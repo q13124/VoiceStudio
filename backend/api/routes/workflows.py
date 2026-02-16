@@ -24,10 +24,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/workflows", tags=["workflows"])
 
 # In-memory storage (ready for database migration)
-_workflows: dict[str, "Workflow"] = {}
+_workflows: dict[str, Workflow] = {}
 
 
-def _validate_workflow(workflow: "Workflow") -> list[str]:
+def _validate_workflow(workflow: Workflow) -> list[str]:
     """
     Validate a workflow structure and return list of validation errors.
 

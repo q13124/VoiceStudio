@@ -34,7 +34,7 @@ class Severity(str, Enum):
     S4_CHORE = "S4 Chore"
 
     @classmethod
-    def from_string(cls, value: str) -> "Severity":
+    def from_string(cls, value: str) -> Severity:
         """Parse severity from string, handling variations."""
         value_lower = value.lower().strip()
         if "s0" in value_lower or "blocker" in value_lower:
@@ -64,7 +64,7 @@ class Gate(str, Enum):
     H = "H"
 
     @classmethod
-    def from_string(cls, value: str) -> Optional["Gate"]:
+    def from_string(cls, value: str) -> Optional[Gate]:
         """Parse gate from string."""
         value_upper = value.strip().upper()
         if value_upper in [g.value for g in cls]:
@@ -91,7 +91,7 @@ class Category(str, Enum):
     TEST = "TEST"  # Found in ledger
 
     @classmethod
-    def from_string(cls, value: str) -> Optional["Category"]:
+    def from_string(cls, value: str) -> Optional[Category]:
         """Parse category from string."""
         value_upper = value.strip().upper()
         try:
@@ -254,4 +254,4 @@ class LedgerSummary:
 
 
 # Agent governance models (re-export for Overseer tools)
-from .agent.identity import AgentIdentity, AgentRole, AgentState  # noqa: E402,F401
+from .agent.identity import AgentIdentity, AgentRole, AgentState

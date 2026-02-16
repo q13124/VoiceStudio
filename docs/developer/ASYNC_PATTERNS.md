@@ -530,6 +530,150 @@ public partial class ExampleViewModel : ObservableObject
 
 ---
 
+## 🔗 CANCELLATION TOKEN PROPAGATION (GAP-I15)
+
+### Policy
+
+All async methods MUST follow these cancellation token rules:
+
+1. **ALWAYS propagate** the incoming `CancellationToken` to all async calls
+2. **NEVER use `CancellationToken.None`** except for fire-and-forget cleanup operations
+3. **Use linked tokens** when combining user cancellation with timeout
+4. **Fire-and-forget MUST use disposal token** from `_disposalCts`
+
+### Anti-Patterns (DO NOT USE)
+
+```csharp
+// ❌ BAD: Ignoring incoming token
+public async Task LoadDataAsync(CancellationToken ct)
+{
+    await _backend.GetDataAsync(CancellationToken.None);  // WRONG - should use ct
+}
+
+// ❌ BAD: Fire-and-forget without cancellation awareness
+_ = LoadLogsAsync(CancellationToken.None);  // WRONG - use disposal token
+
+// ❌ BAD: Method doesn't accept token
+public async Task LoadAsync()  // WRONG - no CancellationToken parameter
+{
+    await _backend.GetAsync();
+}
+
+// ❌ BAD: Command handler ignores the token
+CreateProfileCommand = new EnhancedAsyncRelayCommand<string>(async (name, ct) =>
+{
+    await CreateProfileAsync(name, CancellationToken.None);  // WRONG - should use ct
+});
+```
+
+### Correct Patterns
+
+```csharp
+// ✅ GOOD: Propagate token throughout the call chain
+public async Task LoadDataAsync(CancellationToken ct)
+{
+    await _backend.GetDataAsync(ct);  // Propagate the token
+}
+
+// ✅ GOOD: Linked token for timeout + user cancellation
+var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+linkedCts.CancelAfter(TimeSpan.FromSeconds(30));
+try
+{
+    await _backend.GetDataAsync(linkedCts.Token);
+}
+finally
+{
+    linkedCts.Dispose();
+}
+
+// ✅ GOOD: Fire-and-forget with disposal token
+private CancellationTokenSource _disposalCts = new();
+
+partial void OnSelectedItemChanged(Item? value)
+{
+    // Use disposal token for fire-and-forget operations
+    _ = LoadDetailsAsync(_disposalCts.Token);
+}
+
+public void Dispose()
+{
+    _disposalCts.Cancel();
+    _disposalCts.Dispose();
+}
+
+// ✅ GOOD: Command handler propagates the token
+CreateProfileCommand = new EnhancedAsyncRelayCommand<string>(async (name, ct) =>
+{
+    await CreateProfileAsync(name, ct);  // Propagate the token from the command
+});
+```
+
+### Polling Loops
+
+Polling loops MUST check and propagate cancellation:
+
+```csharp
+// ✅ GOOD: Polling with proper cancellation
+private async Task PollStatusAsync(CancellationToken cancellationToken)
+{
+    while (!cancellationToken.IsCancellationRequested)
+    {
+        await LoadStatusAsync(cancellationToken);  // Propagate token
+        await Task.Delay(5000, cancellationToken);  // Delay respects cancellation
+    }
+}
+```
+
+### Linked Token Pattern for Timeouts
+
+When you need both user cancellation AND a timeout:
+
+```csharp
+public async Task<T> GetWithTimeoutAsync<T>(CancellationToken userToken)
+{
+    using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(userToken);
+    linkedCts.CancelAfter(TimeSpan.FromSeconds(30));
+    
+    try
+    {
+        return await _client.GetAsync<T>(linkedCts.Token);
+    }
+    catch (OperationCanceledException) when (!userToken.IsCancellationRequested)
+    {
+        throw new TimeoutException("Operation timed out after 30 seconds");
+    }
+}
+```
+
+### Selection Change Pattern
+
+When loading data on selection change, use a dedicated cancellation token source:
+
+```csharp
+private CancellationTokenSource? _selectionChangeCts;
+
+partial void OnSelectedItemChanged(Item? value)
+{
+    // Cancel previous selection change operations
+    _selectionChangeCts?.Cancel();
+    _selectionChangeCts?.Dispose();
+    _selectionChangeCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+    
+    if (value != null)
+    {
+        var ct = _selectionChangeCts.Token;
+        _ = LoadDetailsAsync(ct).ContinueWith(t =>
+        {
+            if (t.IsFaulted && t.Exception?.InnerException is not OperationCanceledException)
+                _logService?.LogError(t.Exception.InnerException, "LoadDetails");
+        }, TaskScheduler.Default);
+    }
+}
+```
+
+---
+
 ## 🔍 VERIFICATION CHECKLIST
 
 Before marking a ViewModel as complete, verify:

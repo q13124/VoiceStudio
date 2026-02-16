@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/deepfake-creator", tags=["deepfake-creator"])
 
 # In-memory storage for deepfake jobs (replace with database in production)
-_deepfake_jobs: dict[str, "DeepfakeJob"] = {}
+_deepfake_jobs: dict[str, DeepfakeJob] = {}
 _job_queue: list[str] = []  # Queue of job IDs
 _processing_jobs: set[str] = set()  # Jobs currently being processed
 _max_concurrent_jobs: int = 2  # Maximum concurrent deepfake processing jobs

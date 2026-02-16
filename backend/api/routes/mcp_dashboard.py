@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/mcp-dashboard", tags=["mcp-dashboard"])
 
 # In-memory storage for MCP servers (replace with database in production)
-_mcp_servers: dict[str, "MCPServer"] = {}
+_mcp_servers: dict[str, MCPServer] = {}
 
 
 class MCPServer(BaseModel):

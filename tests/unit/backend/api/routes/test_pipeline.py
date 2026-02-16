@@ -4,11 +4,11 @@ Unit Tests for Pipeline API Routes.
 Tests pipeline processing, providers, and metrics endpoints.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 
 # =============================================================================
 # Fixtures

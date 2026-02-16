@@ -16,7 +16,8 @@ from ..models_additional import AssistantRunRequest
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/assistant", tags=["assistant"])
+# GAP-B02: Changed to sub-prefix to avoid conflict with assistant.py
+router = APIRouter(prefix="/api/assistant/run", tags=["assistant-run"])
 
 # In-memory action registry (replace with database in production)
 _action_registry: dict[str, dict] = {

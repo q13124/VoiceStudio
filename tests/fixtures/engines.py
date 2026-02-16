@@ -493,7 +493,7 @@ class MockEngineService:
         return engine.transcribe(audio, **kwargs)
 
     @classmethod
-    def create_with_engines(cls, engine_ids: list[str] | None = None) -> "MockEngineService":
+    def create_with_engines(cls, engine_ids: list[str] | None = None) -> MockEngineService:
         """Create service with pre-registered engines."""
         service = cls()
 

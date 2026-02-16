@@ -79,7 +79,7 @@ class ReleaseBundle:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ReleaseBundle":
+    def from_dict(cls, data: dict) -> ReleaseBundle:
         """Create from dictionary."""
         return cls(
             bundle_id=data["bundle_id"],

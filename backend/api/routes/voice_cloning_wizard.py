@@ -21,7 +21,7 @@ router = APIRouter(prefix="/api/voice/clone/wizard", tags=["voice-cloning-wizard
 
 # Disk-backed wizard job state (durable across backend restarts)
 _wizard_store = get_job_state_store("voice_cloning_wizard")
-_wizard_jobs: dict[str, "WizardJob"] = {}
+_wizard_jobs: dict[str, WizardJob] = {}
 
 
 class WizardJob(BaseModel):
@@ -47,7 +47,7 @@ class WizardJob(BaseModel):
     updated_at: str
 
 
-def _persist_wizard_job(job: "WizardJob") -> None:
+def _persist_wizard_job(job: WizardJob) -> None:
     _wizard_jobs[job.job_id] = job
     try:
         _wizard_store.upsert(job.job_id, job.model_dump(mode="json"))

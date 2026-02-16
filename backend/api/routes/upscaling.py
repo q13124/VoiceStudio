@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/upscaling", tags=["upscaling"])
 
 # In-memory storage for upscaling jobs (replace with database in production)
-_upscaling_jobs: dict[str, "UpscalingJob"] = {}
+_upscaling_jobs: dict[str, UpscalingJob] = {}
 
 
 class UpscalingJob(BaseModel):

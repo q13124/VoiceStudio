@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/emotion", tags=["emotion"])
 
 # In-memory storage for emotion presets (replace with database in production)
-_emotion_presets: dict[str, "EmotionPreset"] = {}
+_emotion_presets: dict[str, EmotionPreset] = {}
 
 # Available emotions
 AVAILABLE_EMOTIONS = [

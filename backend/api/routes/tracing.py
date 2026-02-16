@@ -75,7 +75,7 @@ class TraceTreeNode(BaseModel):
     name: str
     duration_ms: float
     status: str
-    children: list["TraceTreeNode"] = []
+    children: list[TraceTreeNode] = []
 
 
 TraceTreeNode.model_rebuild()

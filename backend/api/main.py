@@ -2,6 +2,7 @@
 # before any huggingface_hub imports
 
 from __future__ import annotations
+
 import os
 from datetime import datetime
 
@@ -436,6 +437,18 @@ async def startup_event():
                     logger.warning(f"  - {engine_id}: {error}")
         except Exception as e:
             logger.warning(f"Failed to load engines from manifests: {e}")
+
+        # GAP-B02: Validate route prefixes for conflicts
+        try:
+            from .route_validator import log_route_conflicts
+
+            if log_route_conflicts(app):
+                logger.warning(
+                    "Route conflicts detected - some endpoints may be unreachable. "
+                    "See warnings above for details."
+                )
+        except Exception as e:
+            logger.warning(f"Failed to validate routes: {e}")
 
         # Validate OpenAPI contract at startup
         _perform_contract_validation()

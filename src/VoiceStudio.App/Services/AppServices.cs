@@ -37,13 +37,20 @@ namespace VoiceStudio.App.Services
     {
       var services = new ServiceCollection();
 
+      // GAP-I12: Correlation ID provider for cross-layer request tracing
+      // Must be registered before ErrorLoggingService and BackendClient
+      services.AddSingleton<ICorrelationIdProvider, CorrelationIdProvider>();
+
       // Config and backend - use environment variable with fallback to 8001
       var apiHost = Environment.GetEnvironmentVariable("VOICESTUDIO_API_HOST") ?? "localhost";
       var apiPort = Environment.GetEnvironmentVariable("VOICESTUDIO_API_PORT") ?? "8001";
       var baseUrl = $"http://{apiHost}:{apiPort}";
       var wsUrl = $"ws://{apiHost}:{apiPort}/ws/realtime";
       services.AddSingleton(new BackendClientConfig { BaseUrl = baseUrl, WebSocketUrl = wsUrl });
-      services.AddSingleton<IBackendClient, BackendClient>();
+      // GAP-I12: Inject correlation provider into BackendClient
+      services.AddSingleton<IBackendClient>(sp => new BackendClient(
+        sp.GetRequiredService<BackendClientConfig>(),
+        sp.GetRequiredService<ICorrelationIdProvider>()));
 
       // Use cases
       services.AddSingleton<IProfilesUseCase, ProfilesUseCase>();
@@ -70,7 +77,9 @@ namespace VoiceStudio.App.Services
       services.AddSingleton<PanelStateService>();
       services.AddSingleton<INavigationService, NavigationService>();
       services.AddSingleton<IErrorDialogService, ErrorDialogService>();
-      services.AddSingleton<IErrorLoggingService, ErrorLoggingService>();
+      // GAP-I12: Inject correlation provider into ErrorLoggingService
+      services.AddSingleton<IErrorLoggingService>(sp => new ErrorLoggingService(
+        sp.GetRequiredService<ICorrelationIdProvider>()));
       services.AddSingleton<IAuditLoggingService>(sp => new AuditLoggingService(sp.GetRequiredService<IErrorLoggingService>()));
       services.AddSingleton<IHelpOverlayService, HelpOverlayService>();
       services.AddSingleton<IAudioPlayerService, AudioPlayerService>();
@@ -183,7 +192,60 @@ namespace VoiceStudio.App.Services
       // ViewModel factory (needs service provider, so use factory registration)
       services.AddSingleton<IViewModelFactory>(sp => new ViewModelFactory(sp));
 
+      // GAP-B12: Command queue service for busy-state handling
+      services.AddSingleton<ICommandQueueService>(sp =>
+        new CommandQueueService(
+          sp.GetRequiredService<IUnifiedCommandRegistry>(),
+          sp.GetService<ICommandMutexService>(),
+          DispatcherQueue.GetForCurrentThread()));
+
       _provider = services.BuildServiceProvider();
+
+      // Wire up command queue service to registry (GAP-B12)
+      WireCommandQueueService();
+
+      // Register all panels after services are ready
+      RegisterAllPanels();
+    }
+
+    /// <summary>
+    /// Registers all panels in the unified PanelRegistry.
+    /// Called after DI container is built.
+    /// </summary>
+    private static void RegisterAllPanels()
+    {
+      var registry = GetPanelRegistry();
+
+      // Register advanced panels (TextSpeechEditor, Prosody, SpatialAudio, etc.)
+      AdvancedPanelRegistrationService.RegisterAdvancedPanels(registry);
+
+      // Register core panels - these were previously hardcoded in MainWindow
+      CorePanelRegistrationService.RegisterCorePanels(registry);
+
+      System.Diagnostics.Debug.WriteLine(
+        $"[AppServices] Registered {registry.GetAllDescriptors().Count()} panels in PanelRegistry");
+    }
+
+    /// <summary>
+    /// Wires the command queue service to the unified command registry.
+    /// GAP-B12: Enables busy-state command queueing.
+    /// </summary>
+    private static void WireCommandQueueService()
+    {
+      var registry = GetCommandRegistry() as UnifiedCommandRegistry;
+      var queueService = GetService<ICommandQueueService>();
+
+      if (registry != null && queueService != null)
+      {
+        registry.SetQueueService(queueService);
+        System.Diagnostics.Debug.WriteLine(
+          "[AppServices] Command queue service wired to registry (GAP-B12)");
+      }
+      else
+      {
+        System.Diagnostics.Debug.WriteLine(
+          "[AppServices] Warning: Could not wire command queue service");
+      }
     }
 
     public static T? GetService<T>() where T : class => (T?)_provider?.GetService(typeof(T));
@@ -266,6 +328,8 @@ namespace VoiceStudio.App.Services
     public static IUnifiedCommandRegistry? TryGetCommandRegistry() => GetService<IUnifiedCommandRegistry>();
     public static CommandRouter GetCommandRouter() => GetRequiredService<CommandRouter>();
     public static CommandRouter? TryGetCommandRouter() => GetService<CommandRouter>();
+    public static ICommandQueueService GetCommandQueueService() => GetRequiredService<ICommandQueueService>();
+    public static ICommandQueueService? TryGetCommandQueueService() => GetService<ICommandQueueService>();
     public static IDialogService GetDialogService() => GetRequiredService<IDialogService>();
     public static IDialogService? TryGetDialogService() => GetService<IDialogService>();
     public static BackendProcessManager GetBackendProcessManager() => GetRequiredService<BackendProcessManager>();

@@ -29,12 +29,12 @@ class ToolResult:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def ok(cls, output: Any = None, **metadata) -> "ToolResult":
+    def ok(cls, output: Any = None, **metadata) -> ToolResult:
         """Create a successful result."""
         return cls(success=True, output=output, metadata=metadata)
 
     @classmethod
-    def fail(cls, error: str, **metadata) -> "ToolResult":
+    def fail(cls, error: str, **metadata) -> ToolResult:
         """Create a failed result."""
         return cls(success=False, error=error, metadata=metadata)
 

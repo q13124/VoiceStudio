@@ -14,7 +14,8 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/plugins", tags=["Plugin Gallery"])
+# GAP-B02: Changed from /api/plugins to avoid conflict with plugins.py
+router = APIRouter(prefix="/api/plugin-gallery", tags=["plugin-gallery"])
 
 
 # ============================================================================

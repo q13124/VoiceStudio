@@ -99,10 +99,11 @@ except Exception as e:
     logging.getLogger(__name__).warning(
         "Pitch tracking unavailable (audio_processing import failed): %s", e
     )
-# Import correlation ID support for enhanced logging (Phase 3A)
+# Import correlation ID support for enhanced logging (Phase 3A, GAP-I08)
 import contextlib
 
-from ..middleware.correlation_id import get_correlation_id
+from ..dependencies import RequestContext, get_request_context
+from ..middleware.correlation_id import get_correlation_id, get_span_id, get_trace_id
 from ..models_additional import (
     ABTestRequest,
     ABTestResponse,
@@ -140,9 +141,15 @@ def _log_context(**kwargs) -> dict[str, Any]:
         **kwargs: Additional context fields to include
 
     Returns:
-        Dict with correlation_id and any additional fields
+        Dict with correlation_id, trace_id, span_id, and any additional fields
+        
+    GAP-I08: Enhanced with full tracing context.
     """
-    context = {"correlation_id": get_correlation_id() or "no-correlation-id"}
+    context = {
+        "correlation_id": get_correlation_id() or "no-correlation-id",
+        "trace_id": get_trace_id() or "N/A",
+        "span_id": get_span_id() or "N/A",
+    }
     context.update(kwargs)
     return context
 

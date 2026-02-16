@@ -391,7 +391,7 @@ class PerformanceTimer:
         self.end_time: float | None = None
         self.checkpoints: list[tuple] = []
 
-    def start(self) -> "PerformanceTimer":
+    def start(self) -> PerformanceTimer:
         """Start the timer."""
         self.start_time = time.time()
         logger.info(f"Timer started: {self.name}")
@@ -425,7 +425,7 @@ class PerformanceTimer:
         end = self.end_time or time.time()
         return end - self.start_time
 
-    def __enter__(self) -> "PerformanceTimer":
+    def __enter__(self) -> PerformanceTimer:
         """Context manager entry."""
         return self.start()
 

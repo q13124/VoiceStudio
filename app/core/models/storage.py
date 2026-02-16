@@ -40,7 +40,7 @@ class ModelInfo:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ModelInfo":
+    def from_dict(cls, data: dict) -> ModelInfo:
         """Create from dictionary."""
         return cls(**data)
 

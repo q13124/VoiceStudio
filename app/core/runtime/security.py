@@ -105,7 +105,7 @@ class SecurityPolicy:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "SecurityPolicy":
+    def from_dict(cls, data: dict) -> SecurityPolicy:
         """Create policy from dictionary."""
         return cls(
             allow_net=data.get("allow_net", False),

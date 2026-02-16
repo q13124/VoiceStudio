@@ -53,7 +53,7 @@ class ReplayBundle:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ReplayBundle":
+    def from_dict(cls, data: dict) -> ReplayBundle:
         """Create from dictionary."""
         return cls(
             bundle_id=data["bundle_id"],

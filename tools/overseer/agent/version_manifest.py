@@ -73,7 +73,7 @@ class ManifestEntry:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ManifestEntry":
+    def from_dict(cls, data: dict) -> ManifestEntry:
         """Create from dictionary."""
         return cls(
             manifest_type=ManifestType(data["manifest_type"]),

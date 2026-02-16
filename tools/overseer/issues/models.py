@@ -66,7 +66,7 @@ class StateTransition:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "StateTransition":
+    def from_dict(cls, data: dict[str, Any]) -> StateTransition:
         return cls(
             status=data["status"],
             at=datetime.fromisoformat(data["at"]),
@@ -95,7 +95,7 @@ class Recommendation:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Recommendation":
+    def from_dict(cls, data: dict[str, Any]) -> Recommendation:
         """Create from dictionary."""
         return cls(
             action=data["action"],
@@ -163,7 +163,7 @@ class Issue:
         return out
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Issue":
+    def from_dict(cls, data: dict[str, Any]) -> Issue:
         """Create from dictionary."""
         state_history = [
             StateTransition.from_dict(s)

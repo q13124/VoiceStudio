@@ -1,5 +1,6 @@
 
 from __future__ import annotations
+
 r"""
 So-VITS-SVC 4.0 Engine for VoiceStudio
 Voice conversion using So-VITS-SVC 4.0 checkpoints

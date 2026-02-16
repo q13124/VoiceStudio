@@ -73,7 +73,7 @@ class E2EConfig:
         self.logs_dir.mkdir(parents=True, exist_ok=True)
 
     @classmethod
-    def from_env(cls) -> "E2EConfig":
+    def from_env(cls) -> E2EConfig:
         """Create config from environment variables."""
         config = cls()
 

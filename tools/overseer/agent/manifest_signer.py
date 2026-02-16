@@ -67,7 +67,7 @@ class SignedManifest:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "SignedManifest":
+    def from_dict(cls, data: dict) -> SignedManifest:
         """Create from dictionary."""
         return cls(
             manifest_type=data["manifest_type"],

@@ -28,6 +28,7 @@ namespace VoiceStudio.App.Services
   /// <summary>
   /// HTTP handler that adds X-Correlation-Id and trace headers to all requests.
   /// Implements Phase 5.1.2 trace propagation for distributed tracing.
+  /// GAP-I12: Enhanced to extract correlation IDs from responses and set in provider.
   /// </summary>
   internal sealed class CorrelationIdHandler : DelegatingHandler
   {
@@ -35,6 +36,9 @@ namespace VoiceStudio.App.Services
     private const string TraceIdHeader = "X-Trace-Id";
     private const string SpanIdHeader = "X-Span-Id";
     private const string TraceParentHeader = "traceparent";
+
+    // GAP-I12: Optional correlation provider for setting context from response headers
+    private readonly ICorrelationIdProvider? _correlationProvider;
 
     public CorrelationIdHandler() : base(new HttpClientHandler())
     {
@@ -44,15 +48,45 @@ namespace VoiceStudio.App.Services
     {
     }
 
+    /// <summary>
+    /// GAP-I12: Constructor with correlation provider for response header extraction.
+    /// </summary>
+    public CorrelationIdHandler(ICorrelationIdProvider correlationProvider) : base(new HttpClientHandler())
+    {
+      _correlationProvider = correlationProvider;
+    }
+
+    /// <summary>
+    /// GAP-I12: Constructor with both inner handler and correlation provider.
+    /// </summary>
+    public CorrelationIdHandler(HttpMessageHandler innerHandler, ICorrelationIdProvider correlationProvider) : base(innerHandler)
+    {
+      _correlationProvider = correlationProvider;
+    }
+
     protected override async Task<HttpResponseMessage> SendAsync(
       HttpRequestMessage request,
       CancellationToken cancellationToken)
     {
+      string? correlationId = null;
+
       // Generate a new correlation ID for this request if not already present
       if (!request.Headers.Contains(CorrelationIdHeader))
       {
-        var correlationId = Guid.NewGuid().ToString("N");
+        // GAP-I12: Check provider first, then generate new ID
+        correlationId = _correlationProvider?.GetCurrentCorrelationId() ?? Guid.NewGuid().ToString("N");
         request.Headers.Add(CorrelationIdHeader, correlationId);
+
+        // GAP-I12: Set in provider if we generated a new one
+        if (_correlationProvider != null && _correlationProvider.GetCurrentCorrelationId() == null)
+        {
+          _correlationProvider.SetCorrelationId(correlationId);
+        }
+      }
+      else
+      {
+        // Extract correlation ID from existing header
+        correlationId = request.Headers.GetValues(CorrelationIdHeader).FirstOrDefault();
       }
 
       // Add W3C Trace Context header for distributed tracing compatibility
@@ -86,7 +120,51 @@ namespace VoiceStudio.App.Services
         request.Headers.Add(TraceParentHeader, actTraceParent);
       }
 
-      return await base.SendAsync(request, cancellationToken);
+      var response = await base.SendAsync(request, cancellationToken);
+
+      // GAP-I12: Extract correlation context from response headers and set in provider
+      if (_correlationProvider != null)
+      {
+        ExtractAndSetCorrelationContext(response);
+      }
+
+      return response;
+    }
+
+    /// <summary>
+    /// GAP-I12: Extracts correlation, trace, and span IDs from response headers
+    /// and sets them in the correlation provider.
+    /// </summary>
+    private void ExtractAndSetCorrelationContext(HttpResponseMessage response)
+    {
+      // Extract correlation ID from response (backend may override)
+      if (response.Headers.TryGetValues(CorrelationIdHeader, out var correlationValues))
+      {
+        var responseCorrelationId = correlationValues.FirstOrDefault();
+        if (!string.IsNullOrEmpty(responseCorrelationId))
+        {
+          _correlationProvider!.SetCorrelationId(responseCorrelationId);
+        }
+      }
+
+      // Extract trace and span IDs
+      string? traceId = null;
+      string? spanId = null;
+
+      if (response.Headers.TryGetValues(TraceIdHeader, out var traceValues))
+      {
+        traceId = traceValues.FirstOrDefault();
+      }
+
+      if (response.Headers.TryGetValues(SpanIdHeader, out var spanValues))
+      {
+        spanId = spanValues.FirstOrDefault();
+      }
+
+      if (!string.IsNullOrEmpty(traceId) || !string.IsNullOrEmpty(spanId))
+      {
+        _correlationProvider!.SetTraceContext(traceId, spanId);
+      }
     }
   }
 
@@ -152,13 +230,29 @@ namespace VoiceStudio.App.Services
 
     public IWebSocketService? WebSocketService { get; }
 
-    public BackendClient(BackendClientConfig config)
+    /// <summary>
+    /// Initializes a new instance of BackendClient without correlation provider.
+    /// </summary>
+    public BackendClient(BackendClientConfig config) : this(config, null)
+    {
+    }
+
+    /// <summary>
+    /// GAP-I12: Initializes a new instance with optional correlation ID provider
+    /// for cross-layer request tracing.
+    /// </summary>
+    /// <param name="config">Backend client configuration.</param>
+    /// <param name="correlationProvider">Optional provider for correlation context.</param>
+    public BackendClient(BackendClientConfig config, ICorrelationIdProvider? correlationProvider)
     {
       _config = config ?? throw new ArgumentNullException(nameof(config));
 
       // Use CorrelationIdHandler to add X-Correlation-Id headers to all requests
       // This enables distributed tracing per Phase 5.1.2
-      var handler = new CorrelationIdHandler();
+      // GAP-I12: Pass correlation provider for response header extraction
+      var handler = correlationProvider != null
+        ? new CorrelationIdHandler(correlationProvider)
+        : new CorrelationIdHandler();
       _httpClient = new HttpClient(handler)
       {
         BaseAddress = new Uri(config.BaseUrl),

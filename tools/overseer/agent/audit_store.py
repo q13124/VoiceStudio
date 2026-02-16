@@ -72,7 +72,7 @@ class AuditEntry:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "AuditEntry":
+    def from_dict(cls, data: dict) -> AuditEntry:
         """Create from dictionary."""
         return cls(
             timestamp=datetime.fromisoformat(data["timestamp"]),

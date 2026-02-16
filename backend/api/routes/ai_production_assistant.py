@@ -16,10 +16,11 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/assistant", tags=["ai-production-assistant"])
+# GAP-B02: Changed to sub-prefix to avoid conflict with assistant.py
+router = APIRouter(prefix="/api/assistant/production", tags=["assistant-production"])
 
 # In-memory storage for chat sessions (replace with database in production)
-_chat_sessions: dict[str, "ChatSession"] = {}
+_chat_sessions: dict[str, ChatSession] = {}
 
 
 class ChatMessage(BaseModel):

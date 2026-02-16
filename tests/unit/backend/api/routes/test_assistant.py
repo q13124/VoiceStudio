@@ -4,11 +4,11 @@ Unit Tests for Assistant API Routes.
 Tests AI production assistant endpoints for chat, conversations, and task suggestions.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 
 # =============================================================================
 # Fixtures
@@ -264,7 +264,7 @@ class TestProviders:
         response = assistant_client.get("/api/assistant/providers")
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, dict) or isinstance(data, list)
+        assert isinstance(data, (dict, list))
 
     def test_providers_structure(self, assistant_client):
         """Test GET /providers returns expected structure."""

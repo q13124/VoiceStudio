@@ -32,12 +32,12 @@ class ErrorResult(Generic[T]):
     error_message: str | None = None
 
     @classmethod
-    def ok(cls, value: T) -> "ErrorResult[T]":
+    def ok(cls, value: T) -> ErrorResult[T]:
         """Create a successful result."""
         return cls(success=True, value=value)
 
     @classmethod
-    def fail(cls, error: Exception, message: str | None = None) -> "ErrorResult[T]":
+    def fail(cls, error: Exception, message: str | None = None) -> ErrorResult[T]:
         """Create a failed result."""
         return cls(
             success=False,

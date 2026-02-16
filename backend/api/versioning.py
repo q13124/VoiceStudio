@@ -46,22 +46,22 @@ class APIVersion(str, Enum):
     V3 = "v3"
 
     @classmethod
-    def current(cls) -> "APIVersion":
+    def current(cls) -> APIVersion:
         """Return the current (latest) API version."""
         return cls.V3
 
     @classmethod
-    def default(cls) -> "APIVersion":
+    def default(cls) -> APIVersion:
         """Return the default API version for unversioned requests."""
         return cls.V1
 
     @classmethod
-    def supported(cls) -> set["APIVersion"]:
+    def supported(cls) -> set[APIVersion]:
         """Return set of all supported versions."""
         return {cls.V1, cls.V2, cls.V3}
 
     @classmethod
-    def deprecated(cls) -> set["APIVersion"]:
+    def deprecated(cls) -> set[APIVersion]:
         """Return set of deprecated versions (still supported but will be removed)."""
         return {cls.V1}
 
@@ -98,7 +98,7 @@ class VersionNegotiator:
         self.current_version = current_version
         self.min_version = min_version
 
-    def negotiate(self, request: "Request") -> APIVersion:
+    def negotiate(self, request: Request) -> APIVersion:
         """Negotiate API version from request."""
         return get_version_from_request(request)
 

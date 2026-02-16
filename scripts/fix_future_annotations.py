@@ -20,7 +20,7 @@ for directory in directories:
     for fname in files:
         if fname.endswith('.py'):
             fpath = os.path.join(root, fname)
-            with open(fpath, 'r', encoding='utf-8') as f:
+            with open(fpath, encoding='utf-8') as f:
                 content = f.read()
             
             # Skip if already has the import

@@ -122,7 +122,7 @@ class ContextLogger:
         self._logger = logging.getLogger(name)
         self._context = context or {}
 
-    def bind(self, **kwargs: Any) -> "ContextLogger":
+    def bind(self, **kwargs: Any) -> ContextLogger:
         """Create a new logger with additional context."""
         new_context = {**self._context, **kwargs}
         return ContextLogger(self._logger.name, new_context)

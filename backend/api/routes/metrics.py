@@ -63,11 +63,11 @@ class MetricsRegistry:
     Thread-safe and designed for local-first operation.
     """
 
-    _instance: Optional["MetricsRegistry"] = None
+    _instance: Optional[MetricsRegistry] = None
     _metrics: dict[str, MetricValue] = {}
     _start_time: float = time.time()
 
-    def __new__(cls) -> "MetricsRegistry":
+    def __new__(cls) -> MetricsRegistry:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._metrics = {}

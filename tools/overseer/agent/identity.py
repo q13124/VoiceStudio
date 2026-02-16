@@ -30,7 +30,7 @@ class AgentRole(str, Enum):
     DEBUGGER = "Debugger"
 
     @classmethod
-    def from_string(cls, value: str) -> Optional["AgentRole"]:
+    def from_string(cls, value: str) -> Optional[AgentRole]:
         """Parse role from string."""
         value_lower = value.lower().strip()
         for role in cls:
@@ -50,7 +50,7 @@ class AgentState(str, Enum):
     QUARANTINED = "Quarantined"
     TERMINATED = "Terminated"
 
-    def can_transition_to(self, target: "AgentState") -> bool:
+    def can_transition_to(self, target: AgentState) -> bool:
         """Check if transition to target state is valid."""
         valid_transitions = {
             AgentState.CREATED: {AgentState.RUNNING, AgentState.TERMINATED},
@@ -118,7 +118,7 @@ class AgentIdentity:
         user_id: str,
         config: dict | None = None,
         parent_agent_id: str | None = None,
-    ) -> "AgentIdentity":
+    ) -> AgentIdentity:
         """
         Factory method to create a new agent identity.
 
@@ -215,7 +215,7 @@ class AgentIdentity:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "AgentIdentity":
+    def from_dict(cls, data: dict) -> AgentIdentity:
         """Create from dictionary."""
         return cls(
             agent_id=data["agent_id"],

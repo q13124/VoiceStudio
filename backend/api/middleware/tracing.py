@@ -437,6 +437,17 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
             # Store trace info for response headers
             trace_id = format(span.get_span_context().trace_id, "032x")
             span_id = format(span.get_span_context().span_id, "016x")
+            
+            # GAP-I08: Set trace/span IDs on request state for dependencies
+            request.state.trace_id = trace_id
+            request.state.span_id = span_id
+            
+            # GAP-I08: Set context vars for logging
+            from backend.api.middleware.correlation_id import (
+                reset_trace_context,
+                set_trace_context,
+            )
+            trace_tokens = set_trace_context(trace_id, span_id)
 
             try:
                 response = await call_next(request)
@@ -463,6 +474,9 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
                 span.set_status(Status(StatusCode.ERROR, str(e)))
                 span.record_exception(e)
                 raise
+            finally:
+                # GAP-I08: Reset trace context vars
+                reset_trace_context(*trace_tokens)
 
 
 # =============================================================================

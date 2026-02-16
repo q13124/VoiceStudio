@@ -1,8 +1,20 @@
 """
-Audio Analysis Routes
+Audio Analysis Routes - Basic Single-File Operations
 
-Endpoints for audio visualization data: waveforms, spectrograms, and meters.
-Provides downsampled data optimized for real-time rendering in the UI.
+Endpoints for quick audio visualization and analysis of single files.
+Optimized for real-time UI rendering with minimal latency.
+
+Route Purposes (GAP-B06):
+- /api/audio/waveform: Quick waveform generation for audio files < 1 minute
+- /api/audio/spectrogram: Quick spectrogram generation for single files
+- /api/audio/meters: Real-time level meters (peak, RMS, LUFS)
+- /api/audio/loudness: Loudness measurement for single files
+
+For advanced operations (batch processing, streaming, comparison), use:
+- /api/waveform for advanced waveform features (caching, config, analysis)
+- /api/spectrogram for advanced spectrogram features (custom FFT, overlays)
+
+See also: docs/api/ROUTE_MAPPING.md for complete route documentation.
 """
 
 from __future__ import annotations

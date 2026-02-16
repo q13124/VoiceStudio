@@ -53,7 +53,7 @@ class RetentionPolicy:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "RetentionPolicy":
+    def from_dict(cls, data: dict[str, Any]) -> RetentionPolicy:
         """Create from dictionary."""
         return cls(
             directory=Path(data["directory"]),
@@ -99,10 +99,10 @@ class MetricsCleanupService:
     Thread-safe and suitable for background operation.
     """
 
-    _instance: Optional["MetricsCleanupService"] = None
+    _instance: Optional[MetricsCleanupService] = None
     _lock = threading.Lock()
 
-    def __new__(cls) -> "MetricsCleanupService":
+    def __new__(cls) -> MetricsCleanupService:
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:

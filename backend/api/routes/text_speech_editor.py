@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/edit", tags=["text-speech-editor"])
 
 # In-memory storage for edit sessions (replace with database in production)
-_edit_sessions: dict[str, "EditSession"] = {}
+_edit_sessions: dict[str, EditSession] = {}
 
 
 class WordAlignment(BaseModel):

@@ -100,7 +100,7 @@ class ApprovalRequest:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ApprovalRequest":
+    def from_dict(cls, data: dict) -> ApprovalRequest:
         """Create from dictionary."""
         return cls(
             request_id=data["request_id"],

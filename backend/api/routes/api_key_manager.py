@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/api-keys", tags=["api-keys"])
 
 # In-memory storage (replace with encrypted storage in production)
-_api_keys: dict[str, "APIKey"] = {}
+_api_keys: dict[str, APIKey] = {}
 
 
 class APIKey(BaseModel):

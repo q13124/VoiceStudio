@@ -1,118 +1,143 @@
+"""
+Additional API models for voice synthesis, image generation, and quality analysis.
+
+GAP-I16: Models should inherit from VoiceStudioBaseModel for consistent null handling.
+New models MUST inherit from VoiceStudioBaseModel. Existing models are being migrated.
+
+See: docs/contracts/NULL_HANDLING_POLICY.md
+"""
 
 from __future__ import annotations
+
 import re
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, validator
 
+# GAP-I16: Import base model for consistent null handling
+from backend.api.models import VoiceStudioBaseModel
 
-class AbxStartRequest(BaseModel):
+# =============================================================================
+# Testing and Evaluation Models (use VoiceStudioBaseModel)
+# =============================================================================
+
+
+class AbxStartRequest(VoiceStudioBaseModel):
     items: list[str]
 
 
-class AbxResult(BaseModel):
+class AbxResult(VoiceStudioBaseModel):
     item: str
     mos: float
     pref: str
 
 
-class DatasetScoreRequest(BaseModel):
+class DatasetScoreRequest(VoiceStudioBaseModel):
     clips: list[str]
 
 
-class ScoreResult(BaseModel):
+class ScoreResult(VoiceStudioBaseModel):
     clip: str
     snr: float
     lufs: float
     quality: float
 
 
-class Telemetry(BaseModel):
+class Telemetry(VoiceStudioBaseModel):
     engine_ms: float
     underruns: int
     vram_pct: float
 
 
-class AdrAlignRequest(BaseModel):
+# =============================================================================
+# Audio Processing Models (use VoiceStudioBaseModel)
+# =============================================================================
+
+
+class AdrAlignRequest(VoiceStudioBaseModel):
     video_id: str
     audio_id: str
 
 
-class ProsodyQuantizeRequest(BaseModel):
+class ProsodyQuantizeRequest(VoiceStudioBaseModel):
     audio_id: str
     grid: str = "1/8"
 
 
-class EmotionApplyRequest(BaseModel):
+class EmotionApplyRequest(VoiceStudioBaseModel):
     audio_id: str
     curve: list[float]
 
 
-class FormantEditRequest(BaseModel):
+class FormantEditRequest(VoiceStudioBaseModel):
     audio_id: str
     shifts: dict[str, float]
 
 
-class SpectralInpaintRequest(BaseModel):
+class SpectralInpaintRequest(VoiceStudioBaseModel):
     audio_id: str
     mask: str
 
 
-class ModelInspectRequest(BaseModel):
+class ModelInspectRequest(VoiceStudioBaseModel):
     layer: int
 
 
-class GranularRenderRequest(BaseModel):
+class GranularRenderRequest(VoiceStudioBaseModel):
     audio_id: str
     params: dict[str, Any]
 
 
-class RvcStartRequest(BaseModel):
+class RvcStartRequest(VoiceStudioBaseModel):
     target_voice: str
 
 
-class DubTranslateRequest(BaseModel):
+class DubTranslateRequest(VoiceStudioBaseModel):
     audio_id: str
     lang: str
 
 
-class ArticulationAnalyzeRequest(BaseModel):
+class ArticulationAnalyzeRequest(VoiceStudioBaseModel):
     audio_id: str
 
 
-class NrApplyRequest(BaseModel):
+class NrApplyRequest(VoiceStudioBaseModel):
     audio_id: str
     noise_print_id: str
 
 
-class RepairClippingRequest(BaseModel):
+class RepairClippingRequest(VoiceStudioBaseModel):
     audio_id: str
 
 
-class SceneMixAnalyzeRequest(BaseModel):
+class SceneMixAnalyzeRequest(VoiceStudioBaseModel):
     tracks: list[str]
 
 
-class RmTrainRequest(BaseModel):
+class RmTrainRequest(VoiceStudioBaseModel):
     ratings: list[dict[str, Any]]
 
 
-class SafetyScanRequest(BaseModel):
+class SafetyScanRequest(VoiceStudioBaseModel):
     text: str
 
 
-class ImgSamplerRequest(BaseModel):
+class ImgSamplerRequest(VoiceStudioBaseModel):
     prompt: str
     sampler: str = "ddim"
 
 
-class AssistantRunRequest(BaseModel):
+class AssistantRunRequest(VoiceStudioBaseModel):
     action_id: str
     params: dict[str, Any] | None = None
 
 
-# Voice Cloning Models
-class VoiceSynthesizeRequest(BaseModel):
+# =============================================================================
+# Voice Cloning Models (GAP-I16: Use VoiceStudioBaseModel)
+# =============================================================================
+
+
+class VoiceSynthesizeRequest(VoiceStudioBaseModel):
     """Request model for voice synthesis with validation."""
 
     model_config = ConfigDict(
@@ -198,8 +223,8 @@ class VoiceSynthesizeRequest(BaseModel):
         return v.strip()
 
 
-class QualityMetrics(BaseModel):
-    """Detailed quality metrics for voice cloning."""
+class QualityMetrics(VoiceStudioBaseModel):
+    """Detailed quality metrics for voice cloning (GAP-I16)."""
 
     # Mean Opinion Score (1.0-5.0)
     mos_score: float | None = None
@@ -220,7 +245,8 @@ class QualityMetrics(BaseModel):
     )
 
 
-class VoiceSynthesizeResponse(BaseModel):
+class VoiceSynthesizeResponse(VoiceStudioBaseModel):
+    """Voice synthesis response (GAP-I16)."""
     audio_id: str
     audio_url: str
     duration: float
@@ -230,8 +256,8 @@ class VoiceSynthesizeResponse(BaseModel):
     quality_metrics: QualityMetrics | None = None
 
 
-class ABTestRequest(BaseModel):
-    """Request for A/B testing two synthesis configurations.
+class ABTestRequest(VoiceStudioBaseModel):
+    """Request for A/B testing two synthesis configurations (GAP-I16).
 
     Implements IDEA 46: A/B Testing Interface for Quality Comparison.
     """
@@ -269,8 +295,8 @@ class ABTestRequest(BaseModel):
     )
 
 
-class ABTestResult(BaseModel):
-    """Result for one side of A/B test."""
+class ABTestResult(VoiceStudioBaseModel):
+    """Result for one side of A/B test (GAP-I16)."""
 
     sample_label: str = Field(
         ...,
@@ -296,8 +322,8 @@ class ABTestResult(BaseModel):
     )
 
 
-class ABTestResponse(BaseModel):
-    """Response from A/B test."""
+class ABTestResponse(VoiceStudioBaseModel):
+    """Response from A/B test (GAP-I16)."""
 
     sample_a: ABTestResult = Field(..., description="Result for sample A")
     sample_b: ABTestResult = Field(..., description="Result for sample B")
@@ -308,15 +334,16 @@ class ABTestResponse(BaseModel):
     test_id: str = Field(..., description="Unique test identifier")
 
 
-class VoiceAnalyzeResponse(BaseModel):
+class VoiceAnalyzeResponse(VoiceStudioBaseModel):
+    """Voice analysis response (GAP-I16)."""
     # mos, similarity, naturalness, snr, lufs, etc.
     metrics: dict[str, float]
     quality_score: float | None = None
     missing_dependencies: list[str] = Field(default_factory=list)
 
 
-class VoiceCloneRequest(BaseModel):
-    """Request model for voice cloning with validation and advanced features."""
+class VoiceCloneRequest(VoiceStudioBaseModel):
+    """Request model for voice cloning with validation and advanced features (GAP-I16)."""
 
     reference_audio: str | list[str] = Field(
         ...,
@@ -401,7 +428,8 @@ class VoiceCloneRequest(BaseModel):
         return v
 
 
-class VoiceCloneResponse(BaseModel):
+class VoiceCloneResponse(VoiceStudioBaseModel):
+    """Voice cloning response (GAP-I16)."""
     profile_id: str
     audio_id: str | None = None
     audio_url: str | None = None
@@ -412,8 +440,12 @@ class VoiceCloneResponse(BaseModel):
     candidate_metrics: list[dict[str, Any]] | None = None
 
 
-# Quality Improvement Models (IDEA 61-70)
-class MultiPassSynthesisRequest(BaseModel):
+# =============================================================================
+# Quality Improvement Models (IDEA 61-70, GAP-I16)
+# =============================================================================
+
+
+class MultiPassSynthesisRequest(VoiceStudioBaseModel):
     """Request model for multi-pass synthesis with quality refinement."""
 
     engine: str = Field(
@@ -475,8 +507,8 @@ class MultiPassSynthesisRequest(BaseModel):
         return v.lower()
 
 
-class PassResult(BaseModel):
-    """Result from a single synthesis pass."""
+class PassResult(VoiceStudioBaseModel):
+    """Result from a single synthesis pass (GAP-I16)."""
 
     pass_number: int
     audio_id: str
@@ -486,8 +518,8 @@ class PassResult(BaseModel):
     improvement: float | None = None  # Improvement over previous pass
 
 
-class MultiPassSynthesisResponse(BaseModel):
-    """Response model for multi-pass synthesis."""
+class MultiPassSynthesisResponse(VoiceStudioBaseModel):
+    """Response model for multi-pass synthesis (GAP-I16)."""
 
     audio_id: str  # Final selected audio
     audio_url: str

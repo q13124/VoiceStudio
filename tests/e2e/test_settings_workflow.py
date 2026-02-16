@@ -25,6 +25,7 @@ pytestmark = [
 def api_client():
     """Create a test client for API tests."""
     from fastapi.testclient import TestClient
+
     from backend.api.main import app
     return TestClient(app)
 

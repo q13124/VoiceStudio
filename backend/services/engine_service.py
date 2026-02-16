@@ -132,7 +132,7 @@ class IEngineService(ABC):
 
     @abstractmethod
     def calculate_snr(
-        self, audio: Union[AudioPath, "np.ndarray"], sample_rate: int | None = None
+        self, audio: Union[AudioPath, np.ndarray], sample_rate: int | None = None
     ) -> float:
         """Calculate Signal-to-Noise Ratio for audio (path or numpy array)."""
         ...

@@ -80,6 +80,4 @@ if __name__ == "__main__":
         print("[SUCCESS] Backend HuggingFace integration appears to be working")
     else:
         print("[FAILED] Backend HuggingFace integration has issues")
-    sys.exit(0 if success else 1)    else:
-        print("[FAILED] Backend HuggingFace integration has issues")
     sys.exit(0 if success else 1)

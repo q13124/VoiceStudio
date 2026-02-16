@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/voice/multi", tags=["multi-voice-generator"])
 
 # In-memory storage for multi-voice jobs (replace with database in production)
-_multi_voice_jobs: dict[str, "MultiVoiceJob"] = {}
+_multi_voice_jobs: dict[str, MultiVoiceJob] = {}
 
 
 class VoiceGenerationItem(BaseModel):

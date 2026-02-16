@@ -37,7 +37,7 @@ router = APIRouter(
 )
 
 # Active pipeline sessions
-_sessions: dict[str, "PipelineSession"] = {}
+_sessions: dict[str, PipelineSession] = {}
 
 
 class PipelineRequest(BaseModel):

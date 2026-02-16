@@ -79,7 +79,7 @@ class KillSwitchActivation:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "KillSwitchActivation":
+    def from_dict(cls, data: dict) -> KillSwitchActivation:
         """Create from dictionary."""
         return cls(
             activation_id=data["activation_id"],

@@ -96,11 +96,11 @@ class AuditLogger:
         except ImportError:
             self._issue_bridge = None
 
-    def set_context_enricher(self, enricher: "ContextEnricher"):
+    def set_context_enricher(self, enricher: ContextEnricher):
         """Set the context enricher for automatic context resolution."""
         self._context_enricher = enricher
 
-    def set_issue_bridge(self, bridge: "AuditIssueBridge"):
+    def set_issue_bridge(self, bridge: AuditIssueBridge):
         """Set the issue bridge for automatic issue creation."""
         self._issue_bridge = bridge
 

@@ -49,7 +49,7 @@ router = APIRouter(prefix="/api/settings", tags=["settings"])
 SETTINGS_FILE = Path("data/settings.json")
 
 # Cache for settings to reduce file I/O
-_settings_cache: Optional["SettingsData"] = None
+_settings_cache: Optional[SettingsData] = None
 _cache_timestamp: float = 0.0
 _cache_ttl: float = 60.0  # Cache for 60 seconds
 

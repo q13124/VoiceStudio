@@ -64,7 +64,7 @@ class SafeZone:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "SafeZone":
+    def from_dict(cls, data: dict) -> SafeZone:
         """Create from dictionary."""
         return cls(
             zone_type=SafeZoneType(data["zone_type"]),

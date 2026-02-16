@@ -361,7 +361,7 @@ class UnifiedTrainer:
         device: str | None = None,
         gpu: bool = True,
         output_dir: str | None = None,
-    ) -> "UnifiedTrainer":
+    ) -> UnifiedTrainer:
         """
         Factory method to create a Unified Trainer instance.
 

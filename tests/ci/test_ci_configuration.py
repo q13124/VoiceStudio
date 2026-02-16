@@ -156,7 +156,7 @@ class TestCIWorkflowContent:
                 content = yaml.safe_load(f)
                 jobs = content.get("jobs", {})
                 python_jobs = [
-                    k for k in jobs.keys()
+                    k for k in jobs
                     if "python" in k.lower() or "test" in k.lower()
                 ]
                 assert len(python_jobs) > 0, "No Python test job in CI"
@@ -169,7 +169,7 @@ class TestCIWorkflowContent:
                 content = yaml.safe_load(f)
                 jobs = content.get("jobs", {})
                 dotnet_jobs = [
-                    k for k in jobs.keys()
+                    k for k in jobs
                     if "dotnet" in k.lower() or "build" in k.lower() or "csharp" in k.lower()
                 ]
                 assert len(dotnet_jobs) > 0, "No .NET build job in CI"

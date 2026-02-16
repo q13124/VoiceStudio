@@ -1,7 +1,24 @@
 """
 Advanced Waveform Visualization Routes
 
-Endpoints for advanced waveform analysis and visualization.
+Endpoints for advanced waveform analysis and visualization with caching,
+configuration management, and detailed analysis features.
+
+Route Purposes (GAP-B06):
+- /api/waveform/config/{audio_id}: Waveform display configuration (zoom, channels)
+- /api/waveform/data/{audio_id}: Detailed waveform data with optional analysis
+- /api/waveform/analysis/{audio_id}: Peak/RMS/crest factor analysis
+- /api/waveform/compare: A/B waveform comparison (batch operation)
+
+Use Cases:
+- Multi-channel display configuration
+- Persistent waveform settings per audio file
+- Detailed signal analysis (dynamic range, crest factor, zero-crossing rate)
+- A/B comparison between two audio files
+
+For quick single-file operations (< 1 min audio), consider using /api/audio/waveform.
+
+See also: docs/api/ROUTE_MAPPING.md for complete route documentation.
 """
 
 from __future__ import annotations

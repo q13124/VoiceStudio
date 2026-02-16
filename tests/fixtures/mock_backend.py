@@ -67,37 +67,37 @@ class MockResponse:
     headers: dict[str, str] = field(default_factory=dict)
 
     @classmethod
-    def ok(cls, body: Any = None) -> "MockResponse":
+    def ok(cls, body: Any = None) -> MockResponse:
         """Create 200 OK response."""
         return cls(status_code=200, body=body)
 
     @classmethod
-    def created(cls, body: Any = None) -> "MockResponse":
+    def created(cls, body: Any = None) -> MockResponse:
         """Create 201 Created response."""
         return cls(status_code=201, body=body)
 
     @classmethod
-    def accepted(cls, body: Any = None) -> "MockResponse":
+    def accepted(cls, body: Any = None) -> MockResponse:
         """Create 202 Accepted response."""
         return cls(status_code=202, body=body)
 
     @classmethod
-    def no_content(cls) -> "MockResponse":
+    def no_content(cls) -> MockResponse:
         """Create 204 No Content response."""
         return cls(status_code=204)
 
     @classmethod
-    def bad_request(cls, detail: str = "Bad Request") -> "MockResponse":
+    def bad_request(cls, detail: str = "Bad Request") -> MockResponse:
         """Create 400 Bad Request response."""
         return cls(status_code=400, body={"detail": detail})
 
     @classmethod
-    def not_found(cls, detail: str = "Not Found") -> "MockResponse":
+    def not_found(cls, detail: str = "Not Found") -> MockResponse:
         """Create 404 Not Found response."""
         return cls(status_code=404, body={"detail": detail})
 
     @classmethod
-    def internal_error(cls, detail: str = "Internal Server Error") -> "MockResponse":
+    def internal_error(cls, detail: str = "Internal Server Error") -> MockResponse:
         """Create 500 Internal Server Error response."""
         return cls(status_code=500, body={"detail": detail})
 

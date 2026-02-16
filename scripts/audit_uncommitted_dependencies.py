@@ -72,8 +72,6 @@ def extract_imports(file_path):
 
 def audit():
     """Audit for uncommitted dependencies."""
-    Path(__file__).parent.parent
-
     # Get untracked directories containing Python files
     untracked_files = get_untracked_py_files()
     untracked_dirs = {str(Path(f).parent) for f in untracked_files}

@@ -356,7 +356,7 @@ class EngineProtocol(ABC):
         # Default: no-op, engines can override
         return self._initialized
 
-    def set_cancellation_token(self, token: Optional['CancellationToken']) -> None:
+    def set_cancellation_token(self, token: Optional[CancellationToken]) -> None:
         """Set the current cancellation token for the engine operation."""
         self._current_cancellation_token = token
 

@@ -303,7 +303,8 @@ public class DeferredServiceInitializerTests : TestBase
         }
         catch (OperationCanceledException)
         {
-            // Expected when cancellation is requested
+            // Expected when cancellation is requested - test confirms cancellation worked
+            System.Diagnostics.Debug.WriteLine("Cancellation occurred as expected in test");
         }
 
         // Assert - second service should not have initialized

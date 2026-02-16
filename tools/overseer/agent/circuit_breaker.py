@@ -49,7 +49,7 @@ class CircuitConfig:
     recovery_timeout_seconds: float = 60.0
 
     @classmethod
-    def from_policy(cls, policy_config: dict) -> "CircuitConfig":
+    def from_policy(cls, policy_config: dict) -> CircuitConfig:
         """Create from policy configuration."""
         cb_config = policy_config.get("circuit_breaker", {})
         backoff = cb_config.get("backoff", {})

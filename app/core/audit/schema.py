@@ -134,7 +134,7 @@ class AuditEntry:
         return json.dumps(self.to_dict(), default=str)
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "AuditEntry":
+    def from_dict(cls, data: dict[str, Any]) -> AuditEntry:
         """Create AuditEntry from dictionary."""
         return cls(
             timestamp=data.get("timestamp", ""),
@@ -162,7 +162,7 @@ class AuditEntry:
         )
 
     @classmethod
-    def from_json(cls, json_str: str) -> "AuditEntry":
+    def from_json(cls, json_str: str) -> AuditEntry:
         """Deserialize from JSON string."""
         return cls.from_dict(json.loads(json_str))
 

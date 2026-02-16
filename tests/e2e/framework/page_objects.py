@@ -33,22 +33,22 @@ class ElementLocator:
         return f"{self.by}={self.value}"
 
     @classmethod
-    def by_automation_id(cls, automation_id: str, description: str = "") -> "ElementLocator":
+    def by_automation_id(cls, automation_id: str, description: str = "") -> ElementLocator:
         """Create locator by automation ID."""
         return cls(value=automation_id, by="automation_id", description=description)
 
     @classmethod
-    def by_name(cls, name: str, description: str = "") -> "ElementLocator":
+    def by_name(cls, name: str, description: str = "") -> ElementLocator:
         """Create locator by name."""
         return cls(value=name, by="name", description=description)
 
     @classmethod
-    def by_class(cls, class_name: str, description: str = "") -> "ElementLocator":
+    def by_class(cls, class_name: str, description: str = "") -> ElementLocator:
         """Create locator by class name."""
         return cls(value=class_name, by="class_name", description=description)
 
     @classmethod
-    def by_xpath(cls, xpath: str, description: str = "") -> "ElementLocator":
+    def by_xpath(cls, xpath: str, description: str = "") -> ElementLocator:
         """Create locator by XPath."""
         return cls(value=xpath, by="xpath", description=description)
 

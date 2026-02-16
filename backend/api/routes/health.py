@@ -20,7 +20,12 @@ from app.core.resilience.health_check import (
     get_health_checker,
 )
 from backend.config.path_config import get_models_path
-from backend.services.circuit_breaker import get_engine_breaker_stats
+from backend.services.circuit_breaker import (
+    get_engine_breaker_metrics,
+    get_engine_breaker_stats,
+    get_engine_breaker_summary,
+    reset_engine_breaker,
+)
 from backend.services.engine_service import get_engine_service
 from backend.settings import config
 
@@ -781,36 +786,76 @@ def engine_health() -> dict[str, Any]:
 @cache_response(ttl=5)
 def circuit_breaker_health() -> dict[str, Any]:
     """
-    Get circuit breaker status for all engines (TD-014).
+    GAP-I24: Get circuit breaker status for all engines with enhanced metrics.
 
     Returns per-engine breaker state (closed/open/half_open), failure counts,
-    and blocked request counts for monitoring and debugging.
+    blocked request counts, failure rates, and a summary for dashboard display.
     """
     try:
-        stats = get_engine_breaker_stats()
-        breakers = {}
-        for name, s in stats.items():
-            breakers[name] = {
-                "name": s.name,
-                "state": s.state.name,
-                "failure_count": s.failure_count,
-                "success_count": s.success_count,
-                "last_failure_time": s.last_failure_time,
-                "last_success_time": s.last_success_time,
-                "open_count": s.open_count,
-                "total_calls": s.total_calls,
-                "total_failures": s.total_failures,
-                "total_blocked": s.total_blocked,
-            }
+        metrics = get_engine_breaker_metrics()
+        summary = get_engine_breaker_summary()
+
+        # Format metrics for JSON response
+        circuit_breakers = []
+        for m in metrics:
+            circuit_breakers.append({
+                "name": m.name,
+                "state": m.state,
+                "failure_count": m.failure_count,
+                "success_count": m.success_count,
+                "total_calls": m.total_calls,
+                "blocked_requests": m.blocked_requests,
+                "failure_rate": round(m.failure_rate, 4),
+                "last_failure_time": m.last_failure_time,
+                "last_state_change": m.last_state_change,
+                "config": {
+                    "failure_threshold": m.config.failure_threshold,
+                    "success_threshold": m.config.success_threshold,
+                    "recovery_timeout": m.config.recovery_timeout,
+                    "half_open_max_calls": m.config.half_open_max_calls,
+                } if m.config else None,
+            })
+
         return {
             "timestamp": datetime.utcnow().isoformat(),
-            "breakers": breakers,
+            "circuit_breakers": circuit_breakers,
+            "summary": summary,
         }
     except Exception as e:
         logger.warning("Failed to get circuit breaker stats: %s", e)
         return {
             "timestamp": datetime.utcnow().isoformat(),
-            "breakers": {},
+            "circuit_breakers": [],
+            "summary": {"total": 0, "open": 0, "half_open": 0, "closed": 0},
+            "error": str(e),
+        }
+
+
+@router.post("/circuit-breakers/{engine_id}/reset")
+def reset_circuit_breaker(engine_id: str) -> dict[str, Any]:
+    """
+    GAP-I24: Manually reset a circuit breaker to CLOSED state.
+    
+    Use with caution - this allows requests to flow even if the engine
+    may still be unhealthy.
+    """
+    try:
+        success = reset_engine_breaker(engine_id)
+        if success:
+            logger.info("Circuit breaker '%s' manually reset", engine_id)
+            return {
+                "success": True,
+                "message": f"Circuit breaker '{engine_id}' reset to CLOSED",
+            }
+        else:
+            return {
+                "success": False,
+                "message": f"Circuit breaker '{engine_id}' not found",
+            }
+    except Exception as e:
+        logger.error("Failed to reset circuit breaker '%s': %s", engine_id, e)
+        return {
+            "success": False,
             "error": str(e),
         }
 

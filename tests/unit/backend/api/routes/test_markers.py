@@ -12,7 +12,6 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-
 # =============================================================================
 # Fixtures
 # =============================================================================
@@ -30,7 +29,7 @@ def reset_markers_state():
 @pytest.fixture
 def markers_client():
     """Create test client for markers routes."""
-    from backend.api.routes.markers import router, project_markers_router
+    from backend.api.routes.markers import project_markers_router, router
 
     app = FastAPI()
     app.include_router(router)

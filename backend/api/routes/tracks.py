@@ -494,10 +494,10 @@ class UndoRedoResponse(BaseModel):
 
 
 # Store EditHistory instances per project for undo/redo functionality
-_project_histories: dict[str, "EditHistoryDep"] = {}
+_project_histories: dict[str, EditHistoryDep] = {}
 
 
-def _get_project_history(project_id: str) -> "EditHistoryDep":
+def _get_project_history(project_id: str) -> EditHistoryDep:
     """Get or create EditHistory for a project."""
     from backend.services.edit_history import EditHistory
     if project_id not in _project_histories:

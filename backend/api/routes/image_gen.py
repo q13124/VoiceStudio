@@ -45,7 +45,7 @@ router = APIRouter(prefix="/api/image", tags=["image", "generation"])
 _image_storage: dict[str, str] = {}  # image_id -> file_path
 
 
-def _analyze_image_artifacts(img_array: "np.ndarray") -> float:
+def _analyze_image_artifacts(img_array: np.ndarray) -> float:
     """
     Analyze image artifacts (compression artifacts, noise, blockiness).
 
@@ -95,7 +95,7 @@ def _analyze_image_artifacts(img_array: "np.ndarray") -> float:
     return float(artifact_score)
 
 
-def _analyze_image_alignment(img_array: "np.ndarray") -> float:
+def _analyze_image_alignment(img_array: np.ndarray) -> float:
     """
     Analyze image alignment and symmetry.
 
@@ -147,7 +147,7 @@ def _analyze_image_alignment(img_array: "np.ndarray") -> float:
     return float(alignment_score)
 
 
-def _analyze_image_realism(img_array: "np.ndarray") -> float:
+def _analyze_image_realism(img_array: np.ndarray) -> float:
     """
     Analyze image realism (color balance, contrast, sharpness).
 

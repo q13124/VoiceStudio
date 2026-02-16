@@ -169,7 +169,7 @@ def _init_todo_database_simple(conn):
         raise
 
 
-def _load_todo_from_db(todo_id: str) -> Optional["Todo"]:
+def _load_todo_from_db(todo_id: str) -> Optional[Todo]:
     """Load a todo from database.
 
     Args:
@@ -217,7 +217,7 @@ def _load_todo_from_db(todo_id: str) -> Optional["Todo"]:
         )
 
 
-def _save_todo_to_db(todo: "Todo"):
+def _save_todo_to_db(todo: Todo):
     """Save a todo to database.
 
     Raises:
@@ -344,7 +344,7 @@ def _list_todos_from_db(
     priority: str | None = None,
     category: str | None = None,
     tag: str | None = None,
-) -> list["Todo"]:
+) -> list[Todo]:
     """List todos from database with optional filters."""
     db = _get_todo_database()
     if not db or not _use_database:
@@ -389,7 +389,7 @@ def _list_todos_from_db(
         return []
 
 
-def _row_to_todo(row: dict) -> "Todo":
+def _row_to_todo(row: dict) -> Todo:
     """Convert database row to Todo object."""
     tags = json.loads(row.get("tags", "[]")) if row.get("tags") else []
     metadata = json.loads(row.get("metadata", "{}")) if row.get("metadata") else {}

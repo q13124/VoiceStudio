@@ -163,7 +163,7 @@ class EngineMetricsCollector:
     engine operation metrics with histogram support.
     """
 
-    _instance: Optional["EngineMetricsCollector"] = None
+    _instance: Optional[EngineMetricsCollector] = None
     _lock = threading.Lock()
 
     # Histograms
@@ -181,7 +181,7 @@ class EngineMetricsCollector:
     _total_chars_synthesized: dict[str, Counter]
     _total_audio_generated_seconds: dict[str, Counter]
 
-    def __new__(cls) -> "EngineMetricsCollector":
+    def __new__(cls) -> EngineMetricsCollector:
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:

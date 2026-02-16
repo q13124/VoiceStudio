@@ -53,7 +53,7 @@ class PluginFileWatcher:
         self,
         plugins_dir: str = "plugins",
         debounce_ms: int = DEFAULT_DEBOUNCE_MS,
-        safe_reloader: Optional["SafePluginReloader"] = None,
+        safe_reloader: Optional[SafePluginReloader] = None,
         auto_reload: bool = True,
     ):
         self._plugins_dir = Path(plugins_dir).resolve()
@@ -70,7 +70,7 @@ class PluginFileWatcher:
         """Register a handler for plugin file changes."""
         self._handlers.append(handler)
 
-    def set_safe_reloader(self, reloader: "SafePluginReloader") -> None:
+    def set_safe_reloader(self, reloader: SafePluginReloader) -> None:
         """Set the SafePluginReloader for automatic reload on changes."""
         self._safe_reloader = reloader
 
@@ -79,7 +79,7 @@ class PluginFileWatcher:
         cls,
         plugins_dir: str = "plugins",
         debounce_ms: int = DEFAULT_DEBOUNCE_MS,
-    ) -> "PluginFileWatcher":
+    ) -> PluginFileWatcher:
         """
         Factory method to create a watcher with SafePluginReloader integration.
 

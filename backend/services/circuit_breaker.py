@@ -90,6 +90,25 @@ class CircuitBreakerStats:
     total_blocked: int = 0              # Calls blocked by open circuit
 
 
+@dataclass
+class CircuitBreakerMetrics:
+    """
+    GAP-I24: Enhanced metrics for circuit breaker dashboard.
+    
+    Includes computed fields like failure_rate and state change tracking.
+    """
+    name: str
+    state: str  # CLOSED, OPEN, HALF_OPEN
+    failure_count: int
+    success_count: int
+    total_calls: int
+    blocked_requests: int
+    last_failure_time: float | None
+    last_state_change: float | None
+    failure_rate: float  # failures / total_calls (0.0-1.0)
+    config: CircuitBreakerConfig | None = None  # Optional config exposure
+
+
 class CircuitBreaker:
     """
     Circuit breaker implementation with thread-safe state management.
@@ -124,6 +143,8 @@ class CircuitBreaker:
         self._failure_count = 0
         self._success_count = 0
         self._last_failure_time: float | None = None
+        self._last_success_time: float | None = None
+        self._last_state_change: float | None = None  # GAP-I24: Track state transitions
         self._half_open_calls = 0
 
         # Stats
@@ -160,6 +181,7 @@ class CircuitBreaker:
         if self._state != new_state:
             old_state = self._state
             self._state = new_state
+            self._last_state_change = time.monotonic()  # GAP-I24: Track state change time
 
             if new_state == CircuitState.OPEN:
                 self._open_count += 1
@@ -217,6 +239,7 @@ class CircuitBreaker:
     def record_success(self) -> None:
         """Record a successful call."""
         self._total_calls += 1
+        self._last_success_time = time.monotonic()  # GAP-I24: Track success time
 
         if self._state == CircuitState.HALF_OPEN:
             # Decrement in-flight counter (allow_request incremented it)
@@ -275,10 +298,34 @@ class CircuitBreaker:
             failure_count=self._failure_count,
             success_count=self._success_count,
             last_failure_time=self._last_failure_time,
+            last_success_time=self._last_success_time,
             open_count=self._open_count,
             total_calls=self._total_calls,
             total_failures=self._total_failures,
             total_blocked=self._total_blocked,
+        )
+
+    def get_metrics(self) -> CircuitBreakerMetrics:
+        """
+        GAP-I24: Get enhanced metrics for dashboard visualization.
+        
+        Returns:
+            CircuitBreakerMetrics with computed failure rate and state change tracking.
+        """
+        total = max(self._total_calls, 1)  # Avoid division by zero
+        failure_rate = self._total_failures / total
+        
+        return CircuitBreakerMetrics(
+            name=self.name,
+            state=self._state.name,
+            failure_count=self._failure_count,
+            success_count=self._success_count,
+            total_calls=self._total_calls,
+            blocked_requests=self._total_blocked,
+            last_failure_time=self._last_failure_time,
+            last_state_change=self._last_state_change,
+            failure_rate=failure_rate,
+            config=self.config,
         )
 
     @asynccontextmanager
@@ -347,6 +394,20 @@ class CircuitBreakerRegistry:
         """Get stats for all circuit breakers."""
         return {name: breaker.get_stats() for name, breaker in self._breakers.items()}
 
+    def get_all_metrics(self) -> list[CircuitBreakerMetrics]:
+        """GAP-I24: Get metrics for all circuit breakers (for dashboard)."""
+        return [breaker.get_metrics() for breaker in self._breakers.values()]
+
+    def get_summary(self) -> dict[str, int]:
+        """GAP-I24: Get summary counts by state."""
+        metrics = self.get_all_metrics()
+        return {
+            "total": len(metrics),
+            "open": sum(1 for m in metrics if m.state == "OPEN"),
+            "half_open": sum(1 for m in metrics if m.state == "HALF_OPEN"),
+            "closed": sum(1 for m in metrics if m.state == "CLOSED"),
+        }
+
     def reset(self, name: str) -> bool:
         """Reset a specific circuit breaker. Returns True if found."""
         if name in self._breakers:
@@ -375,6 +436,16 @@ def get_engine_breaker(engine_id: str) -> CircuitBreaker:
 def get_engine_breaker_stats() -> dict[str, CircuitBreakerStats]:
     """Get all engine circuit breaker stats."""
     return _engine_breakers.get_all_stats()
+
+
+def get_engine_breaker_metrics() -> list[CircuitBreakerMetrics]:
+    """GAP-I24: Get all engine circuit breaker metrics for dashboard."""
+    return _engine_breakers.get_all_metrics()
+
+
+def get_engine_breaker_summary() -> dict[str, int]:
+    """GAP-I24: Get summary counts of circuit breaker states."""
+    return _engine_breakers.get_summary()
 
 
 def reset_engine_breaker(engine_id: str) -> bool:

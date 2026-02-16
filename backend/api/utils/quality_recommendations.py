@@ -5,7 +5,6 @@ Uses text analysis to recommend optimal quality settings.
 
 from __future__ import annotations
 
-
 from api.utils.text_analysis import ContentType, TextAnalysisResult, TextComplexity
 
 

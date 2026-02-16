@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/image-search", tags=["image-search"])
 
 # In-memory storage for search history (replace with database in production)
-_search_history: list["ImageSearchResult"] = []
+_search_history: list[ImageSearchResult] = []
 
 
 class ImageSearchResult(BaseModel):

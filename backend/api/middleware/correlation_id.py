@@ -24,10 +24,15 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-# Context variable for correlation ID (thread-safe)
+# Context variables for correlation, trace, and span IDs (thread-safe)
+# GAP-I08: Enhanced with trace and span context for distributed tracing
 correlation_id_var: ContextVar[str | None] = ContextVar("correlation_id", default=None)
+trace_id_var: ContextVar[str | None] = ContextVar("trace_id", default=None)
+span_id_var: ContextVar[str | None] = ContextVar("span_id", default=None)
 
 CORRELATION_ID_HEADER = "X-Correlation-ID"
+TRACE_ID_HEADER = "X-Trace-ID"
+SPAN_ID_HEADER = "X-Span-ID"
 
 logger = logging.getLogger(__name__)
 
@@ -37,20 +42,51 @@ def get_correlation_id() -> str | None:
     return correlation_id_var.get()
 
 
+def get_trace_id() -> str | None:
+    """Get the current trace ID from context. GAP-I08."""
+    return trace_id_var.get()
+
+
+def get_span_id() -> str | None:
+    """Get the current span ID from context. GAP-I08."""
+    return span_id_var.get()
+
+
+def set_trace_context(trace_id: str | None, span_id: str | None) -> tuple:
+    """
+    Set trace and span IDs in context. Returns tokens for reset.
+    
+    GAP-I08: Called by tracing middleware to propagate IDs.
+    """
+    trace_token = trace_id_var.set(trace_id)
+    span_token = span_id_var.set(span_id)
+    return trace_token, span_token
+
+
+def reset_trace_context(trace_token, span_token) -> None:
+    """Reset trace and span context vars. GAP-I08."""
+    trace_id_var.reset(trace_token)
+    span_id_var.reset(span_token)
+
+
 class CorrelationIdFilter(logging.Filter):
     """
-    Logging filter that adds correlation_id to log records.
+    Logging filter that adds correlation_id, trace_id, and span_id to log records.
+
+    GAP-I08: Enhanced to include full tracing context.
 
     Add to logging configuration:
         filter = CorrelationIdFilter()
         handler.addFilter(filter)
 
     Then use in format:
-        "%(correlation_id)s - %(message)s"
+        "[%(correlation_id)s] [%(trace_id)s/%(span_id)s] %(message)s"
     """
 
     def filter(self, record: logging.LogRecord) -> bool:
         record.correlation_id = get_correlation_id() or "no-correlation-id"
+        record.trace_id = get_trace_id() or "N/A"
+        record.span_id = get_span_id() or "N/A"
         return True
 
 

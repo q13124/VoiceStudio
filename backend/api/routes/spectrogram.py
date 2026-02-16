@@ -1,7 +1,25 @@
 """
 Advanced Spectrogram Routes
 
-Endpoints for advanced spectrogram visualization and analysis.
+Endpoints for advanced spectrogram visualization and analysis with custom
+FFT configuration, overlay support, and advanced color mapping.
+
+Route Purposes (GAP-B06):
+- /api/spectrogram/config/{audio_id}: Spectrogram display configuration
+- /api/spectrogram/data/{audio_id}: Generate spectrogram with custom settings
+- /api/spectrogram/analyze/{audio_id}: Frequency-domain analysis
+- /api/spectrogram/overlay: Overlay multiple spectrograms for comparison
+
+Use Cases:
+- Custom FFT window sizes (256-8192)
+- Adjustable frequency and time ranges
+- Multiple color schemes (viridis, plasma, inferno, etc.)
+- Phase and magnitude display options
+- Log-scale frequency axis
+
+For quick single-file spectrograms, consider using /api/audio/spectrogram.
+
+See also: docs/api/ROUTE_MAPPING.md for complete route documentation.
 """
 
 from __future__ import annotations

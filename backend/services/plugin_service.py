@@ -92,7 +92,7 @@ class PluginManifest:
     settings_schema: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "PluginManifest":
+    def from_dict(cls, data: dict[str, Any]) -> PluginManifest:
         return cls(
             plugin_id=data["plugin_id"],
             name=data["name"],
@@ -148,7 +148,7 @@ class PluginInfo:
 class PluginBase(ABC):
     """Base class for all plugins."""
 
-    def __init__(self, plugin_service: "PluginService"):
+    def __init__(self, plugin_service: PluginService):
         self.plugin_service = plugin_service
         self._initialized = False
 
@@ -272,7 +272,7 @@ class PluginFileWatcher(FileSystemEventHandler if WATCHDOG_AVAILABLE else object
     plugin reload when plugin files are modified.
     """
 
-    def __init__(self, plugin_service: "PluginService"):
+    def __init__(self, plugin_service: PluginService):
         if WATCHDOG_AVAILABLE:
             super().__init__()
         self._plugin_service = plugin_service

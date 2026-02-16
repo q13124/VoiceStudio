@@ -560,7 +560,7 @@ class VoiceAIEngine(EngineProtocol):
                 audio_path, target_voice_id, output_path, **kwargs
             )
 
-    def _get_target_voice_embedding(self, target_voice_id: str, device: "torch.device") -> "torch.Tensor":
+    def _get_target_voice_embedding(self, target_voice_id: str, device: torch.device) -> torch.Tensor:
         """Get or generate target voice embedding."""
         try:
             # Try to load target voice profile
@@ -595,7 +595,7 @@ class VoiceAIEngine(EngineProtocol):
             logger.debug(f"Failed to get target voice embedding: {e}")
             return torch.randn(1, 256, device=device) * 0.1
 
-    def _extract_voice_embedding(self, audio: "np.ndarray", sample_rate: int) -> "np.ndarray":
+    def _extract_voice_embedding(self, audio: np.ndarray, sample_rate: int) -> np.ndarray:
         """Extract voice embedding from audio."""
         try:
             import librosa
@@ -624,9 +624,9 @@ class VoiceAIEngine(EngineProtocol):
             return np.zeros(256)
 
     def _convert_rvc_like(
-        self, state_dict: dict, audio_tensor: "torch.Tensor",
-        target_voice_embedding: "torch.Tensor", device: "torch.device", sample_rate: int
-    ) -> Optional["torch.Tensor"]:
+        self, state_dict: dict, audio_tensor: torch.Tensor,
+        target_voice_embedding: torch.Tensor, device: torch.device, sample_rate: int
+    ) -> Optional[torch.Tensor]:
         """Attempt conversion using RVC-like architecture."""
         try:
             # Check for RVC-like keys
@@ -669,9 +669,9 @@ class VoiceAIEngine(EngineProtocol):
             return None
 
     def _convert_sovits_like(
-        self, state_dict: dict, audio_tensor: "torch.Tensor",
-        target_voice_embedding: "torch.Tensor", device: "torch.device", sample_rate: int
-    ) -> Optional["torch.Tensor"]:
+        self, state_dict: dict, audio_tensor: torch.Tensor,
+        target_voice_embedding: torch.Tensor, device: torch.device, sample_rate: int
+    ) -> Optional[torch.Tensor]:
         """Attempt conversion using SoVITS-like architecture."""
         try:
             # Check for SoVITS-like keys
@@ -711,9 +711,9 @@ class VoiceAIEngine(EngineProtocol):
             return None
 
     def _convert_generic_encoder_decoder(
-        self, state_dict: dict, audio_tensor: "torch.Tensor",
-        target_voice_embedding: "torch.Tensor", device: "torch.device", sample_rate: int
-    ) -> Optional["torch.Tensor"]:
+        self, state_dict: dict, audio_tensor: torch.Tensor,
+        target_voice_embedding: torch.Tensor, device: torch.device, sample_rate: int
+    ) -> Optional[torch.Tensor]:
         """Attempt conversion using generic encoder-decoder approach."""
         try:
             # Generic approach: encode, modify with voice embedding, decode

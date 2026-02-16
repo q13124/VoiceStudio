@@ -9,9 +9,9 @@ Validates that all test fixtures are properly configured and accessible:
 
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
 
+import pytest
 
 # =============================================================================
 # FIXTURE LOADING TESTS
@@ -23,28 +23,28 @@ class TestFixtureModulesLoad:
 
     def test_test_data_module_loads(self):
         """Test that test_data module loads."""
-        from tests.fixtures.test_data import TEXT_SAMPLES, SSML_SAMPLES, LANGUAGE_SAMPLES
+        from tests.fixtures.test_data import LANGUAGE_SAMPLES, SSML_SAMPLES, TEXT_SAMPLES
         assert len(TEXT_SAMPLES) > 0
         assert len(SSML_SAMPLES) > 0
         assert len(LANGUAGE_SAMPLES) > 0
 
     def test_datasets_module_loads(self):
         """Test that datasets module loads."""
-        from tests.fixtures.datasets import SAMPLE_DATASETS, AUDIO_FILE_CONFIGS, BATCH_JOB_CONFIGS
+        from tests.fixtures.datasets import AUDIO_FILE_CONFIGS, BATCH_JOB_CONFIGS, SAMPLE_DATASETS
         assert len(SAMPLE_DATASETS) > 0
         assert len(AUDIO_FILE_CONFIGS) > 0
         assert len(BATCH_JOB_CONFIGS) > 0
 
     def test_presets_module_loads(self):
         """Test that presets module loads."""
-        from tests.fixtures.presets import SYNTHESIS_PRESETS, EFFECT_CHAIN_PRESETS, TRAINING_PRESETS
+        from tests.fixtures.presets import EFFECT_CHAIN_PRESETS, SYNTHESIS_PRESETS, TRAINING_PRESETS
         assert len(SYNTHESIS_PRESETS) > 0
         assert len(EFFECT_CHAIN_PRESETS) > 0
         assert len(TRAINING_PRESETS) > 0
 
     def test_workflows_module_loads(self):
         """Test that workflows module loads."""
-        from tests.fixtures.workflows import ALL_WORKFLOWS, SYNTHESIS_WORKFLOWS, CLONING_WORKFLOWS
+        from tests.fixtures.workflows import ALL_WORKFLOWS, CLONING_WORKFLOWS, SYNTHESIS_WORKFLOWS
         assert len(ALL_WORKFLOWS) > 0
         assert len(SYNTHESIS_WORKFLOWS) > 0
         assert len(CLONING_WORKFLOWS) > 0
@@ -56,7 +56,7 @@ class TestFixtureModulesLoad:
 
     def test_factories_module_loads(self):
         """Test that factories module loads."""
-        from tests.fixtures.factories import ProfileFactory, AudioFactory
+        from tests.fixtures.factories import AudioFactory, ProfileFactory
         assert ProfileFactory is not None
         assert AudioFactory is not None
 
@@ -151,7 +151,7 @@ class TestDatasetFixtures:
 
     def test_get_dataset_by_id_works(self):
         """Test that get_dataset_by_id returns datasets."""
-        from tests.fixtures.datasets import get_dataset_by_id, SAMPLE_DATASETS
+        from tests.fixtures.datasets import SAMPLE_DATASETS, get_dataset_by_id
         if SAMPLE_DATASETS:
             first_id = SAMPLE_DATASETS[0].metadata.id
             result = get_dataset_by_id(first_id)
@@ -222,7 +222,7 @@ class TestWorkflowFixtures:
 
     def test_get_workflow_by_id_works(self):
         """Test that get_workflow_by_id returns workflows."""
-        from tests.fixtures.workflows import get_workflow_by_id, ALL_WORKFLOWS
+        from tests.fixtures.workflows import ALL_WORKFLOWS, get_workflow_by_id
         if ALL_WORKFLOWS:
             first_id = ALL_WORKFLOWS[0].id  # Uses id, not workflow_id
             result = get_workflow_by_id(first_id)
@@ -332,9 +332,20 @@ class TestFixtureSummary:
 
     def test_fixture_summary_counts(self):
         """Test that fixture summary returns valid counts."""
-        from tests.fixtures.test_data import TEXT_SAMPLES, SSML_SAMPLES, LANGUAGE_SAMPLES, VOICE_PROFILES
-        from tests.fixtures.datasets import AUDIO_FILE_CONFIGS, SAMPLE_DATASETS, BATCH_JOB_CONFIGS
-        from tests.fixtures.presets import SYNTHESIS_PRESETS, EFFECT_CHAIN_PRESETS, TRAINING_PRESETS, EXPORT_PRESETS, PROJECT_TEMPLATES
+        from tests.fixtures.datasets import AUDIO_FILE_CONFIGS, BATCH_JOB_CONFIGS, SAMPLE_DATASETS
+        from tests.fixtures.presets import (
+            EFFECT_CHAIN_PRESETS,
+            EXPORT_PRESETS,
+            PROJECT_TEMPLATES,
+            SYNTHESIS_PRESETS,
+            TRAINING_PRESETS,
+        )
+        from tests.fixtures.test_data import (
+            LANGUAGE_SAMPLES,
+            SSML_SAMPLES,
+            TEXT_SAMPLES,
+            VOICE_PROFILES,
+        )
         from tests.fixtures.workflows import ALL_WORKFLOWS
 
         summary = {
