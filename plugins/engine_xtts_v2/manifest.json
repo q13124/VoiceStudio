@@ -1,0 +1,30 @@
+{
+  "name": "engine_xtts_v2",
+  "display_name": "XTTS v2 Engine Adapter",
+  "version": "1.0.0",
+  "author": "VoiceStudio Team",
+  "description": "Plugin adapter for the existing XTTS v2 engine implementation.",
+  "plugin_type": "backend_only",
+  "category": "voice_synthesis",
+  "min_app_version": "1.0.0",
+  "capabilities": {
+    "backend_routes": true,
+    "engines": ["tts"]
+  },
+  "entry_points": {
+    "backend": "register"
+  },
+  "dependencies": {
+    "python": ["numpy>=1.20.0"],
+    "plugins": [],
+    "system": []
+  },
+  "permissions": ["audio.process"],
+  "metadata": {
+    "license": "MIT",
+    "tags": ["engine", "xtts", "tts", "adapter"]
+  },
+  "security": {
+    "isolation_mode": "in_process"
+  }
+}

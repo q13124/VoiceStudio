@@ -1,0 +1,39 @@
+{
+  "$schema": "../../shared/schemas/plugin-manifest.schema.json",
+  "name": "{{PLUGIN_NAME}}",
+  "display_name": "{{DISPLAY_NAME}}",
+  "version": "{{VERSION}}",
+  "author": "{{AUTHOR}}",
+  "description": "{{DESCRIPTION}}",
+  "plugin_type": "frontend_only",
+  "category": "utilities",
+  "min_app_version": "1.0.0",
+  "capabilities": {
+    "ui_panels": ["{{PLUGIN_NAME}}_settings"]
+  },
+  "entry_points": {
+    "frontend": "{{CLASS_NAME}}Plugin.dll"
+  },
+  "dependencies": {
+    "python": [],
+    "plugins": [],
+    "system": []
+  },
+  "permissions": [],
+  "settings_schema": {
+    "type": "object",
+    "properties": {}
+  },
+  "metadata": {
+    "license": "MIT",
+    "tags": ["ui", "frontend", "example"]
+  },
+  "security": {
+    "isolation_mode": "in_process"
+  },
+  "lifecycle": {
+    "auto_start": true,
+    "lazy_load": false,
+    "restart_on_failure": true
+  }
+}

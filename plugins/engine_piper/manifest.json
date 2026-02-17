@@ -1,0 +1,30 @@
+{
+  "name": "engine_piper",
+  "display_name": "Piper Engine Adapter",
+  "version": "1.0.0",
+  "author": "VoiceStudio Team",
+  "description": "Plugin adapter for the existing Piper engine implementation.",
+  "plugin_type": "backend_only",
+  "category": "voice_synthesis",
+  "min_app_version": "1.0.0",
+  "capabilities": {
+    "backend_routes": true,
+    "engines": ["tts"]
+  },
+  "entry_points": {
+    "backend": "register"
+  },
+  "dependencies": {
+    "python": ["numpy>=1.20.0"],
+    "plugins": [],
+    "system": []
+  },
+  "permissions": ["audio.process"],
+  "metadata": {
+    "license": "MIT",
+    "tags": ["engine", "piper", "tts", "adapter"]
+  },
+  "security": {
+    "isolation_mode": "in_process"
+  }
+}

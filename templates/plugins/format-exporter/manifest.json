@@ -1,0 +1,31 @@
+{
+  "$schema": "../../shared/schemas/plugin-manifest.schema.json",
+  "name": "{{PLUGIN_NAME}}",
+  "display_name": "{{DISPLAY_NAME}}",
+  "version": "{{VERSION}}",
+  "author": "{{AUTHOR}}",
+  "description": "{{DESCRIPTION}}",
+  "plugin_type": "backend_only",
+  "category": "utilities",
+  "min_app_version": "1.0.0",
+  "capabilities": {
+    "backend_routes": true,
+    "export_formats": []
+  },
+  "entry_points": {
+    "backend": "register"
+  },
+  "dependencies": {
+    "python": ["fastapi>=0.100.0", "pydantic>=2.0.0"],
+    "plugins": [],
+    "system": ["ffmpeg"]
+  },
+  "permissions": ["filesystem.write.user_selected", "audio.process"],
+  "metadata": {
+    "license": "MIT",
+    "tags": ["audio", "exporter", "format"]
+  },
+  "security": {
+    "isolation_mode": "in_process"
+  }
+}

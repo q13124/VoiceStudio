@@ -1,0 +1,46 @@
+{
+  "$schema": "../../shared/schemas/plugin-manifest.schema.json",
+  "name": "{{PLUGIN_NAME}}",
+  "display_name": "{{DISPLAY_NAME}}",
+  "version": "{{VERSION}}",
+  "author": "{{AUTHOR}}",
+  "description": "{{DESCRIPTION}}",
+  "plugin_type": "full_stack",
+  "category": "utilities",
+  "min_app_version": "1.0.0",
+  "capabilities": {
+    "backend_routes": true,
+    "ui_panels": ["{{PLUGIN_NAME}}_main"]
+  },
+  "entry_points": {
+    "backend": "register",
+    "frontend": "{{CLASS_NAME}}Plugin.dll"
+  },
+  "dependencies": {
+    "python": [],
+    "plugins": [],
+    "system": []
+  },
+  "permissions": [],
+  "settings_schema": {
+    "type": "object",
+    "properties": {}
+  },
+  "metadata": {
+    "license": "MIT",
+    "tags": ["full-stack", "example"]
+  },
+  "security": {
+    "isolation_mode": "in_process"
+  },
+  "resource_limits": {
+    "max_memory_mb": 256,
+    "max_cpu_percent": 30,
+    "max_execution_time_ms": 15000
+  },
+  "lifecycle": {
+    "auto_start": true,
+    "lazy_load": false,
+    "restart_on_failure": true
+  }
+}

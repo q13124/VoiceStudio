@@ -1,0 +1,30 @@
+{
+  "name": "export_flac",
+  "display_name": "FLAC Exporter",
+  "version": "1.0.0",
+  "author": "VoiceStudio Team",
+  "description": "FLAC export plugin powered by AudioConversionService.",
+  "plugin_type": "backend_only",
+  "category": "utilities",
+  "min_app_version": "1.0.0",
+  "capabilities": {
+    "backend_routes": true,
+    "export_formats": ["flac"]
+  },
+  "entry_points": {
+    "backend": "register"
+  },
+  "dependencies": {
+    "python": [],
+    "plugins": [],
+    "system": ["ffmpeg"]
+  },
+  "permissions": ["filesystem.write.user_selected", "audio.process"],
+  "metadata": {
+    "license": "MIT",
+    "tags": ["audio", "export", "flac"]
+  },
+  "security": {
+    "isolation_mode": "in_process"
+  }
+}

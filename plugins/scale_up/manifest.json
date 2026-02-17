@@ -3,6 +3,8 @@
   "version": "3.0.0",
   "author": "VoiceStudio Team",
   "description": "Advanced voice cloning quality enhancement with multi-stage processing, AI upscaling, and professional voice restoration",
+  "plugin_type": "backend_only",
+  "category": "audio_effects",
   "capabilities": {
     "backend_routes": true,
     "ui_panels": false,

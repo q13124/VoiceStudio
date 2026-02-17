@@ -1,0 +1,30 @@
+{
+  "name": "engine_bark",
+  "display_name": "Bark Engine Adapter",
+  "version": "1.0.0",
+  "author": "VoiceStudio Team",
+  "description": "Plugin adapter for the existing Bark engine implementation.",
+  "plugin_type": "backend_only",
+  "category": "voice_synthesis",
+  "min_app_version": "1.0.0",
+  "capabilities": {
+    "backend_routes": true,
+    "engines": ["tts", "expressive_audio"]
+  },
+  "entry_points": {
+    "backend": "register"
+  },
+  "dependencies": {
+    "python": ["numpy>=1.20.0"],
+    "plugins": [],
+    "system": []
+  },
+  "permissions": ["audio.process"],
+  "metadata": {
+    "license": "MIT",
+    "tags": ["engine", "bark", "tts", "adapter"]
+  },
+  "security": {
+    "isolation_mode": "in_process"
+  }
+}

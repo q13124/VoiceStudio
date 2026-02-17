@@ -1,0 +1,55 @@
+{
+  "$schema": "../../shared/schemas/plugin-manifest.schema.json",
+  "name": "{{PLUGIN_NAME}}",
+  "display_name": "{{DISPLAY_NAME}}",
+  "version": "{{VERSION}}",
+  "author": "{{AUTHOR}}",
+  "description": "{{DESCRIPTION}}",
+  "plugin_type": "backend_only",
+  "category": "audio_effects",
+  "min_app_version": "1.0.0",
+  "capabilities": {
+    "backend_routes": true,
+    "effects": ["process"]
+  },
+  "entry_points": {
+    "backend": "register"
+  },
+  "dependencies": {
+    "python": ["numpy>=1.20.0"],
+    "plugins": [],
+    "system": []
+  },
+  "permissions": [
+    "filesystem.read.user_selected",
+    "filesystem.write.user_selected",
+    "audio.process"
+  ],
+  "settings_schema": {
+    "type": "object",
+    "properties": {
+      "gain_db": {
+        "type": "number",
+        "default": 0,
+        "description": "Gain in decibels"
+      }
+    }
+  },
+  "metadata": {
+    "license": "MIT",
+    "tags": ["audio", "effect", "processing"]
+  },
+  "security": {
+    "isolation_mode": "in_process"
+  },
+  "resource_limits": {
+    "max_memory_mb": 512,
+    "max_cpu_percent": 80,
+    "max_execution_time_ms": 30000
+  },
+  "lifecycle": {
+    "auto_start": true,
+    "lazy_load": false,
+    "restart_on_failure": true
+  }
+}

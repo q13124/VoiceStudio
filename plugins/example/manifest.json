@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "author": "VoiceStudio Team",
   "description": "Example plugin demonstrating the VoiceStudio plugin system",
+  "plugin_type": "backend_only",
+  "category": "developer_tools",
   "capabilities": {
     "backend_routes": true,
     "ui_panels": [],

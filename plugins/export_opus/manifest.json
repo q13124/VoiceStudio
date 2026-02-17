@@ -1,0 +1,30 @@
+{
+  "name": "export_opus",
+  "display_name": "Opus Exporter",
+  "version": "1.0.0",
+  "author": "VoiceStudio Team",
+  "description": "Opus export plugin powered by AudioConversionService.",
+  "plugin_type": "backend_only",
+  "category": "utilities",
+  "min_app_version": "1.0.0",
+  "capabilities": {
+    "backend_routes": true,
+    "export_formats": ["opus"]
+  },
+  "entry_points": {
+    "backend": "register"
+  },
+  "dependencies": {
+    "python": [],
+    "plugins": [],
+    "system": ["ffmpeg"]
+  },
+  "permissions": ["filesystem.write.user_selected", "audio.process"],
+  "metadata": {
+    "license": "MIT",
+    "tags": ["audio", "export", "opus"]
+  },
+  "security": {
+    "isolation_mode": "in_process"
+  }
+}

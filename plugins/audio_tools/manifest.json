@@ -3,6 +3,8 @@
   "version": "2.1.0",
   "author": "VoiceStudio Team",
   "description": "Advanced voice cloning quality enhancement tools with professional audio processing",
+  "plugin_type": "backend_only",
+  "category": "audio_effects",
   "capabilities": {
     "backend_routes": true,
     "ui_panels": false,

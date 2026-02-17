@@ -1,0 +1,30 @@
+{
+  "name": "compressor",
+  "display_name": "Compressor",
+  "version": "1.0.0",
+  "author": "VoiceStudio Team",
+  "description": "Dynamic range compressor plugin.",
+  "plugin_type": "backend_only",
+  "category": "audio_effects",
+  "min_app_version": "1.0.0",
+  "capabilities": {
+    "backend_routes": true,
+    "effects": ["compressor"]
+  },
+  "entry_points": {
+    "backend": "register"
+  },
+  "dependencies": {
+    "python": ["numpy>=1.20.0"],
+    "plugins": [],
+    "system": []
+  },
+  "permissions": ["audio.process"],
+  "metadata": {
+    "license": "MIT",
+    "tags": ["audio", "compressor", "effects"]
+  },
+  "security": {
+    "isolation_mode": "in_process"
+  }
+}

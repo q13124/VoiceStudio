@@ -1,0 +1,30 @@
+{
+  "name": "normalize_volume",
+  "display_name": "Normalize Volume",
+  "version": "1.0.0",
+  "author": "VoiceStudio Team",
+  "description": "Audio normalization plugin with peak and LUFS modes.",
+  "plugin_type": "backend_only",
+  "category": "audio_effects",
+  "min_app_version": "1.0.0",
+  "capabilities": {
+    "backend_routes": true,
+    "effects": ["normalize"]
+  },
+  "entry_points": {
+    "backend": "register"
+  },
+  "dependencies": {
+    "python": ["numpy>=1.20.0"],
+    "plugins": [],
+    "system": []
+  },
+  "permissions": ["audio.process"],
+  "metadata": {
+    "license": "MIT",
+    "tags": ["audio", "normalize", "effects"]
+  },
+  "security": {
+    "isolation_mode": "in_process"
+  }
+}

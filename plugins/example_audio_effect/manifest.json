@@ -1,0 +1,107 @@
+{
+  "$schema": "../../shared/schemas/plugin-manifest.schema.json",
+  "name": "example_audio_effect",
+  "display_name": "Example Audio Effect",
+  "version": "1.0.0",
+  "author": "VoiceStudio Team",
+  "description": "Example plugin demonstrating the unified plugin architecture with audio effects, permissions, and sandboxing.",
+  "long_description": "This plugin serves as a reference implementation for the VoiceStudio unified plugin system (Phase 1). It demonstrates:\n\n- Full-stack plugin architecture (backend + frontend integration)\n- Permission-based security model\n- Audio effect processing pipeline\n- Plugin settings and configuration\n- Resource limits and sandboxing\n- Health checks and lifecycle management",
+  "plugin_type": "backend_only",
+  "category": "audio_effects",
+  "min_app_version": "1.0.0",
+  "min_api_version": "1.0.0",
+  "capabilities": {
+    "backend_routes": true,
+    "effects": [
+      "normalize",
+      "amplify",
+      "fade",
+      "trim"
+    ],
+    "mcp_integration": false
+  },
+  "entry_points": {
+    "backend": "plugin.register"
+  },
+  "dependencies": {
+    "python": [
+      "numpy>=1.20.0",
+      "scipy>=1.7.0"
+    ],
+    "plugins": [],
+    "system": []
+  },
+  "permissions": [
+    "filesystem.read",
+    "filesystem.write",
+    "audio.output"
+  ],
+  "settings_schema": {
+    "type": "object",
+    "properties": {
+      "default_normalization_level": {
+        "type": "number",
+        "description": "Default normalization level in dB",
+        "default": -3.0,
+        "minimum": -20.0,
+        "maximum": 0.0
+      },
+      "preserve_original_files": {
+        "type": "boolean",
+        "description": "Keep original files when applying effects",
+        "default": true
+      },
+      "output_format": {
+        "type": "string",
+        "description": "Default output audio format",
+        "enum": ["wav", "mp3", "flac", "ogg"],
+        "default": "wav"
+      },
+      "sample_rate": {
+        "type": "integer",
+        "description": "Output sample rate in Hz",
+        "enum": [22050, 44100, 48000, 96000],
+        "default": 44100
+      }
+    },
+    "required": []
+  },
+  "metadata": {
+    "license": "MIT",
+    "tags": [
+      "audio",
+      "effects",
+      "example",
+      "reference"
+    ],
+    "icon": "icon.png"
+  },
+  "security": {
+    "isolation_mode": "sandboxed",
+    "trusted_publisher": true,
+    "sandbox_config": {
+      "allow_network": false,
+      "allow_filesystem": true,
+      "allowed_paths": [
+        "${app_data}/plugins/example_audio_effect",
+        "${temp}"
+      ],
+      "allowed_hosts": []
+    }
+  },
+  "resource_limits": {
+    "max_memory_mb": 256,
+    "max_cpu_percent": 25,
+    "max_io_mbps": 50,
+    "max_execution_time_ms": 60000,
+    "max_concurrent_tasks": 2,
+    "requires_gpu": false
+  },
+  "lifecycle": {
+    "auto_start": true,
+    "lazy_load": false,
+    "restart_on_failure": true,
+    "max_restart_attempts": 3,
+    "health_check_interval_ms": 30000
+  }
+}

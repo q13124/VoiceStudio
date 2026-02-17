@@ -1,0 +1,50 @@
+{
+  "$schema": "../../shared/schemas/plugin-manifest.schema.json",
+  "name": "{{PLUGIN_NAME}}",
+  "display_name": "{{DISPLAY_NAME}}",
+  "version": "{{VERSION}}",
+  "author": "{{AUTHOR}}",
+  "description": "{{DESCRIPTION}}",
+  "plugin_type": "backend_only",
+  "category": "utilities",
+  "min_app_version": "1.0.0",
+  "capabilities": {
+    "backend_routes": true
+  },
+  "entry_points": {
+    "backend": "register"
+  },
+  "dependencies": {
+    "python": [],
+    "plugins": [],
+    "system": []
+  },
+  "permissions": [],
+  "settings_schema": {
+    "type": "object",
+    "properties": {
+      "example_setting": {
+        "type": "string",
+        "default": "example_value",
+        "description": "An example configuration setting"
+      }
+    }
+  },
+  "metadata": {
+    "license": "MIT",
+    "tags": ["example"]
+  },
+  "security": {
+    "isolation_mode": "in_process"
+  },
+  "resource_limits": {
+    "max_memory_mb": 128,
+    "max_cpu_percent": 20,
+    "max_execution_time_ms": 10000
+  },
+  "lifecycle": {
+    "auto_start": true,
+    "lazy_load": false,
+    "restart_on_failure": true
+  }
+}
