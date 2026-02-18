@@ -193,9 +193,9 @@ def record_issue(
             enqueue_issue(issue)
             logger.debug("Issue enqueued (async): %s", issue.id)
             # Auto-task creation handled after store append
-        # ALLOWED: bare except - Optional async dependency
-        except ImportError:
-            pass
+        except ImportError as e:
+            # GAP-PY-001: Optional async dependency not available
+            logger.debug(f"Async aggregator not available: {e}")
     else:
         store = _get_store()
         store.append(issue)

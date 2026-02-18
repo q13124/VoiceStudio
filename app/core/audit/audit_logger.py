@@ -199,7 +199,9 @@ class AuditLogger:
             try:
                 with open(task_log_path, encoding="utf-8") as f:
                     entries = json.load(f)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
+                # GAP-PY-001: Corrupted task log, start fresh
+                logger.debug(f"Failed to parse task log {task_log_path}: {e}")
                 entries = []
 
         entries.append(entry.to_dict())
@@ -217,9 +219,9 @@ class AuditLogger:
             try:
                 with open(index_path, encoding="utf-8") as f:
                     index = json.load(f)
-            # Best effort - failure is acceptable here
-            except json.JSONDecodeError:
-                pass
+            except json.JSONDecodeError as e:
+                # GAP-PY-001: Corrupted index file, use fresh index
+                logger.debug(f"Failed to parse audit index {index_path}: {e}")
 
         index["last_updated"] = datetime.now(timezone.utc).isoformat()
 
@@ -439,7 +441,9 @@ class AuditLogger:
                         if entry.entry_id == entry_id:
                             entry.linked_artifacts.append(crash_path)
                         entries.append(entry)
-                    except json.JSONDecodeError:
+                    except json.JSONDecodeError as e:
+                        # GAP-PY-001: Skip malformed audit log line
+                        logger.debug(f"Failed to parse audit entry: {e}")
                         continue
 
             # Rewrite log with updated entry
@@ -534,7 +538,9 @@ class AuditLogger:
                 for line in reversed(lines[-limit:]):
                     try:
                         entries.append(AuditEntry.from_json(line.strip()))
-                    except json.JSONDecodeError:
+                    except json.JSONDecodeError as e:
+                        # GAP-PY-001: Skip malformed audit log line
+                        logger.debug(f"Failed to parse recent audit entry: {e}")
                         continue
 
         return entries

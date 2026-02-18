@@ -10,6 +10,8 @@ These tests validate the four most critical user workflows:
 These tests are designed to run in CI as nightly smoke tests.
 """
 
+from __future__ import annotations
+
 import time
 
 import pytest

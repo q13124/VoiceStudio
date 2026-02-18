@@ -4,6 +4,8 @@ Tests all optimizations: schema caching (LRU), early validation failures,
 batch validation, performance metrics, and validation middleware.
 """
 
+from __future__ import annotations
+
 import contextlib
 import sys
 from pathlib import Path

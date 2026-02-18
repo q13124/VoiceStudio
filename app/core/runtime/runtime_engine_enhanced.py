@@ -387,8 +387,10 @@ class EnhancedRuntimeEngine:
                 host = parsed.hostname or "127.0.0.1"
                 port = parsed.port or 80
                 return self.security_policy.check_network_access(host, port)
-            except Exception:
-                return True  # Default to allow if parsing fails
+            except Exception as e:
+                # GAP-PY-001: Default to allow if URL parsing fails
+                logger.debug(f"Failed to parse URL for security check, allowing: {e}")
+                return True
 
         return True
 

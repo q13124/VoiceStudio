@@ -15,6 +15,8 @@ SLO Targets:
 - UI thread frame time: < 16.67ms (60 FPS target)
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from dataclasses import dataclass

@@ -521,9 +521,19 @@ namespace VoiceStudio.App.Views.Panels
         var file = await savePicker.PickSaveFileAsync();
         if (file != null)
         {
-          // Export logs - placeholder for actual implementation
-          await Windows.Storage.FileIO.WriteTextAsync(file, "VoiceStudio Log Export\n" + DateTime.Now.ToString());
-          _toastService?.ShowToast(ToastType.Success, "Export Complete", "Logs exported successfully");
+          // GAP-CS-002: Export real logs from ViewModel
+          var logContent = new System.Text.StringBuilder();
+          logContent.AppendLine($"VoiceStudio Log Export - {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+          logContent.AppendLine($"Total entries: {ViewModel.Logs.Count}");
+          logContent.AppendLine(new string('-', 80));
+          
+          foreach (var log in ViewModel.Logs)
+          {
+            logContent.AppendLine(log.FormattedLine);
+          }
+          
+          await Windows.Storage.FileIO.WriteTextAsync(file, logContent.ToString());
+          _toastService?.ShowToast(ToastType.Success, "Export Complete", $"Exported {ViewModel.Logs.Count} log entries");
         }
       }
       catch (Exception ex)
@@ -561,9 +571,35 @@ namespace VoiceStudio.App.Views.Panels
         var file = await savePicker.PickSaveFileAsync();
         if (file != null)
         {
-          // Export traces - placeholder for actual implementation
-          await Windows.Storage.FileIO.WriteTextAsync(file, "{ \"traces\": [] }");
-          _toastService?.ShowToast(ToastType.Success, "Export Complete", "Traces exported successfully");
+          // GAP-CS-002: Export real traces from ViewModel
+          var traceData = new
+          {
+            exported_at = DateTime.UtcNow,
+            total_traces = ViewModel.TotalTracesCount,
+            success_rate = ViewModel.TraceSuccessRate,
+            avg_duration = ViewModel.TraceAvgDuration,
+            traces = ViewModel.Traces.Select(t => new
+            {
+              trace_id = t.TraceId,
+              start_time = t.StartTime,
+              duration_ms = t.DurationMs,
+              status = t.Status,
+              operation = t.OperationName,
+              spans = t.Spans?.Select(s => new
+              {
+                span_id = s.SpanId,
+                name = s.Name,
+                duration_ms = s.DurationMs,
+                status = s.Status
+              })
+            }).ToList()
+          };
+          
+          var json = System.Text.Json.JsonSerializer.Serialize(
+            traceData, 
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+          await Windows.Storage.FileIO.WriteTextAsync(file, json);
+          _toastService?.ShowToast(ToastType.Success, "Export Complete", $"Exported {ViewModel.TotalTracesCount} traces");
         }
       }
       catch (Exception ex)

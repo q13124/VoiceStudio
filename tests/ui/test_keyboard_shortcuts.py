@@ -7,6 +7,8 @@ Note: WinAppDriver has limited support for keyboard shortcuts.
 These tests focus on verifiable shortcuts that work with the custom driver.
 """
 
+from __future__ import annotations
+
 import time
 
 import pytest

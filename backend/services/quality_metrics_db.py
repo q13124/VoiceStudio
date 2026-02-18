@@ -301,16 +301,16 @@ class QualityMetricsDatabase:
         if metrics_json:
             try:
                 metrics = json.loads(metrics_json)
-            # Best effort - failure is acceptable here
-            except (json.JSONDecodeError, TypeError):
-                pass
+            except (json.JSONDecodeError, TypeError) as e:
+                # GAP-PY-001: Best effort - corrupted metrics JSON
+                logger.debug(f"Failed to parse metrics JSON for record {id_}: {e}")
         metadata = None
         if metadata_json and metadata_json != "null":
             try:
                 metadata = json.loads(metadata_json)
-            # Best effort - failure is acceptable here
-            except (json.JSONDecodeError, TypeError):
-                pass
+            except (json.JSONDecodeError, TypeError) as e:
+                # GAP-PY-001: Best effort - corrupted metadata JSON
+                logger.debug(f"Failed to parse metadata JSON for record {id_}: {e}")
         return {
             "id": id_,
             "profile_id": profile_id,

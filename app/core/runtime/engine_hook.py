@@ -5,6 +5,7 @@ Connects Governor + learners orchestration to engine router and runtime engines
 Note: Migrated to use EnhancedRuntimeEngine (GAP-ENG-003)
 """
 
+from __future__ import annotations
 
 from app.core.engines.protocols import EngineProtocol
 from app.core.engines.router import router

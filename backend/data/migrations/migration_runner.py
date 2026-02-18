@@ -48,19 +48,24 @@ class Migration(ABC):
     Base class for database migrations.
 
     Each migration should implement upgrade() and downgrade().
+    
+    GAP-ARCH-004: This is an abstract base class. The `pass` statements in
+    abstract methods are intentional Python pattern - concrete migration
+    classes MUST override these methods. The @abstractmethod decorator
+    enforces this at instantiation time.
     """
 
     @property
     @abstractmethod
     def version(self) -> int:
         """Migration version number (must be unique and sequential)."""
-        pass
+        ...  # Intentional: abstract method to be overridden by subclasses
 
     @property
     @abstractmethod
     def name(self) -> str:
         """Human-readable migration name."""
-        pass
+        ...  # Intentional: abstract method to be overridden by subclasses
 
     @property
     def description(self) -> str:
@@ -75,7 +80,7 @@ class Migration(ABC):
         Args:
             connection: Database connection
         """
-        pass
+        ...  # Intentional: abstract method to be overridden by subclasses
 
     @abstractmethod
     async def downgrade(self, connection: Any) -> None:
@@ -85,7 +90,7 @@ class Migration(ABC):
         Args:
             connection: Database connection
         """
-        pass
+        ...  # Intentional: abstract method to be overridden by subclasses
 
     def get_checksum(self) -> str:
         """Generate checksum for migration validation."""

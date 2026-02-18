@@ -4,6 +4,8 @@ UI Tests for Navigation and Routing.
 Tests panel switching, navigation rail, and routing functionality.
 """
 
+from __future__ import annotations
+
 import time
 
 import pytest

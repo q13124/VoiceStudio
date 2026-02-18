@@ -5,6 +5,8 @@ Provides functions to compare generated audio against golden references
 using quality metrics with configurable tolerances.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import wave

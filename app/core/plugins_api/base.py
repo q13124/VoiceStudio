@@ -1,11 +1,17 @@
 """
-Base Plugin Class for VoiceStudio
+Base Plugin Class for VoiceStudio (DEPRECATED)
 
-All plugins must inherit from BasePlugin and implement the register method.
+.. deprecated:: 1.3.0
+   Use :class:`app.core.plugins_api.plugin.Plugin` instead.
+   This class will be removed in version 1.5.0.
+
+All plugins must inherit from Plugin (not BasePlugin) and implement
+the register method. See ADR-038 for migration guidance.
 """
 
 import json
 import logging
+import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
@@ -71,10 +77,21 @@ class BasePlugin(ABC):
     """
     Base class for all VoiceStudio plugins.
 
+    .. deprecated:: 1.3.0
+       Use :class:`Plugin` from `app.core.plugins_api.plugin` instead.
+       This class will be removed in version 1.5.0. See ADR-038.
+
     Plugins must inherit from this class and implement the register method.
     """
 
     def __init__(self, metadata: PluginMetadata):
+        warnings.warn(
+            f"{self.__class__.__name__} inherits from deprecated BasePlugin. "
+            "Migrate to 'from app.core.plugins_api import Plugin'. "
+            "See ADR-038 for guidance. Will be removed in v1.5.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         """
         Initialize plugin with metadata.
 

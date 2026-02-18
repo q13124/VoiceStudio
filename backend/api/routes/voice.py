@@ -68,6 +68,7 @@ from backend.services.model_preflight import (
     ensure_sovits,
     ensure_xtts,
 )
+from backend.services.unified_config import get_config
 
 from ...services.AudioArtifactRegistry import get_audio_registry
 from ...services.ContentAddressedAudioCache import get_audio_cache
@@ -632,7 +633,8 @@ def _select_engine_with_fallback(
     """
     Select an engine with fallback chain if requested engine is unavailable.
 
-    Fallback chain: XTTS -> Piper -> eSpeak
+    GAP-PY-005: Fallback chain is now loaded from config/engines.config.yaml
+    instead of being hardcoded.
 
     Args:
         requested_engine: The engine requested by the user
@@ -647,8 +649,17 @@ def _select_engine_with_fallback(
     engine_id = _normalize_engine_id(requested_engine)
 
     if valid_engines and engine_id not in valid_engines:
-        # Try fallback chain: XTTS -> Piper -> eSpeak
-        fallback_chain = ["xtts_v2", "xtts", "piper", "espeak_ng"]
+        # GAP-PY-005: Load fallback chain from config
+        try:
+            fallback_chain = get_config().get_fallback_chain("tts")
+        except Exception as e:
+            logger.warning(f"Failed to load fallback chain from config: {e}")
+            fallback_chain = []
+        
+        # Default fallback chain if config is empty or unavailable
+        if not fallback_chain:
+            fallback_chain = ["xtts_v2", "xtts", "piper", "espeak_ng"]
+        
         original_engine_id = engine_id
 
         for fallback_engine in fallback_chain:
@@ -1011,8 +1022,17 @@ async def synthesize(
 
             # Validate engine and try fallback chain if invalid
             if valid_engines and engine_id not in valid_engines:
-                # Try fallback chain: XTTS -> Piper -> eSpeak
-                fallback_chain = ["xtts_v2", "xtts", "piper", "espeak_ng"]
+                # GAP-PY-005: Load fallback chain from config
+                try:
+                    fallback_chain = get_config().get_fallback_chain("tts")
+                except Exception as cfg_err:
+                    logger.warning(f"Failed to load fallback chain from config: {cfg_err}")
+                    fallback_chain = []
+                
+                # Default fallback chain if config is empty or unavailable
+                if not fallback_chain:
+                    fallback_chain = ["xtts_v2", "xtts", "piper", "espeak_ng"]
+                
                 original_engine_id = engine_id
 
                 for fallback_engine in fallback_chain:

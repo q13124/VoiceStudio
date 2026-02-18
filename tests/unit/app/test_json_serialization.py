@@ -4,6 +4,8 @@ Tests for JSON serialization conventions used between Python backend and C# clie
 These tests verify that the Python backend produces JSON in the expected format
 that the C# client can consume correctly.
 """
+from __future__ import annotations
+
 import json
 from datetime import datetime, timezone
 

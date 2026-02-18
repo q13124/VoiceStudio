@@ -188,11 +188,18 @@ except ImportError:
     HAS_CYTHON_AUDIO = False
     logger.debug("Cython audio processing not available. Using pure Python implementations.")
 
-# Default paths
-DEFAULT_TEMP_DIR = os.path.join(
-    os.environ.get("PROGRAMDATA", "C:\\ProgramData"), "VoiceStudio", "temp"
-)
-DEFAULT_OUTPUT_DIR = os.path.join("E:", "VoiceStudio_data", "output")
+# Default paths - GAP-PY-002: Use centralized path_config when available
+try:
+    from backend.config.path_config import get_path
+    DEFAULT_TEMP_DIR = str(get_path("temp"))
+    DEFAULT_OUTPUT_DIR = str(get_path("output"))
+except ImportError:
+    DEFAULT_TEMP_DIR = os.path.join(
+        os.environ.get("PROGRAMDATA", "C:\\ProgramData"), "VoiceStudio", "temp"
+    )
+    DEFAULT_OUTPUT_DIR = os.path.join(
+        os.environ.get("APPDATA", os.path.expanduser("~")), "VoiceStudio", "output"
+    )
 
 
 def normalize_lufs(

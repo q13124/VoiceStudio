@@ -15,6 +15,8 @@ Requires:
 - VoiceStudio application built
 """
 
+from __future__ import annotations
+
 import os
 
 # Import tracing infrastructure

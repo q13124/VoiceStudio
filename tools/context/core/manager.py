@@ -216,7 +216,7 @@ def _load_config(path: Path) -> dict:
         for f in sorted(roles_dir.glob("*.json")):
             try:
                 config["roles"][f.stem] = json.loads(f.read_text(encoding="utf-8"))
-            # ALLOWED: bare except - Best effort role config loading
-            except Exception:
-                pass
+            except Exception as e:
+                # GAP-PY-001: Best effort role config loading
+                logger.debug(f"Failed to load role config {f}: {e}")
     return config

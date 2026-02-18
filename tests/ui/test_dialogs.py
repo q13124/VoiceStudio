@@ -4,6 +4,8 @@ UI Tests for Dialogs and Modal Windows.
 Tests dialog display, interaction, and dismissal.
 """
 
+from __future__ import annotations
+
 import time
 
 import pytest

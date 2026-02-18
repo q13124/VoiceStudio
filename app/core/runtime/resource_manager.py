@@ -445,7 +445,9 @@ class ResourceManager:
                         else:
                             # Put job back if insufficient resources
                             queue.put((priority.value, time.time(), job))
-                    except Exception:
+                    except Exception as e:
+                        # GAP-PY-001: Best effort job dequeue, continue to next
+                        logger.debug(f"Failed to process queued job: {e}")
                         continue
 
             return None

@@ -33,6 +33,8 @@ Categories covered:
 - Assistant/Help (4 panels)
 """
 
+from __future__ import annotations
+
 import json
 import os
 

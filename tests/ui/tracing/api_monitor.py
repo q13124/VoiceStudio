@@ -5,6 +5,8 @@ Intercepts all backend API calls during testing, logging request/response
 details for debugging and validation purposes.
 """
 
+from __future__ import annotations
+
 import json
 import time
 from datetime import datetime

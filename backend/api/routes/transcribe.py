@@ -176,6 +176,91 @@ async def get_supported_languages():
     return languages
 
 
+class TranscriptionEngine(BaseModel):
+    """Information about an available transcription engine."""
+    
+    id: str
+    name: str
+    description: str = ""
+    supports_word_timestamps: bool = True
+    supports_diarization: bool = False
+    supports_vad: bool = False
+
+
+# GAP-CS-003: Add engines endpoint for dynamic discovery
+@router.get("/engines", response_model=list[TranscriptionEngine])
+@cache_response(ttl=300)  # Cache for 5 minutes
+async def list_transcription_engines():
+    """
+    List available transcription (STT) engines.
+    
+    GAP-CS-003: Enables dynamic engine discovery for the frontend.
+    """
+    engines: list[TranscriptionEngine] = []
+    
+    # Get engines from EngineService
+    if STT_ENGINE_AVAILABLE:
+        try:
+            engine_service = get_engine_service()
+            all_engines = engine_service.list_engines()
+            
+            # Filter to STT-capable engines
+            stt_types = {"stt", "transcription", "speech_recognition", "whisper"}
+            for eng in all_engines:
+                eng_type = eng.get("type", "").lower()
+                eng_id = eng.get("id", eng.get("name", ""))
+                eng_name = eng.get("name", eng_id)
+                
+                # Include if type matches or name suggests STT
+                is_stt = (
+                    eng_type in stt_types or
+                    any(s in eng_id.lower() for s in ["whisper", "vosk", "stt", "transcri"])
+                )
+                
+                if is_stt:
+                    engines.append(TranscriptionEngine(
+                        id=eng_id,
+                        name=eng_name,
+                        description=eng.get("description", ""),
+                        supports_word_timestamps=eng.get("supports_word_timestamps", True),
+                        supports_diarization=eng.get("supports_diarization", False),
+                        supports_vad=eng.get("supports_vad", False),
+                    ))
+        except Exception as e:
+            logger.warning(f"Failed to get engines from EngineService: {e}")
+    
+    # Fallback: return known engines if none discovered
+    if not engines:
+        engines = [
+            TranscriptionEngine(
+                id="whisper_cpp",
+                name="Whisper.cpp",
+                description="OpenAI Whisper ported to C++ for CPU inference",
+                supports_word_timestamps=True,
+                supports_diarization=False,
+                supports_vad=False,
+            ),
+            TranscriptionEngine(
+                id="whisper",
+                name="Whisper",
+                description="OpenAI Whisper for speech recognition",
+                supports_word_timestamps=True,
+                supports_diarization=False,
+                supports_vad=False,
+            ),
+            TranscriptionEngine(
+                id="vosk",
+                name="Vosk",
+                description="Offline speech recognition toolkit",
+                supports_word_timestamps=True,
+                supports_diarization=False,
+                supports_vad=True,
+            ),
+        ]
+    
+    return engines
+
+
 @router.post("/", response_model=TranscriptionResponse)
 async def transcribe_audio(
     request: TranscriptionRequest,

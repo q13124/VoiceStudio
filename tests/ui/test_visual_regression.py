@@ -8,6 +8,8 @@ Tests visual consistency of UI panels:
 - Support for different themes/modes
 """
 
+from __future__ import annotations
+
 import contextlib
 import hashlib
 import json

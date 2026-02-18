@@ -3,6 +3,8 @@ Test Reporting Utilities
 Provides test reporting and coverage utilities for VoiceStudio Quantum+ test suite.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from datetime import datetime

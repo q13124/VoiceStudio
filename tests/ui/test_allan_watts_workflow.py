@@ -22,6 +22,8 @@ Requirements:
 - Test audio file: C:\\Users\\Tyler\\Downloads\\Allan Watts.m4a
 """
 
+from __future__ import annotations
+
 import os
 
 # Import test infrastructure

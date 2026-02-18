@@ -6,6 +6,8 @@ Worker 3: Testing/Quality/Documentation Specialist
 Date: 2025-01-28
 """
 
+from __future__ import annotations
+
 import importlib.util
 import inspect
 import logging

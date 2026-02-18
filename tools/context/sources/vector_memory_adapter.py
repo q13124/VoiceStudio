@@ -45,7 +45,9 @@ def _get_embedding_function():
     try:
         from chromadb.utils import embedding_functions
         return embedding_functions.DefaultEmbeddingFunction()
-    except Exception:
+    except Exception as e:
+        # GAP-PY-001: Fallback to dummy embedding
+        logger.debug(f"Failed to load embedding function, using dummy: {e}")
         return _DummyEmbeddingFunction()
 
 
@@ -91,7 +93,9 @@ class VectorMemoryAdapter(BaseSourceAdapter):
             root = Path(__file__).resolve().parents[4]
             client = self._get_client(root)
             return client is not None
-        except Exception:
+        except Exception as e:
+            # GAP-PY-001: Vector memory health check failed
+            logger.debug(f"Vector memory health check failed: {e}")
             return False
 
     def _get_client(self, root: Path) -> Any | None:
@@ -241,7 +245,9 @@ class VectorMemoryAdapter(BaseSourceAdapter):
             coll.delete(ids=[memory_id])
             return True
 
-        except Exception:
+        except Exception as e:
+            # GAP-PY-001: Memory deletion failed
+            logger.debug(f"Failed to delete memory {memory_id}: {e}")
             return False
 
     def get_stats(self) -> dict[str, Any]:

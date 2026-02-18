@@ -15,6 +15,8 @@ Requirements:
 - VoiceStudio application built
 """
 
+from __future__ import annotations
+
 import os
 import statistics
 import sys

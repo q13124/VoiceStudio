@@ -3,6 +3,8 @@ Test Utilities and Helpers
 Provides common utilities and helpers for VoiceStudio Quantum+ test suite.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import shutil

@@ -400,7 +400,9 @@ class ContextDistributor:
             with open(self._config_path, encoding="utf-8") as f:
                 data = json.load(f)
             return data.get("plan", {})
-        except Exception:
+        except Exception as e:
+            # GAP-PY-001: Config file may not exist yet
+            logger.debug(f"Failed to load plan context: {e}")
             return {}
 
     def get_phase_ownership(self, phase: int) -> dict[str, Any]:
@@ -410,7 +412,9 @@ class ContextDistributor:
                 data = json.load(f)
             ownership = data.get("phase_ownership", {})
             return ownership.get(str(phase), {})
-        except Exception:
+        except Exception as e:
+            # GAP-PY-001: Config file may not exist yet
+            logger.debug(f"Failed to load phase ownership: {e}")
             return {}
 
     def get_role_for_current_phase(self) -> str | None:

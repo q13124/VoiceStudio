@@ -13,6 +13,8 @@ Requires:
 - Engine binaries/models available
 """
 
+from __future__ import annotations
+
 import os
 
 # Import tracing infrastructure

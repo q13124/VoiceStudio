@@ -5,6 +5,8 @@ Tests that validate UI operations trigger correct backend API calls
 and that backend state is reflected in the UI.
 """
 
+from __future__ import annotations
+
 import time
 
 import pytest

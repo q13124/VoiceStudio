@@ -5,6 +5,8 @@ Test all 133+ backend API endpoints for completeness, error handling, and placeh
 Worker 3 - Task: TASK-W3-F2-001
 """
 
+from __future__ import annotations
+
 import logging
 import re
 import sys

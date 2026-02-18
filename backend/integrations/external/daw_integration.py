@@ -458,8 +458,9 @@ def _parse_aup3_tracks(project_path: Path) -> tuple[list[dict[str, Any]], int]:
                 if row and row[0]:
                     project_xml = row[0]
                     break
-            except sqlite3.OperationalError:
-                pass
+            except sqlite3.OperationalError as e:
+                # GAP-PY-001: Table structure varies by Audacity version
+                logger.debug(f"Failed to query {table} with dict||doc: {e}")
 
         # Fallback: try reading raw XML column
         if not project_xml:
@@ -470,8 +471,9 @@ def _parse_aup3_tracks(project_path: Path) -> tuple[list[dict[str, Any]], int]:
                     if row and row[0]:
                         project_xml = row[0] if isinstance(row[0], str) else row[0].decode("utf-8", errors="ignore")
                         break
-                except (sqlite3.OperationalError, UnicodeDecodeError):
-                    pass
+                except (sqlite3.OperationalError, UnicodeDecodeError) as e:
+                    # GAP-PY-001: Table structure varies by Audacity version
+                    logger.debug(f"Failed to query {table} for doc: {e}")
 
         conn.close()
 

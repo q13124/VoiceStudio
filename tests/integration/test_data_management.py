@@ -4,6 +4,8 @@ Test Data Management
 Provides test data fixtures and helpers for integration tests.
 """
 
+from __future__ import annotations
+
 import logging
 import sys
 from pathlib import Path

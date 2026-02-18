@@ -124,47 +124,38 @@ package-dir = { "" = "." }
 # Tool Configurations
 # ============================================================================
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-asyncio_mode = "auto"
-addopts = [
-    "-v",
-    "--tb=short",
-    "--strict-markers",
-]
-markers = [
-    "slow: marks tests as slow",
-    "integration: marks tests as integration tests",
-    "e2e: marks tests as end-to-end tests",
-    "gpu: marks tests that require GPU",
-    "engine: marks tests that require a voice engine",
-    "performance: marks tests as performance tests",
-]
-filterwarnings = [
-    "ignore::DeprecationWarning",
-    "ignore::PendingDeprecationWarning",
-]
+# GAP-BQ-003: Pytest configuration consolidated to pytest.ini (canonical source)
+# See pytest.ini for test paths, markers, and all pytest options.
 
 [tool.coverage.run]
 source = ["backend", "app"]
 branch = true
 omit = [
     "*/tests/*",
+    "*/test_*",
     "*/__pycache__/*",
+    "*/venv/*",
+    "*/.venv/*",
+    "*/site-packages/*",
 ]
 
 [tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+# Phase 4 target: 95% coverage
+fail_under = 95
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
+    "raise AssertionError",
     "raise NotImplementedError",
     "if TYPE_CHECKING:",
     "if __name__ == .__main__.:",
+    "@abstractmethod",
+    "assert False",
+    "raise RuntimeError",
 ]
-show_missing = true
 
 [tool.black]
 line-length = 100
@@ -200,6 +191,8 @@ exclude = [
     "runtime/external",
     "installer/runtime",
     "tools/chatgpt-localfiles",
+    "templates",  # Plugin templates use Jinja2 syntax (not valid Python until rendered)
+    "tools/plugin-sdk",  # SDK has its own ruff config and build artifacts
 ]
 
 [tool.ruff.lint]
@@ -217,6 +210,7 @@ select = [
 ]
 ignore = [
     "E501",   # line too long (handled by black)
+    "E701",   # multiple-statements-on-one-line (compact guard clauses are acceptable)
     "B008",   # do not perform function calls in argument defaults
     # Pre-existing style issues - baseline cleanup deferred
     "E402",   # module-import-not-at-top-of-file (often intentional)
@@ -232,6 +226,7 @@ ignore = [
     "TID251", # banned-api (deferred architecture enforcement)
     "TID252", # relative-imports (style preference)
     "SIM102", # collapsible-if (style preference)
+    "SIM103", # return-bool-condition-directly (style preference - explicit if/return is clearer)
     "SIM117", # multiple-with-statements (style preference)
     "SIM105", # suppressible-exception (style preference)
     "SIM108", # if-else-block-instead-of-if-exp (style preference)
@@ -249,6 +244,7 @@ ignore = [
     "RUF005", # collection-literal-concatenation (style)
     "RUF012", # mutable-class-default (common pattern)
     "RUF001", # ambiguous-unicode-character-string (false positives)
+    "RUF002", # ambiguous-unicode-character-docstring (EN DASH vs HYPHEN)
     "RUF003", # ambiguous-unicode-character-comment (false positives)
     "RUF006", # asyncio-dangling-task (false positives in tests)
     "RUF059", # unused-unpacked-variable (often intentional)

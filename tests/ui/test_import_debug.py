@@ -1,4 +1,7 @@
 """Debug script for Import functionality testing with WinAppDriver."""
+
+from __future__ import annotations
+
 import subprocess
 import sys
 import time

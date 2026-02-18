@@ -491,9 +491,9 @@ class AudioQualityBenchmark:
             if tmp_path.exists():
                 try:
                     tmp_path.unlink()
-                # ALLOWED: bare except - Best effort cleanup, failure is acceptable
-                except Exception:
-                    pass
+                except Exception as cleanup_e:
+                    # GAP-PY-001: Best effort temp file cleanup
+                    logger.debug(f"Failed to clean temp file {tmp_path}: {cleanup_e}")
             raise
         logger.info(f"Results saved to: {output_path}")
 

@@ -11,6 +11,8 @@ This script creates standardized WAV audio files used for testing:
 Run this script to regenerate fixtures if they don't exist or are corrupted.
 """
 
+from __future__ import annotations
+
 import math
 import struct
 import wave

@@ -9,6 +9,8 @@ Tests system behavior under load:
 - Recovery after load
 """
 
+from __future__ import annotations
+
 import concurrent.futures
 import json
 import os

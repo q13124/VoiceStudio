@@ -20,8 +20,7 @@ def main():
 
     try:
         # Import backend HF utilities
-        from app.core.utils.huggingface_api import (check_api_compatibility,
-                                                    get_api_headers)
+        from app.core.utils.huggingface_api import check_api_compatibility, get_api_headers
 
         print("Testing API compatibility...")
         info = check_api_compatibility()

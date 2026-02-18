@@ -819,7 +819,9 @@ class VoiceAIEngine(EngineProtocol):
 
             return None
 
-        except Exception:
+        except Exception as e:
+            # GAP-PY-001: Best effort model search
+            logger.debug(f"Failed to find voice model {voice_id}: {e}")
             return None
 
     def _convert_cloud(

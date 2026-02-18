@@ -15,6 +15,8 @@ Usage:
     pytest tests/sentinel/test_sentinel_audio_workflow.py -v
 """
 
+from __future__ import annotations
+
 import argparse
 import asyncio
 import hashlib
@@ -459,7 +461,7 @@ class SentinelRunner:
         self._async_audio_id: str | None = None
         self._ab_test_id: str | None = None
 
-    async def __aenter__(self) -> "SentinelRunner":
+    async def __aenter__(self) -> SentinelRunner:
         """Enter async context - create HTTP client with connection pooling."""
         # Set correlation ID for structured logging
         correlation_filter.set_correlation_id(self._correlation_id)

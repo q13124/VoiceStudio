@@ -142,6 +142,11 @@ class PluginLoader:
 
             module = importlib.util.module_from_spec(spec)
 
+            # Snapshot sys.modules before loading so we can clean up
+            # plugin-local bare imports (e.g. "processor", "adapter")
+            # that would otherwise contaminate the next plugin load.
+            modules_before = set(sys.modules.keys())
+
             # Add plugin directory to path for imports
             sys.path.insert(0, str(plugin_dir))
 
@@ -151,6 +156,23 @@ class PluginLoader:
                 # Remove from path after loading
                 if str(plugin_dir) in sys.path:
                     sys.path.remove(str(plugin_dir))
+
+                # Remove any bare modules added during this plugin load
+                # whose origin is inside the plugin directory, so the next
+                # plugin gets its own fresh copy.
+                new_modules = set(sys.modules.keys()) - modules_before
+                plugin_dir_str = str(plugin_dir)
+                for mod_name in new_modules:
+                    mod = sys.modules.get(mod_name)
+                    if mod is None:
+                        continue
+                    origin = getattr(getattr(mod, "__spec__", None), "origin", None) or ""
+                    mod_file = getattr(mod, "__file__", None) or ""
+                    if (
+                        origin.startswith(plugin_dir_str)
+                        or mod_file.startswith(plugin_dir_str)
+                    ):
+                        del sys.modules[mod_name]
 
             # Call entry point function
             entry_parts = backend_entry.split('.')

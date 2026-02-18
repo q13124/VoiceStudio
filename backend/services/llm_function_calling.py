@@ -107,7 +107,9 @@ class FunctionRegistry:
             func_name = function_data.get("name", "")
             try:
                 arguments = json.loads(function_data.get("arguments", "{}"))
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
+                # GAP-PY-001: Invalid JSON arguments from LLM, using empty dict
+                logger.debug(f"Failed to parse LLM function arguments for '{func_name}': {e}")
                 arguments = {}
 
             try:

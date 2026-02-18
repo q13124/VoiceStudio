@@ -15,6 +15,8 @@ Requires:
 - Audio devices available
 """
 
+from __future__ import annotations
+
 import os
 
 # Import tracing infrastructure

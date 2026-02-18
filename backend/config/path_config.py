@@ -133,6 +133,10 @@ def get_path(path_type: str) -> Path:
         - "data": User data directory
         - "config": Configuration directory
         - "jobs": Job state storage directory
+        - "temp": Temporary files directory (GAP-PY-002)
+        - "output": Default output directory (GAP-PY-002)
+        - "bin": Executables/binaries directory (GAP-PY-002)
+        - "plugins": Plugins directory (GAP-PY-002)
 
     Args:
         path_type: Type of path to resolve
@@ -226,6 +230,51 @@ def get_path(path_type: str) -> Path:
                 path = Path(appdata) / "VoiceStudio" / "jobs"
             else:
                 path = Path(os.path.expanduser("~/.voicestudio/jobs"))
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    # GAP-PY-002: Centralized temp/output paths
+    elif path_type_lower == "temp":
+        env_path = os.getenv("VOICESTUDIO_TEMP_PATH")
+        if env_path:
+            path = Path(env_path)
+        elif os.name == "nt":
+            path = Path(os.getenv("TEMP", "C:\\Temp")) / "VoiceStudio"
+        else:
+            path = Path("/tmp/VoiceStudio")
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    elif path_type_lower == "output":
+        env_path = os.getenv("VOICESTUDIO_OUTPUT_PATH")
+        if env_path:
+            path = Path(env_path)
+        else:
+            path = get_path("temp") / "output"
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    elif path_type_lower == "bin":
+        env_path = os.getenv("VOICESTUDIO_BIN_PATH")
+        if env_path:
+            path = Path(env_path)
+        elif os.name == "nt":
+            program_data = os.getenv("PROGRAMDATA", "C:\\ProgramData")
+            path = Path(program_data) / "VoiceStudio" / "bin"
+        else:
+            path = Path(os.path.expanduser("~/.voicestudio/bin"))
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    elif path_type_lower == "plugins":
+        env_path = os.getenv("VOICESTUDIO_PLUGINS_PATH")
+        if env_path:
+            path = Path(env_path)
+        elif os.name == "nt":
+            appdata = os.getenv("APPDATA", os.path.expanduser("~"))
+            path = Path(appdata) / "VoiceStudio" / "plugins"
+        else:
+            path = Path(os.path.expanduser("~/.voicestudio/plugins"))
         path.mkdir(parents=True, exist_ok=True)
         return path
 

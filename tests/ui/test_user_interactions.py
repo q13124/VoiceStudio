@@ -4,6 +4,8 @@ UI Tests for User Interactions.
 Tests button clicks, navigation, and panel interactions using correct automation IDs.
 """
 
+from __future__ import annotations
+
 import time
 
 import pytest

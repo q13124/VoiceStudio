@@ -4,6 +4,8 @@ UI Tests for Error Handling.
 Tests validation errors, error dialogs, and recovery scenarios.
 """
 
+from __future__ import annotations
+
 import time
 
 import pytest

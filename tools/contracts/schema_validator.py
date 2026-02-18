@@ -158,9 +158,9 @@ class SchemaValidator:
 
         # Check required fields
         required_fields = ["openapi", "info", "paths"]
-        for field in required_fields:
-            if field not in self._schema:
-                result.add_error(f"Missing required field: {field}")
+        for required_field in required_fields:
+            if required_field not in self._schema:
+                result.add_error(f"Missing required field: {required_field}")
 
         # Check info section
         info = self._schema.get("info", {})

@@ -375,7 +375,9 @@ class HandoffQueue:
                     continue
                 try:
                     entries.append(json.loads(line))
-                except json.JSONDecodeError:
+                except json.JSONDecodeError as e:
+                    # GAP-PY-001: Skip malformed index entry
+                    logger.debug(f"Failed to parse handoff index entry: {e}")
                     continue
 
         return entries

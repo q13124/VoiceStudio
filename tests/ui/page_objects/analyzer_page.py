@@ -4,6 +4,8 @@ Analyzer Page Object.
 Provides methods for interacting with the audio analysis panel.
 """
 
+from __future__ import annotations
+
 import time
 from typing import TYPE_CHECKING
 

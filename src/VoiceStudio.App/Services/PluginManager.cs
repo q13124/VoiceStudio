@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text.Json;
 using System.Threading.Tasks;
 using VoiceStudio.Core.Plugins;
 using VoiceStudio.Core.Panels;
@@ -21,13 +20,15 @@ namespace VoiceStudio.App.Services
     private readonly IPanelRegistry _panelRegistry;
     private readonly IBackendClient _backendClient;
     private readonly IErrorLoggingService? _errorLoggingService;
+    private readonly PluginSchemaValidator _schemaValidator;
     private readonly string _pluginsDirectory;
     private bool _initialized;
 
     public PluginManager(
         IPanelRegistry panelRegistry,
         IBackendClient backendClient,
-        string? pluginsDirectory = null)
+        string? pluginsDirectory = null,
+        string? schemaPath = null)
     {
       _panelRegistry = panelRegistry;
       _backendClient = backendClient;
@@ -44,6 +45,9 @@ namespace VoiceStudio.App.Services
           AppDomain.CurrentDomain.BaseDirectory,
           "Plugins"
       );
+      
+      // Initialize schema validator (Phase 1)
+      _schemaValidator = new PluginSchemaValidator(schemaPath);
     }
 
     /// <summary>
@@ -113,10 +117,19 @@ namespace VoiceStudio.App.Services
         return; // Skip directories without manifest
       }
 
-      // Load manifest
-      var manifestJson = await File.ReadAllTextAsync(manifestPath);
-      var manifest = JsonSerializer.Deserialize<PluginManifest>(manifestJson);
+      // Validate and load manifest using unified schema validator (Phase 1)
+      // Use Task.Run to avoid blocking on file I/O
+      var validationResult = await Task.Run(() => _schemaValidator.ValidateFile(manifestPath));
+      
+      if (!validationResult.IsValid)
+      {
+        var errors = string.Join("; ", validationResult.Errors);
+        throw new InvalidOperationException(
+            $"Manifest validation failed in {pluginDirectory}: {errors}"
+        );
+      }
 
+      var manifest = validationResult.Manifest;
       if (manifest == null)
       {
         throw new InvalidOperationException(
@@ -124,10 +137,11 @@ namespace VoiceStudio.App.Services
         );
       }
 
-      // Check for C# plugin assembly
+      // Check for C# plugin assembly (use entry_points.frontend or Name + Plugin.dll)
+      var assemblyName = manifest.EntryPoints?.Frontend ?? $"{manifest.Name}Plugin.dll";
       var pluginAssemblyPath = Path.Combine(
           pluginDirectory,
-          $"{manifest.Name}Plugin.dll"
+          assemblyName
       );
 
       if (File.Exists(pluginAssemblyPath))
@@ -182,17 +196,6 @@ namespace VoiceStudio.App.Services
 
       _plugins.Clear();
       _initialized = false;
-    }
-
-    /// <summary>
-    /// Plugin manifest model.
-    /// </summary>
-    private class PluginManifest
-    {
-      public string Name { get; set; } = string.Empty;
-      public string Version { get; set; } = string.Empty;
-      public string Author { get; set; } = string.Empty;
-      public string Description { get; set; } = string.Empty;
     }
   }
 }

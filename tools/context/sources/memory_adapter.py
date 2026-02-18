@@ -335,7 +335,9 @@ class MemorySourceAdapter(BaseSourceAdapter):
 
             # If MCP is enabled and not offline, consider it available
             return bool(self._mcp_enabled and not self._offline)
-        except Exception:
+        except Exception as e:
+            # GAP-PY-001: Best effort availability check
+            logger.debug(f"Memory availability check failed: {e}")
             return False
 
     def _fetch_env_hint(self) -> list[MemoryItem]:

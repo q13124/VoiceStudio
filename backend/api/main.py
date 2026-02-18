@@ -1541,6 +1541,28 @@ async def ws_realtime(ws: WebSocket, topics: str | None = None):
     await realtime.connect(ws, topic_list)
 
 
+@app.websocket("/ws/plugins")
+async def ws_plugins(ws: WebSocket):
+    """
+    WebSocket endpoint for plugin state synchronization.
+
+    Phase 1 Plugin Architecture: Real-time sync between backend and frontend.
+
+    Protocol:
+    - On connect: Server sends full sync automatically
+    - Client can send:
+      - {"type": "sync_request"}: Request full sync
+      - {"type": "plugin_command", "command": "...", "plugin_id": "..."}: Execute command
+      - {"type": "ping"}: Heartbeat
+    - Server sends:
+      - {"type": "plugin_sync", "action": "..."}: State updates
+      - {"type": "plugin_command_response", ...}: Command results
+    """
+    from .ws import plugins
+
+    await plugins.plugin_websocket_handler(ws)
+
+
 @app.get("/")
 def root():
     """Root endpoint with version information."""

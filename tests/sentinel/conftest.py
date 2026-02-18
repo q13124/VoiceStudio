@@ -7,6 +7,8 @@ This module provides fixtures for:
 - Test audio fixture management
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import os

@@ -169,7 +169,9 @@ def _validate_audio_id(audio_id: str) -> bool:
 
         audio_path = _audio_storage[audio_id]
         return os.path.exists(audio_path)
-    except Exception:
+    except Exception as e:
+        # GAP-PY-001: Audio validation failed, treating as invalid
+        logger.debug(f"Audio ID validation failed for '{audio_id}': {e}")
         return False
 
 

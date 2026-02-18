@@ -2,6 +2,9 @@
 REAL functional test - traces every workflow with the Allan Watts asset.
 Not checking if elements exist. Testing if things ACTUALLY WORK.
 """
+
+from __future__ import annotations
+
 import json
 import os
 import struct

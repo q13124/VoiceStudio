@@ -235,7 +235,9 @@ class InstantCloningService:
 
                 if noise_level > 0.5:
                     recommendations.append("High background noise detected. Record in quieter environment.")
-            except Exception:
+            except Exception as e:
+                # GAP-PY-001: Noise analysis failed, using default
+                logger.debug(f"Noise level analysis failed: {e}")
                 noise_level = 0.3  # Default if analysis fails
 
             # Voice clarity (using zero-crossing rate variance)
@@ -251,7 +253,9 @@ class InstantCloningService:
 
                 zcr_std = np.std(zcr_values) if zcr_values else 0
                 voice_clarity = max(0.3, 1.0 - min(1.0, zcr_std * 10))
-            except Exception:
+            except Exception as e:
+                # GAP-PY-001: Voice clarity analysis failed, using default
+                logger.debug(f"Voice clarity analysis failed: {e}")
                 voice_clarity = 0.7  # Default if analysis fails
 
             # Embedding confidence (if speaker encoder available)

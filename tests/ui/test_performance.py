@@ -9,6 +9,8 @@ Tests performance of UI and API operations:
 - Resource utilization
 """
 
+from __future__ import annotations
+
 import contextlib
 import json
 import os

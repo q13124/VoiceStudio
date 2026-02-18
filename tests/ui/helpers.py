@@ -4,6 +4,8 @@ UI Test Helper Utilities.
 Common operations and utilities for WinAppDriver UI tests.
 """
 
+from __future__ import annotations
+
 import time
 from dataclasses import dataclass
 

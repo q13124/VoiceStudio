@@ -547,9 +547,9 @@ class EngineLifecycleManager:
                         try:
                             engine.process.kill()
                             engine.process.wait()
-                        # Best effort - failure is acceptable here
-                        except Exception:
-                            pass
+                        except Exception as kill_err:
+                            # GAP-PY-001: Best effort kill, process may already be dead
+                            logger.debug(f"Failed to force kill {engine.engine_id}: {kill_err}")
 
             # Release port
             if engine.port:
@@ -706,9 +706,9 @@ class EngineLifecycleManager:
                 for engine in pool:
                     try:
                         self._stop_engine(engine)
-                    # Best effort - failure is acceptable here
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        # GAP-PY-001: Best effort pool cleanup
+                        logger.debug(f"Failed to stop pooled engine: {e}")
 
         return results
 

@@ -5,6 +5,8 @@ Test doubles for pipeline and supervisor tests that don't
 require actual LLM or S2S service connections.
 """
 
+from __future__ import annotations
+
 import asyncio
 from collections.abc import AsyncIterator
 

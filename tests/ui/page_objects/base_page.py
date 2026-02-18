@@ -8,6 +8,8 @@ Provides common utilities for all page objects including:
 - Navigation helpers
 """
 
+from __future__ import annotations
+
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -33,7 +35,7 @@ class BasePage(ABC):
     # Screenshot directory
     SCREENSHOT_DIR = Path(__file__).parent.parent.parent.parent / ".buildlogs" / "ui_tests" / "screenshots"
 
-    def __init__(self, driver: "WinAppDriverSession"):
+    def __init__(self, driver: WinAppDriverSession):
         """
         Initialize the page object.
 
@@ -116,7 +118,7 @@ class BasePage(ABC):
         automation_id: str,
         timeout: float = DEFAULT_WAIT_TIMEOUT,
         by: str = "accessibility id"
-    ) -> "WinAppDriverElement":
+    ) -> WinAppDriverElement:
         """
         Find an element by automation ID with retry logic.
 
@@ -149,7 +151,7 @@ class BasePage(ABC):
         self,
         automation_id: str,
         by: str = "accessibility id"
-    ) -> list["WinAppDriverElement"]:
+    ) -> list[WinAppDriverElement]:
         """
         Find all elements matching the automation ID.
 
@@ -194,7 +196,7 @@ class BasePage(ABC):
         self,
         automation_id: str,
         timeout: float = DEFAULT_WAIT_TIMEOUT
-    ) -> Optional["WinAppDriverElement"]:
+    ) -> Optional[WinAppDriverElement]:
         """
         Wait for an element to appear.
 

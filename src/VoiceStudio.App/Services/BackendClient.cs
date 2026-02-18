@@ -2503,6 +2503,23 @@ namespace VoiceStudio.App.Services
       });
     }
 
+    // GAP-CS-003: Dynamic engine discovery
+    public async Task<List<TranscriptionEngine>> GetTranscriptionEnginesAsync(CancellationToken cancellationToken = default)
+    {
+      return await ExecuteWithRetryAsync(async () =>
+      {
+        var response = await _httpClient.GetAsync("/api/transcribe/engines", cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+          throw await CreateExceptionFromResponseAsync(response);
+        }
+
+        return await response.Content.ReadFromJsonAsync<List<TranscriptionEngine>>(_jsonOptions, cancellationToken)
+                  ?? throw new BackendDeserializationException("Failed to deserialize transcription engines");
+      });
+    }
+
     public async Task<TranscriptionResponse> TranscribeAudioAsync(TranscriptionRequest request, string? projectId = null, CancellationToken cancellationToken = default)
     {
       return await ExecuteWithRetryAsync(async () =>
@@ -4593,6 +4610,60 @@ namespace VoiceStudio.App.Services
       {
         System.Diagnostics.Debug.WriteLine($"File upload failed for {endpoint}: {ex.Message}");
         ErrorLogger.LogError($"File upload failed for {endpoint}: {ex.Message}", "BackendClient.UploadFilesWithProgressAsync");
+        throw;
+      }
+    }
+
+    // Plugin Health Dashboard endpoints (Phase 4)
+    public async Task<PluginHealthDashboardResponse?> GetPluginHealthDashboardAsync(CancellationToken cancellationToken = default)
+    {
+      try
+      {
+        return await SendRequestAsync<object?, PluginHealthDashboardResponse>(
+          "api/plugins/health/dashboard",
+          null,
+          HttpMethod.Get,
+          cancellationToken);
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting plugin health dashboard: {ex.Message}");
+        ErrorLogger.LogError($"Error getting plugin health dashboard: {ex.Message}", "BackendClient.GetPluginHealthDashboardAsync");
+        throw;
+      }
+    }
+
+    public async Task<PluginMetricsResponse?> GetPluginMetricsAsync(string pluginId, CancellationToken cancellationToken = default)
+    {
+      try
+      {
+        var encodedPluginId = Uri.EscapeDataString(pluginId);
+        return await SendRequestAsync<object?, PluginMetricsResponse>(
+          $"api/plugins/{encodedPluginId}/metrics",
+          null,
+          HttpMethod.Get,
+          cancellationToken);
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error getting plugin metrics for {pluginId}: {ex.Message}");
+        ErrorLogger.LogError($"Error getting plugin metrics for {pluginId}: {ex.Message}", "BackendClient.GetPluginMetricsAsync");
+        throw;
+      }
+    }
+
+    public async Task<string> ExportPluginMetricsAsync(string format = "json", CancellationToken cancellationToken = default)
+    {
+      try
+      {
+        var response = await _httpClient.GetAsync($"api/plugins/metrics/export?format={format}", cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync(cancellationToken);
+      }
+      catch (Exception ex)
+      {
+        System.Diagnostics.Debug.WriteLine($"Error exporting plugin metrics: {ex.Message}");
+        ErrorLogger.LogError($"Error exporting plugin metrics: {ex.Message}", "BackendClient.ExportPluginMetricsAsync");
         throw;
       }
     }

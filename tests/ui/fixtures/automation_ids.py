@@ -8,6 +8,8 @@ Generated from: src/VoiceStudio.App/Views/Panels/*.xaml
 Total Panels: 96
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 
 

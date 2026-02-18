@@ -7,6 +7,8 @@ Note: WinAppDriver has limitations with keyboard shortcuts.
 These tests focus on verifiable functionality via element interaction.
 """
 
+from __future__ import annotations
+
 import time
 
 import pytest

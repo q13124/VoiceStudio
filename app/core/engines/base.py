@@ -203,6 +203,18 @@ class EngineProtocol(ABC):
     Base protocol that all VoiceStudio engines must implement.
 
     This ensures consistent interface across all engines (XTTS, Whisper, RVC, etc.)
+
+    Required abstract methods:
+        initialize() -> bool
+        cleanup() -> None
+
+    Synthesis convention:
+        Subclasses that perform synthesis should implement a ``synthesize()``
+        method with engine-specific parameters.  Because parameter signatures
+        differ across engine types (e.g. XTTS requires ``reference_audio``,
+        Bark accepts ``emotion``, Piper takes ``voice``), ``synthesize()`` is
+        intentionally **not** declared as an abstract method on this base class.
+        Engine adapter plugins rely on duck-typing to call it.
     """
 
     def __init__(self, device: str | None = None, gpu: bool = True):

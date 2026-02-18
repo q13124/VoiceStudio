@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.UI.Dispatching;
 using VoiceStudio.Core.Panels;
+using VoiceStudio.Core.Plugins;
 using VoiceStudio.Core.Services;
 using VoiceStudio.Core.State;
 using VoiceStudio.App.Core.Commands;
@@ -52,6 +54,12 @@ namespace VoiceStudio.App.Services
         sp.GetRequiredService<BackendClientConfig>(),
         sp.GetRequiredService<ICorrelationIdProvider>()));
 
+      // GAP-CS-001: WebSocket services for real-time streaming support
+      services.AddSingleton<IWebSocketService>(sp => new WebSocketService(
+          sp.GetRequiredService<BackendClientConfig>().WebSocketUrl));
+      services.AddSingleton<IWebSocketClientFactory>(sp => new WebSocketClientFactory(
+          sp.GetService<IWebSocketService>()));
+
       // Use cases
       services.AddSingleton<IProfilesUseCase, ProfilesUseCase>();
 
@@ -88,6 +96,9 @@ namespace VoiceStudio.App.Services
       services.AddSingleton<StateCacheService>();
       services.AddSingleton<GracefulDegradationService>();
       services.AddSingleton<PluginManager>();
+      // Plugin Bridge Service for frontend-backend plugin state synchronization (Phase 1)
+      services.AddSingleton<IPluginBridgeService, PluginBridgeService>(sp => new PluginBridgeService(
+          sp.GetRequiredService<ILogger<PluginBridgeService>>()));
       services.AddSingleton<RealTimeQualityService>();
       // NOTE: ToastNotificationService requires a StackPanel container and cannot be auto-resolved.
       // It must be registered manually via RegisterToastNotificationService() after UI is created.
@@ -183,9 +194,6 @@ namespace VoiceStudio.App.Services
       // Module loader for UI modules
       services.AddSingleton<ModuleLoader>();
 
-      // Panel lazy loading
-      services.AddSingleton<PanelLoader>();
-
       // Error coordination service
       services.AddSingleton<IErrorCoordinator, ErrorCoordinator>();
 
@@ -271,6 +279,8 @@ namespace VoiceStudio.App.Services
     public static IUpdateService GetUpdateService() => GetRequiredService<IUpdateService>();
     public static ISettingsService GetSettingsService() => GetRequiredService<ISettingsService>();
     public static PluginManager GetPluginManager() => GetRequiredService<PluginManager>();
+    public static PluginBridgeService GetPluginBridgeService() => GetRequiredService<PluginBridgeService>();
+    public static PluginBridgeService? TryGetPluginBridgeService() => GetService<PluginBridgeService>();
     public static IPanelRegistry GetPanelRegistry() => GetRequiredService<IPanelRegistry>();
     public static IHelpOverlayService GetHelpOverlayService() => GetRequiredService<IHelpOverlayService>();
     public static RealTimeQualityService GetRealTimeQualityService() => GetRequiredService<RealTimeQualityService>();
@@ -318,8 +328,6 @@ namespace VoiceStudio.App.Services
     public static IProjectRepository? TryGetProjectRepository() => GetService<IProjectRepository>();
     public static ModuleLoader GetModuleLoader() => GetRequiredService<ModuleLoader>();
     public static ModuleLoader? TryGetModuleLoader() => GetService<ModuleLoader>();
-    public static PanelLoader GetPanelLoader() => GetRequiredService<PanelLoader>();
-    public static PanelLoader? TryGetPanelLoader() => GetService<PanelLoader>();
     public static IErrorCoordinator GetErrorCoordinator() => GetRequiredService<IErrorCoordinator>();
     public static IErrorCoordinator? TryGetErrorCoordinator() => GetService<IErrorCoordinator>();
     public static IViewModelFactory GetViewModelFactory() => GetRequiredService<IViewModelFactory>();

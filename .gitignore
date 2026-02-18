@@ -96,8 +96,8 @@ build_cs*.txt
 # Installer build output (distribute separately)
 installer/Output/
 
-# Runtime bundle dependencies (installed at build time)
-installer/runtime/python/Lib/site-packages/
+# Runtime bundle (downloaded/installed at build time)
+installer/runtime/
 
 # External runtime submodules (tracked separately)
 runtime/external/deepfacelab_2025/

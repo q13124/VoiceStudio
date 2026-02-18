@@ -14,6 +14,8 @@ Requires:
 - At least one TTS engine available
 """
 
+from __future__ import annotations
+
 import os
 
 # Import tracing infrastructure

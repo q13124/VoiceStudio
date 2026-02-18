@@ -5,6 +5,8 @@ This module provides Page Object implementations for UI automation testing.
 Each page object encapsulates the structure and behavior of a UI component.
 """
 
+from __future__ import annotations
+
 from .analyzer_page import AnalyzerPage
 from .base_page import BasePage
 from .clone_page import ClonePage

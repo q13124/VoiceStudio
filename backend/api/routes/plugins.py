@@ -1,7 +1,8 @@
 """
 Plugin Management Routes
 
-Endpoints for plugin discovery, loading, unloading, configuration, and status.
+Endpoints for plugin discovery, loading, unloading, configuration, status,
+and Wasm plugin execution (Phase 6A).
 """
 
 from __future__ import annotations
@@ -12,10 +13,18 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..optimization import cache_response
 from ..plugins import get_plugin_loader
+
+# Phase 6A: Import plugin service for Wasm execution
+try:
+    from backend.services.plugin_service import get_plugin_service
+    PLUGIN_SERVICE_AVAILABLE = True
+except ImportError:
+    PLUGIN_SERVICE_AVAILABLE = False
+    get_plugin_service = None
 
 logger = logging.getLogger(__name__)
 
@@ -321,13 +330,13 @@ async def get_plugin_manifest(plugin_id: str):
 
 @router.post("/{plugin_id}/load")
 async def load_plugin(plugin_id: str, request: PluginLoadRequest | None = None):
-    """Load a plugin."""
+    """
+    Load a plugin dynamically.
+    
+    GAP-PY-004: Wired to PluginService.load_plugin() for actual lifecycle management.
+    """
     try:
-        # Note: Plugin loading is typically done at application startup
-        # This endpoint provides a way to reload plugins dynamically
-        # In a production system, this would require careful handling of
-        # module reloading and resource cleanup
-
+        # Verify plugin exists
         discovered_plugins = _discover_plugins()
 
         plugin_data = None
@@ -342,7 +351,7 @@ async def load_plugin(plugin_id: str, request: PluginLoadRequest | None = None):
                 detail=f"Plugin '{plugin_id}' not found",
             )
 
-        # Check if already loaded
+        # Check if already loaded (unless force_reload requested)
         status = _get_plugin_status(plugin_id)
         if status == "loaded" and (request is None or not request.force_reload):
             return {
@@ -351,20 +360,33 @@ async def load_plugin(plugin_id: str, request: PluginLoadRequest | None = None):
                 "status": "loaded",
             }
 
-        # In a real implementation, this would:
-        # 1. Import the plugin module
-        # 2. Call the plugin's entry point
-        # 3. Register any routes or hooks
-        # 4. Update plugin status
+        # GAP-PY-004: Wire to PluginService lifecycle
+        if not PLUGIN_SERVICE_AVAILABLE:
+            raise HTTPException(
+                status_code=501,
+                detail="Plugin loading not available: PluginService not initialized. "
+                       "Plugins are loaded at application startup.",
+            )
 
-        # For now, return a message indicating the plugin would be loaded
-        # Actual loading should be done at application startup via PluginLoader
+        plugin_service = get_plugin_service()
+        
+        # Force reload requires unload first
+        if status == "loaded" and request and request.force_reload:
+            await plugin_service.unload_plugin(plugin_id)
 
-        return {
-            "message": f"Plugin '{plugin_id}' load requested. Plugins are typically loaded at application startup. Use the PluginLoader to load plugins dynamically.",
-            "plugin_id": plugin_id,
-            "status": "requested",
-        }
+        success = await plugin_service.load_plugin(plugin_id)
+        
+        if success:
+            return {
+                "message": f"Plugin '{plugin_id}' loaded successfully",
+                "plugin_id": plugin_id,
+                "status": "loaded",
+            }
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to load plugin '{plugin_id}'. Check server logs for details.",
+            )
     except HTTPException:
         raise
     except Exception as e:
@@ -377,11 +399,13 @@ async def load_plugin(plugin_id: str, request: PluginLoadRequest | None = None):
 
 @router.post("/{plugin_id}/unload")
 async def unload_plugin(plugin_id: str, request: PluginUnloadRequest | None = None):
-    """Unload a plugin."""
+    """
+    Unload a plugin dynamically.
+    
+    GAP-PY-004: Wired to PluginService.unload_plugin() for actual lifecycle management.
+    """
     try:
-        # Note: Plugin unloading requires careful resource cleanup
-        # This endpoint provides a way to unload plugins dynamically
-
+        # Verify plugin exists
         discovered_plugins = _discover_plugins()
 
         plugin_data = None
@@ -405,20 +429,27 @@ async def unload_plugin(plugin_id: str, request: PluginUnloadRequest | None = No
                 "status": "unloaded",
             }
 
-        # In a real implementation, this would:
-        # 1. Unregister any routes or hooks
-        # 2. Clean up plugin resources
-        # 3. Remove plugin from loaded plugins
-        # 4. Update plugin status
+        # GAP-PY-004: Wire to PluginService lifecycle
+        if not PLUGIN_SERVICE_AVAILABLE:
+            raise HTTPException(
+                status_code=501,
+                detail="Plugin unloading not available: PluginService not initialized.",
+            )
 
-        # For now, return a message indicating the plugin would be unloaded
-        # Actual unloading should be done carefully to avoid breaking the application
-
-        return {
-            "message": f"Plugin '{plugin_id}' unload requested. Plugin unloading requires careful resource cleanup.",
-            "plugin_id": plugin_id,
-            "status": "requested",
-        }
+        plugin_service = get_plugin_service()
+        success = await plugin_service.unload_plugin(plugin_id)
+        
+        if success:
+            return {
+                "message": f"Plugin '{plugin_id}' unloaded successfully",
+                "plugin_id": plugin_id,
+                "status": "unloaded",
+            }
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to unload plugin '{plugin_id}'. Check server logs for details.",
+            )
     except HTTPException:
         raise
     except Exception as e:
@@ -523,3 +554,484 @@ async def update_plugin_config(plugin_id: str, config: dict[str, Any]):
             status_code=500,
             detail=f"Failed to update plugin config: {e!s}",
         ) from e
+
+
+# =============================================================================
+# Phase 6A: Wasm Plugin Execution Routes (D-3)
+# =============================================================================
+
+
+class WasmExecutionRequest(BaseModel):
+    """Request to execute a Wasm plugin function."""
+
+    function_name: str | None = Field(
+        default=None,
+        description="Function to call in the Wasm module (default: main or _start)",
+    )
+    input_data: str | None = Field(
+        default=None,
+        description="Base64-encoded input data to pass to the function",
+    )
+    capabilities: list[str] = Field(
+        default_factory=list,
+        description="List of capability tokens to grant (e.g., 'fs_read', 'network')",
+    )
+    memory_limit_mb: int = Field(
+        default=64,
+        ge=1,
+        le=1024,
+        description="Maximum memory in MB (1-1024)",
+    )
+    timeout_seconds: float = Field(
+        default=30.0,
+        ge=0.1,
+        le=300.0,
+        description="Execution timeout in seconds (0.1-300)",
+    )
+
+
+class WasmExecutionResponse(BaseModel):
+    """Response from Wasm plugin execution."""
+
+    success: bool
+    output: Any | None = None
+    error: str | None = None
+    execution_time_ms: float = 0.0
+    metrics: dict[str, Any] = Field(default_factory=dict)
+
+
+class WasmPluginInfo(BaseModel):
+    """Information about a Wasm plugin."""
+
+    plugin_id: str
+    name: str
+    version: str
+    wasm_path: str | None = None
+    capabilities_required: list[str] = Field(default_factory=list)
+    is_loaded: bool = False
+
+
+@router.get("/wasm", response_model=list[WasmPluginInfo])
+async def list_wasm_plugins():
+    """List all available Wasm plugins."""
+    if not PLUGIN_SERVICE_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Plugin service not available",
+        )
+
+    try:
+        service = get_plugin_service()
+        wasm_plugins = await service.list_wasm_plugins()
+
+        result = []
+        for plugin_info in wasm_plugins:
+            wasm_path = service.get_wasm_path(plugin_info.manifest.name)
+            result.append(
+                WasmPluginInfo(
+                    plugin_id=plugin_info.manifest.name,
+                    name=plugin_info.manifest.name,
+                    version=plugin_info.manifest.version,
+                    wasm_path=str(wasm_path) if wasm_path else None,
+                    capabilities_required=getattr(
+                        plugin_info.manifest, "capabilities_required", []
+                    ),
+                    is_loaded=plugin_info.instance is not None,
+                )
+            )
+
+        return result
+    except Exception as e:
+        logger.error(f"Failed to list Wasm plugins: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to list Wasm plugins: {e!s}",
+        ) from e
+
+
+@router.get("/{plugin_id}/wasm/status")
+async def get_wasm_plugin_status(plugin_id: str):
+    """Get the Wasm runtime status for a plugin."""
+    if not PLUGIN_SERVICE_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Plugin service not available",
+        )
+
+    try:
+        service = get_plugin_service()
+
+        # Check if plugin exists
+        plugin_info = service.get_plugin(plugin_id)
+        if plugin_info is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Plugin '{plugin_id}' not found",
+            )
+
+        # Check if it's a Wasm plugin
+        is_wasm = service.is_wasm_plugin(plugin_id)
+        wasm_path = service.get_wasm_path(plugin_id) if is_wasm else None
+
+        # Get runtime availability
+        try:
+            from backend.plugins.wasm.wasm_runner import WASMTIME_AVAILABLE
+        except ImportError:
+            WASMTIME_AVAILABLE = False
+
+        return {
+            "plugin_id": plugin_id,
+            "is_wasm_plugin": is_wasm,
+            "wasm_path": str(wasm_path) if wasm_path else None,
+            "wasm_runtime_available": WASMTIME_AVAILABLE if is_wasm else False,
+            "can_execute": is_wasm and WASMTIME_AVAILABLE and wasm_path is not None,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get Wasm status for '{plugin_id}': {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get Wasm status: {e!s}",
+        ) from e
+
+
+@router.post("/{plugin_id}/wasm/execute", response_model=WasmExecutionResponse)
+async def execute_wasm_plugin(plugin_id: str, request: WasmExecutionRequest):
+    """Execute a Wasm plugin function.
+
+    This endpoint allows executing WebAssembly plugins in a sandboxed environment
+    with configurable capabilities and resource limits.
+    """
+    if not PLUGIN_SERVICE_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Plugin service not available",
+        )
+
+    try:
+        service = get_plugin_service()
+
+        # Decode input data if provided
+        input_data = None
+        if request.input_data:
+            import base64
+            try:
+                input_data = base64.b64decode(request.input_data)
+            except Exception as decode_error:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid base64 input_data: {decode_error}",
+                ) from decode_error
+
+        # Execute the Wasm plugin
+        result = await service.execute_wasm_plugin(
+            plugin_id=plugin_id,
+            function_name=request.function_name,
+            input_data=input_data,
+            capabilities=request.capabilities,
+            memory_limit_mb=request.memory_limit_mb,
+            timeout_seconds=request.timeout_seconds,
+        )
+
+        if not result["success"]:
+            # Return the error in the response (not as HTTP error)
+            # This allows clients to handle execution errors programmatically
+            return WasmExecutionResponse(
+                success=False,
+                output=result.get("output"),
+                error=result.get("error"),
+                execution_time_ms=result.get("execution_time_ms", 0.0),
+                metrics=result.get("metrics", {}),
+            )
+
+        return WasmExecutionResponse(
+            success=True,
+            output=result.get("output"),
+            error=None,
+            execution_time_ms=result.get("execution_time_ms", 0.0),
+            metrics=result.get("metrics", {}),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to execute Wasm plugin '{plugin_id}': {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to execute Wasm plugin: {e!s}",
+        ) from e
+
+
+@router.get("/{plugin_id}/wasm/capabilities")
+async def get_wasm_plugin_capabilities(plugin_id: str):
+    """Get available capabilities for a Wasm plugin."""
+    # Return available capability tokens that can be granted
+    from backend.plugins.wasm.capability_tokens import (
+        STANDARD_CAPABILITY_SETS,
+        CapabilityToken,
+    )
+
+    try:
+        # Build capability info
+        capabilities = {}
+        for token in CapabilityToken:
+            capabilities[token.value] = {
+                "name": token.value,
+                "description": _get_capability_description(token),
+            }
+
+        # Include standard sets
+        standard_sets = {}
+        for name, cap_set in STANDARD_CAPABILITY_SETS.items():
+            standard_sets[name] = {
+                "name": name,
+                "tokens": [t.value for t in cap_set._tokens],
+            }
+
+        return {
+            "plugin_id": plugin_id,
+            "available_capabilities": capabilities,
+            "standard_sets": standard_sets,
+        }
+    except ImportError:
+        return {
+            "plugin_id": plugin_id,
+            "available_capabilities": {},
+            "standard_sets": {},
+            "error": "Wasm capability module not available",
+        }
+    except Exception as e:
+        logger.error(f"Failed to get Wasm capabilities: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get Wasm capabilities: {e!s}",
+        ) from e
+
+
+def _get_capability_description(token) -> str:
+    """Get a human-readable description for a capability token."""
+    descriptions = {
+        "fs_read": "Read files from allowed directories",
+        "fs_write": "Write files to allowed directories",
+        "network_http": "Make HTTP requests",
+        "network_socket": "Use raw sockets",
+        "env_read": "Read environment variables",
+        "env_write": "Set environment variables",
+        "process_spawn": "Spawn subprocesses",
+        "time_access": "Access system time",
+        "random_access": "Access random number generation",
+        "audio_input": "Access audio input devices",
+        "audio_output": "Access audio output devices",
+        "gpu_compute": "Use GPU compute resources",
+    }
+    return descriptions.get(token.value, f"Capability: {token.value}")
+
+
+# =============================================================================
+# P4-1, P5-2: Signature Verification Routes
+# =============================================================================
+
+
+class SignatureVerificationResponse(BaseModel):
+    """Response model for signature verification."""
+
+    plugin_id: str
+    verified: bool
+    signed: bool
+    key_id: str = ""
+    algorithm: str = ""
+    signed_at: str = ""
+    fingerprint: str = ""
+    message: str = ""
+    error: bool = False
+
+
+class LoadWithVerificationRequest(BaseModel):
+    """Request for loading a plugin with signature verification."""
+
+    require_signature: bool = False
+
+
+class LoadWithVerificationResponse(BaseModel):
+    """Response for load with verification."""
+
+    plugin_id: str
+    loaded: bool
+    verification: SignatureVerificationResponse | None = None
+    error: str | None = None
+
+
+@router.get("/{plugin_id}/signature", response_model=SignatureVerificationResponse)
+async def verify_plugin_signature(
+    plugin_id: str,
+    require_signature: bool = False,
+):
+    """
+    Verify a plugin's cryptographic signature.
+
+    P4-1: Signature verification endpoint for plugin security.
+
+    Args:
+        plugin_id: Plugin identifier
+        require_signature: If True, treats missing/invalid signature as error
+
+    Returns:
+        Verification result with signature details
+    """
+    try:
+        from backend.plugins.supply_chain.signer import (
+            check_signing_available,
+            verify_package_auto,
+        )
+
+        SIGNING_AVAILABLE = check_signing_available()
+    except ImportError:
+        SIGNING_AVAILABLE = False
+        verify_package_auto = None
+
+    if not SIGNING_AVAILABLE:
+        return SignatureVerificationResponse(
+            plugin_id=plugin_id,
+            verified=False,
+            signed=False,
+            message="Signing functionality not available",
+            error=require_signature,
+        )
+
+    # Find plugin path
+    discovered_plugins = _discover_plugins()
+    plugin_path = None
+    for p in discovered_plugins:
+        if p["plugin_id"] == plugin_id:
+            plugin_path = Path(p["path"])
+            break
+
+    if not plugin_path:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Plugin '{plugin_id}' not found",
+        )
+
+    result = verify_package_auto(plugin_path)
+
+    return SignatureVerificationResponse(
+        plugin_id=plugin_id,
+        verified=result.valid,
+        signed=bool(result.key_id),
+        key_id=result.key_id,
+        algorithm=result.algorithm,
+        signed_at=result.signed_at,
+        fingerprint=result.fingerprint,
+        message=result.message,
+        error=require_signature and not result.valid,
+    )
+
+
+@router.post(
+    "/{plugin_id}/load-verified",
+    response_model=LoadWithVerificationResponse,
+)
+async def load_plugin_with_verification(
+    plugin_id: str,
+    request: LoadWithVerificationRequest | None = None,
+):
+    """
+    Load a plugin with signature verification.
+
+    P4-1: Full integration of signature verification into plugin load flow.
+
+    Args:
+        plugin_id: Plugin identifier
+        request: Load options including signature requirement
+
+    Returns:
+        Load result with verification status
+    """
+    require_signature = request.require_signature if request else False
+
+    # First verify the signature
+    try:
+        from backend.plugins.supply_chain.signer import (
+            check_signing_available,
+            verify_package_auto,
+        )
+
+        SIGNING_AVAILABLE = check_signing_available()
+    except ImportError:
+        SIGNING_AVAILABLE = False
+        verify_package_auto = None
+
+    # Find plugin path
+    discovered_plugins = _discover_plugins()
+    plugin_path = None
+    for p in discovered_plugins:
+        if p["plugin_id"] == plugin_id:
+            plugin_path = Path(p["path"])
+            break
+
+    if not plugin_path:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Plugin '{plugin_id}' not found",
+        )
+
+    # Perform verification
+    verification_result = None
+    if SIGNING_AVAILABLE and verify_package_auto:
+        result = verify_package_auto(plugin_path)
+        verification_result = SignatureVerificationResponse(
+            plugin_id=plugin_id,
+            verified=result.valid,
+            signed=bool(result.key_id),
+            key_id=result.key_id,
+            algorithm=result.algorithm,
+            signed_at=result.signed_at,
+            fingerprint=result.fingerprint,
+            message=result.message,
+            error=require_signature and not result.valid,
+        )
+
+        # Reject if signature required but not valid
+        if require_signature and not result.valid:
+            return LoadWithVerificationResponse(
+                plugin_id=plugin_id,
+                loaded=False,
+                verification=verification_result,
+                error=f"Signature verification failed: {result.message}",
+            )
+    else:
+        verification_result = SignatureVerificationResponse(
+            plugin_id=plugin_id,
+            verified=False,
+            signed=False,
+            message="Signing functionality not available",
+            error=require_signature,
+        )
+
+        if require_signature:
+            return LoadWithVerificationResponse(
+                plugin_id=plugin_id,
+                loaded=False,
+                verification=verification_result,
+                error="Signing functionality not available",
+            )
+
+    # Proceed with load (using existing load logic)
+    status = _get_plugin_status(plugin_id)
+    if status == "loaded":
+        return LoadWithVerificationResponse(
+            plugin_id=plugin_id,
+            loaded=True,
+            verification=verification_result,
+            error=None,
+        )
+
+    # Return load request status (actual loading done by PluginLoader)
+    return LoadWithVerificationResponse(
+        plugin_id=plugin_id,
+        loaded=False,  # Actually "requested" - see load_plugin endpoint
+        verification=verification_result,
+        error="Plugin load requested. Use PluginLoader for actual loading.",
+    )

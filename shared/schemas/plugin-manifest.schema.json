@@ -1,16 +1,16 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://voicestudio.app/schemas/plugin-manifest.schema.json",
-  "title": "VoiceStudio Plugin Manifest v4",
-  "description": "Unified plugin manifest schema for VoiceStudio backend (Python) and frontend (C#) plugins. Implements architectural principles: modularity, security isolation, resource management, version control, and marketplace distribution (Phase 4).",
+  "title": "VoiceStudio Plugin Manifest v6",
+  "description": "Unified plugin manifest schema for VoiceStudio backend (Python) and frontend (C#) plugins. Implements architectural principles: modularity, security isolation, resource management, version control, marketplace distribution (Phase 4), enterprise supply chain security (Phase 5), and strategic maturity features (Phase 6) including Wasm runtime, AI quality, and compliance.",
   "type": "object",
   "required": ["name", "version", "author", "plugin_type", "category"],
   "properties": {
     "schema_version": {
       "type": "string",
-      "description": "Manifest schema version (v4 adds distribution, catalog, trust fields)",
-      "enum": ["3.0.0", "4.0.0"],
-      "default": "4.0.0"
+      "description": "Manifest schema version (v6 adds compatibility, ai_quality, and enhanced compliance fields for Phase 6)",
+      "enum": ["3.0.0", "4.0.0", "5.0.0", "6.0.0"],
+      "default": "6.0.0"
     },
     "id": {
       "type": "string",
@@ -191,7 +191,8 @@
     },
     "permissions": {
       "type": "array",
-      "description": "Permissions required by plugin (capability-based security)",
+      "description": "DEPRECATED in v6: Use security.permissions instead. Legacy permissions array for backward compatibility.",
+      "deprecated": true,
       "items": {
         "type": "string",
         "enum": [
@@ -911,6 +912,596 @@
           "description": "Content rating for age-appropriate filtering",
           "enum": ["everyone", "teen", "mature"],
           "default": "everyone"
+        }
+      },
+      "additionalProperties": false
+    },
+    "supply_chain": {
+      "type": "object",
+      "description": "Phase 5: Supply chain security metadata for dependency tracking and vulnerability management",
+      "properties": {
+        "sbom": {
+          "type": "object",
+          "description": "Software Bill of Materials information",
+          "properties": {
+            "format": {
+              "type": "string",
+              "description": "SBOM format specification",
+              "enum": ["cyclonedx-1.4", "cyclonedx-1.5", "spdx-2.3"],
+              "default": "cyclonedx-1.5"
+            },
+            "generated_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp when SBOM was generated"
+            },
+            "tool": {
+              "type": "string",
+              "description": "Tool used to generate the SBOM",
+              "maxLength": 100
+            },
+            "tool_version": {
+              "type": "string",
+              "description": "Version of the SBOM generation tool",
+              "maxLength": 50
+            },
+            "component_count": {
+              "type": "integer",
+              "description": "Number of components in the SBOM",
+              "minimum": 0
+            },
+            "sbom_path": {
+              "type": "string",
+              "description": "Relative path to SBOM file within package",
+              "default": "sbom.json"
+            }
+          },
+          "additionalProperties": false
+        },
+        "vulnerability_scan": {
+          "type": "object",
+          "description": "Latest vulnerability scan results summary",
+          "properties": {
+            "scanned_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp of last scan"
+            },
+            "scanner": {
+              "type": "string",
+              "description": "Scanner tool used",
+              "enum": ["pip-audit", "grype", "trivy", "snyk", "other"]
+            },
+            "scanner_version": {
+              "type": "string",
+              "description": "Version of the scanner",
+              "maxLength": 50
+            },
+            "passed": {
+              "type": "boolean",
+              "description": "Whether scan passed policy requirements"
+            },
+            "summary": {
+              "type": "object",
+              "description": "Vulnerability count by severity",
+              "properties": {
+                "critical": { "type": "integer", "minimum": 0, "default": 0 },
+                "high": { "type": "integer", "minimum": 0, "default": 0 },
+                "medium": { "type": "integer", "minimum": 0, "default": 0 },
+                "low": { "type": "integer", "minimum": 0, "default": 0 },
+                "unknown": { "type": "integer", "minimum": 0, "default": 0 }
+              },
+              "additionalProperties": false
+            },
+            "report_path": {
+              "type": "string",
+              "description": "Relative path to full vulnerability report",
+              "default": "vuln-report.json"
+            }
+          },
+          "additionalProperties": false
+        },
+        "license_compliance": {
+          "type": "object",
+          "description": "License compliance check results",
+          "properties": {
+            "checked_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp of last check"
+            },
+            "passed": {
+              "type": "boolean",
+              "description": "Whether license check passed"
+            },
+            "plugin_license": {
+              "type": "string",
+              "description": "SPDX license identifier for the plugin itself",
+              "maxLength": 50
+            },
+            "license_category": {
+              "type": "string",
+              "description": "Category of the plugin license",
+              "enum": ["permissive", "copyleft_weak", "copyleft_strong", "proprietary", "public_domain", "unknown"]
+            },
+            "dependency_count": {
+              "type": "integer",
+              "description": "Number of dependencies checked",
+              "minimum": 0
+            },
+            "incompatible_count": {
+              "type": "integer",
+              "description": "Number of incompatible licenses found",
+              "minimum": 0,
+              "default": 0
+            },
+            "copyleft_count": {
+              "type": "integer",
+              "description": "Number of copyleft dependencies",
+              "minimum": 0,
+              "default": 0
+            },
+            "unknown_count": {
+              "type": "integer",
+              "description": "Number of unknown/unrecognized licenses",
+              "minimum": 0,
+              "default": 0
+            },
+            "report_path": {
+              "type": "string",
+              "description": "Relative path to full license report",
+              "default": "license-report.json"
+            }
+          },
+          "additionalProperties": false
+        },
+        "dependency_graph": {
+          "type": "object",
+          "description": "Dependency relationship information",
+          "properties": {
+            "direct_count": {
+              "type": "integer",
+              "description": "Number of direct dependencies",
+              "minimum": 0
+            },
+            "transitive_count": {
+              "type": "integer",
+              "description": "Number of transitive dependencies",
+              "minimum": 0
+            },
+            "max_depth": {
+              "type": "integer",
+              "description": "Maximum depth of dependency tree",
+              "minimum": 0
+            },
+            "pinned": {
+              "type": "boolean",
+              "description": "Whether all dependencies are version-pinned",
+              "default": false
+            },
+            "lockfile_path": {
+              "type": "string",
+              "description": "Relative path to lockfile",
+              "default": "requirements.lock"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "description": "Phase 5: Build provenance metadata following SLSA principles (adapted for local-first)",
+      "properties": {
+        "spec_version": {
+          "type": "string",
+          "description": "Provenance specification version",
+          "enum": ["v1"],
+          "default": "v1"
+        },
+        "build_type": {
+          "type": "string",
+          "description": "Type of build that produced this artifact",
+          "enum": ["development", "ci", "release", "unknown"],
+          "default": "unknown"
+        },
+        "built_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of build completion"
+        },
+        "builder": {
+          "type": "object",
+          "description": "Information about the build environment",
+          "properties": {
+            "os": {
+              "type": "string",
+              "description": "Operating system (e.g., Windows-10, Linux-5.4)",
+              "maxLength": 100
+            },
+            "python_version": {
+              "type": "string",
+              "description": "Python version used for build",
+              "pattern": "^\\d+\\.\\d+\\.\\d+$"
+            },
+            "hostname": {
+              "type": "string",
+              "description": "Build machine hostname (may be redacted)",
+              "maxLength": 100
+            },
+            "ci_system": {
+              "type": "string",
+              "description": "CI system if built in CI",
+              "enum": ["github-actions", "gitlab-ci", "jenkins", "azure-devops", "local", "other"]
+            },
+            "ci_job_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "URL to CI job (if available)"
+            }
+          },
+          "additionalProperties": false
+        },
+        "source": {
+          "type": "object",
+          "description": "Source code information",
+          "properties": {
+            "repository": {
+              "type": "string",
+              "format": "uri",
+              "description": "Source repository URL"
+            },
+            "commit": {
+              "type": "string",
+              "description": "Git commit SHA",
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            "branch": {
+              "type": "string",
+              "description": "Git branch name",
+              "maxLength": 256
+            },
+            "tag": {
+              "type": "string",
+              "description": "Git tag (if release build)",
+              "maxLength": 128
+            },
+            "dirty": {
+              "type": "boolean",
+              "description": "Whether working directory had uncommitted changes",
+              "default": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "inputs": {
+          "type": "array",
+          "description": "Input artifacts that went into the build",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string", "maxLength": 256 },
+              "digest": {
+                "type": "object",
+                "properties": {
+                  "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+                }
+              }
+            }
+          },
+          "maxItems": 100
+        },
+        "reproducible": {
+          "type": "boolean",
+          "description": "Whether build is expected to be reproducible",
+          "default": false
+        },
+        "provenance_path": {
+          "type": "string",
+          "description": "Relative path to full provenance file",
+          "default": "provenance.json"
+        }
+      },
+      "additionalProperties": false
+    },
+    "enterprise": {
+      "type": "object",
+      "description": "Phase 5: Enterprise deployment and SLA configuration",
+      "properties": {
+        "deployment": {
+          "type": "object",
+          "description": "Deployment configuration for enterprise environments",
+          "properties": {
+            "environments": {
+              "type": "array",
+              "description": "Supported deployment environments",
+              "items": {
+                "type": "string",
+                "enum": ["development", "staging", "production", "air-gapped"]
+              },
+              "default": ["development", "staging", "production"]
+            },
+            "requires_approval": {
+              "type": "boolean",
+              "description": "Whether deployment requires admin approval",
+              "default": false
+            },
+            "rollout_strategy": {
+              "type": "string",
+              "description": "Deployment rollout strategy",
+              "enum": ["immediate", "canary", "staged", "manual"],
+              "default": "immediate"
+            },
+            "rollback_supported": {
+              "type": "boolean",
+              "description": "Whether automatic rollback is supported",
+              "default": true
+            },
+            "config_profiles": {
+              "type": "array",
+              "description": "Named configuration profiles for different environments",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "maxLength": 64 },
+                  "description": { "type": "string", "maxLength": 256 },
+                  "environment": { "type": "string" },
+                  "settings_override": { "type": "object" }
+                },
+                "required": ["name"]
+              },
+              "maxItems": 20
+            }
+          },
+          "additionalProperties": false
+        },
+        "sla": {
+          "type": "object",
+          "description": "Service Level Agreement guarantees",
+          "properties": {
+            "availability_percent": {
+              "type": "number",
+              "description": "Target availability percentage (e.g., 99.9)",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "max_latency_ms": {
+              "type": "integer",
+              "description": "Maximum operation latency in milliseconds (p99)",
+              "minimum": 0
+            },
+            "max_memory_mb": {
+              "type": "integer",
+              "description": "Maximum memory usage guarantee",
+              "minimum": 0
+            },
+            "support_tier": {
+              "type": "string",
+              "description": "Support tier for this plugin",
+              "enum": ["community", "standard", "premium", "enterprise"],
+              "default": "community"
+            },
+            "response_time_hours": {
+              "type": "integer",
+              "description": "Guaranteed support response time in hours",
+              "minimum": 1
+            },
+            "maintenance_window": {
+              "type": "string",
+              "description": "Cron expression for maintenance window",
+              "maxLength": 100
+            }
+          },
+          "additionalProperties": false
+        },
+        "compliance": {
+          "type": "object",
+          "description": "Compliance certifications and requirements",
+          "properties": {
+            "certifications": {
+              "type": "array",
+              "description": "Industry certifications the plugin meets",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "soc2-type1",
+                  "soc2-type2",
+                  "iso27001",
+                  "hipaa",
+                  "gdpr",
+                  "fedramp",
+                  "pci-dss",
+                  "ccpa"
+                ]
+              },
+              "uniqueItems": true
+            },
+            "data_residency": {
+              "type": "array",
+              "description": "Supported data residency regions",
+              "items": {
+                "type": "string",
+                "enum": ["local-only", "us", "eu", "apac", "global"]
+              },
+              "default": ["local-only"]
+            },
+            "audit_logging": {
+              "type": "boolean",
+              "description": "Whether plugin supports enterprise audit logging",
+              "default": false
+            },
+            "encryption_at_rest": {
+              "type": "boolean",
+              "description": "Whether plugin data is encrypted at rest",
+              "default": false
+            },
+            "encryption_in_transit": {
+              "type": "boolean",
+              "description": "Whether plugin communications are encrypted",
+              "default": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "telemetry": {
+          "type": "object",
+          "description": "Telemetry and observability configuration",
+          "properties": {
+            "metrics_enabled": {
+              "type": "boolean",
+              "description": "Whether plugin exposes metrics",
+              "default": false
+            },
+            "metrics_endpoint": {
+              "type": "string",
+              "description": "Metrics endpoint path (if enabled)",
+              "maxLength": 256
+            },
+            "metrics_format": {
+              "type": "string",
+              "description": "Metrics format",
+              "enum": ["prometheus", "opentelemetry", "statsd", "json"],
+              "default": "prometheus"
+            },
+            "tracing_enabled": {
+              "type": "boolean",
+              "description": "Whether plugin supports distributed tracing",
+              "default": false
+            },
+            "health_endpoint": {
+              "type": "string",
+              "description": "Health check endpoint path",
+              "default": "/health"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "certification": {
+      "type": "object",
+      "description": "Phase 5: Plugin certification and quality gate status",
+      "properties": {
+        "certified": {
+          "type": "boolean",
+          "description": "Whether plugin has passed certification",
+          "default": false
+        },
+        "certification_level": {
+          "type": "string",
+          "description": "Certification level achieved",
+          "enum": ["none", "basic", "standard", "premium", "enterprise"],
+          "default": "none"
+        },
+        "certified_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of certification"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when certification expires"
+        },
+        "certifier": {
+          "type": "string",
+          "description": "Entity that performed certification",
+          "maxLength": 100
+        },
+        "certificate_id": {
+          "type": "string",
+          "description": "Unique certificate identifier",
+          "maxLength": 128
+        },
+        "quality_gates": {
+          "type": "object",
+          "description": "Quality gate pass/fail status",
+          "properties": {
+            "manifest_valid": {
+              "type": "boolean",
+              "description": "Manifest schema validation passed"
+            },
+            "signature_valid": {
+              "type": "boolean",
+              "description": "Cryptographic signature verified"
+            },
+            "sbom_present": {
+              "type": "boolean",
+              "description": "SBOM is present and valid"
+            },
+            "vulnerabilities_passed": {
+              "type": "boolean",
+              "description": "Vulnerability scan passed policy"
+            },
+            "licenses_compatible": {
+              "type": "boolean",
+              "description": "All licenses are compatible"
+            },
+            "provenance_verified": {
+              "type": "boolean",
+              "description": "Build provenance is verified"
+            },
+            "tests_passed": {
+              "type": "boolean",
+              "description": "Automated tests passed"
+            },
+            "performance_acceptable": {
+              "type": "boolean",
+              "description": "Performance benchmarks met"
+            },
+            "security_review_passed": {
+              "type": "boolean",
+              "description": "Security review completed"
+            }
+          },
+          "additionalProperties": false
+        },
+        "metrics": {
+          "type": "object",
+          "description": "Quality metrics at time of certification",
+          "properties": {
+            "test_coverage_percent": {
+              "type": "number",
+              "description": "Test coverage percentage",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "cyclomatic_complexity": {
+              "type": "number",
+              "description": "Average cyclomatic complexity",
+              "minimum": 0
+            },
+            "documentation_coverage_percent": {
+              "type": "number",
+              "description": "Documentation coverage percentage",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "api_stability_score": {
+              "type": "number",
+              "description": "API stability score (0-100)",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "additionalProperties": false
+        },
+        "requirements": {
+          "type": "array",
+          "description": "Certification requirements met",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "maxLength": 64 },
+              "name": { "type": "string", "maxLength": 128 },
+              "passed": { "type": "boolean" },
+              "evidence_path": { "type": "string" }
+            },
+            "required": ["id", "name", "passed"]
+          },
+          "maxItems": 50
         }
       },
       "additionalProperties": false

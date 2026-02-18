@@ -15,6 +15,8 @@ Usage:
     pytest tests/regression/test_audio_golden.py -k xtts
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import tempfile

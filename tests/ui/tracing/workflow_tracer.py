@@ -13,6 +13,8 @@ Enhanced for comprehensive Allan Watts audio workflow testing with:
 - Detailed categorization of all traced events
 """
 
+from __future__ import annotations
+
 import json
 import time
 import traceback
@@ -199,7 +201,7 @@ class WorkflowTracer:
         (self.output_dir / "screenshots").mkdir(exist_ok=True)
         (self.output_dir / "reports" / "workflow_traces").mkdir(parents=True, exist_ok=True)
 
-    def start(self) -> "WorkflowTracer":
+    def start(self) -> WorkflowTracer:
         """Start the workflow trace timer."""
         self._start_time = time.perf_counter()
         self.trace_log.append({
@@ -210,7 +212,7 @@ class WorkflowTracer:
         })
         return self
 
-    def step(self, name: str, driver=None, capture_screenshot: bool = True) -> "WorkflowTracer":
+    def step(self, name: str, driver=None, capture_screenshot: bool = True) -> WorkflowTracer:
         """
         Record a workflow step with optional screenshot.
 
@@ -251,7 +253,7 @@ class WorkflowTracer:
         self.trace_log.append(step_entry)
         return self
 
-    def api_call(self, method: str, url: str, response, request_body: Any = None) -> "WorkflowTracer":
+    def api_call(self, method: str, url: str, response, request_body: Any = None) -> WorkflowTracer:
         """
         Log an API call with request/response details.
 
@@ -289,7 +291,7 @@ class WorkflowTracer:
         self.trace_log.append(call_entry)
         return self
 
-    def error(self, exception: Exception, context: str = "") -> "WorkflowTracer":
+    def error(self, exception: Exception, context: str = "") -> WorkflowTracer:
         """
         Log an error with full stack trace.
 
@@ -317,7 +319,7 @@ class WorkflowTracer:
         self.trace_log.append(error_entry)
         return self
 
-    def success(self, message: str = "") -> "WorkflowTracer":
+    def success(self, message: str = "") -> WorkflowTracer:
         """Mark the workflow as successfully completed."""
         self.trace_log.append({
             "event": "workflow_complete",
@@ -328,7 +330,7 @@ class WorkflowTracer:
         })
         return self
 
-    def fail(self, message: str = "") -> "WorkflowTracer":
+    def fail(self, message: str = "") -> WorkflowTracer:
         """Mark the workflow as failed."""
         self.trace_log.append({
             "event": "workflow_complete",
@@ -349,7 +351,7 @@ class WorkflowTracer:
         to_panel: str,
         driver=None,
         capture_screenshot: bool = False
-    ) -> "WorkflowTracer":
+    ) -> WorkflowTracer:
         """
         Start tracking a panel transition.
 
@@ -393,7 +395,7 @@ class WorkflowTracer:
         error: str | None = None,
         driver=None,
         capture_screenshot: bool = True
-    ) -> "WorkflowTracer":
+    ) -> WorkflowTracer:
         """
         End tracking the current panel transition.
 
@@ -448,7 +450,7 @@ class WorkflowTracer:
         success: bool,
         duration_ms: float,
         error: str | None = None
-    ) -> "WorkflowTracer":
+    ) -> WorkflowTracer:
         """
         Record a complete panel transition (shorthand method).
 
@@ -504,7 +506,7 @@ class WorkflowTracer:
         source_panel: str | None = None,
         target_panel: str | None = None,
         payload: dict[str, Any] | None = None,
-    ) -> "WorkflowTracer":
+    ) -> WorkflowTracer:
         """
         Trace an inter-panel or application event.
 
@@ -576,7 +578,7 @@ class WorkflowTracer:
     # Workflow Phase Tracking
     # =========================================================================
 
-    def start_phase(self, phase_name: str, description: str = "") -> "WorkflowTracer":
+    def start_phase(self, phase_name: str, description: str = "") -> WorkflowTracer:
         """
         Start a new workflow phase.
 
@@ -616,7 +618,7 @@ class WorkflowTracer:
         self.trace_log.append(entry)
         return self
 
-    def end_phase(self, success: bool = True, notes: str = "") -> "WorkflowTracer":
+    def end_phase(self, success: bool = True, notes: str = "") -> WorkflowTracer:
         """
         End the current workflow phase.
 
@@ -661,7 +663,7 @@ class WorkflowTracer:
         details: dict[str, Any] | None = None,
         driver=None,
         capture_screenshot: bool = False
-    ) -> "WorkflowTracer":
+    ) -> WorkflowTracer:
         """
         Track a UI interaction.
 
@@ -702,7 +704,7 @@ class WorkflowTracer:
         operation_type: str,
         duration_ms: float,
         details: str | None = None
-    ) -> "WorkflowTracer":
+    ) -> WorkflowTracer:
         """
         Record a timing metric.
 

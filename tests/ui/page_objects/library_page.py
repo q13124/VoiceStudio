@@ -4,6 +4,8 @@ Library Page Object.
 Provides methods for interacting with the audio library panel.
 """
 
+from __future__ import annotations
+
 import time
 from typing import TYPE_CHECKING
 

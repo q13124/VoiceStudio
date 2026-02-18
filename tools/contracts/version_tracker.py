@@ -265,9 +265,9 @@ class VersionTracker:
                     breaking = True
                 elif new_count > old_version.endpoint_count:
                     changes.append(f"Endpoints increased from {old_version.endpoint_count} to {new_count}")
-            # ALLOWED: bare except - Best effort version comparison
-            except Exception:
-                pass
+            except Exception as e:
+                # GAP-PY-001: Best effort version comparison
+                logger.debug(f"Version comparison failed: {e}")
 
         # Create version record
         endpoint_count = sum(

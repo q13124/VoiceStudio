@@ -9,6 +9,7 @@ Features:
 - Plugin lifecycle management
 - Extension points (engines, processors, UI)
 - Plugin sandboxing
+- Unified manifest validation (Phase 1)
 """
 
 from __future__ import annotations
@@ -27,6 +28,50 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+# Schema validation (Phase 1)
+from backend.services.plugin_schema_validator import (
+    PluginSchemaValidator,
+    get_validator,
+    validate_plugin_manifest,
+    validate_plugin_manifest_file,
+)
+
+# Phase 6A: Wasm execution imports
+try:
+    from backend.plugins.wasm.capability_tokens import CapabilitySet
+    from backend.plugins.wasm.wasm_runner import (
+        WASMTIME_AVAILABLE,
+        WasmExecutionResult,
+        WasmPluginConfig,
+        WasmRunner,
+    )
+    WASM_RUNNER_AVAILABLE = True
+except ImportError:
+    WASM_RUNNER_AVAILABLE = False
+    WASMTIME_AVAILABLE = False
+    WasmRunner = None
+    WasmPluginConfig = None
+    WasmExecutionResult = None
+    CapabilitySet = None
+
+# Phase 5B: Signature verification imports
+try:
+    from backend.plugins.supply_chain.signer import (
+        VerificationResult,
+        check_signing_available,
+        verify_package_auto,
+    )
+    SIGNING_AVAILABLE = check_signing_available()
+except ImportError:
+    SIGNING_AVAILABLE = False
+    verify_package_auto = None
+    VerificationResult = None
+
+# Phase 6 module imports - lazy loaded to avoid circular imports
+_phase6_ai_quality: Phase6AIQuality | None = None
+_phase6_compliance: Phase6Compliance | None = None
+_phase6_ecosystem: Phase6Ecosystem | None = None
 
 try:
     from watchdog.events import FileModifiedEvent, FileSystemEventHandler
@@ -146,9 +191,23 @@ class PluginInfo:
 
 
 class PluginBase(ABC):
-    """Base class for all plugins."""
+    """
+    Base class for all plugins.
+
+    .. deprecated:: 1.3.0
+       Use :class:`Plugin` from `app.core.plugins_api` instead.
+       This class will be removed in version 1.5.0. See ADR-038.
+    """
 
     def __init__(self, plugin_service: PluginService):
+        import warnings
+        warnings.warn(
+            f"{self.__class__.__name__} inherits from deprecated PluginBase. "
+            "Migrate to 'from app.core.plugins_api import Plugin'. "
+            "See ADR-038 for guidance. Will be removed in v1.5.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.plugin_service = plugin_service
         self._initialized = False
 
@@ -182,7 +241,13 @@ class PluginBase(ABC):
 
 
 class EnginePlugin(PluginBase):
-    """Base class for engine plugins."""
+    """
+    Base class for engine plugins.
+
+    .. deprecated:: 1.3.0
+       Use :class:`Plugin` with :class:`EngineMixin` from `app.core.plugins_api`.
+       See ADR-038 for guidance. Will be removed in v1.5.0.
+    """
 
     @abstractmethod
     async def synthesize(
@@ -201,7 +266,13 @@ class EnginePlugin(PluginBase):
 
 
 class ProcessorPlugin(PluginBase):
-    """Base class for audio processor plugins."""
+    """
+    Base class for audio processor plugins.
+
+    .. deprecated:: 1.3.0
+       Use :class:`Plugin` with :class:`ProcessorMixin` from `app.core.plugins_api`.
+       See ADR-038 for guidance. Will be removed in v1.5.0.
+    """
 
     @abstractmethod
     async def process(
@@ -215,7 +286,13 @@ class ProcessorPlugin(PluginBase):
 
 
 class ExporterPlugin(PluginBase):
-    """Base class for exporter plugins."""
+    """
+    Base class for exporter plugins.
+
+    .. deprecated:: 1.3.0
+       Use :class:`Plugin` with :class:`ExporterMixin` from `app.core.plugins_api`.
+       See ADR-038 for guidance. Will be removed in v1.5.0.
+    """
 
     @abstractmethod
     async def export(
@@ -235,7 +312,13 @@ class ExporterPlugin(PluginBase):
 
 
 class ImporterPlugin(PluginBase):
-    """Base class for importer plugins."""
+    """
+    Base class for importer plugins.
+
+    .. deprecated:: 1.3.0
+       Use :class:`Plugin` with :class:`ImporterMixin` from `app.core.plugins_api`.
+       See ADR-038 for guidance. Will be removed in v1.5.0.
+    """
 
     @abstractmethod
     async def import_file(
@@ -473,15 +556,34 @@ class PluginService:
             if not plugin_path.is_dir():
                 continue
 
-            manifest_path = plugin_path / "plugin.json"
+            # Prefer manifest.json (unified schema), fallback to plugin.json (legacy)
+            manifest_path = plugin_path / "manifest.json"
+            using_unified_schema = True
             if not manifest_path.exists():
-                continue
+                manifest_path = plugin_path / "plugin.json"
+                using_unified_schema = False
+                if not manifest_path.exists():
+                    continue
 
             try:
-                with open(manifest_path) as f:
-                    manifest_data = json.load(f)
+                # Validate using unified schema validator (Phase 1)
+                if using_unified_schema:
+                    is_valid, errors, manifest_data = validate_plugin_manifest_file(manifest_path)
+                    if not is_valid:
+                        logger.warning(
+                            f"Plugin manifest validation failed for {plugin_path.name}: {errors}"
+                        )
+                        continue
+                else:
+                    # Legacy manifest - load without unified validation but log warning
+                    with open(manifest_path) as f:
+                        manifest_data = json.load(f)
+                    logger.info(
+                        f"Plugin {plugin_path.name} uses legacy plugin.json format - "
+                        "consider migrating to manifest.json with unified schema"
+                    )
 
-                manifest = PluginManifest.from_dict(manifest_data)
+                manifest = self._convert_manifest_data(manifest_data, using_unified_schema)
 
                 # Check version compatibility
                 if not self.check_version_compatibility(manifest):
@@ -508,6 +610,57 @@ class PluginService:
 
         return discovered
 
+    def _convert_manifest_data(
+        self, data: dict[str, Any], using_unified_schema: bool
+    ) -> PluginManifest:
+        """
+        Convert manifest data to internal PluginManifest.
+        
+        Handles both unified schema (manifest.json) and legacy (plugin.json) formats.
+        """
+        if using_unified_schema:
+            # Map unified schema fields to internal PluginManifest
+            plugin_type_str = data.get("plugin_type", "tool")
+            
+            # Determine plugin type from capabilities
+            capabilities = data.get("capabilities", {})
+            if capabilities.get("engines"):
+                plugin_type = PluginType.ENGINE
+            elif capabilities.get("effects"):
+                plugin_type = PluginType.PROCESSOR
+            elif capabilities.get("export_formats"):
+                plugin_type = PluginType.EXPORTER
+            elif capabilities.get("import_formats"):
+                plugin_type = PluginType.IMPORTER
+            elif capabilities.get("ui_panels"):
+                plugin_type = PluginType.UI_PANEL
+            else:
+                plugin_type = PluginType.TOOL
+            
+            entry_points = data.get("entry_points", {})
+            entry_point = entry_points.get("backend", "")
+            
+            dependencies = data.get("dependencies", {})
+            python_deps = dependencies.get("python", [])
+            plugin_deps = dependencies.get("plugins", [])
+            
+            return PluginManifest(
+                plugin_id=data.get("name", ""),
+                name=data.get("display_name") or data.get("name", ""),
+                version=data.get("version", "0.0.0"),
+                description=data.get("description", ""),
+                author=data.get("author", ""),
+                plugin_type=plugin_type,
+                entry_point=entry_point,
+                dependencies=python_deps + plugin_deps,
+                min_app_version=data.get("min_app_version", "1.0.0"),
+                permissions=data.get("permissions", []),
+                settings_schema=data.get("settings_schema", {}),
+            )
+        else:
+            # Legacy format - use existing from_dict method
+            return PluginManifest.from_dict(data)
+
     def check_version_compatibility(self, manifest: PluginManifest) -> bool:
         """Check if a plugin is compatible with the current app version."""
         return is_version_compatible(self._app_version, manifest.min_app_version)
@@ -530,13 +683,26 @@ class PluginService:
             # Unload existing plugin
             await self.unload_plugin(plugin_id)
 
-            # Re-read manifest
-            manifest_path = plugin_info.path / "plugin.json"
+            # Re-read manifest (prefer manifest.json, fallback to plugin.json)
+            manifest_path = plugin_info.path / "manifest.json"
+            using_unified_schema = True
+            if not manifest_path.exists():
+                manifest_path = plugin_info.path / "plugin.json"
+                using_unified_schema = False
+            
             if manifest_path.exists():
-                with open(manifest_path) as f:
-                    manifest_data = json.load(f)
+                if using_unified_schema:
+                    is_valid, errors, manifest_data = validate_plugin_manifest_file(manifest_path)
+                    if not is_valid:
+                        logger.error(f"Manifest validation failed on reload: {errors}")
+                        plugin_info.state = PluginState.ERROR
+                        plugin_info.error_message = f"Validation failed: {errors}"
+                        return False
+                else:
+                    with open(manifest_path) as f:
+                        manifest_data = json.load(f)
 
-                new_manifest = PluginManifest.from_dict(manifest_data)
+                new_manifest = self._convert_manifest_data(manifest_data, using_unified_schema)
 
                 # Check version compatibility
                 if not self.check_version_compatibility(new_manifest):
@@ -598,11 +764,28 @@ class PluginService:
             spec.loader.exec_module(module)
 
             # Find and instantiate the plugin class
+            # Support both unified Plugin (Phase 4+) and deprecated PluginBase
+            from app.core.plugins_api import Plugin as UnifiedPlugin
+
             plugin_class = None
+            uses_unified_plugin = False
+
             for name in dir(module):
                 obj = getattr(module, name)
+                if not isinstance(obj, type):
+                    continue
+
+                # Prefer unified Plugin class (Phase 4+)
                 if (
-                    isinstance(obj, type) and
+                    issubclass(obj, UnifiedPlugin) and
+                    obj is not UnifiedPlugin
+                ):
+                    plugin_class = obj
+                    uses_unified_plugin = True
+                    break
+
+                # Fallback to deprecated PluginBase
+                if (
                     issubclass(obj, PluginBase) and
                     obj is not PluginBase and
                     obj not in (EnginePlugin, ProcessorPlugin, ExporterPlugin, ImporterPlugin)
@@ -613,9 +796,16 @@ class PluginService:
             if plugin_class is None:
                 raise TypeError(f"No plugin class found in {entry_point}")
 
-            plugin_info.instance = plugin_class(self)
+            # Instantiate based on class type
+            if uses_unified_plugin:
+                plugin_info.instance = plugin_class(plugin_info.path)
+            else:
+                plugin_info.instance = plugin_class(self)
             plugin_info.state = PluginState.LOADED
             plugin_info.loaded_at = datetime.now()
+
+            # Phase 6 integration: record load event and run code review
+            await self._run_phase6_on_load(plugin_info)
 
             logger.info(f"Loaded plugin: {plugin_info.manifest.name}")
             return True
@@ -625,6 +815,153 @@ class PluginService:
             plugin_info.state = PluginState.ERROR
             plugin_info.error_message = str(e)
             return False
+
+    async def _run_phase6_on_load(self, plugin_info: PluginInfo) -> None:
+        """Run Phase 6 integrations when a plugin is loaded."""
+        try:
+            # Phase 6D: Record load event for analytics
+            ecosystem = get_phase6_ecosystem()
+            ecosystem.record_plugin_event(
+                plugin_info.manifest.plugin_id,
+                "plugin_loaded",
+                {"version": plugin_info.manifest.version},
+            )
+
+            # Phase 6B: Run code review (async, non-blocking)
+            ai_quality = get_phase6_ai_quality()
+            review_result = await ai_quality.review_plugin_code(plugin_info.path)
+            if review_result.get("error"):
+                logger.warning(
+                    f"Code review for {plugin_info.manifest.plugin_id}: {review_result['error']}"
+                )
+
+            # Phase 6C: Run compliance scan
+            compliance = get_phase6_compliance()
+            compliance_result = await compliance.scan_compliance(plugin_info.path)
+            if compliance_result.get("error"):
+                logger.warning(
+                    f"Compliance scan for {plugin_info.manifest.plugin_id}: {compliance_result['error']}"
+                )
+
+        except Exception as e:
+            # Phase 6 integration errors should not block plugin loading
+            logger.warning(f"Phase 6 integration error during load: {e}")
+
+    # =========================================================================
+    # P4-1: Signature Verification Integration
+    # =========================================================================
+
+    def verify_plugin_signature(
+        self,
+        plugin_id: str,
+        require_signature: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Verify the cryptographic signature of a plugin.
+
+        P4-1: Integrates signature verification into plugin install/update flow.
+
+        Args:
+            plugin_id: Plugin identifier
+            require_signature: If True, unsigned plugins are rejected
+
+        Returns:
+            Dictionary with verification result:
+            - verified: bool indicating if signature is valid
+            - signed: bool indicating if plugin has a signature
+            - key_id: signing key ID (if signed)
+            - message: human-readable status
+        """
+        if not SIGNING_AVAILABLE or verify_package_auto is None:
+            return {
+                "verified": False,
+                "signed": False,
+                "key_id": "",
+                "message": "Signing functionality not available",
+                "error": not require_signature,  # Only error if required
+            }
+
+        plugin_info = self._plugins.get(plugin_id)
+        if not plugin_info:
+            return {
+                "verified": False,
+                "signed": False,
+                "key_id": "",
+                "message": f"Plugin not found: {plugin_id}",
+                "error": True,
+            }
+
+        result = verify_package_auto(plugin_info.path)
+
+        return {
+            "verified": result.valid,
+            "signed": bool(result.key_id),
+            "key_id": result.key_id,
+            "algorithm": result.algorithm,
+            "signed_at": result.signed_at,
+            "fingerprint": result.fingerprint,
+            "message": result.message,
+            "error": require_signature and not result.valid,
+        }
+
+    async def load_plugin_with_verification(
+        self,
+        plugin_id: str,
+        require_signature: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Load a plugin with optional signature verification.
+
+        P4-1: Full integration of signature verification into plugin load flow.
+
+        Args:
+            plugin_id: Plugin identifier
+            require_signature: If True, reject unsigned/invalid plugins
+
+        Returns:
+            Dictionary with load result and verification status
+        """
+        result = {
+            "loaded": False,
+            "verification": None,
+            "error": None,
+        }
+
+        # Verify signature before loading
+        verification = self.verify_plugin_signature(plugin_id, require_signature)
+        result["verification"] = verification
+
+        if verification.get("error"):
+            result["error"] = verification["message"]
+            logger.warning(
+                f"Plugin {plugin_id} rejected: {verification['message']}"
+            )
+            return result
+
+        # Log verification status
+        if verification["signed"]:
+            if verification["verified"]:
+                logger.info(
+                    f"Plugin {plugin_id} signature verified (key: {verification['key_id']})"
+                )
+            else:
+                logger.warning(
+                    f"Plugin {plugin_id} signature invalid: {verification['message']}"
+                )
+        else:
+            logger.debug(f"Plugin {plugin_id} is unsigned")
+
+        # Proceed with loading
+        loaded = await self.load_plugin(plugin_id)
+        result["loaded"] = loaded
+
+        if not loaded:
+            plugin_info = self._plugins.get(plugin_id)
+            result["error"] = (
+                plugin_info.error_message if plugin_info else "Unknown error"
+            )
+
+        return result
 
     async def activate_plugin(self, plugin_id: str) -> bool:
         """Activate a loaded plugin."""
@@ -646,6 +983,15 @@ class PluginService:
                 await plugin_info.instance.activate()
 
             plugin_info.state = PluginState.ACTIVATED
+
+            # Phase 6D: Record activation event
+            ecosystem = get_phase6_ecosystem()
+            ecosystem.record_plugin_event(
+                plugin_id,
+                "plugin_activated",
+                {"version": plugin_info.manifest.version},
+            )
+
             logger.info(f"Activated plugin: {plugin_info.manifest.name}")
             return True
 
@@ -670,6 +1016,15 @@ class PluginService:
                 await plugin_info.instance.deactivate()
 
             plugin_info.state = PluginState.DEACTIVATED
+
+            # Phase 6D: Record deactivation event
+            ecosystem = get_phase6_ecosystem()
+            ecosystem.record_plugin_event(
+                plugin_id,
+                "plugin_deactivated",
+                {"version": plugin_info.manifest.version},
+            )
+
             logger.info(f"Deactivated plugin: {plugin_info.manifest.name}")
             return True
 
@@ -725,6 +1080,221 @@ class PluginService:
     def get_processor_plugins(self) -> list[PluginInfo]:
         """Get all processor plugins."""
         return self.list_plugins(plugin_type=PluginType.PROCESSOR, state=PluginState.ACTIVATED)
+
+    # =============================================================================
+    # Phase 6A: Wasm Plugin Execution (W-5)
+    # =============================================================================
+
+    def is_wasm_plugin(self, plugin_id: str) -> bool:
+        """Check if a plugin is a Wasm plugin.
+
+        Args:
+            plugin_id: Plugin identifier
+
+        Returns:
+            True if the plugin is a Wasm plugin, False otherwise
+        """
+        plugin_info = self.get_plugin(plugin_id)
+        if plugin_info is None:
+            return False
+
+        manifest = plugin_info.manifest
+        # Check for Wasm runtime declaration in manifest
+        if hasattr(manifest, "runtime") and manifest.runtime == "wasm":
+            return True
+
+        # Check for .wasm entry point
+        if hasattr(manifest, "entry_points"):
+            entry_points = manifest.entry_points
+            if isinstance(entry_points, dict):
+                for ep in entry_points.values():
+                    if isinstance(ep, str) and ep.endswith(".wasm"):
+                        return True
+            elif isinstance(entry_points, list):
+                for ep in entry_points:
+                    if isinstance(ep, str) and ep.endswith(".wasm"):
+                        return True
+
+        # Check for .wasm file in plugin directory
+        plugin_dir = self._plugins_dir / plugin_id
+        if plugin_dir.exists():
+            wasm_files = list(plugin_dir.glob("*.wasm"))
+            if wasm_files:
+                return True
+
+        return False
+
+    def get_wasm_path(self, plugin_id: str) -> Path | None:
+        """Get the path to the Wasm binary for a plugin.
+
+        Args:
+            plugin_id: Plugin identifier
+
+        Returns:
+            Path to the Wasm file, or None if not found
+        """
+        plugin_info = self.get_plugin(plugin_id)
+        if plugin_info is None:
+            return None
+
+        plugin_dir = self._plugins_dir / plugin_id
+
+        # Check entry_points first
+        manifest = plugin_info.manifest
+        if hasattr(manifest, "entry_points"):
+            entry_points = manifest.entry_points
+            wasm_entry = None
+
+            if isinstance(entry_points, dict):
+                # Look for 'wasm', 'main', or any .wasm entry
+                for key in ["wasm", "main", "default"]:
+                    if key in entry_points and str(entry_points[key]).endswith(".wasm"):
+                        wasm_entry = entry_points[key]
+                        break
+                if wasm_entry is None:
+                    for ep in entry_points.values():
+                        if isinstance(ep, str) and ep.endswith(".wasm"):
+                            wasm_entry = ep
+                            break
+
+            if wasm_entry:
+                wasm_path = plugin_dir / wasm_entry
+                if wasm_path.exists():
+                    return wasm_path
+
+        # Fall back to first .wasm file in directory
+        if plugin_dir.exists():
+            wasm_files = list(plugin_dir.glob("*.wasm"))
+            if wasm_files:
+                return wasm_files[0]
+
+        return None
+
+    async def execute_wasm_plugin(
+        self,
+        plugin_id: str,
+        function_name: str | None = None,
+        input_data: bytes | None = None,
+        capabilities: list[str] | None = None,
+        memory_limit_mb: int = 64,
+        timeout_seconds: float = 30.0,
+    ) -> dict[str, Any]:
+        """Execute a Wasm plugin function.
+
+        Args:
+            plugin_id: Plugin identifier
+            function_name: Function to call in the Wasm module (default: main or _start)
+            input_data: Input data to pass to the function
+            capabilities: List of capability tokens to grant
+            memory_limit_mb: Maximum memory in MB
+            timeout_seconds: Execution timeout in seconds
+
+        Returns:
+            Execution result dictionary with keys:
+                - success: bool
+                - output: Any output data
+                - error: Error message if failed
+                - execution_time_ms: Execution time in milliseconds
+        """
+        # Check Wasm runtime availability
+        if not WASM_RUNNER_AVAILABLE:
+            return {
+                "success": False,
+                "error": "Wasm runtime not available: backend.plugins.wasm module not found",
+                "output": None,
+                "execution_time_ms": 0,
+            }
+
+        if not WASMTIME_AVAILABLE:
+            return {
+                "success": False,
+                "error": "Wasm runtime not available: wasmtime-py not installed",
+                "output": None,
+                "execution_time_ms": 0,
+            }
+
+        # Get plugin info
+        plugin_info = self.get_plugin(plugin_id)
+        if plugin_info is None:
+            return {
+                "success": False,
+                "error": f"Plugin '{plugin_id}' not found",
+                "output": None,
+                "execution_time_ms": 0,
+            }
+
+        # Verify it's a Wasm plugin
+        if not self.is_wasm_plugin(plugin_id):
+            return {
+                "success": False,
+                "error": f"Plugin '{plugin_id}' is not a Wasm plugin",
+                "output": None,
+                "execution_time_ms": 0,
+            }
+
+        # Get the Wasm file path
+        wasm_path = self.get_wasm_path(plugin_id)
+        if wasm_path is None or not wasm_path.exists():
+            return {
+                "success": False,
+                "error": f"Wasm binary not found for plugin '{plugin_id}'",
+                "output": None,
+                "execution_time_ms": 0,
+            }
+
+        # Build capability set
+        capability_set = None
+        if capabilities and CapabilitySet is not None:
+            capability_set = CapabilitySet()
+            for cap in capabilities:
+                capability_set.add(cap)
+
+        # Create Wasm plugin config
+        config = WasmPluginConfig(
+            wasm_path=wasm_path,
+            memory_limit_mb=memory_limit_mb,
+            capabilities=capability_set,
+        )
+
+        # Create runner and execute
+        import time
+        start_time = time.perf_counter()
+
+        try:
+            runner = WasmRunner()
+            result: WasmExecutionResult = runner.execute(config)
+
+            execution_time_ms = (time.perf_counter() - start_time) * 1000
+
+            return {
+                "success": result.success,
+                "output": result.output,
+                "error": result.error if not result.success else None,
+                "execution_time_ms": execution_time_ms,
+                "metrics": {
+                    "memory_used_mb": getattr(result, "memory_used_mb", None),
+                    "instructions_executed": getattr(result, "instructions_executed", None),
+                },
+            }
+
+        except Exception as e:
+            execution_time_ms = (time.perf_counter() - start_time) * 1000
+            logger.error(f"Wasm execution failed for plugin '{plugin_id}': {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "output": None,
+                "execution_time_ms": execution_time_ms,
+            }
+
+    async def list_wasm_plugins(self) -> list[PluginInfo]:
+        """List all Wasm plugins.
+
+        Returns:
+            List of PluginInfo for all Wasm plugins
+        """
+        all_plugins = self.list_plugins()
+        return [p for p in all_plugins if self.is_wasm_plugin(p.manifest.name)]
 
     # Settings management
 
@@ -806,3 +1376,191 @@ def get_plugin_service() -> PluginService:
     if _plugin_service is None:
         _plugin_service = PluginService()
     return _plugin_service
+
+
+# =============================================================================
+# Phase 6 Integration Classes
+# =============================================================================
+
+
+class Phase6AIQuality:
+    """Phase 6B: AI-Assisted Plugin Quality integration."""
+
+    def __init__(self) -> None:
+        self._code_reviewer: Any | None = None
+        self._anomaly_detector: Any | None = None
+        self._recommendation_engine: Any | None = None
+        self._initialized = False
+
+    def _lazy_init(self) -> bool:
+        """Lazy initialization of Phase 6B modules."""
+        if self._initialized:
+            return True
+        try:
+            from backend.plugins.ai_quality import (
+                AnomalyDetector,
+                CodeReviewer,
+                RecommendationEngine,
+            )
+            self._code_reviewer = CodeReviewer()
+            self._anomaly_detector = AnomalyDetector()
+            self._recommendation_engine = RecommendationEngine()
+            self._initialized = True
+            logger.info("Phase 6B AI Quality modules initialized")
+            return True
+        except ImportError as e:
+            logger.warning(f"Phase 6B modules not available: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Phase 6B initialization failed: {e}")
+            return False
+
+    async def review_plugin_code(self, plugin_path: Path) -> dict[str, Any]:
+        """Run AI-assisted code review on plugin."""
+        if not self._lazy_init() or not self._code_reviewer:
+            return {"skipped": True, "reason": "Phase 6B not available"}
+        try:
+            result = await self._code_reviewer.review_plugin(str(plugin_path))
+            return result.to_dict() if hasattr(result, "to_dict") else {"result": result}
+        except Exception as e:
+            logger.error(f"Code review failed for {plugin_path}: {e}")
+            return {"error": str(e)}
+
+    def check_anomalies(self, plugin_id: str, metrics: dict[str, float]) -> list[dict[str, Any]]:
+        """Check for anomalies in plugin metrics."""
+        if not self._lazy_init() or not self._anomaly_detector:
+            return []
+        try:
+            anomalies = self._anomaly_detector.detect(plugin_id, metrics)
+            return [a.to_dict() if hasattr(a, "to_dict") else a for a in anomalies]
+        except Exception as e:
+            logger.error(f"Anomaly detection failed for {plugin_id}: {e}")
+            return []
+
+    def get_recommendations(self, user_id: str, limit: int = 5) -> list[str]:
+        """Get plugin recommendations for a user."""
+        if not self._lazy_init() or not self._recommendation_engine:
+            return []
+        try:
+            return self._recommendation_engine.get_recommendations(user_id, limit)
+        except Exception as e:
+            logger.error(f"Recommendations failed for {user_id}: {e}")
+            return []
+
+
+class Phase6Compliance:
+    """Phase 6C: Automated Compliance & Privacy integration."""
+
+    def __init__(self) -> None:
+        self._compliance_scanner: Any | None = None
+        self._privacy_engine: Any | None = None
+        self._initialized = False
+
+    def _lazy_init(self) -> bool:
+        """Lazy initialization of Phase 6C modules."""
+        if self._initialized:
+            return True
+        try:
+            from backend.plugins.compliance import ComplianceScanner, PrivacyEngine
+            self._compliance_scanner = ComplianceScanner()
+            self._privacy_engine = PrivacyEngine()
+            self._initialized = True
+            logger.info("Phase 6C Compliance modules initialized")
+            return True
+        except ImportError as e:
+            logger.warning(f"Phase 6C modules not available: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Phase 6C initialization failed: {e}")
+            return False
+
+    async def scan_compliance(self, plugin_path: Path) -> dict[str, Any]:
+        """Scan plugin for compliance issues."""
+        if not self._lazy_init() or not self._compliance_scanner:
+            return {"skipped": True, "reason": "Phase 6C not available"}
+        try:
+            result = await self._compliance_scanner.scan(str(plugin_path))
+            return result.to_dict() if hasattr(result, "to_dict") else {"result": result}
+        except Exception as e:
+            logger.error(f"Compliance scan failed for {plugin_path}: {e}")
+            return {"error": str(e)}
+
+    def get_privacy_engine(self) -> Any:
+        """Get the privacy engine for data handling."""
+        self._lazy_init()
+        return self._privacy_engine
+
+
+class Phase6Ecosystem:
+    """Phase 6D: Ecosystem Growth & Analytics integration."""
+
+    def __init__(self) -> None:
+        self._developer_analytics: Any | None = None
+        self._featured_plugins: Any | None = None
+        self._initialized = False
+
+    def _lazy_init(self) -> bool:
+        """Lazy initialization of Phase 6D modules."""
+        if self._initialized:
+            return True
+        try:
+            from backend.plugins.ecosystem import DeveloperAnalytics, FeaturedPluginsManager
+            self._developer_analytics = DeveloperAnalytics()
+            self._featured_plugins = FeaturedPluginsManager()
+            self._initialized = True
+            logger.info("Phase 6D Ecosystem modules initialized")
+            return True
+        except ImportError as e:
+            logger.warning(f"Phase 6D modules not available: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Phase 6D initialization failed: {e}")
+            return False
+
+    def record_plugin_event(
+        self,
+        plugin_id: str,
+        event_type: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        """Record a plugin lifecycle event for analytics."""
+        if not self._lazy_init() or not self._developer_analytics:
+            return
+        try:
+            self._developer_analytics.record_event(plugin_id, event_type, metadata or {})
+        except Exception as e:
+            logger.error(f"Failed to record event for {plugin_id}: {e}")
+
+    def get_featured_plugins(self, limit: int = 10) -> list[str]:
+        """Get featured plugin IDs."""
+        if not self._lazy_init() or not self._featured_plugins:
+            return []
+        try:
+            return self._featured_plugins.get_featured(limit)
+        except Exception as e:
+            logger.error(f"Failed to get featured plugins: {e}")
+            return []
+
+
+def get_phase6_ai_quality() -> Phase6AIQuality:
+    """Get or create the Phase 6B AI Quality integration."""
+    global _phase6_ai_quality
+    if _phase6_ai_quality is None:
+        _phase6_ai_quality = Phase6AIQuality()
+    return _phase6_ai_quality
+
+
+def get_phase6_compliance() -> Phase6Compliance:
+    """Get or create the Phase 6C Compliance integration."""
+    global _phase6_compliance
+    if _phase6_compliance is None:
+        _phase6_compliance = Phase6Compliance()
+    return _phase6_compliance
+
+
+def get_phase6_ecosystem() -> Phase6Ecosystem:
+    """Get or create the Phase 6D Ecosystem integration."""
+    global _phase6_ecosystem
+    if _phase6_ecosystem is None:
+        _phase6_ecosystem = Phase6Ecosystem()
+    return _phase6_ecosystem

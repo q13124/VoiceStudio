@@ -300,12 +300,13 @@
                                 </Grid>
                                 
                                 <!-- Active Jobs List -->
+                                <!-- GAP-CS-004: Added x:DataType for compile-time binding validation -->
                                 <ListView x:Name="ActiveJobsListView" 
                                           MaxHeight="200"
                                           SelectionMode="None"
                                           AutomationProperties.AutomationId="DiagnosticsView_ActiveJobsListView">
                                     <ListView.ItemTemplate>
-                                        <DataTemplate>
+                                        <DataTemplate x:DataType="local:JobQueueItem">
                                             <Grid Padding="8,4" MinHeight="40">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -530,11 +531,12 @@
                             </Grid>
                             
                             <!-- Trace List with Timeline Bars -->
+                            <!-- GAP-CS-004: Added x:DataType for compile-time binding validation -->
                             <ListView x:Name="TracesListView" 
                                       Grid.Row="1"
                                       SelectionMode="Single">
                                 <ListView.ItemTemplate>
-                                    <DataTemplate>
+                                    <DataTemplate x:DataType="local:TraceEntry">
                                         <Grid Padding="4,8" MinHeight="40">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="200"/>
@@ -575,8 +577,9 @@
                                                             <StackPanel Orientation="Horizontal"/>
                                                         </ItemsPanelTemplate>
                                                     </ItemsControl.ItemsPanel>
+                                                    <!-- GAP-CS-004: Added x:DataType for compile-time binding validation -->
                                                     <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
+                                                        <DataTemplate x:DataType="local:SpanEntry">
                                                             <Border Width="{Binding WidthPercent}" 
                                                                     Height="12"
                                                                     Background="{Binding StatusColor}"
@@ -765,12 +768,13 @@
                                 </Grid>
                                 
                                 <!-- Circuit Breakers List -->
+                                <!-- GAP-CS-004: Added x:DataType for compile-time binding validation -->
                                 <ListView x:Name="CircuitBreakersListView" 
                                           MaxHeight="250"
                                           SelectionMode="None"
                                           AutomationProperties.AutomationId="DiagnosticsView_CircuitBreakersListView">
                                     <ListView.ItemTemplate>
-                                        <DataTemplate>
+                                        <DataTemplate x:DataType="local:CircuitBreakerItem">
                                             <Grid Padding="8,6" MinHeight="44">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -980,8 +984,9 @@
                                     </Grid>
                                 </DataTemplate>
                             </ListView.HeaderTemplate>
+                            <!-- GAP-CS-004: Added x:DataType for compile-time binding validation -->
                             <ListView.ItemTemplate>
-                                <DataTemplate>
+                                <DataTemplate x:DataType="local:CommandHealthItem">
                                     <Grid Padding="8,4" MinHeight="36">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="50"/>
