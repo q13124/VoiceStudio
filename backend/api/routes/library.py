@@ -111,13 +111,17 @@ def _entity_to_asset(entity: LibraryAssetEntity) -> LibraryAsset:
     tags = []
     try:
         tags = json.loads(entity.tags) if entity.tags else []
-    except (json.JSONDecodeError, TypeError):
+    except (json.JSONDecodeError, TypeError) as e:
+        # GAP-PY-001: Best effort - corrupted tags JSON
+        logger.debug(f"Failed to parse tags JSON for entity {entity.id}: {e}")
         tags = []
 
     metadata = {}
     try:
         metadata = json.loads(entity.metadata) if entity.metadata else {}
-    except (json.JSONDecodeError, TypeError):
+    except (json.JSONDecodeError, TypeError) as e:
+        # GAP-PY-001: Best effort - corrupted metadata JSON
+        logger.debug(f"Failed to parse metadata JSON for entity {entity.id}: {e}")
         metadata = {}
 
     return LibraryAsset(
@@ -264,8 +268,9 @@ async def search_assets(
                 entity_tags = json.loads(e.tags) if e.tags else []
                 if any(tag in entity_tags for tag in tag_list):
                     filtered.append(e)
-            except (json.JSONDecodeError, TypeError):
-                pass
+            except (json.JSONDecodeError, TypeError) as ex:
+                # GAP-PY-001: Invalid tags JSON, skip entity in tag filter
+                logger.debug(f"Failed to parse tags for entity {getattr(e, 'id', 'unknown')}: {ex}")
         entities = filtered
 
     # Sort by modified date (newest first) - already done by repository
