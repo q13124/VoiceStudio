@@ -14,7 +14,6 @@ from urllib.parse import urljoin
 
 import click
 
-
 # Default catalog URL
 DEFAULT_CATALOG_URL = "https://catalog.voicestudio.ai/api/v1"
 
@@ -58,7 +57,7 @@ def load_signature(package_path: Path) -> Optional[Dict[str, Any]]:
     if not sig_path.exists():
         return None
     
-    with open(sig_path, "r", encoding="utf-8") as f:
+    with open(sig_path, encoding="utf-8") as f:
         return json.load(f)
 
 

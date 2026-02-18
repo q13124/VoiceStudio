@@ -4,6 +4,9 @@ Tests voice synthesis endpoints comprehensively, including PitchTracker integrat
 Enhanced to test Worker 1's PitchTracker integration for pitch stability
 calculation.
 """
+
+from __future__ import annotations
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.

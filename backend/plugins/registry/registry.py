@@ -2,6 +2,7 @@
 Plugin Registry.
 
 Task 3.3.3: Central registry for plugin management.
+GAP-ARCH-001: Migrated imports from deprecated backend.plugins.core to app.core.plugins_api.
 """
 
 from __future__ import annotations
@@ -10,8 +11,14 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 
-from backend.plugins.core.base import Plugin, PluginMetadata, PluginState
+# GAP-ARCH-001: Import from app.core.plugins_api (ADR-038 migration)
+from app.core.plugins_api import Plugin, PluginMetadata
+
+# PluginLoader remains in backend.plugins.core until full migration
 from backend.plugins.core.loader import PluginLoader
+
+# PluginState enum from plugin_service (canonical location)
+from backend.services.plugin_service import PluginState
 
 logger = logging.getLogger(__name__)
 

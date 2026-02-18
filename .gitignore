@@ -80,18 +80,27 @@ openmemory.md
 # SpecStory chat history (local IDE artifact)
 .specstory/
 
-# OpenMemory - IDE/Assistant specific rules
-.cursor/rules/openmemory.mdc
-.cursor\rules\openmemory.mdc
-.cursor\rules\openmemory.mdc
-.cursor\rules\openmemory.mdc
-AGENTS.md
-.cursor\rules\openmemory.mdc
-AGENTS.md
-
 # Audio uploads (user data)
 data/audio_uploads/
-.cursor\rules\openmemory.mdc
-AGENTS.md
-.cursor\rules\openmemory.mdc
-AGENTS.md
+
+# PDF documents (generated, not source)
+docs/**/*.pdf
+
+# Output dumps and collection files
+collect*.txt
+full_collect.txt
+errors_check.txt
+unit_errors.txt
+build_cs*.txt
+
+# Installer build output (distribute separately)
+installer/Output/
+
+# Runtime bundle dependencies (installed at build time)
+installer/runtime/python/Lib/site-packages/
+
+# External runtime submodules (tracked separately)
+runtime/external/deepfacelab_2025/
+
+# Models directory (downloaded at runtime)
+models/

@@ -4,6 +4,8 @@ Voice Quick Clone Page Object for VoiceStudio.
 Provides access to the Quick Voice Clone wizard panel.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import time

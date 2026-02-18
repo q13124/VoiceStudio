@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Plugin Development Guide
+    url: https://docs.voicestudio.app/developer/PLUGIN_DEVELOPMENT_GUIDE.md
+    about: Learn how to develop plugins for VoiceStudio
+  - name: Plugin SDK Reference
+    url: https://docs.voicestudio.app/developer/PLUGIN_SDK_REFERENCE.md
+    about: Complete API reference for the VoiceStudio Plugin SDK
+  - name: Marketplace Guide
+    url: https://docs.voicestudio.app/developer/PLUGIN_MARKETPLACE_GUIDE.md
+    about: Guide for submitting and publishing plugins
+  - name: Community Discussions
+    url: https://github.com/voicestudio/voicestudio/discussions
+    about: Ask questions and share ideas with the community

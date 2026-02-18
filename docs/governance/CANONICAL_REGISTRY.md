@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-02-14 (Added Security Configuration Guide, UI Automation Guide)
+> **Last Updated**: 2026-02-18 (Overseer Final Mission: Added handoff document, updated governance section)
 
 ---
 
@@ -35,6 +35,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Branch Merge Policy** | `docs/governance/BRANCH_MERGE_POLICY.md` | 2026-02-02 | Divergence limits, branch lifecycle, merge strategies; closes TD-010 |
 | **Change Control Rules** | `docs/governance/CHANGE_CONTROL_RULES.md` | 2026-02-09 | Non-negotiable verification gate, stabilization protocol, Cursor agent operating protocol, blast radius limits |
 | **Verification Harness Rule** | `.cursor/rules/workflows/verification-harness.mdc` | 2026-02-09 | Agent rule for verify.ps1 usage; "no green = no merge" enforcement |
+| **Plugin System Guidelines** | `docs/governance/PLUGIN_SYSTEM_GUIDELINES.md` | 2026-02-16 | Canonical plugin governance: architecture, security, performance, DX, testing, UI, compatibility, risk, observability (10 sections). Companion to ADR-036. |
 
 ## Architecture
 
@@ -77,6 +78,11 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Config Consolidation ADR | `docs/architecture/decisions/ADR-033-config-consolidation.md` | 2026-02-10 | Configuration management consolidation |
 | Enhanced Engine Routing ADR | `docs/architecture/decisions/ADR-034-enhanced-engine-routing.md` | 2026-02-11 | Enhanced engine routing and selection |
 | **Sentinel Deterministic Workflow ADR** | `docs/architecture/decisions/ADR-035-sentinel-deterministic-workflow.md` | 2026-02-12 | 7-step sentinel workflow for reproducible pipeline validation |
+| **Plugin System Unification ADR** | `docs/architecture/decisions/ADR-036-plugin-system-unification.md` | 2026-02-16 | Unified plugin architecture: single manifest schema, bridge service, permission model, phased implementation |
+| **Plugin Trust Lane Model ADR** | `docs/architecture/decisions/ADR-037-plugin-trust-lane-model.md` | 2026-02-16 | Lane A (trusted in-process) for Phase 3; Lane B (isolated) deferred to Phase 4+ |
+| **Plugin ABC Unification ADR** | `docs/architecture/decisions/ADR-038-plugin-abc-unification.md` | 2026-02-17 | Unified Plugin ABC with mixins; deprecates BasePlugin and PluginBase |
+| **Phase 6 Strategic Maturity ADR** | `docs/architecture/decisions/ADR-039-phase6-strategic-maturity.md` | 2026-02-18 | Wasm runtime (wasmtime), AI quality, compliance, ecosystem, PQC research |
+| **Dual Plugin Loader ADR** | `docs/architecture/decisions/ADR-040-dual-plugin-loader.md` | 2026-02-18 | Documents dual loader architecture (PluginLoader vs PluginService) and usage guidelines |
 
 ## Planning and Roadmaps
 
@@ -88,12 +94,13 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Master Roadmap (Legacy) | `docs/archive/governance/MASTER_ROADMAP.md` | 2026-01-25 | **ARCHIVED** — Superseded by MASTER_ROADMAP_UNIFIED.md. Note: `docs/archive/governance/` may be missing; create and move legacy roadmaps if archive policy requires. See [Final Sweep (Pre-Realignment)](../reports/audit/FINAL_SWEEP_ALL_ROLES_PRE_REALIGNMENT_2026-01-30.md) §2, §6.1. |
 | Roadmap Summary (Legacy) | `docs/archive/governance/MASTER_ROADMAP_SUMMARY.md` | 2026-01-25 | **ARCHIVED** — Superseded by MASTER_ROADMAP_UNIFIED.md |
 | Roadmap Index (Legacy) | `docs/archive/governance/MASTER_ROADMAP_INDEX.md` | 2026-01-25 | **ARCHIVED** — Superseded by MASTER_ROADMAP_UNIFIED.md |
-| Task Tracking | `docs/governance/MASTER_TASK_CHECKLIST.md` | 2026-01-25 | Active task checklist |
+| Task Tracking | `docs/governance/MASTER_TASK_CHECKLIST.md` | 2026-01-25 | **ARCHIVED** to `docs/archive/governance/` (GAP-DOC-003). Use `docs/tasks/` for active task briefs. |
 | Task Log | `docs/governance/TASK_LOG.md` | 2026-01-25 | Historical task log |
 | Phase Gates | `docs/governance/PHASE_GATES_EVIDENCE_MAP.md` | 2026-01-25 | Gate completion evidence |
 | Risk Register | `docs/governance/RISK_REGISTER.md` | 2026-01-25 | Known risks and mitigations |
 | Service Level Objectives | `docs/governance/SERVICE_LEVEL_OBJECTIVES.md` | 2026-01-25 | SLOs and telemetry-to-backlog integration |
 | Architecture Integration Phase 4 Backlog | `docs/design/ARCHITECTURE_INTEGRATION_BACKLOG.md` | 2026-01-28 | R10/R11 done; R12 (skills-as-MCP) backlog |
+| **Plugin Phase 3 Remediation Plan** | `docs/design/PLUGIN_PHASE3_REMEDIATION_PLAN.md` | 2026-02-16 | Findings and sprint plan from Phase 3 architectural review |
 | **Cross-Role Escalation Matrix** | `docs/governance/CROSS_ROLE_ESCALATION_MATRIX.md` | 2026-01-29 | Decision tree and routing table for cross-role escalation; when to use Debug Agent vs other roles |
 | **Handoff Protocol** | `docs/governance/HANDOFF_PROTOCOL.md` | 2026-01-29 | Standardized protocol for issue escalation and cross-role handoffs; templates and examples |
 
@@ -129,6 +136,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Role 7: Debug Agent** | `docs/governance/roles/ROLE_7_DEBUG_AGENT_GUIDE.md` | 2026-01-25 | Root-cause analysis, issue triage, system-wide fixes, validation |
 | Skeptical Validator (subagent) | `docs/governance/SKEPTICAL_VALIDATOR_GUIDE.md` | 2026-01-28 | Cross-cutting validation subagent; §7 "When to Use" |
 | Validator Escalation Protocol | `docs/governance/VALIDATOR_ESCALATION.md` | 2026-01-28 | Overseer queue, HIGH PRIORITY, escalation triggers |
+| **Overseer Final Handoff** | `docs/governance/overseer/handoffs/OVERSEER_FINAL_HANDOFF.md` | 2026-02-18 | **NEW** — Successor handoff: architecture, risks, file map, verification playbook, recommendations (10 sections) |
 | Context Manager Integration | `docs/governance/CONTEXT_MANAGER_INTEGRATION.md` | 2026-01-25 | Context manager architecture, ownership, and usage by role |
 | Role Boundaries Protocol | `Recovery Plan/ROLE_SYSTEM_AND_OVERSEER_PROTOCOL.md` | 2026-01-25 | Role playbooks, handshake rules |
 | Role Cheatsheet | `docs/developer/ROLE_CHEATSHEET.md` | 2026-01-25 | Quick one-liner prompts |
@@ -173,6 +181,8 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Scaffolding Tools** | `tools/scaffolds/` | 2026-02-02 | CLI scaffolds: `generate_panel.py`, `generate_route.py`, `generate_engine.py` |
 | **XAML Change Protocol** | `docs/developer/XAML_CHANGE_PROTOCOL.md` | 2026-02-04 | Mandatory procedures for XAML changes; forbidden patterns, binlog analysis workflow, Views subfolder protection |
 | **UI Hardening Guidelines** | `docs/developer/UI_HARDENING_GUIDELINES.md` | 2026-02-04 | XAML stability best practices; UserControl extraction, ResourceDictionary organization, binding anti-patterns |
+| **Phase 6 Developer Guide** | `docs/developer/PHASE6_DEVELOPER_GUIDE.md` | 2026-02-18 | Wasm plugins, AI quality, compliance, ecosystem, incubator features |
+| **Plugin Privacy Guide** | `docs/developer/PLUGIN_PRIVACY_GUIDE.md` | 2026-02-18 | GDPR-inspired privacy framework; data categories, consent management, user rights |
 | **Error Handling Guide** | `docs/developer/ERROR_HANDLING_GUIDE.md` | 2026-02-04 | Unified error envelope, error codes, severity levels, propagation patterns (GAP-010) |
 | **WebSocket Guide** | `docs/developer/WEBSOCKET_GUIDE.md` | 2026-02-04 | WebSocket architecture, topics, message format, connection management (GAP-013) |
 | **UI Virtualization Guide** | `docs/developer/UI_VIRTUALIZATION_GUIDE.md` | 2026-02-04 | List virtualization patterns, incremental loading, performance guidelines (GAP-014) |
@@ -252,6 +262,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
+| **Gap Remediation Sprint Completion** | `docs/reports/audit/GAP_REMEDIATION_SPRINT_COMPLETION_2026-02-18.md` | 2026-02-18 | **NEW** — 52-task gap remediation completion report; Python lint fixes, verification harness GREEN |
 | **Error Pattern Retrospective** | `docs/reports/post_mortem/ERROR_PATTERN_RETROSPECTIVE_2026-02-04.md` | 2026-02-04 | Comprehensive analysis of systemic behaviors causing recurring errors; 36 issues analyzed, role responsibility ranking, anti-pattern inventory |
 | **Architecture Peer Review Package (Gate C / TASK-0004)** | `docs/reports/verification/ARCHITECTURE_PEER_REVIEW_PACKAGE_2026-01-27.md` | 2026-01-27 | Overseer-owned single entry point for architecture peer review; consolidates blockers, decisions, evidence, next tasks, approval map |
 | **Complete Project Report (Start → 2026-02-02)** | `docs/reports/verification/VOICESTUDIO_COMPLETE_PROJECT_REPORT_2026-02-02.md` | 2026-02-02 | Single narrative + status + remaining gaps; links to SSOT; includes peer approval checklist |
@@ -281,6 +292,16 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Phase 6 Security Audit** | `docs/reports/audit/PHASE6_SECURITY_AUDIT_2026-02-05.md` | 2026-02-05 | Phase 6 completion audit: 7/7 tasks complete; HMAC request signing (40 tests), file validation by magic bytes (58 tests), dependency policy, Dependabot config, SBOM generation, CVE monitoring workflow, secrets rotation guide; 98 tests PASS |
 | **v1.0.1 Release Notes** | `docs/release/RELEASE_NOTES_v1.0.1.md` | 2026-02-05 | Phase 7 Production Readiness release: Installer enhancements (prerequisites, silent mode, upgrade validation), Error recovery (crash recovery, error reporting, data backup), Performance optimization (UI virtualization, lazy loading, response caching), Release documentation |
 | **Core Workflow Audit** | `docs/reports/audit/CORE_WORKFLOW_AUDIT_2026-02-12.md` | 2026-02-12 | End-to-end workflow audit: Audio Import → Voice Cloning → Transcription → Playback; 35 issues (3 Critical, 7 High, 7 Medium, 5 Low, 6 Cross-workflow); 4-phase remediation roadmap; panel-by-panel feature matrix |
+| **Panel Architecture Analysis** | `docs/reports/audit/PROFESSIONAL_PANEL_ARCHITECTURE_ANALYSIS.md` | 2026-02-14 | Moved from root (GAP-DOC-002). Professional-grade panel system analysis. |
+| **Architecture Assessment and Remediation Plan** | `docs/reports/audit/ARCHITECTURAL_ASSESSMENT_AND_REMEDIATION_PLAN.md` | 2026-02-13 | Moved from root (GAP-DOC-002). Comprehensive architecture assessment. |
+| **Complete System Report** | `docs/reports/VOICESTUDIO_COMPLETE_SYSTEM_REPORT.md` | 2026-02-13 | Moved from root (GAP-DOC-002). Full system capabilities report. |
+
+## Release
+
+| Topic | Canonical Source | Last Updated | Notes |
+| --- | --- | --- | --- |
+| **Release Notes (Main)** | `docs/release/RELEASE_NOTES.md` | 2026-02-16 | Moved from root (GAP-DOC-002). Primary release notes document. |
+| **v1.0.1 Release Notes** | `docs/release/RELEASE_NOTES_v1.0.1.md` | 2026-02-05 | Phase 7 Production Readiness release. |
 
 ## Overseer Tooling
 

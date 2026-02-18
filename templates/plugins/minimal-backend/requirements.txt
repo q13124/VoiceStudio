@@ -1,0 +1,2 @@
+# Backend plugin dependencies
+# Add your pip packages below

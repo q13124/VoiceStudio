@@ -14,7 +14,13 @@ import logging
 import sys
 from pathlib import Path
 
-from backend.plugins.core.base import Plugin, PluginMetadata
+# Import both unified Plugin (preferred) and deprecated Plugin for backward compatibility
+from app.core.plugins_api import Plugin as UnifiedPlugin
+from backend.plugins.core.base import Plugin as LegacyPlugin
+from backend.plugins.core.base import PluginMetadata
+
+# For type hints, prefer the unified Plugin
+Plugin = UnifiedPlugin
 from backend.plugins.core.version_check import APP_VERSION, check_plugin_compatibility
 
 logger = logging.getLogger(__name__)
@@ -136,17 +142,29 @@ class PluginLoader:
                 logger.error(f"No Plugin class found in {plugin_id}")
                 return None
 
-            # Create instance with config
-            merged_config = {**metadata.default_config, **(config or {})}
-            plugin = plugin_class(merged_config)
-
-            # Load the plugin
-            if await plugin.load():
+            # Create instance based on plugin type
+            if issubclass(plugin_class, UnifiedPlugin):
+                # Unified Plugin (Phase 4+) takes plugin_dir
+                plugin = plugin_class(plugin_dir)
+                # Apply config if supported
+                if hasattr(plugin, "update_config") and config:
+                    plugin.update_config(config)
+                # Initialize the plugin
+                plugin.initialize()
                 logger.info(f"Loaded plugin: {plugin_id}")
                 return plugin
             else:
-                logger.error(f"Plugin load failed: {plugin_id}")
-                return None
+                # Legacy Plugin takes config dict
+                merged_config = {**metadata.default_config, **(config or {})}
+                plugin = plugin_class(merged_config)
+
+                # Load the plugin (legacy async lifecycle)
+                if await plugin.load():
+                    logger.info(f"Loaded plugin: {plugin_id}")
+                    return plugin
+                else:
+                    logger.error(f"Plugin load failed: {plugin_id}")
+                    return None
 
         except Exception as e:
             logger.exception(f"Error loading plugin {plugin_id}: {e}")
@@ -190,19 +208,36 @@ class PluginLoader:
 
         return None
 
-    def _find_plugin_class(self, module: any) -> type[Plugin] | None:
-        """Find the Plugin subclass in a module."""
+    def _find_plugin_class(self, module: any) -> type[UnifiedPlugin] | type[LegacyPlugin] | None:
+        """Find the Plugin subclass in a module.
+        
+        Supports both unified Plugin (Phase 4+) and legacy Plugin (deprecated).
+        Prefers unified Plugin if both are found.
+        """
+        unified_class = None
+        legacy_class = None
+
         for name in dir(module):
             obj = getattr(module, name)
+            if not isinstance(obj, type):
+                continue
 
+            # Check for unified Plugin (preferred)
             if (
-                isinstance(obj, type) and
-                issubclass(obj, Plugin) and
-                obj is not Plugin
+                issubclass(obj, UnifiedPlugin) and
+                obj is not UnifiedPlugin
             ):
-                return obj
+                unified_class = obj
 
-        return None
+            # Check for legacy Plugin (deprecated)
+            if (
+                issubclass(obj, LegacyPlugin) and
+                obj is not LegacyPlugin
+            ):
+                legacy_class = obj
+
+        # Prefer unified Plugin
+        return unified_class or legacy_class
 
     async def unload_plugin(self, plugin_id: str) -> bool:
         """

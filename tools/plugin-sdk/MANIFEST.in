@@ -1,0 +1,6 @@
+include LICENSE
+include README.md
+include pyproject.toml
+
+recursive-include src/voicestudio_plugin_sdk *.yaml *.json
+recursive-include src/voicestudio_plugin_sdk py.typed

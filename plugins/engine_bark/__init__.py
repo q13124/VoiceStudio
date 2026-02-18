@@ -1,0 +1,1 @@
+"""Bark engine adapter plugin."""

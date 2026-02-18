@@ -15,17 +15,17 @@ import asyncio
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Awaitable, Dict, List, Optional, Union
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
 from .protocol import (
+    ErrorCode,
     Message,
+    Notification,
     Request,
     Response,
-    Notification,
     RPCError,
-    ErrorCode,
-    encode_message,
     decode_message_header,
+    encode_message,
 )
 
 logger = logging.getLogger(__name__)

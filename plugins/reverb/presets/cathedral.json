@@ -1,0 +1,8 @@
+{
+  "room_size": 0.9,
+  "damping": 0.6,
+  "wet_dry_mix": 0.65,
+  "pre_delay_ms": 28.0,
+  "stereo_width": 1.0,
+  "decay_time": 4.0
+}

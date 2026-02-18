@@ -8,7 +8,6 @@ from backend.core.audio.formats import AudioFormat
 from plugins.export_flac import plugin as flac_plugin
 from plugins.export_opus import plugin as opus_plugin
 
-
 # Plugin directories containing manifests
 FLAC_PLUGIN_DIR = Path(__file__).parents[4] / "plugins" / "export_flac"
 OPUS_PLUGIN_DIR = Path(__file__).parents[4] / "plugins" / "export_opus"

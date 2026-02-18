@@ -4,6 +4,8 @@ Synthesis Page Object for VoiceStudio.
 Provides access to the voice synthesis panel.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 

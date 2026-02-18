@@ -4,6 +4,8 @@ E2E Test Configuration and Shared Fixtures.
 Provides common setup for end-to-end workflow tests.
 """
 
+from __future__ import annotations
+
 import contextlib
 import os
 import subprocess

@@ -1,0 +1,2 @@
+[console_scripts]
+voicestudio-sdk = voicestudio_plugin_sdk.cli:main

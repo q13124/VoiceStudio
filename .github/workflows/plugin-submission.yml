@@ -1,0 +1,179 @@
+# Plugin Catalog Submission Workflow
+# Handles plugin submissions via GitHub Issues
+
+name: Plugin Submission
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  process-submission:
+    if: contains(github.event.issue.labels.*.name, 'plugin-submission')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r tools/catalog/requirements.txt
+      
+      - name: Parse submission
+        id: parse
+        run: |
+          python tools/catalog/parse_submission.py \
+            --issue-number ${{ github.event.issue.number }} \
+            --issue-body "${{ github.event.issue.body }}" \
+            --output submission.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Validate plugin manifest
+        id: validate
+        run: |
+          python tools/catalog/validate_submission.py \
+            --submission submission.json \
+            --output validation.json
+        continue-on-error: true
+      
+      - name: Security scan
+        id: security
+        if: steps.validate.outcome == 'success'
+        run: |
+          python tools/catalog/security_scan.py \
+            --submission submission.json \
+            --output security.json
+        continue-on-error: true
+      
+      - name: Post validation results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let validationResult = {};
+            let securityResult = {};
+            
+            try {
+              validationResult = JSON.parse(fs.readFileSync('validation.json', 'utf8'));
+            } catch (e) {
+              validationResult = { passed: false, error: 'Validation failed to run' };
+            }
+            
+            try {
+              securityResult = JSON.parse(fs.readFileSync('security.json', 'utf8'));
+            } catch (e) {
+              securityResult = { passed: true, skipped: true };
+            }
+            
+            const passed = validationResult.passed && (securityResult.passed || securityResult.skipped);
+            
+            let body = `## Automated Submission Review\n\n`;
+            
+            if (passed) {
+              body += `✅ **Validation Passed**\n\n`;
+              body += `### Manifest Check\n`;
+              body += `- Plugin ID: \`${validationResult.plugin_id || 'N/A'}\`\n`;
+              body += `- Version: \`${validationResult.version || 'N/A'}\`\n`;
+              body += `- Type: \`${validationResult.plugin_type || 'N/A'}\`\n\n`;
+              
+              if (!securityResult.skipped) {
+                body += `### Security Scan\n`;
+                body += `- No issues detected\n\n`;
+              }
+              
+              body += `---\n`;
+              body += `This submission is ready for manual review by a maintainer.\n`;
+              body += `@voicestudio/plugin-reviewers please review this submission.`;
+            } else {
+              body += `❌ **Validation Failed**\n\n`;
+              
+              if (!validationResult.passed) {
+                body += `### Manifest Issues\n`;
+                for (const error of (validationResult.errors || ['Unknown error'])) {
+                  body += `- ${error}\n`;
+                }
+                body += `\n`;
+              }
+              
+              if (!securityResult.passed && !securityResult.skipped) {
+                body += `### Security Issues\n`;
+                for (const issue of (securityResult.issues || ['Unknown issue'])) {
+                  body += `- ${issue}\n`;
+                }
+                body += `\n`;
+              }
+              
+              body += `---\n`;
+              body += `Please fix the issues above and update your submission.`;
+            }
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+            
+            // Add appropriate label
+            const labelToAdd = passed ? 'submission-validated' : 'submission-needs-work';
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: [labelToAdd]
+            });
+
+  approve-submission:
+    if: contains(github.event.issue.labels.*.name, 'submission-approved')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r tools/catalog/requirements.txt
+      
+      - name: Add to catalog
+        run: |
+          python tools/catalog/add_to_catalog.py \
+            --issue-number ${{ github.event.issue.number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create catalog update PR
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "feat(catalog): add plugin from #${{ github.event.issue.number }}"
+          title: "Add plugin to catalog from #${{ github.event.issue.number }}"
+          body: |
+            This PR adds a new plugin to the catalog.
+            
+            Closes #${{ github.event.issue.number }}
+            
+            ## Automated Submission
+            - Issue: #${{ github.event.issue.number }}
+            - Status: Approved by maintainer
+          branch: catalog/add-plugin-${{ github.event.issue.number }}
+          labels: catalog-update

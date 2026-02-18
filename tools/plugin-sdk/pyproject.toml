@@ -1,0 +1,100 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "voicestudio-plugin-sdk"
+version = "1.0.0"
+description = "SDK for developing VoiceStudio plugins with type-safe host API access"
+readme = "README.md"
+license = "MIT"
+authors = [
+    {name = "VoiceStudio Team", email = "plugins@voicestudio.ai"}
+]
+maintainers = [
+    {name = "VoiceStudio Team", email = "plugins@voicestudio.ai"}
+]
+keywords = [
+    "voicestudio",
+    "plugin",
+    "sdk",
+    "audio",
+    "speech",
+    "tts",
+    "stt",
+    "voice"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Typing :: Typed",
+]
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+# Full SDK with protocol support
+protocol = [
+    "pyyaml>=6.0",
+]
+# Development dependencies
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-asyncio>=0.21.0",
+    "mypy>=1.0.0",
+]
+# Documentation generation
+docs = [
+    "mkdocs>=1.4.0",
+    "mkdocs-material>=9.0.0",
+    "mkdocstrings[python]>=0.20.0",
+]
+# All optional dependencies
+all = [
+    "voicestudio-plugin-sdk[protocol,dev,docs]",
+]
+
+[project.urls]
+Homepage = "https://github.com/voicestudio/voicestudio"
+Documentation = "https://docs.voicestudio.ai/plugins/sdk"
+Repository = "https://github.com/voicestudio/voicestudio"
+Changelog = "https://github.com/voicestudio/voicestudio/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/voicestudio/voicestudio/issues"
+
+[project.scripts]
+voicestudio-sdk = "voicestudio_plugin_sdk.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"voicestudio_plugin_sdk" = ["py.typed", "schemas/*.yaml", "schemas/*.json"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]

@@ -4,6 +4,8 @@ Project Page Object for VoiceStudio.
 Provides access to project management functionality.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 

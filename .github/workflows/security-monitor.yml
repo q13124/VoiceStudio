@@ -71,6 +71,43 @@ jobs:
         continue-on-error: true
         run: |
           safety check --json > .buildlogs/security/safety.json 2>&1 || true
+      
+      # GAP-CI-003: Enforce failure on critical pip-audit vulnerabilities
+      - name: Check pip-audit for critical vulnerabilities
+        if: github.event.inputs.fail_on != 'none'
+        run: |
+          if [ -f .buildlogs/security/pip-audit.json ]; then
+            FAIL_LEVEL="${{ github.event.inputs.fail_on || 'critical' }}"
+            VULN_COUNT=$(python -c "
+          import json
+          import sys
+          try:
+              with open('.buildlogs/security/pip-audit.json') as f:
+                  data = json.load(f)
+                  if isinstance(data, list):
+                      # pip-audit returns list of vulnerabilities
+                      vulns = data
+                  else:
+                      vulns = data.get('vulnerabilities', [])
+                  count = 0
+                  for v in vulns:
+                      # Check severity if available
+                      sev = v.get('severity', '').upper()
+                      if sev in ['CRITICAL', 'HIGH']:
+                          count += 1
+                  print(count)
+          except Exception as e:
+              print(f'Error: {e}', file=sys.stderr)
+              print(0)
+          ")
+            if [ "$VULN_COUNT" -gt 0 ]; then
+              echo "::error::Found $VULN_COUNT high/critical vulnerabilities in pip-audit!"
+              exit 1
+            fi
+            echo "No critical vulnerabilities found in pip-audit."
+          else
+            echo "pip-audit.json not found, skipping critical check."
+          fi
           
       - name: Upload Python scan results
         uses: actions/upload-artifact@v4

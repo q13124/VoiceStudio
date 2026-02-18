@@ -3,6 +3,10 @@ VoiceStudio Plugin System.
 
 Gap Analysis Fix: Consolidated plugin system exports.
 
+.. deprecated:: 1.3.0
+   For NEW plugins, use `app.core.plugins_api.Plugin` instead.
+   See ADR-038 for migration guidance. Will be removed in v1.5.0.
+
 This module provides a unified interface to the plugin system.
 Two plugin subsystems exist and are now integrated:
 
@@ -16,8 +20,11 @@ Two plugin subsystems exist and are now integrated:
    - Manifest-based loading
    - Used for runtime plugin loading
 
-Usage:
-    # For creating new plugins, extend the core Plugin class:
+Usage (DEPRECATED - see ADR-038):
+    # For creating new plugins, use the unified Plugin class:
+    from app.core.plugins_api import Plugin
+
+    # Legacy usage (will be removed in v1.5.0):
     from backend.plugins import Plugin, PluginMetadata, PluginState
 
     # For loading plugins at runtime:

@@ -1,0 +1,49 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-02-17T00:00:00Z",
+  "description": "VoiceStudio Plugin Catalog - Community and Official Plugins",
+  "schema_version": "4.0",
+  "categories": [
+    {
+      "id": "text-to-speech",
+      "name": "Text-to-Speech",
+      "description": "Plugins for synthesizing speech from text"
+    },
+    {
+      "id": "speech-to-text",
+      "name": "Speech-to-Text",
+      "description": "Plugins for transcribing audio to text"
+    },
+    {
+      "id": "audio-effects",
+      "name": "Audio Effects",
+      "description": "Plugins for applying effects to audio"
+    },
+    {
+      "id": "audio-enhancement",
+      "name": "Audio Enhancement",
+      "description": "Plugins for improving audio quality"
+    },
+    {
+      "id": "audio-analysis",
+      "name": "Audio Analysis",
+      "description": "Plugins for analyzing audio content"
+    },
+    {
+      "id": "format-conversion",
+      "name": "Format Conversion",
+      "description": "Plugins for converting between audio formats"
+    },
+    {
+      "id": "integration",
+      "name": "Integration",
+      "description": "Plugins for integrating with external services"
+    },
+    {
+      "id": "utility",
+      "name": "Utility",
+      "description": "General utility plugins"
+    }
+  ],
+  "plugins": []
+}

@@ -1,6 +1,6 @@
 # Risk Register
 
-**Last Updated:** 2026-02-02  
+**Last Updated:** 2026-02-18  
 **Owner:** Overseer (Role 0)
 
 This document tracks technical, operational, and organizational risks for VoiceStudio.
@@ -17,6 +17,9 @@ This document tracks technical, operational, and organizational risks for VoiceS
 | RISK-004 | Python dependency conflicts across engines | High | Medium | Venv families strategy (TD-015); per-engine isolation | Open |
 | RISK-005 | Windows App SDK version drift | Low | Medium | Pin SDK version in Directory.Build.props; test upgrades in branch first | Controlled |
 | RISK-006 | Circuit breaker false positives blocking healthy engines | Low | Low | Configurable thresholds; manual reset endpoint; monitoring | Controlled |
+| RISK-014 | Plugin signature verification bypass | Medium | High | Integrated signer.py verification (GAP-PY-007); fallback checks signature file presence | Mitigating |
+| RISK-015 | Deprecated plugin API usage | Medium | Low | Deprecation warnings in schema validator (GAP-ARCH-002); migration guide in ADR-038 | Controlled |
+| RISK-016 | Phase 6 plugin modules not implemented | Low | Low | pytest.skip markers on Phase 6 tests; tracked in master plan | Controlled |
 
 ---
 
@@ -28,6 +31,8 @@ This document tracks technical, operational, and organizational risks for VoiceS
 | RISK-008 | Backend process crash during long synthesis | Low | Medium | Job state persistence (VS-0021); restart recovery; crash artifact capture | Controlled |
 | RISK-009 | Installer fails on clean Windows install | Low | High | Gate H lifecycle tests on clean VMs; WinAppSDK runtime installer bundling | Controlled |
 | RISK-010 | FFmpeg not available on user system | Medium | Medium | Deterministic ffmpeg discovery (VS-0022); bundled fallback; clear error message | Controlled |
+| RISK-017 | Silent exception swallowing hiding errors | Low | Medium | GAP-PY-001 remediation added logging to 50+ handlers; audit complete | Controlled |
+| RISK-018 | Hardcoded paths failing on non-standard Windows installs | Low | Medium | Centralized path_config.py with environment variable overrides (GAP-PY-002) | Controlled |
 
 ---
 

@@ -4,6 +4,7 @@ Page object for Theme Editor panel.
 Provides methods to interact with the Theme Editor for E2E testing.
 """
 
+from __future__ import annotations
 
 from appium.webdriver.common.appiumby import AppiumBy
 from selenium.webdriver.support import expected_conditions as EC

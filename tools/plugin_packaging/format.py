@@ -37,12 +37,14 @@ MANIFEST.json Schema:
 from __future__ import annotations
 
 import json
+import logging
 import zipfile
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+logger = logging.getLogger(__name__)
 
 FORMAT_VERSION = "1.0.0"
 PACKAGE_EXTENSION = ".vspkg"
@@ -64,7 +66,7 @@ class VSPKGManifest:
     total_size: int = 0
     
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "VSPKGManifest":
+    def from_dict(cls, data: dict[str, Any]) -> VSPKGManifest:
         """Create from dictionary."""
         return cls(
             format_version=data.get("format_version", FORMAT_VERSION),
@@ -115,17 +117,14 @@ class VSPKGFormat:
         Returns:
             True if valid package structure
         """
-        if not path.exists() or not path.suffix == PACKAGE_EXTENSION:
+        if not path.exists() or path.suffix != PACKAGE_EXTENSION:
             return False
         
         try:
             with zipfile.ZipFile(path, "r") as zf:
                 names = set(zf.namelist())
                 # Check required files
-                for required in REQUIRED_FILES:
-                    if required not in names:
-                        return False
-                return True
+                return all(required in names for required in REQUIRED_FILES)
         except (zipfile.BadZipFile, Exception):
             return False
     
@@ -145,7 +144,9 @@ class VSPKGFormat:
                 manifest_data = zf.read("MANIFEST.json")
                 data = json.loads(manifest_data.decode("utf-8"))
                 return VSPKGManifest.from_dict(data)
-        except Exception:
+        except Exception as e:
+            # GAP-PY-001: Invalid package, return None
+            logger.debug(f"Failed to read manifest from {path}: {e}")
             return None
     
     @staticmethod
@@ -168,7 +169,9 @@ class VSPKGFormat:
                 plugin_manifest_path = pkg_manifest.plugin_manifest
                 manifest_data = zf.read(plugin_manifest_path)
                 return json.loads(manifest_data.decode("utf-8"))
-        except Exception:
+        except Exception as e:
+            # GAP-PY-001: Invalid package or missing manifest
+            logger.debug(f"Failed to read plugin manifest from {path}: {e}")
             return None
     
     @staticmethod
@@ -192,10 +195,9 @@ class VSPKGFormat:
                     parts = line.split("  ", 1)  # SHA256 format: hash  filename
                     if len(parts) == 2:
                         checksums[parts[1].strip()] = parts[0].strip()
-        except Exception:
-            # SAFETY: Checksums are optional (older packages may not have them).
-            # Return empty dict on any error (missing file, malformed, etc.)
-            pass
+        except Exception as e:
+            # GAP-PY-001: Checksums are optional (older packages may not have them)
+            logger.debug(f"Failed to read checksums from {path}: {e}")
         return checksums
     
     @staticmethod
@@ -212,7 +214,9 @@ class VSPKGFormat:
         try:
             with zipfile.ZipFile(path, "r") as zf:
                 return "SIGNATURE.json" in zf.namelist()
-        except Exception:
+        except Exception as e:
+            # GAP-PY-001: Invalid package
+            logger.debug(f"Failed to check signature in {path}: {e}")
             return False
     
     @staticmethod
@@ -229,7 +233,9 @@ class VSPKGFormat:
         try:
             with zipfile.ZipFile(path, "r") as zf:
                 return zf.namelist()
-        except Exception:
+        except Exception as e:
+            # GAP-PY-001: Invalid package
+            logger.debug(f"Failed to list files in {path}: {e}")
             return []
     
     @staticmethod
@@ -249,7 +255,9 @@ class VSPKGFormat:
             with zipfile.ZipFile(path, "r") as zf:
                 zf.extractall(destination)
             return True
-        except Exception:
+        except Exception as e:
+            # GAP-PY-001: Extraction failed
+            logger.debug(f"Failed to extract {path} to {destination}: {e}")
             return False
     
     @staticmethod
@@ -277,7 +285,9 @@ class VSPKGFormat:
                     zf.extract(filename, destination)
                     return True
                 return False
-        except Exception:
+        except Exception as e:
+            # GAP-PY-001: Extraction failed
+            logger.debug(f"Failed to extract {filename} from {path}: {e}")
             return False
     
     @staticmethod

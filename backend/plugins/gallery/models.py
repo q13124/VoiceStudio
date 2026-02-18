@@ -60,7 +60,7 @@ class CatalogPlugin:
     id: str
     name: str
     description: str
-    category: str  # engine, voice-model, effect, tool
+    category: str  # voice_synthesis, speech_recognition, audio_effects, etc.
     subcategory: str = ""
     author: str = ""
     license: str = ""

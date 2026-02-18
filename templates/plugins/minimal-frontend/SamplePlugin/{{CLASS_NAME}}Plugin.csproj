@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <OutputType>Library</OutputType>
+    <AssemblyName>{{CLASS_NAME}}Plugin</AssemblyName>
+    <RootNamespace>{{CLASS_NAME}}Plugin</RootNamespace>
+    <UseWinUI>true</UseWinUI>
+    <OutputPath>.</OutputPath>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <!-- Reference VoiceStudio Core for plugin interfaces -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\VoiceStudio.Core\VoiceStudio.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\src\VoiceStudio.App\VoiceStudio.App.csproj" />
+  </ItemGroup>
+
+  <!-- WinUI and framework references -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.240927000" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="2.0.9" />
+  </ItemGroup>
+
+</Project>

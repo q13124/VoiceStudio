@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel, Field
 
 from app.core.plugins_api.base import BasePlugin, PluginMetadata
@@ -183,7 +183,7 @@ def amplify_audio(audio: np.ndarray, gain_db: float) -> np.ndarray:
 
 
 def apply_fade(
-    audio: np.ndarray, 
+    audio: np.ndarray,
     sample_rate: int,
     fade_type: str = "in",
     duration_ms: float = 500.0,

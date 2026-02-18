@@ -1,0 +1,1 @@
+voicestudio_plugin_sdk

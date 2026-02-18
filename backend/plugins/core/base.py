@@ -2,10 +2,15 @@
 Plugin Base Classes.
 
 Task 3.3.1: Engine plugin interface and contracts.
+
+.. deprecated:: 1.3.0
+   Use the unified :class:`Plugin` from `app.core.plugins_api` instead.
+   See ADR-038 for migration guidance. Will be removed in v1.5.0.
 """
 
 from __future__ import annotations
 
+import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -104,6 +109,10 @@ class Plugin(ABC):
 
     Plugins extend VoiceStudio's capabilities by providing
     new engines, effects, or integrations.
+
+    .. deprecated:: 1.3.0
+       Use :class:`Plugin` from `app.core.plugins_api` instead.
+       This class will be removed in version 1.5.0. See ADR-038.
     """
 
     def __init__(self, config: dict[str, Any] | None = None):
@@ -113,6 +122,14 @@ class Plugin(ABC):
         Args:
             config: Plugin configuration
         """
+        warnings.warn(
+            f"{self.__class__.__name__} inherits from deprecated "
+            "backend.plugins.core.base.Plugin. "
+            "Migrate to 'from app.core.plugins_api import Plugin'. "
+            "See ADR-038 for guidance. Will be removed in v1.5.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._config = config or {}
         self._state = PluginState.DISCOVERED
         self._error: str | None = None

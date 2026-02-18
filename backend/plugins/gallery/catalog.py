@@ -29,6 +29,9 @@ DEFAULT_CATALOG_URL = "https://voicestudio.github.io/plugins/catalog.json"
 # Cache duration
 CACHE_DURATION = timedelta(hours=4)
 
+# Default request timeout in seconds
+DEFAULT_REQUEST_TIMEOUT = 30
+
 
 class PluginCatalogService:
     """
@@ -45,6 +48,7 @@ class PluginCatalogService:
         self,
         catalog_url: str = DEFAULT_CATALOG_URL,
         cache_dir: Path | None = None,
+        request_timeout: int = DEFAULT_REQUEST_TIMEOUT,
     ):
         """
         Initialize catalog service.
@@ -52,11 +56,13 @@ class PluginCatalogService:
         Args:
             catalog_url: URL to fetch catalog from
             cache_dir: Directory for caching catalog
+            request_timeout: Timeout for HTTP requests in seconds
         """
         self._catalog_url = catalog_url
         self._cache_dir = cache_dir or Path.home() / ".voicestudio" / "cache" / "plugins"
         self._cache_dir.mkdir(parents=True, exist_ok=True)
         self._cache_file = self._cache_dir / "catalog.json"
+        self._request_timeout = request_timeout
 
         self._catalog: PluginCatalog | None = None
         self._last_fetch: datetime | None = None
@@ -154,8 +160,9 @@ class PluginCatalogService:
 
     async def _fetch_remote(self) -> PluginCatalog:
         """Fetch catalog from remote URL."""
-        async with aiohttp.ClientSession() as session:
-            async with session.get(self._catalog_url, timeout=30) as response:
+        timeout = aiohttp.ClientTimeout(total=self._request_timeout)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(self._catalog_url) as response:
                 response.raise_for_status()
                 data = await response.json()
                 return self._parse_catalog(data)

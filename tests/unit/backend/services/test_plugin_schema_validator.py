@@ -4,16 +4,16 @@ Tests for Plugin Schema Validator
 Phase 1: Validates the unified manifest schema validation.
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from backend.services.plugin_schema_validator import (
     PluginSchemaValidator,
+    get_validator,
     validate_plugin_manifest,
     validate_plugin_manifest_file,
-    get_validator,
 )
-
 
 # Valid manifest examples
 VALID_BACKEND_ONLY_MANIFEST = {

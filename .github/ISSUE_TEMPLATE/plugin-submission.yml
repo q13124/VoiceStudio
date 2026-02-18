@@ -1,0 +1,220 @@
+name: Plugin Submission
+description: Submit a plugin to the VoiceStudio Plugin Catalog
+title: "[Plugin Submission] "
+labels: ["plugin-submission"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Plugin Submission Form
+        
+        Thank you for submitting your plugin to the VoiceStudio Catalog!
+        
+        Please fill out all required fields below. Your submission will be automatically
+        validated and reviewed by our team.
+        
+        **Before submitting:**
+        - Ensure your plugin passes `voicestudio-plugin validate`
+        - Sign your package with `voicestudio-plugin sign`
+        - Read the [Marketplace Guide](https://docs.voicestudio.app/developer/PLUGIN_MARKETPLACE_GUIDE.md)
+
+  - type: input
+    id: plugin-id
+    attributes:
+      label: Plugin ID
+      description: The unique identifier for your plugin (reverse domain notation)
+      placeholder: com.yourcompany.plugin-name
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-name
+    attributes:
+      label: Plugin Name
+      description: Human-readable name for your plugin
+      placeholder: My Awesome Plugin
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Semantic version of this release
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: plugin-type
+    attributes:
+      label: Plugin Type
+      description: What type of plugin is this?
+      options:
+        - synthesis
+        - transcription
+        - processing
+        - enhancement
+        - analysis
+        - utility
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe what your plugin does
+      placeholder: |
+        A brief description of your plugin's functionality...
+    validations:
+      required: true
+
+  - type: input
+    id: repository
+    attributes:
+      label: Source Repository
+      description: GitHub repository URL for your plugin
+      placeholder: https://github.com/yourname/your-plugin
+    validations:
+      required: true
+
+  - type: input
+    id: package-url
+    attributes:
+      label: Package URL
+      description: Direct download URL for your signed .vspkg file
+      placeholder: https://github.com/yourname/your-plugin/releases/download/v1.0.0/your-plugin-1.0.0.vspkg
+    validations:
+      required: true
+
+  - type: input
+    id: manifest-url
+    attributes:
+      label: Manifest URL
+      description: Direct URL to your plugin.json manifest (raw GitHub URL)
+      placeholder: https://raw.githubusercontent.com/yourname/your-plugin/main/plugin.json
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: Primary category for your plugin
+      options:
+        - Text-to-Speech
+        - Speech-to-Text
+        - Audio Effects
+        - Audio Enhancement
+        - Audio Analysis
+        - Format Conversion
+        - Integration
+        - Utility
+    validations:
+      required: true
+
+  - type: input
+    id: author-name
+    attributes:
+      label: Author Name
+      description: Your name or organization name
+      placeholder: John Developer
+    validations:
+      required: true
+
+  - type: input
+    id: author-email
+    attributes:
+      label: Author Email
+      description: Contact email for plugin support
+      placeholder: developer@example.com
+    validations:
+      required: true
+
+  - type: input
+    id: homepage
+    attributes:
+      label: Homepage
+      description: Plugin homepage or documentation URL (optional)
+      placeholder: https://my-plugin.example.com
+
+  - type: dropdown
+    id: license
+    attributes:
+      label: License
+      description: License for your plugin
+      options:
+        - MIT
+        - Apache-2.0
+        - GPL-3.0
+        - BSD-3-Clause
+        - ISC
+        - Proprietary
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: permissions
+    attributes:
+      label: Required Permissions
+      description: List the permissions your plugin requires
+      placeholder: |
+        - file_read
+        - network_local
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: requirements
+    attributes:
+      label: Submission Requirements
+      description: Please confirm you have completed the following
+      options:
+        - label: Plugin passes `voicestudio-plugin validate`
+          required: true
+        - label: Package is signed with a valid key
+          required: true
+        - label: I have read and agree to the [Plugin Guidelines](https://docs.voicestudio.app/developer/PLUGIN_MARKETPLACE_GUIDE.md)
+          required: true
+        - label: Plugin does not contain malware or malicious code
+          required: true
+        - label: I have the right to distribute this plugin
+          required: true
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy Declaration
+      description: Does your plugin collect any user data?
+      options:
+        - label: My plugin collects user data (I have provided a privacy policy URL)
+        - label: My plugin does NOT collect any user data
+
+  - type: input
+    id: privacy-policy
+    attributes:
+      label: Privacy Policy URL
+      description: Required if your plugin collects user data
+      placeholder: https://example.com/privacy
+
+  - type: textarea
+    id: changelog
+    attributes:
+      label: Changelog
+      description: What's new in this version?
+      placeholder: |
+        - Added feature X
+        - Fixed bug Y
+        - Improved performance
+
+  - type: textarea
+    id: additional-notes
+    attributes:
+      label: Additional Notes
+      description: Any additional information for reviewers
+      placeholder: |
+        Optional notes for the review team...
