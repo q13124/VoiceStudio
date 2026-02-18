@@ -97,6 +97,7 @@ Use exactly one:
 | VS-0043 | OPEN | S4 Chore | B | Build & Tooling Engineer | BUILD | mypy --strict audit: 5892 errors in backend/ (technical debt baseline) |
 | VS-0044 | DONE | S2 Major | E | Engine Engineer | ENGINE,RUNTIME | Golden-path E2E: API routing fixed (was 404/405), endpoints verified working |
 | VS-0045 | OPEN | S2 Major | E | Engine Engineer | ENGINE | E2E synthesis fails: XTTS engine init + Whisper model loading on Windows |
+| VS-0046 | OPEN | S3 Minor | B | Build & Tooling Engineer | SECURITY | pip-audit: 29 CVEs in dependencies (transformers, keras, pillow, etc.) |
 
 ---
 
@@ -1658,6 +1659,55 @@ Remaining E2E failures are runtime/engine issues tracked in VS-0045.
 
 - E2E test: `tests/e2e/test_golden_path.py`
 - Proof log: `.buildlogs/e2e/golden_path_test_2026-02-18.log`
+
+---
+
+### VS-0046 — pip-audit: 29 CVEs in dependencies (transformers, keras, pillow, etc.)
+
+**State:** OPEN  
+**Severity:** S3 Minor  
+**Gate:** B  
+**Owner role:** Build & Tooling Engineer  
+**Reviewer role:** Overseer  
+**Categories:** SECURITY  
+**Introduced:** 2026-02-18 (v1.0.2-rc1 prep)  
+**Last verified:** 2026-02-18 (Windows 10.0.26200)
+
+**Summary**
+
+pip-audit scan detected 29 vulnerabilities across 7 packages. Most are in ML dependencies that have newer versions available. These are dependency CVEs, not code vulnerabilities.
+
+**Affected Packages**
+
+| Package | Installed | CVEs | Fix Version |
+|---------|-----------|------|-------------|
+| transformers | 4.46.2 | 14 | 4.53.0 |
+| keras | 3.10.0 | 6 | 3.12.0+ |
+| setuptools | 58.1.0 | 3 | 78.1.1 |
+| filelock | 3.19.1 | 2 | 3.20.3 |
+| pillow | 11.3.0 | 1 | 12.1.1 |
+| python-multipart | 0.0.20 | 1 | 0.0.22 |
+| basicsr | 1.4.2 | 1 | (no fix) |
+
+**Proof run**
+
+- Command: `pip-audit`
+- Date: 2026-02-18
+- Exit code: 1 (vulnerabilities found)
+- Total CVEs: 29
+
+**Resolution Plan**
+
+Not blocking v1.0.2-rc1 (S3 Minor). Plan for v1.0.3:
+1. Test compatibility of newer transformers with XTTS/Whisper
+2. Update pillow, python-multipart, filelock (low risk)
+3. Evaluate keras/setuptools updates for side effects
+4. Document basicsr CVE as accepted risk (no fix available)
+
+**Links**
+
+- pip-audit documentation: https://pypi.org/project/pip-audit/
+- Related: requirements.txt
 
 ---
 
