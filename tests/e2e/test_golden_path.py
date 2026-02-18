@@ -76,7 +76,7 @@ class GoldenPathTestData:
 def backend_health():
     """Verify backend is healthy before running golden path test."""
     try:
-        response = requests.get(f"{API_BASE_URL}/health", timeout=5)
+        response = requests.get(f"{API_BASE_URL}/api/health", timeout=5)
         if response.status_code != 200:
             pytest.skip(f"Backend unhealthy: status {response.status_code}")
         return response.json()
@@ -114,13 +114,23 @@ def test_audio_file():
         
         # Save to temp file
         temp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-        wav.write(temp_file.name, sample_rate, audio)
+        temp_path = temp_file.name
+        temp_file.close()  # Close before writing to avoid permission issues
+        wav.write(temp_path, sample_rate, audio)
         
-        logger.info(f"Generated test audio: {temp_file.name}")
-        yield temp_file.name
+        logger.info(f"Generated test audio: {temp_path}")
+        yield temp_path
         
-        # Cleanup
-        os.unlink(temp_file.name)
+        # Cleanup with retry for Windows file locking
+        import time
+        for attempt in range(3):
+            try:
+                os.unlink(temp_path)
+                break
+            except PermissionError:
+                if attempt < 2:
+                    time.sleep(0.5)
+                # Ignore cleanup failure on last attempt
     except ImportError:
         pytest.skip("scipy not available for audio generation")
 
@@ -169,10 +179,12 @@ class TestGoldenPath:
                 "tags": ["golden-path", "test"]
             }
             
+            # Use library/assets/upload endpoint for audio import
+            # The /audio/* routes are for analysis, not uploads
             response = requests.post(
-                f"{API_BASE_URL}/audio/upload",
+                f"{API_BASE_URL}/api/library/assets/upload",
                 files=files,
-                data=data,
+                data={"folder_id": None, "tags": ",".join(data.get("tags", []))},
                 timeout=TIMEOUT_SECONDS
             )
         
@@ -215,9 +227,9 @@ class TestGoldenPath:
             "word_timestamps": False
         }
         
-        # POST to /api/transcribe/ (prefix is "transcribe" not "transcription")
+        # POST to /api/transcribe/ (prefix is "/api/transcribe")
         response = requests.post(
-            f"{API_BASE_URL}/transcribe/",
+            f"{API_BASE_URL}/api/transcribe/",
             json=transcription_request,
             timeout=TIMEOUT_SECONDS
         )
@@ -277,7 +289,7 @@ class TestGoldenPath:
         }
         
         profile_response = requests.post(
-            f"{API_BASE_URL}/profiles",
+            f"{API_BASE_URL}/api/profiles",
             json=profile_request,
             timeout=TIMEOUT_SECONDS
         )
@@ -304,7 +316,7 @@ class TestGoldenPath:
                 }
                 
                 preprocess_response = requests.post(
-                    f"{API_BASE_URL}/profiles/{profile_id}/preprocess-reference",
+                    f"{API_BASE_URL}/api/profiles/{profile_id}/preprocess-reference",
                     json=preprocess_request,
                     timeout=TIMEOUT_SECONDS
                 )
@@ -350,7 +362,7 @@ class TestGoldenPath:
         }
         
         response = requests.post(
-            f"{API_BASE_URL}/voice/synthesize",
+            f"{API_BASE_URL}/api/voice/synthesize",
             json=synthesis_request,
             timeout=TIMEOUT_SECONDS
         )
@@ -460,7 +472,7 @@ class TestGoldenPath:
         
         while time.time() - start_time < timeout:
             response = requests.get(
-                f"{API_BASE_URL}/jobs/{job_id}",
+                f"{API_BASE_URL}/api/jobs/{job_id}",
                 timeout=10
             )
             
