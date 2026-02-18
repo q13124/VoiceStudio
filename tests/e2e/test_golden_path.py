@@ -445,7 +445,7 @@ class TestGoldenPath:
         else:
             # If no URL, check audio_id was returned
             validations.append(
-                ("audio_id present", bool(golden_path_data.synthesized_audio_id), 
+                ("audio_id present", bool(golden_path_data.synthesized_audio_id),
                  f"id={golden_path_data.synthesized_audio_id}")
             )
         
