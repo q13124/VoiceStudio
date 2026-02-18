@@ -301,6 +301,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
 | **Release Notes (Main)** | `docs/release/RELEASE_NOTES.md` | 2026-02-16 | Moved from root (GAP-DOC-002). Primary release notes document. |
+| **v1.0.2 Release Notes** | `docs/release/RELEASE_NOTES_v1.0.2.md` | 2026-02-18 | Plugin system infrastructure, 17+ architectural gaps resolved, 8 bundled plugins. RC1 release. |
 | **v1.0.1 Release Notes** | `docs/release/RELEASE_NOTES_v1.0.1.md` | 2026-02-05 | Phase 7 Production Readiness release. |
 
 ## Overseer Tooling
