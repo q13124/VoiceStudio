@@ -23,7 +23,11 @@
     "**/.mypy_cache/**": true,
     "**/__pycache__/**": true,
     "**/bin/**": true,
-    "**/obj/**": true
+    "**/obj/**": true,
+    "**/runtime/external/**": true,
+    "**/.venv/**": true,
+    "**/temp/**": true,
+    "**/models/**": true
   },
   // Python settings
   "python.defaultInterpreterPath": "${workspaceFolder}\\backend\\.venv\\Scripts\\python.exe",
@@ -72,7 +76,10 @@
     "**/.mypy_cache": true,
     "**/__pycache__": true,
     "**/.venv": true,
-    "**/venv": true
+    "**/venv": true,
+    "**/runtime/external": true,
+    "**/temp": true,
+    "**/models": true
   },
   // Logging settings (addresses rpcFileLoggerFolder warning)
   "log.output.level": "info",
@@ -101,6 +108,18 @@
     "editor.tabSize": 2
   },
   "markdown.validate.enabled": true,
+  // Git settings — disable aggressive scanning to prevent extension host crash
+  "git.enabled": false,
+  "git.autorefresh": false,
+  "git.decorations.enabled": false,
+  "git.fetchOnPull": false,
+  "git.pruneOnFetch": false,
+  "git.autofetch": false,
+  "git.confirmSync": false,
+  "git.openDiffOnClick": false,
+  "git.scanRepositories": [],
+  "git.repositoryScanMaxDepth": 0,
+  "scm.diffDecorations": "none",
   "git.ignoreLimitWarning": true,
   "cSpell.words": [
     "Coqui"

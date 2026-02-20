@@ -104,3 +104,7 @@ runtime/external/deepfacelab_2025/
 
 # Models directory (downloaded at runtime)
 models/
+
+# OpenMemory - IDE/Assistant specific rules
+.cursor\rules\openmemory.mdc
+AGENTS.md
