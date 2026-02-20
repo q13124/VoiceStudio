@@ -276,7 +276,7 @@ async def compare_embeddings(request: EmbeddingCompareRequest):
     # Calculate cosine similarity
     import math
 
-    dot_product = sum(a * b for a, b in zip(emb1.vector, emb2.vector, strict=False))
+    dot_product = sum(a * b for a, b in zip(emb1.vector, emb2.vector))
     magnitude1 = math.sqrt(sum(a * a for a in emb1.vector))
     magnitude2 = math.sqrt(sum(a * a for a in emb2.vector))
 
@@ -287,7 +287,7 @@ async def compare_embeddings(request: EmbeddingCompareRequest):
     )
 
     # Calculate Euclidean distance
-    distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(emb1.vector, emb2.vector, strict=False)))
+    distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(emb1.vector, emb2.vector)))
 
     return EmbeddingSimilarity(
         embedding_id_1=request.embedding_id_1,

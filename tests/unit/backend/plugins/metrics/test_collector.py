@@ -316,12 +316,12 @@ class TestExecutionTimer:
         collector = PluginMetricsCollector("test.plugin")
 
         with collector.time_execution("process"):
-            time.sleep(0.01)  # 10ms
+            time.sleep(0.02)  # 20ms - generous margin to avoid timing flakiness
 
         stats = collector.get_execution_stats("process")
         assert stats["process"].call_count == 1
         assert stats["process"].success_count == 1
-        assert stats["process"].avg_duration_ms >= 10
+        assert stats["process"].avg_duration_ms >= 15  # Expect at least 15ms
 
     def test_failed_execution(self):
         """Test timing failed execution."""

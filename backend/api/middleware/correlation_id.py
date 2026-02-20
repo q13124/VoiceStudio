@@ -84,10 +84,37 @@ class CorrelationIdFilter(logging.Filter):
     """
 
     def filter(self, record: logging.LogRecord) -> bool:
-        record.correlation_id = get_correlation_id() or "no-correlation-id"
-        record.trace_id = get_trace_id() or "N/A"
-        record.span_id = get_span_id() or "N/A"
+        # Always set these attributes to avoid KeyError in formatters
+        if not hasattr(record, 'correlation_id'):
+            record.correlation_id = get_correlation_id() or "no-correlation-id"
+        if not hasattr(record, 'trace_id'):
+            record.trace_id = get_trace_id() or "N/A"
+        if not hasattr(record, 'span_id'):
+            record.span_id = get_span_id() or "N/A"
         return True
+
+
+def ensure_correlation_attributes(record: logging.LogRecord) -> None:
+    """Ensure correlation attributes exist on a log record (for test contexts)."""
+    if not hasattr(record, 'correlation_id'):
+        record.correlation_id = "no-correlation-id"
+    if not hasattr(record, 'trace_id'):
+        record.trace_id = "N/A"
+    if not hasattr(record, 'span_id'):
+        record.span_id = "N/A"
+
+
+# Monkey-patch logging.LogRecord factory to ensure attributes always exist
+_original_log_record_factory = logging.getLogRecordFactory()
+
+
+def _safe_log_record_factory(*args, **kwargs):
+    record = _original_log_record_factory(*args, **kwargs)
+    ensure_correlation_attributes(record)
+    return record
+
+
+logging.setLogRecordFactory(_safe_log_record_factory)
 
 
 class CorrelationIdMiddleware(BaseHTTPMiddleware):

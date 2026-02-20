@@ -22,7 +22,7 @@ namespace VoiceStudio.App.Services
       // Panel 1: Text-Based Speech Editor (Pro)
       registry.Register(new PanelDescriptor
       {
-        PanelId = "text-speech-editor",
+        PanelId = "TextSpeechEditor",
         DisplayName = "Text Speech Editor",
         Region = PanelRegion.Center,
         ViewType = typeof(TextSpeechEditorView),
@@ -32,7 +32,7 @@ namespace VoiceStudio.App.Services
       // Panel 2: Prosody & Phoneme Control (Advanced)
       registry.Register(new PanelDescriptor
       {
-        PanelId = "prosody",
+        PanelId = "Prosody",
         DisplayName = "Prosody & Phoneme Control",
         Region = PanelRegion.Center,
         ViewType = typeof(ProsodyView),
@@ -42,7 +42,7 @@ namespace VoiceStudio.App.Services
       // Panel 3: Spatial Audio (Pro)
       registry.Register(new PanelDescriptor
       {
-        PanelId = "spatial-audio",
+        PanelId = "SpatialAudio",
         DisplayName = "Spatial Audio",
         Region = PanelRegion.Right,
         ViewType = typeof(SpatialAudioView),
@@ -52,7 +52,7 @@ namespace VoiceStudio.App.Services
       // Panel 4: AI Mixing & Mastering Assistant (Pro)
       registry.Register(new PanelDescriptor
       {
-        PanelId = "ai-mixing-mastering",
+        PanelId = "AIMixingMastering",
         DisplayName = "AI Mixing & Mastering",
         Region = PanelRegion.Right,
         ViewType = typeof(AIMixingMasteringView),
@@ -62,7 +62,7 @@ namespace VoiceStudio.App.Services
       // Panel 5: Voice Style Transfer (Pro)
       registry.Register(new PanelDescriptor
       {
-        PanelId = "voice-style-transfer",
+        PanelId = "VoiceStyleTransfer",
         DisplayName = "Voice Style Transfer",
         Region = PanelRegion.Center,
         ViewType = typeof(VoiceStyleTransferView),
@@ -72,7 +72,7 @@ namespace VoiceStudio.App.Services
       // Panel 6: Speaker Embedding Explorer (Technical)
       registry.Register(new PanelDescriptor
       {
-        PanelId = "embedding-explorer",
+        PanelId = "EmbeddingExplorer",
         DisplayName = "Speaker Embedding Explorer",
         Region = PanelRegion.Right,
         ViewType = typeof(EmbeddingExplorerView),
@@ -82,7 +82,7 @@ namespace VoiceStudio.App.Services
       // Panel 7: AI Production Assistant (Meta)
       registry.Register(new PanelDescriptor
       {
-        PanelId = "ai-production-assistant",
+        PanelId = "AIProductionAssistant",
         DisplayName = "AI Production Assistant",
         Region = PanelRegion.Right,
         ViewType = typeof(AIProductionAssistantView),
@@ -92,7 +92,7 @@ namespace VoiceStudio.App.Services
       // Panel 8: Pronunciation Lexicon (Advanced)
       registry.Register(new PanelDescriptor
       {
-        PanelId = "pronunciation-lexicon",
+        PanelId = "PronunciationLexicon",
         DisplayName = "Pronunciation Lexicon",
         Region = PanelRegion.Right,
         ViewType = typeof(PronunciationLexiconView),
@@ -102,7 +102,7 @@ namespace VoiceStudio.App.Services
       // Panel 9: Voice Morphing/Blending (Pro)
       registry.Register(new PanelDescriptor
       {
-        PanelId = "voice-morphing-blending",
+        PanelId = "VoiceMorphingBlending",
         DisplayName = "Voice Morphing/Blending",
         Region = PanelRegion.Center,
         ViewType = typeof(VoiceMorphingBlendingView),
@@ -112,7 +112,7 @@ namespace VoiceStudio.App.Services
       // Panel 10: Plugin Gallery
       registry.Register(new PanelDescriptor
       {
-        PanelId = "plugin-gallery",
+        PanelId = "PluginGallery",
         DisplayName = "Plugin Gallery",
         Region = PanelRegion.Center,
         ViewType = typeof(PluginGalleryView),
@@ -122,11 +122,10 @@ namespace VoiceStudio.App.Services
       // Panel 11: Theme Editor
       registry.Register(new PanelDescriptor
       {
-        PanelId = "theme-editor",
+        PanelId = "ThemeEditor",
         DisplayName = "Theme Editor",
         Region = PanelRegion.Right,
-        ViewType = typeof(ThemeEditorView),
-        ViewModelType = typeof(ThemeEditorViewModel)
+        ViewType = typeof(ThemeEditorView)
       });
     }
   }

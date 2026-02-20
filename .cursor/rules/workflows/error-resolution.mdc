@@ -105,15 +105,25 @@ Every task involving code modification MUST follow this error lifecycle:
 - Extends DoD with explicit error resolution requirement
 - Proof must show zero errors in modified scope
 
-## Error Deferral (When Acceptable)
+## Error Deferral (Severely Restricted)
 
-Deferring an error is allowed ONLY when:
-1. Error is pre-existing (not introduced by current work)
-2. Error is out of scope for current task
-3. Error is logged in Quality Ledger with owner/priority
-4. Current changes do not worsen the error
+**IMPORTANT**: The `no-deferral-on-encounter.mdc` rule supersedes prior deferral allowances.
 
-**Format**: `[DEFERRED] Issue description → Ledger ID VS-XXXX`
+Pre-existing errors are **NO LONGER** automatically deferrable. When you encounter an issue — pre-existing or new — you own it.
+
+Deferral is now allowed ONLY when ALL of these conditions are met:
+1. The issue requires architectural decision (ADR-level)
+2. The issue is cross-cutting (affects multiple subsystems beyond current scope)
+3. The issue is blocked by external dependency, access, or information
+4. You have documented the issue fully (symptom, root cause, reproduction)
+5. You have created a HIGH priority tracked issue
+6. You have assigned yourself as owner with a specific deadline
+
+**This is escalation with accountability, not deferral.**
+
+**Format**: `[ESCALATED] Issue description → Ledger ID VS-XXXX → Owner: [you] → Deadline: [date]`
+
+See `no-deferral-on-encounter.mdc` for the full governing principle.
 
 ## Enforcement
 

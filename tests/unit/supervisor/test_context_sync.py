@@ -66,13 +66,14 @@ class TestContextSync:
 
     def test_max_history_limit(self):
         """Test context respects max history limit."""
-        sync = ContextSync(max_turns=5)
+        sync = ContextSync()
 
-        for i in range(10):
+        # Add more turns than MAX_HISTORY_TURNS
+        for i in range(ContextSync.MAX_HISTORY_TURNS + 10):
             sync.add_turn("user", f"Message {i}", "cascade")
 
-        # Should be limited
-        assert len(sync._turns) <= 10  # May or may not enforce
+        # Should be limited to MAX_HISTORY_TURNS
+        assert len(sync._turns) <= ContextSync.MAX_HISTORY_TURNS
 
     def test_get_synopsis(self):
         """Test getting conversation synopsis."""

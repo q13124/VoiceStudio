@@ -1,10 +1,11 @@
 from collections.abc import Callable, Hashable
-from typing import Any, SupportsInt, TypeAlias, TypeVar
+from typing import Any, SupportsInt, TypeVar
+from typing_extensions import TypeAlias
 
 _T = TypeVar("_T")
 _Reduce: TypeAlias = tuple[Callable[..., _T], tuple[Any, ...]] | tuple[Callable[..., _T], tuple[Any, ...], Any | None]
 
-__all__ = ["add_extension", "clear_extension_cache", "constructor", "pickle", "remove_extension"]
+__all__ = ["pickle", "constructor", "add_extension", "remove_extension", "clear_extension_cache"]
 
 def pickle(
     ob_type: type[_T],

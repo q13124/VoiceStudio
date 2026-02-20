@@ -1,4 +1,4 @@
-from typing import TypeAlias
+from typing_extensions import TypeAlias
 
 _VersionInfo: TypeAlias = tuple[int, int, int, str, int]
 
@@ -22,15 +22,15 @@ annotations: _Feature
 all_feature_names: list[str]  # undocumented
 
 __all__ = [
-    "absolute_import",
     "all_feature_names",
-    "annotations",
-    "barry_as_FLUFL",
+    "absolute_import",
     "division",
-    "generator_stop",
     "generators",
     "nested_scopes",
     "print_function",
     "unicode_literals",
     "with_statement",
+    "barry_as_FLUFL",
+    "generator_stop",
+    "annotations",
 ]

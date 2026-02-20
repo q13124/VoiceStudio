@@ -71,7 +71,7 @@ class DatabaseTestContext:
         """Execute query and return results as list of dicts."""
         cursor = self.connection.execute(sql, params)
         columns = [desc[0] for desc in cursor.description]
-        return [dict(zip(columns, row, strict=False)) for row in cursor.fetchall()]
+        return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
     def query_one(self, sql: str, params: tuple = ()) -> dict[str, Any] | None:
         """Execute query and return single result or None."""

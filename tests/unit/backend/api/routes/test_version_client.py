@@ -52,7 +52,8 @@ class TestCompatibilityEndpoint:
 
         data = response.json()
         assert data["compatible"] is True
-        assert data["server_version"] == "v2"
+        # Server returns its own version (v3), not the client's requested version
+        assert data["server_version"] == "v3"
         assert "v2" in data["supported_versions"]
 
     def test_compatibility_with_v1_header_is_compatible(self, client):

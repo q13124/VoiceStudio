@@ -249,7 +249,7 @@ class EngineEnsemble:
         # Filter successful results
         successful = [
             (audio, engine_id)
-            for audio, engine_id in zip(results, engine_ids, strict=False)
+            for audio, engine_id in zip(results, engine_ids)
             if audio is not None
         ]
 

@@ -10,7 +10,7 @@ Tests speech-to-text transcription workflows:
 
 Requires:
 - WinAppDriver running
-- Backend running on port 8001
+- Backend running on port 8000
 - VoiceStudio application built
 - At least one STT engine available
 """
@@ -34,7 +34,7 @@ from tracing.workflow_tracer import WorkflowTracer
 from fixtures import get_test_audio_path
 
 # Test configuration
-BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8001")
+BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8000")
 OUTPUT_DIR = Path(os.getenv("VOICESTUDIO_OUTPUT_DIR", ".buildlogs/validation"))
 TRACE_ENABLED = os.getenv("VOICESTUDIO_TRACE_ENABLED", "1") == "1"
 SCREENSHOTS_ENABLED = os.getenv("VOICESTUDIO_SCREENSHOTS_ENABLED", "1") == "1"

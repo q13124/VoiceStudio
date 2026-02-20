@@ -129,7 +129,7 @@ class ONNXInferenceEngine:
             outputs = self.session.run(self.output_names, ort_inputs)
 
             # Convert to dictionary
-            result = dict(zip(self.output_names, outputs, strict=False))
+            result = dict(zip(self.output_names, outputs))
 
             return result
 

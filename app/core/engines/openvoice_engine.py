@@ -1104,7 +1104,7 @@ class OpenVoiceEngine(EngineProtocol):
 
         # Sort by position
         sorted_pauses = sorted(
-            zip(pause_positions, pause_durations, strict=False), key=lambda x: x[0]
+            zip(pause_positions, pause_durations), key=lambda x: x[0]
         )
 
         result = audio.copy()

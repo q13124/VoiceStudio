@@ -325,7 +325,7 @@ class OptimizedAudioPipeline:
         if output_dir:
             try:
                 import soundfile as sf
-                for idx, (file_path, processed_audio) in enumerate(zip(file_paths, processed, strict=False)):
+                for idx, (file_path, processed_audio) in enumerate(zip(file_paths, processed)):
                     if processed_audio is not None:
                         output_path = output_dir / Path(file_path).name
                         sf.write(str(output_path), processed_audio.T, self.sample_rate)

@@ -270,7 +270,7 @@ class ParameterOptimizer:
         from itertools import product
 
         for combination in product(*param_values):
-            param_set = dict(zip(param_names, combination, strict=False))
+            param_set = dict(zip(param_names, combination))
             param_sets.append(param_set)
 
         return param_sets

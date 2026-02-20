@@ -16,7 +16,7 @@ class TestIntentBuffer:
     def test_initialization(self):
         """Test buffer initializes empty."""
         buffer = IntentBuffer()
-        assert len(buffer._utterances) == 0
+        assert len(buffer._buffer) == 0
 
     def test_add_utterance(self):
         """Test adding an utterance to the buffer."""
@@ -26,7 +26,7 @@ class TestIntentBuffer:
             interruption_type="cooperative",
         )
 
-        assert len(self.buffer._utterances) == 1
+        assert len(self.buffer._buffer) == 1
 
     def test_add_multiple_utterances(self):
         """Test adding multiple utterances."""
@@ -34,7 +34,7 @@ class TestIntentBuffer:
         self.buffer.add(text="Second", audio_energy=0.6)
         self.buffer.add(text="Third", audio_energy=0.5)
 
-        assert len(self.buffer._utterances) == 3
+        assert len(self.buffer._buffer) == 3
 
     def test_flush_returns_combined_text(self):
         """Test flush returns combined text from all utterances."""
@@ -51,7 +51,7 @@ class TestIntentBuffer:
         self.buffer.add(text="Test", audio_energy=0.5)
         self.buffer.flush()
 
-        assert len(self.buffer._utterances) == 0
+        assert len(self.buffer._buffer) == 0
 
     def test_flush_empty_buffer_returns_empty(self):
         """Test flush on empty buffer returns empty string."""
@@ -64,24 +64,24 @@ class TestIntentBuffer:
         self.buffer.add(text="Test", audio_energy=0.5)
         self.buffer.clear()
 
-        assert len(self.buffer._utterances) == 0
+        assert len(self.buffer._buffer) == 0
 
-    def test_is_empty(self):
-        """Test is_empty property."""
-        assert self.buffer.is_empty()
+    def test_has_content(self):
+        """Test has_content property."""
+        assert not self.buffer.has_content()
 
         self.buffer.add(text="Test", audio_energy=0.5)
-        assert not self.buffer.is_empty()
+        assert self.buffer.has_content()
 
     def test_max_buffer_size(self):
         """Test buffer respects max size limit."""
-        buffer = IntentBuffer(max_size=3)
+        buffer = IntentBuffer()
 
-        for i in range(10):
+        for i in range(30):
             buffer.add(text=f"Message {i}", audio_energy=0.5)
 
-        # Should be limited to max_size
-        assert len(buffer._utterances) <= 3
+        # Should be limited to MAX_BUFFER_SIZE (20)
+        assert len(buffer._buffer) <= IntentBuffer.MAX_BUFFER_SIZE
 
     def test_buffered_utterance_dataclass(self):
         """Test BufferedUtterance dataclass."""
@@ -98,20 +98,19 @@ class TestIntentBuffer:
         assert utterance.timestamp == 1000.0
 
     def test_get_last_utterance(self):
-        """Test getting the last utterance."""
+        """Test getting the last utterance via _buffer[-1]."""
         self.buffer.add(text="First", audio_energy=0.4)
         self.buffer.add(text="Last", audio_energy=0.6)
 
-        last = self.buffer.get_last()
+        last = self.buffer._buffer[-1]
 
         assert last is not None
         assert last.text == "Last"
 
     def test_get_last_empty_buffer(self):
-        """Test getting last from empty buffer returns None."""
-        last = self.buffer.get_last()
-
-        assert last is None
+        """Test getting last from empty buffer."""
+        # Empty buffer has no items
+        assert len(self.buffer._buffer) == 0
 
     def test_utterances_ordered_by_time(self):
         """Test utterances maintain order."""

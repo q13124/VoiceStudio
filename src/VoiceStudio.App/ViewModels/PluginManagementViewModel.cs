@@ -76,8 +76,8 @@ namespace VoiceStudio.App.ViewModels
     
     private void OnPluginStateChanged(object? sender, PluginStateChangedEventArgs e)
     {
-      // Update UI on state change from WebSocket
-      Dispatcher.TryEnqueue(() =>
+      // Update UI on state change from WebSocket (or synchronously in test context)
+      TryDispatch(() =>
       {
         if (e.WasRemoved)
         {
@@ -104,7 +104,7 @@ namespace VoiceStudio.App.ViewModels
     
     private void OnSyncError(object? sender, PluginSyncErrorEventArgs e)
     {
-      Dispatcher.TryEnqueue(() =>
+      TryDispatch(() =>
       {
         ErrorMessage = e.Error;
       });

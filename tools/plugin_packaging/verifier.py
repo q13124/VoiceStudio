@@ -327,8 +327,8 @@ class PluginVerifier:
                     result["errors"].append("Checksums file has been modified")
                     return result
                 
-                # Verify files hash
-                files = sorted(zf.namelist())
+                # Verify files hash (excluding SIGNATURE.json as it was added after signing)
+                files = sorted(f for f in zf.namelist() if f != "SIGNATURE.json")
                 files_hash = hashlib.sha256(
                     "\n".join(files).encode("utf-8")
                 ).hexdigest()

@@ -5,7 +5,7 @@ from socket import _Address
 from typing import Any
 
 # Keep asyncio.__all__ updated with any changes to __all__ here
-__all__ = ("BaseTransport", "DatagramTransport", "ReadTransport", "SubprocessTransport", "Transport", "WriteTransport")
+__all__ = ("BaseTransport", "ReadTransport", "WriteTransport", "Transport", "DatagramTransport", "SubprocessTransport")
 
 class BaseTransport:
     __slots__ = ("_extra",)
@@ -53,5 +53,5 @@ class SubprocessTransport(BaseTransport):
     def kill(self) -> None: ...
 
 class _FlowControlMixin(Transport):
-    __slots__ = ("_high_water", "_loop", "_low_water", "_protocol_paused")
+    __slots__ = ("_loop", "_protocol_paused", "_high_water", "_low_water")
     def __init__(self, extra: Mapping[str, Any] | None = None, loop: AbstractEventLoop | None = None) -> None: ...

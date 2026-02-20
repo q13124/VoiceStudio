@@ -686,7 +686,7 @@ class ESpeakNGEngine(EngineProtocol):
 
             with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
                 batch_results = list(
-                    executor.map(synthesize_single, zip(batch_texts, batch_outputs, strict=False))
+                    executor.map(synthesize_single, zip(batch_texts, batch_outputs))
                 )
             results.extend(batch_results)
 

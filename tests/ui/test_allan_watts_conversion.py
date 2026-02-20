@@ -11,7 +11,7 @@ Tests audio format conversion capabilities:
 
 Requirements:
 - WinAppDriver running on port 4723
-- Backend running on port 8001
+- Backend running on port 8000
 - VoiceStudio application built
 """
 
@@ -40,7 +40,7 @@ from tracing.api_monitor import APIMonitor
 from tracing.workflow_tracer import WorkflowTracer
 
 # Configuration
-BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8001")
+BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8000")
 OUTPUT_DIR = Path(os.getenv("VOICESTUDIO_OUTPUT_DIR", ".buildlogs/validation"))
 SCREENSHOTS_ENABLED = os.getenv("VOICESTUDIO_SCREENSHOTS_ENABLED", "1") == "1"
 

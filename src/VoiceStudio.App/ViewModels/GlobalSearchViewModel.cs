@@ -104,7 +104,8 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        await HandleErrorAsync(ex, "Search");
+        ErrorMessage = $"Search failed: {ex.Message}";
+        await HandleErrorAsync(ex, "Search", showDialog: false);
         Results.Clear();
         FilteredResults.Clear();
         TotalResults = 0;

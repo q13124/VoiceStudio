@@ -191,7 +191,7 @@ class HealthChecker:
 
         check_results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        for name, result in zip(self.checks.keys(), check_results, strict=False):
+        for name, result in zip(self.checks.keys(), check_results):
             if isinstance(result, Exception):
                 results[name] = HealthCheckResult(
                     name=name,

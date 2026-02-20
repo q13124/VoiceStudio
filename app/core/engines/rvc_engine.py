@@ -1128,7 +1128,7 @@ class RVCEngine(EngineProtocol):
 
             # Return results with similarity scores
             results = []
-            for idx, dist in zip(indices[0], distances[0], strict=False):
+            for idx, dist in zip(indices[0], distances[0]):
                 if idx < len(self._faiss_embedding_ids):
                     embedding_id = self._faiss_embedding_ids[idx]
                     # Convert L2 distance to similarity (lower distance = higher similarity)

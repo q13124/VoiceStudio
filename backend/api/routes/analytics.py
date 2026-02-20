@@ -724,7 +724,7 @@ async def visualize_quality_metrics(
                 else:
                     # Fallback to matplotlib
                     residuals = [
-                        actual - pred for actual, pred in zip(mos_scores, predicted, strict=False)
+                        actual - pred for actual, pred in zip(mos_scores, predicted)
                     ]
                     plt.figure(figsize=(10, 6))
                     plt.scatter(predicted, residuals, alpha=0.6)

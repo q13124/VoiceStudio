@@ -19,6 +19,12 @@
   "files.watcherExclude": {
     "**/.git/objects/**": true,
     "**/.git/subtree-cache/**": true,
+    "**/installer/runtime/**": true,
+    "**/tools/chatgpt-localfiles/.venv/**": true,
+    "**/runtime/external/**": true,
+    "**/.venv/**": true,
+    "**/temp/**": true,
+    "**/models/**": true,
     "**/node_modules/**": true,
     "**/.mypy_cache/**": true,
     "**/__pycache__/**": true,
@@ -72,7 +78,13 @@
     "**/.mypy_cache": true,
     "**/__pycache__": true,
     "**/.venv": true,
-    "**/venv": true
+    "**/venv": true,
+    "**/installer/runtime": true,
+    "**/installer/runtime": true,
+    "**/tools/chatgpt-localfiles/.venv": true,
+    "**/runtime/external": true,
+    "**/temp": true,
+    "**/models": true
   },
   // Logging settings (addresses rpcFileLoggerFolder warning)
   "log.output.level": "info",
@@ -102,6 +114,17 @@
   },
   "markdown.validate.enabled": true,
   "git.ignoreLimitWarning": true,
+  "git.enabled": false,
+  "git.autorefresh": false,
+  "git.decorations.enabled": false,
+  "git.fetchOnPull": false,
+  "git.pruneOnFetch": false,
+  "git.autofetch": false,
+  "git.confirmSync": false,
+  "git.openDiffOnClick": false,
+  "git.scanRepositories": [],
+  "git.repositoryScanMaxDepth": 0,
+  "scm.diffDecorations": "none",
   "cSpell.words": [
     "Coqui"
   ],
