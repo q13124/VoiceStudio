@@ -278,7 +278,7 @@ class HealthAggregationService:
             
             # Map results back to sources
             task_sources = [s for s in sources if s not in results]
-            for source, check_result in zip(task_sources, check_results):
+            for source, check_result in zip(task_sources, check_results, strict=False):
                 if isinstance(check_result, BaseException):
                     result_data: dict[str, Any] = {
                         "status": "unhealthy",

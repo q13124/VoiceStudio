@@ -26,22 +26,9 @@
         <Border Grid.Row="0" 
                 Background="{StaticResource VSQ.Panel.Background.HeaderBrush}" 
                 Padding="{StaticResource VSQ.Spacing.Medium}">
-            <Grid>
-                <TextBlock Text="Timeline" 
-                           FontSize="{StaticResource VSQ.FontSize.Title}" 
-                           Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
-                
-                <!-- Phase 3 Fix 4: Guidance InfoBar -->
-                <InfoBar x:Name="GuidanceInfoBar"
-                         IsOpen="{x:Bind ViewModel.ShowGuidanceInfoBar, Mode=OneWay}"
-                         Severity="Informational"
-                         Title="Getting Started"
-                         Message="{x:Bind ViewModel.GuidanceMessage, Mode=OneWay}"
-                         IsClosable="True"
-                         HorizontalAlignment="Stretch"
-                         VerticalAlignment="Top"
-                         Margin="80,0,0,0" />
-            </Grid>
+            <TextBlock Text="Timeline" 
+                       FontSize="{StaticResource VSQ.FontSize.Title}" 
+                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}" />
         </Border>
 
         <!-- Transport Bar -->
@@ -60,7 +47,7 @@
                         <FontIcon Glyph="&#xE71A;" FontSize="16" FontFamily="Segoe Fluent Icons" />
                     </Button>
                     <Button MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Record">
-                        <FontIcon Glyph="&#xE7C8;" FontSize="16" Foreground="{StaticResource VSQ.Accent.RedBrush}" FontFamily="Segoe Fluent Icons" />
+                        <FontIcon Glyph="&#xE7C8;" FontSize="16" Foreground="#FF4060" FontFamily="Segoe Fluent Icons" />
                     </Button>
                     <Rectangle Width="1" Height="24" Fill="{StaticResource VSQ.Panel.BorderBrush}" Margin="4,0" />
                     <ToggleButton MinWidth="{StaticResource VSQ.Touch.MinSize}" MinHeight="{StaticResource VSQ.Touch.MinSize}" Padding="8" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Loop">
@@ -123,7 +110,7 @@
                                     <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="2" Margin="0,4,0,0">
                                         <ToggleButton Content="M" Width="24" Height="20" FontSize="9" Padding="0" ToolTipService.ToolTip="Mute" />
                                         <ToggleButton Content="S" Width="24" Height="20" FontSize="9" Padding="0" ToolTipService.ToolTip="Solo" />
-                                        <ToggleButton Content="R" Width="24" Height="20" FontSize="9" Padding="0" Foreground="{StaticResource VSQ.Accent.RedBrush}" ToolTipService.ToolTip="Record Arm" />
+                                        <ToggleButton Content="R" Width="24" Height="20" FontSize="9" Padding="0" Foreground="#FF4060" ToolTipService.ToolTip="Record Arm" />
                                         <Slider Minimum="0" Maximum="1" Value="0.8" Width="50" Height="16" Margin="4,0,0,0" />
                                     </StackPanel>
                                 </Grid>

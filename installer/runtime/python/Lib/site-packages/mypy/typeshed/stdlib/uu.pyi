@@ -1,7 +1,6 @@
-from typing import BinaryIO
-from typing_extensions import TypeAlias
+from typing import BinaryIO, TypeAlias
 
-__all__ = ["Error", "encode", "decode"]
+__all__ = ["Error", "decode", "encode"]
 
 _File: TypeAlias = str | BinaryIO
 

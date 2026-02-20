@@ -2,12 +2,7 @@
 Comprehensive Allan Watts Audio Workflow Test Suite.
 
 Master test file for systematically tracing, validating, and fixing all audio
-workflows in VoiceStudio using canonical test audio.
-
-Audio is resolved via:
-1. VOICESTUDIO_TEST_AUDIO environment variable (if set)
-2. conftest.py canonical_audio_path fixture (auto-provisioned)
-3. Synthetic generation fallback via generate_test_audio.py
+workflows in VoiceStudio using Allan Watts.m4a as the test asset.
 
 Test Coverage:
 - File Import (button, drag-drop, format detection)
@@ -22,9 +17,9 @@ Test Coverage:
 
 Requirements:
 - WinAppDriver running on port 4723
-- Backend running on port 8000
+- Backend running on port 8001
 - VoiceStudio application built
-- Test audio: auto-provisioned via conftest.py fixture
+- Test audio file: C:\\Users\\Tyler\\Downloads\\Allan Watts.m4a
 """
 
 from __future__ import annotations
@@ -57,7 +52,7 @@ from tracing.workflow_tracer import WorkflowTracer
 # Configuration
 # =============================================================================
 
-BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8000")
+BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8001")
 OUTPUT_DIR = Path(os.getenv("VOICESTUDIO_OUTPUT_DIR", ".buildlogs/validation"))
 TRACE_ENABLED = os.getenv("VOICESTUDIO_TRACE_ENABLED", "1") == "1"
 SCREENSHOTS_ENABLED = os.getenv("VOICESTUDIO_SCREENSHOTS_ENABLED", "1") == "1"
@@ -225,8 +220,8 @@ class TestFileImport:
         try:
             with open(TEST_AUDIO_FILE, "rb") as f:
                 files = {"file": (TEST_AUDIO_FILE.name, f, "audio/x-m4a")}
-                response = api_monitor.post("/api/library/assets/upload", files=files)
-                tracer.api_call("POST", "/api/library/assets/upload", response)
+                response = api_monitor.post("/api/library/assets", files=files)
+                tracer.api_call("POST", "/api/library/assets", response)
 
                 if response.status_code in [200, 201]:
                     data = response.json()

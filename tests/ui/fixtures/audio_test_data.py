@@ -2,43 +2,24 @@
 Audio Test Data Fixtures for Allan Watts Workflow Testing.
 
 Provides standardized test data for comprehensive audio workflow testing:
-- Reference to canonical test audio (via tests/fixtures/canonical.py)
+- Reference to the Allan Watts.m4a test file
 - Expected metadata (duration, sample rate, channels)
 - Output format configurations
 - Validation checksums for output formats
-
-Audio resolution is delegated to tests/fixtures/canonical.py which provides:
-1. VOICESTUDIO_TEST_AUDIO environment variable support
-2. Canonical WAV from Git LFS (if available)
-3. Synthetic generation fallback (via generate_test_audio.py)
 """
 
 from __future__ import annotations
 
 import hashlib
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
 # =============================================================================
-# Test Audio File Configuration (delegated to canonical.py)
+# Test Audio File Configuration
 # =============================================================================
 
-# Project root directory (relative to this file: tests/ui/fixtures/audio_test_data.py)
-_PROJECT_ROOT = Path(__file__).resolve().parents[3]
-
-# Add tests/ to path for canonical module import
-_TESTS_DIR = _PROJECT_ROOT / "tests"
-if str(_TESTS_DIR) not in sys.path:
-    sys.path.insert(0, str(_TESTS_DIR))
-
-# Delegate to unified canonical resolution
-from fixtures.canonical import resolve_test_audio
-
-# Primary test audio file - resolved via canonical.py
-TEST_AUDIO_FILE = resolve_test_audio(
-    prefer_segment=True, allow_synthetic=True
-)
+# Primary test audio file - Allan Watts lecture excerpt
+TEST_AUDIO_FILE = Path(r"C:\Users\Tyler\Downloads\Allan Watts.m4a")
 
 # Output formats to test conversion
 OUTPUT_FORMATS = ["wav", "mp3", "flac", "ogg"]
@@ -108,77 +89,27 @@ class WorkflowStep:
 
 
 # =============================================================================
-# Library Asset Configuration
+# Library Asset Configuration (Pre-Uploaded Files)
 # =============================================================================
 
-# DEPRECATED: Hardcoded asset UUIDs are environment-specific and may not exist.
-# Prefer using the `uploaded_asset` or `session_uploaded_asset` pytest fixtures
-# from conftest.py which dynamically upload test audio and return asset metadata.
-#
-# Example usage in tests:
-#   def test_something(self, uploaded_asset, api_monitor):
-#       asset_id = uploaded_asset["id"]
-#       response = api_monitor.get(f"/api/library/assets/{asset_id}")
+# These are the assets already uploaded to the library - use these instead of
+# re-uploading to avoid file dialog issues with WinAppDriver
 
-# Legacy hardcoded assets (for backward compatibility only)
 LIBRARY_ASSETS = {
     "allan_watts_1": {
         "id": "305cdf87-73a1-4271-8ae1-3d9407ad51c1",
         "name": "Allan Watts Audio 1",
         "path": r"data\audio_uploads\wav\305cdf87-73a1-4271-8ae1-3d9407ad51c1.wav",
-        "_deprecated": True,
     },
     "allan_watts_2": {
         "id": "350c300d-9127-4a9f-9f4a-0016691bcc14",
         "name": "Allan Watts Audio 2",
         "path": r"data\audio_uploads\wav\350c300d-9127-4a9f-9f4a-0016691bcc14.wav",
-        "_deprecated": True,
     },
 }
 
-# Default asset to use for testing (DEPRECATED - use uploaded_asset fixture)
+# Default asset to use for testing
 DEFAULT_TEST_ASSET = LIBRARY_ASSETS["allan_watts_1"]
-
-
-def get_or_upload_asset(api_monitor, audio_path: Path) -> dict | None:
-    """
-    Upload audio file and return asset metadata.
-
-    This is the preferred method for obtaining asset IDs in tests.
-    Use the `uploaded_asset` fixture in conftest.py for automatic handling.
-
-    Args:
-        api_monitor: APIMonitor instance for making requests.
-        audio_path: Path to the audio file to upload.
-
-    Returns:
-        dict with 'id', 'filename', etc. or None if upload fails.
-    """
-    if not audio_path.exists():
-        return None
-
-    try:
-        with open(audio_path, "rb") as f:
-            files = {"file": (audio_path.name, f, "audio/wav")}
-            response = api_monitor.post(
-                "/api/library/assets/upload",
-                files=files
-            )
-
-        if response.status_code in (200, 201):
-            data = response.json()
-            asset_id = data.get("id") or data.get("asset_id")
-            if asset_id:
-                return {
-                    "id": asset_id,
-                    "filename": audio_path.name,
-                    "path": str(audio_path),
-                    "response": data,
-                }
-    except Exception:
-        pass
-
-    return None
 
 
 # =============================================================================

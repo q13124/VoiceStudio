@@ -26,7 +26,7 @@ class APIMonitor:
 
     def __init__(
         self,
-        base_url: str = "http://127.0.0.1:8000",
+        base_url: str = "http://127.0.0.1:8001",
         timeout: float = 30.0,
         tracer=None
     ):
@@ -300,7 +300,7 @@ class APIMonitorFixture:
         self.output_dir = output_dir
         self.monitor: APIMonitor | None = None
 
-    def create(self, base_url: str = "http://127.0.0.1:8000", tracer=None) -> APIMonitor:
+    def create(self, base_url: str = "http://127.0.0.1:8001", tracer=None) -> APIMonitor:
         """Create a new API monitor."""
         self.monitor = APIMonitor(base_url=base_url, tracer=tracer)
         return self.monitor

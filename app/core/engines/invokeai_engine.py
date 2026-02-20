@@ -395,7 +395,7 @@ class InvokeAIEngine(EngineProtocol):
         args_list = [
             (i, prompt, seed, output_path)
             for i, (prompt, seed, output_path) in enumerate(
-                zip(prompts, seeds, output_paths)
+                zip(prompts, seeds, output_paths, strict=False)
             )
         ]
 

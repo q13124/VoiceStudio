@@ -1207,7 +1207,7 @@ def process_batch_jobs_parallel(
                 results = dask.compute(*[task for _, task in tasks])
 
                 # Map results back to job IDs
-                return {job_id: result for (job_id, _), result in zip(tasks, results)}
+                return {job_id: result for (job_id, _), result in zip(tasks, results, strict=False)}
         except Exception as e:
             logger.warning(
                 f"Dask parallel processing failed: {e}. Falling back to joblib."
@@ -1220,7 +1220,7 @@ def process_batch_jobs_parallel(
             results = Parallel(n_jobs=max_workers, backend="threading")(
                 delayed(_process_batch_job_sync)(job_id) for job_id in job_ids
             )
-            return dict(zip(job_ids, results))
+            return dict(zip(job_ids, results, strict=False))
         except Exception as e:
             logger.warning(
                 f"Joblib parallel processing failed: {e}. Falling back to sequential."

@@ -30,7 +30,7 @@ class TestHalfCascadePipeline:
         )
 
         with patch(
-            "backend.services.engine_service.get_engine_service"
+            "app.core.pipeline.half_cascade.get_engine_service"
         ) as mock_service:
             mock_service.return_value.synthesize = AsyncMock(
                 return_value={"audio_data": b"audio"}
@@ -50,7 +50,7 @@ class TestHalfCascadePipeline:
         )
 
         with patch(
-            "backend.services.engine_service.get_engine_service"
+            "app.core.pipeline.half_cascade.get_engine_service"
         ) as mock_service:
             mock_service.return_value.transcribe = AsyncMock(
                 return_value={"text": "Transcribed"}
@@ -84,7 +84,7 @@ class TestHalfCascadePipeline:
         )
 
         with patch(
-            "backend.services.engine_service.get_engine_service"
+            "app.core.pipeline.half_cascade.get_engine_service"
         ) as mock_service:
             mock_service.return_value.synthesize = AsyncMock(
                 return_value={"audio_data": b"synthesized_audio"}
@@ -103,7 +103,7 @@ class TestHalfCascadePipeline:
         )
 
         with patch(
-            "backend.services.engine_service.get_engine_service"
+            "app.core.pipeline.half_cascade.get_engine_service"
         ) as mock_service:
             mock_service.return_value.synthesize = AsyncMock(
                 side_effect=Exception("TTS failed")
@@ -122,7 +122,7 @@ class TestHalfCascadePipeline:
         )
 
         with patch(
-            "backend.services.engine_service.get_engine_service"
+            "app.core.pipeline.half_cascade.get_engine_service"
         ) as mock_service:
             mock_service.return_value.synthesize = AsyncMock(
                 return_value={"audio_data": b"audio"}
@@ -139,7 +139,7 @@ class TestHalfCascadePipeline:
         self.mock_llm.generate = AsyncMock(side_effect=Exception("LLM failed"))
 
         with patch(
-            "backend.services.engine_service.get_engine_service"
+            "app.core.pipeline.half_cascade.get_engine_service"
         ) as mock_service:
             mock_service.return_value.transcribe = AsyncMock(
                 return_value={"text": "Transcribed"}

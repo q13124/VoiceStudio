@@ -580,7 +580,7 @@ class RHVoiceEngine(EngineProtocol):
         # Use ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
             results = list(
-                executor.map(synthesize_single, zip(text_list, output_paths))
+                executor.map(synthesize_single, zip(text_list, output_paths, strict=False))
             )
 
         return results

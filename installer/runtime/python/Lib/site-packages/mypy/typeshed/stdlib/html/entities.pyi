@@ -1,6 +1,6 @@
 from typing import Final
 
-__all__ = ["html5", "name2codepoint", "codepoint2name", "entitydefs"]
+__all__ = ["codepoint2name", "entitydefs", "html5", "name2codepoint"]
 
 name2codepoint: Final[dict[str, int]]
 html5: Final[dict[str, str]]

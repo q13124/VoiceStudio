@@ -2,7 +2,7 @@
 # Handles port conflicts and starts the backend API
 
 param(
-    [int]$Port = 8000,
+    [int]$Port = 8001,
     [string]$VenvDir = "venv",
     [switch]$CoquiTosAgreed,
     [switch]$Gpu
@@ -17,7 +17,7 @@ if ($portInUse) {
     Write-Host "Process ID: $($portInUse.OwningProcess)" -ForegroundColor Yellow
     
     # Try alternative ports
-    $alternativePorts = @(8000, 8001, 8002, 8080, 8888)
+    $alternativePorts = @(8001, 8002, 8080, 8888)
     $availablePort = $null
     
     foreach ($altPort in $alternativePorts) {

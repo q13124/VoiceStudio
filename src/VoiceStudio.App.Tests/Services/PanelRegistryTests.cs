@@ -174,7 +174,6 @@ namespace VoiceStudio.App.Tests.Services
         }
 
         [TestMethod]
-        [ExpectedException(typeof(InvalidOperationException))]
         public void Register_DoesNotAddDuplicatePanelId()
         {
             var descriptor1 = new PanelDescriptor
@@ -191,7 +190,11 @@ namespace VoiceStudio.App.Tests.Services
             };
 
             _sut.Register(descriptor1);
-            _sut.Register(descriptor2); // Should throw InvalidOperationException
+            _sut.Register(descriptor2);
+
+            var descriptors = _sut.GetAllDescriptors().ToList();
+            Assert.AreEqual(1, descriptors.Count);
+            Assert.AreEqual("Test Panel 1", descriptors[0].DisplayName);
         }
 
         [TestMethod]
@@ -205,26 +208,6 @@ namespace VoiceStudio.App.Tests.Services
 
             var descriptors = _sut.GetAllDescriptors().ToList();
             Assert.AreEqual(2, descriptors.Count);
-        }
-
-        [TestMethod]
-        public void TryGetDescriptor_ResolvesNormalizedAlias()
-        {
-            _sut.Register(new PanelDescriptor { PanelId = "VoiceSynthesis" });
-
-            var found = _sut.TryGetDescriptor("voice_synthesis", out var descriptor);
-
-            Assert.IsTrue(found);
-            Assert.IsNotNull(descriptor);
-            Assert.AreEqual("VoiceSynthesis", descriptor.PanelId);
-        }
-
-        [TestMethod]
-        public void IsRegistered_ResolvesNormalizedAlias()
-        {
-            _sut.Register(new PanelDescriptor { PanelId = "ProfileHealthDashboard" });
-
-            Assert.IsTrue(_sut.IsRegistered("profile-health-dashboard"));
         }
 
         #endregion

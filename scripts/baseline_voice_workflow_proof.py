@@ -34,8 +34,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Default configuration
-DEFAULT_BACKEND_URL = "http://localhost:8000"
-DEFAULT_BACKEND_PORTS = [8000, 8001, 8002, 8080, 8888]
+DEFAULT_BACKEND_URL = "http://localhost:8001"
+DEFAULT_BACKEND_PORTS = [8001, 8002, 8080, 8888]
 DEFAULT_TEST_TEXT = (
     "Hello, this is a baseline voice workflow proof. "
     "We are testing XTTS v2 synthesis, whisper.cpp transcription, "
@@ -279,7 +279,7 @@ class BaselineWorkflowProof:
 
         self._backend_resolution_error = (
             f"No backend with {backend_engine_id} detected on default ports "
-            "(8000, 8001, 8002, 8080, 8888)."
+            "(8001, 8002, 8080, 8888)."
         )
         return False
 
@@ -814,7 +814,7 @@ class BaselineWorkflowProof:
                 logger.error(self._backend_resolution_error)
             logger.info(
                 "Start backend with: .\\scripts\\backend\\start_backend.ps1 (preferred) "
-                "or: .\\venv\\Scripts\\python.exe -m uvicorn backend.api.main:app --port 8000. "
+                "or: .\\venv\\Scripts\\python.exe -m uvicorn backend.api.main:app --port 8001. "
                 "If scripts/backend/start_backend.ps1 selected an alternate port, re-run with "
                 "--backend-url http://localhost:<port>."
             )

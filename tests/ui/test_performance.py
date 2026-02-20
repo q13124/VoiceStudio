@@ -23,11 +23,9 @@ from pathlib import Path
 
 import pytest
 
-# Add tests/ui to path for local imports (consistent with other UI tests)
-sys.path.insert(0, str(Path(__file__).parent))
-
-# Define PROJECT_ROOT at module level (required before conftest loads)
+# Add project paths
 PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT / "tests" / "ui"))
 
 try:
     from selenium import webdriver
@@ -61,7 +59,7 @@ except ImportError:
 # Configuration
 APP_PATH = os.getenv("VOICESTUDIO_APP_PATH", str(PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "x64" / "Debug" / "net8.0-windows10.0.22621.0" / "win-x64" / "VoiceStudio.App.exe"))
 WINAPPDRIVER_URL = "http://127.0.0.1:4723"
-BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8000")
+BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8001")
 OUTPUT_DIR = Path(os.getenv("VOICESTUDIO_OUTPUT_DIR", ".buildlogs/performance"))
 
 # Performance thresholds (in milliseconds)

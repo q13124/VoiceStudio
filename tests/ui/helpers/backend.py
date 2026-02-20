@@ -367,7 +367,7 @@ class BackendHelper:
         if search:
             params["search"] = search
 
-        endpoint = "/api/library/assets"
+        endpoint = "/api/library/items"
         if params:
             query = "&".join(f"{k}={v}" for k, v in params.items())
             endpoint += f"?{query}"
@@ -407,7 +407,7 @@ class BackendHelper:
                 if folder_id:
                     data["folder_id"] = folder_id
                 response = self.session.post(
-                    f"{self.base_url}/api/library/assets/upload",
+                    f"{self.base_url}/api/library/upload",
                     files=files,
                     data=data,
                 )
@@ -427,7 +427,7 @@ class BackendHelper:
         Returns:
             True if deleted successfully.
         """
-        response = self.delete(f"/api/library/assets/{item_id}")
+        response = self.delete(f"/api/library/items/{item_id}")
         return response is not None and response.status_code in (200, 204)
 
     # -------------------------------------------------------------------------

@@ -26,7 +26,7 @@ class TestBatchPipeline:
     async def test_process_text_returns_batch_result(self):
         """Test process_text returns BatchResult with LLM response."""
         with patch(
-            "backend.services.engine_service.get_engine_service"
+            "app.core.pipeline.batch_pipeline.get_engine_service"
         ) as mock_service:
             mock_service.return_value.synthesize = AsyncMock(
                 return_value={"audio_data": b"audio"}
@@ -52,7 +52,7 @@ class TestBatchPipeline:
     async def test_process_text_with_synthesis(self):
         """Test process_text with TTS synthesis."""
         with patch(
-            "backend.services.engine_service.get_engine_service"
+            "app.core.pipeline.batch_pipeline.get_engine_service"
         ) as mock_service:
             mock_service.return_value.synthesize = AsyncMock(
                 return_value={"audio_data": b"test_audio"}
@@ -67,7 +67,7 @@ class TestBatchPipeline:
     async def test_process_text_captures_metrics(self):
         """Test that processing captures timing metrics."""
         with patch(
-            "backend.services.engine_service.get_engine_service"
+            "app.core.pipeline.batch_pipeline.get_engine_service"
         ) as mock_service:
             mock_service.return_value.synthesize = AsyncMock(
                 return_value={"audio_data": b"audio"}
@@ -83,7 +83,7 @@ class TestBatchPipeline:
     async def test_process_audio_with_transcription(self):
         """Test process_audio transcribes and generates response."""
         with patch(
-            "backend.services.engine_service.get_engine_service"
+            "app.core.pipeline.batch_pipeline.get_engine_service"
         ) as mock_service:
             mock_service.return_value.transcribe = AsyncMock(
                 return_value={"text": "Transcribed text"}
@@ -101,7 +101,7 @@ class TestBatchPipeline:
     async def test_process_audio_empty_transcription(self):
         """Test process_audio handles empty transcription."""
         with patch(
-            "backend.services.engine_service.get_engine_service"
+            "app.core.pipeline.batch_pipeline.get_engine_service"
         ) as mock_service:
             mock_service.return_value.transcribe = AsyncMock(
                 return_value={"text": ""}
@@ -116,7 +116,7 @@ class TestBatchPipeline:
     async def test_process_batch(self):
         """Test process_batch handles multiple items."""
         with patch(
-            "backend.services.engine_service.get_engine_service"
+            "app.core.pipeline.batch_pipeline.get_engine_service"
         ) as mock_service:
             mock_service.return_value.synthesize = AsyncMock(
                 return_value={"audio_data": b"audio"}
@@ -144,7 +144,7 @@ class TestBatchPipeline:
     async def test_process_text_handles_tts_error(self):
         """Test process_text continues if TTS fails (non-fatal)."""
         with patch(
-            "backend.services.engine_service.get_engine_service"
+            "app.core.pipeline.batch_pipeline.get_engine_service"
         ) as mock_service:
             mock_service.return_value.synthesize = AsyncMock(
                 side_effect=Exception("TTS error")

@@ -1,8 +1,7 @@
 from collections.abc import Callable
-from typing import Any
-from typing_extensions import TypeAlias
+from typing import Any, TypeAlias
 
-__all__ = ["getline", "clearcache", "checkcache", "lazycache"]
+__all__ = ["checkcache", "clearcache", "getline", "lazycache"]
 
 _ModuleGlobals: TypeAlias = dict[str, Any]
 _ModuleMetadata: TypeAlias = tuple[int, float | None, list[str], str]

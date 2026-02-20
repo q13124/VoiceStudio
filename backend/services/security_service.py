@@ -134,7 +134,7 @@ class EncryptionService:
         """Insecure XOR fallback (demo only)."""
         nonce = os.urandom(12)
         key_stream = self._generate_key_stream(len(data), nonce)
-        encrypted = bytes(a ^ b for a, b in zip(data, key_stream))
+        encrypted = bytes(a ^ b for a, b in zip(data, key_stream, strict=False))
 
         return EncryptedAudio(
             encryption_id=f"enc_{uuid.uuid4().hex[:8]}",
@@ -149,7 +149,7 @@ class EncryptionService:
     def _insecure_decrypt_fallback(self, encrypted: EncryptedAudio) -> bytes:
         """Insecure XOR fallback (demo only)."""
         key_stream = self._generate_key_stream(len(encrypted.encrypted_data), encrypted.nonce)
-        return bytes(a ^ b for a, b in zip(encrypted.encrypted_data, key_stream))
+        return bytes(a ^ b for a, b in zip(encrypted.encrypted_data, key_stream, strict=False))
 
     def _generate_key_stream(self, length: int, nonce: bytes) -> bytes:
         """Generate key stream from key and nonce."""

@@ -32,7 +32,7 @@ reflections = {
 
 
 class Chat:
-    def __init__(self, pairs, reflections={}):
+    def __init__(self, pairs, reflections=None):
         """
         Initialize the chatbot.  Pairs is a list of patterns and responses.  Each
         pattern is a regular expression matching the user's statement or question,
@@ -48,6 +48,8 @@ class Chat:
         :rtype: None
         """
 
+        if reflections is None:
+            reflections = {}
         self._pairs = [(re.compile(x, re.IGNORECASE), y) for (x, y) in pairs]
         self._reflections = reflections
         self._regex = self._compile_reflections()

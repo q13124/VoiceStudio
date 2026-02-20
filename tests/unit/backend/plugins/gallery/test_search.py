@@ -4,8 +4,6 @@ Tests for plugin search engine.
 Phase 5C M2: Full-text search with relevance ranking.
 """
 
-from typing import Optional
-
 import pytest
 
 from backend.plugins.gallery.models import CatalogPlugin, PluginStats, PluginVersion
@@ -27,7 +25,7 @@ def create_test_plugin(
     name: str,
     description: str = "",
     category: str = "voice_synthesis",
-    tags: Optional[list] = None,
+    tags: list | None = None,
     author: str = "Test Author",
     rating: float = 3.0,
     downloads: int = 100,

@@ -641,7 +641,7 @@ class DatabaseQueryOptimizer:
                         else []
                     )
                     rows = cursor.fetchall()
-                    results = [dict(zip(columns, row)) for row in rows]
+                    results = [dict(zip(columns, row, strict=False)) for row in rows]
                 else:
                     results = []
 

@@ -17,7 +17,6 @@
 - `.cursor/rules/quality/repo-hygiene.mdc`
 - `.cursor/rules/quality/no-suppression.mdc` — Errors are NEVER suppressed, always fixed
 - `.cursor/rules/quality/no-defer.mdc` — No deferring work without explicit user approval (effective 2026-02-12)
-- `.cursor/rules/quality/no-deferral-on-encounter.mdc` — Pre-existing issues MUST be fixed when encountered, not kicked down the road
 - `.cursor/rules/workflows/state-gate.mdc`
 - `.cursor/rules/workflows/closure-protocol.mdc`
 - `.cursor/rules/workflows/verifier-subagent.mdc`

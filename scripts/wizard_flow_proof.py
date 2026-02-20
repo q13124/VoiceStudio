@@ -6,10 +6,10 @@ Executes the wizard flow end-to-end proof when the backend is available.
 Validates the voice cloning flow with a reference audio file.
 
 Usage:
-    python scripts/wizard_flow_proof.py --backend-url http://localhost:8000 --reference-audio <path>
+    python scripts/wizard_flow_proof.py --backend-url http://localhost:8001 --reference-audio <path>
 
 Requirements:
-    - Backend running on the specified port (default: 8000)
+    - Backend running on the specified port (default: 8001)
     - Reference audio file with >=3 seconds of speech (not silence)
 """
 
@@ -199,8 +199,8 @@ def main():
     )
     parser.add_argument(
         "--backend-url",
-        default="http://localhost:8000",
-        help="Backend URL (default: http://localhost:8000)",
+        default="http://localhost:8001",
+        help="Backend URL (default: http://localhost:8001)",
     )
     parser.add_argument(
         "--reference-audio",

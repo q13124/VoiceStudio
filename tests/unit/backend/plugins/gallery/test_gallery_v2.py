@@ -6,7 +6,6 @@ Phase 5C M2: Unified gallery with multi-catalog, search, and ratings.
 
 import tempfile
 from pathlib import Path
-from typing import Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -43,7 +42,7 @@ def create_test_plugin(
     name: str,
     description: str = "",
     category: str = "voice_synthesis",
-    tags: Optional[list] = None,
+    tags: list | None = None,
     rating: float = 3.0,
     downloads: int = 100,
     verified: bool = False,

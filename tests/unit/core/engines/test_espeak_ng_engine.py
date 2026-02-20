@@ -71,13 +71,13 @@ class TestESpeakNGEngineStructure:
         """Test that engine has LRU cache."""
         assert hasattr(espeak_engine, "_synthesis_cache")
         assert isinstance(espeak_engine._synthesis_cache, OrderedDict)
-        assert espeak_engine._cache_max_size == 200
+        assert espeak_engine._cache_max_size == 100
         assert espeak_engine.enable_cache is True
 
     def test_engine_has_batch_size(self, espeak_engine):
         """Test that engine has batch size configuration."""
         assert hasattr(espeak_engine, "batch_size")
-        assert espeak_engine.batch_size == 8
+        assert espeak_engine.batch_size == 4
 
     def test_engine_has_temp_dir(self, espeak_engine):
         """Test that engine has reusable temp directory."""
@@ -137,7 +137,7 @@ class TestESpeakNGEngineCache:
         assert "max_cache_size" in stats
         assert "cache_enabled" in stats
         assert stats["cache_size"] == 0
-        assert stats["max_cache_size"] == 200
+        assert stats["max_cache_size"] == 100
         assert stats["cache_enabled"] is True
 
     def test_cache_lru_eviction(self, espeak_engine):

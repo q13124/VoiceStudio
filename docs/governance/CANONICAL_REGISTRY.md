@@ -11,9 +11,8 @@ Before creating a new document, check this registry to ensure the topic isn't al
 
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
-| Agent Rules | `.cursor/rules/*.mdc` | 2026-02-19 | 42 files across 8 categories |
-| Error Resolution Standard | `.cursor/rules/workflows/error-resolution.mdc` | 2026-02-19 | Mandatory error discovery, logging, and professional resolution standards |
-| No Deferral on Encounter | `.cursor/rules/quality/no-deferral-on-encounter.mdc` | 2026-02-19 | Pre-existing issues MUST be fixed when encountered — no kicking the can |
+| Agent Rules | `.cursor/rules/*.mdc` | 2026-01-30 | 41 files across 8 categories |
+| Error Resolution Standard | `.cursor/rules/workflows/error-resolution.mdc` | 2026-01-25 | Mandatory error discovery, logging, and professional resolution standards |
 | Human Rules Reference (Legacy) | `docs/archive/legacy_worker_system/governance/MASTER_RULES_COMPLETE.md` | 2026-01-30 | **ARCHIVED** — Legacy worker/overseer rules; use `.cursor/rules/*.mdc` and [ROLE_GUIDES_INDEX](ROLE_GUIDES_INDEX.md) for current governance |
 | Rule Proposal Template | `docs/governance/templates/RULE_PROPOSAL_TEMPLATE.md` | — | **DEFERRED** — Template not yet created; low priority |
 | Rule Review Checklist | `.cursor/rules/quality/rule-review.mdc` | 2026-01-25 | Quality checklist for rule review |

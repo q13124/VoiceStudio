@@ -1,7 +1,7 @@
 from tkinter import Event, Misc, Tk, Widget
 from typing import ClassVar, Protocol, type_check_only
 
-__all__ = ["dnd_start", "DndHandler"]
+__all__ = ["DndHandler", "dnd_start"]
 
 @type_check_only
 class _DndSource(Protocol):

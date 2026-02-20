@@ -449,7 +449,7 @@ class FastSDCPUEngine(EngineProtocol):
             args_list = [
                 (i, prompt, neg_prompt, seed, out_path)
                 for i, (prompt, neg_prompt, seed, out_path) in enumerate(
-                    zip(prompts, negative_prompts, seeds, output_paths)
+                    zip(prompts, negative_prompts, seeds, output_paths, strict=False)
                 )
             ]
 

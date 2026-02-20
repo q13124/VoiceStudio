@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VoiceStudio.Core.Panels;
@@ -19,7 +18,6 @@ namespace VoiceStudio.App.Services
   {
     private readonly List<IPanelView> _panels = new List<IPanelView>();
     private readonly Dictionary<string, PanelDescriptor> _descriptors = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, string> _normalizedPanelIds = new(StringComparer.OrdinalIgnoreCase);
     private readonly IViewModelFactory _viewModelFactory;
 
     public PanelRegistry(IViewModelFactory viewModelFactory)
@@ -61,14 +59,6 @@ namespace VoiceStudio.App.Services
       }
 
       _descriptors[descriptor.PanelId] = descriptor;
-
-      var normalizedPanelId = NormalizePanelId(descriptor.PanelId);
-      if (!string.IsNullOrEmpty(normalizedPanelId)
-          && !_normalizedPanelIds.ContainsKey(normalizedPanelId))
-      {
-        _normalizedPanelIds[normalizedPanelId] = descriptor.PanelId;
-      }
-
       Debug.WriteLine($"[PanelRegistry] Registered panel: {descriptor.PanelId}");
     }
 
@@ -79,7 +69,7 @@ namespace VoiceStudio.App.Services
 
     public object CreatePanel(string panelId)
     {
-      if (!TryResolveDescriptor(panelId, out var descriptor))
+      if (!_descriptors.TryGetValue(panelId, out var descriptor))
       {
         throw new KeyNotFoundException(
           $"Panel '{panelId}' is not registered. " +
@@ -95,24 +85,27 @@ namespace VoiceStudio.App.Services
       }
 
       // Create and assign ViewModel if specified
-      if (descriptor.ViewModelType != null && view is FrameworkElement frameworkElement)
+      if (descriptor.ViewModelType != null)
       {
-        // Many panel views self-initialize DataContext in their constructor.
-        // Only create/assign a ViewModel from DI when DataContext has not already been set.
-        if (frameworkElement.DataContext == null)
+        var viewModel = _viewModelFactory.Create(descriptor.ViewModelType);
+
+        if (view is UserControl userControl)
         {
-          var viewModel = _viewModelFactory.Create(descriptor.ViewModelType);
+          userControl.DataContext = viewModel;
+        }
+        else if (view is FrameworkElement frameworkElement)
+        {
           frameworkElement.DataContext = viewModel;
         }
       }
 
-      Debug.WriteLine($"[PanelRegistry] Created panel: {descriptor.PanelId}");
+      Debug.WriteLine($"[PanelRegistry] Created panel: {panelId}");
       return view;
     }
 
     public bool TryGetDescriptor(string panelId, out PanelDescriptor? descriptor)
     {
-      if (TryResolveDescriptor(panelId, out var found))
+      if (_descriptors.TryGetValue(panelId, out var found))
       {
         descriptor = found;
         return true;
@@ -124,45 +117,7 @@ namespace VoiceStudio.App.Services
 
     public bool IsRegistered(string panelId)
     {
-      return TryResolveDescriptor(panelId, out _);
-    }
-
-    private bool TryResolveDescriptor(string panelId, out PanelDescriptor descriptor)
-    {
-      if (_descriptors.TryGetValue(panelId, out descriptor!))
-      {
-        return true;
-      }
-
-      var normalizedPanelId = NormalizePanelId(panelId);
-      if (!string.IsNullOrEmpty(normalizedPanelId)
-          && _normalizedPanelIds.TryGetValue(normalizedPanelId, out var canonicalPanelId)
-          && _descriptors.TryGetValue(canonicalPanelId, out descriptor!))
-      {
-        return true;
-      }
-
-      descriptor = null!;
-      return false;
-    }
-
-    private static string NormalizePanelId(string panelId)
-    {
-      if (string.IsNullOrWhiteSpace(panelId))
-      {
-        return string.Empty;
-      }
-
-      var builder = new StringBuilder(panelId.Length);
-      foreach (var ch in panelId)
-      {
-        if (char.IsLetterOrDigit(ch))
-        {
-          builder.Append(char.ToLowerInvariant(ch));
-        }
-      }
-
-      return builder.ToString();
+      return _descriptors.ContainsKey(panelId);
     }
   }
 }

@@ -147,9 +147,8 @@ def _get_audio_path(audio_id: str) -> str | None:
 
     Checks:
     1. Voice route temporary storage (_audio_storage)
-    2. Audio upload directories (from /api/audio/upload)
-    3. Project audio directories (by filename match)
-    4. Direct filename match in project audio directories
+    2. Project audio directories (by filename match)
+    3. Direct filename match in project audio directories
     """
     # Check voice route storage
     from .voice import _audio_storage
@@ -158,28 +157,6 @@ def _get_audio_path(audio_id: str) -> str | None:
         path = _audio_storage[audio_id]
         if os.path.exists(path):
             return path
-
-    # Check audio upload directories (GAP-1 fix: connect upload to export/analysis)
-    # audio_id from upload is a UUID; files are stored as {uuid}.wav
-    upload_wav_dir = UPLOAD_WAV_DIR
-    upload_originals_dir = UPLOAD_ORIGINALS_DIR
-
-    # Try direct match in upload WAV directory (canonical format)
-    wav_path = os.path.join(upload_wav_dir, f"{audio_id}.wav")
-    if os.path.exists(wav_path):
-        return wav_path
-
-    # Try with .wav extension already in audio_id
-    if audio_id.endswith(".wav"):
-        wav_path = os.path.join(upload_wav_dir, audio_id)
-        if os.path.exists(wav_path):
-            return wav_path
-
-    # Try originals directory (for non-WAV formats)
-    for ext in [".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac"]:
-        original_path = os.path.join(upload_originals_dir, f"{audio_id}{ext}")
-        if os.path.exists(original_path):
-            return original_path
 
     # Check project audio storage
     # audio_id might be a filename (for project audio files)
@@ -762,7 +739,7 @@ def get_radar_data(
             frequencies = []
             phases = []
 
-            for (low_freq, high_freq), _band_name in zip(band_ranges, band_names):
+            for (low_freq, high_freq), _band_name in zip(band_ranges, band_names, strict=False):
                 # Find frequency bins in this range
                 mask = (freq_bins >= low_freq) & (freq_bins <= high_freq)
                 if np.any(mask):

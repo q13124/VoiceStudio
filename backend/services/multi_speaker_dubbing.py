@@ -735,7 +735,7 @@ class MultiSpeakerDubbingService:
         segments = []
         speakers_data: dict[str, dict[str, Any]] = {}
 
-        for i, (time_start, label) in enumerate(zip(chunk_times, labels)):
+        for i, (time_start, label) in enumerate(zip(chunk_times, labels, strict=False)):
             speaker_id = f"speaker_{label + 1}"
             time_end = time_start + chunk_duration
 

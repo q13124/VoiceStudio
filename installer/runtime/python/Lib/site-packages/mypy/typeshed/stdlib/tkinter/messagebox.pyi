@@ -2,7 +2,7 @@ from tkinter import Misc
 from tkinter.commondialog import Dialog
 from typing import ClassVar, Final, Literal
 
-__all__ = ["showinfo", "showwarning", "showerror", "askquestion", "askokcancel", "askyesno", "askyesnocancel", "askretrycancel"]
+__all__ = ["askokcancel", "askquestion", "askretrycancel", "askyesno", "askyesnocancel", "showerror", "showinfo", "showwarning"]
 
 ERROR: Final = "error"
 INFO: Final = "info"

@@ -71,13 +71,13 @@ class TestFestivalFliteEngineStructure:
         """Test that engine has LRU cache."""
         assert hasattr(festival_engine, "_synthesis_cache")
         assert isinstance(festival_engine._synthesis_cache, OrderedDict)
-        assert festival_engine._cache_max_size == 200
+        assert festival_engine._cache_max_size == 100
         assert festival_engine.enable_cache is True
 
     def test_engine_has_batch_size(self, festival_engine):
         """Test that engine has batch size configuration."""
         assert hasattr(festival_engine, "batch_size")
-        assert festival_engine.batch_size == 8
+        assert festival_engine.batch_size == 4
 
     def test_engine_has_temp_dir(self, festival_engine):
         """Test that engine has reusable temp directory."""
@@ -137,7 +137,7 @@ class TestFestivalFliteEngineCache:
         assert "max_cache_size" in stats
         assert "cache_enabled" in stats
         assert stats["cache_size"] == 0
-        assert stats["max_cache_size"] == 200
+        assert stats["max_cache_size"] == 100
         assert stats["cache_enabled"] is True
 
     def test_cache_lru_eviction(self, festival_engine):

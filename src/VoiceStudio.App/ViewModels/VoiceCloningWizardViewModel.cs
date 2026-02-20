@@ -613,7 +613,7 @@ namespace VoiceStudio.App.ViewModels
               CurrentStep = 4;
               StatusMessage = ResourceHelper.GetString("VoiceCloningWizard.CloningCompleted", "Voice cloning completed successfully");
 
-              TryDispatch(() =>
+              Dispatcher.TryEnqueue(() =>
               {
                 var profileName = ProfileName ?? "Unknown Profile";
                 _toastNotificationService?.ShowSuccess(
@@ -626,7 +626,7 @@ namespace VoiceStudio.App.ViewModels
             {
               ErrorMessage = status.ErrorMessage ?? ResourceHelper.GetString("VoiceCloningWizard.ProcessingFailedStatus", "Processing failed");
 
-              TryDispatch(() =>
+              Dispatcher.TryEnqueue(() =>
               {
                 _toastNotificationService?.ShowError(
                                   ResourceHelper.GetString("VoiceCloningWizard.ProcessingFailed", "Processing Failed"),

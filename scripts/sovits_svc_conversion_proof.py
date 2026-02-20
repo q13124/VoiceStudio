@@ -17,8 +17,8 @@ from urllib.parse import urlparse
 
 import requests
 
-DEFAULT_BACKEND_URL = "http://localhost:8000"
-DEFAULT_BACKEND_PORTS = [8000, 8001, 8002, 8080, 8888]
+DEFAULT_BACKEND_URL = "http://localhost:8001"
+DEFAULT_BACKEND_PORTS = [8001, 8002, 8080, 8888]
 DEFAULT_TEST_TEXT = (
     "Hello, this is a So-VITS-SVC conversion proof. "
     "We are validating conversion output and metrics."

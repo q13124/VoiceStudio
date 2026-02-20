@@ -3,6 +3,7 @@
 # copies pywintypesXX.dll and pythoncomXX.dll into the system directory,
 # and creates a pth file
 import argparse
+import contextlib
 import glob
 import os
 import shutil
@@ -26,18 +27,14 @@ class Tee:
 
     def write(self, what):
         if self.f is not None:
-            try:
+            with contextlib.suppress(OSError):
                 self.f.write(what.replace("\n", "\r\n"))
-            except OSError:
-                pass
         tee_f.write(what)
 
     def flush(self):
         if self.f is not None:
-            try:
+            with contextlib.suppress(OSError):
                 self.f.flush()
-            except OSError:
-                pass
         tee_f.flush()
 
 
@@ -104,12 +101,7 @@ def create_shortcut(
 def get_special_folder_path(path_name):
     from win32com.shell import shell, shellcon
 
-    for maybe in """
-        CSIDL_COMMON_STARTMENU CSIDL_STARTMENU CSIDL_COMMON_APPDATA
-        CSIDL_LOCAL_APPDATA CSIDL_APPDATA CSIDL_COMMON_DESKTOPDIRECTORY
-        CSIDL_DESKTOPDIRECTORY CSIDL_COMMON_STARTUP CSIDL_STARTUP
-        CSIDL_COMMON_PROGRAMS CSIDL_PROGRAMS CSIDL_PROGRAM_FILES_COMMON
-        CSIDL_PROGRAM_FILES CSIDL_FONTS""".split():
+    for maybe in ["CSIDL_COMMON_STARTMENU", "CSIDL_STARTMENU", "CSIDL_COMMON_APPDATA", "CSIDL_LOCAL_APPDATA", "CSIDL_APPDATA", "CSIDL_COMMON_DESKTOPDIRECTORY", "CSIDL_DESKTOPDIRECTORY", "CSIDL_COMMON_STARTUP", "CSIDL_STARTUP", "CSIDL_COMMON_PROGRAMS", "CSIDL_PROGRAMS", "CSIDL_PROGRAM_FILES_COMMON", "CSIDL_PROGRAM_FILES", "CSIDL_FONTS"]:
         if maybe == path_name:
             csidl = getattr(shellcon, maybe)
             return shell.SHGetSpecialFolderPath(0, csidl, False)
@@ -388,22 +380,18 @@ def install(lib_dir):
         os.unlink(os.path.join(sys.prefix, "pywin32.pth"))
     # The .pth may be new and therefore not loaded in this session.
     # Setup the paths just in case.
-    for name in "win32 win32\\lib Pythonwin".split():
+    for name in ["win32", "win32\\lib", "Pythonwin"]:
         sys.path.append(os.path.join(lib_dir, name))
     # It is possible people with old versions installed with still have
     # pywintypes and pythoncom registered.  We no longer need this, and stale
     # entries hurt us.
-    for name in "pythoncom pywintypes".split():
+    for name in ["pythoncom", "pywintypes"]:
         keyname = "Software\\Python\\PythonCore\\" + sys.winver + "\\Modules\\" + name
         for root in winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER:
-            try:
+            with contextlib.suppress(OSError):
                 winreg.DeleteKey(root, keyname + "\\Debug")
-            except OSError:
-                pass
-            try:
+            with contextlib.suppress(OSError):
                 winreg.DeleteKey(root, keyname)
-            except OSError:
-                pass
     LoadSystemModule(lib_dir, "pywintypes")
     LoadSystemModule(lib_dir, "pythoncom")
     import win32api
@@ -421,7 +409,7 @@ def install(lib_dir):
             for fname in files:
                 base = os.path.basename(fname)
                 dst = os.path.join(dest_dir, base)
-                CopyTo("installing %s" % base, fname, dst)
+                CopyTo(f"installing {base}", fname, dst)
                 if verbose:
                     print(f"Copied {base} to {dst}")
                 worked = 1
@@ -447,9 +435,9 @@ def install(lib_dir):
                 # in that place - otherwise that one will still get used!
                 if os.path.exists(dst):
                     msg = (
-                        "The file '%s' exists, but can not be replaced "
+                        f"The file '{dst}' exists, but can not be replaced "
                         "due to insufficient permissions.  You must "
-                        "reinstall this software as an Administrator" % dst
+                        "reinstall this software as an Administrator"
                     )
                     print(msg)
                     raise RuntimeError(msg)
@@ -589,14 +577,10 @@ def uninstall(lib_dir):
             os.remove(fname)
 
         # The dbi.pyd.old files we may have created.
-        try:
+        with contextlib.suppress(OSError):
             os.remove(os.path.join(lib_dir, "win32", "dbi.pyd.old"))
-        except OSError:
-            pass
-        try:
+        with contextlib.suppress(OSError):
             os.remove(os.path.join(lib_dir, "win32", "dbi_d.pyd.old"))
-        except OSError:
-            pass
 
     except Exception as why:
         print(f"Failed to remove misc files: {why}")
@@ -627,7 +611,7 @@ def uninstall(lib_dir):
                         os.remove(dst)
                         worked = 1
                         if verbose:
-                            print("Removed file %s" % (dst))
+                            print(f"Removed file {dst}")
                     except Exception:
                         print(f"FAILED to remove {dst}")
             if worked:
@@ -719,8 +703,6 @@ def main():
             # child already dead
             pass
 
-    silent = args.silent
-    verbose = not args.quiet
 
     if args.install:
         install(args.destination)

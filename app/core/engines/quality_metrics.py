@@ -1054,7 +1054,7 @@ def detect_clicks(
         click_ratio = click_count / len(diff) if len(diff) > 0 else 0.0
 
         return {
-            "detected": bool(click_count > 0),
+            "detected": click_count > 0,
             "click_count": int(click_count),
             "click_ratio": float(click_ratio),
             "positions": click_positions[:100],  # Limit to first 100 positions

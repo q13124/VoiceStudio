@@ -629,7 +629,7 @@ class FestivalFliteEngine(EngineProtocol):
 
             with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
                 batch_results = list(
-                    executor.map(synthesize_single, zip(batch_texts, batch_outputs))
+                    executor.map(synthesize_single, zip(batch_texts, batch_outputs, strict=False))
                 )
             results.extend(batch_results)
 

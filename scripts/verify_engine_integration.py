@@ -86,7 +86,7 @@ def main():
     try:
         import requests
 
-        resp = requests.get("http://localhost:8000/api/engines/list", timeout=5)
+        resp = requests.get("http://localhost:8001/api/engines/list", timeout=5)
         if resp.status_code == 200:
             data = resp.json()
             print(f"API reports {data.get('count', 0)} engines")

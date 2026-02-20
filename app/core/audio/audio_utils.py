@@ -1520,7 +1520,7 @@ def match_voice_profile(
     # F1 and F2 are more important for voice identity than F3
     formant_weights = [0.4, 0.4, 0.2]  # F1, F2, F3 weights
     formant_sims = []
-    for i, (ref, tgt) in enumerate(zip(ref_chars["formants"], target_chars["formants"])):
+    for i, (ref, tgt) in enumerate(zip(ref_chars["formants"], target_chars["formants"], strict=False)):
         if ref > 0 and tgt > 0:
             # Ratio-based similarity for each formant
             formant_ratio = min(ref, tgt) / max(ref, tgt)

@@ -222,23 +222,19 @@ class TestMetricsPersistence:
 
     def test_get_aggregated_metrics(self, persistence: MetricsPersistence) -> None:
         """Aggregation should compute statistics."""
-        # Use a fixed timestamp in the past to avoid timing issues
-        # (if minute < 30, replace(minute=30) creates a future timestamp)
-        test_time = datetime.now() - timedelta(hours=2)
-        test_time = test_time.replace(minute=30, second=0, microsecond=0)
+        now = datetime.now().replace(minute=30, second=0, microsecond=0)
 
         for i in range(10):
             persistence.store_metric(
                 "plugin-1",
                 "duration",
                 float(i * 10),
-                timestamp=test_time,
+                timestamp=now,
             )
 
         aggregated = persistence.get_aggregated_metrics(
             plugin_id="plugin-1",
-            start_time=test_time - timedelta(hours=1),
-            end_time=test_time + timedelta(hours=1),
+            start_time=now - timedelta(hours=1),
         )
 
         assert len(aggregated) >= 1

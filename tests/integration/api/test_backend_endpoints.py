@@ -23,21 +23,17 @@ logger = logging.getLogger(__name__)
 # Backend API base URL
 API_BASE_URL = "http://localhost:8000/api"
 
-# Forbidden terms that indicate placeholder/stub code
-# Only match when these appear as standalone markers, not as part of legitimate code
+# Forbidden terms to check for
 FORBIDDEN_TERMS = [
-    "TODO", "FIXME", "HACK", "XXX",
-    "placeholder", "stub", "dummy",
-    "NotImplementedError", "NotImplementedException",
-    "incomplete", "unfinished", "coming soon", "not yet implemented",
-    "WIP", "tbd", "tba"
+    "TODO", "FIXME", "NOTE", "HACK", "REMINDER", "XXX", "WARNING", "CAUTION",
+    "BUG", "ISSUE", "REFACTOR", "OPTIMIZE", "REVIEW", "CHECK", "VERIFY",
+    "TEST", "DEBUG", "DEPRECATED", "OBSOLETE",
+    "placeholder", "stub", "dummy", "mock", "fake", "sample", "temporary",
+    "NotImplementedError", "NotImplementedException", "pass",
+    "incomplete", "unfinished", "partial", "coming soon", "not yet",
+    "eventually", "later", "for now", "temporary", "needs", "requires",
+    "missing", "WIP", "tbd", "tba", "tbc"
 ]
-
-# Terms that are OK in specific contexts (not flagged)
-# - sample_rate, sample_count, etc. are standard audio terminology
-# - logger.warning() is standard logging
-# - "requires" in docstrings is documentation
-# - "for now" in comments explaining design choices is acceptable
 
 
 def get_all_route_files() -> list[Path]:
@@ -54,13 +50,7 @@ def get_all_route_files() -> list[Path]:
 
 
 def check_file_for_forbidden_terms(file_path: Path) -> list[str]:
-    """Check file for forbidden placeholder terms.
-    
-    Uses word boundary matching to avoid false positives:
-    - 'sample' won't match 'sample_rate' or 'downsampling'
-    - 'stub' won't match 'stubborn'
-    - Only matches standalone placeholder markers
-    """
+    """Check file for forbidden placeholder terms."""
     violations = []
     try:
         with open(file_path, encoding='utf-8') as f:
@@ -70,18 +60,9 @@ def check_file_for_forbidden_terms(file_path: Path) -> list[str]:
             for line_num, line in enumerate(lines, 1):
                 line_lower = line.lower()
                 for term in FORBIDDEN_TERMS:
-                    term_lower = term.lower()
-                    # Use word boundary matching to avoid false positives
-                    # Match term only as a complete word or at comment start
-                    pattern = r'\b' + re.escape(term_lower) + r'\b'
-                    if re.search(pattern, line_lower):
-                        # Skip if it's inside a string that's clearly not a placeholder
-                        # e.g., error messages, docstrings with "NotImplementedError" as expected exception
-                        if 'raise ' + term_lower in line_lower or 'except ' + term_lower in line_lower:
-                            # This is actual code raising/catching the exception, not a placeholder
-                            violations.append(f"Line {line_num}: Found '{term}' - {line.strip()[:80]}")
-                        elif re.search(r'#\s*' + re.escape(term_lower), line_lower):
-                            # Comment-based TODO/FIXME/etc. markers
+                    if term.lower() in line_lower:
+                        comment_match = re.search(r'#.*' + re.escape(term), line_lower)
+                        if comment_match or term.lower() in line_lower:
                             violations.append(f"Line {line_num}: Found '{term}' - {line.strip()[:80]}")
     except Exception as e:
         logger.warning(f"Could not read {file_path}: {e}")

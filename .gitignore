@@ -102,12 +102,5 @@ installer/runtime/
 # External runtime submodules (tracked separately)
 runtime/external/deepfacelab_2025/
 
-# Installer runtime binaries (local only, too large for git)
-installer/runtime/
-
 # Models directory (downloaded at runtime)
 models/
-
-# OpenMemory - IDE/Assistant specific rules
-.cursor\rules\openmemory.mdc
-AGENTS.md

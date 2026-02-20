@@ -569,7 +569,7 @@ class SDXLEngine(EngineProtocol):
 
             # Save images if paths provided
             if output_paths:
-                for image, path in zip(all_images, output_paths):
+                for image, path in zip(all_images, output_paths, strict=False):
                     if path and image:
                         image.save(path)
                         logger.info(f"Image saved to: {path}")

@@ -69,12 +69,21 @@ namespace VoiceStudio.App
     {
       try
       {
-        var panel = UnifiedPanelRegistry.CreatePanel(panelId);
-        return panel as UserControl;
-      }
-      catch (KeyNotFoundException)
-      {
-        Debug.WriteLine($"[MainWindow] Panel '{panelId}' not found in unified registry");
+        if (UnifiedPanelRegistry.TryGetDescriptor(panelId, out var descriptor) && descriptor != null)
+        {
+          var panel = UnifiedPanelRegistry.CreatePanel(panelId);
+          return panel as UserControl;
+        }
+
+        // Fall back to legacy registry if panel not in unified registry
+        if (_legacyPanelRegistry.TryGetValue(panelId, out var legacyEntry))
+        {
+          Debug.WriteLine(
+            $"[MainWindow] Panel '{panelId}' using legacy factory (migrate to unified registry)");
+          return legacyEntry.Factory();
+        }
+
+        Debug.WriteLine($"[MainWindow] Panel '{panelId}' not found in any registry");
         return null;
       }
       catch (Exception ex)
@@ -94,6 +103,11 @@ namespace VoiceStudio.App
         return descriptor.DefaultRegion;
       }
 
+      if (_legacyPanelRegistry.TryGetValue(panelId, out var legacyEntry))
+      {
+        return legacyEntry.DefaultRegion;
+      }
+
       return PanelRegion.Center; // Default
     }
 
@@ -107,8 +121,80 @@ namespace VoiceStudio.App
         return descriptor.DisplayName;
       }
 
+      if (_legacyPanelRegistry.TryGetValue(panelId, out var legacyEntry))
+      {
+        return legacyEntry.Title;
+      }
+
       return panelId; // Fall back to ID
     }
+
+    /// <summary>
+    /// [DEPRECATED] Legacy panel registry mapping panel IDs to their factory functions.
+    /// Used for backward compatibility during migration to unified PanelRegistry.
+    /// New panels should be registered via CorePanelRegistrationService.
+    /// </summary>
+    private readonly Dictionary<string, (PanelRegion DefaultRegion, string Title, Func<UserControl> Factory)> _legacyPanelRegistry = new(StringComparer.OrdinalIgnoreCase)
+    {
+      // Core synthesis panels
+      ["VoiceSynthesis"] = (PanelRegion.Center, "Voice Synthesis", () => new VoiceSynthesisView()),
+      ["EnsembleSynthesis"] = (PanelRegion.Center, "Ensemble Synthesis", () => new EnsembleSynthesisView()),
+      ["BatchProcessing"] = (PanelRegion.Center, "Batch Processing", () => new BatchProcessingView()),
+      ["TextSpeechEditor"] = (PanelRegion.Center, "Text Speech Editor", () => new TextSpeechEditorView()),
+      // Training panels
+      ["TrainingDatasetEditor"] = (PanelRegion.Center, "Training Dataset Editor", () => new TrainingDatasetEditorView()),
+      ["ModelManager"] = (PanelRegion.Center, "Model Manager", () => new ModelManagerView()),
+      ["Training"] = (PanelRegion.Left, "Training", () => new TrainingView()),
+      // Audio processing panels
+      ["Transcribe"] = (PanelRegion.Center, "Transcribe", () => new TranscribeView()),
+      ["Recording"] = (PanelRegion.Center, "Recording", () => new RecordingView()),
+      ["AudioAnalysis"] = (PanelRegion.Center, "Audio Analysis", () => new AudioAnalysisView()),
+      ["QualityControl"] = (PanelRegion.Right, "Quality Control", () => new QualityControlView()),
+      // Navigation panels
+      ["Timeline"] = (PanelRegion.Center, "Timeline", () => new TimelineView()),
+      ["Profiles"] = (PanelRegion.Left, "Profiles", () => new ProfilesView()),
+      ["Library"] = (PanelRegion.Left, "Library", () => new LibraryView()),
+      // Effect panels
+      ["EffectsMixer"] = (PanelRegion.Right, "Effects Mixer", () => new EffectsMixerView()),
+      ["Analyzer"] = (PanelRegion.Right, "Analyzer", () => new AnalyzerView()),
+      ["VoiceMorph"] = (PanelRegion.Center, "Voice Morph", () => new VoiceMorphView()),
+      ["Prosody"] = (PanelRegion.Right, "Prosody", () => new ProsodyView()),
+      ["EmotionControl"] = (PanelRegion.Right, "Emotion Control", () => new EmotionControlView()),
+      // Utility panels
+      ["Diagnostics"] = (PanelRegion.Bottom, "Diagnostics", () => new DiagnosticsView()),
+      ["Settings"] = (PanelRegion.Right, "Settings", () => new SettingsView()),
+      ["Help"] = (PanelRegion.Right, "Help", () => new HelpView()),
+      // Advanced panels
+      ["SSMLControl"] = (PanelRegion.Right, "SSML Control", () => new SSMLControlView()),
+      // Appearance panels
+      ["ThemeEditor"] = (PanelRegion.Right, "Theme Editor", () => new ThemeEditorView()),
+      // Voice cloning panels
+      ["VoiceQuickClone"] = (PanelRegion.Center, "Quick Clone", () => new VoiceQuickCloneView()),
+      ["VoiceMorphingBlending"] = (PanelRegion.Center, "Voice Morphing & Blending", () => new VoiceMorphingBlendingView()),
+      // Audio processing panels
+      ["SpatialAudio"] = (PanelRegion.Center, "Spatial Audio", () => new SpatialAudioView()),
+      ["AIMixingMastering"] = (PanelRegion.Center, "AI Mixing & Mastering", () => new AIMixingMasteringView()),
+      // Quality panels
+      ["QualityDashboard"] = (PanelRegion.Center, "Quality Dashboard", () => new QualityDashboardView()),
+      ["QualityBenchmark"] = (PanelRegion.Center, "Quality Benchmark", () => new QualityBenchmarkView()),
+      // Image/Video panels
+      ["ImageGen"] = (PanelRegion.Center, "Image Generation", () => new ImageGenView()),
+      ["VideoGen"] = (PanelRegion.Center, "Video Generation", () => new VideoGenView()),
+      ["DeepfakeCreator"] = (PanelRegion.Center, "Deepfake Creator", () => new DeepfakeCreatorView()),
+      // Script/Scene panels
+      ["DatasetQA"] = (PanelRegion.Center, "Dataset QA", () => new DatasetQAView()),
+      ["ScriptEditor"] = (PanelRegion.Center, "Script Editor", () => new ScriptEditorView()),
+      ["SceneBuilder"] = (PanelRegion.Center, "Scene Builder", () => new SceneBuilderView()),
+      // Automation panels
+      ["Macro"] = (PanelRegion.Center, "Macro", () => new MacroView()),
+      ["WorkflowAutomation"] = (PanelRegion.Center, "Workflow Automation", () => new WorkflowAutomationView()),
+      // Settings panels
+      ["AdvancedSettings"] = (PanelRegion.Right, "Advanced Settings", () => new AdvancedSettingsView()),
+      ["APIKeyManager"] = (PanelRegion.Right, "API Key Manager", () => new APIKeyManagerView()),
+      ["GPUStatus"] = (PanelRegion.Right, "GPU Status", () => new GPUStatusView()),
+      // Todo panel
+      ["TodoPanel"] = (PanelRegion.Right, "Todo Panel", () => new TodoPanelView()),
+    };
 
     private T? FindInContent<T>(string name) where T : class
     {
@@ -2130,53 +2216,6 @@ namespace VoiceStudio.App
       }
       
       Log("[MainWindow] ImportAudioFile() called");
-      
-      // Phase 3 Fix 3: Check for active project and offer to create one
-      if (!AppServices.HasActiveProject())
-      {
-        Log("[MainWindow] No active project - prompting user");
-        var dialogService = AppServices.TryGetDialogService();
-        if (dialogService != null)
-        {
-          var createProject = await dialogService.ShowConfirmationAsync(
-            "No Active Project",
-            "You need a project to work with imported audio. Create a new project now?",
-            "Create Project",
-            "Cancel");
-          
-          if (createProject)
-          {
-            Log("[MainWindow] User chose to create project");
-            // Execute New Project command
-            var commandRegistry = AppServices.TryGetCommandRegistry();
-            var newProjectCommand = commandRegistry?.GetCommand("file.new");
-            if (newProjectCommand != null && newProjectCommand.CanExecute(null))
-            {
-              newProjectCommand.Execute(null);
-              // Wait a moment for project creation to complete
-              await Task.Delay(100);
-              Log($"[MainWindow] Project created: {AppServices.GetCurrentProject()?.Name ?? "unknown"}");
-            }
-            else
-            {
-              var toastService = ServiceProvider.GetToastNotificationService();
-              toastService?.ShowToast(Services.ToastType.Warning, "Project Required", "Use File > New Project (Ctrl+N) first");
-              return;
-            }
-          }
-          else
-          {
-            Log("[MainWindow] User cancelled project creation");
-            return;
-          }
-        }
-        else
-        {
-          var toastService = ServiceProvider.GetToastNotificationService();
-          toastService?.ShowToast(Services.ToastType.Warning, "Project Required", "Create a project first (Ctrl+N) before importing audio");
-          return;
-        }
-      }
       
       // Check if we're on UI thread
       var dispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();

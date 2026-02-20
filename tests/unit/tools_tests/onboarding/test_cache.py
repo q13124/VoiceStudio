@@ -211,8 +211,7 @@ class TestSourceHash:
     def test_compute_hash_nonexistent(self, tmp_path):
         """Test hash with nonexistent files."""
         result = compute_source_hash(tmp_path / "nonexistent.txt")
-        # MD5 hash of empty string - no files contributed to the hash
-        assert result == "d41d8cd98f00b204"
+        assert result == ""  # No files contributed
 
     def test_compute_hash_single_file(self, tmp_path):
         """Test hash with single file."""

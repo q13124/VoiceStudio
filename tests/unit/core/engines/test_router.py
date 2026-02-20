@@ -23,7 +23,6 @@ sys.path.insert(0, str(project_root))
 
 # Import the router module
 try:
-    from app.core.engines import router as router_module
     from app.core.engines.protocols import EngineProtocol
     from app.core.engines.router import EngineRouter
 
@@ -207,45 +206,38 @@ class TestEngineRouterMemoryMonitoring:
         router2 = EngineRouter(auto_cleanup_enabled=False)
         assert router2._auto_cleanup_enabled is False
 
-    def test_memory_cleanup_when_high(self, engine_router, mock_engine_class):
+    @patch("app.core.engines.router.HAS_PSUTIL", True)
+    @patch("app.core.engines.router.psutil")
+    def test_memory_cleanup_when_high(
+        self, mock_psutil, engine_router, mock_engine_class
+    ):
         """Test that engines are cleaned up when memory is high."""
-        # Get the actual module from sys.modules to avoid fixture interference
-        the_router_module = sys.modules["app.core.engines.router"]
-        
-        with patch.object(the_router_module, "HAS_PSUTIL", True), \
-             patch.object(the_router_module, "psutil") as mock_psutil:
+        # Mock psutil to return high memory usage
+        mock_process = MagicMock()
+        mock_process.memory_info.return_value = MagicMock(
+            rss=200 * 1024 * 1024
+        )  # 200MB
+        engine_router._process = mock_process
 
-            # Mock psutil.virtual_memory to return high memory usage
-            mock_virtual_memory = MagicMock()
-            mock_virtual_memory.percent = 95.0  # 95% memory usage
-            mock_psutil.virtual_memory.return_value = mock_virtual_memory
+        # Register and get engines
+        engine_router.register_engine("engine1", mock_engine_class)
+        engine_router.get_engine("engine1", device="cpu", gpu=False)
 
-            # Mock process memory info
-            mock_process = MagicMock()
-            mock_process.memory_info.return_value = MagicMock(
-                rss=200 * 1024 * 1024
-            )  # 200MB
-            engine_router._process = mock_process
+        engine_router.register_engine("engine2", mock_engine_class)
+        engine_router.get_engine("engine2", device="cpu", gpu=False)
 
-            # Register and get engines
-            engine_router.register_engine("engine1", mock_engine_class)
-            engine_router.get_engine("engine1", device="cpu", gpu=False)
+        # Set memory usage for engines
+        engine_router._engine_memory_usage["engine1"] = 60.0  # MB
+        engine_router._engine_memory_usage["engine2"] = 60.0  # MB
 
-            engine_router.register_engine("engine2", mock_engine_class)
-            engine_router.get_engine("engine2", device="cpu", gpu=False)
+        # Set threshold low to trigger cleanup
+        engine_router._memory_threshold_mb = 100.0
 
-            # Set memory usage for engines
-            engine_router._engine_memory_usage["engine1"] = 60.0  # MB
-            engine_router._engine_memory_usage["engine2"] = 60.0  # MB
+        # Trigger memory check
+        engine_router._cleanup_if_memory_high()
 
-            # Set threshold low to trigger cleanup
-            engine_router._memory_threshold_mb = 100.0
-
-            # Trigger memory check
-            engine_router._cleanup_if_memory_high()
-
-            # At least one engine should be cleaned up (oldest first)
-            # Note: This depends on implementation details
+        # At least one engine should be cleaned up (oldest first)
+        # Note: This depends on implementation details
 
 
 class TestEngineRouterStatistics:

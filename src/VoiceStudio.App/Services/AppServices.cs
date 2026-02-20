@@ -43,10 +43,9 @@ namespace VoiceStudio.App.Services
       // Must be registered before ErrorLoggingService and BackendClient
       services.AddSingleton<ICorrelationIdProvider, CorrelationIdProvider>();
 
-      // Config and backend - use environment variable with fallback to 8000
-      // NOTE: Backend starts on port 8000 (see scripts/start_backend.ps1 line 69)
+      // Config and backend - use environment variable with fallback to 8001
       var apiHost = Environment.GetEnvironmentVariable("VOICESTUDIO_API_HOST") ?? "localhost";
-      var apiPort = Environment.GetEnvironmentVariable("VOICESTUDIO_API_PORT") ?? "8000";
+      var apiPort = Environment.GetEnvironmentVariable("VOICESTUDIO_API_PORT") ?? "8001";
       var baseUrl = $"http://{apiHost}:{apiPort}";
       var wsUrl = $"ws://{apiHost}:{apiPort}/ws/realtime";
       services.AddSingleton(new BackendClientConfig { BaseUrl = baseUrl, WebSocketUrl = wsUrl });
@@ -371,21 +370,6 @@ namespace VoiceStudio.App.Services
     public static IJobService? TryGetJobService() => GetService<IJobService>();
     public static ISelectionStack GetSelectionStack() => GetRequiredService<ISelectionStack>();
     public static ISelectionStack? TryGetSelectionStack() => GetService<ISelectionStack>();
-
-    /// <summary>
-    /// Gets the current active project from FileOperationsHandler (if any).
-    /// Phase 3 Fix: Bridge project state for cross-component access.
-    /// </summary>
-    public static VoiceStudio.Core.Models.Project? GetCurrentProject()
-    {
-      var bootstrapper = VoiceStudio.App.Commands.CommandHandlerBootstrapper.Instance;
-      return bootstrapper?.FileHandler?.CurrentProject;
-    }
-
-    /// <summary>
-    /// Checks if there's an active project.
-    /// </summary>
-    public static bool HasActiveProject() => GetCurrentProject() != null;
   }
 
   /// <summary>

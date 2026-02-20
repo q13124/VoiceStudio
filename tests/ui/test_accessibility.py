@@ -24,11 +24,9 @@ from typing import Optional
 
 import pytest
 
-# Add tests/ui to path for local imports (consistent with other UI tests)
-sys.path.insert(0, str(Path(__file__).parent))
-
-# Define PROJECT_ROOT at module level (required before conftest loads)
+# Add project paths
 PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT / "tests" / "ui"))
 
 try:
     from selenium import webdriver

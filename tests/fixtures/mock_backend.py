@@ -430,7 +430,7 @@ class MockBackend:
             return None
 
         params = {}
-        for p, v in zip(pattern_parts, path_parts):
+        for p, v in zip(pattern_parts, path_parts, strict=False):
             if p.startswith("{") and p.endswith("}"):
                 param_name = p[1:-1]
                 params[param_name] = v

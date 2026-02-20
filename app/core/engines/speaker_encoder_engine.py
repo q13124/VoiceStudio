@@ -673,7 +673,7 @@ class SpeakerEncoderEngine(EngineProtocol):
         # Use ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
             embeddings = list(
-                executor.map(extract_single, zip(audio_list, sample_rates))
+                executor.map(extract_single, zip(audio_list, sample_rates, strict=False))
             )
 
         # Clear GPU cache periodically

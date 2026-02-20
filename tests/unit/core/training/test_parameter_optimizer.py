@@ -21,15 +21,9 @@ import sys
 for module_name in ["torch", "torch.cuda"]:
     if module_name not in sys.modules:
         mock_module = MagicMock()
-        if module_name == "torch":
-            mock_module.__version__ = "2.0.0"  # Required for TTS version check
         if module_name == "torch.cuda":
             mock_module.is_available = lambda: False
         sys.modules[module_name] = mock_module
-    elif module_name == "torch":
-        # Ensure existing mock has __version__
-        if not hasattr(sys.modules[module_name], "__version__") or isinstance(sys.modules[module_name].__version__, MagicMock):
-            sys.modules[module_name].__version__ = "2.0.0"
 
 # Import the parameter optimizer module
 try:

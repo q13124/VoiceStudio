@@ -1131,7 +1131,7 @@ class EngineRouter:
 
         r = random.random()
         cumulative = 0.0
-        for item, weight in zip(items, normalized):
+        for item, weight in zip(items, normalized, strict=False):
             cumulative += weight
             if r <= cumulative:
                 return item

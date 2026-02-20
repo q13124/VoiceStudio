@@ -39,17 +39,17 @@ class TestConversionResult:
         )
         assert result.success is True
         assert result.output_path == Path("/tmp/output.wav")
-        assert result.error is None
+        assert result.error_message is None
 
     def test_failed_result(self):
         """Test creating a failed conversion result."""
         result = ConversionResult(
             success=False,
-            error="FFmpeg not found",
+            error_message="FFmpeg not found",
         )
         assert result.success is False
         assert result.output_path is None
-        assert result.error == "FFmpeg not found"
+        assert result.error_message == "FFmpeg not found"
 
 
 class TestConversionSettings:
@@ -59,9 +59,8 @@ class TestConversionSettings:
         """Test default conversion settings."""
         settings = ConversionSettings()
         assert settings.format == AudioFormat.WAV
-        assert settings.sample_rate == 44100
-        assert settings.channels == 2
-        assert settings.bit_depth == 16
+        assert settings.sample_rate is None
+        assert settings.channels is None
         assert settings.bitrate_kbps is None
 
     def test_custom_settings(self):
@@ -97,7 +96,7 @@ class TestAudioConversionService:
         service = AudioConversionService()
         result = await service.convert_to_wav(Path("/nonexistent/file.mp3"))
         assert result.success is False
-        assert result.error is not None and ("not found" in result.error.lower() or "not exist" in result.error.lower())
+        assert "not found" in result.error_message.lower() or "not exist" in result.error_message.lower()
 
     @pytest.mark.asyncio
     async def test_convert_to_format_missing_input(self):
@@ -120,14 +119,10 @@ class TestAudioConversionService:
 
     @pytest.mark.asyncio
     async def test_probe_format_missing_file(self):
-        """Test probe_format with missing file falls back to extension-based detection."""
+        """Test probe_format with missing file."""
         service = AudioConversionService()
-        fmt, metadata = await service.probe_format(Path("/nonexistent/file.wav"))
-        # Implementation falls back to extension-based detection when ffprobe fails
-        # For a .wav extension, it returns AudioFormat.WAV
-        assert fmt == AudioFormat.WAV
-        # Metadata is None when ffprobe can't probe the actual file
-        assert metadata is None
+        fmt, _metadata = await service.probe_format(Path("/nonexistent/file.wav"))
+        assert fmt is None
 
 
 class TestGetConversionService:

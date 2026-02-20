@@ -163,8 +163,7 @@ class TestConnectionPool:
 
     def test_pool_initialization(self, temp_db):
         """Test ConnectionPool initializes correctly."""
-        # Use min_connections=0 to test initialization without pre-creation
-        pool = ConnectionPool(temp_db, max_connections=5, min_connections=0)
+        pool = ConnectionPool(temp_db, max_connections=5)
         assert pool.db_path == temp_db
         assert pool.max_connections == 5
         assert len(pool.pool) == 0
@@ -172,8 +171,7 @@ class TestConnectionPool:
 
     def test_connection_creation(self, temp_db):
         """Test connection creation."""
-        # Use min_connections=0 to test explicit connection creation
-        pool = ConnectionPool(temp_db, max_connections=5, min_connections=0)
+        pool = ConnectionPool(temp_db, max_connections=5)
 
         with pool.get_connection() as conn:
             assert conn is not None
@@ -182,8 +180,7 @@ class TestConnectionPool:
 
     def test_connection_reuse(self, temp_db):
         """Test connection reuse from pool."""
-        # Use min_connections=0 to test explicit reuse behavior
-        pool = ConnectionPool(temp_db, max_connections=5, min_connections=0)
+        pool = ConnectionPool(temp_db, max_connections=5)
 
         # First use - creates connection
         with pool.get_connection():
@@ -370,9 +367,8 @@ class TestDatabaseQueryOptimizer:
         assert "SELECT * FROM test" in optimizer.query_stats
         query_stat = optimizer.query_stats["SELECT * FROM test"]
         assert query_stat.execution_count == 3
-        # Fast in-memory SQLite operations may complete in 0.0 seconds
-        assert query_stat.total_time >= 0.0
-        assert query_stat.average_time >= 0.0
+        assert query_stat.total_time > 0.0
+        assert query_stat.average_time > 0.0
 
     def test_cache_hit_statistics(self, temp_db):
         """Test cache hit statistics."""

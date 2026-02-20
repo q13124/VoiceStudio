@@ -495,7 +495,7 @@ class SDXLComfyEngine(EngineProtocol):
         args_list = [
             (i, prompt, seed, output_path, workflow)
             for i, (prompt, seed, output_path, workflow) in enumerate(
-                zip(prompts, seeds, output_paths, workflows)
+                zip(prompts, seeds, output_paths, workflows, strict=False)
             )
         ]
 

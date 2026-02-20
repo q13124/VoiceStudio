@@ -15,7 +15,6 @@ from backend.services.plugin_schema_validator import (
 )
 
 # Base valid manifest for testing v5 extensions
-# Using security.permissions instead of legacy permissions array
 BASE_VALID_MANIFEST = {
     "name": "test_plugin",
     "display_name": "Test Plugin",
@@ -30,12 +29,7 @@ BASE_VALID_MANIFEST = {
     "capabilities": {
         "backend_routes": True
     },
-    "security": {
-        "permissions": {
-            "filesystem": {"read": ["$PLUGIN_DATA/*"], "scope": "plugin_data"},
-            "network": {"enabled": False}
-        }
-    }
+    "permissions": ["filesystem.read"]
 }
 
 
@@ -68,7 +62,7 @@ class TestSchemaVersionField:
         """Test that invalid schema_version is rejected."""
         manifest = {
             **BASE_VALID_MANIFEST,
-            "schema_version": "7.0.0"  # Not in enum
+            "schema_version": "6.0.0"  # Not in enum
         }
         is_valid, errors = validator.validate(manifest)
         assert not is_valid

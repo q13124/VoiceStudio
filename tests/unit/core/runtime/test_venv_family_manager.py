@@ -48,10 +48,8 @@ class TestVenvFamilyManager:
         """Test engine to family mapping."""
         # Core TTS engines
         assert ENGINE_TO_FAMILY.get("xtts_v2") == VenvFamily.CORE_TTS
+        assert ENGINE_TO_FAMILY.get("piper") == VenvFamily.CORE_TTS
         assert ENGINE_TO_FAMILY.get("silero") == VenvFamily.CORE_TTS
-
-        # Fast TTS engines (piper moved here)
-        assert ENGINE_TO_FAMILY.get("piper") == VenvFamily.FAST_TTS
 
         # Advanced TTS engines
         assert ENGINE_TO_FAMILY.get("chatterbox") == VenvFamily.ADVANCED_TTS
@@ -141,14 +139,8 @@ class TestFamilyConfigs:
         config = FAMILY_CONFIGS[VenvFamily.CORE_TTS]
         assert config.requirements_file == "requirements-core-tts.txt"
         assert "xtts_v2" in config.engines
-        # Note: piper is now in FAST_TTS, not CORE_TTS
-        assert config.estimated_size_gb == 8.0
-
-    def test_fast_tts_config(self):
-        """Test fast TTS family config (includes piper)."""
-        config = FAMILY_CONFIGS[VenvFamily.FAST_TTS]
         assert "piper" in config.engines
-        assert "espeak_ng" in config.engines
+        assert config.estimated_size_gb == 8.0
 
     def test_advanced_tts_config(self):
         """Test advanced TTS family config."""

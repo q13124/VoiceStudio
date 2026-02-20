@@ -25,7 +25,10 @@
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         
-        <!-- Health Status Colors - now using global VSQ.Status.* tokens from DesignTokens.xaml -->
+        <!-- Health Status Colors -->
+        <SolidColorBrush x:Key="HealthyBrush" Color="#4CAF50" />
+        <SolidColorBrush x:Key="DegradedBrush" Color="#FF9800" />
+        <SolidColorBrush x:Key="UnhealthyBrush" Color="#F44336" />
         
         <!-- Card Style -->
         <Style x:Key="MetricCardStyle" TargetType="Border">
@@ -104,11 +107,11 @@
                 <Border Style="{StaticResource MetricCardStyle}" Width="140">
                     <StackPanel>
                         <TextBlock Text="Healthy" Style="{StaticResource VSQ.Text.Caption}"
-                                   Foreground="{StaticResource VSQ.Status.HealthyBrush}" />
+                                   Foreground="{StaticResource HealthyBrush}" />
                         <TextBlock Text="{x:Bind ViewModel.HealthyPlugins, Mode=OneWay}"
                                    Style="{StaticResource VSQ.Text.Title}"
                                    FontSize="28" FontWeight="Bold"
-                                   Foreground="{StaticResource VSQ.Status.HealthyBrush}" />
+                                   Foreground="{StaticResource HealthyBrush}" />
                     </StackPanel>
                 </Border>
                 
@@ -116,11 +119,11 @@
                 <Border Style="{StaticResource MetricCardStyle}" Width="140">
                     <StackPanel>
                         <TextBlock Text="Degraded" Style="{StaticResource VSQ.Text.Caption}"
-                                   Foreground="{StaticResource VSQ.Status.DegradedBrush}" />
+                                   Foreground="{StaticResource DegradedBrush}" />
                         <TextBlock Text="{x:Bind ViewModel.DegradedPlugins, Mode=OneWay}"
                                    Style="{StaticResource VSQ.Text.Title}"
                                    FontSize="28" FontWeight="Bold"
-                                   Foreground="{StaticResource VSQ.Status.DegradedBrush}" />
+                                   Foreground="{StaticResource DegradedBrush}" />
                     </StackPanel>
                 </Border>
                 
@@ -128,11 +131,11 @@
                 <Border Style="{StaticResource MetricCardStyle}" Width="140">
                     <StackPanel>
                         <TextBlock Text="Unhealthy" Style="{StaticResource VSQ.Text.Caption}"
-                                   Foreground="{StaticResource VSQ.Status.UnhealthyBrush}" />
+                                   Foreground="{StaticResource UnhealthyBrush}" />
                         <TextBlock Text="{x:Bind ViewModel.UnhealthyPlugins, Mode=OneWay}"
                                    Style="{StaticResource VSQ.Text.Title}"
                                    FontSize="28" FontWeight="Bold"
-                                   Foreground="{StaticResource VSQ.Status.UnhealthyBrush}" />
+                                   Foreground="{StaticResource UnhealthyBrush}" />
                     </StackPanel>
                 </Border>
                 
@@ -188,7 +191,7 @@
                         <TextBlock Text="{x:Bind ViewModel.TotalErrorsDisplay, Mode=OneWay}"
                                    Style="{StaticResource VSQ.Text.Title}"
                                    FontSize="24" FontWeight="Bold"
-                                   Foreground="{StaticResource VSQ.Status.UnhealthyBrush}" />
+                                   Foreground="{StaticResource UnhealthyBrush}" />
                     </StackPanel>
                 </Border>
             </StackPanel>
@@ -454,7 +457,7 @@
                             <StackPanel>
                                 <TextBlock Text="Recent Errors"
                                            Style="{StaticResource VSQ.Text.Heading}"
-                                           Foreground="{StaticResource VSQ.Status.UnhealthyBrush}"
+                                           Foreground="{StaticResource UnhealthyBrush}"
                                            Margin="0,0,0,8" />
                                 <ItemsControl ItemsSource="{x:Bind ViewModel.SelectedPluginErrors, Mode=OneWay}">
                                     <ItemsControl.ItemTemplate>
@@ -468,7 +471,7 @@
                                                                Foreground="{StaticResource VSQ.Text.TertiaryBrush}" />
                                                     <TextBlock Text="{x:Bind Message, Mode=OneWay}"
                                                                Style="{StaticResource VSQ.Text.Body}"
-                                                               Foreground="{StaticResource VSQ.Status.UnhealthyBrush}"
+                                                               Foreground="{StaticResource UnhealthyBrush}"
                                                                TextWrapping="Wrap" />
                                                 </StackPanel>
                                             </Border>
@@ -500,7 +503,7 @@
                 <TextBlock Grid.Column="1"
                            Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
                            Style="{StaticResource VSQ.Text.Caption}"
-                           Foreground="{StaticResource VSQ.Status.UnhealthyBrush}"
+                           Foreground="{StaticResource UnhealthyBrush}"
                            Visibility="{x:Bind ViewModel.ErrorMessage, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}" />
             </Grid>
         </Border>

@@ -358,7 +358,7 @@ function Write-Report {
             "SKIPPED" { "⏭️" }
             default { "❓" }
         }
-        $report += ("`n" + "| $stageNum | $($stage.Name) | $icon $($stage.Status) | $($stage.ExitCode) | $($stage.DurationSeconds)s |")
+        $report += "`n| $stageNum | $($stage.Name) | $icon $($stage.Status) | $($stage.ExitCode) | $($stage.DurationSeconds)s |"
         $stageNum++
     }
 
@@ -540,29 +540,15 @@ $stage3Passed = Invoke-Stage -Name "C# Unit Tests" -Description "Run C# unit tes
     $trxFile = Join-Path $TestResultsDir "csharp_unit_tests.trx"
     $testProject = Join-Path $RootDir "src\VoiceStudio.App.Tests\VoiceStudio.App.Tests.csproj"
     
-    $testOutput = & dotnet test $testProject `
+    & dotnet test $testProject `
         -c $Configuration `
         -p:Platform=x64 `
         --no-build `
         --filter "TestCategory!=UI&TestCategory!=E2E&TestCategory!=Smoke" `
         --logger "trx;LogFileName=$trxFile" `
-        --results-directory $TestResultsDir 2>&1
+        --results-directory $TestResultsDir
     
-    $exitCode = $LASTEXITCODE
-    $testOutput | Write-Host
-    
-    # WinUI test host may crash during shutdown even when all tests pass.
-    # Check if all tests passed by examining output for "Failed: 0" pattern.
-    $summaryLine = $testOutput | Where-Object { $_ -match "Failed:\s+\d+.*Passed:\s+\d+" } | Select-Object -Last 1
-    if ($summaryLine -match "Failed:\s+0.*Passed:\s+(\d+)" -and [int]$Matches[1] -gt 0) {
-        # All tests passed - treat post-test host crash as success
-        if ($exitCode -ne 0) {
-            Write-Host "Note: Test host crashed after tests completed (known WinUI issue), but all tests passed." -ForegroundColor Yellow
-        }
-        return 0
-    }
-    
-    return $exitCode
+    return $LASTEXITCODE
 }
 
 if (-not $stage3Passed -and -not $SkipCSharpTests) {

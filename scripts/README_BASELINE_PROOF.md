@@ -16,10 +16,10 @@ This script runs a baseline end-to-end voice workflow proof to establish a quali
    # Start backend (from project root)
    .\scripts/backend/start_backend.ps1
    # Or manually:
-   uvicorn backend.api.main:app --port 8000
+   uvicorn backend.api.main:app --port 8001
    ```
 
-   If port `8000` is already in use, `scripts/backend/start_backend.ps1` will switch to an
+   If port `8001` is already in use, `scripts/backend/start_backend.ps1` will switch to an
    alternate port (8002/8080/8888). The proof script will auto-detect the
    backend when using the default URL, but you can always pass `--backend-url`
    to pin the exact port.
@@ -95,7 +95,7 @@ The command template must accept `{input}`, `{output}`, `{checkpoint}`, `{config
 
 ```bash
 python scripts/baseline_voice_workflow_proof.py \
-    --backend-url http://localhost:8000 \
+    --backend-url http://localhost:8001 \
     --text "Your custom test text here" \
     --language en \
     --profile-id profile_123
@@ -103,7 +103,7 @@ python scripts/baseline_voice_workflow_proof.py \
 
 ### Command-Line Arguments
 
-- `--backend-url`: Backend API URL (default: `http://localhost:8000`)
+- `--backend-url`: Backend API URL (default: `http://localhost:8001`)
 - `--text`: Text to synthesize (default: baseline test text)
 - `--language`: Language code (default: `en`)
 - `--profile-id`: Voice profile ID (optional, will try to get/create one)
@@ -210,7 +210,7 @@ ERROR: Backend API is not accessible. Please start the backend server.
 
 ### /api/voice/clone returns 404
 
-If the backend started on an alternate port, the default proof URL (`8000`)
+If the backend started on an alternate port, the default proof URL (`8001`)
 may point at an older process with missing voice routes.
 
 **Solution**: Re-run the proof with the port printed by `scripts/backend/start_backend.ps1`:

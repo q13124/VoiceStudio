@@ -20,7 +20,7 @@ try:
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
-    # Import warning logged via the logger instance defined below (line 46+)
+    # Logger not yet defined, will log later if needed
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse

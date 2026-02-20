@@ -148,7 +148,7 @@ def main():
     # Check backend
     print("\n1. Checking backend API...")
     try:
-        response = requests.get("http://localhost:8000/api/library/assets")
+        response = requests.get("http://localhost:8001/api/library/assets")
         data = response.json()
         print(f"   Backend has {data.get('total', 0)} assets")
         for asset in data.get('assets', [])[:5]:

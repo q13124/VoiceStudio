@@ -5,7 +5,7 @@ Enumerates all API route modules, calls health/status endpoints,
 and generates a feature availability matrix report.
 
 Usage:
-    py -3.12 scripts/verify_backend_features.py [--output report.json] [--base-url http://127.0.0.1:8000]
+    py -3.12 scripts/verify_backend_features.py [--output report.json] [--base-url http://127.0.0.1:8001]
 """
 
 import argparse
@@ -1198,7 +1198,7 @@ ROUTE_MODULES = {
 class BackendVerifier:
     """Verifies backend feature availability."""
 
-    def __init__(self, base_url: str = "http://127.0.0.1:8000", timeout: float = 10.0):
+    def __init__(self, base_url: str = "http://127.0.0.1:8001", timeout: float = 10.0):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.results: dict[str, RouteModule] = {}
@@ -1411,7 +1411,7 @@ class BackendVerifier:
 
 def main():
     parser = argparse.ArgumentParser(description="Verify VoiceStudio backend features")
-    parser.add_argument("--base-url", default="http://127.0.0.1:8000", help="Backend API base URL")
+    parser.add_argument("--base-url", default="http://127.0.0.1:8001", help="Backend API base URL")
     parser.add_argument("--output", default=".buildlogs/validation/api_coverage/backend_verification.json",
                         help="Output report path")
     parser.add_argument("--timeout", type=float, default=10.0, help="Request timeout in seconds")
@@ -1423,7 +1423,7 @@ def main():
     print("Checking backend health...")
     if not verifier.check_backend_health():
         print(f"ERROR: Backend not reachable at {args.base_url}")
-        print("Please start the backend with: py -3.12 -m uvicorn backend.api.main:app --port 8000")
+        print("Please start the backend with: py -3.12 -m uvicorn backend.api.main:app --port 8001")
         sys.exit(1)
 
     print("Backend is healthy. Starting verification...\n")

@@ -1,9 +1,9 @@
 from collections.abc import Mapping, Sequence
-from typing_extensions import TypeAlias
+from typing import TypeAlias
 
 _Cap: TypeAlias = dict[str, str | int]
 
-__all__ = ["getcaps", "findmatch"]
+__all__ = ["findmatch", "getcaps"]
 
 def findmatch(
     caps: Mapping[str, list[_Cap]], MIMEtype: str, key: str = "view", filename: str = "/dev/null", plist: Sequence[str] = []
