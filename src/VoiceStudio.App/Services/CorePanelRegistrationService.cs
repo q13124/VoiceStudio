@@ -357,6 +357,463 @@ namespace VoiceStudio.App.Services
         ViewType = typeof(TodoPanelView),
         ViewModelType = typeof(TodoPanelViewModel)
       });
+
+      // Legacy panel migration batch: register panels that were previously
+      // only reachable through MainWindow fallback logic.
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "SpatialStage",
+        DisplayName = "Spatial Stage",
+        Region = PanelRegion.Center,
+        ViewType = typeof(SpatialStageView),
+        ViewModelType = typeof(SpatialStageViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "HealthCheck",
+        DisplayName = "Health Check",
+        Region = PanelRegion.Right,
+        ViewType = typeof(HealthCheckView)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "MiniTimeline",
+        DisplayName = "Mini Timeline",
+        Region = PanelRegion.Bottom,
+        ViewType = typeof(MiniTimelineView),
+        ViewModelType = typeof(MiniTimelineViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "JobProgress",
+        DisplayName = "Job Progress",
+        Region = PanelRegion.Bottom,
+        ViewType = typeof(JobProgressView),
+        ViewModelType = typeof(JobProgressViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "MCPDashboard",
+        DisplayName = "MCP Dashboard",
+        Region = PanelRegion.Center,
+        ViewType = typeof(MCPDashboardView),
+        ViewModelType = typeof(MCPDashboardViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "SLODashboard",
+        DisplayName = "SLO Dashboard",
+        Region = PanelRegion.Center,
+        ViewType = typeof(SLODashboardView),
+        ViewModelType = typeof(SLODashboardViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "AudioMonitoringDashboard",
+        DisplayName = "Audio Monitoring Dashboard",
+        Region = PanelRegion.Center,
+        ViewType = typeof(AudioMonitoringDashboardView),
+        ViewModelType = typeof(AudioMonitoringDashboardViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "AnalyticsDashboard",
+        DisplayName = "Analytics Dashboard",
+        Region = PanelRegion.Center,
+        ViewType = typeof(AnalyticsDashboardView),
+        ViewModelType = typeof(AnalyticsDashboardViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "UltimateDashboard",
+        DisplayName = "Ultimate Dashboard",
+        Region = PanelRegion.Center,
+        ViewType = typeof(UltimateDashboardView),
+        ViewModelType = typeof(UltimateDashboardViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "BackupRestore",
+        DisplayName = "Backup & Restore",
+        Region = PanelRegion.Center,
+        ViewType = typeof(BackupRestoreView),
+        ViewModelType = typeof(BackupRestoreViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "PluginManagement",
+        DisplayName = "Plugin Management",
+        Region = PanelRegion.Center,
+        ViewType = typeof(PluginManagementView),
+        ViewModelType = typeof(PluginManagementViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "PluginDetail",
+        DisplayName = "Plugin Detail",
+        Region = PanelRegion.Center,
+        ViewType = typeof(PluginDetailView)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "PluginHealthDashboard",
+        DisplayName = "Plugin Health Dashboard",
+        Region = PanelRegion.Center,
+        ViewType = typeof(PluginHealthDashboardView),
+        ViewModelType = typeof(PluginHealthDashboardViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "ProfileComparison",
+        DisplayName = "Profile Comparison",
+        Region = PanelRegion.Center,
+        ViewType = typeof(ProfileComparisonView),
+        ViewModelType = typeof(ProfileComparisonViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "ProfileHealthDashboard",
+        DisplayName = "Profile Health Dashboard",
+        Region = PanelRegion.Center,
+        ViewType = typeof(ProfileHealthDashboardView),
+        ViewModelType = typeof(ProfileHealthDashboardViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "ABTesting",
+        DisplayName = "A/B Testing",
+        Region = PanelRegion.Center,
+        ViewType = typeof(ABTestingView),
+        ViewModelType = typeof(ABTestingViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "Spectrogram",
+        DisplayName = "Spectrogram",
+        Region = PanelRegion.Center,
+        ViewType = typeof(SpectrogramView),
+        ViewModelType = typeof(SpectrogramViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "RealTimeAudioVisualizer",
+        DisplayName = "Real-Time Audio Visualizer",
+        Region = PanelRegion.Center,
+        ViewType = typeof(RealTimeAudioVisualizerView),
+        ViewModelType = typeof(RealTimeAudioVisualizerViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "SonographyVisualization",
+        DisplayName = "Sonography Visualization",
+        Region = PanelRegion.Center,
+        ViewType = typeof(SonographyVisualizationView),
+        ViewModelType = typeof(SonographyVisualizationViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "AdvancedRealTimeVisualization",
+        DisplayName = "Advanced Real-Time Visualization",
+        Region = PanelRegion.Center,
+        ViewType = typeof(AdvancedRealTimeVisualizationView),
+        ViewModelType = typeof(AdvancedRealTimeVisualizationViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "Automation",
+        DisplayName = "Automation",
+        Region = PanelRegion.Center,
+        ViewType = typeof(AutomationView),
+        ViewModelType = typeof(AutomationViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "PipelineConversation",
+        DisplayName = "Pipeline Conversation",
+        Region = PanelRegion.Center,
+        ViewType = typeof(PipelineConversationView),
+        ViewModelType = typeof(PipelineConversationViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "PresetLibrary",
+        DisplayName = "Preset Library",
+        Region = PanelRegion.Left,
+        ViewType = typeof(PresetLibraryView),
+        ViewModelType = typeof(PresetLibraryViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "TemplateLibrary",
+        DisplayName = "Template Library",
+        Region = PanelRegion.Left,
+        ViewType = typeof(TemplateLibraryView),
+        ViewModelType = typeof(TemplateLibraryViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "TagManager",
+        DisplayName = "Tag Manager",
+        Region = PanelRegion.Right,
+        ViewType = typeof(TagManagerView),
+        ViewModelType = typeof(TagManagerViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "TagOrganization",
+        DisplayName = "Tag Organization",
+        Region = PanelRegion.Right,
+        ViewType = typeof(TagOrganizationView),
+        ViewModelType = typeof(TagOrganizationViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "VoiceBrowser",
+        DisplayName = "Voice Browser",
+        Region = PanelRegion.Left,
+        ViewType = typeof(VoiceBrowserView),
+        ViewModelType = typeof(VoiceBrowserViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "MarkerManager",
+        DisplayName = "Marker Manager",
+        Region = PanelRegion.Right,
+        ViewType = typeof(MarkerManagerView),
+        ViewModelType = typeof(MarkerManagerViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "MixAssistant",
+        DisplayName = "Mix Assistant",
+        Region = PanelRegion.Right,
+        ViewType = typeof(MixAssistantView),
+        ViewModelType = typeof(MixAssistantViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "ImageSearch",
+        DisplayName = "Image Search",
+        Region = PanelRegion.Left,
+        ViewType = typeof(ImageSearchView),
+        ViewModelType = typeof(ImageSearchViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "Upscaling",
+        DisplayName = "Upscaling",
+        Region = PanelRegion.Center,
+        ViewType = typeof(UpscalingView),
+        ViewModelType = typeof(UpscalingViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "VideoEdit",
+        DisplayName = "Video Edit",
+        Region = PanelRegion.Center,
+        ViewType = typeof(VideoEditView),
+        ViewModelType = typeof(VideoEditViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "ImageVideoEnhancementPipeline",
+        DisplayName = "Image/Video Enhancement Pipeline",
+        Region = PanelRegion.Center,
+        ViewType = typeof(ImageVideoEnhancementPipelineView),
+        ViewModelType = typeof(ImageVideoEnhancementPipelineViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "MultiVoiceGenerator",
+        DisplayName = "Multi-Voice Generator",
+        Region = PanelRegion.Center,
+        ViewType = typeof(MultiVoiceGeneratorView),
+        ViewModelType = typeof(MultiVoiceGeneratorViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "RealTimeVoiceConverter",
+        DisplayName = "Real-Time Voice Converter",
+        Region = PanelRegion.Center,
+        ViewType = typeof(RealTimeVoiceConverterView),
+        ViewModelType = typeof(RealTimeVoiceConverterViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "TextHighlighting",
+        DisplayName = "Text Highlighting",
+        Region = PanelRegion.Center,
+        ViewType = typeof(TextHighlightingView),
+        ViewModelType = typeof(TextHighlightingViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "TextBasedSpeechEditor",
+        DisplayName = "Text-Based Speech Editor",
+        Region = PanelRegion.Center,
+        ViewType = typeof(TextBasedSpeechEditorView),
+        ViewModelType = typeof(TextBasedSpeechEditorViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "EmotionStyleControl",
+        DisplayName = "Emotion Style Control",
+        Region = PanelRegion.Right,
+        ViewType = typeof(EmotionStyleControlView),
+        ViewModelType = typeof(EmotionStyleControlViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "EmotionStylePresetEditor",
+        DisplayName = "Emotion Style Preset Editor",
+        Region = PanelRegion.Right,
+        ViewType = typeof(EmotionStylePresetEditorView),
+        ViewModelType = typeof(EmotionStylePresetEditorViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "MultilingualSupport",
+        DisplayName = "Multilingual Support",
+        Region = PanelRegion.Right,
+        ViewType = typeof(MultilingualSupportView),
+        ViewModelType = typeof(MultilingualSupportViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "AssistantView",
+        DisplayName = "Assistant",
+        Region = PanelRegion.Right,
+        ViewType = typeof(AssistantView),
+        ViewModelType = typeof(AssistantViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "AdvancedSearch",
+        DisplayName = "Advanced Search",
+        Region = PanelRegion.Center,
+        ViewType = typeof(AdvancedSearchView),
+        ViewModelType = typeof(AdvancedSearchViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "EngineParameterTuning",
+        DisplayName = "Engine Parameter Tuning",
+        Region = PanelRegion.Right,
+        ViewType = typeof(EngineParameterTuningView),
+        ViewModelType = typeof(EngineParameterTuningViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "EngineRecommendation",
+        DisplayName = "Engine Recommendation",
+        Region = PanelRegion.Right,
+        ViewType = typeof(EngineRecommendationView),
+        ViewModelType = typeof(EngineRecommendationViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "TrainingQualityVisualization",
+        DisplayName = "Training Quality Visualization",
+        Region = PanelRegion.Center,
+        ViewType = typeof(TrainingQualityVisualizationView),
+        ViewModelType = typeof(TrainingQualityVisualizationViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "QualityOptimizationWizard",
+        DisplayName = "Quality Optimization Wizard",
+        Region = PanelRegion.Center,
+        ViewType = typeof(QualityOptimizationWizardView),
+        ViewModelType = typeof(QualityOptimizationWizardViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "LexiconView",
+        DisplayName = "Lexicon",
+        Region = PanelRegion.Right,
+        ViewType = typeof(LexiconView),
+        ViewModelType = typeof(LexiconViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "VoiceCloningWizard",
+        DisplayName = "Voice Cloning Wizard",
+        Region = PanelRegion.Center,
+        ViewType = typeof(VoiceCloningWizardView),
+        ViewModelType = typeof(VoiceCloningWizardViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "StyleTransfer",
+        DisplayName = "Style Transfer",
+        Region = PanelRegion.Center,
+        ViewType = typeof(StyleTransferView),
+        ViewModelType = typeof(StyleTransferViewModel)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "AdvancedSpectrogramVisualization",
+        DisplayName = "Advanced Spectrogram Visualization",
+        Region = PanelRegion.Center,
+        ViewType = typeof(AdvancedSpectrogramVisualizationView)
+      });
+
+      RegisterIfNotExists(registry, new PanelDescriptor
+      {
+        PanelId = "AdvancedWaveformVisualization",
+        DisplayName = "Advanced Waveform Visualization",
+        Region = PanelRegion.Center,
+        ViewType = typeof(AdvancedWaveformVisualizationView)
+      });
     }
 
     /// <summary>

@@ -23,7 +23,7 @@ namespace VoiceStudio.App.ViewModels
     private readonly ToastNotificationService? _toastNotificationService;
     private readonly IErrorPresentationService? _errorService;
     private readonly IErrorLoggingService? _logService;
-    private readonly DispatcherQueueTimer _statusTimer;
+    private readonly DispatcherQueueTimer? _statusTimer;
     private readonly MicrophoneRecordingService _microphoneService;
 
     public string PanelId => "recording";
@@ -116,10 +116,14 @@ namespace VoiceStudio.App.ViewModels
       _microphoneService.LevelChanged += MicrophoneService_LevelChanged;
       _microphoneService.RecordingError += MicrophoneService_RecordingError;
 
-      _statusTimer = Dispatcher.CreateTimer();
-      _statusTimer.Interval = TimeSpan.FromMilliseconds(100);
-      _statusTimer.IsRepeating = true;
-      _statusTimer.Tick += StatusTimer_Tick;
+      // Only create timer if dispatcher is available (not available in test context)
+      if (Dispatcher != null)
+      {
+        _statusTimer = Dispatcher.CreateTimer();
+        _statusTimer.Interval = TimeSpan.FromMilliseconds(100);
+        _statusTimer.IsRepeating = true;
+        _statusTimer.Tick += StatusTimer_Tick;
+      }
 
       StartRecordingCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
@@ -186,7 +190,7 @@ namespace VoiceStudio.App.ViewModels
         RecordedAudioUrl = null;
 
         // Start status polling for duration updates
-        _statusTimer.Start();
+        _statusTimer?.Start();
 
         StatusMessage = ResourceHelper.GetString("Recording.RecordingStarted", "Recording started");
         _toastNotificationService?.ShowSuccess(
@@ -224,7 +228,7 @@ namespace VoiceStudio.App.ViewModels
 
       try
       {
-        _statusTimer.Stop();
+        _statusTimer?.Stop();
 
         // Stop local microphone recording
         var recordingPath = await _microphoneService.StopRecordingAsync();
@@ -294,7 +298,7 @@ namespace VoiceStudio.App.ViewModels
 
       try
       {
-        _statusTimer.Stop();
+        _statusTimer?.Stop();
 
         // Stop local microphone recording and discard the file
         var recordingPath = await _microphoneService.StopRecordingAsync();
@@ -397,8 +401,8 @@ namespace VoiceStudio.App.ViewModels
 
     private void MicrophoneService_RecordingStarted(object? sender, EventArgs e)
     {
-      // Ensure UI updates happen on dispatcher thread
-      Dispatcher.TryEnqueue(() =>
+      // Ensure UI updates happen on dispatcher thread (or synchronously in test context)
+      TryDispatch(() =>
       {
         IsRecording = true;
         StatusMessage = ResourceHelper.GetString("Recording.RecordingStarted", "Recording started");
@@ -407,10 +411,10 @@ namespace VoiceStudio.App.ViewModels
 
     private void MicrophoneService_RecordingStopped(object? sender, RecordingCompletedEventArgs e)
     {
-      Dispatcher.TryEnqueue(() =>
+      TryDispatch(() =>
       {
         IsRecording = false;
-        _statusTimer.Stop();
+        _statusTimer?.Stop();
         RecordingDuration = e.Duration;
         RecordingDurationDisplay = e.Duration.ToString(@"mm\:ss");
         
@@ -423,8 +427,8 @@ namespace VoiceStudio.App.ViewModels
 
     private void MicrophoneService_LevelChanged(object? sender, float level)
     {
-      // Update VU meter / waveform on the UI thread
-      Dispatcher.TryEnqueue(() =>
+      // Update VU meter / waveform on the UI thread (or synchronously in test context)
+      TryDispatch(() =>
       {
         // Add the level to the waveform samples for visualization
         // Keep only the last 100 samples for performance
@@ -438,10 +442,10 @@ namespace VoiceStudio.App.ViewModels
 
     private void MicrophoneService_RecordingError(object? sender, string errorMessage)
     {
-      Dispatcher.TryEnqueue(() =>
+      TryDispatch(() =>
       {
         IsRecording = false;
-        _statusTimer.Stop();
+        _statusTimer?.Stop();
         
         ErrorMessage = ResourceHelper.FormatString("Recording.RecordingError", errorMessage);
         _toastNotificationService?.ShowError(
@@ -504,8 +508,11 @@ namespace VoiceStudio.App.ViewModels
     {
       if (disposing)
       {
-        _statusTimer.Stop();
-        _statusTimer.Tick -= StatusTimer_Tick;
+        if (_statusTimer != null)
+        {
+          _statusTimer.Stop();
+          _statusTimer.Tick -= StatusTimer_Tick;
+        }
 
         // Unsubscribe from microphone service events
         _microphoneService.RecordingStarted -= MicrophoneService_RecordingStarted;

@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.UI.Dispatching;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,8 +15,7 @@ namespace VoiceStudio.App.Tests.ViewModels
     [TestClass]
     public class PluginGalleryViewModelTests
     {
-        private IViewModelContext _context = null!;
-        private DispatcherQueueController? _dispatcherController;
+        private MockViewModelContext _mockContext = null!;
         private MockPluginGateway _mockGateway = null!;
         private PluginGalleryViewModel _viewModel = null!;
 
@@ -26,18 +23,15 @@ namespace VoiceStudio.App.Tests.ViewModels
         public void Setup()
         {
             TestAppServicesHelper.EnsureInitialized();
-            _dispatcherController = DispatcherQueueController.CreateOnDedicatedThread();
-            var dispatcher = _dispatcherController.DispatcherQueue;
-            _context = new ViewModelContext(NullLogger.Instance, dispatcher);
+            _mockContext = new MockViewModelContext();
             _mockGateway = new MockPluginGateway();
-            _viewModel = new PluginGalleryViewModel(_context, _mockGateway);
+            _viewModel = new PluginGalleryViewModel(_mockContext, _mockGateway);
         }
 
         [TestCleanup]
         public void Cleanup()
         {
             _viewModel?.Dispose();
-            _dispatcherController?.ShutdownQueueAsync().AsTask().GetAwaiter().GetResult();
         }
 
         #region Initialization Tests

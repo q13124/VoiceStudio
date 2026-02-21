@@ -76,10 +76,28 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "rendering: marks tests as UI rendering tests")
     config.addinivalue_line("markers", "matrix: marks tests as panel matrix tests")
     config.addinivalue_line("markers", "workflow: marks tests as workflow tests")
+    config.addinivalue_line("markers", "e2e: marks tests as end-to-end lifecycle tests")
+    config.addinivalue_line("markers", "audio: marks tests that require audio files")
 
     # Ensure output directories exist
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def pytest_addoption(parser):
+    """Add custom command-line options."""
+    parser.addoption(
+        "--generate-audio",
+        action="store_true",
+        default=False,
+        help="Force regeneration of test audio files even if they exist"
+    )
+    parser.addoption(
+        "--skip-audio-gen",
+        action="store_true",
+        default=False,
+        help="Skip automatic audio generation (fail fast if audio missing)"
+    )
 
 
 # =============================================================================
@@ -181,6 +199,102 @@ def winappdriver_service():
         )
     yield
     # Cleanup if needed
+
+
+@pytest.fixture(scope="session", autouse=True)
+def ensure_test_audio(request):
+    """
+    Session-scoped autouse fixture that ensures test audio files are available.
+    
+    This fixture:
+    1. Checks if canonical audio files exist
+    2. If missing, generates synthetic fallback audio
+    3. Sets VOICESTUDIO_TEST_AUDIO environment variable to the audio path
+    
+    Can be controlled via pytest options:
+    - --generate-audio: Force regeneration even if files exist
+    - --skip-audio-gen: Skip generation entirely (fail fast if missing)
+    """
+    skip_gen = request.config.getoption("--skip-audio-gen", default=False)
+    force_gen = request.config.getoption("--generate-audio", default=False)
+    
+    if skip_gen:
+        # Check if audio exists without generating
+        canonical_dir = PROJECT_ROOT / "tests" / "assets" / "canonical" / "standard"
+        audio_path = canonical_dir / "allan_watts_15s.wav"
+        if not audio_path.exists():
+            audio_path = canonical_dir / "allan_watts.wav"
+        if not audio_path.exists():
+            # Check UI fixtures
+            fixtures_dir = Path(__file__).parent / "fixtures"
+            audio_path = fixtures_dir / "test_audio_short.wav"
+        
+        if audio_path.exists():
+            os.environ.setdefault("VOICESTUDIO_TEST_AUDIO", str(audio_path))
+        yield
+        return
+    
+    # Import and use the generator
+    try:
+        from tests.ui.fixtures.generate_test_audio import (
+            ensure_test_audio_available,
+            generate_canonical_audio,
+        )
+        
+        if force_gen:
+            print("\n[conftest] Force-generating test audio files...")
+            generate_canonical_audio(force=True)
+        
+        audio_path = ensure_test_audio_available()
+        
+        if audio_path:
+            os.environ.setdefault("VOICESTUDIO_TEST_AUDIO", str(audio_path))
+            print(f"\n[conftest] Test audio available: {audio_path}")
+        else:
+            print("\n[conftest] WARNING: Could not ensure test audio availability")
+    
+    except ImportError as e:
+        print(f"\n[conftest] WARNING: Could not import audio generator: {e}")
+    except Exception as e:
+        print(f"\n[conftest] WARNING: Error ensuring test audio: {e}")
+    
+    yield
+
+
+@pytest.fixture(scope="session")
+def canonical_audio_path(ensure_test_audio):
+    """
+    Provide the path to canonical test audio.
+    
+    Depends on ensure_test_audio to guarantee files exist.
+    Returns the path to the best available test audio file.
+    """
+    # Check for canonical audio
+    canonical_dir = PROJECT_ROOT / "tests" / "assets" / "canonical" / "standard"
+    
+    # Prefer the 15s segment for faster tests
+    segment_path = canonical_dir / "allan_watts_15s.wav"
+    if segment_path.exists():
+        return segment_path
+    
+    # Fall back to full audio
+    full_path = canonical_dir / "allan_watts.wav"
+    if full_path.exists():
+        return full_path
+    
+    # Fall back to UI fixtures
+    fixtures_dir = Path(__file__).parent / "fixtures"
+    for name in ["test_audio_short.wav", "test_audio_long.wav", "voice_reference_clean.wav"]:
+        path = fixtures_dir / name
+        if path.exists():
+            return path
+    
+    # Last resort: check environment variable
+    env_path = os.getenv("VOICESTUDIO_TEST_AUDIO")
+    if env_path and Path(env_path).exists():
+        return Path(env_path)
+    
+    pytest.skip("No test audio available. Run with --generate-audio or provide VOICESTUDIO_TEST_AUDIO")
 
 
 class WinAppDriverSession:
@@ -524,6 +638,39 @@ class WinAppDriverSession:
         else:
             self.send_keys("TAB")
 
+    # -------------------------------------------------------------------------
+    # Switch To (for active element, window, frame operations)
+    # -------------------------------------------------------------------------
+
+    @property
+    def switch_to(self):
+        """Return a SwitchTo object for accessing active element, windows, etc."""
+        return self._SwitchTo(self)
+
+    class _SwitchTo:
+        """Provides switch_to functionality for WinAppDriver sessions."""
+
+        def __init__(self, session: WinAppDriverSession):
+            self._session = session
+
+        @property
+        def active_element(self):
+            """Get the currently active/focused element."""
+            result = self._session._request("GET", "/element/active")
+            value = result.get("value", {})
+            element_id = value.get("ELEMENT") or next(iter(value.values()), None)
+            if not element_id:
+                raise RuntimeError("No active element found")
+            return WinAppDriverElement(self._session, element_id)
+
+        def window(self, window_handle: str):
+            """Switch to a different window by handle."""
+            self._session._request("POST", "/window", {"handle": window_handle})
+
+        def default_content(self):
+            """Switch to the default content (main window)."""
+            pass  # WinAppDriver operates on a single window typically
+
 
 class WinAppDriverElement:
     """Element wrapper for WinAppDriver."""
@@ -575,6 +722,24 @@ class WinAppDriverElement:
         """Check if element is enabled."""
         result = self._request("GET", "/enabled")
         return result.get("value", False)
+
+    @property
+    def rect(self) -> dict:
+        """Get element rectangle (position and size)."""
+        result = self._request("GET", "/rect")
+        return result.get("value", {})
+
+    @property
+    def location(self) -> dict:
+        """Get element location (x, y coordinates)."""
+        result = self._request("GET", "/location")
+        return result.get("value", {})
+
+    @property
+    def size(self) -> dict:
+        """Get element size (width, height)."""
+        result = self._request("GET", "/size")
+        return result.get("value", {})
 
     def find_element(self, by: str, value: str):
         """Find child element."""
@@ -759,6 +924,228 @@ def retry_action():
 
 
 # =============================================================================
+# Tracing Fixtures
+# =============================================================================
+
+BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8000")
+
+
+@pytest.fixture(scope="session")
+def session_tracer():
+    """
+    Session-scoped WorkflowTracer for capturing traces across multiple tests.
+
+    The tracer is initialized once per test session and can be used to track
+    the full workflow across related tests. Individual tests can start new
+    phases within the same session tracer.
+
+    Yields:
+        WorkflowTracer: Configured tracer instance.
+    """
+    from tracing.workflow_tracer import WorkflowTracer
+
+    output_dir = OUTPUT_DIR / "traces"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    tracer = WorkflowTracer(
+        workflow_name="session_workflow",
+        output_dir=output_dir,
+    )
+    tracer.start("Session Test Workflow")
+
+    yield tracer
+
+    # Export reports at session end
+    try:
+        tracer.complete()
+        tracer.export_json()
+        tracer.export_html()
+    except Exception as e:
+        print(f"[conftest] Error exporting session tracer reports: {e}")
+
+
+@pytest.fixture(scope="function")
+def tracer(request):
+    """
+    Function-scoped WorkflowTracer for per-test tracing.
+
+    Creates a fresh tracer for each test, allowing isolated trace capture.
+    Reports are exported automatically at test completion.
+
+    Yields:
+        WorkflowTracer: Configured tracer instance for the current test.
+    """
+    from tracing.workflow_tracer import WorkflowTracer
+
+    test_name = request.node.name.replace("::", "_").replace("[", "_").replace("]", "_")
+    output_dir = OUTPUT_DIR / "traces" / test_name
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    tracer = WorkflowTracer(
+        workflow_name=test_name,
+        output_dir=output_dir,
+    )
+    tracer.start(f"Test: {test_name}")
+
+    yield tracer
+
+    # Export reports at test end
+    try:
+        tracer.complete()
+        tracer.export_json()
+    except Exception as e:
+        print(f"[conftest] Error exporting test tracer reports: {e}")
+
+
+@pytest.fixture(scope="session")
+def session_api_monitor(session_tracer):
+    """
+    Session-scoped APIMonitor for monitoring backend calls across tests.
+
+    Integrated with session_tracer for correlated logging.
+
+    Yields:
+        APIMonitor: Configured monitor instance.
+    """
+    from tracing.api_monitor import APIMonitor
+
+    monitor = APIMonitor(
+        base_url=BACKEND_URL,
+        timeout=30.0,
+        tracer=session_tracer,
+    )
+
+    yield monitor
+
+    # Export call log at session end
+    try:
+        log_path = OUTPUT_DIR / "traces" / "api_calls_session.json"
+        monitor.export_log(log_path)
+    except Exception as e:
+        print(f"[conftest] Error exporting session API log: {e}")
+
+
+@pytest.fixture(scope="function")
+def api_monitor(tracer):
+    """
+    Function-scoped APIMonitor for per-test backend call monitoring.
+
+    Integrated with the function-scoped tracer for correlated logging.
+
+    Yields:
+        APIMonitor: Configured monitor instance for the current test.
+    """
+    from tracing.api_monitor import APIMonitor
+
+    monitor = APIMonitor(
+        base_url=BACKEND_URL,
+        timeout=30.0,
+        tracer=tracer,
+    )
+
+    yield monitor
+
+
+@pytest.fixture(scope="function")
+def uploaded_asset(api_monitor, canonical_audio_path):
+    """
+    Upload test audio to the backend and return asset metadata.
+
+    This fixture dynamically uploads the canonical test audio file to the
+    backend's library, eliminating the need for hardcoded asset UUIDs.
+    The uploaded asset is available for the duration of the test.
+
+    Yields:
+        dict: Asset metadata including 'id', 'filename', 'path', etc.
+              Returns None if upload fails.
+    """
+    if not canonical_audio_path.exists():
+        pytest.skip(f"Test audio not found: {canonical_audio_path}")
+
+    try:
+        with open(canonical_audio_path, "rb") as f:
+            files = {"file": (canonical_audio_path.name, f, "audio/wav")}
+            response = api_monitor.post(
+                "/api/library/assets/upload",
+                files=files
+            )
+
+        if response.status_code in (200, 201):
+            data = response.json()
+            asset_id = data.get("id") or data.get("asset_id")
+            if asset_id:
+                yield {
+                    "id": asset_id,
+                    "filename": canonical_audio_path.name,
+                    "path": canonical_audio_path,
+                    "response": data,
+                }
+                return
+
+        print(f"[conftest] Upload failed: {response.status_code}")
+        yield None
+
+    except Exception as e:
+        print(f"[conftest] Error uploading test audio: {e}")
+        yield None
+
+
+@pytest.fixture(scope="session")
+def session_uploaded_asset(session_api_monitor, ensure_test_audio):
+    """
+    Session-scoped uploaded asset for tests that share the same asset.
+
+    Uploads the canonical test audio once per session and provides
+    the asset metadata to all tests that need it.
+
+    Yields:
+        dict: Asset metadata or None if upload fails.
+    """
+    canonical_dir = PROJECT_ROOT / "tests" / "assets" / "canonical" / "standard"
+    audio_path = canonical_dir / "allan_watts_15s.wav"
+    if not audio_path.exists():
+        audio_path = canonical_dir / "allan_watts.wav"
+    if not audio_path.exists():
+        # Fall back to environment variable
+        env_path = os.getenv("VOICESTUDIO_TEST_AUDIO")
+        if env_path:
+            audio_path = Path(env_path)
+
+    if not audio_path.exists():
+        print("[conftest] No test audio available for session upload")
+        yield None
+        return
+
+    try:
+        with open(audio_path, "rb") as f:
+            files = {"file": (audio_path.name, f, "audio/wav")}
+            response = session_api_monitor.post(
+                "/api/library/assets/upload",
+                files=files
+            )
+
+        if response.status_code in (200, 201):
+            data = response.json()
+            asset_id = data.get("id") or data.get("asset_id")
+            if asset_id:
+                print(f"[conftest] Session asset uploaded: {asset_id}")
+                yield {
+                    "id": asset_id,
+                    "filename": audio_path.name,
+                    "path": audio_path,
+                    "response": data,
+                }
+                return
+
+        print(f"[conftest] Session upload failed: {response.status_code}")
+        yield None
+
+    except Exception as e:
+        print(f"[conftest] Error uploading session audio: {e}")
+        yield None
+
+
+# =============================================================================
 # Session Info
 # =============================================================================
 
@@ -768,5 +1155,6 @@ def pytest_report_header(config):
         "VoiceStudio UI Tests",
         f"  App Path: {APP_PATH}",
         f"  WinAppDriver: {WINAPPDRIVER_URL}",
+        f"  Backend URL: {BACKEND_URL}",
         f"  Screenshots: {SCREENSHOT_DIR}",
     ]

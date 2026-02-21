@@ -1,8 +1,13 @@
 """
 Allan Watts M4A File Import Tests.
 
-Comprehensive import testing using the specific test file:
-C:\\Users\\Tyler\\Downloads\\Allan Watts.m4a
+Comprehensive import testing using the canonical test audio:
+tests/assets/canonical/standard/allan_watts.wav (or allan_watts_15s.wav)
+
+Audio is resolved via:
+1. VOICESTUDIO_TEST_AUDIO environment variable (if set)
+2. conftest.py canonical_audio_path fixture (auto-provisioned)
+3. Synthetic generation fallback via generate_test_audio.py
 
 Tests:
 - UI Import button workflow
@@ -14,9 +19,9 @@ Tests:
 
 Requirements:
 - WinAppDriver running on port 4723
-- Backend running on port 8001
+- Backend running on port 8000
 - VoiceStudio application built
-- Test file: C:\\Users\\Tyler\\Downloads\\Allan Watts.m4a
+- Test audio: auto-provisioned via conftest.py fixture
 """
 
 from __future__ import annotations
@@ -43,7 +48,7 @@ from tracing.api_monitor import APIMonitor
 from tracing.workflow_tracer import WorkflowTracer
 
 # Configuration
-BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8001")
+BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8000")
 OUTPUT_DIR = Path(os.getenv("VOICESTUDIO_OUTPUT_DIR", ".buildlogs/validation"))
 SCREENSHOTS_ENABLED = os.getenv("VOICESTUDIO_SCREENSHOTS_ENABLED", "1") == "1"
 
@@ -280,10 +285,10 @@ class TestAPIImport:
                 files = {"file": (TEST_AUDIO_FILE.name, f, "audio/x-m4a")}
 
                 start_time = time.perf_counter()
-                response = api_monitor.post("/api/library/assets", files=files)
+                response = api_monitor.post("/api/library/assets/upload", files=files)
                 elapsed_ms = (time.perf_counter() - start_time) * 1000
 
-                tracer.api_call("POST", "/api/library/assets", response)
+                tracer.api_call("POST", "/api/library/assets/upload", response)
                 tracer.record_timing("api_upload", elapsed_ms, f"{test_file['size_mb']:.2f} MB file")
 
                 if response.status_code in [200, 201]:
@@ -347,8 +352,8 @@ class TestAPIImport:
                 files = {"file": (TEST_AUDIO_FILE.name, f, "audio/x-m4a")}
                 data = {"metadata": str(metadata)}  # Some APIs accept string, some JSON
 
-                response = api_monitor.post("/api/library/assets", files=files, data=data)
-                tracer.api_call("POST", "/api/library/assets (with metadata)", response)
+                response = api_monitor.post("/api/library/assets/upload", files=files, data=data)
+                tracer.api_call("POST", "/api/library/assets/upload (with metadata)", response)
 
                 tracer.step(f"Upload with metadata: status {response.status_code}")
                 tracer.success("Metadata upload test completed")
@@ -456,8 +461,8 @@ class TestImportErrorHandling:
 
         # Can't send nonexistent file via API, but we can test with empty body
         try:
-            response = api_monitor.post("/api/library/assets", files={})
-            tracer.api_call("POST", "/api/library/assets (empty)", response)
+            response = api_monitor.post("/api/library/assets/upload", files={})
+            tracer.api_call("POST", "/api/library/assets/upload (empty)", response)
 
             assert response.status_code in [400, 422], \
                 f"Empty upload should fail with validation error, got {response.status_code}"
@@ -480,8 +485,8 @@ class TestImportErrorHandling:
         try:
             with open(temp_path, "rb") as f:
                 files = {"file": ("corrupted.m4a", f, "audio/x-m4a")}
-                response = api_monitor.post("/api/library/assets", files=files)
-                tracer.api_call("POST", "/api/library/assets (corrupted)", response)
+                response = api_monitor.post("/api/library/assets/upload", files=files)
+                tracer.api_call("POST", "/api/library/assets/upload (corrupted)", response)
 
                 tracer.step(f"Corrupted file handling: status {response.status_code}")
                 # Either reject (400/422) or attempt processing is acceptable

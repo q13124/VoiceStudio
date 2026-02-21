@@ -23,6 +23,7 @@ namespace VoiceStudio.App.Commands
         private readonly IDialogService _dialogService;
         private readonly IBackendClient? _backendClient;
         private readonly ToastNotificationService? _toastService;
+        private readonly IEventAggregator? _eventAggregator;
 
         private Project? _currentProject;
         private string? _currentProjectPath;
@@ -34,13 +35,15 @@ namespace VoiceStudio.App.Commands
             IProjectRepository projectRepository,
             IDialogService dialogService,
             IBackendClient? backendClient = null,
-            ToastNotificationService? toastService = null)
+            ToastNotificationService? toastService = null,
+            IEventAggregator? eventAggregator = null)
         {
             _registry = registry ?? throw new ArgumentNullException(nameof(registry));
             _projectRepository = projectRepository ?? throw new ArgumentNullException(nameof(projectRepository));
             _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
             _backendClient = backendClient;
             _toastService = toastService;
+            _eventAggregator = eventAggregator ?? AppServices.TryGetEventAggregator();
 
             RegisterCommands();
         }
@@ -196,6 +199,7 @@ namespace VoiceStudio.App.Commands
             HasUnsavedChanges = true;
 
             CurrentProjectChanged?.Invoke(this, _currentProject);
+            _eventAggregator?.Publish(new ProjectChangedEvent("file.handler", _currentProject.Id, _currentProject.Name, isNew: true));
             _toastService?.ShowInfo($"Created new project: {name}");
 
             Debug.WriteLine($"[FileOperationsHandler] New project created: {name}");
@@ -241,6 +245,7 @@ namespace VoiceStudio.App.Commands
                     HasUnsavedChanges = false;
 
                     CurrentProjectChanged?.Invoke(this, _currentProject);
+                    _eventAggregator?.Publish(new ProjectChangedEvent("file.handler", _currentProject?.Id, _currentProject?.Name, isNew: false));
                     _toastService?.ShowSuccess($"Opened project: {project.Name}");
 
                     Debug.WriteLine($"[FileOperationsHandler] Opened project: {project.Name}");
@@ -325,6 +330,7 @@ namespace VoiceStudio.App.Commands
                 HasUnsavedChanges = false;
 
                 CurrentProjectChanged?.Invoke(this, _currentProject);
+                _eventAggregator?.Publish(new ProjectChangedEvent("file.handler", _currentProject?.Id, _currentProject?.Name, isNew: false));
                 _toastService?.ShowSuccess($"Project saved as: {name}");
 
                 Debug.WriteLine($"[FileOperationsHandler] Project saved as: {name}");
@@ -575,6 +581,7 @@ namespace VoiceStudio.App.Commands
             HasUnsavedChanges = false;
 
             CurrentProjectChanged?.Invoke(this, null);
+            _eventAggregator?.Publish(new ProjectChangedEvent("file.handler", null, null, isNew: false));
             _toastService?.ShowInfo($"Closed project: {projectName}");
 
             Debug.WriteLine($"[FileOperationsHandler] Project closed: {projectName}");

@@ -155,10 +155,41 @@ namespace VoiceStudio.App.Views.Panels
     /// </summary>
     private async Task HandleCrossPanelDropAsync(DragPayload payload, CancellationToken cancellationToken)
     {
-      if (ViewModel.SelectedTrack == null || ViewModel.SelectedProject == null)
+      // Phase 3 Fix 2: Auto-create project and track if needed
+      if (ViewModel.SelectedProject == null)
       {
-        _toastService?.ShowToast(ToastType.Warning, "Drop Failed", "Select a track first to add clips");
+        _toastService?.ShowToast(ToastType.Warning, "No Project", "Create or open a project first (Ctrl+N)");
         return;
+      }
+
+      // Auto-create a track if none exist
+      if (ViewModel.SelectedTrack == null)
+      {
+        if (ViewModel.Tracks.Count == 0)
+        {
+          _toastService?.ShowToast(ToastType.Info, "Creating Track", "Adding first track automatically...");
+          try
+          {
+            await ViewModel.AddTrackCommand.ExecuteAsync(null);
+          }
+          catch (Exception ex)
+          {
+            _toastService?.ShowToast(ToastType.Error, "Track Creation Failed", ex.Message);
+            return;
+          }
+        }
+        else
+        {
+          // Tracks exist but none selected - auto-select first
+          ViewModel.SelectedTrack = ViewModel.Tracks.FirstOrDefault();
+        }
+
+        // Verify we now have a track
+        if (ViewModel.SelectedTrack == null)
+        {
+          _toastService?.ShowToast(ToastType.Warning, "Drop Failed", "Could not create or select a track");
+          return;
+        }
       }
 
       switch (payload.PayloadType)

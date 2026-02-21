@@ -72,7 +72,8 @@ def compare_screenshot(
     actual_path: Path,
     baseline_name: str,
     threshold: float = 0.01,
-    generate_diff: bool = True
+    generate_diff: bool = True,
+    auto_capture_missing: bool = True
 ) -> tuple[bool, float]:
     """
     Compare a screenshot against a baseline image.
@@ -82,6 +83,7 @@ def compare_screenshot(
         baseline_name: Name of the baseline to compare against
         threshold: Maximum allowed difference percentage (0.0 to 1.0)
         generate_diff: Whether to generate a visual diff image
+        auto_capture_missing: If True, auto-capture baseline on first run
 
     Returns:
         Tuple of (passed: bool, diff_percentage: float)
@@ -93,6 +95,12 @@ def compare_screenshot(
     baseline_path = get_baseline_path(baseline_name)
 
     if not baseline_path.exists():
+        if auto_capture_missing and actual_path.exists():
+            # Auto-capture baseline on first run
+            import shutil
+            shutil.copy(actual_path, baseline_path)
+            print(f"Auto-captured baseline (first run): {baseline_path}")
+            return True, 0.0
         print(f"Baseline not found: {baseline_path}")
         print("Run capture_baseline() first to establish expected appearance")
         return False, 1.0

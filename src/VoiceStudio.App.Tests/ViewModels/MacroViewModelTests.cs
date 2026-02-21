@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.UI.Dispatching;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using VoiceStudio.App.Tests.Fixtures;
@@ -12,26 +10,23 @@ namespace VoiceStudio.App.Tests.ViewModels
     [TestClass]
     public class MacroViewModelTests
     {
-        private IViewModelContext _context = null!;
+        private MockViewModelContext _mockContext = null!;
         private Mock<IBackendClient> _mockBackendClient = null!;
-        private DispatcherQueueController? _dispatcherController;
         private MacroViewModel _viewModel = null!;
 
         [TestInitialize]
         public void Setup()
         {
             TestAppServicesHelper.EnsureInitialized();
-            _dispatcherController = DispatcherQueueController.CreateOnDedicatedThread();
-            var dispatcher = _dispatcherController.DispatcherQueue;
-            _context = new ViewModelContext(NullLogger.Instance, dispatcher);
+            _mockContext = new MockViewModelContext();
             _mockBackendClient = new Mock<IBackendClient>();
-            _viewModel = new MacroViewModel(_context, _mockBackendClient.Object);
+            _viewModel = new MacroViewModel(_mockContext, _mockBackendClient.Object);
         }
 
         [TestCleanup]
         public void Cleanup()
         {
-            _dispatcherController?.ShutdownQueueAsync().AsTask().GetAwaiter().GetResult();
+            // No dispatcher cleanup needed with MockViewModelContext
         }
 
         [TestMethod]

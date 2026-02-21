@@ -1,7 +1,7 @@
 """
 Allan Watts Library Panel Workflow Tests.
 
-Tests Library panel functionality using the Allan Watts.m4a file:
+Tests Library panel functionality using canonical test audio:
 - File listing and display
 - Search functionality
 - Selection and multi-select
@@ -11,11 +11,16 @@ Tests Library panel functionality using the Allan Watts.m4a file:
 - Panel state persistence
 - Integration with other panels
 
+Audio is resolved via:
+1. VOICESTUDIO_TEST_AUDIO environment variable (if set)
+2. conftest.py canonical_audio_path fixture (auto-provisioned)
+3. Synthetic generation fallback via generate_test_audio.py
+
 Requirements:
 - WinAppDriver running on port 4723
-- Backend running on port 8001
+- Backend running on port 8000
 - VoiceStudio application built
-- Test file: C:\\Users\\Tyler\\Downloads\\Allan Watts.m4a
+- Test audio: auto-provisioned via conftest.py fixture
 """
 
 from __future__ import annotations
@@ -39,7 +44,7 @@ from tracing.api_monitor import APIMonitor
 from tracing.workflow_tracer import WorkflowTracer
 
 # Configuration
-BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8001")
+BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8000")
 OUTPUT_DIR = Path(os.getenv("VOICESTUDIO_OUTPUT_DIR", ".buildlogs/validation"))
 SCREENSHOTS_ENABLED = os.getenv("VOICESTUDIO_SCREENSHOTS_ENABLED", "1") == "1"
 

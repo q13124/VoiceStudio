@@ -1,8 +1,7 @@
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.UI.Dispatching;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using VoiceStudio.App.Services;
+using VoiceStudio.App.Tests.Fixtures;
 using VoiceStudio.App.ViewModels;
 using VoiceStudio.Core.Services;
 
@@ -11,22 +10,19 @@ namespace VoiceStudio.App.Tests.ViewModels
     [TestClass]
     public class SettingsViewModelTests
     {
-        private IViewModelContext _context = null!;
+        private MockViewModelContext _mockContext = null!;
         private Mock<ISettingsService> _mockSettingsService = null!;
         private Mock<IBackendClient> _mockBackendClient = null!;
-        private DispatcherQueueController? _dispatcherController;
         private SettingsViewModel _viewModel = null!;
 
         [TestInitialize]
         public void Setup()
         {
-            _dispatcherController = DispatcherQueueController.CreateOnDedicatedThread();
-            var dispatcher = _dispatcherController.DispatcherQueue;
-            _context = new ViewModelContext(NullLogger.Instance, dispatcher);
+            _mockContext = new MockViewModelContext();
             _mockSettingsService = new Mock<ISettingsService>();
             _mockBackendClient = new Mock<IBackendClient>();
             _viewModel = new SettingsViewModel(
-                _context,
+                _mockContext,
                 _mockSettingsService.Object,
                 _mockBackendClient.Object);
         }
@@ -34,7 +30,7 @@ namespace VoiceStudio.App.Tests.ViewModels
         [TestCleanup]
         public void Cleanup()
         {
-            _dispatcherController?.ShutdownQueueAsync().AsTask().GetAwaiter().GetResult();
+            // No dispatcher cleanup needed with MockViewModelContext
         }
 
         [TestMethod]
