@@ -161,7 +161,12 @@ class WhisperCPPEngine(EngineProtocol):
             language: Language code (e.g., 'en', 'zh', 'ja')
                 or None for auto-detect
         """
-        default_model_root = os.getenv("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models")
+        default_model_root = os.getenv("VOICESTUDIO_MODELS_PATH", "")
+        if not default_model_root:
+            default_model_root = os.path.join(
+                os.getenv("PROGRAMDATA", "C:\\ProgramData"),
+                "VoiceStudio", "models",
+            )
         default_model_path = os.path.join(
             default_model_root, "whisper", "whisper-medium.en.gguf"
         )
@@ -399,13 +404,12 @@ class WhisperCPPEngine(EngineProtocol):
                     self._model = cached_ctx.get("model")
                     return True
 
-            # Check if model path exists
             if not os.path.exists(self.model_path):
-                logger.warning(
+                logger.error(
                     f"Model path not found: {self.model_path}. "
-                    f"whisper.cpp model may need to be downloaded."
+                    f"Run model preflight or download the GGUF manually."
                 )
-                return True
+                return False
 
             logger.info(f"Loading whisper.cpp model from {self.model_path}")
 

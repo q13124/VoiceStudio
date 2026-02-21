@@ -956,20 +956,19 @@ _Previous:_
 
 ## Context Acknowledgment
 
-- **Acknowledged At**: 2026-02-21 (Overseer Onboarding + Sprint-3 Recovery)
-- **Acknowledged By**: Overseer (Role 0) — GPT-5.3 Codex
+- **Acknowledged At**: 2026-02-21 (Overseer Full Onboarding — Session 2)
+- **Acknowledged By**: Overseer (Role 0) — Claude 4.6 Opus
 - **Actions Completed**:
-  - Read STATE.md: Phase (all 8 phases COMPLETE), Active Task (DEEP-UI-UX-INTEGRITY-REVIEW COMPLETE), Blockers, Next Steps
-  - Read QUALITY_LEDGER.md: 3 OPEN items (VS-0043 S4, VS-0045 S2, VS-0046 S3)
-  - Read Overseer prompt, guide, skill, and handoff document
-  - Read ROLE_GUIDES_INDEX.md and Ultimate Master Plan 2026
-  - Ran `python scripts/run_verification.py` — ALL PASS (gate_status, ledger_validate, completion_guard, empty_catch_check, xaml_safety_check)
-  - Recovered Sprint-3 deliverables from reverted commit `6b24034d` (excluding `installer/runtime` and submodule trees)
-  - Re-validated recovery with `python scripts/run_verification.py` (PASS) and restored-unit pytest slice (`738 passed, 18 skipped`)
-  - Reviewed Proof Index and Last Milestones
-- **Notes**: Full Overseer onboarding complete and Sprint-3 recovery executed. Restored Deep UI/UX Integrity reports, UI debug infrastructure, page objects, tracing tools, and test remediations lost during the runtime-binary revert cycle. Verification harness remains GREEN. Open ledger priorities remain VS-0045, VS-0046, VS-0043.
-- **Previous**: 2026-02-19 (UI/UX Integrity Implementation Start)
-- **Summary**: New Overseer session completed with recovery reconciliation. All gates A-H GREEN. Project is in post-RC1 state with recovered artifacts restored; next focus remains VS-0045 and GA promotion prerequisites.
+  - Read STATE.md: Phase (all 8 phases COMPLETE), Active Task (DEEP-UI-UX-INTEGRITY-REVIEW COMPLETE 2026-02-19), Blockers, Next Steps
+  - Read QUALITY_LEDGER.md: 3 open items (VS-0043 S4 OPEN, VS-0045 S2 IN_PROGRESS, VS-0046 S3 IN_PROGRESS)
+  - Read Overseer prompt (ROLE_0_OVERSEER_PROMPT.md), guide (ROLE_0_OVERSEER_GUIDE.md), skill (SKILL.md)
+  - Queried OpenMemory: 10 contextual memories retrieved; baseline assessment from today confirmed (C# 0 errors, 990 C# tests, 5292 Python tests, 0 ruff violations)
+  - Ran `python scripts/run_verification.py` — ALL 5/5 PASS (gate_status, ledger_validate, completion_guard, empty_catch_check, xaml_safety_check)
+  - Reviewed Proof Index (30+ entries) and Next 3 Steps
+  - Confirmed branch: `feature/gap-resolution-sprint-3`
+- **Notes**: Full Overseer onboarding complete. All gates A-H GREEN. Verification harness PASS. Sprint-3 recovery was completed earlier today. Three open ledger items remain: VS-0045 (XTTS/Whisper engine init), VS-0046 (dependency CVEs), VS-0043 (mypy tech debt). Project is post-RC1 awaiting VM lifecycle validation for GA promotion.
+- **Previous**: 2026-02-21 (Overseer Onboarding + Sprint-3 Recovery)
+- **Summary**: Second Overseer session today. Full onboarding review confirms project health. All infrastructure verified GREEN. Focus remains on VS-0045 resolution, VS-0046 security remediation, and v1.0.2 GA promotion path.
 
 ## SSOT Pointers
 

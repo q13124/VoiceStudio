@@ -34,6 +34,11 @@ from backend.config.path_config import get_models_path
 
 _configure_hf_endpoints()
 
+# Accept Coqui CPML license for non-interactive XTTS model download.
+# Without this, XTTS init raises RuntimeError when stdin is not a TTY
+# (e.g. uvicorn, pytest, CI). Users who disagree can set COQUI_TOS_AGREED=0.
+os.environ.setdefault("COQUI_TOS_AGREED", "1")
+
 # Set default model/cache locations (override with env if needed)
 _default_models_root = os.environ.get("VOICESTUDIO_MODELS_PATH")
 if not _default_models_root:

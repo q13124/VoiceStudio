@@ -69,7 +69,7 @@ class TranscriptionRequest(BaseModel):
     """Request for transcription."""
 
     audio_id: str
-    engine: str = "whisper_cpp"  # whisper_cpp, whisper, whisperx, vosk
+    engine: str = "whisper"  # whisper, whisper_cpp, whisperx, vosk
     language: str | None = None  # Auto-detect if None
     word_timestamps: bool = False
     diarization: bool = False  # Speaker diarization (WhisperX only)

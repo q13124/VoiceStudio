@@ -29,6 +29,8 @@ import os
 from importlib import metadata
 from pathlib import Path
 
+from backend.config.path_config import get_models_path
+
 try:
     from huggingface_hub import hf_hub_download, snapshot_download
 
@@ -108,7 +110,7 @@ def ensure_xtts(auto_download: bool = True) -> dict[str, object]:
     base_dir = Path(
         engine_cfg.get("model_paths", {}).get("base")
         or os.path.join(
-            os.environ.get("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models"), "xtts"
+            str(get_models_path()), "xtts"
         )
     )
     cache_dir = Path(
@@ -179,6 +181,7 @@ def ensure_xtts(auto_download: bool = True) -> dict[str, object]:
         "downloaded": downloaded,
         "message": message,
         "assets_present": assets_present,
+        "deferred_download": not assets_present and not downloaded,
         "base_dir": str(base_dir),
         "cache_dir": str(cache_dir),
         "dependencies": deps_status,
@@ -194,7 +197,7 @@ def ensure_piper(auto_download: bool = True) -> dict[str, object]:
     base_dir = Path(
         engine_cfg.get("model_paths", {}).get("base")
         or os.path.join(
-            os.environ.get("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models"), "piper"
+            str(get_models_path()), "piper"
         )
     )
     voice = engine_cfg.get("parameters", {}).get("voice", "en_US-amy-medium")
@@ -256,7 +259,7 @@ def ensure_whisper_cpp(auto_download: bool = True) -> dict[str, object]:
     model_path = Path(
         engine_cfg.get("parameters", {}).get("model_path")
         or os.path.join(
-            os.environ.get("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models"),
+            str(get_models_path()),
             "whisper",
             "whisper-medium.en.gguf",
         )
@@ -305,7 +308,7 @@ def ensure_sovits(auto_download: bool = False) -> dict[str, object]:
         params.get("checkpoint_path")
         or params.get("model_path")
         or os.path.join(
-            os.environ.get("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models"),
+            str(get_models_path()),
             "checkpoints",
             "MyVoiceProj",
             "model.pth",
@@ -340,6 +343,46 @@ def ensure_sovits(auto_download: bool = False) -> dict[str, object]:
     }
 
 
+def ensure_faster_whisper(auto_download: bool = True) -> dict[str, object]:
+    """
+    Validate faster-whisper (CTranslate2) availability.
+
+    Unlike whisper.cpp, faster-whisper auto-downloads models from HuggingFace
+    when given a size name (e.g. "base", "medium"). This check verifies the
+    library is importable and the download cache directory is writable.
+    """
+    try:
+        from faster_whisper import WhisperModel  # noqa: F401
+    except ImportError:
+        raise _fail(
+            "faster-whisper not installed. Install: pip install faster-whisper",
+            status_code=503,
+        )
+
+    models_root = os.environ.get("VOICESTUDIO_MODELS_PATH", "")
+    if not models_root:
+        models_root = os.path.join(
+            os.environ.get("PROGRAMDATA", "C:\\ProgramData"),
+            "VoiceStudio", "models",
+        )
+    whisper_cache = os.path.join(models_root, "whisper")
+    os.makedirs(whisper_cache, exist_ok=True)
+
+    has_cached = any(Path(whisper_cache).rglob("*.bin"))
+
+    return {
+        "ok": True,
+        "paths": [whisper_cache],
+        "downloaded": False,
+        "message": (
+            f"faster-whisper importable; cache at {whisper_cache}"
+            + (" (models cached)" if has_cached else " (models download on first use)")
+        ),
+        "cache_dir": whisper_cache,
+        "models_cached": has_cached,
+    }
+
+
 def run_preflight(auto_download: bool = True) -> dict[str, object]:
     """
     Run all pre-flight checks. Returns a summary dict.
@@ -349,6 +392,7 @@ def run_preflight(auto_download: bool = True) -> dict[str, object]:
         "xtts_v2": ensure_xtts,
         "piper": ensure_piper,
         "whisper_cpp": ensure_whisper_cpp,
+        "faster_whisper": ensure_faster_whisper,
         "gpt_sovits": ensure_sovits,
     }
 

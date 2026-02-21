@@ -391,10 +391,20 @@ class WhisperEngine(EngineProtocol):
             f"Loading Whisper model: {self.model_name} on {self.whisper_device}"
         )
 
+        models_root = os.getenv("VOICESTUDIO_MODELS_PATH", "")
+        if not models_root:
+            models_root = os.path.join(
+                os.getenv("PROGRAMDATA", "C:\\ProgramData"),
+                "VoiceStudio", "models",
+            )
+        whisper_cache = os.path.join(models_root, "whisper")
+        os.makedirs(whisper_cache, exist_ok=True)
+
         self.model = WhisperModel(
             model_size_or_path=self.model_name,
             device=self.whisper_device,
             compute_type=self.compute_type,
+            download_root=whisper_cache,
         )
 
         # Cache model
