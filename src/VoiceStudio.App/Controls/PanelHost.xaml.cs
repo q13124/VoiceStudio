@@ -18,6 +18,7 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Animation;
 using Windows.ApplicationModel.DataTransfer;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Controls
 {
@@ -225,7 +226,7 @@ namespace VoiceStudio.App.Controls
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"[PanelHost] Error during content change: {ex.Message}");
+        ErrorLogger.LogWarning($"Error during content change: {ex.Message}", "PanelHost");
       }
     }
 
@@ -248,7 +249,7 @@ namespace VoiceStudio.App.Controls
         }
         catch (Exception ex)
         {
-          System.Diagnostics.Debug.WriteLine($"[PanelHost] Error activating panel: {ex.Message}");
+          ErrorLogger.LogWarning($"Error activating panel: {ex.Message}", "PanelHost");
         }
       }
       else
@@ -277,7 +278,7 @@ namespace VoiceStudio.App.Controls
         }
         catch (Exception ex)
         {
-          System.Diagnostics.Debug.WriteLine($"[PanelHost] Error deactivating panel: {ex.Message}");
+          ErrorLogger.LogWarning($"Error deactivating panel: {ex.Message}", "PanelHost");
         }
       }
       else
@@ -411,7 +412,7 @@ namespace VoiceStudio.App.Controls
                   panelState.CustomState[kvp.Key] = kvp.Value;
               }
               
-              System.Diagnostics.Debug.WriteLine($"Saved custom state for panel: {panelId}");
+              ErrorLogger.LogDebug($"Saved custom state for panel: {panelId}", "PanelHost");
             }
           }
 
@@ -421,7 +422,7 @@ namespace VoiceStudio.App.Controls
       catch (Exception ex)
       {
         // Don't break panel switching if state saving fails
-        System.Diagnostics.Debug.WriteLine($"Failed to save panel state: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to save panel state: {ex.Message}", "PanelHost");
       }
     }
 
@@ -496,13 +497,13 @@ namespace VoiceStudio.App.Controls
         }
         else
         {
-          System.Diagnostics.Debug.WriteLine($"Panel {panelId} does not implement IPanelStatePersistable - skipping custom state restoration");
+          ErrorLogger.LogDebug($"Panel {panelId} does not implement IPanelStatePersistable - skipping custom state restoration", "PanelHost");
         }
       }
       catch (Exception ex)
       {
         // Don't break panel loading if state restoration fails
-        System.Diagnostics.Debug.WriteLine($"Failed to restore panel state: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to restore panel state: {ex.Message}", "PanelHost");
       }
     }
     
@@ -514,11 +515,11 @@ namespace VoiceStudio.App.Controls
       try
       {
         await persistable.RestoreStateAsync(stateData);
-        System.Diagnostics.Debug.WriteLine($"Successfully restored custom state for panel: {panelId}");
+        ErrorLogger.LogInfo($"Successfully restored custom state for panel: {panelId}", "PanelHost");
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to restore custom state for panel {panelId}: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to restore custom state for panel {panelId}: {ex.Message}", "PanelHost");
       }
     }
 
@@ -589,7 +590,7 @@ namespace VoiceStudio.App.Controls
       catch (Exception ex)
       {
         // Don't break panel switching if disposal fails
-        System.Diagnostics.Debug.WriteLine($"Failed to dispose previous ViewModel: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to dispose previous ViewModel: {ex.Message}", "PanelHost");
       }
     }
 
@@ -618,7 +619,7 @@ namespace VoiceStudio.App.Controls
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to save region state: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to save region state: {ex.Message}", "PanelHost");
       }
     }
 
@@ -632,7 +633,7 @@ namespace VoiceStudio.App.Controls
     {
       if (_panelRegistry == null)
       {
-        System.Diagnostics.Debug.WriteLine($"[PanelHost] PanelRegistry not available, cannot lazy load {panelId}");
+        ErrorLogger.LogDebug($"PanelRegistry not available, cannot lazy load {panelId}", "PanelHost");
         return null;
       }
 
@@ -671,7 +672,7 @@ namespace VoiceStudio.App.Controls
             _loadedPanels[panelId] = panel;
             Content = panel;
             var loadTime = DateTime.UtcNow - startTime;
-            System.Diagnostics.Debug.WriteLine($"[PanelHost] Loaded panel {panelId} in {loadTime.TotalMilliseconds:F1}ms");
+            ErrorLogger.LogDebug($"Loaded panel {panelId} in {loadTime.TotalMilliseconds:F1}ms", "PanelHost");
           }
 
           return panel;
@@ -688,7 +689,7 @@ namespace VoiceStudio.App.Controls
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"[PanelHost] Error loading panel {panelId}: {ex.Message}");
+        ErrorLogger.LogWarning($"Error loading panel {panelId}: {ex.Message}", "PanelHost");
         return null;
       }
       finally
@@ -707,7 +708,7 @@ namespace VoiceStudio.App.Controls
     {
       if (_panelRegistry == null)
       {
-        System.Diagnostics.Debug.WriteLine($"[PanelHost] PanelRegistry not available, cannot load {panelId}");
+        ErrorLogger.LogDebug($"PanelRegistry not available, cannot load {panelId}", "PanelHost");
         return null;
       }
 
@@ -730,7 +731,7 @@ namespace VoiceStudio.App.Controls
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"[PanelHost] Error loading panel {panelId}: {ex.Message}");
+        ErrorLogger.LogWarning($"Error loading panel {panelId}: {ex.Message}", "PanelHost");
         return null;
       }
     }
@@ -754,7 +755,7 @@ namespace VoiceStudio.App.Controls
         {
           disposable.Dispose();
         }
-        System.Diagnostics.Debug.WriteLine($"[PanelHost] Unloaded panel: {panelId}");
+        ErrorLogger.LogDebug($"Unloaded panel: {panelId}", "PanelHost");
       }
     }
 

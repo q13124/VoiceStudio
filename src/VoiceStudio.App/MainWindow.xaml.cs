@@ -74,12 +74,12 @@ namespace VoiceStudio.App
       }
       catch (KeyNotFoundException)
       {
-        Debug.WriteLine($"[MainWindow] Panel '{panelId}' not found in unified registry");
+        ErrorLogger.LogDebug($"Panel '{panelId}' not found in unified registry", "MainWindow");
         return null;
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[MainWindow] Failed to create panel '{panelId}': {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to create panel '{panelId}': {ex.Message}", "MainWindow");
         return null;
       }
     }
@@ -191,7 +191,7 @@ namespace VoiceStudio.App
           }
           catch (Exception ex)
           {
-            System.Diagnostics.Debug.WriteLine($"[Theme] Failed to initialize: {ex.Message}");
+            ErrorLogger.LogWarning($"Failed to initialize: {ex.Message}", "Theme");
           }
 
           // Log visual tree info after loaded
@@ -215,7 +215,7 @@ namespace VoiceStudio.App
             System.IO.File.WriteAllText(diagPath, sb.ToString());
           }
           // ALLOWED: empty catch - diagnostic file write is best-effort
-          catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Diagnostic write failed: {ex.Message}"); }
+          catch (Exception ex) { ErrorLogger.LogWarning($"Diagnostic write failed: {ex.Message}", "MainWindow"); }
           
           // Add pointer event handler
           contentFE.AddHandler(
@@ -231,7 +231,7 @@ namespace VoiceStudio.App
                 System.IO.File.AppendAllText(inputDiagPath, $"[{DateTime.UtcNow:O}] PointerPressed at ({point.Position.X:F0}, {point.Position.Y:F0}) Handled={args.Handled}\n"); 
               }
               // ALLOWED: empty catch - diagnostic file write is best-effort
-              catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Input diagnostic write failed: {ex.Message}"); }
+              catch (Exception ex) { ErrorLogger.LogWarning($"Input diagnostic write failed: {ex.Message}", "MainWindow"); }
             }),
             true); // handledEventsToo = true
         };
@@ -271,12 +271,12 @@ namespace VoiceStudio.App
         if (navigationService != null)
         {
           navigationService.NavigationChanged += OnNavigationChanged;
-          Debug.WriteLine("[MainWindow] Subscribed to NavigationService.NavigationChanged");
+          ErrorLogger.LogDebug("Subscribed to NavigationService.NavigationChanged", "MainWindow");
         }
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[MainWindow] Failed to subscribe to NavigationService: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to subscribe to NavigationService: {ex.Message}", "MainWindow");
       }
       profiler.Checkpoint("NavigationService Subscription");
 
@@ -373,7 +373,7 @@ namespace VoiceStudio.App
 
       profiler.Checkpoint("MainWindow Construction Complete");
 
-      Debug.WriteLine(profiler.GetReport());
+      ErrorLogger.LogDebug(profiler.GetReport(), "MainWindow");
     }
 
     #region Navigation Button Click Handlers
@@ -387,33 +387,33 @@ namespace VoiceStudio.App
       {
         // Use CommandRouter for unified command execution
         _commandRouter.ExecuteFireAndForget(commandId);
-        Debug.WriteLine($"[MainWindow] Nav command executed via CommandRouter: {commandId}");
+        ErrorLogger.LogDebug($"Nav command executed via CommandRouter: {commandId}", "MainWindow");
       }
       else
       {
         // Fallback to direct panel switch
         SwitchToPanel(fallbackRegion, fallbackPanel, fallbackFactory);
         SetActiveNavButton(buttonName);
-        Debug.WriteLine($"[MainWindow] Nav fallback executed: {fallbackPanel}");
+        ErrorLogger.LogDebug($"Nav fallback executed: {fallbackPanel}", "MainWindow");
       }
     }
 
     private void NavStudio_Click(object _, RoutedEventArgs __)
     {
-      Debug.WriteLine("[DEBUG] NavStudio_Click fired");
+      ErrorLogger.LogDebug("NavStudio_Click fired", "MainWindow");
       try
       {
         ExecuteNavCommand("nav.studio", "Timeline", PanelRegion.Center, () => new TimelineView(), "NavStudio");
-        Debug.WriteLine("[DEBUG] NavStudio_Click completed");
+        ErrorLogger.LogDebug("NavStudio_Click completed", "MainWindow");
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DEBUG] NavStudio_Click EXCEPTION: {ex}");
+        ErrorLogger.LogWarning($"NavStudio_Click EXCEPTION: {ex}", "MainWindow");
         var diagPath = Path.Combine(
           Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
           "VoiceStudio", "crashes", "click_diag.txt");
         // ALLOWED: empty catch - diagnostic file write is best-effort
-        try { File.AppendAllText(diagPath, $"[{DateTime.UtcNow:O}] NavStudio_Click EXCEPTION: {ex}\n"); } catch (Exception diagEx) { System.Diagnostics.Debug.WriteLine($"Click diagnostic write failed: {diagEx.Message}"); }
+        try { File.AppendAllText(diagPath, $"[{DateTime.UtcNow:O}] NavStudio_Click EXCEPTION: {ex}\n"); } catch (Exception diagEx) { ErrorLogger.LogWarning($"Click diagnostic write failed: {diagEx.Message}", "MainWindow"); }
       }
     }
 
@@ -468,7 +468,7 @@ namespace VoiceStudio.App
 
       // Map panel ID to panel info and switch
       var panelId = e.NewPanelId.ToLowerInvariant();
-      Debug.WriteLine($"[MainWindow] OnNavigationChanged: {panelId}");
+      ErrorLogger.LogDebug($"OnNavigationChanged: {panelId}", "MainWindow");
 
       // Dispatch to UI thread
       DispatcherQueue.TryEnqueue(() =>
@@ -525,14 +525,14 @@ namespace VoiceStudio.App
               }
               else
               {
-                Debug.WriteLine($"[MainWindow] Unknown panel ID in navigation: {panelId}");
+                ErrorLogger.LogDebug($"Unknown panel ID in navigation: {panelId}", "MainWindow");
               }
               break;
           }
         }
         catch (Exception ex)
         {
-          Debug.WriteLine($"[MainWindow] Navigation failed: {ex.Message}");
+          ErrorLogger.LogWarning($"Navigation failed: {ex.Message}", "MainWindow");
         }
       });
     }
@@ -2124,7 +2124,7 @@ namespace VoiceStudio.App
       void Log(string msg)
       {
         var line = $"[{DateTime.Now:HH:mm:ss.fff}] {msg}";
-        Debug.WriteLine(line);
+        ErrorLogger.LogDebug(msg, "MainWindow");
         // ALLOWED: empty catch - Best effort debug logging, failure is acceptable
         try { System.IO.File.AppendAllText(logPath, line + Environment.NewLine); } catch { }
       }
@@ -2229,7 +2229,7 @@ namespace VoiceStudio.App
           if (backendClient != null)
           {
             var uploadResult = await backendClient.UploadAudioFileAsync(filePath);
-            Debug.WriteLine($"[MainWindow] Audio uploaded: {System.IO.Path.GetFileName(filePath)} -> {uploadResult.Id}");
+            ErrorLogger.LogInfo($"Audio uploaded: {System.IO.Path.GetFileName(filePath)} -> {uploadResult.Id}", "MainWindow");
 
             // Publish AssetAddedEvent so Library and other panels refresh
             var eventAggregator = AppServices.TryGetEventAggregator();
@@ -2268,7 +2268,7 @@ namespace VoiceStudio.App
         {
           Log($"[MainWindow] COM HResult: 0x{comEx.HResult:X8}");
         }
-        Debug.WriteLine($"[MainWindow] ImportAudioFile failed: {ex.Message}");
+        ErrorLogger.LogWarning($"ImportAudioFile failed: {ex.Message}", "MainWindow");
         var toastService = ServiceProvider.GetToastNotificationService();
         toastService?.ShowToast(
             Services.ToastType.Error,
@@ -2735,7 +2735,7 @@ namespace VoiceStudio.App
       else
       {
         // Fallback - just log that command router isn't available
-        item.Click += (_, __) => Debug.WriteLine($"[MainWindow] Command '{commandId}' unavailable - no CommandRouter");
+        item.Click += (_, __) => ErrorLogger.LogDebug($"Command '{commandId}' unavailable - no CommandRouter", "MainWindow");
       }
 
       return item;
@@ -3071,7 +3071,7 @@ namespace VoiceStudio.App
         // Check if there are any saved regions to restore
         if (layout.Regions == null || layout.Regions.Count == 0)
         {
-          System.Diagnostics.Debug.WriteLine("No saved regions to restore, using defaults.");
+          ErrorLogger.LogDebug("No saved regions to restore, using defaults.", "MainWindow");
           return false;
         }
 
@@ -3104,16 +3104,16 @@ namespace VoiceStudio.App
                 targetHost.Content = panel;
                 targetHost.PanelTitle = GetPanelTitle(activePanelId);
                 restoredAny = true;
-                System.Diagnostics.Debug.WriteLine($"Restored panel '{activePanelId}' to {regionState.Region}");
+                ErrorLogger.LogInfo($"Restored panel '{activePanelId}' to {regionState.Region}", "MainWindow");
               }
               catch (Exception panelEx)
               {
-                System.Diagnostics.Debug.WriteLine($"Failed to restore panel '{activePanelId}': {panelEx.Message}");
+                ErrorLogger.LogWarning($"Failed to restore panel '{activePanelId}': {panelEx.Message}", "MainWindow");
               }
             }
             else
             {
-              System.Diagnostics.Debug.WriteLine($"Panel ID '{activePanelId}' not found in registry for region {regionState.Region}; skipping.");
+              ErrorLogger.LogDebug($"Panel ID '{activePanelId}' not found in registry for region {regionState.Region}; skipping.", "MainWindow");
             }
           }
         }
@@ -3122,7 +3122,7 @@ namespace VoiceStudio.App
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to restore panels from layout: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to restore panels from layout: {ex.Message}", "MainWindow");
         return false;
       }
     }
@@ -3149,7 +3149,7 @@ namespace VoiceStudio.App
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to save workspace layout: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to save workspace layout: {ex.Message}", "MainWindow");
       }
     }
 
@@ -3164,7 +3164,7 @@ namespace VoiceStudio.App
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to handle workspace profile change: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to handle workspace profile change: {ex.Message}", "MainWindow");
       }
     }
 
@@ -3190,7 +3190,7 @@ namespace VoiceStudio.App
         _lastCpuCheck = DateTime.UtcNow;
       }
       // ALLOWED: empty catch - CPU telemetry is non-critical
-      catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"CPU telemetry init failed: {ex.Message}"); }
+      catch (Exception ex) { ErrorLogger.LogWarning($"CPU telemetry init failed: {ex.Message}", "MainWindow"); }
 
       // Update immediately
       UpdateStatusBarMetrics();
@@ -3245,7 +3245,7 @@ namespace VoiceStudio.App
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Status bar update error: {ex.Message}");
+        ErrorLogger.LogWarning($"Status bar update error: {ex.Message}", "MainWindow");
       }
     }
 
@@ -3372,24 +3372,24 @@ namespace VoiceStudio.App
             catch (System.IO.IOException)
             {
               // File in use -- skip, will be cleaned next exit
-              Debug.WriteLine("[MainWindow] Temp file in use, skipped: " + file);
+              ErrorLogger.LogDebug($"Temp file in use, skipped: {file}", "MainWindow");
             }
             catch (UnauthorizedAccessException)
             {
               // Permission denied -- skip
-              Debug.WriteLine("[MainWindow] Temp file access denied, skipped: " + file);
+              ErrorLogger.LogDebug($"Temp file access denied, skipped: {file}", "MainWindow");
             }
           }
         }
 
         if (cleaned > 0)
         {
-          Debug.WriteLine($"[MainWindow] Cleaned up {cleaned} temporary audio file(s)");
+          ErrorLogger.LogInfo($"Cleaned up {cleaned} temporary audio file(s)", "MainWindow");
         }
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[MainWindow] Temp cleanup failed (non-critical): {ex.Message}");
+        ErrorLogger.LogWarning($"Temp cleanup failed (non-critical): {ex.Message}", "MainWindow");
       }
     }
 

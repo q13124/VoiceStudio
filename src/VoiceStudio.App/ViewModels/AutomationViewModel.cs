@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -128,7 +129,7 @@ namespace VoiceStudio.App.ViewModels
       {
         // Track loading is optional - don't show error if it fails
         // Just leave AvailableTracks empty
-        System.Diagnostics.Debug.WriteLine($"Failed to load tracks: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Failed to load tracks: {ex.Message}", "AutomationViewModel");
       }
     }
 

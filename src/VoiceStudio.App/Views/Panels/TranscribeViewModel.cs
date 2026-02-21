@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -272,7 +273,7 @@ namespace VoiceStudio.App.Views.Panels
         }
         
         // Log but don't show error to user since we have fallback
-        System.Diagnostics.Debug.WriteLine($"Failed to load engines from backend: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Failed to load engines from backend: {ex.Message}", "TranscribeViewModel");
       }
       finally
       {

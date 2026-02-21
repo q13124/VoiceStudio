@@ -14,6 +14,8 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from backend.services.api_key_store import load_api_keys, save_api_keys
+
 from ..middleware.auth_middleware import require_auth_if_enabled
 from ..optimization import cache_response
 
@@ -21,8 +23,39 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/api-keys", tags=["api-keys"])
 
-# In-memory storage (replace with encrypted storage in production)
+# In-memory cache; persisted to JSON file (Phase 7 Sprint 2)
 _api_keys: dict[str, APIKey] = {}
+
+
+def _load_persisted_keys() -> None:
+    """Load API keys from persistent store on startup."""
+    global _api_keys
+    try:
+        stored = load_api_keys()
+        for key_id, data in stored.items():
+            if not isinstance(data, dict):
+                continue
+            # Ensure required fields exist
+            data.setdefault("metadata", {})
+            _api_keys[key_id] = APIKey(**data)
+        if stored:
+            logger.info("Loaded %d API keys from persistent store", len(stored))
+    except Exception as e:
+        logger.warning("Failed to load persisted API keys: %s", e)
+
+
+def _persist_keys() -> None:
+    """Save API keys to persistent store."""
+    try:
+        data = {k: v.model_dump() for k, v in _api_keys.items()}
+        if save_api_keys(data):
+            logger.debug("Persisted %d API keys", len(data))
+    except Exception as e:
+        logger.warning("Failed to persist API keys: %s", e)
+
+
+# Load on module init
+_load_persisted_keys()
 
 
 class APIKey(BaseModel):
@@ -343,6 +376,7 @@ async def create_api_key(request: APIKeyCreateRequest):
         )
 
         _api_keys[key_id] = key
+        _persist_keys()
 
         logger.info(f"Created API key for service: {request.service_name}")
 
@@ -398,6 +432,7 @@ async def update_api_key(key_id: str, request: APIKeyUpdateRequest):
             key.metadata.update(request.metadata)
 
         _api_keys[key_id] = key
+        _persist_keys()
 
         logger.info(f"Updated API key: {key_id}")
 
@@ -430,6 +465,7 @@ async def delete_api_key(key_id: str):
             raise HTTPException(status_code=404, detail=f"API key '{key_id}' not found")
 
         del _api_keys[key_id]
+        _persist_keys()
         logger.info(f"Deleted API key: {key_id}")
 
         return {"message": f"API key '{key_id}' deleted successfully"}
@@ -556,6 +592,7 @@ async def validate_api_key(key_id: str):
             key.last_used = now
             key.usage_count += 1
             _api_keys[key_id] = key
+            _persist_keys()
             logger.info(f"Validated API key: {key_id} for {key.service_name}")
         else:
             logger.warning(

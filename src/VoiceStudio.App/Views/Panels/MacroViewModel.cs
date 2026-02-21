@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -532,7 +533,7 @@ namespace VoiceStudio.App.Views.Panels
           catch (Exception ex)
           {
             // Log error but continue polling
-            System.Diagnostics.Debug.WriteLine($"Error polling macro status: {ex.Message}");
+            System.Diagnostics.ErrorLogger.LogWarning($"Error polling macro status: {ex.Message}", "MacroViewModel");
           }
 
           // Poll every 200ms

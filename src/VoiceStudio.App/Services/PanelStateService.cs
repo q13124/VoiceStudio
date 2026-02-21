@@ -239,7 +239,7 @@ namespace VoiceStudio.App.Services
       catch (Exception ex)
       {
         // Log error but don't throw - state saving shouldn't break the app
-        System.Diagnostics.Debug.WriteLine($"Failed to save project state: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to save project state: {ex.Message}", "PanelStateService");
       }
     }
 
@@ -261,7 +261,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to load project state: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to load project state: {ex.Message}", "PanelStateService");
         return null;
       }
     }
@@ -281,7 +281,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to save workspace profile: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to save workspace profile: {ex.Message}", "PanelStateService");
       }
     }
 
@@ -304,7 +304,7 @@ namespace VoiceStudio.App.Services
         var path = Path.Combine(baseDir, "Resources", "Workspaces", $"{resourceName}.json");
         if (!File.Exists(path))
         {
-          System.Diagnostics.Debug.WriteLine($"[PanelStateService] Embedded workspace not found: {path}");
+          ErrorLogger.LogDebug($"Embedded workspace not found: {path}", "PanelStateService");
           return null;
         }
 
@@ -324,7 +324,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"[PanelStateService] Failed to load embedded workspace '{profileId}': {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to load embedded workspace '{profileId}': {ex.Message}", "PanelStateService");
         return null;
       }
     }
@@ -347,7 +347,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to load workspace profile: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to load workspace profile: {ex.Message}", "PanelStateService");
         return null;
       }
     }
@@ -382,7 +382,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to list workspace profiles: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to list workspace profiles: {ex.Message}", "PanelStateService");
       }
 
       // Ensure studio (canonical default) profile exists
@@ -433,7 +433,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to delete workspace profile: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to delete workspace profile: {ex.Message}", "PanelStateService");
       }
 
       return Task.FromResult(false);
@@ -507,7 +507,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to switch workspace profile: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to switch workspace profile: {ex.Message}", "PanelStateService");
         return false;
       }
     }
@@ -527,7 +527,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to save workspace to settings: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to save workspace to settings: {ex.Message}", "PanelStateService");
       }
     }
 
@@ -545,7 +545,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to save workspace to settings: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to save workspace to settings: {ex.Message}", "PanelStateService");
       }
     }
 
@@ -571,7 +571,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"[PanelStateService] Failed to load workspace: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to load workspace: {ex.Message}", "PanelStateService");
       }
 
       _currentWorkspaceProfile = "studio";
@@ -714,7 +714,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to import workspace: {ex.Message}");
+        ErrorLogger.LogWarning($"Failed to import workspace: {ex.Message}", "PanelStateService");
         return null;
       }
     }

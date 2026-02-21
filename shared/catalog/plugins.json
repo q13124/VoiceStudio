@@ -1,49 +1,153 @@
 {
-  "version": "1.0.0",
-  "last_updated": "2026-02-17T00:00:00Z",
+  "version": "1.1.0",
+  "last_updated": "2026-02-21T06:00:00Z",
   "description": "VoiceStudio Plugin Catalog - Community and Official Plugins",
   "schema_version": "4.0",
   "categories": [
     {
-      "id": "text-to-speech",
-      "name": "Text-to-Speech",
+      "id": "voice_synthesis",
+      "name": "Voice Synthesis",
       "description": "Plugins for synthesizing speech from text"
     },
     {
-      "id": "speech-to-text",
-      "name": "Speech-to-Text",
+      "id": "speech_recognition",
+      "name": "Speech Recognition",
       "description": "Plugins for transcribing audio to text"
     },
     {
-      "id": "audio-effects",
+      "id": "audio_effects",
       "name": "Audio Effects",
-      "description": "Plugins for applying effects to audio"
+      "description": "Plugins for applying effects and processing audio"
     },
     {
-      "id": "audio-enhancement",
-      "name": "Audio Enhancement",
-      "description": "Plugins for improving audio quality"
-    },
-    {
-      "id": "audio-analysis",
+      "id": "audio_analysis",
       "name": "Audio Analysis",
       "description": "Plugins for analyzing audio content"
     },
     {
-      "id": "format-conversion",
-      "name": "Format Conversion",
-      "description": "Plugins for converting between audio formats"
+      "id": "voice_conversion",
+      "name": "Voice Conversion",
+      "description": "Plugins for converting between voice identities"
     },
     {
-      "id": "integration",
-      "name": "Integration",
+      "id": "utilities",
+      "name": "Utilities",
+      "description": "General utility plugins for format conversion and tools"
+    },
+    {
+      "id": "integrations",
+      "name": "Integrations",
       "description": "Plugins for integrating with external services"
     },
     {
-      "id": "utility",
-      "name": "Utility",
-      "description": "General utility plugins"
+      "id": "developer_tools",
+      "name": "Developer Tools",
+      "description": "Plugins for plugin development and debugging"
     }
   ],
-  "plugins": []
+  "plugins": [
+    {
+      "id": "com.voicestudio.noise_reduction",
+      "name": "Noise Reduction",
+      "description": "Reduce background noise from audio using spectral gating. Wraps the noisereduce library for high-quality stationary and non-stationary noise reduction.",
+      "category": "audio_effects",
+      "subcategory": "enhancement",
+      "author": "VoiceStudio",
+      "license": "MIT",
+      "homepage": "",
+      "icon_url": "",
+      "tags": ["noise", "denoise", "audio-enhancement", "spectral-gating", "reference"],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "release_date": "2026-02-21",
+          "download_url": "plugins/reference/noise_reduction",
+          "checksum_sha256": "",
+          "size_bytes": 4096,
+          "min_voicestudio_version": "1.0.0",
+          "dependencies": {
+            "noisereduce": ">=3.0.0",
+            "numpy": ">=1.26.0",
+            "soundfile": ">=0.12.0"
+          },
+          "changelog": "Initial release. Spectral gating noise reduction with configurable strength, stationary/non-stationary modes."
+        }
+      ],
+      "stats": {
+        "downloads": 0,
+        "rating": 0.0,
+        "reviews": 0
+      },
+      "featured": true,
+      "verified": true
+    },
+    {
+      "id": "com.voicestudio.format_converter",
+      "name": "Audio Format Converter",
+      "description": "Convert audio between formats (WAV, MP3, FLAC, OGG, AAC) using FFmpeg. Supports bitrate, sample rate, and channel configuration.",
+      "category": "utilities",
+      "subcategory": "conversion",
+      "author": "VoiceStudio",
+      "license": "MIT",
+      "homepage": "",
+      "icon_url": "",
+      "tags": ["converter", "format", "ffmpeg", "wav", "mp3", "flac", "reference"],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "release_date": "2026-02-21",
+          "download_url": "plugins/reference/format_converter",
+          "checksum_sha256": "",
+          "size_bytes": 3584,
+          "min_voicestudio_version": "1.0.0",
+          "dependencies": {
+            "soundfile": ">=0.12.0"
+          },
+          "changelog": "Initial release. FFmpeg-based format conversion with configurable bitrate, sample rate, and channels."
+        }
+      ],
+      "stats": {
+        "downloads": 0,
+        "rating": 0.0,
+        "reviews": 0
+      },
+      "featured": true,
+      "verified": true
+    },
+    {
+      "id": "com.voicestudio.silence_detector",
+      "name": "Silence Detector",
+      "description": "Detect and analyze silence regions in audio. Identifies pauses, gaps, and quiet segments with configurable thresholds.",
+      "category": "audio_analysis",
+      "subcategory": "detection",
+      "author": "VoiceStudio",
+      "license": "MIT",
+      "homepage": "",
+      "icon_url": "",
+      "tags": ["silence", "detection", "analysis", "vad", "pause", "reference"],
+      "versions": [
+        {
+          "version": "1.0.0",
+          "release_date": "2026-02-21",
+          "download_url": "plugins/reference/silence_detector",
+          "checksum_sha256": "",
+          "size_bytes": 4608,
+          "min_voicestudio_version": "1.0.0",
+          "dependencies": {
+            "librosa": ">=0.10.0",
+            "numpy": ">=1.26.0",
+            "soundfile": ">=0.12.0"
+          },
+          "changelog": "Initial release. Librosa-based silence detection with configurable dB threshold, minimum duration, and frame parameters."
+        }
+      ],
+      "stats": {
+        "downloads": 0,
+        "rating": 0.0,
+        "reviews": 0
+      },
+      "featured": false,
+      "verified": true
+    }
+  ]
 }

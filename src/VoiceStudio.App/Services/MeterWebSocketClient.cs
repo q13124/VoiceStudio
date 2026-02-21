@@ -186,7 +186,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to process meter message: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Failed to process meter message: {ex.Message}", "MeterWebSocketClient");
       }
     }
 

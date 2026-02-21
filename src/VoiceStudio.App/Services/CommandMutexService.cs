@@ -5,9 +5,9 @@
 // GAP-I13: Added lock order validation for deadlock prevention.
 
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using VoiceStudio.App.Utilities;
 
@@ -119,7 +119,7 @@ public class CommandMutexService : ICommandMutexService
         {
             if (_activeLocks.ContainsKey(lockId))
             {
-                Debug.WriteLine($"[CommandMutex] Lock '{lockId}' already exists, reusing");
+                ErrorLogger.LogDebug($"[CommandMutex] Lock '{lockId}' already exists, reusing", "CommandMutexService");
                 return new LockHandle(this, lockId);
             }
 
@@ -136,7 +136,7 @@ public class CommandMutexService : ICommandMutexService
             }
         }
 
-        Debug.WriteLine($"[CommandMutex] Lock acquired: '{lockId}' on groups [{string.Join(", ", groups)}]");
+        ErrorLogger.LogDebug($"[CommandMutex] Lock acquired: '{lockId}' on groups [{string.Join(", ", groups)}]", "CommandMutexService");
 
         // Invalidate affected groups so buttons update
         InvalidateAffectedGroups(groups);
@@ -164,7 +164,7 @@ public class CommandMutexService : ICommandMutexService
         {
             if (!_activeLocks.TryRemove(lockId, out entry))
             {
-                Debug.WriteLine($"[CommandMutex] Lock '{lockId}' not found for release");
+                ErrorLogger.LogDebug($"[CommandMutex] Lock '{lockId}' not found for release", "CommandMutexService");
                 return;
             }
 
@@ -179,7 +179,7 @@ public class CommandMutexService : ICommandMutexService
             }
         }
 
-        Debug.WriteLine($"[CommandMutex] Lock released: '{lockId}'");
+        ErrorLogger.LogDebug($"[CommandMutex] Lock released: '{lockId}'", "CommandMutexService");
 
         // Invalidate affected groups so buttons update
         if (affectedGroups != null)
@@ -202,7 +202,7 @@ public class CommandMutexService : ICommandMutexService
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[CommandMutex] Failed to invalidate group '{groupId}': {ex.Message}");
+                ErrorLogger.LogWarning($"[CommandMutex] Failed to invalidate group '{groupId}': {ex.Message}", "CommandMutexService");
             }
         }
     }

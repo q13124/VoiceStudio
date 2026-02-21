@@ -2,6 +2,7 @@
 // Task 5.1.3: Multi-monitor support using WinUI 3 DisplayArea APIs
 
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -131,7 +132,7 @@ public class MultiMonitorManager
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[MultiMonitor] Failed to detect displays: {ex.Message}");
+            System.Diagnostics.ErrorLogger.LogWarning($"[MultiMonitor] Failed to detect displays: {ex.Message}", "MultiMonitorManager");
             
             // Add a default display entry
             _displays.Add(new DisplayInfo

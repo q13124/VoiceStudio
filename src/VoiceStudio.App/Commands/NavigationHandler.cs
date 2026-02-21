@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceStudio.App.Core.Commands;
+using VoiceStudio.App.Logging;
 using VoiceStudio.App.Services;
 using VoiceStudio.Core.Services;
 
@@ -109,7 +109,7 @@ namespace VoiceStudio.App.Commands
                 _ => true
             );
 
-            Debug.WriteLine("[NavigationHandler] Registered 13 navigation commands");
+            ErrorLogger.LogDebug("Registered 13 navigation commands", "NavigationHandler");
         }
 
         private void RegisterNavCommand(string commandId, string title, string description, string icon, string panelId, string? shortcut = null)
@@ -135,11 +135,11 @@ namespace VoiceStudio.App.Commands
             {
                 await _navigationService.NavigateToPanelAsync(panelId, parameters, ct);
                 NavigationRequested?.Invoke(this, panelId);
-                Debug.WriteLine($"[NavigationHandler] Navigated to: {panelId}");
+                ErrorLogger.LogInfo($"Navigated to: {panelId}", "NavigationHandler");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[NavigationHandler] Navigation to '{panelId}' failed: {ex.Message}");
+                ErrorLogger.LogWarning($"Navigation to '{panelId}' failed: {ex.Message}", "NavigationHandler");
                 throw;
             }
         }
@@ -153,16 +153,16 @@ namespace VoiceStudio.App.Commands
                     await _navigationService.NavigateBackAsync(ct);
                     var currentPanel = _navigationService.GetCurrentPanelId();
                     NavigationRequested?.Invoke(this, currentPanel ?? "home");
-                    Debug.WriteLine($"[NavigationHandler] Navigated back to: {currentPanel}");
+                    ErrorLogger.LogInfo($"Navigated back to: {currentPanel}", "NavigationHandler");
                 }
                 else
                 {
-                    Debug.WriteLine("[NavigationHandler] Cannot navigate back - empty backstack");
+                    ErrorLogger.LogDebug("Cannot navigate back - empty backstack", "NavigationHandler");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[NavigationHandler] Navigate back failed: {ex.Message}");
+                ErrorLogger.LogWarning($"Navigate back failed: {ex.Message}", "NavigationHandler");
                 throw;
             }
         }
@@ -191,16 +191,16 @@ namespace VoiceStudio.App.Commands
                     await _navigationService.NavigateForwardAsync(ct);
                     var currentPanel = _navigationService.GetCurrentPanelId();
                     NavigationRequested?.Invoke(this, currentPanel ?? "home");
-                    Debug.WriteLine($"[NavigationHandler] Navigated forward to: {currentPanel}");
+                    ErrorLogger.LogInfo($"Navigated forward to: {currentPanel}", "NavigationHandler");
                 }
                 else
                 {
-                    Debug.WriteLine("[NavigationHandler] Cannot navigate forward - empty forward stack");
+                    ErrorLogger.LogDebug("Cannot navigate forward - empty forward stack", "NavigationHandler");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[NavigationHandler] Navigate forward failed: {ex.Message}");
+                ErrorLogger.LogWarning($"Navigate forward failed: {ex.Message}", "NavigationHandler");
                 throw;
             }
         }

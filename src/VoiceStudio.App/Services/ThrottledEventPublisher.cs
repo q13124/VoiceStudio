@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
@@ -261,13 +262,11 @@ namespace VoiceStudio.App.Services
         catch (OperationCanceledException)
         {
           // Expected when cancelled - trailing edge processing stopped
-          System.Diagnostics.Debug.WriteLine(
-            "[ThrottledEventPublisher] Trailing publish cancelled (expected during disposal)");
+          System.Diagnostics.ErrorLogger.LogDebug("[ThrottledEventPublisher] Trailing publish cancelled (expected during disposal)", "ThrottledEventPublisher");
         }
         catch (Exception ex)
         {
-          System.Diagnostics.Debug.WriteLine(
-            $"[ThrottledEventPublisher] Error in trailing publish: {ex.Message}");
+          System.Diagnostics.ErrorLogger.LogWarning($"[ThrottledEventPublisher] Error in trailing publish: {ex.Message}", "ThrottledEventPublisher");
         }
       }, token);
     }

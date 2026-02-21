@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -334,7 +335,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Error loading clone reference: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Error loading clone reference: {ex.Message}", "VoiceQuickCloneViewModel");
         ErrorMessage = $"Failed to load audio: {ex.Message}";
       }
     }

@@ -122,6 +122,176 @@ async def list_models(engine: str | None = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# -------------------------------------------------------------------------
+# Model Registry (Phase 8 WS1) - lifecycle, activate, rollback
+# -------------------------------------------------------------------------
+
+try:
+    from backend.services.model_registry import get_model_registry_service
+
+    _model_registry = get_model_registry_service()
+    HAS_MODEL_REGISTRY = True
+except ImportError:
+    _model_registry = None
+    HAS_MODEL_REGISTRY = False
+
+
+@router.get("/registry")
+@cache_response(ttl=30)
+async def list_registry_models(engine_id: str | None = None):
+    """List all model artifacts from the model registry (lifecycle catalog)."""
+    if not HAS_MODEL_REGISTRY or _model_registry is None:
+        raise HTTPException(status_code=503, detail="Model registry not available")
+    try:
+        return _model_registry.list_models(engine_id=engine_id)
+    except Exception as e:
+        logger.error(f"Failed to list registry models: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/registry/{engine_id}")
+@cache_response(ttl=30)
+async def get_registry_engine_models(engine_id: str):
+    """Get model state for a specific engine from the registry."""
+    if not HAS_MODEL_REGISTRY or _model_registry is None:
+        raise HTTPException(status_code=503, detail="Model registry not available")
+    try:
+        return _model_registry.get_engine_models(engine_id)
+    except Exception as e:
+        logger.error(f"Failed to get engine models: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class ActivateModelRequest(BaseModel):
+    """Request to activate a model version."""
+
+    model_name: str
+    version: str | None = None
+
+
+@router.post("/registry/{engine_id}/activate")
+async def activate_registry_model(
+    engine_id: str,
+    request: ActivateModelRequest,
+    _: None = Depends(require_auth_if_enabled),
+):
+    """Activate a model version for an engine."""
+    if not HAS_MODEL_REGISTRY or _model_registry is None:
+        raise HTTPException(status_code=503, detail="Model registry not available")
+    try:
+        return _model_registry.activate_model(
+            engine_id=engine_id,
+            model_name=request.model_name,
+            version=request.version,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to activate model: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/registry/{engine_id}/rollback")
+async def rollback_registry_model(
+    engine_id: str,
+    _: None = Depends(require_auth_if_enabled),
+):
+    """Rollback engine to the previous known-good model version."""
+    if not HAS_MODEL_REGISTRY or _model_registry is None:
+        raise HTTPException(status_code=503, detail="Model registry not available")
+    try:
+        return _model_registry.rollback(engine_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to rollback model: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# -------------------------------------------------------------------------
+# Engine A/B Experiment (Phase 8 WS1)
+# -------------------------------------------------------------------------
+
+class CreateModelExperimentRequest(BaseModel):
+    """Request to create an engine A/B experiment for model version testing."""
+
+    experiment_id: str
+    name: str
+    engine_id: str
+    description: str = ""
+    variants: list[dict]  # [{id, name, model_version, weight, config}]
+    target_sample_size: int = 0
+
+
+@router.post("/experiment")
+async def create_model_experiment(
+    request: CreateModelExperimentRequest,
+    _: None = Depends(require_auth_if_enabled),
+):
+    """
+    Create an engine A/B experiment for model version testing.
+
+    Routes a percentage of synthesis to different model versions (e.g. XTTS v2.1 vs v2.0).
+    Variants should have config with engine_id and model_version.
+    """
+    try:
+        from backend.services.ab_testing import (
+            ABTestingService,
+            Experiment,
+            ExperimentStatus,
+            Variant,
+        )
+
+        ab = ABTestingService()
+        if ab.get_experiment(request.experiment_id):
+            raise HTTPException(
+                status_code=409,
+                detail=f"Experiment '{request.experiment_id}' already exists",
+            )
+        variants = [
+            Variant(
+                id=v.get("id", f"v{i}"),
+                name=v.get("name", f"Variant {i}"),
+                description=v.get("description", ""),
+                weight=v.get("weight", 50),
+                config={
+                    "engine_id": request.engine_id,
+                    "model_version": v.get("model_version", "1.0"),
+                    **(v.get("config") or {}),
+                },
+            )
+            for i, v in enumerate(request.variants)
+        ]
+        exp = Experiment(
+            id=request.experiment_id,
+            name=request.name,
+            description=request.description,
+            status=ExperimentStatus.DRAFT,
+            variants=variants,
+            tags=[f"engine:{request.engine_id}"],
+            target_sample_size=request.target_sample_size,
+        )
+        ab.register_experiment(exp)
+        return {
+            "experiment_id": exp.id,
+            "status": exp.status.value,
+            "variants": [{"id": v.id, "name": v.name, "weight": v.weight, "config": v.config} for v in exp.variants],
+        }
+    except ImportError as e:
+        raise HTTPException(status_code=503, detail=f"A/B testing not available: {e}")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create model experiment: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# -------------------------------------------------------------------------
+# Model Storage (engine/model_name)
+# -------------------------------------------------------------------------
+
 @router.get("/{engine}/{model_name}", response_model=ModelInfoResponse)
 @cache_response(ttl=300)  # Cache for 5 minutes (model info is relatively static)
 async def get_model(engine: str, model_name: str):

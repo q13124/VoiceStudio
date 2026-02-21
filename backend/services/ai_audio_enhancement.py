@@ -248,7 +248,7 @@ class AIAudioEnhancementService:
             self._output_dir.mkdir(parents=True, exist_ok=True)
 
             try:
-                from demucs.pretrained import get_model  # noqa: F401
+                from demucs.pretrained import get_model
                 self._has_voice_separation = True
                 logger.info("Voice separation model (demucs) available")
             except ImportError:

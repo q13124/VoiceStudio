@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -589,17 +588,15 @@ namespace VoiceStudio.App.Services
       if (!result.IsCompatible)
       {
         // Log warning about version mismatch
-        System.Diagnostics.Debug.WriteLine(
-          $"[WARNING] API version mismatch: {result.Message}. " +
-          $"Recommendation: {result.Recommendation ?? "Update client"}");
+        System.Diagnostics.ErrorLogger.LogDebug($"[WARNING] API version mismatch: {result.Message}. " +
+          $"Recommendation: {result.Recommendation ?? "Update client"}", "BackendClient");
         return false;
       }
 
       if (!string.IsNullOrEmpty(result.Recommendation))
       {
         // Log recommendation even if compatible
-        System.Diagnostics.Debug.WriteLine(
-          $"[INFO] API version note: {result.Recommendation}");
+        System.Diagnostics.ErrorLogger.LogDebug($"[INFO] API version note: {result.Recommendation}", "BackendClient");
       }
 
       return true;
@@ -4608,7 +4605,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"File upload failed for {endpoint}: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"File upload failed for {endpoint}: {ex.Message}", "BackendClient");
         ErrorLogger.LogError($"File upload failed for {endpoint}: {ex.Message}", "BackendClient.UploadFilesWithProgressAsync");
         throw;
       }
@@ -4627,7 +4624,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Error getting plugin health dashboard: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Error getting plugin health dashboard: {ex.Message}", "BackendClient");
         ErrorLogger.LogError($"Error getting plugin health dashboard: {ex.Message}", "BackendClient.GetPluginHealthDashboardAsync");
         throw;
       }
@@ -4646,7 +4643,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Error getting plugin metrics for {pluginId}: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Error getting plugin metrics for {pluginId}: {ex.Message}", "BackendClient");
         ErrorLogger.LogError($"Error getting plugin metrics for {pluginId}: {ex.Message}", "BackendClient.GetPluginMetricsAsync");
         throw;
       }
@@ -4662,7 +4659,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Error exporting plugin metrics: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Error exporting plugin metrics: {ex.Message}", "BackendClient");
         ErrorLogger.LogError($"Error exporting plugin metrics: {ex.Message}", "BackendClient.ExportPluginMetricsAsync");
         throw;
       }

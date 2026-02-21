@@ -304,7 +304,7 @@ public class DeferredServiceInitializerTests : TestBase
         catch (OperationCanceledException)
         {
             // Expected when cancellation is requested - test confirms cancellation worked
-            System.Diagnostics.Debug.WriteLine("Cancellation occurred as expected in test");
+            VoiceStudio.App.Logging.ErrorLogger.LogDebug("Cancellation occurred as expected in test", "DeferredServiceInitializerTests");
         }
 
         // Assert - second service should not have initialized

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceStudio.App.Logging;
@@ -94,7 +93,7 @@ namespace VoiceStudio.App.Services
                 
                 var stopwatch = Stopwatch.StartNew();
                 InitializationStarted?.Invoke(this, EventArgs.Empty);
-                Debug.WriteLine("[DeferredInit] Starting deferred service initialization");
+                ErrorLogger.LogDebug("[DeferredInit] Starting deferred service initialization", "DeferredServiceInitializer");
                 
                 // Sort by priority (highest first)
                 _services.Sort((a, b) => b.Priority.CompareTo(a.Priority));
@@ -155,7 +154,7 @@ namespace VoiceStudio.App.Services
                 };
                 
                 InitializationCompleted?.Invoke(this, completedArgs);
-                Debug.WriteLine($"[DeferredInit] Deferred initialization completed in {stopwatch.ElapsedMilliseconds}ms");
+                ErrorLogger.LogInfo($"[DeferredInit] Deferred initialization completed in {stopwatch.ElapsedMilliseconds}ms", "DeferredServiceInitializer");
             }
             finally
             {

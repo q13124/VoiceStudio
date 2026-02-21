@@ -62,6 +62,23 @@ VoiceStudio v1.0.2-rc1 delivers a comprehensive plugin system infrastructure, ar
 | **Verification Pipeline** | 8-stage automated verification (scripts/verify.ps1) |
 | **Empty Catch Audit** | 85 occurrences reviewed and allowlisted |
 
+### Phase 4-6 Release Polish (2026-02-21)
+
+| Workstream | Deliverable |
+|------------|--------------|
+| **Phase 4 Plugin Ecosystem** | 3 reference plugins (noise_reduction, format_converter, silence_detector); 123 plugin tests (e2e lifecycle, integration, contract, security); PLUGIN_DEVELOPER_GUIDE.md |
+| **Phase 5 Dependency & Tooling** | ADR-041 Python 3.11.9 runtime; ADR-042 plugin installer consolidation; VS-0045 DONE (engine init root cause); VS-0046 DONE (0 CVEs via pip-audit) |
+| **Phase 6 Port Unification** | Backend port 8001→8000 across 16 files; BackendProcessManager, SettingsViewModel, launchSettings, FirstRunWizard, VoiceSynthesisViewModel, SettingsView, MatplotlibControl, PlotlyControl, SettingsService, SettingsData, StartupDiagnostics, QualityDashboardViewModel, HealthCheckViewModel, SystemStore, AppConfig |
+
+### Phase 7 Platform Operationalization (2026-02-21)
+
+| Workstream | Deliverable |
+|------------|--------------|
+| **Plugin Marketplace** | Publisher registration, submission workflow, review queue, ratings/reviews, download tracking; `/api/marketplace/*` endpoints |
+| **Operational Hardening** | API key persistence; OTLP trace export; Grafana dashboard; health aggregation (plugins); log rotation |
+| **Security Attestation** | Build provenance; dependency audit; SECURITY_CONTROLS_MATRIX.md; INCIDENT_RESPONSE_PLAYBOOK.md |
+| **Documentation** | DEPLOYMENT_TOPOLOGY.md; OPERATIONS_RUNBOOK.md; ADR index (42); architecture portfolio update |
+
 ---
 
 ## Technical Details
@@ -149,19 +166,8 @@ python -m tools.plugin-cli pack my_plugin/
 | Issue ID | Severity | Description | Status |
 |----------|----------|-------------|--------|
 | VS-0043 | S4 Chore | mypy --strict audit: 5892 errors in backend/ | Tech Debt baseline |
-| VS-0045 | S2 Major | E2E synthesis: XTTS engine init + Whisper model loading | Under investigation |
-| VS-0046 | S3 Minor | pip-audit: 29 CVEs in dependencies | Planned for v1.0.3 |
-
-### Dependency Vulnerabilities (VS-0046)
-
-The following dependencies have known vulnerabilities. Updates planned for v1.0.3:
-
-| Package | Current | Vulnerabilities | Target |
-|---------|---------|-----------------|--------|
-| transformers | 4.46.2 | 14 CVEs | 4.53.0 |
-| keras | 3.10.0 | 6 CVEs | 3.12.0+ |
-| pillow | 11.3.0 | 1 CVE | 12.1.1 |
-| python-multipart | 0.0.20 | 1 CVE | 0.0.22 |
+| VS-0045 | S2 Major | E2E synthesis: XTTS engine init + Whisper model loading | **DONE** (2026-02-21) |
+| VS-0046 | S3 Minor | pip-audit CVEs in dependencies | **DONE** (2026-02-21, 0 CVEs) |
 
 See `Recovery Plan/QUALITY_LEDGER.md` for full issue tracking.
 

@@ -1,6 +1,6 @@
 using System;
-using System.Diagnostics;
 using System.IO;
+using VoiceStudio.App.Logging;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -158,7 +158,7 @@ namespace VoiceStudio.App.Commands
                 _ => _currentProject != null
             );
 
-            Debug.WriteLine("[FileOperationsHandler] Registered 7 file commands");
+            ErrorLogger.LogDebug("[FileOperationsHandler] Registered 7 file commands");
         }
 
         public async Task NewProjectAsync(CancellationToken ct = default)
@@ -202,7 +202,7 @@ namespace VoiceStudio.App.Commands
             _eventAggregator?.Publish(new ProjectChangedEvent("file.handler", _currentProject.Id, _currentProject.Name, isNew: true));
             _toastService?.ShowInfo($"Created new project: {name}");
 
-            Debug.WriteLine($"[FileOperationsHandler] New project created: {name}");
+            ErrorLogger.LogDebug($"[FileOperationsHandler] New project created: {name}");
         }
 
         public async Task OpenProjectAsync(string? projectPath = null, CancellationToken ct = default)
@@ -248,7 +248,7 @@ namespace VoiceStudio.App.Commands
                     _eventAggregator?.Publish(new ProjectChangedEvent("file.handler", _currentProject?.Id, _currentProject?.Name, isNew: false));
                     _toastService?.ShowSuccess($"Opened project: {project.Name}");
 
-                    Debug.WriteLine($"[FileOperationsHandler] Opened project: {project.Name}");
+                    ErrorLogger.LogDebug($"[FileOperationsHandler] Opened project: {project.Name}");
                 }
                 else
                 {
@@ -260,7 +260,7 @@ namespace VoiceStudio.App.Commands
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[FileOperationsHandler] Open failed: {ex.Message}");
+                ErrorLogger.LogWarning($"Open failed: {ex.Message}", "FileOperationsHandler");
                 await _dialogService.ShowErrorAsync(
                     "Open Failed",
                     $"Failed to open project: {ex.Message}");
@@ -282,11 +282,11 @@ namespace VoiceStudio.App.Commands
                 HasUnsavedChanges = false;
 
                 _toastService?.ShowSuccess("Project saved");
-                Debug.WriteLine($"[FileOperationsHandler] Project saved: {_currentProject.Name}");
+                ErrorLogger.LogDebug($"[FileOperationsHandler] Project saved: {_currentProject.Name}");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[FileOperationsHandler] Save failed: {ex.Message}");
+                ErrorLogger.LogWarning($"Save failed: {ex.Message}", "FileOperationsHandler");
                 await _dialogService.ShowErrorAsync(
                     "Save Failed",
                     $"Failed to save project: {ex.Message}");
@@ -333,11 +333,11 @@ namespace VoiceStudio.App.Commands
                 _eventAggregator?.Publish(new ProjectChangedEvent("file.handler", _currentProject?.Id, _currentProject?.Name, isNew: false));
                 _toastService?.ShowSuccess($"Project saved as: {name}");
 
-                Debug.WriteLine($"[FileOperationsHandler] Project saved as: {name}");
+                ErrorLogger.LogDebug($"[FileOperationsHandler] Project saved as: {name}");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[FileOperationsHandler] Save As failed: {ex.Message}");
+                ErrorLogger.LogWarning($"Save As failed: {ex.Message}", "FileOperationsHandler");
                 await _dialogService.ShowErrorAsync(
                     "Save As Failed",
                     $"Failed to save project: {ex.Message}");
@@ -353,24 +353,24 @@ namespace VoiceStudio.App.Commands
 
         public async Task ImportAudioAsync(CancellationToken ct = default)
         {
-            Debug.WriteLine("[FileOperationsHandler] ImportAudioAsync called");
+            ErrorLogger.LogDebug("[FileOperationsHandler] ImportAudioAsync called");
             FileLog("[FileOperationsHandler] ImportAudioAsync called");
             
             string[]? files;
             try
             {
-                Debug.WriteLine("[FileOperationsHandler] Calling ShowOpenFilesAsync...");
+                ErrorLogger.LogDebug("[FileOperationsHandler] Calling ShowOpenFilesAsync...");
                 FileLog("[FileOperationsHandler] Calling ShowOpenFilesAsync...");
                 // Use centralized format list for all supported audio formats
                 files = await _dialogService.ShowOpenFilesAsync(
                     "Import Audio Files",
                     AudioFileFormats.ImportExtensions.ToArray());
-                Debug.WriteLine($"[FileOperationsHandler] ShowOpenFilesAsync returned: {(files == null ? "null" : $"{files.Length} files")}");
+                ErrorLogger.LogDebug($"[FileOperationsHandler] ShowOpenFilesAsync returned: {(files == null ? "null" : $"{files.Length} files")}");
                 FileLog($"[FileOperationsHandler] ShowOpenFilesAsync returned: {(files == null ? "null" : $"{files.Length} files")}");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[FileOperationsHandler] ShowOpenFilesAsync EXCEPTION: {ex.GetType().Name}: {ex.Message}");
+                ErrorLogger.LogWarning($"ShowOpenFilesAsync EXCEPTION: {ex.GetType().Name}: {ex.Message}", "FileOperationsHandler");
                 FileLog($"[FileOperationsHandler] ShowOpenFilesAsync EXCEPTION: {ex.GetType().Name}: {ex.Message}");
                 FileLog($"[FileOperationsHandler] Stack: {ex.StackTrace}");
                 if (ex is System.Runtime.InteropServices.COMException comEx)
@@ -410,7 +410,7 @@ namespace VoiceStudio.App.Commands
                         {
                             // Upload to backend for processing
                             var result = await _backendClient.UploadAudioFileAsync(files[i], ct);
-                            Debug.WriteLine($"[FileOperationsHandler] Uploaded: {fileName} -> {result.Id}");
+                            ErrorLogger.LogDebug($"[FileOperationsHandler] Uploaded: {fileName} -> {result.Id}");
 
                             // If project exists, save to project
                             if (_currentProject != null)
@@ -429,13 +429,13 @@ namespace VoiceStudio.App.Commands
                         else
                         {
                             // Fallback: copy to local project folder
-                            Debug.WriteLine($"[FileOperationsHandler] Backend not available, skipping upload for: {fileName}");
+                            ErrorLogger.LogDebug($"[FileOperationsHandler] Backend not available, skipping upload for: {fileName}");
                         }
                         successCount++;
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"[FileOperationsHandler] Failed to import {fileName}: {ex.Message}");
+                        ErrorLogger.LogWarning($"Failed to import {fileName}: {ex.Message}", "FileOperationsHandler");
                         // Continue with other files
                     }
                 }
@@ -449,7 +449,7 @@ namespace VoiceStudio.App.Commands
                 {
                     _toastService?.ShowWarning("Import", "No files were imported");
                 }
-                Debug.WriteLine($"[FileOperationsHandler] Imported {successCount}/{files.Length} files");
+                ErrorLogger.LogDebug($"[FileOperationsHandler] Imported {successCount}/{files.Length} files");
             }
             finally
             {
@@ -528,12 +528,12 @@ namespace VoiceStudio.App.Commands
                         progress.SetProgress(1.0);
 
                         _toastService?.ShowSuccess($"Audio exported to: {Path.GetFileName(path)}");
-                        Debug.WriteLine($"[FileOperationsHandler] Exported to: {path} (format: {targetExtension})");
+                        ErrorLogger.LogDebug($"[FileOperationsHandler] Exported to: {path} (format: {targetExtension})");
                     }
                     else
                     {
                         _toastService?.ShowWarning("Export", "No audio files in project to export");
-                        Debug.WriteLine("[FileOperationsHandler] No audio files to export");
+                        ErrorLogger.LogDebug("[FileOperationsHandler] No audio files to export");
                     }
                 }
                 else
@@ -541,12 +541,12 @@ namespace VoiceStudio.App.Commands
                     // Backend not available - show message
                     progress.SetProgress(1.0);
                     _toastService?.ShowWarning("Export", "Backend service not available for export");
-                    Debug.WriteLine("[FileOperationsHandler] Backend not available for export");
+                    ErrorLogger.LogDebug("[FileOperationsHandler] Backend not available for export");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[FileOperationsHandler] Export failed: {ex.Message}");
+                ErrorLogger.LogWarning($"Export failed: {ex.Message}", "FileOperationsHandler");
                 _toastService?.ShowError("Export Failed", ex.Message);
             }
             finally
@@ -584,7 +584,7 @@ namespace VoiceStudio.App.Commands
             _eventAggregator?.Publish(new ProjectChangedEvent("file.handler", null, null, isNew: false));
             _toastService?.ShowInfo($"Closed project: {projectName}");
 
-            Debug.WriteLine($"[FileOperationsHandler] Project closed: {projectName}");
+            ErrorLogger.LogDebug($"[FileOperationsHandler] Project closed: {projectName}");
         }
 
         public void MarkDirty()

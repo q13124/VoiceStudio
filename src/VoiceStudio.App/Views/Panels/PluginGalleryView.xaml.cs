@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
+using VoiceStudio.App.Logging;
 using System.Threading;
 using VoiceStudio.App.Services;
 using VoiceStudio.App.ViewModels;
@@ -220,7 +221,7 @@ namespace VoiceStudio.App.Views.Panels
             
             // Navigate to detail view
             // This would typically use a navigation service
-            System.Diagnostics.Debug.WriteLine($"[PluginGallery] Navigate to details: {plugin.Name}");
+            System.Diagnostics.ErrorLogger.LogDebug($"[PluginGallery] Navigate to details: {plugin.Name}", "PluginGalleryView.xaml");
         }
 
         // GAP-B18: PrevPageButton_Click - Removed, now using Command binding in XAML

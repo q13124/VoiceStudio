@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using VoiceStudio.App.Core.Commands;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services
 {
@@ -37,7 +38,7 @@ namespace VoiceStudio.App.Services
                 if (_isBusy != value)
                 {
                     _isBusy = value;
-                    Debug.WriteLine($"[CommandRegistry] Busy state changed: {value}");
+                    ErrorLogger.LogDebug($"Busy state changed: {value}", "CommandRegistry");
                 }
             }
         }
@@ -122,8 +123,7 @@ namespace VoiceStudio.App.Services
             // GAP-B19: Validate command ID against known IDs
             if (!CommandIds.IsKnown(commandId))
             {
-                Debug.WriteLine($"[CommandRegistry] WARNING: Unregistered command ID: {commandId}. " +
-                    $"Add it to CommandIds.cs for compile-time safety.");
+                ErrorLogger.LogWarning($"Unregistered command ID: {commandId}. Add it to CommandIds.cs for compile-time safety.", "CommandRegistry");
             }
 
             _commands[commandId] = entry;
@@ -138,7 +138,7 @@ namespace VoiceStudio.App.Services
                 });
             }
 
-            Debug.WriteLine($"[CommandRegistry] Registered: {commandId}");
+            ErrorLogger.LogDebug($"Registered: {commandId}", "CommandRegistry");
             CommandRegistered?.Invoke(this, entry.Descriptor);
         }
 
@@ -151,7 +151,7 @@ namespace VoiceStudio.App.Services
 
             if (removed)
             {
-                Debug.WriteLine($"[CommandRegistry] Unregistered: {commandId}");
+                ErrorLogger.LogDebug($"Unregistered: {commandId}", "CommandRegistry");
                 CommandUnregistered?.Invoke(this, commandId);
             }
 
@@ -171,21 +171,21 @@ namespace VoiceStudio.App.Services
 
         public async Task ExecuteAsync(string commandId, object? parameter = null, CancellationToken cancellationToken = default)
         {
-            Debug.WriteLine($"[CommandRegistry] ExecuteAsync called for: {commandId}");
+            ErrorLogger.LogDebug($"ExecuteAsync called for: {commandId}", "CommandRegistry");
             FileLog($"[CommandRegistry] ExecuteAsync called for: {commandId}");
             if (!_commands.TryGetValue(commandId, out var entry))
             {
-                Debug.WriteLine($"[CommandRegistry] Command not found: {commandId}");
+                ErrorLogger.LogWarning($"Command not found: {commandId}", "CommandRegistry");
                 FileLog($"[CommandRegistry] Command not found: {commandId}");
                 FileLog($"[CommandRegistry] Registered commands: {string.Join(", ", _commands.Keys)}");
                 throw new InvalidOperationException($"Command not registered: {commandId}");
             }
 
-            Debug.WriteLine($"[CommandRegistry] Found command: {commandId}, IsEnabled: {entry.Descriptor.IsEnabled}");
+            ErrorLogger.LogDebug($"Found command: {commandId}, IsEnabled: {entry.Descriptor.IsEnabled}", "CommandRegistry");
             FileLog($"[CommandRegistry] Found command: {commandId}, IsEnabled: {entry.Descriptor.IsEnabled}");
             if (!entry.Descriptor.IsEnabled)
             {
-                Debug.WriteLine($"[CommandRegistry] Command disabled: {commandId}");
+                ErrorLogger.LogDebug($"Command disabled: {commandId}", "CommandRegistry");
                 FileLog($"[CommandRegistry] Command disabled: {commandId}");
                 return;
             }
@@ -193,13 +193,13 @@ namespace VoiceStudio.App.Services
             // GAP-B12: Queue command if busy and command doesn't bypass busy state
             if (_isBusy && !entry.Descriptor.BypassBusy && _queueService != null)
             {
-                Debug.WriteLine($"[CommandRegistry] Busy - queueing command: {commandId}");
+                ErrorLogger.LogDebug($"Busy - queueing command: {commandId}", "CommandRegistry");
                 FileLog($"[CommandRegistry] Busy - queueing command: {commandId}");
                 _queueService.EnqueueIfBusy(commandId, parameter);
                 return;
             }
 
-            Debug.WriteLine($"[CommandRegistry] Executing handler for: {commandId}");
+            ErrorLogger.LogDebug($"Executing handler for: {commandId}", "CommandRegistry");
             FileLog($"[CommandRegistry] Executing handler for: {commandId}");
 
             var stopwatch = Stopwatch.StartNew();
@@ -231,7 +231,7 @@ namespace VoiceStudio.App.Services
                 var totalExecTime = entry.State.AverageExecutionMs * (entry.State.SuccessCount - 1) + stopwatch.ElapsedMilliseconds;
                 entry.State.AverageExecutionMs = totalExecTime / entry.State.SuccessCount;
 
-                Debug.WriteLine($"[CommandRegistry] Executed: {commandId} ({stopwatch.ElapsedMilliseconds}ms)");
+                ErrorLogger.LogDebug($"Executed: {commandId} ({stopwatch.ElapsedMilliseconds}ms)", "CommandRegistry");
 
                 CommandExecuted?.Invoke(this, new CommandExecutedEventArgs
                 {
@@ -249,7 +249,7 @@ namespace VoiceStudio.App.Services
                 entry.State.LastError = ex.Message;
                 entry.State.Status = CommandStatus.Broken;
 
-                Debug.WriteLine($"[CommandRegistry] Failed: {commandId} - {ex.Message}");
+                ErrorLogger.LogWarning($"Failed: {commandId} - {ex.Message}", "CommandRegistry");
 
                 CommandFailed?.Invoke(this, new CommandFailedEventArgs
                 {

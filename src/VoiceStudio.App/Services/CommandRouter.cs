@@ -1,5 +1,5 @@
 using System;
-using System.Diagnostics;
+using VoiceStudio.App.Logging;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Dispatching;
@@ -65,7 +65,7 @@ namespace VoiceStudio.App.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[CommandRouter] Command '{commandId}' failed: {ex.Message}");
+                ErrorLogger.LogWarning($"[CommandRouter] Command '{commandId}' failed: {ex.Message}", "CommandRouter");
                 return false;
             }
         }
@@ -163,7 +163,7 @@ namespace VoiceStudio.App.Services
             {
                 // Fallback to click handler if command not found
                 button.Click += CreateClickHandler(commandId, parameter);
-                Debug.WriteLine($"[CommandRouter] Warning: Command '{commandId}' not found, using click handler fallback");
+                ErrorLogger.LogDebug($"[CommandRouter] Warning: Command '{commandId}' not found, using click handler fallback", "CommandRouter");
             }
         }
 
@@ -183,7 +183,7 @@ namespace VoiceStudio.App.Services
             else
             {
                 menuItem.Click += CreateClickHandler(commandId, parameter);
-                Debug.WriteLine($"[CommandRouter] Warning: Command '{commandId}' not found for menu item");
+                ErrorLogger.LogDebug($"[CommandRouter] Warning: Command '{commandId}' not found for menu item", "CommandRouter");
             }
         }
 
@@ -218,8 +218,8 @@ namespace VoiceStudio.App.Services
                     // GAP-B19: Validate Tag against known command IDs
                     if (!CommandIds.IsKnown(commandId))
                     {
-                        Debug.WriteLine($"[CommandRouter] WARNING: Button Tag '{commandId}' is not a known command ID. " +
-                            $"Add it to CommandIds.cs or fix the Tag value.");
+                        ErrorLogger.LogDebug($"[CommandRouter] WARNING: Button Tag '{commandId}' is not a known command ID. " +
+                            $"Add it to CommandIds.cs or fix the Tag value.", "CommandRouter");
                     }
                     WireButton(button, commandId);
                 }
@@ -241,8 +241,8 @@ namespace VoiceStudio.App.Services
                     // GAP-B19: Validate Tag against known command IDs
                     if (!CommandIds.IsKnown(commandId))
                     {
-                        Debug.WriteLine($"[CommandRouter] WARNING: MenuItem Tag '{commandId}' is not a known command ID. " +
-                            $"Add it to CommandIds.cs or fix the Tag value.");
+                        ErrorLogger.LogDebug($"[CommandRouter] WARNING: MenuItem Tag '{commandId}' is not a known command ID. " +
+                            $"Add it to CommandIds.cs or fix the Tag value.", "CommandRouter");
                     }
                     WireMenuItem(item, commandId);
                 }

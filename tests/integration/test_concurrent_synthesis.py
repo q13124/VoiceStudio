@@ -7,10 +7,10 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from unittest.mock import patch, AsyncMock
 
 from backend.api.main import app
 

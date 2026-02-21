@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -150,7 +151,7 @@ namespace VoiceStudio.App.Services
         }
         catch (Exception ex)
         {
-          System.Diagnostics.Debug.WriteLine($"EventAggregator: Error invoking handler: {ex.Message}");
+          System.Diagnostics.ErrorLogger.LogWarning($"EventAggregator: Error invoking handler: {ex.Message}", "EventAggregator");
         }
       }
     }
@@ -187,7 +188,7 @@ namespace VoiceStudio.App.Services
         }
         catch (Exception ex)
         {
-          System.Diagnostics.Debug.WriteLine($"EventAggregator: Error invoking async handler: {ex.Message}");
+          System.Diagnostics.ErrorLogger.LogWarning($"EventAggregator: Error invoking async handler: {ex.Message}", "EventAggregator");
         }
       }
 

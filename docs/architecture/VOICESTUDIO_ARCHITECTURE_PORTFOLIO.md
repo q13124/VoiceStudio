@@ -2,6 +2,21 @@
 
 ---
 
+## Phase 3–7 Additions (2026-02-21)
+
+### Phase 3: Extended Panels and Features
+- 93 extended UI panels (Audio, Training, Image, Video, Library, Quality, Settings)
+- 50+ engine adapters verified
+- 15 IDEA features wired (Multi-Pass Synthesis, Artifact Removal, Temporal Consistency, etc.)
+
+### Phase 7: Platform Operationalization
+- **Plugin Marketplace**: Publisher registration, submission workflow, review queue, ratings/reviews, download tracking
+- **Operational Hardening**: API key persistence, OTLP trace export, Grafana dashboard, health aggregation, log rotation
+- **Security Attestation**: Build provenance, dependency audit, security controls matrix, incident response playbook
+- **Documentation**: Deployment topology, operations runbook, ADR index (42 ADRs)
+
+---
+
 ## 14. Gap Analysis and Technical Debt
 
 This section catalogs architectural gaps, technical debt, and improvement opportunities identified across all system layers. Each gap is assigned a severity, impact assessment, and recommended resolution path.

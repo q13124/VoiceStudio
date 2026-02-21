@@ -240,7 +240,7 @@ namespace VoiceStudio.App.Views.Panels
 
       // Get backend base URL - try to get from local settings, otherwise use default
       // This matches the default in ServiceProvider and BackendClientConfig
-      _backendBaseUrl = "http://localhost:8001";
+      _backendBaseUrl = "http://localhost:8000";
       try
       {
         // Use UnpackagedSettingsHelper for file-based settings (works for both packaged and unpackaged apps)

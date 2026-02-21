@@ -1,6 +1,6 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Microsoft.UI.Xaml;
@@ -69,7 +69,7 @@ namespace VoiceStudio.App.Services
         _normalizedPanelIds[normalizedPanelId] = descriptor.PanelId;
       }
 
-      Debug.WriteLine($"[PanelRegistry] Registered panel: {descriptor.PanelId}");
+      ErrorLogger.LogInfo($"[PanelRegistry] Registered panel: {descriptor.PanelId}", "PanelRegistry");
     }
 
     public IEnumerable<PanelDescriptor> GetAllDescriptors()
@@ -106,7 +106,7 @@ namespace VoiceStudio.App.Services
         }
       }
 
-      Debug.WriteLine($"[PanelRegistry] Created panel: {descriptor.PanelId}");
+      ErrorLogger.LogDebug($"[PanelRegistry] Created panel: {descriptor.PanelId}", "PanelRegistry");
       return view;
     }
 

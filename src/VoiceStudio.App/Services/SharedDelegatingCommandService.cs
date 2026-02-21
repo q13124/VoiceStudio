@@ -3,8 +3,8 @@
 // Provides shared DelegatingCommand instances for common toolbar/panel actions.
 
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Windows.Input;
 using Microsoft.UI.Dispatching;
 using VoiceStudio.App.Core.Commands;
@@ -91,7 +91,7 @@ public class SharedDelegatingCommandService : ISharedDelegatingCommandService
         // and PanelDeactivatedEvent are added to VoiceStudio.Core.Events
         // For now, ViewModels wire their commands directly in their constructors
 
-        Debug.WriteLine("[SharedDelegatingCommandService] Initialized with 5 shared commands");
+        ErrorLogger.LogDebug("[SharedDelegatingCommandService] Initialized with 5 shared commands", "SharedDelegatingCommandService");
     }
 
     private DelegatingCommand CreateSharedCommand(string commandId)
@@ -111,14 +111,14 @@ public class SharedDelegatingCommandService : ISharedDelegatingCommandService
         if (_sharedCommands.TryGetValue(commandId, out var sharedCommand))
         {
             sharedCommand.SetDelegate(command);
-            Debug.WriteLine($"[SharedDelegatingCommandService] Set delegate for '{commandId}'");
+            ErrorLogger.LogDebug($"[SharedDelegatingCommandService] Set delegate for '{commandId}'", "SharedDelegatingCommandService");
         }
         else
         {
             // Create new shared command if it doesn't exist
             var newCommand = GetSharedCommand(commandId);
             newCommand.SetDelegate(command);
-            Debug.WriteLine($"[SharedDelegatingCommandService] Created and set delegate for '{commandId}'");
+            ErrorLogger.LogDebug($"[SharedDelegatingCommandService] Created and set delegate for '{commandId}'", "SharedDelegatingCommandService");
         }
     }
 
@@ -131,7 +131,7 @@ public class SharedDelegatingCommandService : ISharedDelegatingCommandService
                 if (_sharedCommands.TryGetValue(kvp.Key, out var command))
                 {
                     command.ClearDelegate();
-                    Debug.WriteLine($"[SharedDelegatingCommandService] Cleared delegate for '{kvp.Key}' (panel: {panelId})");
+                    ErrorLogger.LogDebug($"[SharedDelegatingCommandService] Cleared delegate for '{kvp.Key}' (panel: {panelId})", "SharedDelegatingCommandService");
                 }
             }
         }

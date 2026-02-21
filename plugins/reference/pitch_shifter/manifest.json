@@ -1,0 +1,47 @@
+{
+  "$schema": "../../../shared/schemas/plugin-manifest.schema.json",
+  "schema_version": "6.0.0",
+  "id": "com.voicestudio.pitch_shifter",
+  "name": "pitch_shifter",
+  "display_name": "Pitch Shifter",
+  "version": "1.0.0",
+  "description": "Shift audio pitch by semitones without changing duration. Uses librosa for high-quality pitch shifting.",
+  "long_description": "VoiceStudio reference plugin for pitch shifting. Adjusts pitch by a configurable number of semitones while preserving duration. Useful for voice transformation and musical applications.",
+  "author": "VoiceStudio",
+  "license": "MIT",
+  "plugin_type": "backend_only",
+  "category": "audio_effects",
+  "min_app_version": "1.0.0",
+  "capabilities": ["audio_processing"],
+  "entry_point": "plugin.py",
+  "dependencies": {
+    "runtime": [],
+    "python": ["librosa>=0.10.0", "numpy>=1.26.0", "soundfile>=0.12.0"]
+  },
+  "permissions": {
+    "filesystem": {"read": ["$PLUGIN_DIR", "$TEMP_DIR"], "write": ["$TEMP_DIR"]},
+    "network": false
+  },
+  "settings_schema": {
+    "type": "object",
+    "properties": {
+      "semitones": {
+        "type": "number",
+        "minimum": -12,
+        "maximum": 12,
+        "default": 0,
+        "description": "Pitch shift in semitones (negative = lower, positive = higher)"
+      },
+      "preserve_formants": {
+        "type": "boolean",
+        "default": false,
+        "description": "Preserve formant structure (voice-like quality)"
+      }
+    }
+  },
+  "catalog": {
+    "tags": ["pitch", "audio-effects", "voice", "reference"],
+    "featured": false,
+    "verified": true
+  }
+}

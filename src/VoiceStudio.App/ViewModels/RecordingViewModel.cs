@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
@@ -312,7 +313,7 @@ namespace VoiceStudio.App.ViewModels
           }
           catch (Exception deleteEx)
           {
-            System.Diagnostics.Debug.WriteLine($"Failed to delete cancelled recording: {deleteEx.Message}");
+            System.Diagnostics.ErrorLogger.LogWarning($"Failed to delete cancelled recording: {deleteEx.Message}", "RecordingViewModel");
           }
         }
 

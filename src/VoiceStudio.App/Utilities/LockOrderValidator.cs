@@ -14,6 +14,7 @@
 // See: docs/architecture/CONCURRENCY_GUIDE.md
 
 using System;
+using VoiceStudio.App.Logging;
 #if DEBUG
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -114,7 +115,7 @@ public static class LockOrderValidator
                 Debug.Fail(message);
 
                 // Also write to debug output for logging
-                Debug.WriteLine($"[LockOrderValidator] {message}");
+                ErrorLogger.LogDebug($"[LockOrderValidator] {message}", "LockOrderValidator");
             }
         }
 
@@ -122,7 +123,7 @@ public static class LockOrderValidator
         var info = new LockInfo(lockLevel, lockName);
         stack.Push(info);
 
-        Debug.WriteLine($"[LockOrderValidator] Acquired: {lockName} (L{lockLevel}), stack depth: {stack.Count}");
+        ErrorLogger.LogDebug($"[LockOrderValidator] Acquired: {lockName} (L{lockLevel}), stack depth: {stack.Count}", "LockOrderValidator");
 
         return new LockReleaser(stack, info);
 #else
@@ -241,7 +242,7 @@ public static class LockOrderValidator
                 if (top.Level == _info.Level && top.Name == _info.Name)
                 {
                     _stack.Pop();
-                    Debug.WriteLine($"[LockOrderValidator] Released: {_info.Name} (L{_info.Level}), stack depth: {_stack.Count}");
+                    ErrorLogger.LogDebug($"[LockOrderValidator] Released: {_info.Name} (L{_info.Level}), stack depth: {_stack.Count}", "LockOrderValidator");
                 }
                 else
                 {

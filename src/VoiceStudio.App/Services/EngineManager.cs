@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -61,7 +62,7 @@ namespace VoiceStudio.App.Services
       catch (Exception ex)
       {
         // Log error but allow partial initialization
-        System.Diagnostics.Debug.WriteLine($"Error initializing EngineManager: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Error initializing EngineManager: {ex.Message}", "EngineManager");
         // In a real scenario, we might want to retry or expose the error state
       }
     }

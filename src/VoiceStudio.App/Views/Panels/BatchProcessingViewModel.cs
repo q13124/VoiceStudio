@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -354,11 +355,11 @@ namespace VoiceStudio.App.Views.Panels
       {
         await _jobProgressClient.ConnectAsync();
         _isWebSocketConnected = _jobProgressClient.IsConnected;
-        System.Diagnostics.Debug.WriteLine($"BatchProcessingViewModel: WebSocket connected: {_isWebSocketConnected}");
+        System.Diagnostics.ErrorLogger.LogDebug($"BatchProcessingViewModel: WebSocket connected: {_isWebSocketConnected}", "BatchProcessingViewModel");
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"BatchProcessingViewModel: WebSocket connection failed: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"BatchProcessingViewModel: WebSocket connection failed: {ex.Message}", "BatchProcessingViewModel");
         _isWebSocketConnected = false;
       }
     }
@@ -375,7 +376,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"BatchProcessingViewModel: WebSocket disconnect error: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"BatchProcessingViewModel: WebSocket disconnect error: {ex.Message}", "BatchProcessingViewModel");
       }
     }
 
@@ -526,7 +527,7 @@ namespace VoiceStudio.App.Views.Panels
         }
         catch (Exception ex)
         {
-          System.Diagnostics.Debug.WriteLine($"Error polling batch jobs: {ex.Message}");
+          System.Diagnostics.ErrorLogger.LogWarning($"Error polling batch jobs: {ex.Message}", "BatchProcessingViewModel");
           await Task.Delay(5000, cancellationToken); // Wait longer on error
         }
       }

@@ -367,7 +367,7 @@ namespace VoiceStudio.App.ViewModels
         {
           // Update UI or send to audio player
           // Audio data received from WebSocket connection
-          System.Diagnostics.Debug.WriteLine($"Received audio data: {data.AudioData.Length} bytes, {data.SampleRate}Hz, {data.Channels} channels");
+          System.Diagnostics.ErrorLogger.LogDebug($"Received audio data: {data.AudioData.Length} bytes, {data.SampleRate}Hz, {data.Channels} channels", "RealTimeVoiceConverterViewModel");
         });
     }
 

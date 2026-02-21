@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Windows.System;
 using Windows.UI.Core;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services;
 
@@ -316,8 +317,7 @@ public class KeyboardShortcutService : IUnifiedKeyboardService
 
         if (binding != null)
         {
-            System.Diagnostics.Debug.WriteLine(
-                $"[KeyboardShortcuts] Executing '{binding.CommandId}' (context: {binding.Context}, current: {currentContext})");
+            ErrorLogger.LogDebug($"Executing '{binding.CommandId}' (context: {binding.Context}, current: {currentContext})", "KeyboardShortcuts");
             ExecuteShortcut(binding.CommandId);
             return true;
         }
@@ -340,7 +340,7 @@ public class KeyboardShortcutService : IUnifiedKeyboardService
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Shortcut handler error: {ex.Message}");
+                    ErrorLogger.LogWarning($"Shortcut handler error: {ex.Message}", "KeyboardShortcutService");
                 }
             }
 
@@ -407,16 +407,14 @@ public class KeyboardShortcutService : IUnifiedKeyboardService
         {
             if (!allowOverwrite)
             {
-                System.Diagnostics.Debug.WriteLine(
-                    $"[Shortcuts] Conflict: {commandId} vs {conflict.ConflictingCommandId}");
+            ErrorLogger.LogWarning($"Conflict: {commandId} vs {conflict.ConflictingCommandId}", "Shortcuts");
                 ConflictDetected?.Invoke(this, new ShortcutConflictEventArgs(commandId, conflict));
                 return false;
             }
             
             // Remove conflicting shortcut when overwrite allowed
             UnregisterShortcut(conflict.ConflictingCommandId);
-            System.Diagnostics.Debug.WriteLine(
-                $"[Shortcuts] Overwrote conflicting shortcut: {conflict.ConflictingCommandId}");
+            ErrorLogger.LogDebug($"Overwrote conflicting shortcut: {conflict.ConflictingCommandId}", "Shortcuts");
         }
 
         // Proceed with registration
@@ -441,8 +439,7 @@ public class KeyboardShortcutService : IUnifiedKeyboardService
         if (conflict != null)
         {
             // For user customizations, we allow overwrite but log the conflict
-            System.Diagnostics.Debug.WriteLine(
-                $"[Shortcuts] User customization overwrites {conflict.ConflictingCommandId}");
+            ErrorLogger.LogDebug($"User customization overwrites {conflict.ConflictingCommandId}", "Shortcuts");
             UnregisterShortcut(conflict.ConflictingCommandId);
         }
 
@@ -470,8 +467,7 @@ public class KeyboardShortcutService : IUnifiedKeyboardService
     {
         // Load user customizations (overrides defaults registered in constructor)
         await LoadCustomShortcutsAsync();
-        System.Diagnostics.Debug.WriteLine(
-            $"[Shortcuts] Initialized with {_customizedShortcuts.Count} custom shortcuts");
+        ErrorLogger.LogDebug($"Initialized with {_customizedShortcuts.Count} custom shortcuts", "Shortcuts");
     }
 
     /// <summary>
@@ -552,7 +548,7 @@ public class KeyboardShortcutService : IUnifiedKeyboardService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to import shortcuts: {ex.Message}");
+            ErrorLogger.LogWarning($"Failed to import shortcuts: {ex.Message}", "KeyboardShortcutService");
         }
     }
 
@@ -668,8 +664,7 @@ public class KeyboardShortcutService : IUnifiedKeyboardService
 
         if (binding != null)
         {
-            System.Diagnostics.Debug.WriteLine(
-                $"[KeyboardShortcuts] Async executing '{binding.CommandId}' (context: {binding.Context}, current: {currentContext})");
+            ErrorLogger.LogDebug($"Async executing '{binding.CommandId}' (context: {binding.Context}, current: {currentContext})", "KeyboardShortcuts");
             await ExecuteShortcutAsync(binding.CommandId);
             return true;
         }
@@ -687,7 +682,7 @@ public class KeyboardShortcutService : IUnifiedKeyboardService
                 try { handler(); }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Shortcut handler error: {ex.Message}");
+                    ErrorLogger.LogWarning($"Shortcut handler error: {ex.Message}", "KeyboardShortcutService");
                 }
             }
         }
@@ -700,7 +695,7 @@ public class KeyboardShortcutService : IUnifiedKeyboardService
                 try { await handler(); }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Async shortcut handler error: {ex.Message}");
+                    ErrorLogger.LogWarning($"Async shortcut handler error: {ex.Message}", "KeyboardShortcutService");
                 }
             }
         }
@@ -754,7 +749,7 @@ public class KeyboardShortcutService : IUnifiedKeyboardService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to save shortcuts: {ex.Message}");
+            ErrorLogger.LogWarning($"Failed to save shortcuts: {ex.Message}", "KeyboardShortcutService");
         }
     }
 
@@ -778,7 +773,7 @@ public class KeyboardShortcutService : IUnifiedKeyboardService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load shortcuts: {ex.Message}");
+            ErrorLogger.LogWarning($"Failed to load shortcuts: {ex.Message}", "KeyboardShortcutService");
         }
     }
 

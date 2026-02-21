@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -238,7 +237,7 @@ namespace VoiceStudio.App.Services
                 var json = JsonSerializer.Serialize(report, _jsonOptions);
                 await File.WriteAllTextAsync(filePath, json);
                 
-                Debug.WriteLine($"[ErrorReporting] Report {report.ReportId} processed.");
+                ErrorLogger.LogWarning($"[ErrorReporting] Report {report.ReportId} processed.", "ErrorReportingService");
             }
             catch (Exception ex)
             {

@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.UI.Xaml;
@@ -95,7 +96,7 @@ namespace VoiceStudio.App.Services
           }
           else
           {
-            System.Diagnostics.Debug.WriteLine($"[Palette] Panel not found: {e.Value}");
+            System.Diagnostics.ErrorLogger.LogDebug($"[Palette] Panel not found: {e.Value}", "CommandPaletteService");
           }
           break;
 
@@ -116,7 +117,7 @@ namespace VoiceStudio.App.Services
           break;
 
         default:
-          System.Diagnostics.Debug.WriteLine($"[Palette] Unknown action: {e.Action}");
+          System.Diagnostics.ErrorLogger.LogDebug($"[Palette] Unknown action: {e.Action}", "CommandPaletteService");
           break;
       }
     }

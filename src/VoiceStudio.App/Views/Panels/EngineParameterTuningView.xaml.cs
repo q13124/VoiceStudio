@@ -66,7 +66,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Unhandled error in event handler: {ex.Message}", "EngineParameterTuningView.xaml");
       }
     }
   }

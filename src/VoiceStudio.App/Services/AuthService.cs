@@ -2,8 +2,8 @@
 // Provides authentication and authorization for VoiceStudio
 
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -70,7 +70,7 @@ public class AuthService : IUnifiedAuthService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[AuthService] Initialization failed: {ex.Message}");
+            ErrorLogger.LogWarning($"[AuthService] Initialization failed: {ex.Message}", "AuthService");
             
             // Fallback to local session if not auth required
             if (!IsAuthRequired)
@@ -141,7 +141,7 @@ public class AuthService : IUnifiedAuthService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[AuthService] Login failed: {ex.Message}");
+            ErrorLogger.LogWarning($"[AuthService] Login failed: {ex.Message}", "AuthService");
             return new AuthResult
             {
                 Success = false,
@@ -203,7 +203,7 @@ public class AuthService : IUnifiedAuthService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[AuthService] API key login failed: {ex.Message}");
+            ErrorLogger.LogWarning($"[AuthService] API key login failed: {ex.Message}", "AuthService");
             return new AuthResult
             {
                 Success = false,
@@ -294,7 +294,7 @@ public class AuthService : IUnifiedAuthService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[AuthService] Token refresh failed: {ex.Message}");
+            ErrorLogger.LogWarning($"[AuthService] Token refresh failed: {ex.Message}", "AuthService");
             return new AuthResult
             {
                 Success = false,
@@ -444,7 +444,7 @@ public class AuthService : IUnifiedAuthService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[AuthService] Session restore failed: {ex.Message}");
+            ErrorLogger.LogWarning($"[AuthService] Session restore failed: {ex.Message}", "AuthService");
         }
     }
 
@@ -482,7 +482,7 @@ public class AuthService : IUnifiedAuthService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[AuthService] Session save failed: {ex.Message}");
+            ErrorLogger.LogWarning($"[AuthService] Session save failed: {ex.Message}", "AuthService");
         }
 
         await Task.CompletedTask;
@@ -500,7 +500,7 @@ public class AuthService : IUnifiedAuthService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[AuthService] Session clear failed: {ex.Message}");
+            ErrorLogger.LogWarning($"[AuthService] Session clear failed: {ex.Message}", "AuthService");
         }
 
         await Task.CompletedTask;

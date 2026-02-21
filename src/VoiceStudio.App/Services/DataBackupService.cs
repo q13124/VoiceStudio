@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -189,7 +188,7 @@ namespace VoiceStudio.App.Services
                 };
                 
                 BackupCompleted?.Invoke(this, new BackupCompletedEventArgs(result));
-                Debug.WriteLine($"[DataBackup] Backup completed: {backupName}");
+                ErrorLogger.LogInfo($"[DataBackup] Backup completed: {backupName}", "DataBackupService");
                 
                 return result;
             }
@@ -254,7 +253,7 @@ namespace VoiceStudio.App.Services
                     }
                 }, cancellationToken);
                 
-                Debug.WriteLine($"[DataBackup] Restore completed: {itemsRestored} items");
+                ErrorLogger.LogInfo($"[DataBackup] Restore completed: {itemsRestored} items", "DataBackupService");
                 
                 return new RestoreResult
                 {
@@ -358,7 +357,7 @@ namespace VoiceStudio.App.Services
                     try
                     {
                         File.Delete(backup.Path);
-                        Debug.WriteLine($"[DataBackup] Deleted old backup: {backup.Name}");
+                        ErrorLogger.LogDebug($"[DataBackup] Deleted old backup: {backup.Name}", "DataBackupService");
                     }
                     // ALLOWED: empty catch - Best effort cleanup, failure is acceptable
                     catch

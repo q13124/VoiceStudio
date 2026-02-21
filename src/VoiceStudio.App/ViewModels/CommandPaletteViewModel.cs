@@ -1,6 +1,6 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -85,13 +85,13 @@ namespace VoiceStudio.App.ViewModels
     {
       if (_commandRegistry == null)
       {
-        Debug.WriteLine("[CommandPalette] Command registry not available");
+        ErrorLogger.LogDebug("[CommandPalette] Command registry not available", "CommandPaletteViewModel");
         return;
       }
 
       // Get all registered commands from the unified registry
       var commands = _commandRegistry.GetAllCommands();
-      Debug.WriteLine($"[CommandPalette] Loading {commands.Count} commands from registry");
+      ErrorLogger.LogDebug($"[CommandPalette] Loading {commands.Count} commands from registry", "CommandPaletteViewModel");
 
       foreach (var descriptor in commands)
       {
@@ -155,7 +155,7 @@ namespace VoiceStudio.App.ViewModels
       var parts = id.Split(':', 2);
       if (parts.Length != 2)
       {
-        Debug.WriteLine($"[Palette] Invalid command format: {id}");
+        ErrorLogger.LogDebug($"[Palette] Invalid command format: {id}", "CommandPaletteViewModel");
         return;
       }
 
@@ -172,7 +172,7 @@ namespace VoiceStudio.App.ViewModels
 
       CommandExecuted?.Invoke(this, args);
 
-      Debug.WriteLine($"[Palette] Executed: {action} = {value}");
+      ErrorLogger.LogDebug($"[Palette] Executed: {action} = {value}", "CommandPaletteViewModel");
     }
 
     private async Task ExecuteRegistryCommandAsync(string commandId)

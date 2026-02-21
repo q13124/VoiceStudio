@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 using System;
+using VoiceStudio.App.Logging;
 using System.Windows.Input;
 using Microsoft.UI.Dispatching;
 
@@ -125,8 +126,7 @@ public sealed class DelegatingCommand : ICommand
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine(
-                $"[DelegatingCommand] CanExecute error for '{CommandId}': {ex.Message}");
+            System.Diagnostics.ErrorLogger.LogWarning($"[DelegatingCommand] CanExecute error for '{CommandId}': {ex.Message}", "DelegatingCommand");
             return false;
         }
     }
@@ -145,8 +145,7 @@ public sealed class DelegatingCommand : ICommand
 
         if (activeDelegate == null)
         {
-            System.Diagnostics.Debug.WriteLine(
-                $"[DelegatingCommand] Execute called but no delegate for '{CommandId}'");
+            System.Diagnostics.ErrorLogger.LogDebug($"[DelegatingCommand] Execute called but no delegate for '{CommandId}'", "DelegatingCommand");
             return;
         }
 
@@ -156,8 +155,7 @@ public sealed class DelegatingCommand : ICommand
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine(
-                $"[DelegatingCommand] Execute error for '{CommandId}': {ex.Message}");
+            System.Diagnostics.ErrorLogger.LogWarning($"[DelegatingCommand] Execute error for '{CommandId}': {ex.Message}", "DelegatingCommand");
             throw;
         }
     }

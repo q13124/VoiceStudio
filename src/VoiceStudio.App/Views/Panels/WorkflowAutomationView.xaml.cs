@@ -6,6 +6,7 @@ using VoiceStudio.App.Views.Panels;
 using VoiceStudio.Core.Services;
 using VoiceStudio.Core.Models;
 using System.Threading.Tasks;
+using VoiceStudio.App.Logging;
 using Windows.System;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System;
@@ -184,7 +185,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Unhandled error in event handler: {ex.Message}", "WorkflowAutomationView.xaml");
       }
     }
 
@@ -223,7 +224,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Unhandled error in event handler: {ex.Message}", "WorkflowAutomationView.xaml");
       }
     }
 

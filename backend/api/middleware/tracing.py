@@ -49,6 +49,17 @@ except ImportError:
     TracerProvider = None  # type: ignore
     SpanExporter = None  # type: ignore
 
+# OTLP exporter (optional, Phase 7 Sprint 2)
+try:
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+        OTLPSpanExporter,
+    )
+
+    OTLP_AVAILABLE = True
+except ImportError:
+    OTLP_AVAILABLE = False
+    OTLPSpanExporter = None  # type: ignore
+
 # Local imports
 from backend.services.telemetry import get_telemetry_service
 
@@ -234,6 +245,16 @@ def setup_tracing(
         _tracer_provider.add_span_processor(
             BatchSpanProcessor(LocalFileSpanExporter())
         )
+
+    # Phase 7: Optional OTLP export when VOICESTUDIO_OTLP_ENDPOINT is set
+    otlp_endpoint = os.environ.get("VOICESTUDIO_OTLP_ENDPOINT")
+    if otlp_endpoint and OTLP_AVAILABLE and OTLPSpanExporter:
+        try:
+            otlp_exporter = OTLPSpanExporter(endpoint=otlp_endpoint, insecure=True)
+            _tracer_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
+            logger.info("OTLP trace export enabled: %s", otlp_endpoint)
+        except Exception as e:
+            logger.warning("OTLP exporter setup failed: %s", e)
 
     # Set as global provider
     trace.set_tracer_provider(_tracer_provider)

@@ -269,6 +269,12 @@ class ABTestingService:
 
         return experiment
 
+    def register_experiment(self, experiment: Experiment) -> None:
+        """Register an experiment (add or update). Persists to config."""
+        self._experiments[experiment.id] = experiment
+        self._save_experiments()
+        logger.info(f"Registered experiment: {experiment.id}")
+
     def get_experiment(self, experiment_id: str) -> Experiment | None:
         """Get an experiment by ID."""
         return self._experiments.get(experiment_id)

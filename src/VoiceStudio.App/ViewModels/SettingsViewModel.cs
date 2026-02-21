@@ -16,6 +16,7 @@ using CoreSettingsData = VoiceStudio.Core.Models.SettingsData;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
 using Windows.UI;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.ViewModels
 {
@@ -89,7 +90,7 @@ namespace VoiceStudio.App.ViewModels
 
     // Backend Settings
     [ObservableProperty]
-    private string apiUrl = "http://localhost:8001";
+    private string apiUrl = "http://localhost:8000";
 
     [ObservableProperty]
     private int apiTimeout = 30; // seconds
@@ -474,7 +475,7 @@ namespace VoiceStudio.App.ViewModels
       GridInterval = settings.Timeline?.GridInterval ?? 1.0;
 
       // Backend
-      ApiUrl = settings.Backend?.ApiUrl ?? "http://localhost:8001";
+      ApiUrl = settings.Backend?.ApiUrl ?? "http://localhost:8000";
       ApiTimeout = settings.Backend?.Timeout ?? 30;
       ApiRetryCount = settings.Backend?.RetryCount ?? 3;
 
@@ -585,7 +586,7 @@ namespace VoiceStudio.App.ViewModels
       SnapInterval = 0.1;
       GridEnabled = true;
       GridInterval = 1.0;
-      ApiUrl = "http://localhost:8001";
+      ApiUrl = "http://localhost:8000";
       ApiTimeout = 30;
       ApiRetryCount = 3;
       CachingEnabled = true;
@@ -742,7 +743,7 @@ namespace VoiceStudio.App.ViewModels
         // Check dependency status via backend
         try
         {
-          System.Diagnostics.Debug.WriteLine("[DEP-CHECK] Starting dependency check...");
+          ErrorLogger.LogDebug("Starting dependency check...", "DEP-CHECK");
           var response = await _backendClient.SendRequestAsync<object, Dictionary<string, object>>(
               "/api/settings/check/dependencies",
               null,
@@ -750,18 +751,18 @@ namespace VoiceStudio.App.ViewModels
               cancellationToken
           );
 
-          System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Response received: {response != null}");
+          ErrorLogger.LogDebug($"Response received: {response != null}", "DEP-CHECK");
           if (response != null)
           {
-            System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Response keys: {string.Join(", ", response.Keys)}");
+            ErrorLogger.LogDebug($"Response keys: {string.Join(", ", response.Keys)}", "DEP-CHECK");
             int matchCount = 0;
             foreach (var dep in dependencies)
             {
               var key = dep.Name.ToLower().Replace(" ", "_");
-              System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Looking for key: '{key}'");
+              ErrorLogger.LogDebug($"Looking for key: '{key}'", "DEP-CHECK");
               if (response.TryGetValue(key, out var statusObj))
               {
-                System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Found! Type: {statusObj?.GetType().Name ?? "null"}, Value: {statusObj}");
+                ErrorLogger.LogDebug($"Found! Type: {statusObj?.GetType().Name ?? "null"}, Value: {statusObj}", "DEP-CHECK");
                 if (statusObj is bool isInstalled)
                 {
                   dep.IsInstalled = isInstalled;
@@ -769,7 +770,7 @@ namespace VoiceStudio.App.ViewModels
                 }
                 else if (statusObj is System.Text.Json.JsonElement jsonElement)
                 {
-                  System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] JsonElement ValueKind: {jsonElement.ValueKind}");
+                  ErrorLogger.LogDebug($"JsonElement ValueKind: {jsonElement.ValueKind}", "DEP-CHECK");
                   // Handle JsonElement (System.Text.Json deserializes to this type)
                   if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.True)
                   {
@@ -793,10 +794,10 @@ namespace VoiceStudio.App.ViewModels
               }
               else
               {
-                System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Key NOT found: '{key}'");
+                ErrorLogger.LogDebug($"Key NOT found: '{key}'", "DEP-CHECK");
               }
             }
-            System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Total matched as installed: {matchCount}");
+            ErrorLogger.LogDebug($"Total matched as installed: {matchCount}", "DEP-CHECK");
             
             // Save successful results to cache for use when backend is unavailable
             var cacheData = new Dictionary<string, bool>();
@@ -809,7 +810,7 @@ namespace VoiceStudio.App.ViewModels
           }
           else
           {
-            System.Diagnostics.Debug.WriteLine("[DEP-CHECK] Response was NULL");
+            ErrorLogger.LogDebug("Response was NULL", "DEP-CHECK");
           }
         }
         catch (Exception ex)
@@ -821,7 +822,7 @@ namespace VoiceStudio.App.ViewModels
           var cached = LoadCachedDependencyStatus();
           if (cached != null && cached.Count > 0)
           {
-            System.Diagnostics.Debug.WriteLine($"[DEP-CHECK] Using cached status ({cached.Count} entries)");
+            ErrorLogger.LogDebug($"Using cached status ({cached.Count} entries)", "DEP-CHECK");
             foreach (var dep in dependencies)
             {
               var key = dep.Name.ToLower().Replace(" ", "_");
@@ -834,7 +835,7 @@ namespace VoiceStudio.App.ViewModels
           }
           else
           {
-            System.Diagnostics.Debug.WriteLine("[DEP-CHECK] No cache available, showing as not installed");
+            ErrorLogger.LogDebug("No cache available, showing as not installed", "DEP-CHECK");
             // No cache available - keep as not installed (default)
           }
         }
@@ -883,7 +884,7 @@ namespace VoiceStudio.App.ViewModels
       {
         if (!File.Exists(DependencyCachePath))
         {
-          System.Diagnostics.Debug.WriteLine("[DEP-CACHE] No cache file found");
+          ErrorLogger.LogDebug("No cache file found", "DEP-CACHE");
           return null;
         }
 
@@ -892,7 +893,7 @@ namespace VoiceStudio.App.ViewModels
 
         if (cache == null)
         {
-          System.Diagnostics.Debug.WriteLine("[DEP-CACHE] Cache deserialization returned null");
+          ErrorLogger.LogDebug("Cache deserialization returned null", "DEP-CACHE");
           return null;
         }
 
@@ -900,16 +901,16 @@ namespace VoiceStudio.App.ViewModels
         var cacheAge = DateTime.UtcNow - cache.LastChecked;
         if (cacheAge.TotalHours > 24)
         {
-          System.Diagnostics.Debug.WriteLine($"[DEP-CACHE] Cache expired (age: {cacheAge.TotalHours:F1} hours)");
+          ErrorLogger.LogDebug($"Cache expired (age: {cacheAge.TotalHours:F1} hours)", "DEP-CACHE");
           return null;
         }
 
-        System.Diagnostics.Debug.WriteLine($"[DEP-CACHE] Loaded cache with {cache.Dependencies?.Count ?? 0} entries (age: {cacheAge.TotalMinutes:F0} minutes)");
+        ErrorLogger.LogDebug($"Loaded cache with {cache.Dependencies?.Count ?? 0} entries (age: {cacheAge.TotalMinutes:F0} minutes)", "DEP-CACHE");
         return cache.Dependencies;
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"[DEP-CACHE] Error loading cache: {ex.Message}");
+        ErrorLogger.LogWarning($"Error loading cache: {ex.Message}", "DEP-CACHE");
         return null;
       }
     }
@@ -937,11 +938,11 @@ namespace VoiceStudio.App.ViewModels
         var json = JsonSerializer.Serialize(cache, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(DependencyCachePath, json);
 
-        System.Diagnostics.Debug.WriteLine($"[DEP-CACHE] Saved cache with {dependencies.Count} entries");
+        ErrorLogger.LogDebug($"Saved cache with {dependencies.Count} entries", "DEP-CACHE");
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"[DEP-CACHE] Error saving cache: {ex.Message}");
+        ErrorLogger.LogWarning($"Error saving cache: {ex.Message}", "DEP-CACHE");
       }
     }
 
@@ -1006,7 +1007,7 @@ namespace VoiceStudio.App.ViewModels
 
   public class BackendSettings
   {
-    public string ApiUrl { get; set; } = "http://localhost:8001";
+    public string ApiUrl { get; set; } = "http://localhost:8000";
     public int Timeout { get; set; } = 30;
     public int RetryCount { get; set; } = 3;
   }

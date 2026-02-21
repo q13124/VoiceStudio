@@ -6,6 +6,7 @@
 // This file is kept for reference and will be removed in a future version.
 
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -233,7 +234,7 @@ public class AccessibilityService
         catch (Exception ex)
         {
             // Use defaults if detection fails - this can happen on some Windows versions
-            System.Diagnostics.Debug.WriteLine($"[Accessibility] Failed to detect system settings: {ex.Message}");
+            System.Diagnostics.ErrorLogger.LogWarning($"[Accessibility] Failed to detect system settings: {ex.Message}", "AccessibilityService");
         }
         
         await Task.CompletedTask;
@@ -266,12 +267,12 @@ public class AccessibilityService
                 _settings.ColorBlindType = (string)cbtValue;
             }
             
-            System.Diagnostics.Debug.WriteLine("[Accessibility] Settings loaded successfully");
+            System.Diagnostics.ErrorLogger.LogDebug("[Accessibility] Settings loaded successfully", "AccessibilityService");
         }
         catch (Exception ex)
         {
             // Settings storage may not be available in all contexts
-            System.Diagnostics.Debug.WriteLine($"[Accessibility] Failed to load settings: {ex.Message}");
+            System.Diagnostics.ErrorLogger.LogWarning($"[Accessibility] Failed to load settings: {ex.Message}", "AccessibilityService");
         }
         
         await Task.CompletedTask;
@@ -301,7 +302,7 @@ public class AccessibilityService
     {
         // In a real implementation, this would use UIA notifications
         // For now, we just log and raise the event
-        System.Diagnostics.Debug.WriteLine($"[Accessibility] {message}");
+        System.Diagnostics.ErrorLogger.LogDebug($"[Accessibility] {message}", "AccessibilityService");
     }
 
     private Windows.UI.Color TransformForProtanopia(Windows.UI.Color color)

@@ -1636,7 +1636,7 @@ namespace VoiceStudio.App.Views.Panels
       {
         // Log but don't fail - visualization is optional
         _logService?.LogError(ex, "LoadVisualizationData");
-        System.Diagnostics.Debug.WriteLine($"Failed to load visualization data: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Failed to load visualization data: {ex.Message}", "TimelineViewModel");
       }
     }
 
@@ -1662,7 +1662,7 @@ namespace VoiceStudio.App.Views.Panels
       {
         // Log but don't show error - waveform will show empty state
         _logService?.LogError(ex, "LoadClipWaveform");
-        System.Diagnostics.Debug.WriteLine($"Failed to load waveform for clip {clip.Id}: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Failed to load waveform for clip {clip.Id}: {ex.Message}", "TimelineViewModel");
       }
     }
 

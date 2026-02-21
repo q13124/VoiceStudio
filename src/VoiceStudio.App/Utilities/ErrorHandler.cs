@@ -1,7 +1,7 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.Diagnostics;
 using VoiceStudio.Core.Exceptions;
 
 namespace VoiceStudio.App.Utilities
@@ -20,8 +20,8 @@ namespace VoiceStudio.App.Utilities
         return "An unknown error occurred.";
 
       // Log the full exception for debugging
-      Debug.WriteLine($"Error: {ex.GetType().Name} - {ex.Message}");
-      Debug.WriteLine($"Stack Trace: {ex.StackTrace}");
+      ErrorLogger.LogWarning($"Error: {ex.GetType().Name} - {ex.Message}", "ErrorHandler");
+      ErrorLogger.LogDebug($"Stack Trace: {ex.StackTrace}", "ErrorHandler");
 
       return ex switch
       {
@@ -145,12 +145,12 @@ namespace VoiceStudio.App.Utilities
     public static void LogError(Exception ex, string context = "")
     {
       var contextMsg = string.IsNullOrWhiteSpace(context) ? "" : $" [{context}]";
-      Debug.WriteLine($"[ERROR{contextMsg}] {ex.GetType().Name}: {ex.Message}");
+      ErrorLogger.LogWarning($"[ERROR{contextMsg}] {ex.GetType().Name}: {ex.Message}", "ErrorHandler");
       if (ex.InnerException != null)
       {
-        Debug.WriteLine($"  Inner Exception: {ex.InnerException.GetType().Name}: {ex.InnerException.Message}");
+        ErrorLogger.LogWarning($"  Inner Exception: {ex.InnerException.GetType().Name}: {ex.InnerException.Message}", "ErrorHandler");
       }
-      Debug.WriteLine($"  Stack Trace: {ex.StackTrace}");
+      ErrorLogger.LogDebug($"  Stack Trace: {ex.StackTrace}", "ErrorHandler");
     }
   }
 }

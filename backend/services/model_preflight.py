@@ -352,7 +352,7 @@ def ensure_faster_whisper(auto_download: bool = True) -> dict[str, object]:
     library is importable and the download cache directory is writable.
     """
     try:
-        from faster_whisper import WhisperModel  # noqa: F401
+        from faster_whisper import WhisperModel
     except ImportError:
         raise _fail(
             "faster-whisper not installed. Install: pip install faster-whisper",

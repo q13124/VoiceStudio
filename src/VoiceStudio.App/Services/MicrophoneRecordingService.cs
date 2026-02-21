@@ -1,5 +1,5 @@
 using System;
-using System.Diagnostics;
+using VoiceStudio.App.Logging;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -128,9 +128,8 @@ namespace VoiceStudio.App.Services
           _recordingStartTime = DateTime.UtcNow;
           IsRecording = true;
 
-          Debug.WriteLine(
-              $"[MicrophoneRecordingService] Recording started: " +
-              $"{sampleRate}Hz, {DefaultBitDepth}bit, {channels}ch -> {outputPath}");
+          ErrorLogger.LogDebug($"[MicrophoneRecordingService] Recording started: " +
+              $"{sampleRate}Hz, {DefaultBitDepth}bit, {channels}ch -> {outputPath}", "MicrophoneRecordingService");
 
           RecordingStarted?.Invoke(this, EventArgs.Empty);
         }
@@ -138,7 +137,7 @@ namespace VoiceStudio.App.Services
         {
           // Clean up on failure
           CleanupRecordingResources();
-          Debug.WriteLine($"[MicrophoneRecordingService] Failed to start recording: {ex.Message}");
+          ErrorLogger.LogWarning($"[MicrophoneRecordingService] Failed to start recording: {ex.Message}", "MicrophoneRecordingService");
           RecordingError?.Invoke(this, $"Failed to start recording: {ex.Message}");
           throw;
         }
@@ -167,7 +166,7 @@ namespace VoiceStudio.App.Services
         }
         catch (Exception ex)
         {
-          Debug.WriteLine($"[MicrophoneRecordingService] Error stopping recording: {ex.Message}");
+          ErrorLogger.LogWarning($"[MicrophoneRecordingService] Error stopping recording: {ex.Message}", "MicrophoneRecordingService");
           CleanupRecordingResources();
           throw;
         }
@@ -217,14 +216,13 @@ namespace VoiceStudio.App.Services
 
         if (e.Exception != null)
         {
-          Debug.WriteLine($"[MicrophoneRecordingService] Recording error: {e.Exception.Message}");
+          ErrorLogger.LogWarning($"[MicrophoneRecordingService] Recording error: {e.Exception.Message}", "MicrophoneRecordingService");
           RecordingError?.Invoke(this, $"Recording error: {e.Exception.Message}");
         }
         else
         {
-          Debug.WriteLine(
-              $"[MicrophoneRecordingService] Recording stopped: " +
-              $"{_lastRecordingDuration.TotalSeconds:F1}s -> {LastRecordingPath}");
+          ErrorLogger.LogDebug($"[MicrophoneRecordingService] Recording stopped: " +
+              $"{_lastRecordingDuration.TotalSeconds:F1}s -> {LastRecordingPath}", "MicrophoneRecordingService");
 
           RecordingStopped?.Invoke(this, new RecordingCompletedEventArgs(
               LastRecordingPath ?? string.Empty,
@@ -242,7 +240,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[MicrophoneRecordingService] Writer cleanup error: {ex.Message}");
+        ErrorLogger.LogWarning($"[MicrophoneRecordingService] Writer cleanup error: {ex.Message}", "MicrophoneRecordingService");
       }
 
       try
@@ -257,7 +255,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[MicrophoneRecordingService] WaveIn cleanup error: {ex.Message}");
+        ErrorLogger.LogWarning($"[MicrophoneRecordingService] WaveIn cleanup error: {ex.Message}", "MicrophoneRecordingService");
       }
     }
 
@@ -276,7 +274,7 @@ namespace VoiceStudio.App.Services
         }
         catch (Exception ex)
         {
-          Debug.WriteLine($"[MicrophoneRecordingService] Dispose stop error: {ex.Message}");
+          ErrorLogger.LogWarning($"[MicrophoneRecordingService] Dispose stop error: {ex.Message}", "MicrophoneRecordingService");
         }
       }
 

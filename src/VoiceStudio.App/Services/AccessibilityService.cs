@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -377,7 +378,7 @@ public class AccessibilityService : IUnifiedAccessibilityService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[Accessibility] Failed to load settings: {ex.Message}");
+            System.Diagnostics.ErrorLogger.LogWarning($"[Accessibility] Failed to load settings: {ex.Message}", "AccessibilityService");
         }
 
         await Task.CompletedTask;
@@ -400,7 +401,7 @@ public class AccessibilityService : IUnifiedAccessibilityService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[Accessibility] Failed to save settings: {ex.Message}");
+            System.Diagnostics.ErrorLogger.LogWarning($"[Accessibility] Failed to save settings: {ex.Message}", "AccessibilityService");
         }
 
         await Task.CompletedTask;

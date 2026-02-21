@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Phase 7 Platform Operationalization (2026-02-21)
+- **Plugin Marketplace**: Publisher registration, plugin submission workflow, review queue, ratings/reviews, download tracking
+- **Operational Hardening**: API key persistence (JSON store), OTLP trace export (VOICESTUDIO_OTLP_ENDPOINT), Grafana dashboard config, health aggregation (plugins check), log rotation for .buildlogs/
+- **Security Attestation**: Build provenance in release workflow, dependency audit report, SECURITY_CONTROLS_MATRIX.md, INCIDENT_RESPONSE_PLAYBOOK.md
+- **Documentation**: DEPLOYMENT_TOPOLOGY.md, OPERATIONS_RUNBOOK.md, ADR index update (42 ADRs), architecture portfolio Phase 3–7 section
+
 #### UI Testing Infrastructure Improvements (2026-02-13)
 - Custom `WinAppDriverSession` class for Selenium 4.x/WinAppDriver compatibility
   - Direct HTTP requests to WinAppDriver (bypasses W3C capabilities format)

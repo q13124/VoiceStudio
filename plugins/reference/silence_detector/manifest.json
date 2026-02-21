@@ -1,0 +1,66 @@
+{
+  "$schema": "../../../shared/schemas/plugin-manifest.schema.json",
+  "schema_version": "6.0.0",
+  "id": "com.voicestudio.silence_detector",
+  "name": "silence_detector",
+  "display_name": "Silence Detector",
+  "version": "1.0.0",
+  "description": "Detect and analyze silence regions in audio. Identifies pauses, gaps, and quiet segments with configurable thresholds.",
+  "long_description": "VoiceStudio reference plugin for silence detection and analysis. Uses librosa to identify silent segments in audio files. Reports timestamps, durations, and overall silence statistics. Useful for audio cleanup, trimming, and quality assessment.",
+  "author": "VoiceStudio",
+  "license": "MIT",
+  "plugin_type": "backend_only",
+  "category": "audio_analysis",
+  "min_app_version": "1.0.0",
+  "capabilities": ["audio_analysis"],
+  "entry_point": "plugin.py",
+  "dependencies": {
+    "runtime": [],
+    "python": ["librosa>=0.10.0", "numpy>=1.26.0", "soundfile>=0.12.0"]
+  },
+  "permissions": {
+    "filesystem": {
+      "read": ["$PLUGIN_DIR", "$TEMP_DIR", "$PROJECT_DIR"],
+      "write": ["$TEMP_DIR"]
+    },
+    "network": false
+  },
+  "settings_schema": {
+    "type": "object",
+    "properties": {
+      "silence_threshold_db": {
+        "type": "number",
+        "minimum": -80,
+        "maximum": 0,
+        "default": -40,
+        "description": "Silence threshold in dB (below this is considered silence)"
+      },
+      "min_silence_duration": {
+        "type": "number",
+        "minimum": 0.01,
+        "maximum": 10.0,
+        "default": 0.3,
+        "description": "Minimum silence duration in seconds to report"
+      },
+      "frame_length": {
+        "type": "integer",
+        "default": 2048,
+        "description": "Analysis frame length in samples"
+      },
+      "hop_length": {
+        "type": "integer",
+        "default": 512,
+        "description": "Hop length between frames in samples"
+      }
+    }
+  },
+  "catalog": {
+    "tags": ["silence", "detection", "analysis", "vad", "pause", "reference"],
+    "featured": false,
+    "verified": true
+  },
+  "distribution": {
+    "published": true,
+    "release_channel": "stable"
+  }
+}

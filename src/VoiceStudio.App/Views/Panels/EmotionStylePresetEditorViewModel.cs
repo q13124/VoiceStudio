@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -160,7 +161,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Error loading emotion presets: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Error loading emotion presets: {ex.Message}", "EmotionStylePresetEditorViewModel");
         // Fallback to default preset on error
         Presets.Clear();
         Presets.Add(new EmotionStylePreset
@@ -282,7 +283,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Error creating emotion preset: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Error creating emotion preset: {ex.Message}", "EmotionStylePresetEditorViewModel");
         // Show error to user (could use ToastNotificationService)
       }
     }
@@ -310,7 +311,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Error saving emotion preset: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Error saving emotion preset: {ex.Message}", "EmotionStylePresetEditorViewModel");
         // Show error to user (could use ToastNotificationService)
       }
     }
@@ -330,7 +331,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Error deleting emotion preset: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Error deleting emotion preset: {ex.Message}", "EmotionStylePresetEditorViewModel");
         // Show error to user (could use ToastNotificationService)
       }
     }
@@ -384,7 +385,7 @@ namespace VoiceStudio.App.Views.Panels
         {
           // Log the preview audio ID for playback
           // In a full implementation, this would play the audio via IAudioPlayerService
-          System.Diagnostics.Debug.WriteLine($"Preview generated: {response.AudioId}, Duration: {response.Duration}s");
+          System.Diagnostics.ErrorLogger.LogDebug($"Preview generated: {response.AudioId}, Duration: {response.Duration}s", "EmotionStylePresetEditorViewModel");
           
           // Future enhancement: Store the audio ID and play via audio player service
           // _lastPreviewAudioId = response.AudioId;
@@ -393,7 +394,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Error previewing preset: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Error previewing preset: {ex.Message}", "EmotionStylePresetEditorViewModel");
       }
     }
 
@@ -409,7 +410,7 @@ namespace VoiceStudio.App.Views.Panels
       // 2. Set emotion parameters from preset
       // 3. Set style parameters (speaking rate, pitch, energy, pause duration)
 
-      System.Diagnostics.Debug.WriteLine($"Apply preset '{SelectedPreset.Name}' to synthesis");
+      System.Diagnostics.ErrorLogger.LogDebug($"Apply preset '{SelectedPreset.Name}' to synthesis", "EmotionStylePresetEditorViewModel");
     }
   }
 

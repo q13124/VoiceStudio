@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -66,7 +67,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to update tag: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Failed to update tag: {ex.Message}", "TagOrganizationViewModel");
       }
     }
 
@@ -132,7 +133,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Error refreshing tags: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Error refreshing tags: {ex.Message}", "TagOrganizationViewModel");
       }
     }
 

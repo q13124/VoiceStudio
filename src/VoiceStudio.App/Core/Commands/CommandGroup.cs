@@ -1,6 +1,6 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Generic;
-using System.Diagnostics;
 using CommunityToolkit.Mvvm.Input;
 
 namespace VoiceStudio.App.Core.Commands
@@ -95,7 +95,7 @@ namespace VoiceStudio.App.Core.Commands
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"[CommandGroup] NotifyCanExecuteChanged failed: {ex.Message}");
+                        ErrorLogger.LogWarning($"[CommandGroup] NotifyCanExecuteChanged failed: {ex.Message}", "CommandGroup");
                     }
                 }
                 else

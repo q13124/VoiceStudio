@@ -269,7 +269,7 @@ namespace VoiceStudio.App.Services
             // ALLOWED: empty catch - OperationCanceledException expected during normal cancellation flow
             catch (OperationCanceledException)
             {
-                System.Diagnostics.Debug.WriteLine("[StreamingAudioPlayer] Receiver loop cancelled");
+                ErrorLogger.LogDebug("Receiver loop cancelled", "StreamingAudioPlayer");
             }
             catch (WebSocketException ex)
             {
@@ -417,7 +417,7 @@ namespace VoiceStudio.App.Services
             // ALLOWED: empty catch - OperationCanceledException expected during normal cancellation flow
             catch (OperationCanceledException)
             {
-                System.Diagnostics.Debug.WriteLine("[StreamingAudioPlayer] Playback loop cancelled");
+                ErrorLogger.LogDebug("Playback loop cancelled", "StreamingAudioPlayer");
             }
             catch (Exception ex)
             {
@@ -452,11 +452,11 @@ namespace VoiceStudio.App.Services
             }
             catch (TimeoutException)
             {
-                System.Diagnostics.Debug.WriteLine("[StreamingAudioPlayer] Receiver task did not complete within timeout during stop");
+                ErrorLogger.LogWarning("Receiver task did not complete within timeout during stop", "StreamingAudioPlayer");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[StreamingAudioPlayer] Error waiting for receiver task: {ex.Message}");
+                ErrorLogger.LogWarning($"Error waiting for receiver task: {ex.Message}", "StreamingAudioPlayer");
             }
 
             try
@@ -468,11 +468,11 @@ namespace VoiceStudio.App.Services
             }
             catch (TimeoutException)
             {
-                System.Diagnostics.Debug.WriteLine("[StreamingAudioPlayer] Playback task did not complete within timeout during stop");
+                ErrorLogger.LogWarning("Playback task did not complete within timeout during stop", "StreamingAudioPlayer");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[StreamingAudioPlayer] Error waiting for playback task: {ex.Message}");
+                ErrorLogger.LogWarning($"Error waiting for playback task: {ex.Message}", "StreamingAudioPlayer");
             }
 
             // Close WebSocket
@@ -484,7 +484,7 @@ namespace VoiceStudio.App.Services
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[StreamingAudioPlayer] Error closing WebSocket: {ex.Message}");
+                    ErrorLogger.LogWarning($"Error closing WebSocket: {ex.Message}", "StreamingAudioPlayer");
                 }
             }
 
@@ -565,7 +565,7 @@ namespace VoiceStudio.App.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[StreamingAudioPlayer] Capability check failed: {ex.Message}");
+                ErrorLogger.LogWarning($"Capability check failed: {ex.Message}", "StreamingAudioPlayer");
                 return new StreamingCapability
                 {
                     EngineId = engineId,
@@ -623,7 +623,7 @@ namespace VoiceStudio.App.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[StreamingAudioPlayer] Get capabilities failed: {ex.Message}");
+                ErrorLogger.LogWarning($"Get capabilities failed: {ex.Message}", "StreamingAudioPlayer");
                 return new StreamingCapabilities { WebSocketEndpoint = null };
             }
         }

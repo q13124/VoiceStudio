@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -179,6 +180,11 @@ namespace VoiceStudio.App.ViewModels
                 {
                     await SearchAsync();
                 }, TaskContinuationOptions.OnlyOnRanToCompletion);
+        }
+
+        partial void OnSelectedPluginChanged(CoreModels.PluginInfo? value)
+        {
+            _ = LoadReviewsForSelectedPluginAsync();
         }
 
         partial void OnSelectedCategoryChanged(CoreModels.PluginCategory? value)
@@ -447,7 +453,96 @@ namespace VoiceStudio.App.ViewModels
         private void ViewPluginDetails(CoreModels.PluginInfo plugin)
         {
             SelectedPlugin = plugin;
-            // Navigation to detail view would be handled by the view
+        }
+
+        #endregion
+
+        #region Marketplace Reviews (Phase 7)
+
+        [ObservableProperty]
+        private ObservableCollection<CoreModels.PluginReview> _reviews = new();
+
+        [ObservableProperty]
+        private CoreModels.PluginReview? _myReview;
+
+        [ObservableProperty]
+        private int _selectedPluginRating;
+
+        [ObservableProperty]
+        private string _selectedPluginReviewText = string.Empty;
+
+        [RelayCommand]
+        private async Task SubmitReviewAsync()
+        {
+            if (SelectedPlugin == null) return;
+            if (SelectedPluginRating < 1 || SelectedPluginRating > 5) return;
+
+            try
+            {
+                var success = await _gateway.SubmitReviewAsync(
+                    SelectedPlugin.Id,
+                    SelectedPluginRating,
+                    SelectedPluginReviewText,
+                    SelectedPlugin.Version,
+                    CancellationToken.None);
+
+                if (success)
+                {
+                    StatusMessage = "Review submitted successfully";
+                    await LoadReviewsForSelectedPluginAsync();
+                }
+                else
+                {
+                    ErrorMessage = "Failed to submit review";
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Review failed: {ex.Message}";
+            }
+        }
+
+        private async Task LoadReviewsForSelectedPluginAsync()
+        {
+            if (SelectedPlugin == null)
+            {
+                Reviews.Clear();
+                MyReview = null;
+                SelectedPluginRating = 0;
+                SelectedPluginReviewText = string.Empty;
+                return;
+            }
+
+            try
+            {
+                var reviewsTask = _gateway.GetReviewsAsync(SelectedPlugin.Id);
+                var myReviewTask = _gateway.GetMyReviewAsync(SelectedPlugin.Id);
+
+                var reviews = await reviewsTask;
+                var myReview = await myReviewTask;
+
+                Reviews.Clear();
+                foreach (var r in reviews)
+                {
+                    Reviews.Add(r);
+                }
+
+                MyReview = myReview;
+                if (MyReview != null)
+                {
+                    SelectedPluginRating = MyReview.Rating;
+                    SelectedPluginReviewText = MyReview.Review;
+                }
+                else
+                {
+                    SelectedPluginRating = 0;
+                    SelectedPluginReviewText = string.Empty;
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Failed to load reviews: {ex.Message}";
+            }
         }
 
         #endregion
@@ -456,17 +551,17 @@ namespace VoiceStudio.App.ViewModels
 
         private void OnInstallStarted(object? sender, CoreModels.PluginInfo e)
         {
-            System.Diagnostics.Debug.WriteLine($"[PluginGallery] Install started: {e.Name}");
+            System.Diagnostics.ErrorLogger.LogDebug($"[PluginGallery] Install started: {e.Name}", "PluginGalleryViewModel");
         }
 
         private void OnInstallCompleted(object? sender, CoreModels.PluginInstallResult e)
         {
-            System.Diagnostics.Debug.WriteLine($"[PluginGallery] Install completed: {e.Success}");
+            System.Diagnostics.ErrorLogger.LogInfo($"[PluginGallery] Install completed: {e.Success}", "PluginGalleryViewModel");
         }
 
         private void OnCatalogRefreshed(object? sender, EventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine("[PluginGallery] Catalog refreshed");
+            System.Diagnostics.ErrorLogger.LogDebug("[PluginGallery] Catalog refreshed", "PluginGalleryViewModel");
         }
 
         #endregion

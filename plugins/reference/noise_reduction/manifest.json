@@ -1,0 +1,61 @@
+{
+  "$schema": "../../../shared/schemas/plugin-manifest.schema.json",
+  "schema_version": "6.0.0",
+  "id": "com.voicestudio.noise_reduction",
+  "name": "noise_reduction",
+  "display_name": "Noise Reduction",
+  "version": "1.0.0",
+  "description": "Reduce background noise from audio using spectral gating. Wraps the noisereduce library for high-quality stationary and non-stationary noise reduction.",
+  "long_description": "VoiceStudio reference plugin for audio noise reduction. Supports adjustable noise reduction strength, stationary and non-stationary modes, and preserves voice clarity while removing background noise. Uses the noisereduce library (spectral gating algorithm).",
+  "author": "VoiceStudio",
+  "license": "MIT",
+  "plugin_type": "backend_only",
+  "category": "audio_effects",
+  "min_app_version": "1.0.0",
+  "capabilities": ["audio_processing"],
+  "entry_point": "plugin.py",
+  "dependencies": {
+    "runtime": [],
+    "python": ["noisereduce>=3.0.0", "numpy>=1.26.0", "soundfile>=0.12.0"]
+  },
+  "permissions": {
+    "filesystem": {
+      "read": ["$PLUGIN_DIR", "$TEMP_DIR"],
+      "write": ["$TEMP_DIR"]
+    },
+    "network": false
+  },
+  "settings_schema": {
+    "type": "object",
+    "properties": {
+      "reduction_strength": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "default": 0.7,
+        "description": "Noise reduction strength (0.0 = none, 1.0 = maximum)"
+      },
+      "stationary": {
+        "type": "boolean",
+        "default": true,
+        "description": "Use stationary noise reduction (faster, best for constant noise)"
+      },
+      "prop_decrease": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "default": 1.0,
+        "description": "Proportion to reduce noise by"
+      }
+    }
+  },
+  "catalog": {
+    "tags": ["noise", "denoise", "audio-enhancement", "spectral-gating", "reference"],
+    "featured": true,
+    "verified": true
+  },
+  "distribution": {
+    "published": true,
+    "release_channel": "stable"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "$schema": "../../../shared/schemas/plugin-manifest.schema.json",
+  "schema_version": "6.0.0",
+  "id": "com.voicestudio.format_converter",
+  "name": "format_converter",
+  "display_name": "Audio Format Converter",
+  "version": "1.0.0",
+  "description": "Convert audio between formats (WAV, MP3, FLAC, OGG, AAC) using FFmpeg. Supports bitrate, sample rate, and channel configuration.",
+  "long_description": "VoiceStudio reference plugin for audio format conversion. Wraps FFmpeg for reliable transcoding between WAV, MP3, FLAC, OGG, and AAC formats. Supports configurable bitrate, sample rate, and mono/stereo channel settings.",
+  "author": "VoiceStudio",
+  "license": "MIT",
+  "plugin_type": "backend_only",
+  "category": "utilities",
+  "min_app_version": "1.0.0",
+  "capabilities": ["audio_processing", "format_conversion"],
+  "entry_point": "plugin.py",
+  "dependencies": {
+    "runtime": ["ffmpeg"],
+    "python": ["soundfile>=0.12.0"]
+  },
+  "permissions": {
+    "filesystem": {
+      "read": ["$PLUGIN_DIR", "$TEMP_DIR", "$PROJECT_DIR"],
+      "write": ["$TEMP_DIR", "$PROJECT_DIR"]
+    },
+    "network": false,
+    "subprocess": true
+  },
+  "settings_schema": {
+    "type": "object",
+    "properties": {
+      "default_format": {
+        "type": "string",
+        "enum": ["wav", "mp3", "flac", "ogg", "aac"],
+        "default": "wav",
+        "description": "Default output format"
+      },
+      "bitrate": {
+        "type": "string",
+        "default": "192k",
+        "description": "Output bitrate for lossy formats (e.g., 128k, 192k, 320k)"
+      },
+      "sample_rate": {
+        "type": "integer",
+        "enum": [8000, 16000, 22050, 44100, 48000],
+        "default": 44100,
+        "description": "Output sample rate in Hz"
+      },
+      "channels": {
+        "type": "integer",
+        "enum": [1, 2],
+        "default": 1,
+        "description": "Number of output channels (1=mono, 2=stereo)"
+      }
+    }
+  },
+  "catalog": {
+    "tags": ["converter", "format", "ffmpeg", "wav", "mp3", "flac", "reference"],
+    "featured": true,
+    "verified": true
+  },
+  "distribution": {
+    "published": true,
+    "release_channel": "stable"
+  }
+}

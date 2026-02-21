@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -208,7 +207,7 @@ namespace VoiceStudio.App.Services
                 if (recoveredState != null)
                 {
                     SessionRecovered?.Invoke(this, new SessionRecoveredEventArgs(recoveredState));
-                    Debug.WriteLine($"[CrashRecovery] Session recovered from crash. Session ID: {recoveredState.SessionId}");
+                    ErrorLogger.LogDebug($"[CrashRecovery] Session recovered from crash. Session ID: {recoveredState.SessionId}", "CrashRecoveryService");
                 }
             }
             catch (Exception ex)

@@ -50,12 +50,12 @@ namespace VoiceStudio.App
           if (backendManager != null)
           {
             var started = await backendManager.EnsureBackendRunningAsync();
-            Debug.WriteLine($"[App] Backend auto-start: {(started ? "SUCCESS" : "FAILED")}");
+            ErrorLogger.LogDebug($"Backend auto-start: {(started ? "SUCCESS" : "FAILED")}", "App");
           }
         }
         catch (Exception ex)
         {
-          Debug.WriteLine($"[App] Backend auto-start error: {ex.Message}");
+          ErrorLogger.LogDebug($"Backend auto-start error: {ex.Message}", "App");
           ErrorLogger.LogWarning($"Backend auto-start failed: {ex.Message}", "App.Constructor");
         }
       });
@@ -156,12 +156,12 @@ namespace VoiceStudio.App
         catch (Exception ex) { ErrorLogger.LogWarning($"Best effort operation failed: {ex.Message}", "detailed.Unknown"); }
 
         // Debug output
-        Debug.WriteLine($"Unhandled exception logged to: {logPath}");
+        ErrorLogger.LogInfo($"Unhandled exception logged to: {logPath}", "App");
       }
       catch (Exception logEx)
       {
         // Fallback to debug output if file writing fails
-        Debug.WriteLine($"Failed to write crash log: {logEx.Message}");
+        ErrorLogger.LogWarning($"Failed to write crash log: {logEx.Message}", "App");
       }
 
       // Mark as handled to prevent app termination for non-fatal exceptions
@@ -253,7 +253,7 @@ namespace VoiceStudio.App
           }
           catch (Exception ex)
           {
-            Debug.WriteLine($"[App] Command handler initialization failed: {ex.Message}");
+            ErrorLogger.LogWarning($"Command handler initialization failed: {ex.Message}", "App");
           }
 
           if (IsSmokeHinted())
@@ -369,7 +369,7 @@ namespace VoiceStudio.App
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[App] Command handler initialization failed: {ex.Message}");
+        ErrorLogger.LogWarning($"Command handler initialization failed: {ex.Message}", "App");
         // Non-fatal - app can continue without command handlers
       }
 
@@ -399,11 +399,11 @@ namespace VoiceStudio.App
 
             var initializer = DeferredServiceInitializer.CreateDefault(new ServiceProviderAdapter());
             await initializer.InitializeAllAsync();
-            Debug.WriteLine("[App] Deferred service initialization completed");
+            ErrorLogger.LogDebug("Deferred service initialization completed", "App");
           }
           catch (Exception ex)
           {
-            Debug.WriteLine($"[App] Deferred initialization error: {ex.Message}");
+            ErrorLogger.LogWarning($"Deferred initialization error: {ex.Message}", "App");
             ErrorLogger.LogWarning($"Deferred initialization failed: {ex.Message}", "App.DeferredInit");
           }
         });
@@ -437,16 +437,16 @@ namespace VoiceStudio.App
       if (_startupProfiler != null)
       {
         var totalTime = _startupProfiler.ElapsedMilliseconds;
-        Debug.WriteLine(_startupProfiler.GetReport());
+        ErrorLogger.LogDebug(_startupProfiler.GetReport(), "App");
 
         // Target: < 3 seconds
         if (totalTime > 3000)
         {
-          Debug.WriteLine($"⚠️ WARNING: Startup time ({totalTime}ms) exceeds target (3000ms)");
+          ErrorLogger.LogWarning($"Startup time ({totalTime}ms) exceeds target (3000ms)", "App");
         }
         else
         {
-          Debug.WriteLine($"✅ Startup time: {totalTime}ms (target: <3000ms)");
+          ErrorLogger.LogDebug($"Startup time: {totalTime}ms (target: <3000ms)", "App");
         }
 
         _startupProfiler.Dispose();

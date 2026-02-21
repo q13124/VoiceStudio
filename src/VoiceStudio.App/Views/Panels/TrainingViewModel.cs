@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -869,11 +870,11 @@ namespace VoiceStudio.App.Views.Panels
       {
         await _jobProgressClient.ConnectAsync();
         _isWebSocketConnected = _jobProgressClient.IsConnected;
-        System.Diagnostics.Debug.WriteLine($"TrainingViewModel: WebSocket connected: {_isWebSocketConnected}");
+        System.Diagnostics.ErrorLogger.LogDebug($"TrainingViewModel: WebSocket connected: {_isWebSocketConnected}", "TrainingViewModel");
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"TrainingViewModel: WebSocket connection failed: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"TrainingViewModel: WebSocket connection failed: {ex.Message}", "TrainingViewModel");
         _isWebSocketConnected = false;
       }
     }
@@ -890,7 +891,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"TrainingViewModel: WebSocket disconnect error: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"TrainingViewModel: WebSocket disconnect error: {ex.Message}", "TrainingViewModel");
       }
     }
 
@@ -957,8 +958,7 @@ namespace VoiceStudio.App.Views.Panels
           {
             var profileName = $"Trained Profile ({job.Engine})";
             _eventAggregator.Publish(new ProfileCreatedEvent(PanelId, job.ProfileId, profileName));
-            System.Diagnostics.Debug.WriteLine(
-              $"[TrainingViewModel] Published ProfileCreatedEvent: {job.ProfileId}");
+            System.Diagnostics.ErrorLogger.LogDebug($"[TrainingViewModel] Published ProfileCreatedEvent: {job.ProfileId}", "TrainingViewModel");
           }
         }
 
@@ -1096,7 +1096,7 @@ namespace VoiceStudio.App.Views.Panels
         catch (Exception ex)
         {
           // Log but don't show error for polling failures
-          System.Diagnostics.Debug.WriteLine($"Polling error: {ex.Message}");
+          System.Diagnostics.ErrorLogger.LogWarning($"Polling error: {ex.Message}", "TrainingViewModel");
         }
 
         await Task.Delay(2000, cancellationToken); // Poll every 2 seconds

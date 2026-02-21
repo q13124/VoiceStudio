@@ -66,6 +66,20 @@ jobs:
           echo "Creating installer package..."
           # iscc installer/scripts/inno_setup.iss
       
+      - name: Generate build provenance (Phase 7 Sprint 3)
+        run: |
+          $provenance = @{
+            version = "1.0"
+            buildType = "voice-studio-release"
+            timestamp = (Get-Date -Format "o")
+            commit = "${{ github.sha }}"
+            ref = "${{ github.ref }}"
+            runId = "${{ github.run_id }}"
+            runNumber = "${{ github.run_number }}"
+          } | ConvertTo-Json
+          New-Item -ItemType Directory -Force -Path dist
+          $provenance | Out-File -FilePath dist/build-provenance.json -Encoding utf8
+
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:

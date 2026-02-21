@@ -1,0 +1,49 @@
+{
+  "$schema": "../../../shared/schemas/plugin-manifest.schema.json",
+  "schema_version": "6.0.0",
+  "id": "com.voicestudio.silence_trimmer",
+  "name": "silence_trimmer",
+  "display_name": "Silence Trimmer",
+  "version": "1.0.0",
+  "description": "Trim leading and trailing silence from audio. Configurable threshold and padding.",
+  "long_description": "VoiceStudio reference plugin for trimming silence. Removes silence from the start and end of audio based on an amplitude threshold. Useful for cleaning up recordings.",
+  "author": "VoiceStudio",
+  "license": "MIT",
+  "plugin_type": "backend_only",
+  "category": "audio_effects",
+  "min_app_version": "1.0.0",
+  "capabilities": ["audio_processing"],
+  "entry_point": "plugin.py",
+  "dependencies": {
+    "runtime": [],
+    "python": ["numpy>=1.26.0", "soundfile>=0.12.0"]
+  },
+  "permissions": {
+    "filesystem": {"read": ["$PLUGIN_DIR", "$TEMP_DIR"], "write": ["$TEMP_DIR"]},
+    "network": false
+  },
+  "settings_schema": {
+    "type": "object",
+    "properties": {
+      "threshold_db": {
+        "type": "number",
+        "minimum": -60,
+        "maximum": 0,
+        "default": -40,
+        "description": "Amplitude threshold in dB below which is considered silence"
+      },
+      "padding_ms": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 500,
+        "default": 50,
+        "description": "Padding in ms to keep at trim boundaries"
+      }
+    }
+  },
+  "catalog": {
+    "tags": ["silence", "trim", "audio-cleanup", "reference"],
+    "featured": false,
+    "verified": true
+  }
+}

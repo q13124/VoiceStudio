@@ -493,7 +493,9 @@ if (-not $stage1Passed -and -not $SkipBuild) {
 # ============================================================================
 
 $stage2Passed = Invoke-Stage -Name "Python Quality" -Description "Lint and type-check Python code (ruff, mypy)" -Skip:$SkipPythonLint -Action {
-    Write-Host "Running ruff..."
+    Write-Host "Running ruff check --fix (autofix)..."
+    & python -m ruff check backend app tests --fix --output-format=concise 2>&1 | Write-Host
+    Write-Host "Running ruff check..."
     $ruffResult = & python -m ruff check backend app tests --output-format=concise 2>&1
     $ruffExit = $LASTEXITCODE
     $ruffResult | Write-Host
@@ -619,10 +621,30 @@ if (-not $stage5Passed -and -not $SkipContractTests) {
 }
 
 # ============================================================================
-# STAGE 6: Backend Integration Tests
+# STAGE 6: Security Tests
 # ============================================================================
 
-$stage6Passed = Invoke-Stage -Name "Backend Integration" -Description "Run backend integration tests (API endpoints, engine adapters)" -Skip:$SkipIntegration -Action {
+$stage6Passed = Invoke-Stage -Name "Security Tests" -Description "Run security tests (injection, auth bypass, sandbox escape)" -Action {
+    $junitFile = Join-Path $TestResultsDir "security_tests.xml"
+    & python -m pytest tests/security `
+        -v `
+        --tb=short `
+        --junitxml=$junitFile
+    return $LASTEXITCODE
+}
+
+if (-not $stage6Passed) {
+    Write-Host ""
+    Write-Host "SECURITY TESTS FAILED - Stopping verification (fail-fast)" -ForegroundColor Red
+    Write-Report
+    exit 1
+}
+
+# ============================================================================
+# STAGE 7: Backend Integration Tests
+# ============================================================================
+
+$stage7Passed = Invoke-Stage -Name "Backend Integration" -Description "Run backend integration tests (API endpoints, engine adapters)" -Skip:($SkipIntegration) -Action {
     $junitFile = Join-Path $TestResultsDir "integration_tests.xml"
     
     & python -m pytest tests/integration `
@@ -635,7 +657,7 @@ $stage6Passed = Invoke-Stage -Name "Backend Integration" -Description "Run backe
     return $LASTEXITCODE
 }
 
-if (-not $stage6Passed -and -not $SkipIntegration) {
+if (-not $stage7Passed -and -not $SkipIntegration) {
     Write-Host ""
     Write-Host "BACKEND INTEGRATION FAILED - Stopping verification (fail-fast)" -ForegroundColor Red
     Write-Report
@@ -646,7 +668,7 @@ if (-not $stage6Passed -and -not $SkipIntegration) {
 # STAGE 7: UI Smoke Tests
 # ============================================================================
 
-$stage7Passed = Invoke-Stage -Name "UI Smoke Tests" -Description "Verify app launches, panels exist, navigation works" -Skip:$SkipUI -Action {
+$stage8Passed = Invoke-Stage -Name "UI Smoke Tests" -Description "Verify app launches, panels exist, navigation works" -Skip:$SkipUI -Action {
     $trxFile = Join-Path $TestResultsDir "ui_smoke_tests.trx"
     $testProject = Join-Path $RootDir "src\VoiceStudio.App.Tests\VoiceStudio.App.Tests.csproj"
     
@@ -676,7 +698,7 @@ $stage7Passed = Invoke-Stage -Name "UI Smoke Tests" -Description "Verify app lau
     }
 }
 
-if (-not $stage7Passed -and -not $SkipUI) {
+if (-not $stage8Passed -and -not $SkipUI) {
     Write-Host ""
     Write-Host "UI SMOKE TESTS FAILED - Stopping verification (fail-fast)" -ForegroundColor Red
     Write-Report
@@ -687,7 +709,7 @@ if (-not $stage7Passed -and -not $SkipUI) {
 # STAGE 8: Gate/Ledger Validation
 # ============================================================================
 
-$stage8Passed = Invoke-Stage -Name "Gate/Ledger Validation" -Description "Check gate status and validate quality ledger" -Skip:$SkipGates -Action {
+$stage9Passed = Invoke-Stage -Name "Gate/Ledger Validation" -Description "Check gate status and validate quality ledger" -Skip:$SkipGates -Action {
     & python scripts/run_verification.py --skip-guard --skip WS-1 --skip WS-4
     return $LASTEXITCODE
 }

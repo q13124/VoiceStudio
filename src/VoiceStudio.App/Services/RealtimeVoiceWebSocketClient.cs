@@ -67,7 +67,7 @@ namespace VoiceStudio.App.Services
     /// <summary>
     /// Creates a client that connects directly to the RVC real-time WebSocket endpoint.
     /// </summary>
-    /// <param name="backendBaseUrl">Base URL of the backend (e.g., http://localhost:8001)</param>
+    /// <param name="backendBaseUrl">Base URL of the backend (e.g., http://localhost:8000)</param>
     public RealtimeVoiceWebSocketClient(string backendBaseUrl)
     {
       if (string.IsNullOrEmpty(backendBaseUrl))
@@ -218,7 +218,7 @@ namespace VoiceStudio.App.Services
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Failed to process direct message: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Failed to process direct message: {ex.Message}", "RealtimeVoiceWebSocketClient");
       }
     }
 
@@ -341,7 +341,7 @@ namespace VoiceStudio.App.Services
       catch (Exception ex)
       {
         // Log error but don't throw
-        System.Diagnostics.Debug.WriteLine($"Failed to process real-time voice message: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Failed to process real-time voice message: {ex.Message}", "RealtimeVoiceWebSocketClient");
       }
     }
 

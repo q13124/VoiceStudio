@@ -809,7 +809,7 @@ namespace VoiceStudio.App.ViewModels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Error loading clone reference in wizard: {ex.Message}");
+        System.Diagnostics.ErrorLogger.LogWarning($"Error loading clone reference in wizard: {ex.Message}", "VoiceCloningWizardViewModel");
         ErrorMessage = $"Failed to load audio: {ex.Message}";
       }
     }

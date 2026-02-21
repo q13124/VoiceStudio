@@ -3,7 +3,6 @@ using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using VoiceStudio.App.Logging;
@@ -158,7 +157,7 @@ namespace VoiceStudio.App.Services
                     disposable.Dispose();
                 }
                 
-                Debug.WriteLine($"[PanelLoader] Unloaded panel: {panelId}");
+                ErrorLogger.LogDebug($"[PanelLoader] Unloaded panel: {panelId}", "PanelLoader");
             }
         }
         
@@ -276,7 +275,7 @@ namespace VoiceStudio.App.Services
                     
                     var loadTime = DateTime.UtcNow - startTime;
                     PanelLoaded?.Invoke(this, new PanelLoadedEventArgs(panelId, loadTime));
-                    Debug.WriteLine($"[PanelLoader] Loaded panel {panelId} in {loadTime.TotalMilliseconds:F1}ms");
+                    ErrorLogger.LogDebug($"[PanelLoader] Loaded panel {panelId} in {loadTime.TotalMilliseconds:F1}ms", "PanelLoader");
                 }
                 
                 return panel;

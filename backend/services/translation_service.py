@@ -510,8 +510,9 @@ class TranslationService:
         """Load Whisper model via faster-whisper."""
         logger.info(f"Loading Whisper model: {model.value}")
         try:
-            from faster_whisper import WhisperModel
             import os
+
+            from faster_whisper import WhisperModel
 
             models_root = os.getenv("VOICESTUDIO_MODELS_PATH", "")
             if not models_root:

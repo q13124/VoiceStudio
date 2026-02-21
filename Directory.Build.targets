@@ -45,6 +45,7 @@
   -->
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App'">
     <UseXamlCompilerExecutable>true</UseXamlCompilerExecutable>
+    <XamlCompilerExePath>$(MSBuildThisFileDirectory)tools\xaml-compiler-wrapper.cmd</XamlCompilerExePath>
     <XAMLFingerprint>false</XAMLFingerprint>
     <EnableWin32Codegen>false</EnableWin32Codegen>
     <UseVCMetaManaged>false</UseVCMetaManaged>
@@ -74,7 +75,7 @@
   -->
   <Target Name="EnsureXamlInObj"
     BeforeTargets="MarkupCompilePass1;GetCopyToOutputDirectoryItems"
-    Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App'">
+    Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App' OR '$(MSBuildProjectName)' == 'VoiceStudio.App.Tests'">
     <ItemGroup>
       <_XamlSource Include="@(Page)" />
       <_XamlSource Include="@(ApplicationDefinition)" />
@@ -100,7 +101,7 @@
   -->
   <Target Name="EnsureXamlInObjBeforeCopyToOutput"
     BeforeTargets="_CopyOutOfDateSourceItemsToOutputDirectory"
-    Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App'">
+    Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App' OR '$(MSBuildProjectName)' == 'VoiceStudio.App.Tests'">
     <ItemGroup>
       <_XamlSource_CopyOut Include="@(Page)" />
       <_XamlSource_CopyOut Include="@(ApplicationDefinition)" />
@@ -219,6 +220,35 @@ Reference: https://github.com/microsoft/microsoft-ui-xaml/issues/10947
       Condition="'$(_NestedViewsFound)' != 'true'"
       Text="DetectNestedViewsXaml: No deeply nested Views subfolders detected (good)"
       Importance="normal" />
+  </Target>
+
+  <!--
+    VS-0036: Skip MarkupCompilePass2 for VoiceStudio.App.
+    The WinUI XAML compiler crashes (exit code -1) during pass 2 on this project.
+    Pass 1 (codegen) succeeds and generates all required .g.i.cs files.
+    Pass 2 only generates .xbf binaries (runtime optimization, not functional).
+    This no-op override prevents the crash from blocking the build.
+    To re-enable: remove this target once the upstream XAML compiler crash is resolved.
+  -->
+  <Target Name="MarkupCompilePass2"
+    Condition="'$(MSBuildProjectName)' == 'VoiceStudio.App'">
+    <Message Text="MarkupCompilePass2 SKIPPED (VS-0036: pass 2 crash workaround)" Importance="high" />
+  </Target>
+
+  <!--
+    Remove .xbf items from the copy-to-output list since MarkupCompilePass2 is skipped.
+    Without this, MSBuild tries to copy non-existent .xbf files and fails with MSB3030.
+  -->
+  <Target Name="RemoveXbfFromCopyList"
+    BeforeTargets="_CopyOutOfDateSourceItemsToOutputDirectory;CopyFilesToOutputDirectory"
+    Condition="'$(UseWinUI)' == 'true'">
+    <ItemGroup>
+      <_SourceItemsToCopyToOutputDirectory Remove="@(_SourceItemsToCopyToOutputDirectory)"
+        Condition="'%(Extension)' == '.xbf'" />
+      <Content Remove="@(Content)" Condition="'%(Extension)' == '.xbf'" />
+      <EmbeddedResource Remove="@(EmbeddedResource)" Condition="'%(Extension)' == '.xbf'" />
+    </ItemGroup>
+    <Message Text="RemoveXbfFromCopyList: Removed .xbf items from copy list (VS-0036)" Importance="normal" />
   </Target>
 
   <!--

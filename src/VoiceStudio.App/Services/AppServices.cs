@@ -1,4 +1,5 @@
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -231,8 +232,7 @@ namespace VoiceStudio.App.Services
       // Register core panels - these were previously hardcoded in MainWindow
       CorePanelRegistrationService.RegisterCorePanels(registry);
 
-      System.Diagnostics.Debug.WriteLine(
-        $"[AppServices] Registered {registry.GetAllDescriptors().Count()} panels in PanelRegistry");
+      System.Diagnostics.ErrorLogger.LogInfo($"[AppServices] Registered {registry.GetAllDescriptors().Count()} panels in PanelRegistry", "AppServices");
     }
 
     /// <summary>
@@ -247,13 +247,11 @@ namespace VoiceStudio.App.Services
       if (registry != null && queueService != null)
       {
         registry.SetQueueService(queueService);
-        System.Diagnostics.Debug.WriteLine(
-          "[AppServices] Command queue service wired to registry (GAP-B12)");
+        System.Diagnostics.ErrorLogger.LogDebug("[AppServices] Command queue service wired to registry (GAP-B12)", "AppServices");
       }
       else
       {
-        System.Diagnostics.Debug.WriteLine(
-          "[AppServices] Warning: Could not wire command queue service");
+        System.Diagnostics.ErrorLogger.LogDebug("[AppServices] Warning: Could not wire command queue service", "AppServices");
       }
     }
 
@@ -408,19 +406,19 @@ namespace VoiceStudio.App.Services
     public void TrackEvent(string eventName, IDictionary<string, object>? properties = null)
     {
       // No-op by design: local-first, privacy-respecting telemetry
-      System.Diagnostics.Debug.WriteLine($"[Telemetry] Event: {eventName}");
+      System.Diagnostics.ErrorLogger.LogDebug($"[Telemetry] Event: {eventName}", "AppServices");
     }
 
     public void TrackMetric(string metricName, double value, IDictionary<string, string>? dimensions = null)
     {
       // No-op by design: metrics stay local
-      System.Diagnostics.Debug.WriteLine($"[Telemetry] Metric: {metricName}={value}");
+      System.Diagnostics.ErrorLogger.LogDebug($"[Telemetry] Metric: {metricName}={value}", "AppServices");
     }
 
     public void TrackException(Exception exception, IDictionary<string, string>? properties = null)
     {
       // Log exceptions locally for debugging
-      System.Diagnostics.Debug.WriteLine($"[Telemetry] Exception: {exception.GetType().Name}: {exception.Message}");
+      System.Diagnostics.ErrorLogger.LogWarning($"[Telemetry] Exception: {exception.GetType().Name}: {exception.Message}", "AppServices");
     }
 
     public IDisposable TrackOperation(string operationName) => new TelemetryOperationStub(operationName);
@@ -445,13 +443,13 @@ namespace VoiceStudio.App.Services
     {
       _operationName = operationName;
       _stopwatch = System.Diagnostics.Stopwatch.StartNew();
-      System.Diagnostics.Debug.WriteLine($"[Telemetry] Operation started: {operationName}");
+      System.Diagnostics.ErrorLogger.LogDebug($"[Telemetry] Operation started: {operationName}", "AppServices");
     }
 
     public void Dispose()
     {
       _stopwatch.Stop();
-      System.Diagnostics.Debug.WriteLine($"[Telemetry] Operation completed: {_operationName} ({_stopwatch.ElapsedMilliseconds}ms)");
+      System.Diagnostics.ErrorLogger.LogInfo($"[Telemetry] Operation completed: {_operationName} ({_stopwatch.ElapsedMilliseconds}ms)", "AppServices");
     }
   }
 }

@@ -88,6 +88,16 @@ What becomes easier or more difficult to do because of this change?
 | [ADR-030](ADR-030-viewmodel-di-migration.md) | ViewModel Dependency Injection Migration | Accepted | 2026-02-06 |
 | [ADR-031](ADR-031-api-versioning-strategy.md) | API Versioning Strategy | Accepted | 2026-02-10 |
 | [ADR-032](ADR-032-middleware-stack.md) | Middleware Stack Architecture | Accepted | 2026-02-10 |
+| [ADR-033](ADR-033-config-consolidation.md) | Config Consolidation | Accepted | 2026-02 |
+| [ADR-034](ADR-034-enhanced-engine-routing.md) | Enhanced Engine Routing | Accepted | 2026-02 |
+| [ADR-035](ADR-035-sentinel-deterministic-workflow.md) | Sentinel Deterministic Workflow | Accepted | 2026-02 |
+| [ADR-036](ADR-036-plugin-system-unification.md) | Plugin System Unification | Accepted | 2026-02 |
+| [ADR-037](ADR-037-plugin-trust-lane-model.md) | Plugin Trust Lane Model | Accepted | 2026-02 |
+| [ADR-038](ADR-038-plugin-abc-unification.md) | Plugin ABC Unification | Accepted | 2026-02 |
+| [ADR-039](ADR-039-phase6-strategic-maturity.md) | Phase 6 Strategic Maturity | Accepted | 2026-02 |
+| [ADR-040](ADR-040-dual-plugin-loader.md) | Dual Plugin Loader | Accepted | 2026-02 |
+| [ADR-041](ADR-041-python-311-runtime.md) | Python 3.11 Runtime | Accepted | 2026-02 |
+| [ADR-042](ADR-042-plugin-installer-consolidation.md) | Plugin Installer Consolidation | Accepted | 2026-02 |
 
 ## Status Legend
 

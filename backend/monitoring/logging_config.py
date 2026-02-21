@@ -214,3 +214,27 @@ def setup_default_logging() -> None:
         file_path=Path.home() / ".voicestudio" / "logs" / "voicestudio.log",
         json_format=True,
     ))
+
+
+def setup_buildlogs_logging() -> None:
+    """
+    Phase 7 Sprint 2: Add log rotation for .buildlogs/ structured logs.
+
+    Adds a RotatingFileHandler for .buildlogs/voicestudio.json with:
+    - 10MB max file size
+    - 5 backup files
+    - JSON format
+    """
+    from logging.handlers import RotatingFileHandler
+
+    buildlogs_dir = Path(".buildlogs")
+    buildlogs_dir.mkdir(parents=True, exist_ok=True)
+    log_path = buildlogs_dir / "voicestudio.json"
+
+    handler = RotatingFileHandler(
+        log_path,
+        maxBytes=10 * 1024 * 1024,
+        backupCount=5,
+    )
+    handler.setFormatter(StructuredFormatter(include_stacktrace=True))
+    logging.getLogger().addHandler(handler)

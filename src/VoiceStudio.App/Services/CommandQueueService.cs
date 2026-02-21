@@ -6,11 +6,11 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.UI.Dispatching;
 using VoiceStudio.App.Core.Commands;
+using VoiceStudio.App.Logging;
 
 namespace VoiceStudio.App.Services;
 
@@ -111,28 +111,28 @@ public class CommandQueueService : ICommandQueueService
         // Check if we should queue (system is busy)
         if (!IsSystemBusy(commandId))
         {
-            Debug.WriteLine($"[CommandQueue] System not busy, skipping queue for '{commandId}'");
+            ErrorLogger.LogDebug($"System not busy, skipping queue for '{commandId}'", "CommandQueue");
             return;
         }
 
         // Prevent queue overflow
         if (_queue.Count >= MaxQueueSize)
         {
-            Debug.WriteLine($"[CommandQueue] Queue full ({MaxQueueSize}), dropping '{commandId}'");
+            ErrorLogger.LogWarning($"Queue full ({MaxQueueSize}), dropping '{commandId}'", "CommandQueue");
             return;
         }
 
         // Don't queue duplicate commands
         if (_queue.Any(e => e.CommandId == commandId))
         {
-            Debug.WriteLine($"[CommandQueue] Command '{commandId}' already queued");
+            ErrorLogger.LogDebug($"Command '{commandId}' already queued", "CommandQueue");
             return;
         }
 
         var entry = new QueueEntry(commandId, parameter);
         _queue.Enqueue(entry);
 
-        Debug.WriteLine($"[CommandQueue] Enqueued '{commandId}', depth={_queue.Count}");
+        ErrorLogger.LogDebug($"Enqueued '{commandId}', depth={_queue.Count}", "CommandQueue");
 
         CommandEnqueued?.Invoke(this, new CommandQueueEventArgs(commandId, parameter, _queue.Count));
     }
@@ -143,7 +143,7 @@ public class CommandQueueService : ICommandQueueService
         {
             if (_isProcessing)
             {
-                Debug.WriteLine("[CommandQueue] Already processing, skipping");
+                ErrorLogger.LogDebug("Already processing, skipping", "CommandQueue");
                 return;
             }
             _isProcessing = true;
@@ -151,7 +151,7 @@ public class CommandQueueService : ICommandQueueService
 
         try
         {
-            Debug.WriteLine($"[CommandQueue] Processing queue, depth={_queue.Count}");
+            ErrorLogger.LogDebug($"Processing queue, depth={_queue.Count}", "CommandQueue");
 
             while (_queue.TryDequeue(out var entry))
             {
@@ -163,11 +163,11 @@ public class CommandQueueService : ICommandQueueService
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"[CommandQueue] Failed to execute '{entry.CommandId}': {ex.Message}");
+                    ErrorLogger.LogWarning($"Failed to execute '{entry.CommandId}': {ex.Message}", "CommandQueue");
                 }
             }
 
-            Debug.WriteLine("[CommandQueue] Queue processing complete");
+            ErrorLogger.LogDebug("Queue processing complete", "CommandQueue");
         }
         finally
         {
@@ -186,7 +186,7 @@ public class CommandQueueService : ICommandQueueService
             cleared++;
         }
 
-        Debug.WriteLine($"[CommandQueue] Cleared {cleared} queued commands");
+        ErrorLogger.LogDebug($"Cleared {cleared} queued commands", "CommandQueue");
     }
 
     public IReadOnlyList<string> GetQueuedCommands()
@@ -225,20 +225,20 @@ public class CommandQueueService : ICommandQueueService
     {
         if (_commandRegistry == null)
         {
-            Debug.WriteLine($"[CommandQueue] No registry, cannot execute '{entry.CommandId}'");
+            ErrorLogger.LogWarning($"No registry, cannot execute '{entry.CommandId}'", "CommandQueue");
             return;
         }
 
         var descriptor = _commandRegistry.GetCommand(entry.CommandId);
         if (descriptor == null)
         {
-            Debug.WriteLine($"[CommandQueue] Command '{entry.CommandId}' not found");
+            ErrorLogger.LogWarning($"Command '{entry.CommandId}' not found", "CommandQueue");
             return;
         }
 
         if (!_commandRegistry.CanExecute(entry.CommandId, entry.Parameter))
         {
-            Debug.WriteLine($"[CommandQueue] Command '{entry.CommandId}' cannot execute");
+            ErrorLogger.LogDebug($"Command '{entry.CommandId}' cannot execute", "CommandQueue");
             return;
         }
 
@@ -246,11 +246,11 @@ public class CommandQueueService : ICommandQueueService
         try
         {
             await _commandRegistry.ExecuteAsync(entry.CommandId, entry.Parameter);
-            Debug.WriteLine($"[CommandQueue] Executed '{entry.CommandId}'");
+            ErrorLogger.LogDebug($"Executed '{entry.CommandId}'", "CommandQueue");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[CommandQueue] Failed to execute '{entry.CommandId}': {ex.Message}");
+            ErrorLogger.LogWarning($"Failed to execute '{entry.CommandId}': {ex.Message}", "CommandQueue");
             throw;
         }
     }

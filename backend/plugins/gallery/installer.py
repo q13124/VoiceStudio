@@ -1,10 +1,25 @@
 """
-Plugin Install Service.
+Plugin Install Service (v1 - DEPRECATED).
 
 D.1 Enhancement: Handles plugin download, verification, and installation.
+
+.. deprecated:: 1.0.2
+    Use :mod:`backend.plugins.gallery.installer_v2` instead.
+    This module provides basic installation without atomic rollback.
+    installer_v2 adds .vspkg support, signature verification, and
+    atomic installation with rollback. See ADR-042.
 """
 
 from __future__ import annotations
+
+import warnings
+
+warnings.warn(
+    "backend.plugins.gallery.installer is deprecated. "
+    "Use backend.plugins.gallery.installer_v2 instead. See ADR-042.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 import hashlib
 import json

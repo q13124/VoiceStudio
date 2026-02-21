@@ -1472,6 +1472,15 @@ def _register_all_routes():
     except Exception as e:
         logger.warning(f"Failed to register plugin_gallery_router: {e}")
 
+    # Register Marketplace routes (Phase 7 Sprint 1)
+    try:
+        from .routes.marketplace import router as marketplace_router
+
+        app.include_router(marketplace_router)
+        logger.debug("Registered marketplace_router")
+    except Exception as e:
+        logger.warning(f"Failed to register marketplace_router: {e}")
+
     # Register Video Enhancement routes (D.2 Enhancement)
     try:
         from .routes.video_enhance import router as video_enhance_router
@@ -1693,6 +1702,41 @@ def api_metrics():
         payload["engines"] = {"enabled": False, "error": str(e)}
 
     return payload
+
+
+@app.get("/api/metrics/history")
+def api_metrics_history(window: str = "24h"):
+    """
+    Phase 8 WS4: Get metrics history for trend charts.
+
+    Query param: window (e.g. 24h, 48h, 168h for 1 week). Default 24h.
+    """
+    try:
+        from backend.services.metrics_history import get_metrics_history
+
+        hours = 24
+        if window.endswith("h"):
+            try:
+                hours = int(window[:-1])
+            except ValueError:
+                pass
+        elif window.endswith("d"):
+            try:
+                hours = int(window[:-1]) * 24
+            except ValueError:
+                pass
+        history = get_metrics_history(window_hours=min(hours, 720))
+        return {
+            "window": window,
+            "window_hours": hours,
+            "count": len(history),
+            "snapshots": history,
+        }
+    except ImportError as e:
+        return {"error": f"Metrics history not available: {e}", "snapshots": []}
+    except Exception as e:
+        logger.warning(f"Failed to get metrics history: {e}")
+        return {"error": str(e), "snapshots": []}
 
 
 @app.get("/api/cache/stats")

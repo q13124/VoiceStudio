@@ -96,6 +96,26 @@ def _check_gpu() -> dict[str, Any]:
         }
 
 
+def _check_plugins() -> dict[str, Any]:
+    """Check plugin system health."""
+    try:
+        from backend.plugins.gallery import get_install_service
+
+        install_service = get_install_service()
+        installed = install_service.get_installed_plugins()
+        return {
+            "status": "healthy",
+            "installed_count": len(installed),
+            "plugins": [p.id for p in installed[:10]],
+        }
+    except Exception as e:
+        return {
+            "status": "degraded",
+            "error": str(e),
+            "installed_count": 0,
+        }
+
+
 def _check_engines() -> dict[str, Any]:
     """Check engine availability with detailed information (enhanced)."""
     try:
@@ -150,6 +170,88 @@ _health_checker.register_check(
 _health_checker.register_check(
     "engines", lambda: _check_engines()["status"] == "healthy", critical=False
 )
+_health_checker.register_check(
+    "plugins", lambda: _check_plugins()["status"] == "healthy", critical=False
+)
+
+
+@router.get("/summary")
+@cache_response(ttl=10)
+async def health_summary() -> dict[str, Any]:
+    """
+    Phase 8 WS4: Aggregate health summary for SLO dashboard.
+
+    Returns engine health, plugin health, error rates, latency percentiles,
+    and circuit breaker states.
+    """
+    from datetime import datetime
+
+    summary: dict[str, Any] = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "engines": {},
+        "plugins": {},
+        "error_rates": {},
+        "latency_p95_ms": {},
+        "circuit_breakers": {},
+        "overall": "healthy",
+    }
+
+    try:
+        engine_info = _check_engines()
+        summary["engines"] = {
+            "status": engine_info.get("status", "unknown"),
+            "available_count": engine_info.get("available_engines", 0),
+            "total_count": engine_info.get("total_engines", 0),
+        }
+    except Exception as e:
+        summary["engines"] = {"status": "degraded", "error": str(e)}
+
+    try:
+        plugin_info = _check_plugins()
+        summary["plugins"] = {
+            "status": plugin_info.get("status", "unknown"),
+            "installed_count": plugin_info.get("installed_count", 0),
+        }
+    except Exception as e:
+        summary["plugins"] = {"status": "degraded", "error": str(e)}
+
+    try:
+        cb_summary = get_engine_breaker_summary()
+        summary["circuit_breakers"] = cb_summary
+        if cb_summary.get("open", 0) > 0:
+            summary["overall"] = "degraded"
+    except Exception as e:
+        summary["circuit_breakers"] = {"error": str(e)}
+
+    try:
+        engine_service = get_engine_service()
+        perf = engine_service.get_engine_performance_metrics()
+        if "error" not in perf:
+            all_stats = perf.get("all_stats", {})
+            if isinstance(all_stats, dict):
+                for eng, s in all_stats.items():
+                    if isinstance(s, dict):
+                        err_cnt = s.get("errors", 0)
+                        total = s.get("total_requests", 1)
+                        summary["error_rates"][eng] = err_cnt / max(total, 1)
+                        st = s.get("synthesis_times") or {}
+                        p95_sec = st.get("p95")
+                        if p95_sec is not None:
+                            summary["latency_p95_ms"][eng] = p95_sec * 1000
+            elif isinstance(all_stats, list):
+                for s in all_stats:
+                    if isinstance(s, dict):
+                        eng = s.get("engine", s.get("engine_name", "unknown"))
+                        summary["latency_p95_ms"][eng] = s.get("latency_p95_ms")
+                        err_cnt = s.get("errors", s.get("error_count", 0))
+                        total = s.get("total_requests", 1)
+                        summary["error_rates"][eng] = err_cnt / max(total, 1)
+        if any(v and v > 0.05 for v in summary["error_rates"].values()):
+            summary["overall"] = "degraded"
+    except Exception as e:
+        summary["error_rates"] = {"error": str(e)}
+
+    return summary
 
 
 @router.get("/")
@@ -192,6 +294,13 @@ async def health_check() -> dict[str, Any]:
         details["engines"] = engine_info
     except Exception as e:
         details["engines"] = {"status": "unknown", "error": str(e)}
+
+    # Plugins (Phase 7)
+    try:
+        plugin_info = _check_plugins()
+        details["plugins"] = plugin_info
+    except Exception as e:
+        details["plugins"] = {"status": "unknown", "error": str(e)}
 
     # System metrics (lightweight)
     try:

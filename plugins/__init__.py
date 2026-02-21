@@ -1,0 +1,1 @@
+# VoiceStudio plugins directory

@@ -3,6 +3,7 @@
 // GAP-FE-001: Integrated with VoiceGateway and EngineGateway for backend connectivity
 
 using System;
+using VoiceStudio.App.Logging;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading;
@@ -649,7 +650,7 @@ public partial class SynthesisViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error selecting voice profile: {ex.Message}");
+            System.Diagnostics.ErrorLogger.LogWarning($"Error selecting voice profile: {ex.Message}", "SynthesisViewModel");
             ErrorMessage = $"Failed to select voice profile: {ex.Message}";
         }
     }
@@ -678,7 +679,7 @@ public partial class SynthesisViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Error loading voice profile: {ex.Message}");
+            System.Diagnostics.ErrorLogger.LogWarning($"Error loading voice profile: {ex.Message}", "SynthesisViewModel");
             ErrorMessage = $"Failed to load voice profile: {ex.Message}";
         }
     }

@@ -117,10 +117,21 @@ async def get_catalog(refresh: bool = False):
 
         catalog = await catalog_service.get_catalog(force_refresh=refresh)
 
+        # Phase 7: Merge local download counts with catalog stats
+        try:
+            from backend.services.marketplace_service import get_marketplace_service
+
+            marketplace = get_marketplace_service()
+        except Exception:
+            marketplace = None
+
         # Build response with install status
         plugins = []
         for plugin in catalog.plugins:
             installed = install_service.get_installed_plugin(plugin.id)
+            downloads = plugin.stats.downloads
+            if marketplace:
+                downloads += marketplace.get_download_count(plugin.id)
             summary = PluginSummary(
                 id=plugin.id,
                 name=plugin.name,
@@ -133,7 +144,7 @@ async def get_catalog(refresh: bool = False):
                 featured=plugin.featured,
                 verified=plugin.verified,
                 rating=plugin.stats.rating,
-                downloads=plugin.stats.downloads,
+                downloads=downloads,
                 installed=installed is not None,
                 installed_version=installed.version if installed else None,
                 update_available=(
@@ -332,6 +343,15 @@ async def install_plugin(request: InstallRequest):
             plugin_id=request.plugin_id,
             version=request.version,
         )
+
+        # Phase 7: Record download for analytics
+        if result.success:
+            try:
+                from backend.services.marketplace_service import get_marketplace_service
+
+                get_marketplace_service().record_download(request.plugin_id)
+            except Exception as dl_err:
+                logger.debug("Download tracking skipped: %s", dl_err)
 
         return InstallResponse(
             success=result.success,
