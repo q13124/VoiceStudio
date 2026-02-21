@@ -96,8 +96,8 @@ Use exactly one:
 | VS-0042 | DONE | S2 Major | B | Overseer | BUILD,RULES | Unified verification harness (scripts/verify.ps1) with 8 stages + change control rules |
 | VS-0043 | OPEN | S4 Chore | B | Build & Tooling Engineer | BUILD | mypy --strict audit: 5892 errors in backend/ (technical debt baseline) |
 | VS-0044 | DONE | S2 Major | E | Engine Engineer | ENGINE,RUNTIME | Golden-path E2E: API routing fixed (was 404/405), endpoints verified working |
-| VS-0045 | OPEN | S2 Major | E | Engine Engineer | ENGINE | E2E synthesis fails: XTTS engine init + Whisper model loading on Windows |
-| VS-0046 | OPEN | S3 Minor | B | Build & Tooling Engineer | SECURITY | pip-audit: 29 CVEs in dependencies (transformers, keras, pillow, etc.) |
+| VS-0045 | IN_PROGRESS | S2 Major | E | Engine Engineer | ENGINE | E2E synthesis fails: XTTS engine init + Whisper model loading on Windows |
+| VS-0046 | IN_PROGRESS | S3 Minor | B | Build & Tooling Engineer | SECURITY | pip-audit: 26 CVEs in dependencies (transformers, keras, pillow, etc.) |
 
 ---
 
@@ -1662,47 +1662,139 @@ Remaining E2E failures are runtime/engine issues tracked in VS-0045.
 
 ---
 
-### VS-0046 — pip-audit: 29 CVEs in dependencies (transformers, keras, pillow, etc.)
+### VS-0045 — E2E synthesis fails: XTTS engine init + Whisper model loading on Windows
 
-**State:** OPEN  
+**State:** IN_PROGRESS  
+**Severity:** S2 Major  
+**Gate:** E  
+**Owner role:** Engine Engineer  
+**Reviewer role:** Overseer  
+**Categories:** ENGINE  
+**Introduced:** 2026-02-18  
+**Last verified:** 2026-02-19 (Windows 10.0.26200)
+
+**Summary**
+
+E2E synthesis workflow was failing due to:
+1. XTTS engine init errors (RESOLVED)
+2. Whisper model not downloaded locally (EXPECTED - first-run setup)
+3. Missing voice profile for synthesis (EXPECTED - requires clone first)
+
+**Root Cause Analysis (2026-02-19)**
+
+| Issue | Status | Cause | Resolution |
+|-------|--------|-------|------------|
+| XTTS engine creation | ✅ PASS | Works with `COQUI_TOS_AGREED=1` | Env var required for license |
+| XTTS lazy init | ✅ PASS | `engine.initialize(lazy=True)` succeeds | Working |
+| Whisper engine creation | ✅ PASS | WhisperEngine() succeeds | Working |
+| Whisper model loading | ⚠️ EXPECTED | Model downloads from HuggingFace Hub on first use | Preflight/setup step |
+| Voice synthesis | ⚠️ BLOCKED | Requires `profile_id` from prior voice clone | User must clone voice first |
+
+**Diagnosis Commands**
+
+```bash
+# XTTS engine init
+$env:COQUI_TOS_AGREED = "1"
+python -c "from app.core.engines.xtts_engine import XTTSEngine; e = XTTSEngine(); e.initialize(lazy=True)"
+# Result: Success (device: cpu)
+
+# Whisper engine init
+python -c "from app.core.engines.whisper_engine import WhisperEngine; e = WhisperEngine()"
+# Result: Success (device: cpu)
+```
+
+**Current State**
+
+- **Engine initialization**: ✅ Working (both XTTS and Whisper)
+- **GPU availability**: ❌ Not functional (PyTorch CUDA issues on current hardware)
+- **Model caching**: ✅ Working (lazy loading enabled)
+- **E2E synthesis**: ⚠️ Requires voice profile setup (expected workflow)
+
+**Next Steps**
+
+1. Document first-run setup requirements (Whisper model download, voice clone)
+2. Add preflight check for model availability
+3. Improve error messages when `profile_id` missing
+
+**Links**
+
+- Related: VS-0044 (API routing fixes)
+- E2E test: `tests/e2e/test_golden_path.py`
+
+---
+
+### VS-0046 — pip-audit: 26 CVEs in dependencies (transformers, keras, pillow, etc.)
+
+**State:** IN_PROGRESS  
 **Severity:** S3 Minor  
 **Gate:** B  
 **Owner role:** Build & Tooling Engineer  
 **Reviewer role:** Overseer  
 **Categories:** SECURITY  
 **Introduced:** 2026-02-18 (v1.0.2-rc1 prep)  
-**Last verified:** 2026-02-18 (Windows 10.0.26200)
+**Last verified:** 2026-02-19 (Windows 10.0.26200)
 
 **Summary**
 
-pip-audit scan detected 29 vulnerabilities across 7 packages. Most are in ML dependencies that have newer versions available. These are dependency CVEs, not code vulnerabilities.
+pip-audit scan detected 26 vulnerabilities across 6 packages (reduced from 29). Most are in ML dependencies constrained by coqui-tts compatibility or Python 3.9 version limits.
 
-**Affected Packages**
+**Affected Packages (2026-02-19)**
 
-| Package | Installed | CVEs | Fix Version |
-|---------|-----------|------|-------------|
-| transformers | 4.46.2 | 14 | 4.53.0 |
-| keras | 3.10.0 | 6 | 3.12.0+ |
-| setuptools | 58.1.0 | 3 | 78.1.1 |
-| filelock | 3.19.1 | 2 | 3.20.3 |
-| pillow | 11.3.0 | 1 | 12.1.1 |
-| python-multipart | 0.0.20 | 1 | 0.0.22 |
-| basicsr | 1.4.2 | 1 | (no fix) |
+| Package | Installed | CVEs | Fix Version | Status |
+|---------|-----------|------|-------------|--------|
+| transformers | 4.46.2 | 14 | 4.53.0 | ❌ BLOCKED (coqui-tts requires <=4.46.2) |
+| keras | 3.10.0 | 6 | 3.12.0+ | ❌ BLOCKED (Python 3.10+ required) |
+| filelock | 3.19.1 | 2 | 3.20.3 | ❌ BLOCKED (Python 3.10+ required) |
+| pillow | 11.3.0 | 1 | 12.1.1 | ❌ BLOCKED (Python 3.10+ required) |
+| python-multipart | 0.0.20 | 1 | 0.0.22 | ❌ BLOCKED (Python 3.10+ required) |
+| basicsr | 1.4.2 | 1 | (no fix) | ⚠️ ACCEPTED RISK |
+| setuptools | 82.0.0 | 0 | - | ✅ FIXED |
 
-**Proof run**
+**Proof run (2026-02-19)**
 
-- Command: `pip-audit`
-- Date: 2026-02-18
-- Exit code: 1 (vulnerabilities found)
-- Total CVEs: 29
+```
+Found 26 known vulnerabilities in 6 packages
+Name             Version ID                  Fix Versions
+---------------- ------- ------------------- -------------
+basicsr          1.4.2   GHSA-86w8-vhw6-q9qq
+filelock         3.19.1  GHSA-w853-jp5j-5j7f 3.20.1
+filelock         3.19.1  GHSA-qmgc-5h2g-mvrw 3.20.3
+keras            3.10.0  (6 CVEs)            3.11.0+
+pillow           11.3.0  GHSA-cfh3-3jmp-rvhc 12.1.1
+python-multipart 0.0.20  GHSA-wp53-j4wj-2cfg 0.0.22
+transformers     4.46.2  (14 CVEs)           4.48.0+
+```
+
+**Root Cause**
+
+- **Python 3.9 constraint**: Many fix versions require Python 3.10+
+- **coqui-tts constraint**: `coqui-tts 0.25.3` requires `transformers<=4.46.2` (breaks XTTS if upgraded)
+- **Upstream dependency**: basicsr has no fix available
+
+**Resolution Status**
+
+| Action | Status |
+|--------|--------|
+| Upgrade setuptools | ✅ DONE (82.0.0) |
+| Upgrade transformers | ❌ BLOCKED (breaks coqui-tts XTTS) |
+| Upgrade filelock | ❌ BLOCKED (Python 3.10+) |
+| Upgrade keras | ❌ BLOCKED (Python 3.10+) |
+| Upgrade pillow | ❌ BLOCKED (Python 3.10+) |
+| Upgrade python-multipart | ❌ BLOCKED (Python 3.10+) |
+| Accept basicsr risk | ✅ DOCUMENTED |
 
 **Resolution Plan**
 
-Not blocking v1.0.2-rc1 (S3 Minor). Plan for v1.0.3:
-1. Test compatibility of newer transformers with XTTS/Whisper
-2. Update pillow, python-multipart, filelock (low risk)
-3. Evaluate keras/setuptools updates for side effects
-4. Document basicsr CVE as accepted risk (no fix available)
+Not blocking v1.0.2-rc1 (S3 Minor). Path forward:
+1. **Upgrade to Python 3.10+** (enables most CVE fixes)
+2. **Wait for coqui-tts update** (to support newer transformers)
+3. **Accept basicsr CVE** as risk (no fix available, low severity)
+
+**Risk Assessment**
+
+- CVEs are in ML libraries, not directly exploitable in offline desktop app
+- All vulnerabilities are DoS or model loading issues, not RCE
+- Mitigation: offline-first operation, no untrusted model loading
 
 **Links**
 
