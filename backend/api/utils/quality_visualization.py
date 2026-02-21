@@ -170,7 +170,7 @@ def detect_quality_anomalies(
 
     # Detect anomalies (values beyond threshold_std standard deviations)
     anomalies = []
-    for i, (value, record) in enumerate(zip(values, records_with_values, strict=False)):
+    for i, (value, record) in enumerate(zip(values, records_with_values)):
         z_score = abs((value - mean) / std) if std > 0 else 0.0
         if z_score > threshold_std:
             anomalies.append(

@@ -204,9 +204,12 @@ class PluginSchemaValidator:
         The legacy top-level 'permissions' array is deprecated since v6.
         Use 'security.permissions' object instead.
         
+        Note: Deprecation warnings are logged but do NOT cause validation failure
+        to maintain backward compatibility with v3/v4/v5 manifests.
+        
         Args:
             manifest: Plugin manifest dictionary
-            errors: List to append warning messages to
+            errors: List to append error messages to (not used for deprecation warnings)
         """
         if "permissions" in manifest:
             plugin_name = manifest.get("name", "unknown")
@@ -215,17 +218,18 @@ class PluginSchemaValidator:
                 "deprecated since schema v6. Migrate to 'security.permissions' object. "
                 f"Plugin: {plugin_name}"
             )
+            # Log warning but do NOT add to errors - deprecation should warn, not fail
             logger.warning(warning_msg)
-            errors.append(warning_msg)
             
             # Provide migration guidance if security section exists
             security = manifest.get("security", {})
             if not security.get("permissions"):
-                errors.append(
+                guidance_msg = (
                     "[DEPRECATED] Suggestion: Add 'security.permissions' object with "
                     "granular permissions (filesystem.read, network.outbound, etc.) "
                     "to replace the legacy array."
                 )
+                logger.info(guidance_msg)
     
     def validate_file(self, path: Path | str) -> tuple[bool, list[str], dict[str, Any] | None]:
         """

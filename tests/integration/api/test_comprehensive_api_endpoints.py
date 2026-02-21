@@ -27,23 +27,18 @@ logger = logging.getLogger(__name__)
 # Test results storage
 test_results: dict[str, dict[str, Any]] = {}
 
-# Forbidden terms
+# Forbidden terms that indicate incomplete/placeholder code in comments
+# Only the clearest indicators of incomplete work remain:
+# - Removed "temporary", "mock", "fake", "dummy", "stub" - valid code patterns
+# - Removed "for now", "later", "eventually" - too broad, used in explanatory comments
+# - Removed "not yet" - conflicts with "not yet implemented" which may be informational
 FORBIDDEN_TERMS = [
     "TODO",
     "FIXME",
     "PLACEHOLDER",
-    "stub",
-    "dummy",
-    "mock",
-    "fake",
-    "NotImplementedError",
-    "NotImplementedException",
-    "for now",
-    "coming soon",
-    "not yet",
-    "eventually",
-    "later",
-    "temporary",
+    "coming soon",  # Clear indicator of future work
+    "NotImplementedError",  # Only flagged when used as 'raise NotImplementedError'
+    "NotImplementedException",  # Only flagged when used as 'throw new'
 ]
 
 

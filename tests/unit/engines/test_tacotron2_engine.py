@@ -40,11 +40,14 @@ class TestTacotron2EngineInit:
             assert "tacotron2" in AVAILABLE_MODELS[lang].lower()
 
     def test_init_sets_default_device(self):
-        """Engine should default to cuda device when gpu=True."""
+        """Engine should default to cuda device when gpu=True and CUDA available."""
+        from app.core.engines.base import EngineProtocol
         from app.core.engines.tacotron2_engine import Tacotron2Engine
 
-        engine = Tacotron2Engine(gpu=True)
-        assert engine.device == "cuda"
+        # Mock CUDA detection to return cuda
+        with patch.object(EngineProtocol, "_detect_cuda_device", return_value="cuda"):
+            engine = Tacotron2Engine(gpu=True)
+            assert engine.device == "cuda"
 
     def test_init_respects_cpu_device(self):
         """Engine should use cpu when gpu=False."""
@@ -71,20 +74,23 @@ class TestTacotron2EngineInit:
 class TestTacotron2EngineWithMocks:
     """Tests using mocked TTS library."""
 
-    @patch("app.core.engines.tacotron2_engine.TTS")
-    def test_initialize_creates_tts_instance(self, mock_tts_class):
+    def test_initialize_creates_tts_instance(self):
         """Initialize should create TTS instance."""
         from app.core.engines.tacotron2_engine import Tacotron2Engine
 
-        # Setup mock
+        # Setup mock TTS module
         mock_tts = MagicMock()
         mock_tts.synthesizer = MagicMock()
         mock_tts.synthesizer.output_sample_rate = 22050
-        mock_tts_class.return_value = mock_tts
+
+        mock_tts_class = MagicMock(return_value=mock_tts)
+        mock_tts_api = MagicMock()
+        mock_tts_api.TTS = mock_tts_class
 
         engine = Tacotron2Engine(device="cpu")
 
-        with patch.dict("sys.modules", {"TTS.api": MagicMock()}):
+        # Mock the TTS.api module that is imported inside initialize()
+        with patch.dict("sys.modules", {"TTS": MagicMock(), "TTS.api": mock_tts_api}):
             result = engine.initialize()
 
         assert result is True

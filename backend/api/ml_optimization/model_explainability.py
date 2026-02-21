@@ -103,7 +103,7 @@ class ModelExplainer:
                 result["feature_importance_dict"] = {
                     name: float(importance)
                     for name, importance in zip(
-                        feature_names, feature_importance, strict=False
+                        feature_names, feature_importance
                     )
                 }
 

@@ -309,7 +309,7 @@ class TestAPIPerformance:
         if len(valid_results) < 5:
             pytest.skip("Too many middleware errors during concurrent test")
 
-        status_codes, elapsed_times = zip(*valid_results, strict=False)
+        status_codes, elapsed_times = zip(*valid_results, )
 
         success_rate = sum(1 for c in status_codes if c == 200) / len(status_codes)
         assert success_rate >= 0.8, f"At least 80% should succeed, got {success_rate*100:.0f}%"
@@ -596,7 +596,7 @@ class TestEnhancedRoutesPerformance:
         if len(valid_results) < 5:
             pytest.skip("Too many middleware errors during concurrent test")
 
-        status_codes, elapsed_times = zip(*valid_results, strict=False)
+        status_codes, elapsed_times = zip(*valid_results, )
 
         # All valid requests should succeed
         assert all(
@@ -842,7 +842,7 @@ class TestConcurrentLoadSLOs:
         if len(valid_results) < 20:
             pytest.skip("Too many middleware errors during concurrent test")
 
-        status_codes, times = zip(*valid_results, strict=False)
+        status_codes, times = zip(*valid_results, )
 
         # Most should succeed
         success_rate = sum(1 for c in status_codes if c == 200) / len(status_codes)
@@ -981,7 +981,7 @@ class TestAPIThroughput:
         if len(valid_results) < 50:
             pytest.skip("Too many errors during burst test")
 
-        status_codes, _times = zip(*valid_results, strict=False)
+        status_codes, _times = zip(*valid_results, )
         success_rate = sum(1 for c in status_codes if c == 200) / len(valid_results)
 
         # At least 90% success rate under burst (lowered from 95% due to middleware)

@@ -411,7 +411,7 @@ class SDCPUEngine(EngineProtocol):
 
             # Save images if paths provided
             if output_paths:
-                for image, path in zip(all_images, output_paths, strict=False):
+                for image, path in zip(all_images, output_paths):
                     if path and image:
                         image.save(path)
                         logger.info(f"Image saved to: {path}")

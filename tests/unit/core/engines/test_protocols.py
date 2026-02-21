@@ -81,9 +81,8 @@ class TestEngineProtocolInitialization:
             def cleanup(self):
                 self._initialized = False
 
-        with patch("app.core.engines.protocols.logger"):
-            engine = TestEngine(device="cuda", gpu=True)
-            assert engine.device == "cuda", "Device should be set to cuda"
+        engine = TestEngine(device="cuda", gpu=True)
+        assert engine.device == "cuda", "Device should be set to cuda"
 
     def test_protocol_initialization_auto_device(self):
         """Test protocol initialization with auto device selection."""
@@ -96,12 +95,11 @@ class TestEngineProtocolInitialization:
             def cleanup(self):
                 self._initialized = False
 
-        with patch("app.core.engines.protocols.logger"):
-            with patch("torch.cuda.is_available", return_value=False):
-                engine = TestEngine(gpu=False)
-                assert (
-                    engine.device == "cpu"
-                ), "Device should default to cpu when gpu=False"
+        with patch("torch.cuda.is_available", return_value=False):
+            engine = TestEngine(gpu=False)
+            assert (
+                engine.device == "cpu"
+            ), "Device should default to cpu when gpu=False"
 
 
 class TestEngineProtocolMethods:

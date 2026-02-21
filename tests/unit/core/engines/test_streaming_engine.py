@@ -82,7 +82,7 @@ class TestStreamingEngineStructure:
         """Test that engine has LRU chunk cache."""
         assert hasattr(streaming_engine, "_chunk_cache")
         assert isinstance(streaming_engine._chunk_cache, OrderedDict)
-        assert streaming_engine._cache_max_size == 100
+        assert streaming_engine._cache_max_size == 200
         assert streaming_engine.enable_cache is True
 
     def test_engine_has_stream_cache(self, streaming_engine):
@@ -95,7 +95,7 @@ class TestStreamingEngineStructure:
         assert hasattr(streaming_engine, "_buffer_pool")
         assert isinstance(streaming_engine._buffer_pool, list)
         assert hasattr(streaming_engine, "_max_buffer_pool_size")
-        assert streaming_engine._max_buffer_pool_size == 10
+        assert streaming_engine._max_buffer_pool_size == 20
 
     def test_engine_protocol_compliance(self, streaming_engine):
         """Test that engine implements EngineProtocol."""
@@ -157,7 +157,7 @@ class TestStreamingEngineCache:
         assert "cache_enabled" in stats
         assert stats["chunk_cache_size"] == 0
         assert stats["stream_cache_size"] == 0
-        assert stats["max_cache_size"] == 100
+        assert stats["max_cache_size"] == 200
         assert stats["cache_enabled"] is True
 
     def test_chunk_cache_lru_eviction(self, streaming_engine):

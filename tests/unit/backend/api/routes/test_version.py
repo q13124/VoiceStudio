@@ -29,10 +29,11 @@ class TestVersionRoutes:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["current_version"] == "v2"
+        assert data["current_version"] == "v3"
         assert data["default_version"] == "v1"
         assert "v1" in data["supported_versions"]
         assert "v2" in data["supported_versions"]
+        assert "v3" in data["supported_versions"]
         assert "versions" in data
         assert "timestamp" in data
 
@@ -153,12 +154,12 @@ class TestVersionRoutes:
         """Test compatibility check with valid client version."""
         response = client.get(
             "/api/version/compatibility",
-            headers={VERSION_HEADER: "v2"},
+            headers={VERSION_HEADER: "v3"},
         )
 
         assert response.status_code == 200
         data = response.json()
-        assert data["client_version"] == "v2"
+        assert data["client_version"] == "v3"
         assert data["compatible"] is True
         assert data["is_current"] is True
 

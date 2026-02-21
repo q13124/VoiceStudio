@@ -513,6 +513,9 @@ class ModelCache:
                 if torch.cuda.is_available():
                     # Get GPU memory before and after (rough estimate)
                     gpu_memory_mb = self._get_gpu_memory_usage_mb()
+                else:
+                    # CUDA not available, use 0.0
+                    gpu_memory_mb = 0.0
             except ImportError:
                 gpu_memory_mb = 0.0
         elif gpu_memory_mb is None:

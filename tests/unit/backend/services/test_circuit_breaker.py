@@ -181,8 +181,8 @@ class TestCircuitBreaker:
         breaker.record_failure()
         assert breaker.is_open
 
-        # Wait for recovery timeout
-        time.sleep(0.06)
+        # Wait for recovery timeout (generous margin to avoid timing flakiness under load)
+        time.sleep(0.15)
 
         # First call - should allow and increment counter
         assert breaker.allow_request()

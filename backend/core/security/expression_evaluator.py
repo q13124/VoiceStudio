@@ -169,7 +169,7 @@ class SafeExpressionEvaluator:
         # Comparisons
         if isinstance(node, ast.Compare):
             left = self._eval_node(node.left, variables)
-            for op, comparator in zip(node.ops, node.comparators, strict=False):
+            for op, comparator in zip(node.ops, node.comparators):
                 op_type = type(op)
                 if op_type not in SAFE_OPERATORS:
                     raise ExpressionError(f"Unsupported comparison: {op_type.__name__}", "")
@@ -209,7 +209,7 @@ class SafeExpressionEvaluator:
         if isinstance(node, ast.Dict):
             return {
                 self._eval_node(k, variables): self._eval_node(v, variables)
-                for k, v in zip(node.keys, node.values, strict=False)
+                for k, v in zip(node.keys, node.values)
                 if k is not None
             }
 

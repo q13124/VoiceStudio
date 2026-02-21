@@ -148,7 +148,11 @@ Handles theme switching and persistence.
 
             assert result.success is True
             assert result.source_name == "memory"
-            assert len(result.content) > 0 or len(result.data) > 0
+            # SourceResult has 'data' not 'content'
+            assert result.data is not None and (
+                (isinstance(result.data, str) and len(result.data) > 0) or
+                (isinstance(result.data, (list, dict)) and len(result.data) > 0)
+            )
 
     def test_fetch_with_query(self, adapter, temp_openmemory_dir):
         """Test fetch with specific query."""

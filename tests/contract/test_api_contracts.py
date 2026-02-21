@@ -228,7 +228,7 @@ class TestResponseValidation:
         assert "status" in data, "Response must have status"
 
     def test_error_response_structure(self, contract_client):
-        """Test error responses match HTTPValidationError schema."""
+        """Test error responses match VoiceStudio's custom error schema."""
         # Trigger a validation error
         response = contract_client.post(
             "/api/voice/synthesize",
@@ -240,8 +240,12 @@ class TestResponseValidation:
 
         if response.status_code == 422:
             data = response.json()
-            # Should match HTTPValidationError schema
-            assert "detail" in data, "Validation error should have 'detail'"
+            # VoiceStudio uses custom error format with status/message/errors
+            # instead of FastAPI's default 'detail' field
+            assert "status" in data, "Error response should have 'status'"
+            assert "message" in data, "Error response should have 'message'"
+            assert "errors" in data, "Error response should have 'errors'"
+            assert isinstance(data["errors"], list), "errors should be a list"
 
 
 class TestContractConsistency:

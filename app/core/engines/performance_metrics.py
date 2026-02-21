@@ -13,7 +13,7 @@ import logging
 import time
 from collections import defaultdict
 from contextlib import contextmanager
-from threading import Lock
+from threading import Lock, RLock
 from typing import Any
 
 try:
@@ -43,7 +43,7 @@ class EnginePerformanceMetrics:
 
     def __init__(self):
         """Initialize engine performance metrics collector."""
-        self._lock = Lock()
+        self._lock = RLock()
 
         # Per-engine metrics
         self._synthesis_times: dict[str, list] = defaultdict(list)

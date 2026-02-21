@@ -31,7 +31,7 @@ class TestStreamingPipeline:
         self.mock_llm.generate_stream = mock_stream
 
         with patch(
-            "app.core.pipeline.streaming_pipeline.get_engine_service"
+            "backend.services.engine_service.get_engine_service"
         ) as mock_service:
             mock_service.return_value.synthesize = AsyncMock(
                 return_value={"audio_data": b"audio"}
@@ -65,7 +65,7 @@ class TestStreamingPipeline:
         self.mock_llm.generate_stream = mock_stream
 
         with patch(
-            "app.core.pipeline.streaming_pipeline.get_engine_service"
+            "backend.services.engine_service.get_engine_service"
         ) as mock_service:
             mock_service.return_value.synthesize = AsyncMock(
                 return_value={"audio_data": None}
@@ -107,7 +107,7 @@ class TestStreamingPipeline:
             yield b"audio_chunk"
 
         with patch(
-            "app.core.pipeline.streaming_pipeline.get_engine_service"
+            "backend.services.engine_service.get_engine_service"
         ) as mock_service:
             mock_service.return_value.transcribe = AsyncMock(
                 return_value={"text": ""}

@@ -18,7 +18,7 @@
     Capture screenshots at each step (default: true)
 
 .PARAMETER BackendPort
-    Backend API port (default: 8001)
+    Backend API port (default: 8000)
 
 .PARAMETER SkipBackendStart
     Skip starting the backend (use if already running)
@@ -41,7 +41,7 @@ param(
     
     [switch]$TraceEnabled = $true,
     [switch]$ScreenshotsEnabled = $true,
-    [int]$BackendPort = 8001,
+    [int]$BackendPort = 8000,
     [switch]$SkipBackendStart,
     [switch]$SkipWinAppDriverStart
 )

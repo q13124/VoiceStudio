@@ -99,10 +99,11 @@ installer/Output/
 # Runtime bundle (downloaded/installed at build time)
 installer/runtime/
 
-# External runtime repos (full external clones — do not track)
-runtime/external/
+# External runtime submodules (tracked separately)
+runtime/external/deepfacelab_2025/
+
+# Installer runtime binaries (local only, too large for git)
 installer/runtime/
-runtime/
 
 # Models directory (downloaded at runtime)
 models/

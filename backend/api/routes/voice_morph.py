@@ -297,7 +297,7 @@ async def apply_morph(request: MorphApplyRequest):
             max_len = max(len(a) for a in target_audios)
             blended_target = np.zeros(max_len)
 
-            for audio, weight in zip(target_audios, target_weights, strict=False):
+            for audio, weight in zip(target_audios, target_weights):
                 # Pad to max length
                 if len(audio) < max_len:
                     audio = np.pad(audio, (0, max_len - len(audio)), mode="constant")

@@ -4,6 +4,7 @@ Unit tests for XTTS Engine optimizations.
 Tests model caching, lazy loading, batch processing, and GPU optimizations.
 """
 
+import os
 from unittest.mock import Mock, patch
 
 import pytest
@@ -15,6 +16,13 @@ from app.core.engines.xtts_engine import (
     _get_cache_key,
     _get_cached_model,
 )
+
+
+# Fixture to allow XTTS model loading in tests (bypasses license check)
+@pytest.fixture(autouse=True)
+def allow_xtts_loading(monkeypatch):
+    """Set COQUI_TOS_AGREED to bypass license check in tests."""
+    monkeypatch.setenv("COQUI_TOS_AGREED", "1")
 
 
 class TestModelCaching:
@@ -29,8 +37,10 @@ class TestModelCaching:
         assert key1 == key2
         assert key1 != key3
 
+    @patch("app.core.engines.xtts_engine.HAS_MODEL_CACHE", False)
+    @patch("app.core.engines.xtts_engine._model_cache", None)
     def test_cache_model(self):
-        """Test caching a model."""
+        """Test caching a model using XTTS-specific fallback cache."""
         # Clear cache first
         _MODEL_CACHE.clear()
 
@@ -101,12 +111,23 @@ class TestXTTSEngineOptimization:
 
     @patch("app.core.engines.xtts_engine.TTS")
     @patch("app.core.engines.xtts_engine.torch")
-    def test_get_memory_usage_cuda(self, mock_torch, mock_tts_class):
+    @patch("app.core.engines.base._get_torch")
+    def test_get_memory_usage_cuda(self, mock_get_torch, mock_torch, mock_tts_class):
         """Test getting GPU memory usage."""
+        # Configure the mock torch module for both xtts_engine and base module
         mock_torch.cuda.is_available.return_value = True
         mock_torch.cuda.memory_allocated.return_value = 1024 * 1024 * 100  # 100 MB
         mock_torch.cuda.memory_reserved.return_value = 1024 * 1024 * 150  # 150 MB
         mock_torch.cuda.max_memory_allocated.return_value = 1024 * 1024 * 200  # 200 MB
+
+        # Mock device properties
+        mock_props = Mock()
+        mock_props.name = "Test GPU"
+        mock_props.total_memory = 4 * 1024**3  # 4GB
+        mock_torch.cuda.get_device_properties.return_value = mock_props
+
+        # Make _get_torch return our mock
+        mock_get_torch.return_value = mock_torch
 
         engine = XTTSEngine(device="cuda")
         memory = engine.get_memory_usage()
@@ -158,9 +179,11 @@ class TestXTTSEngineOptimization:
         # Both should have the same model instance
         assert engine1.tts == engine2.tts
 
+    @patch("app.core.engines.xtts_engine.HAS_MODEL_CACHE", False)
+    @patch("app.core.engines.xtts_engine._model_cache", None)
     @patch("app.core.engines.xtts_engine.TTS")
     def test_cleanup_with_cache(self, mock_tts_class):
-        """Test cleanup when model is cached."""
+        """Test cleanup when model is cached (using XTTS-specific fallback cache)."""
         _MODEL_CACHE.clear()
 
         mock_tts_instance = Mock()
@@ -169,7 +192,7 @@ class TestXTTSEngineOptimization:
         engine = XTTSEngine()
         engine.initialize()
 
-        # Model should be cached
+        # Model should be cached in fallback cache
         cache_key = _get_cache_key(engine.model_name, engine.device)
         assert cache_key in _MODEL_CACHE
 

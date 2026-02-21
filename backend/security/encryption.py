@@ -192,7 +192,7 @@ class EncryptionService:
         keystream = self._generate_keystream(key, nonce, len(plaintext))
 
         # XOR encryption
-        ciphertext = bytes(a ^ b for a, b in zip(plaintext, keystream, strict=False))
+        ciphertext = bytes(a ^ b for a, b in zip(plaintext, keystream))
 
         # Generate authentication tag
         tag = hmac.new(key, ciphertext, hashlib.sha256).digest()[:TAG_SIZE]
@@ -220,7 +220,7 @@ class EncryptionService:
         )
 
         # XOR decryption
-        return bytes(a ^ b for a, b in zip(encrypted.ciphertext, keystream, strict=False))
+        return bytes(a ^ b for a, b in zip(encrypted.ciphertext, keystream))
 
     def _generate_keystream(
         self,

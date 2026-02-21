@@ -82,7 +82,7 @@ except ImportError:
             self._events: Dict[str, List[Dict]] = {}
             self._metrics: Dict[str, UsageMetrics] = {}
 
-        def record_event(self, plugin_id: str, event_type: str, metadata: Dict | None = None):
+        def record_event(self, plugin_id: str, event_type: str, metadata: Optional[Dict] = None):
             if plugin_id not in self._events:
                 self._events[plugin_id] = []
                 self._metrics[plugin_id] = UsageMetrics(plugin_id=plugin_id)

@@ -155,13 +155,14 @@ class TestGetMagicBytesForValidation:
         """Test each magic byte entry has correct format."""
         magic_bytes = get_magic_bytes_for_validation()
         for entry in magic_bytes:
-            assert len(entry) == 5, "Each entry should be (bytes, offset, ext, category, mime)"
-            magic, offset, ext, category, mime = entry
+            # Format is (magic_bytes, offset, extension, mime_type, description)
+            assert len(entry) == 5, "Each entry should be (bytes, offset, ext, mime_type, description)"
+            magic, offset, ext, mime_type, description = entry
             assert isinstance(magic, bytes), "First element should be bytes"
             assert isinstance(offset, int), "Second element should be int"
             assert isinstance(ext, str), "Third element should be string"
-            assert category == "audio", "Category should be 'audio'"
-            assert isinstance(mime, str), "Fifth element should be string"
+            assert mime_type.startswith("audio/"), f"Mime type should start with 'audio/', got '{mime_type}'"
+            assert isinstance(description, str), "Fifth element should be string"
 
 
 class TestGetFfmpegOutputArgs:

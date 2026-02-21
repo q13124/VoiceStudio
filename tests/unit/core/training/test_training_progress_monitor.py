@@ -20,11 +20,17 @@ import sys
 for module_name in ["torch", "torch.utils.tensorboard", "tensorboard", "wandb"]:
     if module_name not in sys.modules:
         mock_module = MagicMock()
-        if module_name == "torch.utils.tensorboard" or module_name == "tensorboard":
+        if module_name == "torch":
+            mock_module.__version__ = "2.0.0"  # Required for TTS version check
+        elif module_name == "torch.utils.tensorboard" or module_name == "tensorboard":
             mock_module.SummaryWriter = MagicMock()
         elif module_name == "wandb":
             mock_module.init = MagicMock()
         sys.modules[module_name] = mock_module
+    elif module_name == "torch":
+        # Ensure existing mock has __version__
+        if not hasattr(sys.modules[module_name], "__version__") or isinstance(sys.modules[module_name].__version__, MagicMock):
+            sys.modules[module_name].__version__ = "2.0.0"
 
 # Import the training progress monitor module
 try:

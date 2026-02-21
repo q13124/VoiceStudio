@@ -553,7 +553,7 @@ class SVDEngine(EngineProtocol):
             args_list = [
                 (i, img_path, out_path, motion_id, seed)
                 for i, (img_path, out_path, motion_id, seed) in enumerate(
-                    zip(image_paths, output_paths, motion_bucket_ids, seeds, strict=False)
+                    zip(image_paths, output_paths, motion_bucket_ids, seeds)
                 )
             ]
 

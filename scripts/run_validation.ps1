@@ -31,7 +31,7 @@ param(
     [switch]$HtmlReport,
     
     [Parameter(HelpMessage="Backend port")]
-    [int]$BackendPort = 8001,
+    [int]$BackendPort = 8000,
     
     [Parameter(HelpMessage="Output directory")]
     [string]$OutputDir = ".buildlogs/validation"
@@ -90,7 +90,7 @@ function Start-Backend {
     $waited = 0
     while ($waited -lt $maxWait) {
         try {
-            $response = Invoke-WebRequest -Uri "http://127.0.0.1:$BackendPort/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
+            $response = Invoke-WebRequest -Uri "http://127.0.0.1:$BackendPort/api/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
             if ($response.StatusCode -eq 200) {
                 Write-Host "  Backend is ready" -ForegroundColor Green
                 return $process
