@@ -3,9 +3,9 @@
 # Estimated size: ~10GB
 # Note: May need nightly torch for SM 120 (RTX 5000 series)
 
-# Core framework - Chatterbox requires torch==2.6.0
+# Core framework - Chatterbox requires torch==2.8.0
 # For SM 120 support, install nightly manually after base install
-torch==2.6.0
+torch==2.8.0
 torchaudio==2.6.0
 numpy>=1.24.0,<2.0.0
 
