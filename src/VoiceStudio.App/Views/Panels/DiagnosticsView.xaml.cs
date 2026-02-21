@@ -6,6 +6,7 @@ using VoiceStudio.App.Core.Commands;
 using VoiceStudio.App.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using SelectionChangedEventArgs = global::Microsoft.UI.Xaml.Controls.SelectionChangedEventArgs;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -19,6 +20,7 @@ namespace VoiceStudio.App.Views.Panels
   {
     public DiagnosticsViewModel ViewModel { get; }
     private ToastNotificationService? _toastService;
+    private IErrorLoggingService? _errorLoggingService;
     private IUnifiedCommandRegistry? _commandRegistry;
     private ObservableCollection<CommandHealthItem> _commandHealthItems = new();
     private DispatcherTimer? _resourceMonitorTimer;
@@ -28,6 +30,7 @@ namespace VoiceStudio.App.Views.Panels
     private DateTime _lastGpuUpdate = DateTime.MinValue;
     private readonly TimeSpan _gpuUpdateInterval = TimeSpan.FromSeconds(5);
     private ObservableCollection<CircuitBreakerItem> _circuitBreakerItems = new();
+    private ObservableCollection<LogEntry> _filteredLogs = new();
 
     public DiagnosticsView()
     {
@@ -38,6 +41,7 @@ namespace VoiceStudio.App.Views.Panels
 
       // Initialize services
       _toastService = ServiceProvider.GetToastNotificationService();
+      _errorLoggingService = AppServices.TryGetErrorLoggingService();
       _commandRegistry = AppServices.TryGetCommandRegistry();
 
       // Subscribe to ViewModel events for toast notifications
@@ -64,6 +68,26 @@ namespace VoiceStudio.App.Views.Panels
 
       // Initialize resource monitoring
       InitializeResourceMonitoring();
+
+      // Wire logs display and filtering
+      LogsListView.ItemsSource = ViewModel.Logs;
+      ViewModel.Logs.CollectionChanged += (_, _) =>
+      {
+        if (IsLogFilterActive())
+          ApplyLogFilters();
+      };
+
+      // Set backend URL from actual configuration
+      try
+      {
+        var backendAddress = ServiceProvider.GetBackendClient().BaseAddress;
+        BaseUrlText.Text = backendAddress?.ToString() ?? "Not configured";
+      }
+      catch (Exception ex)
+      {
+        _errorLoggingService?.LogError(ex, "DiagnosticsView_ctor_BackendUrl");
+        BaseUrlText.Text = "Not available";
+      }
     }
 
     private void DiagnosticsView_Unloaded(object sender, RoutedEventArgs e)
@@ -96,7 +120,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Failed to initialize resource monitoring: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "InitializeResourceMonitoring");
       }
     }
 
@@ -152,7 +176,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Failed to update GPU metrics from backend: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "UpdateGpuMetricsAsync");
       }
     }
 
@@ -199,7 +223,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Failed to update resource gauges: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "UpdateResourceGauges");
       }
     }
 
@@ -239,7 +263,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Failed to get memory info: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "GetMemoryInfo");
         return null;
       }
     }
@@ -263,7 +287,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Failed to get GPU info: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "GetGpuInfo");
         return null;
       }
     }
@@ -304,7 +328,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Failed to update job queue: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "UpdateJobQueueAsync");
         // Show empty state on error
         NoActiveJobsText.Visibility = Visibility.Visible;
       }
@@ -334,7 +358,7 @@ namespace VoiceStudio.App.Views.Panels
       VirtualizedListHelper.ConfigureListView(EnvVarsListView);
     }
 
-    private void TabView_SelectionChanged(object? sender, Microsoft.UI.Xaml.Controls.SelectionChangedEventArgs e)
+    private void TabView_SelectionChanged(object? sender, global::Microsoft.UI.Xaml.Controls.SelectionChangedEventArgs e)
     {
       // Show/hide tab content based on selection
       if (DiagnosticsTabView?.SelectedItem is TabViewItem selectedTab)
@@ -364,6 +388,7 @@ namespace VoiceStudio.App.Views.Panels
             break;
           case "Logs":
             LogsGrid.Visibility = Visibility.Visible;
+            ApplyLogFilters();
             break;
           case "Traces":
             TracesGrid.Visibility = Visibility.Visible;
@@ -375,6 +400,7 @@ namespace VoiceStudio.App.Views.Panels
           case "Engines":
             EnginesGrid.Visibility = Visibility.Visible;
             _ = LoadCircuitBreakersAsync();
+            _ = LoadEnginesAsync();
             break;
           case "Commands":
             CommandsGrid.Visibility = Visibility.Visible;
@@ -382,6 +408,7 @@ namespace VoiceStudio.App.Views.Panels
             break;
           case "Environment":
             EnvironmentGrid.Visibility = Visibility.Visible;
+            LoadEnvironmentVariables();
             break;
           case "Errors":
             ErrorsTabGrid.Visibility = Visibility.Visible;
@@ -436,7 +463,7 @@ namespace VoiceStudio.App.Views.Panels
     {
       if (_commandRegistry == null)
       {
-        Debug.WriteLine("[DiagnosticsView] Command registry not available");
+        _errorLoggingService?.LogWarning("Command registry not available", "LoadCommandHealth");
         return;
       }
 
@@ -495,14 +522,120 @@ namespace VoiceStudio.App.Views.Panels
         TotalExecutionsCount.Text = totalExecutions.ToString();
 
         CommandsListView.ItemsSource = _commandHealthItems;
-
-        Debug.WriteLine($"[DiagnosticsView] Loaded {totalCommands} commands");
       }
       catch (System.Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Failed to load command health: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "LoadCommandHealth");
       }
     }
+
+    #region Log Filtering
+
+    private void LogLevelFilter_SelectionChanged(object? sender, global::Microsoft.UI.Xaml.Controls.SelectionChangedEventArgs e)
+    {
+      ApplyLogFilters();
+    }
+
+    private void LogSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+      ApplyLogFilters();
+    }
+
+    private bool IsLogFilterActive()
+    {
+      var levelFilter = (LogLevelFilter?.SelectedItem as ComboBoxItem)?.Content?.ToString();
+      var searchText = LogSearchBox?.Text?.Trim();
+      return (levelFilter != null && levelFilter != "All") || !string.IsNullOrEmpty(searchText);
+    }
+
+    private void ApplyLogFilters()
+    {
+      if (LogsListView == null || ViewModel?.Logs == null)
+        return;
+
+      var levelFilter = (LogLevelFilter?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All";
+      var searchText = LogSearchBox?.Text?.Trim() ?? "";
+
+      if (levelFilter == "All" && string.IsNullOrEmpty(searchText))
+      {
+        LogsListView.ItemsSource = ViewModel.Logs;
+        return;
+      }
+
+      IEnumerable<LogEntry> filtered = ViewModel.Logs;
+
+      if (levelFilter != "All")
+      {
+        filtered = filtered.Where(l => string.Equals(l.Level, levelFilter, StringComparison.OrdinalIgnoreCase));
+      }
+
+      if (!string.IsNullOrEmpty(searchText))
+      {
+        filtered = filtered.Where(l =>
+            l.Message?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true);
+      }
+
+      _filteredLogs.Clear();
+      foreach (var log in filtered)
+      {
+        _filteredLogs.Add(log);
+      }
+      LogsListView.ItemsSource = _filteredLogs;
+    }
+
+    #endregion
+
+    #region Data Loading
+
+    private async Task LoadEnginesAsync()
+    {
+      try
+      {
+        var backendClient = ServiceProvider.GetBackendClient();
+        if (backendClient == null) return;
+
+        var engines = await backendClient.GetEnginesAsync();
+        if (engines?.Count > 0)
+        {
+          EnginesListView.ItemsSource = engines;
+        }
+        else
+        {
+          EnginesListView.ItemsSource = new List<string> { "(No engines available)" };
+        }
+      }
+      catch (Exception ex)
+      {
+        _errorLoggingService?.LogError(ex, "LoadEnginesAsync");
+        EnginesListView.ItemsSource = new List<string> { $"(Failed to load: {ex.Message})" };
+      }
+    }
+
+    private void LoadEnvironmentVariables()
+    {
+      try
+      {
+        var envVars = System.Environment.GetEnvironmentVariables();
+        var items = new List<EnvironmentInfoItem>();
+
+        foreach (System.Collections.DictionaryEntry entry in envVars)
+        {
+          items.Add(new EnvironmentInfoItem
+          {
+            Key = entry.Key?.ToString() ?? "",
+            Value = entry.Value?.ToString() ?? ""
+          });
+        }
+
+        EnvVarsListView.ItemsSource = items.OrderBy(i => i.Key).ToList();
+      }
+      catch (Exception ex)
+      {
+        _errorLoggingService?.LogError(ex, "LoadEnvironmentVariables");
+      }
+    }
+
+    #endregion
 
     #region Additional Button Handlers
 
@@ -538,7 +671,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Failed to export logs: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "ExportLogs_Click");
         _toastService?.ShowToast(ToastType.Error, "Export Failed", ex.Message);
       }
     }
@@ -553,7 +686,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Failed to refresh traces: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "RefreshTraces_Click");
       }
     }
 
@@ -604,7 +737,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Failed to export traces: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "ExportTraces_Click");
         _toastService?.ShowToast(ToastType.Error, "Export Failed", ex.Message);
       }
     }
@@ -624,7 +757,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Connection test failed: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "TestConnection_Click");
         _toastService?.ShowToast(ToastType.Error, "Connection Error", ex.Message);
       }
     }
@@ -643,7 +776,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Reconnect failed: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "Reconnect_Click");
         _toastService?.ShowToast(ToastType.Error, "Reconnect Failed", ex.Message);
       }
     }
@@ -658,7 +791,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Failed to refresh engines: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "RefreshEngines_Click");
       }
     }
 
@@ -672,7 +805,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Failed to stop engines: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "StopAllEngines_Click");
         _toastService?.ShowToast(ToastType.Error, "Stop Failed", ex.Message);
       }
     }
@@ -706,7 +839,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Failed to reset circuit breaker: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "ResetCircuitBreaker_Click");
         _toastService?.ShowToast(ToastType.Error, "Reset Failed", ex.Message);
       }
     }
@@ -750,7 +883,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        Debug.WriteLine($"[DiagnosticsView] Failed to load circuit breakers: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "LoadCircuitBreakersAsync");
         NoCircuitBreakersText.Visibility = Visibility.Visible;
       }
     }

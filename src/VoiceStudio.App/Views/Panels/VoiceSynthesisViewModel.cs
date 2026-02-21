@@ -183,7 +183,6 @@ namespace VoiceStudio.App.Views.Panels
     [ObservableProperty]
     private bool hasPipelineComparison;
 
-    // Synthesis parameters (Phase 1.5 - wire sliders to API)
     [ObservableProperty]
     private double speed = 1.0;
 
@@ -198,6 +197,24 @@ namespace VoiceStudio.App.Views.Panels
 
     [ObservableProperty]
     private double temperature = 0.35;
+
+    [ObservableProperty]
+    private ObservableCollection<string> availableLanguages = new() { "en", "es", "fr", "de", "it", "pt", "zh", "ja" };
+
+    [ObservableProperty]
+    private ObservableCollection<string> availableEmotions = new() { "neutral", "happy", "sad", "angry", "excited", "calm" };
+
+    public string SpeedDisplay => Speed.ToString("F2");
+    public string PitchDisplay => Pitch >= 0 ? $"+{(int)Pitch}" : $"{(int)Pitch}";
+    public string StabilityDisplay => Stability.ToString("F2");
+    public string ClarityDisplay => Clarity.ToString("F2");
+    public string TemperatureDisplay => Temperature.ToString("F2");
+
+    partial void OnSpeedChanged(double value) => OnPropertyChanged(nameof(SpeedDisplay));
+    partial void OnPitchChanged(double value) => OnPropertyChanged(nameof(PitchDisplay));
+    partial void OnStabilityChanged(double value) => OnPropertyChanged(nameof(StabilityDisplay));
+    partial void OnClarityChanged(double value) => OnPropertyChanged(nameof(ClarityDisplay));
+    partial void OnTemperatureChanged(double value) => OnPropertyChanged(nameof(TemperatureDisplay));
 
     public VoiceSynthesisViewModel(IBackendClient backendClient, IAudioPlayerService audioPlayer)
         : base(AppServices.GetViewModelContext())
@@ -476,10 +493,30 @@ namespace VoiceStudio.App.Views.Panels
               ResourceHelper.GetString("VoiceSynthesis.ProfilesLoaded", "Profiles Loaded"),
               ResourceHelper.FormatString("VoiceSynthesis.ProfilesLoadedCount", Profiles.Count));
         }
+
+        try
+        {
+          var engines = await _backendClient.GetEnginesAsync(cancellationToken);
+          if (engines != null && engines.Count > 0)
+          {
+            AvailableEngines.Clear();
+            foreach (var engine in engines)
+            {
+              AvailableEngines.Add(engine);
+            }
+            if (!AvailableEngines.Contains(SelectedEngine))
+            {
+              SelectedEngine = AvailableEngines[0];
+            }
+          }
+        }
+        catch (Exception ex)
+        {
+          _errorLoggingService?.LogError(ex, "LoadEngines");
+        }
       }
       catch (OperationCanceledException)
       {
-        // User cancelled - expected
         return;
       }
       catch (Exception ex)
@@ -555,7 +592,12 @@ namespace VoiceStudio.App.Views.Panels
           Text = Text!,
           Language = Language,
           Emotion = Emotion,
-          EnhanceQuality = EnhanceQuality
+          EnhanceQuality = EnhanceQuality,
+          Speed = Speed,
+          Pitch = Pitch,
+          Stability = Stability,
+          Clarity = Clarity,
+          Temperature = Temperature
         };
 
         // Update progress estimate (synthesis starting)
@@ -1168,13 +1210,10 @@ namespace VoiceStudio.App.Views.Panels
 
       try
       {
-        // Get available engines (typically xtts, chatterbox, tortoise)
-        var availableEngines = new List<string> { "xtts", "chatterbox", "tortoise" };
-
         QualityRecommendation = await _backendClient.GetQualityRecommendationAsync(
             Text,
             Language,
-            availableEngines,
+            AvailableEngines.ToList(),
             null, // No target quality - auto-determine
             cancellationToken
         );

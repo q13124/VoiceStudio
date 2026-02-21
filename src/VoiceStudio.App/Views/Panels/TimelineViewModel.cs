@@ -123,6 +123,12 @@ namespace VoiceStudio.App.Views.Panels
     [ObservableProperty]
     private double timelineZoom = 1.0;
 
+    [ObservableProperty]
+    private bool isLoopEnabled;
+
+    [ObservableProperty]
+    private bool isRecording;
+
     // Multi-select support
     private readonly MultiSelectService _multiSelectService;
     private MultiSelectState? _multiSelectState;

@@ -54,6 +54,9 @@ namespace VoiceStudio.App.Views.Panels
     private string? searchQuery;
 
     [ObservableProperty]
+    private string filterMode = "all";
+
+    [ObservableProperty]
     private string? selectedLanguage;
 
     [ObservableProperty]
@@ -1644,9 +1647,18 @@ namespace VoiceStudio.App.Views.Panels
     {
       var query = (SearchQuery ?? "").Trim().ToLowerInvariant();
 
-      var filtered = Profiles.Where(profile =>
+      IEnumerable<VoiceProfile> source = Profiles;
+      if (FilterMode == "favorites")
       {
-        // Search query filter
+        source = source.Where(p => p.Tags?.Any(t => t.Equals("favorite", StringComparison.OrdinalIgnoreCase)) == true);
+      }
+      else if (FilterMode == "recent")
+      {
+        source = source.Take(10);
+      }
+
+      var filtered = source.Where(profile =>
+      {
         if (!string.IsNullOrEmpty(query))
         {
           var nameMatch = (profile.Name ?? "").ToLowerInvariant().Contains(query);
@@ -1729,6 +1741,11 @@ namespace VoiceStudio.App.Views.Panels
     }
 
     partial void OnSelectedQualityRangeChanged(string? value)
+    {
+      ApplyFilters();
+    }
+
+    partial void OnFilterModeChanged(string value)
     {
       ApplyFilters();
     }

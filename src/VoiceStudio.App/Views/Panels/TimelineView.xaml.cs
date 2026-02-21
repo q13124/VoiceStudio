@@ -35,6 +35,7 @@ namespace VoiceStudio.App.Views.Panels
     private UndoRedoService? _undoRedoService;
     private AudioClip? _clipboardClip; // For cut/copy/paste
     private KeyboardShortcutService? _keyboardShortcutService;
+    private IErrorLoggingService? _errorLoggingService;
 
     public TimelineView()
     {
@@ -59,6 +60,7 @@ namespace VoiceStudio.App.Views.Panels
       _toastService = AppServices.TryGetToastNotificationService();
       _undoRedoService = AppServices.TryGetUndoRedoService();
       _keyboardShortcutService = AppServices.TryGetKeyboardShortcutService();
+      _errorLoggingService = AppServices.TryGetErrorLoggingService();
 
       // Register keyboard shortcuts
       if (_keyboardShortcutService != null)
@@ -373,7 +375,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "LoadAudioFileButton_Click");
       }
     }
 
@@ -388,7 +390,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "PlayAudioFile_Click");
       }
     }
 
@@ -551,7 +553,7 @@ namespace VoiceStudio.App.Views.Panels
       catch (Exception ex)
       {
         _toastService?.ShowToast(ToastType.Error, "Error", $"Failed to {action}: {ex.Message}");
-        System.Diagnostics.Debug.WriteLine($"Error handling clip menu action '{action}': {ex.Message}");
+        _errorLoggingService?.LogError(ex, $"HandleClipMenuClick_{action}");
       }
     }
 
@@ -952,41 +954,38 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
-    private void HandleTrackMenuClick(string action, AudioTrack track)
+    private async void HandleTrackMenuClick(string action, AudioTrack track)
     {
       try
       {
         switch (action.ToLower())
         {
           case "add clip":
-            // Use existing AddClipToTrackCommand if available
-            System.Diagnostics.Debug.WriteLine($"Add clip to track: {track.Name}");
+            if (ViewModel.AddClipToTrackCommand.CanExecute(track.Id))
+            {
+              await ViewModel.AddClipToTrackCommand.ExecuteAsync(track.Id);
+            }
             break;
           case "add effect":
-            // Note: Add effect will be implemented when effect picker dialog is available
-            System.Diagnostics.Debug.WriteLine($"Add effect to track: {track.Name}");
+            _toastService?.ShowInfo("Effects", $"Effect picker for track '{track.Name}' is not yet available.");
             break;
           case "mute":
             track.IsMuted = !track.IsMuted;
-            System.Diagnostics.Debug.WriteLine($"Toggle mute for track: {track.Name}");
             break;
           case "solo":
             track.IsSolo = !track.IsSolo;
-            System.Diagnostics.Debug.WriteLine($"Toggle solo for track: {track.Name}");
             break;
           case "rename":
-            // Note: Track rename will be implemented when rename command is available
-            System.Diagnostics.Debug.WriteLine($"Rename track: {track.Name}");
+            await RenameTrackAsync(track);
             break;
           case "delete":
-            // Note: Track delete will be implemented when delete command is available
-            System.Diagnostics.Debug.WriteLine($"Delete track: {track.Name}");
+            await DeleteTrackAsync(track);
             break;
         }
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Error handling track menu action '{action}': {ex.Message}");
+        _errorLoggingService?.LogError(ex, $"HandleTrackMenuClick_{action}");
       }
     }
 
@@ -1012,14 +1011,69 @@ namespace VoiceStudio.App.Views.Panels
             ViewModel.ZoomOutCommand.Execute(null);
             break;
           case "zoom to fit":
-            // Note: Zoom to fit will be implemented when zoom command is available
-            System.Diagnostics.Debug.WriteLine("Zoom to fit");
+            ZoomToFit();
             break;
         }
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Error handling timeline menu action '{action}': {ex.Message}");
+        _errorLoggingService?.LogError(ex, $"HandleTimelineMenuClick_{action}");
+      }
+    }
+
+    private async Task RenameTrackAsync(AudioTrack track)
+    {
+      var dialog = new ContentDialog
+      {
+        Title = "Rename Track",
+        PrimaryButtonText = "Rename",
+        SecondaryButtonText = "Cancel",
+        DefaultButton = ContentDialogButton.Primary,
+        XamlRoot = this.XamlRoot
+      };
+      var textBox = new TextBox { Text = track.Name, PlaceholderText = "Track name" };
+      dialog.Content = textBox;
+      var result = await dialog.ShowAsync();
+      if (result == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(textBox.Text))
+      {
+        track.Name = textBox.Text;
+        _toastService?.ShowSuccess("Track Renamed", $"Track renamed to '{textBox.Text}'");
+      }
+    }
+
+    private async Task DeleteTrackAsync(AudioTrack track)
+    {
+      var dialog = new ContentDialog
+      {
+        Title = "Delete Track",
+        Content = $"Are you sure you want to delete track '{track.Name}'?",
+        PrimaryButtonText = "Delete",
+        SecondaryButtonText = "Cancel",
+        DefaultButton = ContentDialogButton.Secondary,
+        XamlRoot = this.XamlRoot
+      };
+      var result = await dialog.ShowAsync();
+      if (result == ContentDialogResult.Primary)
+      {
+        ViewModel.Tracks.Remove(track);
+        _toastService?.ShowSuccess("Track Deleted", $"Track '{track.Name}' deleted");
+      }
+    }
+
+    private void ZoomToFit()
+    {
+      if (ViewModel.Tracks.Count == 0) return;
+      var maxDuration = ViewModel.Tracks
+          .SelectMany(t => t.Clips)
+          .Select(c => c.EndTime)
+          .DefaultIfEmpty(10.0)
+          .Max();
+      if (maxDuration > 0 && ActualWidth > 160)
+      {
+        var availableWidth = ActualWidth - 160;
+        var pixelsPerSecond = 100.0;
+        var requiredZoom = availableWidth / (maxDuration * pixelsPerSecond);
+        ViewModel.TimelineZoom = Math.Clamp(requiredZoom, 0.1, 10.0);
       }
     }
 
@@ -1191,7 +1245,6 @@ namespace VoiceStudio.App.Views.Panels
         _dragDropService.Cleanup();
 
         // Note: Clip reordering will be implemented when reorder command is available
-        System.Diagnostics.Debug.WriteLine($"Drop clip {_draggedClip.Name} onto {border.DataContext}");
 
         // Clean up drag state
         _draggedClip = null;
@@ -1236,7 +1289,6 @@ namespace VoiceStudio.App.Views.Panels
         if (border.DataContext is AudioTrack track)
         {
           // Note: Adding clip to track will be implemented when AddClipToTrackCommand is available
-          System.Diagnostics.Debug.WriteLine($"Drop clip {_draggedClip.Name} onto track {track.Name}");
         }
 
         // Clean up drag state

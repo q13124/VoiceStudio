@@ -378,14 +378,31 @@
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,12">
                         <ComboBox x:Name="LogLevelFilter" PlaceholderText="Log Level" Width="120"
-                                 AutomationProperties.AutomationId="DiagnosticsView_LogLevelFilter"/>
+                                 SelectionChanged="LogLevelFilter_SelectionChanged"
+                                 AutomationProperties.AutomationId="DiagnosticsView_LogLevelFilter">
+                            <ComboBoxItem Content="All" IsSelected="True"/>
+                            <ComboBoxItem Content="ERROR"/>
+                            <ComboBoxItem Content="WARNING"/>
+                            <ComboBoxItem Content="INFO"/>
+                        </ComboBox>
                         <TextBox x:Name="LogSearchBox" PlaceholderText="Search logs..." Width="200"
+                                TextChanged="LogSearchBox_TextChanged"
                                 AutomationProperties.AutomationId="DiagnosticsView_LogSearchBox"/>
                         <Button Content="Export"/>
                     </StackPanel>
                     <Border Grid.Row="1" Background="{StaticResource VSQ.Panel.Background}" CornerRadius="8">
                         <ListView x:Name="LogsListView" Padding="8"
-                                  AutomationProperties.AutomationId="DiagnosticsView_LogsListView"/>
+                                  AutomationProperties.AutomationId="DiagnosticsView_LogsListView">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="local:LogEntry">
+                                    <TextBlock Text="{x:Bind FormattedLine}"
+                                               FontFamily="Consolas"
+                                               FontSize="12"
+                                               TextWrapping="NoWrap"
+                                               Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
                     </Border>
                 </Grid>
             </Grid>
@@ -648,7 +665,7 @@
                                     <TextBlock Grid.Row="0" Text="Backend API:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
                                     <TextBlock Grid.Row="0" Grid.Column="1" x:Name="BackendStatusText" Text="Connected" Foreground="Green"/>
                                     <TextBlock Grid.Row="1" Text="Base URL:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="BaseUrlText" Text="http://localhost:8001" Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="BaseUrlText" Text="Loading..." Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
                                     <TextBlock Grid.Row="2" Text="Last Ping:" Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
                                     <TextBlock Grid.Row="2" Grid.Column="1" x:Name="LastPingText" Text="--" Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
                                 </Grid>
@@ -676,7 +693,24 @@
                         
                         <!-- Engines List -->
                         <Border Background="{StaticResource VSQ.Panel.Background}" CornerRadius="8" Padding="8">
-                            <ListView x:Name="EnginesListView" MaxHeight="300"/>
+                            <ListView x:Name="EnginesListView" MaxHeight="300"
+                                      SelectionMode="None"
+                                      AutomationProperties.AutomationId="DiagnosticsView_EnginesListView">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Padding="8,6" ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <FontIcon Grid.Column="0" Glyph="&#xE9F5;" FontSize="14"
+                                                      Foreground="{StaticResource VSQ.Accent.Brush}"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding}"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
                         </Border>
                         
                         <!-- GAP-I24: Circuit Breakers Panel -->
@@ -1082,7 +1116,29 @@
                             <TextBlock Text="Environment Variables" 
                                        FontWeight="SemiBold"
                                        Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
-                            <ListView x:Name="EnvVarsListView" MaxHeight="400"/>
+                            <ListView x:Name="EnvVarsListView" MaxHeight="400"
+                                      SelectionMode="None"
+                                      AutomationProperties.AutomationId="DiagnosticsView_EnvVarsListView">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate x:DataType="local:EnvironmentInfoItem">
+                                        <Grid Padding="4,2" ColumnSpacing="16">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="250"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{x:Bind Key}"
+                                                       FontFamily="Consolas" FontSize="12"
+                                                       FontWeight="SemiBold"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       Foreground="{StaticResource VSQ.Text.PrimaryBrush}"/>
+                                            <TextBlock Grid.Column="1" Text="{x:Bind Value}"
+                                                       FontFamily="Consolas" FontSize="12"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{StaticResource VSQ.Text.SecondaryBrush}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
                         </StackPanel>
                     </Border>
                 </ScrollViewer>

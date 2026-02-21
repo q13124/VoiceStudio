@@ -5,6 +5,7 @@ using VoiceStudio.App.Services;
 using VoiceStudio.App.Services.UndoableActions;
 using VoiceStudio.Core.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 // Type aliases to resolve ambiguity with local types in VoiceStudio.App.Services namespace
@@ -19,6 +20,7 @@ namespace VoiceStudio.App.Views.Panels
     private ContextMenuService? _contextMenuService;
     private ToastNotificationService? _toastService;
     private UndoRedoService? _undoRedoService;
+    private IErrorLoggingService? _errorLoggingService;
 
     public MacroView()
     {
@@ -34,6 +36,7 @@ namespace VoiceStudio.App.Views.Panels
       _contextMenuService = ServiceProvider.GetContextMenuService();
       _toastService = ServiceProvider.GetToastNotificationService();
       _undoRedoService = ServiceProvider.GetUndoRedoService();
+      _errorLoggingService = ServiceProvider.TryGetErrorLoggingService();
 
       // Setup keyboard navigation
       this.Loaded += MacroView_KeyboardNavigation_Loaded;
@@ -86,7 +89,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "NewMacroButton_Click");
       }
     }
 
@@ -127,7 +130,7 @@ namespace VoiceStudio.App.Views.Panels
       }
       catch (Exception ex)
       {
-        System.Diagnostics.Debug.WriteLine($"Unhandled error in event handler: {ex.Message}");
+        _errorLoggingService?.LogError(ex, "CreateCurveButton_Click");
       }
     }
 
@@ -248,7 +251,7 @@ namespace VoiceStudio.App.Views.Panels
             await DuplicateMacroAsync(macro);
             break;
           case "export":
-            _toastService?.ShowToast(ToastType.Info, "Export", $"Export functionality for '{macro.Name}' is planned for a future release. Macros are automatically saved to your project.");
+            await ExportMacroAsync(macro);
             break;
           case "delete":
             if (ViewModel.DeleteMacroCommand.CanExecute(macro.Id))
@@ -294,7 +297,7 @@ namespace VoiceStudio.App.Views.Panels
             await DuplicateAutomationCurveAsync(curve);
             break;
           case "export":
-            _toastService?.ShowToast(ToastType.Info, "Export", $"Export functionality for '{curve.Name}' is planned for a future release. Automation curves are automatically saved to your project.");
+            await ExportAutomationCurveAsync(curve);
             break;
           case "delete":
             if (ViewModel.DeleteAutomationCurveCommand.CanExecute(curve.Id))
@@ -440,6 +443,48 @@ namespace VoiceStudio.App.Views.Panels
       }
 
       return System.Threading.Tasks.Task.CompletedTask;
+    }
+
+    private async System.Threading.Tasks.Task ExportMacroAsync(Macro macro)
+    {
+      var savePicker = new Windows.Storage.Pickers.FileSavePicker();
+      var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindowInstance);
+      WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
+
+      savePicker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
+      savePicker.FileTypeChoices.Add("JSON", new List<string> { ".json" });
+      savePicker.SuggestedFileName = $"macro_{macro.Name}_{DateTime.Now:yyyyMMdd}";
+
+      var file = await savePicker.PickSaveFileAsync();
+      if (file != null)
+      {
+        var json = System.Text.Json.JsonSerializer.Serialize(macro,
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        await Windows.Storage.FileIO.WriteTextAsync(file, json);
+        _toastService?.ShowToast(ToastType.Success, "Export Complete",
+            $"Exported macro '{macro.Name}' to {file.Name}");
+      }
+    }
+
+    private async System.Threading.Tasks.Task ExportAutomationCurveAsync(AutomationCurve curve)
+    {
+      var savePicker = new Windows.Storage.Pickers.FileSavePicker();
+      var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindowInstance);
+      WinRT.Interop.InitializeWithWindow.Initialize(savePicker, hwnd);
+
+      savePicker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
+      savePicker.FileTypeChoices.Add("JSON", new List<string> { ".json" });
+      savePicker.SuggestedFileName = $"automation_curve_{curve.Name}_{DateTime.Now:yyyyMMdd}";
+
+      var file = await savePicker.PickSaveFileAsync();
+      if (file != null)
+      {
+        var json = System.Text.Json.JsonSerializer.Serialize(curve,
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        await Windows.Storage.FileIO.WriteTextAsync(file, json);
+        _toastService?.ShowToast(ToastType.Success, "Export Complete",
+            $"Exported automation curve '{curve.Name}' to {file.Name}");
+      }
     }
   }
 }

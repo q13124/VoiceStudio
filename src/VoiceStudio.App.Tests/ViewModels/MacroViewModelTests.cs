@@ -75,5 +75,17 @@ namespace VoiceStudio.App.Tests.ViewModels
         {
             Assert.IsFalse(_viewModel.HasMultipleMacroSelection);
         }
+
+        [TestMethod]
+        public void CancelMacroExecutionCommand_IsNotNull()
+        {
+            Assert.IsNotNull(_viewModel.CancelMacroExecutionCommand);
+        }
+
+        [TestMethod]
+        public void IsExecutingMacro_DefaultIsFalse()
+        {
+            Assert.IsFalse(_viewModel.IsExecutingMacro);
+        }
     }
 }

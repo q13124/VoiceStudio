@@ -4,12 +4,17 @@ namespace VoiceStudio.Core.Models
 {
   public class VoiceSynthesisRequest
   {
-    public string Engine { get; set; } = "xtts"; // chatterbox, xtts, tortoise
+    public string Engine { get; set; } = "xtts";
     public string ProfileId { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
     public string Language { get; set; } = "en";
     public string? Emotion { get; set; }
-    public bool EnhanceQuality { get; set; }  // Enable quality enhancement pipeline
+    public bool EnhanceQuality { get; set; }
+    public double Speed { get; set; } = 1.0;
+    public double Pitch { get; set; } = 0.0;
+    public double Stability { get; set; } = 0.72;
+    public double Clarity { get; set; } = 0.58;
+    public double Temperature { get; set; } = 0.35;
   }
 
   public class VoiceSynthesisResponse

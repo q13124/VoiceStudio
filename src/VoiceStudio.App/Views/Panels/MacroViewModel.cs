@@ -87,12 +87,15 @@ namespace VoiceStudio.App.Views.Panels
     public bool IsAutomationCurveSelected(string curveId) => _automationCurveMultiSelectState?.SelectedIds.Contains(curveId) ?? false;
 
     private System.Threading.CancellationTokenSource? _statusPollingCts;
+    private System.Threading.CancellationTokenSource? _executionCts;
     private bool _isPollingStatus;
 
     /// <summary>
     /// Computed property for showing automation view (inverse of showMacrosView).
     /// </summary>
     public bool ShowAutomationView => !ShowMacrosView;
+
+    public bool IsExecutingMacro => !string.IsNullOrEmpty(ExecutingMacroId);
 
     public bool HasMacros => Macros?.Count > 0;
 
@@ -192,6 +195,8 @@ namespace VoiceStudio.App.Views.Panels
         await DeleteAutomationCurveAsync(curveId, CancellationToken.None);
       }, (string? curveId) => !IsLoading);
 
+      CancelMacroExecutionCommand = new RelayCommand(CancelMacroExecution, () => IsExecutingMacro);
+
       // Multi-select commands for macros
       SelectAllMacrosCommand = new RelayCommand(SelectAllMacros, () => Macros?.Count > 0);
       ClearMacroSelectionCommand = new RelayCommand(ClearMacroSelection);
@@ -219,6 +224,8 @@ namespace VoiceStudio.App.Views.Panels
     public IAsyncRelayCommand CreateAutomationCurveCommand { get; }
     public IAsyncRelayCommand<string> DeleteAutomationCurveCommand { get; }
 
+    public IRelayCommand CancelMacroExecutionCommand { get; }
+
     // Multi-select commands for macros
     public IRelayCommand SelectAllMacrosCommand { get; }
     public IRelayCommand ClearMacroSelectionCommand { get; }
@@ -241,6 +248,12 @@ namespace VoiceStudio.App.Views.Panels
     partial void OnShowMacrosViewChanged(bool value)
     {
       OnPropertyChanged(nameof(ShowAutomationView));
+    }
+
+    partial void OnExecutingMacroIdChanged(string? value)
+    {
+      OnPropertyChanged(nameof(IsExecutingMacro));
+      CancelMacroExecutionCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedTrackIdChanged(string? value)
@@ -429,27 +442,34 @@ namespace VoiceStudio.App.Views.Panels
       if (string.IsNullOrWhiteSpace(macroId))
         return;
 
+      _executionCts?.Cancel();
+      _executionCts?.Dispose();
+      _executionCts = new CancellationTokenSource();
+      var executionToken = _executionCts.Token;
+
       IsLoading = true;
       ErrorMessage = null;
       ExecutingMacroId = macroId;
 
       try
       {
-        // Start execution (non-blocking)
         _ = Task.Run(async () =>
         {
           try
           {
-            await _backendClient.ExecuteMacroAsync(macroId, cancellationToken);
+            await _backendClient.ExecuteMacroAsync(macroId, executionToken);
+          }
+          catch (OperationCanceledException)
+          {
+            _toastNotificationService?.ShowInfo("Cancelled", "Macro execution was cancelled");
           }
           catch (Exception ex)
           {
-            await Task.Delay(100, cancellationToken); // Small delay to ensure status is updated
+            await Task.Delay(100, CancellationToken.None);
             ErrorMessage = ResourceHelper.FormatString("Macro.ExecuteMacroFailed", ex.Message);
           }
-        }, cancellationToken);
+        }, executionToken);
 
-        // Start polling for status
         StartStatusPolling(macroId);
 
         var macro = Macros.FirstOrDefault(m => m.Id == macroId);
@@ -459,7 +479,7 @@ namespace VoiceStudio.App.Views.Panels
       catch (OperationCanceledException)
       {
         ExecutingMacroId = null;
-        return; // User cancelled
+        return;
       }
       catch (Exception ex)
       {
@@ -529,6 +549,16 @@ namespace VoiceStudio.App.Views.Panels
       _statusPollingCts = null;
     }
 
+    private void CancelMacroExecution()
+    {
+      _executionCts?.Cancel();
+      StopStatusPolling();
+      ExecutingMacroId = null;
+      IsLoading = false;
+      ExecutionStatus = null;
+      _toastNotificationService?.ShowInfo("Macro Cancelled", "Macro execution was cancelled");
+    }
+
     protected override void Dispose(bool disposing)
     {
       if (IsDisposed)
@@ -538,10 +568,11 @@ namespace VoiceStudio.App.Views.Panels
 
       if (disposing)
       {
-        // Stop status polling if active
         StopStatusPolling();
+        _executionCts?.Cancel();
+        _executionCts?.Dispose();
+        _executionCts = null;
 
-        // Clear collections
         Macros.Clear();
         AutomationCurves.Clear();
       }
