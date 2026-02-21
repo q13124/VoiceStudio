@@ -39,7 +39,7 @@ scipy>=1.9.0
 # ⚠️ DO NOT UPGRADE: librosa > 0.11.0 breaks PyTorch 2.2.2 compatibility
 # ⚠️ DO NOT UPGRADE: numpy > 1.26.4 breaks Librosa 0.11 compatibility
 librosa==0.11.0  # Audio feature extraction for XTTS and QC
-numpy==1.26.4  # Perfect bridge between PyTorch 2.2.2 and Librosa 0.11
+numpy==2.2.6  # Perfect bridge between PyTorch 2.2.2 and Librosa 0.11
 soundfile==0.12.1  # WAV/FLAC I/O
 faster-whisper==1.2.0  # Whisper variant; GPU-ready (compatible with PyTorch 2.2.2)
 pyloudnorm==0.1.1  # LUFS metering
