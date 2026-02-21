@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Phase 11 Post-GA Polish (2026-02-21)
+- **VS-0043 Type Safety**: Incremental mypy remediation on model_drift_detector, ab_testing, drift routes; MYPY_TRIAGE_PLAN updated with progress
+- **Performance Baselines**: Inference benchmark section (cache, GPU, health) in PERFORMANCE_BASELINES.md
+- **Sprint 1 Blocker Doc**: SPRINT1_GA_BLOCKER.md updated with Phase 11 note and SSH fallback
+
+#### Phase 10 Production Readiness (2026-02-21)
+- **Plugin Catalog**: pitch_shifter and silence_trimmer added to shared/catalog/plugins.json; 5 reference plugins; local catalog support via VOICESTUDIO_PLUGIN_CATALOG_URL
+- **Model Registry**: Seeding from engines/config.json; 6 installed engines; activate/rollback; A/B experiment API
+- **Operational Verification**: Alert rules (error_rate, latency_p95, circuit_open); metrics history; health aggregation; security and resilience test suites
+
+#### Phase 8 Ecosystem Maturity (2026-02-21)
+- **Model Lifecycle**: Model registry, baselines, rollback, A/B testing (ADR-043)
+- **Observability**: Alert rules (config/alert_rules.json), metrics history, health summary
+- **Debug.WriteLine Tier 2**: Bulk replacement; ErrorLogger recursion fix
+- **Testing Hardening**: Security tests (injection, auth bypass, plugin escape); resilience tests (circuit breaker, backend crash, plugin isolation)
+
 #### Phase 9 Final Launch Readiness (2026-02-21)
 - **Model Data Drift Detection**: PSI-based statistical drift detection; `backend/services/model_drift_detector.py`, `/api/drift/status`, `/api/drift/history`, `/api/drift/baseline`; Diagnostics panel integration
 - **User Documentation**: QUICK_START_GUIDE.md, FEATURE_GUIDE.md, TROUBLESHOOTING.md in docs/user/
@@ -36,6 +52,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Proper yield handling in `winappdriver_process` fixture
 
 ### Fixed
+
+#### Phase 11 Type Safety (2026-02-21)
+- model_drift_detector: Corrected _baselines/_current to dict[str, list[float]]; added _parse_list_float_dict for JSON load
+- ab_testing: Fixed stats["variants"] append via typed variants list
+- drift routes: Added return type annotations to all handlers
 
 #### Phase 9 Quality Remediation (2026-02-21)
 - Empty catch blocks: main.py (window format), model_baselines.py, model_registry.py (temp cleanup), PluginGateway.cs (HttpRequestException)

@@ -50,6 +50,15 @@ python -m mypy backend/ --strict --ignore-missing-imports 2>&1 | tee .buildlogs/
 python -m mypy backend/ --strict --ignore-missing-imports 2>&1 | grep "error:" | cut -d: -f1 | sort | uniq -c | sort -rn | head -30
 ```
 
+## Phase 11 Sprint 2 Progress (2026-02-21)
+
+**Completed fixes:**
+- `backend/services/model_drift_detector.py`: Fixed `_baselines`/`_current` type (`dict[str, list[float]]`), added `_parse_list_float_dict()` for JSON load, annotated `current_vals`
+- `backend/services/ab_testing.py`: Fixed `stats["variants"]` append by using typed `variants: list[dict[str, Any]]`
+- `backend/api/routes/drift.py`: Added return type annotations to all route handlers
+
+**Remaining:** Full `mypy --strict` on 8 priority modules blocked by transitive deps (app/, tools/, pydantic stubs). Incremental fixes reduce error count in targeted files. Full remediation tracked as tech debt.
+
 ## References
 
 - QUALITY_LEDGER.md § VS-0043

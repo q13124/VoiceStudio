@@ -161,6 +161,19 @@ Set up alerts for:
 - Throughput < 50% of expected
 - Resource usage > 80%
 
+### Inference Benchmarks (Phase 11)
+
+**TTS/STT Latency** (requires backend running):
+- **Cache stats** (`GET /api/cache/stats`): < 100ms
+- **GPU status** (`GET /api/gpu-status`): < 200ms
+- **Health** (`GET /health`): < 50ms
+
+**Real model inference** (XTTS, Whisper, Piper):
+- Run `pytest tests/performance/test_inference_benchmarks.py -v` with models loaded
+- Document actual P95 latency per engine in this section when run
+
+**CUDA compatibility:** See [CUDA_COMPATIBILITY_AUDIT.md](../reports/CUDA_COMPATIBILITY_AUDIT.md) for RTX 5070 Ti (sm_120) notes.
+
 ## Performance Improvement History
 
 ### Version 1.0.0
@@ -171,8 +184,13 @@ Set up alerts for:
 - Quality Benchmarking: < 120s (3 engines)
 - Quality Dashboard: < 300ms
 
+### Version 1.0.2 (Phase 11)
+
+- Inference benchmark tests added (`tests/performance/test_inference_benchmarks.py`)
+- Cache, GPU, health endpoint baselines documented
+
 ---
 
-**Last Updated:** 2025-01-27  
-**Version:** 1.0.0
+**Last Updated:** 2026-02-21  
+**Version:** 1.0.2
 

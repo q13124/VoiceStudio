@@ -106,12 +106,23 @@ class ModelDriftDetector:
     def __init__(self, data_dir: Path | None = None):
         self._data_dir = data_dir or get_path("data")
         self._drift_path = self._data_dir / "model_drift.json"
-        self._baselines: dict[str, dict[str, list[float]]] = {}  # key: engine_id:metric
-        self._current: dict[str, dict[str, list[float]]] = {}
+        self._baselines: dict[str, list[float]] = {}  # key: engine_id:metric_name -> values
+        self._current: dict[str, list[float]] = {}
         self._load()
 
     def _key(self, engine_id: str, metric_name: str) -> str:
         return f"{engine_id}:{metric_name}"
+
+    @staticmethod
+    def _parse_list_float_dict(raw: dict[str, Any]) -> dict[str, list[float]]:
+        """Convert JSON-loaded dict to dict[str, list[float]]."""
+        result: dict[str, list[float]] = {}
+        for k, v in raw.items():
+            if isinstance(v, list):
+                result[k] = [float(x) for x in v if isinstance(x, (int, float))]
+            else:
+                result[k] = []
+        return result
 
     def _load(self) -> None:
         """Load baselines and current from disk."""
@@ -119,8 +130,8 @@ class ModelDriftDetector:
             try:
                 with open(self._drift_path, encoding="utf-8") as f:
                     data = json.load(f)
-                self._baselines = data.get("baselines", {})
-                self._current = data.get("current", {})
+                self._baselines = self._parse_list_float_dict(data.get("baselines", {}))
+                self._current = self._parse_list_float_dict(data.get("current", {}))
                 logger.debug(
                     "Loaded drift data: %d baselines, %d current",
                     len(self._baselines),
@@ -213,7 +224,7 @@ class ModelDriftDetector:
                 if not key.startswith(eng + ":"):
                     continue
                 metric_name = key.split(":", 1)[1]
-                current_vals = self._current.get(key, [])
+                current_vals: list[float] = self._current.get(key, [])
                 if len(baseline_vals) < 5:
                     continue
                 baseline_bins = _values_to_bins(baseline_vals)

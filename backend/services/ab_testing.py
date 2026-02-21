@@ -539,14 +539,7 @@ class ABTestingService:
                 )
 
         # Calculate conversion rates
-        stats = {
-            "experiment_id": experiment_id,
-            "name": exp.name,
-            "status": exp.status.value,
-            "total_users": sum(variant_counts.values()),
-            "variants": [],
-        }
-
+        variants: list[dict[str, Any]] = []
         for variant in exp.variants:
             users = variant_counts.get(variant.id, 0)
             exposures = event_counts.get(variant.id, {}).get("exposure", 0)
@@ -554,7 +547,7 @@ class ABTestingService:
 
             conversion_rate = (conversions / exposures * 100) if exposures > 0 else 0
 
-            stats["variants"].append({
+            variants.append({
                 "id": variant.id,
                 "name": variant.name,
                 "weight": variant.weight,
@@ -564,7 +557,13 @@ class ABTestingService:
                 "conversion_rate": round(conversion_rate, 2),
             })
 
-        return stats
+        return {
+            "experiment_id": experiment_id,
+            "name": exp.name,
+            "status": exp.status.value,
+            "total_users": sum(variant_counts.values()),
+            "variants": variants,
+        }
 
     def export_flags_config(self) -> dict[str, bool]:
         """

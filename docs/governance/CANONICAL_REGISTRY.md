@@ -3,7 +3,7 @@
 This registry is the single source of truth for all canonical documents in VoiceStudio.
 Before creating a new document, check this registry to ensure the topic isn't already covered.
 
-> **Last Updated**: 2026-02-18 (Overseer Final Mission: Added handoff document, updated governance section)
+> **Last Updated**: 2026-02-21 (Phase 11: Post-GA polish, type safety, performance baselines)
 
 ---
 
@@ -84,6 +84,7 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Plugin ABC Unification ADR** | `docs/architecture/decisions/ADR-038-plugin-abc-unification.md` | 2026-02-17 | Unified Plugin ABC with mixins; deprecates BasePlugin and PluginBase |
 | **Phase 6 Strategic Maturity ADR** | `docs/architecture/decisions/ADR-039-phase6-strategic-maturity.md` | 2026-02-18 | Wasm runtime (wasmtime), AI quality, compliance, ecosystem, PQC research |
 | **Dual Plugin Loader ADR** | `docs/architecture/decisions/ADR-040-dual-plugin-loader.md` | 2026-02-18 | Documents dual loader architecture (PluginLoader vs PluginService) and usage guidelines |
+| **Model Lifecycle Strategy ADR** | `docs/architecture/decisions/ADR-043-model-lifecycle-strategy.md` | 2026-02-21 | Model registry, baselines, rollback, A/B testing integration |
 
 ## Planning and Roadmaps
 
@@ -302,7 +303,8 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | Topic | Canonical Source | Last Updated | Notes |
 | --- | --- | --- | --- |
 | **Release Notes (Main)** | `docs/release/RELEASE_NOTES.md` | 2026-02-16 | Moved from root (GAP-DOC-002). Primary release notes document. |
-| **v1.0.2 Release Notes** | `docs/release/RELEASE_NOTES_v1.0.2.md` | 2026-02-18 | Plugin system infrastructure, 17+ architectural gaps resolved, 8 bundled plugins. RC1 release. |
+| **v1.0.2 Release Notes** | `docs/release/RELEASE_NOTES_v1.0.2.md` | 2026-02-21 | Plugin system infrastructure, Phase 4-10 deliverables. GA release. |
+| **Handover Checklist** | `docs/release/HANDOVER_CHECKLIST.md` | 2026-02-21 | Build verification, test commands, gate status, key files, operational procedures, GA tag checklist |
 | **v1.0.1 Release Notes** | `docs/release/RELEASE_NOTES_v1.0.1.md` | 2026-02-05 | Phase 7 Production Readiness release. |
 
 ## Overseer Tooling

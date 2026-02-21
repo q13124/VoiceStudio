@@ -7,6 +7,7 @@ Provides endpoints for model data drift monitoring.
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -60,7 +61,7 @@ class SetBaselineRequest(BaseModel):
 
 
 @router.get("/status", response_model=DriftStatusListResponse)
-async def get_drift_status(engine_id: str | None = None):
+async def get_drift_status(engine_id: str | None = None) -> DriftStatusListResponse:
     """
     Get current drift status per engine.
 
@@ -102,7 +103,7 @@ async def get_drift_history(
     engine_id: str | None = None,
     metric_name: str | None = None,
     limit: int = 100,
-):
+) -> dict[str, list[dict[str, Any]]]:
     """
     Get drift metrics history.
 
@@ -122,7 +123,7 @@ async def get_drift_history(
 
 
 @router.post("/baseline")
-async def set_baseline(body: SetBaselineRequest):
+async def set_baseline(body: SetBaselineRequest) -> dict[str, str | int | bool]:
     """
     Set baseline distribution from current model version.
 
