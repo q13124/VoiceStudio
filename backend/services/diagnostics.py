@@ -108,6 +108,7 @@ class DiagnosticsService:
         self._check_paths()
         self._check_backend_services()
         self._check_network()
+        self._check_model_drift()
 
         # Calculate overall status
         statuses = [c.status for c in self._checks]
@@ -474,6 +475,56 @@ class DiagnosticsService:
 
         elapsed = (time.perf_counter() - start) * 1000
         logger.debug(f"Network checks: {elapsed:.2f}ms")
+
+    def _check_model_drift(self) -> None:
+        """Check model data drift status (Phase 9 Sprint 2)."""
+        import time
+        start = time.perf_counter()
+
+        try:
+            from backend.services.model_drift_detector import get_model_drift_detector
+
+            detector = get_model_drift_detector()
+            statuses = detector.get_status()
+
+            if not statuses:
+                self._add_check(
+                    "model_drift", "services", "pass",
+                    "Model drift detection: no baselines set (no drift to report)",
+                    {"engines_with_baselines": 0},
+                )
+                return
+
+            drifted = [s for s in statuses if s.any_drifted]
+            total_metrics = sum(len(s.metrics) for s in statuses)
+
+            if drifted:
+                engines = ", ".join(s.engine_id for s in drifted)
+                self._add_check(
+                    "model_drift", "services", "warn",
+                    f"Model drift detected for: {engines}",
+                    {
+                        "drifted_engines": [s.engine_id for s in drifted],
+                        "total_engines": len(statuses),
+                        "total_metrics": total_metrics,
+                    },
+                )
+            else:
+                self._add_check(
+                    "model_drift", "services", "pass",
+                    f"Model drift: no significant drift ({len(statuses)} engines monitored)",
+                    {"engines_monitored": len(statuses), "total_metrics": total_metrics},
+                )
+        except Exception as e:
+            logger.debug("Model drift check failed: %s", e)
+            self._add_check(
+                "model_drift", "services", "warn",
+                f"Model drift check unavailable: {e}",
+                {},
+            )
+
+        elapsed = (time.perf_counter() - start) * 1000
+        logger.debug(f"Model drift check: {elapsed:.2f}ms")
 
     def _collect_environment(self, include_sensitive: bool) -> dict:
         """Collect environment information."""

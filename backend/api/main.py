@@ -1255,6 +1255,7 @@ def _register_all_routes():
         "assistant_run",
         "dataset_editor",
         "diagnostics",
+        "drift",
         "emotion_style",
         "errors",
         "huggingface_fix",
@@ -1346,6 +1347,7 @@ def _register_all_routes():
     _include_route("tracing")
     _include_route("slo")
     _include_route("diagnostics")
+    _include_route("drift")
     _include_route("errors")
 
     # Additional routes

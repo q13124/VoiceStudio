@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Phase 9 Final Launch Readiness (2026-02-21)
+- **Model Data Drift Detection**: PSI-based statistical drift detection; `backend/services/model_drift_detector.py`, `/api/drift/status`, `/api/drift/history`, `/api/drift/baseline`; Diagnostics panel integration
+- **User Documentation**: QUICK_START_GUIDE.md, FEATURE_GUIDE.md, TROUBLESHOOTING.md in docs/user/
+- **Performance**: Inference benchmarks (tests/performance/test_inference_benchmarks.py), CUDA compatibility audit (docs/reports/CUDA_COMPATIBILITY_AUDIT.md)
+- **Installer**: INSTALLER_LIFECYCLE_TEST_REPORT.md template for VM validation
+
 #### Phase 7 Platform Operationalization (2026-02-21)
 - **Plugin Marketplace**: Publisher registration, plugin submission workflow, review queue, ratings/reviews, download tracking
 - **Operational Hardening**: API key persistence (JSON store), OTLP trace export (VOICESTUDIO_OTLP_ENDPOINT), Grafana dashboard config, health aggregation (plugins check), log rotation for .buildlogs/
@@ -30,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Proper yield handling in `winappdriver_process` fixture
 
 ### Fixed
+
+#### Phase 9 Quality Remediation (2026-02-21)
+- Empty catch blocks: main.py (window format), model_baselines.py, model_registry.py (temp cleanup), PluginGateway.cs (HttpRequestException)
+- python-multipart CVE (GHSA-wp53-j4wj-2cfg): bumped to >=0.0.22
 
 #### UI Testing Infrastructure (2026-02-13)
 - Selenium 4.x incompatibility with WinAppDriver JSON Wire Protocol
