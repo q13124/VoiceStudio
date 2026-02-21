@@ -1611,9 +1611,16 @@ async def synthesize_multipass(
                 detail=f"Profile reference audio not found for profile: {req.profile_id}",
             )
 
-        # Determine pass strategy based on preset
-        if req.pass_preset == "naturalness_focus" or req.pass_preset == "similarity_focus" or req.pass_preset == "artifact_focus":
-            pass
+        preset_overrides: dict[str, float] = {}
+        if req.pass_preset == "naturalness_focus":
+            preset_overrides = {"min_quality_improvement": 0.02, "naturalness_weight": 1.5}
+        elif req.pass_preset == "similarity_focus":
+            preset_overrides = {"min_quality_improvement": 0.01, "similarity_weight": 1.5}
+        elif req.pass_preset == "artifact_focus":
+            preset_overrides = {"min_quality_improvement": 0.03, "artifact_penalty": 2.0}
+
+        if preset_overrides.get("min_quality_improvement"):
+            req.min_quality_improvement = preset_overrides["min_quality_improvement"]
 
         # Generate multiple passes
         passes: list[PassResult] = []

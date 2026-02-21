@@ -135,17 +135,12 @@ async def delete_style_transfer_job(job_id: str):
 
 @router.get("/presets", response_model=list[StylePreset])
 async def list_style_presets():
-    """
-    List available voice style presets.
-
-    Note: Style presets are stored in memory. For persistent storage,
-    a database implementation would be required.
-    """
-    # Style presets are stored in memory in _style_transfer_jobs
-    # In production, this would load from database
-    # Currently, no presets are stored - presets would need to be created
-    # via the POST /presets endpoint first
-    return []
+    """List available voice style presets (in-memory; created via POST /presets)."""
+    presets = [
+        v for v in _style_transfer_jobs.values()
+        if isinstance(v, dict) and v.get("type") == "preset"
+    ]
+    return presets
 
 
 @router.post("/presets", response_model=StylePreset)

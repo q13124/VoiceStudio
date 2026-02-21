@@ -247,12 +247,13 @@ class AIAudioEnhancementService:
             # Create output directory
             self._output_dir.mkdir(parents=True, exist_ok=True)
 
-            # Try to load voice separation model (optional)
             try:
-                # Placeholder for voice separation model
-                logger.info("Voice separation model available")
+                from demucs.pretrained import get_model  # noqa: F401
+                self._has_voice_separation = True
+                logger.info("Voice separation model (demucs) available")
             except ImportError:
-                logger.warning("Voice separation model not available")
+                self._has_voice_separation = False
+                logger.info("Voice separation model (demucs) not installed; separation features disabled")
 
             self._initialized = True
             logger.info("AIAudioEnhancementService initialized")

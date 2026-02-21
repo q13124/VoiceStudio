@@ -305,12 +305,10 @@ async def visualize_embeddings(
 ):
     """Generate 2D/3D visualization coordinates for embeddings."""
     if not embedding_ids:
-        # Return empty list with proper error handling
-        logger.warning(
-            "List embeddings requested - returning empty list. "
-            "Real implementation needed."
+        raise HTTPException(
+            status_code=422,
+            detail="embedding_ids must contain at least one embedding ID",
         )
-        return []
 
     # Load embeddings
     embeddings_data = []
@@ -394,12 +392,10 @@ async def cluster_embeddings(
 ):
     """Cluster embeddings by similarity."""
     if not embedding_ids:
-        # Return empty list with proper error handling
-        logger.warning(
-            "List embeddings requested - returning empty list. "
-            "Real implementation needed."
+        raise HTTPException(
+            status_code=422,
+            detail="embedding_ids must contain at least one embedding ID",
         )
-        return []
 
     # Load embeddings
     embeddings_data = []

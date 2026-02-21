@@ -507,11 +507,38 @@ class TranslationService:
     # Internal methods
 
     async def _load_whisper_model(self, model: TranscriptionModel) -> Any:
-        """Load Whisper model."""
-        # Placeholder for actual model loading
-        # In production, load via whisper or faster-whisper
+        """Load Whisper model via faster-whisper."""
         logger.info(f"Loading Whisper model: {model.value}")
-        return {"model": model.value}
+        try:
+            from faster_whisper import WhisperModel
+            import os
+
+            models_root = os.getenv("VOICESTUDIO_MODELS_PATH", "")
+            if not models_root:
+                models_root = os.path.join(
+                    os.getenv("PROGRAMDATA", "C:\\ProgramData"),
+                    "VoiceStudio", "models",
+                )
+            whisper_cache = os.path.join(models_root, "whisper")
+            os.makedirs(whisper_cache, exist_ok=True)
+
+            try:
+                import torch as _torch
+                device = "cuda" if _torch.cuda.is_available() else "cpu"
+            except ImportError:
+                device = "cpu"
+            compute_type = "float16" if device == "cuda" else "int8"
+
+            whisper = WhisperModel(
+                model_size_or_path=model.value,
+                device=device,
+                compute_type=compute_type,
+                download_root=whisper_cache,
+            )
+            return whisper
+        except ImportError:
+            logger.warning("faster-whisper not installed, using stub model")
+            return {"model": model.value, "stub": True}
 
     async def _run_whisper(
         self,
