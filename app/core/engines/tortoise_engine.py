@@ -193,15 +193,21 @@ class TortoiseEngine(EngineProtocol):
 
     # Quality presets
     QUALITY_PRESETS = {
-        "ultra_fast": {"num_autoregressive_samples": 16, "diffusion_iterations": 30},
-        "fast": {"num_autoregressive_samples": 32, "diffusion_iterations": 50},
-        "standard": {"num_autoregressive_samples": 96, "diffusion_iterations": 100},
-        "high_quality": {
+        "ultra_fast": {
+            "num_autoregressive_samples": 16,
+            "diffusion_iterations": 30,
+            "cond_free": False,
+        },
+        "fast": {
+            "num_autoregressive_samples": 96,
+            "diffusion_iterations": 80,
+        },
+        "standard": {
             "num_autoregressive_samples": 256,
             "diffusion_iterations": 200,
         },
-        "ultra_quality": {
-            "num_autoregressive_samples": 512,
+        "high_quality": {
+            "num_autoregressive_samples": 256,
             "diffusion_iterations": 400,
         },
     }
@@ -277,13 +283,14 @@ class TortoiseEngine(EngineProtocol):
         # Ensure model cache directory exists
         os.makedirs(model_cache_dir, exist_ok=True)
 
-        # Initialize Tortoise TTS
-        # Note: Actual API may vary, this is a template based on common patterns
-        self.tts = TextToSpeech()
+        tortoise_models_dir = os.path.join(model_cache_dir, "tortoise_models")
+        os.makedirs(tortoise_models_dir, exist_ok=True)
 
-        # Move to device if available
-        if hasattr(self.tts, "to"):
-            self.tts.to(self.device)
+        self.tts = TextToSpeech(
+            device=self.device,
+            models_dir=tortoise_models_dir,
+            kv_cache=True,
+        )
 
         # Cache model
         if self.enable_caching:
@@ -368,104 +375,89 @@ class TortoiseEngine(EngineProtocol):
             if isinstance(speaker_wav, (str, Path)):
                 speaker_wav = [speaker_wav]
 
-            # Ensure all paths are strings
             speaker_wav = [str(path) for path in speaker_wav]
 
-            # Use voice_samples if provided, otherwise use speaker_wav
             voice_refs = voice_samples if voice_samples else speaker_wav
             if voice_refs:
                 voice_refs = [str(path) for path in voice_refs]
 
-            # Get or cache voice embedding for multi-voice synthesis
-            voice_embedding = None
-            if self.enable_caching and voice_refs and len(voice_refs) > 1:
-                voice_embedding = _get_cached_voice_embedding(voice_refs)
-                if voice_embedding is None and hasattr(self.tts, "get_voice_embedding"):
-                    # Extract embedding and cache it
+            sample_rate = 24000
+
+            voice_tensors = None
+            if voice_refs:
+                try:
+                    import torchaudio
+                    voice_tensors = []
+                    for ref_path in voice_refs:
+                        wav, sr = torchaudio.load(ref_path)
+                        if sr != 22050:
+                            wav = torchaudio.functional.resample(wav, sr, 22050)
+                        voice_tensors.append(wav.squeeze())
+                except Exception as e:
+                    logger.warning(f"Failed to load voice references as tensors: {e}")
+
+            conditioning_latents = None
+            if voice_tensors and self.enable_caching:
+                cached = _get_cached_voice_embedding(voice_refs)
+                if cached is not None:
+                    conditioning_latents = cached
+                elif hasattr(self.tts, "get_conditioning_latents"):
                     try:
-                        voice_embedding = self.tts.get_voice_embedding(voice_refs)
-                        _cache_voice_embedding(voice_refs, voice_embedding)
-                        logger.debug(
-                            f"Cached voice embedding for {len(voice_refs)} samples"
-                        )
+                        conditioning_latents = self.tts.get_conditioning_latents(voice_tensors)
+                        _cache_voice_embedding(voice_refs, conditioning_latents)
                     except Exception as e:
-                        logger.debug(f"Failed to extract/cache voice embedding: {e}")
+                        logger.debug(f"Failed to cache conditioning latents: {e}")
 
-            # Get sample rate (Tortoise typically uses 22050)
-            sample_rate = getattr(self.tts, "output_sample_rate", 22050)
-
-            # Prepare synthesis parameters
-            synthesis_params = {
-                "text": text,
-                "voice_samples": voice_refs,
-                **quality_params,
-                **kwargs,
-            }
-
-            # Use cached embedding if available
-            if voice_embedding is not None:
-                synthesis_params["voice_embedding"] = voice_embedding
-
-            # Synthesize with inference mode for better performance
-            # Note: Actual API may vary, this is a template
             with torch.inference_mode():
-                if output_path:
-                    output_path = str(output_path)
-                    # Save to file
-                    if hasattr(self.tts, "tts_to_file"):
-                        self.tts.tts_to_file(
-                            output_path=output_path, **synthesis_params
-                        )
+                if conditioning_latents is not None:
+                    audio = self.tts.tts(
+                        text,
+                        conditioning_latents=conditioning_latents,
+                        **quality_params,
+                    )
+                elif voice_tensors:
+                    audio = self.tts.tts(
+                        text,
+                        voice_samples=voice_tensors,
+                        **quality_params,
+                    )
                 else:
-                    # Fallback: synthesize then save
-                    audio = self.tts.tts(**synthesis_params)
-                    import soundfile as sf
+                    audio = self.tts.tts_with_preset(
+                        text,
+                        preset=preset,
+                    )
 
-                    sf.write(output_path, audio, sample_rate)
+            audio_np = audio.squeeze().cpu().numpy()
 
+            if output_path:
+                import torchaudio
+                torchaudio.save(str(output_path), audio.squeeze(0).cpu(), sample_rate)
                 logger.info(f"Audio saved to: {output_path}")
 
-                # Load and process if quality enhancement or metrics needed
                 if enhance_quality or calculate_quality:
-                    import soundfile as sf
-
-                    audio, sr = sf.read(output_path)
-                    audio = self._process_audio_quality(
-                        audio,
-                        sr,
+                    audio_np = self._process_audio_quality(
+                        audio_np, sample_rate,
                         speaker_wav[0] if speaker_wav else None,
-                        enhance_quality,
-                        calculate_quality,
+                        enhance_quality, calculate_quality,
                     )
-                    if isinstance(audio, tuple):
-                        # Quality metrics returned
-                        enhanced_audio, quality_metrics = audio
-                        sf.write(output_path, enhanced_audio, sr)
+                    if isinstance(audio_np, tuple):
+                        enhanced_audio, quality_metrics = audio_np
+                        import soundfile as sf
+                        sf.write(str(output_path), enhanced_audio, sample_rate)
                         return None, quality_metrics
-                    else:
-                        sf.write(output_path, audio, sr)
 
-                    return None
-                else:
-                    # Return audio array
-                    audio = self.tts.tts(**synthesis_params)
-                    audio = (
-                        np.array(audio) if isinstance(audio, (list, tuple)) else audio
+                return None
+            else:
+                if enhance_quality or calculate_quality:
+                    audio_np = self._process_audio_quality(
+                        audio_np, sample_rate,
+                        speaker_wav[0] if speaker_wav else None,
+                        enhance_quality, calculate_quality,
                     )
+                    if isinstance(audio_np, tuple):
+                        return audio_np
 
-                    # Apply quality processing if requested
-                    if enhance_quality or calculate_quality:
-                        audio = self._process_audio_quality(
-                            audio,
-                            sample_rate,
-                            speaker_wav[0] if speaker_wav else None,
-                            enhance_quality,
-                            calculate_quality,
-                        )
-                        if isinstance(audio, tuple):
-                            return audio  # (audio, quality_metrics)
-
-                    return audio
+                return audio_np
 
         except Exception as e:
             logger.error(f"Synthesis failed: {e}")

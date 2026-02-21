@@ -49,7 +49,7 @@ except ImportError:
     enhance_voice_cloning_quality = None
 
 try:
-    from chatterbox_tts import ChatterboxTTS
+    from chatterbox.tts import ChatterboxTTS
 except ImportError:
     ChatterboxTTS = None
     logging.warning("Chatterbox TTS not installed. Install with: pip install chatterbox-tts")
@@ -288,13 +288,7 @@ class ChatterboxEngine(EngineProtocol):
         # Ensure model cache directory exists
         os.makedirs(model_cache_dir, exist_ok=True)
 
-        # Initialize Chatterbox TTS
-        # Note: Actual API may vary, this is a template based on common patterns
-        self.tts = ChatterboxTTS.from_pretrained(self.model_name, cache_dir=model_cache_dir)
-
-        # Move to device if available
-        if hasattr(self.tts, "to"):
-            self.tts.to(self.device)
+        self.tts = ChatterboxTTS.from_pretrained(device=self.device)
 
         # Cache model
         if self.enable_caching:
@@ -377,94 +371,61 @@ class ChatterboxEngine(EngineProtocol):
             # Ensure all paths are strings
             speaker_wav = [str(path) for path in speaker_wav]
 
-            # Get sample rate (Chatterbox typically uses 22050 or 24000)
-            sample_rate = getattr(self.tts, "output_sample_rate", 22050)
+            sample_rate = getattr(self.tts, "sr", 24000)
 
-            # Get or cache speaker embedding
-            speaker_embedding = None
-            if self.enable_caching and speaker_wav:
-                speaker_embedding = _get_cached_embedding(speaker_wav[0])
-                if speaker_embedding is None and hasattr(self.tts, "get_speaker_embedding"):
-                    # Extract embedding and cache it
-                    try:
-                        speaker_embedding = self.tts.get_speaker_embedding(speaker_wav[0])
-                        _cache_embedding(speaker_wav[0], speaker_embedding)
-                        logger.debug(f"Cached speaker embedding for: {speaker_wav[0]}")
-                    except Exception as e:
-                        logger.debug(f"Failed to extract/cache embedding: {e}")
+            exaggeration = 0.5
+            if emotion and emotion != "neutral":
+                emotion_intensity = {
+                    "happy": 0.8, "excited": 1.0, "sad": 0.3,
+                    "angry": 1.2, "calm": 0.2, "surprised": 0.9,
+                }
+                exaggeration = emotion_intensity.get(emotion, 0.5)
 
-            # Prepare synthesis parameters
-            synthesis_params = {
+            audio_prompt = str(speaker_wav[0]) if speaker_wav else None
+
+            gen_kwargs = {
                 "text": text,
-                "speaker_audio": speaker_wav[0] if speaker_wav else None,
-                "language": language,
-                **kwargs,
+                "audio_prompt_path": audio_prompt,
+                "exaggeration": exaggeration,
             }
+            for k in ("cfg_weight", "temperature", "repetition_penalty", "top_p"):
+                if k in kwargs:
+                    gen_kwargs[k] = kwargs[k]
 
-            # Use cached embedding if available
-            if speaker_embedding is not None:
-                synthesis_params["speaker_embedding"] = speaker_embedding
-
-            # Add emotion if provided
-            if emotion:
-                synthesis_params["emotion"] = emotion
-
-            # Synthesize with inference mode for better performance
-            # Note: Actual API may vary, this is a template
             with torch.inference_mode():
-                if output_path:
-                    output_path = str(output_path)
-                    # Save to file
-                    if hasattr(self.tts, "synthesize_to_file"):
-                        self.tts.synthesize_to_file(output_path=output_path, **synthesis_params)
-                    else:
-                        # Fallback: synthesize then save
-                        audio = self.tts.synthesize(**synthesis_params)
+                wav = self.tts.generate(**gen_kwargs)
+
+            audio = wav.squeeze(0).cpu().numpy()
+
+            if output_path:
+                import torchaudio
+                torchaudio.save(str(output_path), wav.cpu(), sample_rate)
+                logger.info(f"Audio saved to: {output_path}")
+
+                if enhance_quality or calculate_quality:
+                    audio = self._process_audio_quality(
+                        audio, sample_rate,
+                        speaker_wav[0] if speaker_wav else None,
+                        enhance_quality, calculate_quality,
+                    )
+                    if isinstance(audio, tuple):
+                        enhanced_audio, quality_metrics = audio
                         import soundfile as sf
+                        sf.write(str(output_path), enhanced_audio, sample_rate)
+                        return None, quality_metrics
 
-                        sf.write(output_path, audio, sample_rate)
+                return None
+            else:
+                if enhance_quality or calculate_quality:
+                    audio = self._process_audio_quality(
+                        audio, sample_rate,
+                        speaker_wav[0] if speaker_wav else None,
+                        enhance_quality, calculate_quality,
+                    )
+                    if isinstance(audio, tuple):
+                        return audio
 
-                    logger.info(f"Audio saved to: {output_path}")
-
-                    # Load and process if quality enhancement or metrics needed
-                    if enhance_quality or calculate_quality:
-                        import soundfile as sf
-
-                        audio, sr = sf.read(output_path)
-                        audio = self._process_audio_quality(
-                            audio,
-                            sr,
-                            speaker_wav[0] if speaker_wav else None,
-                            enhance_quality,
-                            calculate_quality,
-                        )
-                        if isinstance(audio, tuple):
-                            # Quality metrics returned
-                            enhanced_audio, quality_metrics = audio
-                            sf.write(output_path, enhanced_audio, sr)
-                            return None, quality_metrics
-                        else:
-                            sf.write(output_path, audio, sr)
-
-                    return None
-                else:
-                    # Return audio array
-                    audio = self.tts.synthesize(**synthesis_params)
-                    audio = np.array(audio) if isinstance(audio, (list, tuple)) else audio
-
-                    # Apply quality processing if requested
-                    if enhance_quality or calculate_quality:
-                        audio = self._process_audio_quality(
-                            audio,
-                            sample_rate,
-                            speaker_wav[0] if speaker_wav else None,
-                            enhance_quality,
-                            calculate_quality,
-                        )
-                        if isinstance(audio, tuple):
-                            return audio  # (audio, quality_metrics)
-
-                    return audio
+                return audio
 
         except Exception as e:
             logger.error(f"Synthesis failed: {e}")
