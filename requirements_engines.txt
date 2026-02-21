@@ -29,7 +29,7 @@ huggingface_hub==0.36.0  # Matches Transformers 4.55+ API
 tokenizers==0.21.4  # Required by Transformers 4.55 (tokenizers>=0.21,<0.22)
 safetensors==0.6.2  # Fast checkpoint I/O
 hf-xet==1.2.0  # XetHub remote dataset backend (installed by hub)
-fsspec==2025.9.0  # For remote asset loading
+fsspec==2026.2.0  # For remote asset loading
 diffusers>=0.21.0
 scipy>=1.9.0
 
