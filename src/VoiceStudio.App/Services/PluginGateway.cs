@@ -451,9 +451,9 @@ namespace VoiceStudio.App.Services
                     return list ?? new List<PluginReview>();
                 }
             }
-            catch (HttpRequestException)
+            catch (HttpRequestException ex)
             {
-                // Return empty on failure
+                ErrorLogger.LogDebug($"Marketplace reviews request failed: {ex.Message}", "PluginGateway.GetReviewsAsync");
             }
             return new List<PluginReview>();
         }
@@ -470,9 +470,9 @@ namespace VoiceStudio.App.Services
                     return await response.Content.ReadFromJsonAsync<PluginReview>(cancellationToken: cancellationToken);
                 }
             }
-            catch (HttpRequestException)
+            catch (HttpRequestException ex)
             {
-                // Return null on failure
+                ErrorLogger.LogDebug($"Marketplace my-review request failed: {ex.Message}", "PluginGateway.GetMyReviewAsync");
             }
             return null;
         }

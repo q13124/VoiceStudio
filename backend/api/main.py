@@ -1719,12 +1719,12 @@ def api_metrics_history(window: str = "24h"):
             try:
                 hours = int(window[:-1])
             except ValueError:
-                pass
+                logger.debug("Invalid window format %s (expected Nh), using default", window)
         elif window.endswith("d"):
             try:
                 hours = int(window[:-1]) * 24
             except ValueError:
-                pass
+                logger.debug("Invalid window format %s (expected Nd), using default", window)
         history = get_metrics_history(window_hours=min(hours, 720))
         return {
             "window": window,

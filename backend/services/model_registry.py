@@ -201,8 +201,8 @@ class ModelRegistryService:
             if tmp_path.exists():
                 try:
                     tmp_path.unlink()
-                except OSError:
-                    pass
+                except OSError as e:
+                    logger.debug("Could not remove temp file %s: %s", tmp_path, e)
 
     def list_models(self, engine_id: str | None = None) -> list[dict[str, Any]]:
         """
