@@ -256,6 +256,14 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
+    private void SourceLanguage_SelectionChanged(object sender, global::Microsoft.UI.Xaml.Controls.SelectionChangedEventArgs e)
+    {
+      if (sender is ComboBox comboBox && comboBox.SelectedItem is ViewModels.LanguageItem langItem)
+      {
+        ViewModel.SourceLanguage = langItem.Code;
+      }
+    }
+
     private void MultilingualSupportView_KeyboardNavigation_Loaded(object _, RoutedEventArgs __)
     {
       KeyboardNavigationHelper.SetupTabNavigation(this);

@@ -40,6 +40,24 @@ namespace VoiceStudio.App.Views.Panels
       });
     }
 
+    private void HelpButton_Click(object _, RoutedEventArgs __)
+    {
+      HelpOverlay.Title = "Tag Organization Help";
+      HelpOverlay.HelpText = "The Tag Organization view lets you explore and manage tags in three different views: Cloud (visual overview with size by frequency), Hierarchy (grouped by category), and List (detailed sortable list). Click on any tag to filter by it.";
+
+      HelpOverlay.Shortcuts.Clear();
+      HelpOverlay.Shortcuts.Add(new Controls.KeyboardShortcut { Key = "F5", Description = "Refresh tags" });
+      HelpOverlay.Shortcuts.Add(new Controls.KeyboardShortcut { Key = "Escape", Description = "Close help" });
+
+      HelpOverlay.Tips.Clear();
+      HelpOverlay.Tips.Add("Switch between Cloud, Hierarchy, and List views for different perspectives");
+      HelpOverlay.Tips.Add("Tag cloud shows larger tags for more frequently used ones");
+      HelpOverlay.Tips.Add("Click a tag to filter and see only that tag's items");
+
+      HelpOverlay.Visibility = Visibility.Visible;
+      HelpOverlay.Show();
+    }
+
     private void TagOrganizationView_Loaded(object _, RoutedEventArgs __)
     {
       _ = ViewModel.RefreshCommand.ExecuteAsync(null);

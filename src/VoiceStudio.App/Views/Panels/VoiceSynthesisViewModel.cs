@@ -183,6 +183,22 @@ namespace VoiceStudio.App.Views.Panels
     [ObservableProperty]
     private bool hasPipelineComparison;
 
+    // Multi-Pass Synthesis (IDEA 61)
+    [ObservableProperty]
+    private bool isMultiPassSynthesizing;
+
+    [ObservableProperty]
+    private int multiPassCount = 3;
+
+    [ObservableProperty]
+    private bool hasMultiPassResult;
+
+    [ObservableProperty]
+    private int multiPassPassesCompleted;
+
+    [ObservableProperty]
+    private double multiPassBestQualityScore;
+
     [ObservableProperty]
     private double speed = 1.0;
 
@@ -368,6 +384,13 @@ namespace VoiceStudio.App.Views.Panels
         await CheckEnsembleStatusAsync(ct);
       }, () => !string.IsNullOrEmpty(EnsembleJobId) && !IsEnsembleProcessing);
 
+      // Multi-Pass Synthesis command (IDEA 61)
+      MultiPassSynthesizeCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.Start("Command: MultiPassSynthesize", PerformanceBudgets.CommandExecutionMs);
+        await MultiPassSynthesizeAsync(ct);
+      }, () => SelectedProfile != null && !string.IsNullOrWhiteSpace(Text) && !IsMultiPassSynthesizing && !IsLoading);
+
       // Load profiles on initialization
       var loadCt = new CancellationTokenSource(TimeSpan.FromSeconds(30)).Token;
       _ = LoadProfilesAsync(loadCt).ContinueWith(t =>
@@ -428,6 +451,9 @@ namespace VoiceStudio.App.Views.Panels
     public EnhancedAsyncRelayCommand LoadPipelinesCommand { get; }
     public EnhancedAsyncRelayCommand PreviewPipelineCommand { get; }
     public EnhancedAsyncRelayCommand ComparePipelineCommand { get; }
+
+    // Multi-Pass Synthesis command (IDEA 61)
+    public EnhancedAsyncRelayCommand MultiPassSynthesizeCommand { get; }
 
     public bool CanSynthesize =>
         SelectedProfile != null &&
@@ -1655,6 +1681,85 @@ namespace VoiceStudio.App.Views.Panels
       }
     }
 
+    // Multi-Pass Synthesis method (IDEA 61)
+    private async Task MultiPassSynthesizeAsync(CancellationToken cancellationToken)
+    {
+      if (SelectedProfile == null || string.IsNullOrWhiteSpace(Text))
+        return;
+
+      IsMultiPassSynthesizing = true;
+      IsLoading = true;
+      ErrorMessage = null;
+      HasError = false;
+      HasMultiPassResult = false;
+      MultiPassSynthesizeCommand.NotifyCanExecuteChanged();
+      StatusMessage = ResourceHelper.GetString("Status.MultiPassSynthesizing", "Running multi-pass synthesis...");
+
+      try
+      {
+        var request = new MultiPassSynthesisRequest
+        {
+          Text = Text,
+          ProfileId = SelectedProfile.Id,
+          Engine = SelectedEngine,
+          Passes = MultiPassCount,
+          Language = Language,
+          Emotion = Emotion,
+          EnhanceQuality = EnhanceQuality,
+          Speed = Speed,
+          Pitch = Pitch,
+          Stability = Stability,
+          Clarity = Clarity,
+          Temperature = Temperature
+        };
+
+        var response = await _backendClient.PostAsync<MultiPassSynthesisRequest, MultiPassSynthesisResponse>(
+            "/api/voice/synthesize/multipass", request, cancellationToken);
+
+        HasMultiPassResult = response != null;
+
+        if (response != null)
+        {
+          MultiPassPassesCompleted = response.PassesCompleted;
+          MultiPassBestQualityScore = response.BestQualityScore;
+          LastSynthesizedAudioId = response.BestAudioId;
+          LastSynthesizedAudioUrl = response.BestAudioUrl;
+          CanPlayAudio = !string.IsNullOrWhiteSpace(response.BestAudioUrl);
+          PlayAudioCommand.NotifyCanExecuteChanged();
+          AddToTimelineCommand.NotifyCanExecuteChanged();
+
+          StatusMessage = $"Multi-pass synthesis complete ({response.PassesCompleted} passes, best quality: {response.BestQualityScore:F2})";
+          _toastNotificationService?.ShowSuccess(
+              "Multi-Pass Complete",
+              $"{response.PassesCompleted} passes completed. Best MOS: {response.BestQualityScore:F2}");
+        }
+      }
+      catch (OperationCanceledException)
+      {
+        StatusMessage = "Multi-pass synthesis cancelled";
+        return;
+      }
+      catch (Exception ex)
+      {
+        _errorLoggingService?.LogError(ex, "MultiPassSynthesize", new Dictionary<string, object>
+        {
+          { "Engine", SelectedEngine },
+          { "ProfileId", SelectedProfile?.Id ?? "unknown" },
+          { "Passes", MultiPassCount }
+        });
+        ErrorMessage = $"Multi-pass synthesis failed: {ErrorHandler.GetUserFriendlyMessage(ex)}";
+        HasError = true;
+        StatusMessage = string.Empty;
+        _errorService?.ShowError(ex, "Multi-pass synthesis failed");
+      }
+      finally
+      {
+        IsMultiPassSynthesizing = false;
+        IsLoading = false;
+        MultiPassSynthesizeCommand.NotifyCanExecuteChanged();
+      }
+    }
+
     private async Task<Stream?> LoadAudioStreamAsync(string url)
     {
       try
@@ -1689,6 +1794,31 @@ namespace VoiceStudio.App.Views.Panels
       var tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"voicestudio_preview_{Guid.NewGuid()}.wav");
       await System.IO.File.WriteAllBytesAsync(tempPath, audioData);
       return tempPath;
+    }
+
+    // Multi-Pass Synthesis models (IDEA 61)
+    private class MultiPassSynthesisRequest
+    {
+      public string Text { get; set; } = string.Empty;
+      public string ProfileId { get; set; } = string.Empty;
+      public string Engine { get; set; } = string.Empty;
+      public int Passes { get; set; } = 3;
+      public string Language { get; set; } = "en";
+      public string? Emotion { get; set; }
+      public bool EnhanceQuality { get; set; }
+      public double Speed { get; set; } = 1.0;
+      public double Pitch { get; set; }
+      public double Stability { get; set; } = 0.72;
+      public double Clarity { get; set; } = 0.58;
+      public double Temperature { get; set; } = 0.35;
+    }
+
+    private class MultiPassSynthesisResponse
+    {
+      public string BestAudioId { get; set; } = string.Empty;
+      public string? BestAudioUrl { get; set; }
+      public int PassesCompleted { get; set; }
+      public double BestQualityScore { get; set; }
     }
 
     protected override void Dispose(bool disposing)

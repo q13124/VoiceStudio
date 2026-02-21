@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VoiceStudio.Core.Panels;
 using VoiceStudio.Core.Services;
+using VoiceStudio.App.Services;
 using VoiceStudio.App.Utilities;
 
 namespace VoiceStudio.App.ViewModels
@@ -18,6 +19,7 @@ namespace VoiceStudio.App.ViewModels
   public partial class DeepfakeCreatorViewModel : BaseViewModel, IPanelView
   {
     private readonly IBackendClient _backendClient;
+    private readonly ToastNotificationService? _toastNotificationService;
 
     public string PanelId => "deepfake-creator";
     public string DisplayName => ResourceHelper.GetString("Panel.DeepfakeCreator.DisplayName", "Deepfake Creator");
@@ -73,6 +75,15 @@ namespace VoiceStudio.App.ViewModels
     {
       _backendClient = backendClient ?? throw new ArgumentNullException(nameof(backendClient));
 
+      try
+      {
+        _toastNotificationService = AppServices.TryGetToastNotificationService();
+      }
+      catch
+      {
+        _toastNotificationService = null;
+      }
+
       LoadEnginesCommand = new EnhancedAsyncRelayCommand(async (ct) =>
       {
         using var profiler = PerformanceProfiler.StartCommand("LoadEngines");
@@ -98,6 +109,11 @@ namespace VoiceStudio.App.ViewModels
         using var profiler = PerformanceProfiler.StartCommand("Refresh");
         await RefreshAsync(ct);
       }, () => !IsLoading);
+      EnhanceDeepfakeCommand = new EnhancedAsyncRelayCommand(async (ct) =>
+      {
+        using var profiler = PerformanceProfiler.StartCommand("EnhanceDeepfake");
+        await EnhanceDeepfakeAsync(ct);
+      }, () => !IsProcessing && !IsLoading);
 
       // Load initial data
       _ = LoadEnginesAsync(CancellationToken.None);
@@ -109,6 +125,7 @@ namespace VoiceStudio.App.ViewModels
     public IAsyncRelayCommand LoadJobsCommand { get; }
     public IAsyncRelayCommand DeleteJobCommand { get; }
     public IAsyncRelayCommand RefreshCommand { get; }
+    public IAsyncRelayCommand EnhanceDeepfakeCommand { get; }
 
     partial void OnIsProcessingChanged(bool value)
     {
@@ -399,6 +416,19 @@ namespace VoiceStudio.App.ViewModels
       await LoadEnginesAsync(cancellationToken);
       await LoadJobsAsync(cancellationToken);
       StatusMessage = ResourceHelper.GetString("DeepfakeCreator.Refreshed", "Refreshed");
+    }
+
+    private Task EnhanceDeepfakeAsync(CancellationToken cancellationToken)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+
+      StatusMessage = ResourceHelper.GetString("DeepfakeCreator.EnhancementNotAvailable",
+          "Deepfake enhancement requires backend support — feature coming soon");
+      _toastNotificationService?.ShowToast(ToastType.Info,
+          ResourceHelper.GetString("Toast.Title.FeatureNotAvailable", "Feature Not Available"),
+          StatusMessage);
+
+      return Task.CompletedTask;
     }
 
     private async Task<DeepfakeJobResponse?> UploadFilesAndCreateDeepfakeAsync(string sourceFacePath, string targetMediaPath, DeepfakeRequest requestData, CancellationToken cancellationToken = default)
