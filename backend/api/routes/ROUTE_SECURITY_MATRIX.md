@@ -76,6 +76,16 @@ These should always require auth even if auth is globally disabled:
 ### API Keys
 - All operations - api_key_manager.py ✓
 
+## Archived Routes (Arch Review Task 1.4)
+
+Moved to `routes/_archived/`: todo_panel, ultimate_dashboard, mcp_dashboard, adr, docs, reward, text_highlighting, script_editor, mix_scene, deepfake_creator.
+
+## Face Swap (Arch Review Task 1.4)
+
+- `POST /api/face-swap/create` - face_swap.py (gated, consent required)
+- `GET /api/face-swap/engines` - face_swap.py
+- Alias `/api/deepfake-creator/*` for backward compatibility. Gate: `experimental.face_swap` in config/feature_flags.json.
+
 ## Implementation Notes
 
 1. Use `Depends(require_auth_if_enabled)` for Protected tier

@@ -1163,7 +1163,6 @@ def _register_all_routes():
     start_time = time.time()
 
     route_module_names = [
-        "adr",
         "advanced_settings",
         "ai_production_assistant",
         "analytics",
@@ -1179,8 +1178,7 @@ def _register_all_routes():
         "backup",
         "batch",
         "dataset",
-        "deepfake_creator",
-        "docs",
+        "face_swap",
         "dubbing",
         "effects",
         "embedding_explorer",
@@ -1203,8 +1201,6 @@ def _register_all_routes():
         "library",
         "macros",
         "markers",
-        "mcp_dashboard",
-        "mix_scene",
         "mixer",
         "ml_optimization",
         "model_inspect",
@@ -1224,11 +1220,9 @@ def _register_all_routes():
         "realtime_visualizer",
         "recording",
         "repair",
-        "reward",
         "rvc",
         "safety",
         "scenes",
-        "script_editor",
         "settings",
         "shortcuts",
         "sonography",
@@ -1239,14 +1233,11 @@ def _register_all_routes():
         "tags",
         "telemetry",
         "templates",
-        "text_highlighting",
         "text_speech_editor",
-        "todo_panel",
         "tracks",
         "training",
         "training_audit",
         "transcribe",
-        "ultimate_dashboard",
         "upscaling",
         "video_edit",
         "version",
@@ -1260,7 +1251,6 @@ def _register_all_routes():
         "workflows",
         # Previously unregistered routes
         "advanced_spectrogram",
-        "adr",
         "ai_production_assistant",
         "assistant",
         "assistant_run",
@@ -1269,7 +1259,6 @@ def _register_all_routes():
         "drift",
         "emotion_style",
         "errors",
-        "huggingface_fix",
         "metrics",
         "mix_assistant",
         "multilingual",
@@ -1351,7 +1340,6 @@ def _register_all_routes():
     _include_route("training_audit")
     _include_route("mixer")
     _include_route("ml_optimization")
-    _include_route("docs")
     _include_route("health")
     _include_route("version")
     _include_route("monitoring")
@@ -1367,7 +1355,6 @@ def _register_all_routes():
     _include_route("engine")
     _include_route("engines")
     _include_route("engine_audit")
-    _include_route("adr")
     _include_route("prosody")
     _include_route("emotion")
     _include_route("formant")
@@ -1380,8 +1367,6 @@ def _register_all_routes():
     _include_route("articulation")
     _include_route("nr")
     _include_route("repair")
-    _include_route("mix_scene")
-    _include_route("reward")
     _include_route("safety")
     _include_route("img_sampler")
     _include_route("assistant_run")
@@ -1389,10 +1374,7 @@ def _register_all_routes():
     _include_route("image_gen")
     _include_route("image_search")
     _include_route("upscaling")
-    _include_route("deepfake_creator")
-    _include_route("todo_panel")
-    _include_route("ultimate_dashboard")
-    _include_route("mcp_dashboard")
+    _include_route("face_swap")
     _include_route("pdf")
     _include_route("voice_cloning_wizard")
     _include_route("multi_voice_generator")
@@ -1410,13 +1392,11 @@ def _register_all_routes():
     _include_route("templates")
     _include_route("automation")
     _include_route("scenes")
-    _include_route("script_editor")
     _include_route("markers")
     _include_route("audio_analysis")
     _include_route("ensemble")
     _include_route("ssml")
     _include_route("realtime_converter")
-    _include_route("text_highlighting")
     _include_route("sonography")
     _include_route("realtime_visualizer")
     _include_route("text_speech_editor")
@@ -1435,7 +1415,6 @@ def _register_all_routes():
     _include_route("emotion_style")
     _include_route("multilingual")
     _include_route("mix_assistant")
-    _include_route("huggingface_fix")
     _include_route("advanced_spectrogram")
     _include_route("metrics")
 
@@ -1468,13 +1447,14 @@ def _register_all_routes():
     except Exception as e:
         logger.warning(f"Failed to register project_effects_router: {e}")
 
+    # Register face-swap backward-compat alias (Arch Review 1.4)
     try:
-        from .routes.mcp_dashboard import mcp_router
+        from .routes.face_swap import deepfake_alias_router
 
-        app.include_router(mcp_router)
-        logger.debug("Registered mcp_router")
+        app.include_router(deepfake_alias_router)
+        logger.debug("Registered deepfake-creator alias router")
     except Exception as e:
-        logger.warning(f"Failed to register mcp_router: {e}")
+        logger.warning("Failed to register deepfake alias router: %s", e)
 
     # Register Plugin Gallery routes (D.1 Enhancement)
     try:

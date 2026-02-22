@@ -1,0 +1,21 @@
+{
+  "_comment": "Arch Review Task 1.4 - Experimental features gated. Set to true to enable.",
+  "experimental.face_swap": false,
+  "experimental.voice_morph": false,
+  "experimental.style_transfer": false,
+  "experimental.spatial_audio": false,
+  "experimental.embedding_explorer": false,
+  "experimental.ensemble": false,
+  "experimental.instant_cloning": false,
+  "experimental.realtime": false,
+  "experimental.multi_voice": false,
+  "experimental.multilingual": false,
+  "experimental.rvc": false,
+  "experimental.dubbing": false,
+  "experimental.translation": false,
+  "experimental.lip_sync": false,
+  "experimental.advanced_audio": false,
+  "experimental.image_gen": false,
+  "experimental.video_gen": false,
+  "experimental.pdf": false
+}
