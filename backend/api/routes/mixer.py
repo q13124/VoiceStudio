@@ -53,7 +53,7 @@ def _validate_effect_chain_id(effect_chain_id: str | None, project_id: str) -> N
         return  # None is valid - no effect chain assigned
 
     try:
-        from backend.services.effect_chain_store import get_effect_chain_store
+        from backend.audio.effects.effect_chain_store import get_effect_chain_store
 
         store = get_effect_chain_store()
         chain = store.get(effect_chain_id)

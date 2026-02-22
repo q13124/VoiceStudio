@@ -12,7 +12,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from backend.services.trace_export import (
+from backend.platform.telemetry.trace_export import (
     get_trace_analyzer,
     get_trace_exporter,
 )

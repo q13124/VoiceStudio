@@ -6,54 +6,56 @@ Provides automatic error recovery, retry logic, and fallback mechanisms for API 
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass, field
 from functools import wraps
-from typing import TYPE_CHECKING, TypeVar
+from typing import Any, TypeVar, cast
+
+logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 # Try to import resilience features
 try:
     from app.core.resilience.circuit_breaker import CircuitBreaker, CircuitState
     from app.core.resilience.graceful_degradation import (
         DegradationLevel,
-        GracefulDegradationHandler,
+        GracefulDegradation,
     )
-    from app.core.resilience.retry import RetryConfig, RetryHelper, RetryStrategy
+    from app.core.resilience.retry import RetryStrategy, retry_with_backoff
 
     HAS_RESILIENCE = True
 except ImportError:
     HAS_RESILIENCE = False
-    RetryHelper = None
-    RetryStrategy = None
-    RetryConfig = None
-    CircuitBreaker = None
-    CircuitState = None
-    GracefulDegradationHandler = None
-    DegradationLevel = None
 
-# For type hints when imports are not available
-if TYPE_CHECKING:
-    from app.core.resilience.circuit_breaker import CircuitBreaker
-    from app.core.resilience.graceful_degradation import GracefulDegradationHandler
-    from app.core.resilience.retry import RetryConfig
 
-logger = logging.getLogger(__name__)
+@dataclass
+class RetryConfig:
+    """Configuration for retry behavior."""
 
-T = TypeVar("T")
+    max_attempts: int = 3
+    strategy: str = "exponential"
+    initial_delay: float = 1.0
+    max_delay: float = 30.0
+    multiplier: float = 2.0
+    retryable_exceptions: list[type[Exception]] = field(
+        default_factory=lambda: [Exception]
+    )
 
 
 class ErrorRecoveryManager:
     """Manages error recovery for API operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize error recovery manager."""
-        self.retry_helper = RetryHelper() if HAS_RESILIENCE and RetryHelper else None
         self.circuit_breakers: dict[str, CircuitBreaker] = {}
-        self.degradation_handlers: dict[str, GracefulDegradationHandler] = {}
+        self.degradation_handlers: dict[str, GracefulDegradation] = {}
 
     def get_circuit_breaker(self, service_name: str) -> CircuitBreaker | None:
         """Get or create circuit breaker for a service."""
-        if not HAS_RESILIENCE or not CircuitBreaker:
+        if not HAS_RESILIENCE:
             return None
 
         if service_name not in self.circuit_breakers:
@@ -63,13 +65,13 @@ class ErrorRecoveryManager:
 
         return self.circuit_breakers[service_name]
 
-    def get_degradation_handler(self, operation_name: str) -> GracefulDegradationHandler | None:
+    def get_degradation_handler(self, operation_name: str) -> GracefulDegradation | None:
         """Get or create graceful degradation handler for an operation."""
-        if not HAS_RESILIENCE or not GracefulDegradationHandler:
+        if not HAS_RESILIENCE:
             return None
 
         if operation_name not in self.degradation_handlers:
-            handler = GracefulDegradationHandler(operation_name)
+            handler = GracefulDegradation(operation_name)
             self.degradation_handlers[operation_name] = handler
 
         return self.degradation_handlers[operation_name]
@@ -95,37 +97,40 @@ class ErrorRecoveryManager:
         Returns:
             Result of function execution
         """
-        # Get circuit breaker
         circuit_breaker = self.get_circuit_breaker(service_name)
-
-        # Get degradation handler
         degradation_handler = self.get_degradation_handler(operation_name)
 
-        # Register fallback if provided
         if degradation_handler and fallback:
-            degradation_handler.register_fallback(DegradationLevel.PARTIAL, fallback)
+            degradation_handler.register_fallback(DegradationLevel.DEGRADED, fallback)
 
-        # Execute with circuit breaker
         if circuit_breaker:
             try:
-                return circuit_breaker.execute(func)
+                loop = asyncio.new_event_loop()
+                try:
+                    result: T = loop.run_until_complete(circuit_breaker.call(func))
+                finally:
+                    loop.close()
+                return result
             except Exception as e:
                 logger.warning(f"Circuit breaker triggered for {service_name}: {e}")
-                # Try graceful degradation
                 if degradation_handler and fallback:
                     try:
-                        return degradation_handler.execute(fallback)
+                        loop = asyncio.new_event_loop()
+                        try:
+                            fallback_result: T = loop.run_until_complete(
+                                degradation_handler.execute(fallback)
+                            )
+                        finally:
+                            loop.close()
+                        return fallback_result
                     except Exception as fallback_error:
-                        logger.error(f"Fallback also failed for {operation_name}: {fallback_error}")
+                        logger.error(
+                            f"Fallback also failed for {operation_name}: {fallback_error}"
+                        )
                         raise
                 raise
         else:
-            # Execute with retry if available
-            if self.retry_helper and retry_config:
-                return self.retry_helper.execute_with_retry(func, config=retry_config)
-            else:
-                # Direct execution
-                return func()
+            return func()
 
     async def execute_with_recovery_async(
         self,
@@ -148,40 +153,34 @@ class ErrorRecoveryManager:
         Returns:
             Result of function execution
         """
-        # Get circuit breaker
         circuit_breaker = self.get_circuit_breaker(service_name)
-
-        # Get degradation handler
         degradation_handler = self.get_degradation_handler(operation_name)
 
-        # Register fallback if provided
         if degradation_handler and fallback:
-            degradation_handler.register_fallback(DegradationLevel.PARTIAL, fallback)
+            degradation_handler.register_fallback(DegradationLevel.DEGRADED, fallback)
 
-        # Execute with circuit breaker
         if circuit_breaker:
             try:
-                return await circuit_breaker.execute_async(func)
+                cb_func: Callable[..., Any] = cast(Callable[..., Any], func)
+                result: T = await circuit_breaker.call(cb_func)
+                return result
             except Exception as e:
                 logger.warning(f"Circuit breaker triggered for {service_name}: {e}")
-                # Try graceful degradation
                 if degradation_handler and fallback:
                     try:
-                        return await degradation_handler.execute_async(fallback)
+                        dg_func: Callable[..., Any] = cast(Callable[..., Any], fallback)
+                        fallback_result: T = await degradation_handler.execute(dg_func)
+                        return fallback_result
                     except Exception as fallback_error:
-                        logger.error(f"Fallback also failed for {operation_name}: {fallback_error}")
+                        logger.error(
+                            f"Fallback also failed for {operation_name}: {fallback_error}"
+                        )
                         raise
                 raise
         else:
-            # Execute with retry if available
-            if self.retry_helper and retry_config:
-                return await self.retry_helper.execute_with_retry_async(func, config=retry_config)
-            else:
-                # Direct execution
-                return await func()
+            return await func()
 
 
-# Global error recovery manager
 _error_recovery_manager: ErrorRecoveryManager | None = None
 
 
@@ -198,7 +197,7 @@ def with_error_recovery(
     operation_name: str | None = None,
     retry_config: RetryConfig | None = None,
     fallback: Callable | None = None,
-):
+) -> Callable:
     """
     Decorator for adding error recovery to functions.
 
@@ -211,7 +210,7 @@ def with_error_recovery(
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: object, **kwargs: object) -> object:
             manager = get_error_recovery_manager()
             op_name = operation_name or func.__name__
             return manager.execute_with_recovery(
@@ -223,7 +222,7 @@ def with_error_recovery(
             )
 
         @wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: object, **kwargs: object) -> object:
             manager = get_error_recovery_manager()
             op_name = operation_name or func.__name__
             return await manager.execute_with_recovery_async(
@@ -233,8 +232,6 @@ def with_error_recovery(
                 retry_config=retry_config,
                 fallback=fallback,
             )
-
-        import asyncio
 
         if asyncio.iscoroutinefunction(func):
             return async_wrapper

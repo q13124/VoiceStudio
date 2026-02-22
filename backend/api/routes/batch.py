@@ -18,7 +18,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from backend.services.engine_service import get_engine_service
+from backend.ml.models.engine_service import get_engine_service
 
 from ...services.JobStateStore import get_job_state_store
 from ..models import ApiOk
@@ -67,17 +67,13 @@ def _load_persisted_batch_jobs() -> None:
         logger.warning(f"Failed to load persisted batch jobs: {e}")
 
 
-def _websocket_notifier(event_type: str, data: dict[str, Any]):
+def _websocket_notifier(event_type: str, data: dict[str, Any]) -> None:
     """WebSocket notification callback for job events."""
     if HAS_WEBSOCKET:
         try:
-            # Determine topic based on event type
-            topic = "batch"
-            if event_type.startswith("job.") or event_type.startswith("batch."):
-                topic = "batch"
-
-            # Broadcast to WebSocket clients
-            realtime.broadcast(topic, {"type": event_type, **data})
+            asyncio.ensure_future(
+                realtime.broadcast_general_event(event_type, {"type": event_type, **data})
+            )
         except Exception as e:
             logger.debug(f"WebSocket notification failed: {e}")
 
@@ -329,7 +325,7 @@ async def delete_batch_job(job_id: str):
         _batch_store.delete(job_id)
         logger.info(f"Deleted batch job {job_id}")
 
-        return ApiOk(success=True)
+        return ApiOk(ok=True)
     except HTTPException:
         raise
     except Exception as e:
@@ -502,7 +498,7 @@ async def _process_batch_job(job_id: str):
             )
 
         # Validate engine availability
-        if not ENGINE_AVAILABLE or not engine_router:
+        if not ENGINE_AVAILABLE:
             error_msg = "Voice synthesis engines are not available. Please ensure engines are properly installed and configured."
             logger.error(f"Batch job {job_id} failed: {error_msg}")
 
@@ -594,11 +590,14 @@ async def _process_batch_job(job_id: str):
         if not os.path.exists(profile_audio_path):
             # Try to get from profiles API or storage
             try:
-                from .profiles import _get_profile_audio_path
+                from backend.project.management.profile_store import get_profile_store
 
-                profile_audio_path = _get_profile_audio_path(job.voice_profile_id)
+                _profile_store = get_profile_store()
+                profile_data = _profile_store.get(job.voice_profile_id)
+                if profile_data and isinstance(profile_data, dict):
+                    profile_audio_path = profile_data.get("audio_path", profile_audio_path)
             except Exception as e:
-                logger.debug(f"Could not get profile audio path from profiles API: {e}")
+                logger.debug(f"Could not get profile audio path from profile store: {e}")
 
         if not profile_audio_path or not os.path.exists(profile_audio_path):
             error_msg = f"Profile audio not found for profile '{job.voice_profile_id}'. Please ensure the profile has a reference audio file."
@@ -1196,7 +1195,7 @@ def _process_batch_job_sync(job_id: str) -> dict[str, Any]:
         return {"job_id": job_id, "status": "failed", "success": False, "error": str(e)}
 
 
-def generate_batch_quality_report(job_data: dict, all_jobs: list[dict] | None = None) -> dict:
+def generate_batch_quality_report(job_data: dict[str, Any], all_jobs: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """
     Generate quality report for a batch job.
 
@@ -1207,29 +1206,31 @@ def generate_batch_quality_report(job_data: dict, all_jobs: list[dict] | None = 
     Returns:
         Dictionary with quality report
     """
-    report = {
+    quality_score = job_data.get("quality_score")
+    quality_status = job_data.get("quality_status")
+    quality_threshold = job_data.get("quality_threshold")
+
+    report: dict[str, Any] = {
         "job_id": job_data.get("id"),
         "job_name": job_data.get("name"),
-        "quality_score": job_data.get("quality_score"),
-        "quality_status": job_data.get("quality_status"),
-        "quality_threshold": job_data.get("quality_threshold"),
+        "quality_score": quality_score,
+        "quality_status": quality_status,
+        "quality_threshold": quality_threshold,
         "metrics": job_data.get("quality_metrics", {}),
         "summary": {},
     }
 
-    # Calculate summary statistics
-    if report["quality_score"] is not None:
+    if quality_score is not None:
         report["summary"] = {
-            "score": report["quality_score"],
-            "status": report["quality_status"],
+            "score": quality_score,
+            "status": quality_status,
             "meets_threshold": (
-                report["quality_score"] >= report["quality_threshold"]
-                if report["quality_threshold"] is not None
+                quality_score >= quality_threshold
+                if quality_threshold is not None
                 else None
             ),
         }
 
-    # Add comparison if other jobs provided
     if all_jobs:
         completed_jobs = [
             j
@@ -1237,14 +1238,14 @@ def generate_batch_quality_report(job_data: dict, all_jobs: list[dict] | None = 
             if j.get("status") == JobStatus.COMPLETED.value and j.get("quality_score") is not None
         ]
         if completed_jobs:
-            scores = [j.get("quality_score") for j in completed_jobs]
+            scores: list[float] = [float(j["quality_score"]) for j in completed_jobs]
             report["comparison"] = {
                 "average": sum(scores) / len(scores) if scores else None,
                 "min": min(scores) if scores else None,
                 "max": max(scores) if scores else None,
                 "percentile": (
-                    sum(1 for s in scores if s < report["quality_score"]) / len(scores) * 100
-                    if report["quality_score"] is not None and scores
+                    sum(1 for s in scores if s < quality_score) / len(scores) * 100
+                    if quality_score is not None and scores
                     else None
                 ),
             }
@@ -1252,7 +1253,7 @@ def generate_batch_quality_report(job_data: dict, all_jobs: list[dict] | None = 
     return report
 
 
-def calculate_batch_statistics(jobs: list[dict]) -> dict:
+def calculate_batch_statistics(jobs: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Calculate quality statistics for a batch of jobs.
 
@@ -1266,36 +1267,37 @@ def calculate_batch_statistics(jobs: list[dict]) -> dict:
     completed_jobs = [j for j in jobs if j.get("status") == JobStatus.COMPLETED.value]
     jobs_with_quality = [j for j in completed_jobs if j.get("quality_score") is not None]
 
-    stats = {
+    quality_distribution: dict[str, int] = {}
+    status_distribution: dict[str, int] = {}
+
+    stats: dict[str, Any] = {
         "total_jobs": total_jobs,
         "completed_jobs": len(completed_jobs),
         "jobs_with_quality": len(jobs_with_quality),
         "average_quality": None,
         "min_quality": None,
         "max_quality": None,
-        "quality_distribution": {},
-        "status_distribution": {},
+        "quality_distribution": quality_distribution,
+        "status_distribution": status_distribution,
     }
 
     if jobs_with_quality:
-        scores = [j.get("quality_score") for j in jobs_with_quality]
+        scores: list[float] = [float(j["quality_score"]) for j in jobs_with_quality]
         stats["average_quality"] = sum(scores) / len(scores)
         stats["min_quality"] = min(scores)
         stats["max_quality"] = max(scores)
 
-        # Quality distribution (buckets)
         for job in jobs_with_quality:
-            score = job.get("quality_score", 0)
+            score = float(job.get("quality_score", 0))
             bucket = (
                 "excellent"
                 if score >= 0.9
                 else "good" if score >= 0.7 else "fair" if score >= 0.5 else "poor"
             )
-            stats["quality_distribution"][bucket] = stats["quality_distribution"].get(bucket, 0) + 1
+            quality_distribution[bucket] = quality_distribution.get(bucket, 0) + 1
 
-    # Status distribution
     for job in jobs:
-        status = job.get("status", "unknown")
-        stats["status_distribution"][status] = stats["status_distribution"].get(status, 0) + 1
+        job_status = str(job.get("status", "unknown"))
+        status_distribution[job_status] = status_distribution.get(job_status, 0) + 1
 
     return stats

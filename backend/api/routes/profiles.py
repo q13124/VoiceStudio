@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 # These are lazy-initialized to avoid import-time issues
 def _get_profiles_wrapper():
     """Get the profile store for legacy imports."""
-    from backend.services.profile_store import get_profile_store
+    from backend.project.management.profile_store import get_profile_store
 
     return get_profile_store()
 

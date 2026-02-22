@@ -100,7 +100,7 @@ class DatasetQA:
             Dictionary with validation results
         """
         audio_path = Path(audio_path)
-        results = {
+        results: dict[str, Any] = {
             "file": str(audio_path),
             "valid": False,
             "errors": [],
@@ -151,7 +151,7 @@ class DatasetQA:
                 # Check for silence
                 if HAS_AUDIO_UTILS:
                     try:
-                        silence_regions = detect_silence(audio, sr)
+                        silence_regions = detect_silence(audio, int(sr))
                         silence_duration = sum(end - start for start, end in silence_regions)
                         silence_ratio = silence_duration / duration if duration > 0 else 0.0
 
@@ -165,10 +165,10 @@ class DatasetQA:
                 # Quality check
                 if check_quality and self.quality_metrics:
                     try:
-                        quality = self.quality_metrics.calculate_all(
-                            audio, sr, include_advanced=False
+                        quality: dict[str, Any] = self.quality_metrics.calculate_all(
+                            audio, int(sr), include_advanced=False
                         )
-                        quality_score = quality.get("overall_quality_score", 0.0)
+                        quality_score: float = quality.get("overall_quality_score", 0.0)
                         results["quality_score"] = quality_score
 
                         if quality_score < self.quality_threshold:
@@ -211,7 +211,7 @@ class DatasetQA:
         if audio_extensions is None:
             audio_extensions = [".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac"]
 
-        results = {
+        results: dict[str, Any] = {
             "dataset_path": str(dataset_path),
             "timestamp": datetime.utcnow().isoformat(),
             "total_files": 0,
@@ -232,7 +232,7 @@ class DatasetQA:
             return results
 
         # Find all audio files
-        audio_files = []
+        audio_files: list[Path] = []
         if recursive:
             for ext in audio_extensions:
                 audio_files.extend(dataset_path.rglob(f"*{ext}"))
@@ -316,7 +316,7 @@ class DatasetQA:
             Dictionary with duplicate detection results
         """
         dataset_path = Path(dataset_path)
-        results = {
+        results: dict[str, Any] = {
             "dataset_path": str(dataset_path),
             "total_files": 0,
             "duplicates": [],
@@ -328,7 +328,7 @@ class DatasetQA:
 
         # Find all audio files
         audio_extensions = [".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac"]
-        audio_files = []
+        audio_files: list[Path] = []
         if recursive:
             for ext in audio_extensions:
                 audio_files.extend(dataset_path.rglob(f"*{ext}"))
@@ -340,7 +340,7 @@ class DatasetQA:
 
         # Simple duplicate detection by file size and name
         # In a full implementation, would use audio fingerprinting
-        file_sizes = {}
+        file_sizes: dict[int, list[str]] = {}
         for audio_file in audio_files:
             size = audio_file.stat().st_size
             if size not in file_sizes:
@@ -348,7 +348,7 @@ class DatasetQA:
             file_sizes[size].append(str(audio_file))
 
         # Find duplicates (same size)
-        duplicates = []
+        duplicates: list[dict[str, Any]] = []
         for size, files in file_sizes.items():
             if len(files) > 1:
                 duplicates.append({"size": size, "files": files})

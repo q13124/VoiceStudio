@@ -143,7 +143,7 @@ async def create_project(request: ProjectCreateRequest):
         Created project info
     """
     try:
-        from backend.services.translation_service import (
+        from backend.voice.translation.translation_service import (
             TranscriptionModel,
             TranslationProvider,
             get_translation_service,
@@ -211,7 +211,7 @@ async def transcribe_project(project_id: str, word_timestamps: bool = True):
         Transcription segments
     """
     try:
-        from backend.services.translation_service import get_translation_service
+        from backend.voice.translation.translation_service import get_translation_service
 
         service = get_translation_service()
         segments = await service.transcribe(project_id, word_timestamps=word_timestamps)
@@ -265,7 +265,7 @@ async def translate_project(project_id: str, preserve_timing: bool = True):
         Translated segments
     """
     try:
-        from backend.services.translation_service import get_translation_service
+        from backend.voice.translation.translation_service import get_translation_service
 
         service = get_translation_service()
         segments = await service.translate(project_id, preserve_timing=preserve_timing)
@@ -314,7 +314,7 @@ async def export_subtitles(project_id: str, request: SubtitleExportRequest):
         Path to exported subtitle file
     """
     try:
-        from backend.services.translation_service import get_translation_service
+        from backend.voice.translation.translation_service import get_translation_service
 
         service = get_translation_service()
 
@@ -352,7 +352,7 @@ async def export_subtitles(project_id: str, request: SubtitleExportRequest):
 async def list_projects():
     """List all translation projects."""
     try:
-        from backend.services.translation_service import get_translation_service
+        from backend.voice.translation.translation_service import get_translation_service
 
         service = get_translation_service()
         projects = service.list_projects()
@@ -379,7 +379,7 @@ async def list_projects():
 async def get_project(project_id: str):
     """Get translation project details."""
     try:
-        from backend.services.translation_service import get_translation_service
+        from backend.voice.translation.translation_service import get_translation_service
 
         service = get_translation_service()
         project = service.get_project(project_id)
@@ -408,7 +408,7 @@ async def get_project(project_id: str):
 async def delete_project(project_id: str):
     """Delete a translation project."""
     try:
-        from backend.services.translation_service import get_translation_service
+        from backend.voice.translation.translation_service import get_translation_service
 
         service = get_translation_service()
         success = service.delete_project(project_id)
@@ -429,7 +429,7 @@ async def delete_project(project_id: str):
 async def list_languages():
     """List supported languages."""
     try:
-        from backend.services.translation_service import get_translation_service
+        from backend.voice.translation.translation_service import get_translation_service
 
         service = get_translation_service()
         languages = service.get_supported_languages()

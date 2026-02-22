@@ -21,7 +21,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from backend.services.telemetry import (
+from backend.platform.telemetry.telemetry import (
     SpanStatus,
     TelemetryService,
     get_telemetry_service,

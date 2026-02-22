@@ -9,7 +9,7 @@ import logging
 import tempfile
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
@@ -18,7 +18,7 @@ from backend.core.security.file_validation import (
     FileValidationError,
     validate_audio_file,
 )
-from backend.services.engine_service import get_engine_service
+from backend.ml.models.engine_service import get_engine_service
 
 from ..optimization import cache_response
 
@@ -30,11 +30,10 @@ router = APIRouter(prefix="/api/quality", tags=["quality"])
 HAS_QUALITY_OPTIMIZATION = False
 HAS_QUALITY_PRESETS = False
 HAS_QUALITY_COMPARISON = False
-_quality_engine_service = None
+_quality_engine_service: Any = None
 
 try:
     _quality_engine_service = get_engine_service()
-    # Check if quality features are available
     presets = _quality_engine_service.get_quality_presets()
     HAS_QUALITY_PRESETS = len(presets) > 0
     HAS_QUALITY_OPTIMIZATION = True
@@ -42,6 +41,24 @@ try:
     logger.info(f"Quality EngineService initialized with {len(presets)} presets")
 except Exception as e:
     logger.warning(f"Quality optimization modules not available: {e}")
+
+try:
+    from app.core.engines.quality_comparison import (
+        QualityComparison as QualityComparison,
+    )
+    from app.core.engines.quality_optimizer import (
+        QualityOptimizer as QualityOptimizer,
+        optimize_synthesis_for_quality as optimize_synthesis_for_quality,
+    )
+    from app.core.engines.quality_presets import (
+        get_preset_description as get_preset_description,
+        get_preset_target_metrics as get_preset_target_metrics,
+        get_quality_preset as get_quality_preset,
+        get_synthesis_params_from_preset as get_synthesis_params_from_preset,
+        list_quality_presets as list_quality_presets,
+    )
+except ImportError:
+    pass
 
 
 # Request/Response Models
@@ -764,7 +781,7 @@ async def get_quality_dashboard(project_id: str | None = None, days: int = 30) -
         )
 
         # Calculate trends (daily averages)
-        daily_data = {}
+        daily_data: dict[Any, dict[str, list[Any]]] = {}
         for entry in recent_entries:
             entry_date = datetime.fromisoformat(entry.timestamp.replace("Z", "+00:00")).date()
             if entry_date not in daily_data:
@@ -818,7 +835,7 @@ async def get_quality_dashboard(project_id: str | None = None, days: int = 30) -
         ]
 
         # Calculate distribution
-        mos_distribution = {}
+        mos_distribution: dict[int, int] = {}
         for score in mos_scores:
             bucket = int(score)
             mos_distribution[bucket] = mos_distribution.get(bucket, 0) + 1
@@ -1065,7 +1082,7 @@ async def get_quality_trends(profile_id: str, time_range: str = "30d"):
         statistics: dict[str, dict[str, float]] = {}
 
         for metric in metrics_to_track:
-            metric_values = []
+            metric_values: list[dict[str, Any]] = []
             for entry in filtered_entries:
                 # Get metric value from entry
                 value = None
@@ -1080,13 +1097,13 @@ async def get_quality_trends(profile_id: str, time_range: str = "30d"):
                     metric_values.append({"timestamp": entry.timestamp, "value": value})
 
             # Sort by timestamp
-            metric_values.sort(key=lambda x: x["timestamp"])
+            metric_values.sort(key=lambda x: str(x["timestamp"]))
 
             trends[metric] = metric_values
 
             # Calculate statistics
             if metric_values:
-                values = [v["value"] for v in metric_values]
+                values: list[float] = [float(v["value"]) for v in metric_values]
                 avg = sum(values) / len(values)
                 min_val = min(values)
                 max_val = max(values)
@@ -1353,7 +1370,7 @@ async def check_quality_degradation(
         raise HTTPException(status_code=500, detail=f"Failed to check quality degradation: {e!s}")
 
 
-@router.get("/baseline/{profile_id}", response_model=Optional[QualityBaselineResponse])
+@router.get("/baseline/{profile_id}", response_model=QualityBaselineResponse | None)
 async def get_quality_baseline(profile_id: str, time_period_days: int = 30):
     """
     Get quality baseline for a voice profile (IDEA 56).
@@ -1437,8 +1454,8 @@ class QualityConsistencyReport(BaseModel):
     message: str | None = None
 
 
-class QualityTrendsResponse(BaseModel):
-    """Quality trends response."""
+class ProjectQualityTrendsResponse(BaseModel):
+    """Quality trends response for project consistency."""
 
     project_id: str
     has_data: bool
@@ -1598,7 +1615,7 @@ async def check_all_projects_consistency(time_period_days: int = 30):
         )
 
 
-@router.get("/consistency/{project_id}/trends", response_model=QualityTrendsResponse)
+@router.get("/consistency/{project_id}/trends", response_model=ProjectQualityTrendsResponse)
 async def get_project_quality_trends(project_id: str, time_period_days: int = 30):
     """
     Get quality trends for a project (IDEA 59).
@@ -1608,7 +1625,7 @@ async def get_project_quality_trends(project_id: str, time_period_days: int = 30
         time_period_days: Number of days to analyze (default: 30)
 
     Returns:
-        QualityTrendsResponse
+        ProjectQualityTrendsResponse
     """
     try:
         from api.utils.quality_consistency import get_quality_consistency_monitor
@@ -1616,7 +1633,7 @@ async def get_project_quality_trends(project_id: str, time_period_days: int = 30
         monitor = get_quality_consistency_monitor()
         trends = monitor.get_quality_trends(project_id, time_period_days)
 
-        return QualityTrendsResponse(**trends)
+        return ProjectQualityTrendsResponse(**trends)
 
     except Exception as e:
         logger.error(f"Failed to get project quality trends: {e}", exc_info=True)
@@ -1897,7 +1914,7 @@ async def export_quality_heatmap(
             writer = csv.writer(output)
 
             # Header
-            writer.writerow([x_dimension, y_dimension, metric, "count"])
+            writer.writerow([request.x_dimension, request.y_dimension, request.metric, "count"])
 
             # Data rows
             for _cell_key, cell_data in heatmap["matrix"].items():

@@ -127,7 +127,7 @@ async def list_models(engine: str | None = None):
 # -------------------------------------------------------------------------
 
 try:
-    from backend.services.model_registry import get_model_registry_service
+    from backend.ml.models.model_registry import get_model_registry_service
 
     _model_registry = get_model_registry_service()
     HAS_MODEL_REGISTRY = True
@@ -236,7 +236,7 @@ async def create_model_experiment(
     Variants should have config with engine_id and model_version.
     """
     try:
-        from backend.services.ab_testing import (
+        from backend.ml.models.ab_testing import (
             ABTestingService,
             Experiment,
             ExperimentStatus,

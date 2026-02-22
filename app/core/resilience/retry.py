@@ -12,7 +12,7 @@ import random
 from collections.abc import Callable
 from enum import Enum
 from functools import wraps
-from typing import TypeVar
+from typing import Any, TypeVar, cast
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ def is_retryable_error(exception: Exception) -> bool:
 
     # Check if exception has is_retryable attribute
     if hasattr(exception, "is_retryable"):
-        return exception.is_retryable
+        return bool(exception.is_retryable)
 
     # RetryableError is always retryable
     if isinstance(exception, RetryableError):
@@ -173,10 +173,12 @@ async def retry_with_backoff(
 
     for attempt in range(max_attempts):
         try:
+            result: T
             if asyncio.iscoroutinefunction(func):
-                return await func(*args, **kwargs)
+                result = await func(*args, **kwargs)
             else:
-                return func(*args, **kwargs)
+                result = func(*args, **kwargs)
+            return result
         except Exception as e:
             last_exception = e
 
@@ -252,25 +254,24 @@ def retry(
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
-        async def async_wrapper(*args, **kwargs) -> T:
+        async def async_wrapper(*args: object, **kwargs: object) -> T:
             return await retry_with_backoff(
                 func,
-                max_attempts=max_attempts,
-                strategy=strategy,
-                initial_delay=initial_delay,
-                max_delay=max_delay,
-                multiplier=multiplier,
-                fixed_delay=fixed_delay,
-                jitter_factor=jitter_factor,
-                retryable_exceptions=retryable_exceptions,
-                on_retry=on_retry,
+                max_attempts,
+                strategy,
+                initial_delay,
+                max_delay,
+                multiplier,
+                fixed_delay,
+                jitter_factor,
+                retryable_exceptions,
+                on_retry,
                 *args,
                 **kwargs,
             )
 
         @wraps(func)
-        def sync_wrapper(*args, **kwargs) -> T:
-            # For sync functions, we need to run in event loop
+        def sync_wrapper(*args: object, **kwargs: object) -> T:
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
@@ -280,22 +281,22 @@ def retry(
             return loop.run_until_complete(
                 retry_with_backoff(
                     func,
-                    max_attempts=max_attempts,
-                    strategy=strategy,
-                    initial_delay=initial_delay,
-                    max_delay=max_delay,
-                    multiplier=multiplier,
-                    fixed_delay=fixed_delay,
-                    jitter_factor=jitter_factor,
-                    retryable_exceptions=retryable_exceptions,
-                    on_retry=on_retry,
+                    max_attempts,
+                    strategy,
+                    initial_delay,
+                    max_delay,
+                    multiplier,
+                    fixed_delay,
+                    jitter_factor,
+                    retryable_exceptions,
+                    on_retry,
                     *args,
                     **kwargs,
                 )
             )
 
         if asyncio.iscoroutinefunction(func):
-            return async_wrapper
+            return cast(Callable[..., T], async_wrapper)
         else:
             return sync_wrapper
 

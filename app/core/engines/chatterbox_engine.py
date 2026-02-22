@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import torch
@@ -31,8 +32,11 @@ except ImportError:
     HAS_QUALITY_METRICS = False
 
 # Optional audio utilities import for quality enhancement
-# Default fallback for optional function
-enhance_voice_cloning_quality = None
+enhance_voice_cloning_quality: Any = None
+enhance_voice_quality: Any = None
+match_voice_profile: Any = None
+normalize_lufs: Any = None
+remove_artifacts: Any = None
 
 try:
     from app.core.audio.audio_utils import (
@@ -46,7 +50,6 @@ try:
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
-    enhance_voice_cloning_quality = None
 
 try:
     from chatterbox.tts import ChatterboxTTS
@@ -57,14 +60,15 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # Try importing general model cache
+_model_cache: Any = None
+HAS_MODEL_CACHE = False
+
 try:
     from app.core.models.cache import get_model_cache
 
     _model_cache = get_model_cache(max_models=5, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
 except ImportError:
-    HAS_MODEL_CACHE = False
-    _model_cache = None
     logger.debug("General model cache not available, using Chatterbox-specific cache")
 
 # Fallback: Chatterbox-specific cache (for backward compatibility)
@@ -256,15 +260,15 @@ class ChatterboxEngine(EngineProtocol):
         # Override device if GPU requested and available
         if gpu and torch.cuda.is_available() and self.device == "cpu":
             self.device = "cuda"
-        self.tts = None
+        self.tts: Any = None
         self.lazy_load = lazy_load
         self.batch_size = batch_size
-        self.enable_caching = enable_caching
+        self._caching_enabled = enable_caching
 
-    def _load_model(self):
+    def _load_model(self) -> bool:
         """Load model with caching support."""
         # Check cache first
-        if self.enable_caching:
+        if self._caching_enabled:
             cached_model = _get_cached_model(self.model_name, self.device)
             if cached_model is not None:
                 logger.debug(f"Using cached model: {self.model_name}")
@@ -291,7 +295,7 @@ class ChatterboxEngine(EngineProtocol):
         self.tts = ChatterboxTTS.from_pretrained(device=self.device)
 
         # Cache model
-        if self.enable_caching:
+        if self._caching_enabled:
             _cache_model(self.model_name, self.device, self.tts)
 
         self._initialized = True
@@ -435,7 +439,7 @@ class ChatterboxEngine(EngineProtocol):
                     if isinstance(audio, tuple):
                         return audio
 
-                return audio
+                return np.asarray(audio)
 
         except Exception as e:
             logger.error(f"Synthesis failed: {e}")
@@ -546,32 +550,33 @@ class ChatterboxEngine(EngineProtocol):
         Returns:
             Audio array or None, or tuple of (audio, quality_metrics) if calculate_quality=True
         """
-        kwargs = {}
+        synth_kwargs: dict[str, Any] = {}
         if speed != 1.0:
-            kwargs["speed"] = speed
+            synth_kwargs["speed"] = speed
 
-        audio = self.synthesize(
+        result = self.synthesize(
             text=text,
             speaker_wav=reference_audio,
             language=language,
             emotion=emotion,
             output_path=output_path,
-            **kwargs,
+            **synth_kwargs,
         )
 
         # Process audio quality (enhancement + metrics)
-        if audio is not None:
-            audio = self._process_audio_quality(
-                audio,
+        if result is not None and isinstance(result, np.ndarray):
+            quality_out = self._process_audio_quality(
+                result,
                 getattr(self.tts, "output_sample_rate", 22050),
                 reference_audio,
-                enhance=False,  # Enhancement can be enabled via synthesize() method
+                enhance=False,
                 calculate_metrics=calculate_quality,
             )
-            if isinstance(audio, tuple):
-                return audio  # (audio, quality_metrics)
+            if isinstance(quality_out, tuple):
+                return quality_out
+            return quality_out
 
-        return audio
+        return result
 
     def batch_synthesize(
         self,
@@ -602,7 +607,7 @@ class ChatterboxEngine(EngineProtocol):
 
         # Pre-process speaker audio once if caching enabled
         speaker_embedding = None
-        if self.enable_caching:
+        if self._caching_enabled:
             speaker_embedding = _get_cached_embedding(speaker_wav)
             if speaker_embedding is None and hasattr(self.tts, "get_speaker_embedding"):
                 try:
@@ -676,9 +681,9 @@ class ChatterboxEngine(EngineProtocol):
 
         return results
 
-    def enable_caching(self, enable: bool = True):
+    def enable_caching(self, enable: bool = True) -> None:
         """Enable or disable caching."""
-        self.enable_caching = enable
+        self._caching_enabled = enable
         logger.info(f"Model caching {'enabled' if enable else 'disabled'}")
 
     def set_batch_size(self, batch_size: int):
@@ -762,7 +767,7 @@ if __name__ == "__main__":
         reference_audio=reference_audio, text=text, language="en", emotion="happy"
     )
 
-    if audio is not None:
+    if audio is not None and isinstance(audio, np.ndarray):
         print(f"Generated audio shape: {audio.shape}")
 
     # Cleanup

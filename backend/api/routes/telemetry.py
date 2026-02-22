@@ -65,7 +65,7 @@ async def get_metrics():
     - Custom application metrics
     """
     try:
-        from backend.services.telemetry import get_telemetry_service
+        from backend.platform.telemetry.telemetry import get_telemetry_service
 
         service = get_telemetry_service()
         metrics = service.get_metrics()
@@ -95,7 +95,7 @@ async def get_slos():
     - API availability (> 99.5%)
     """
     try:
-        from backend.services.telemetry import get_telemetry_service
+        from backend.platform.telemetry.telemetry import get_telemetry_service
 
         service = get_telemetry_service()
         metrics = service.get_metrics()
@@ -161,7 +161,7 @@ async def get_recent_spans(
     Returns the most recent spans for debugging and analysis.
     """
     try:
-        from backend.services.telemetry import get_telemetry_service
+        from backend.platform.telemetry.telemetry import get_telemetry_service
 
         service = get_telemetry_service()
         spans = service.get_recent_spans(limit=limit)
@@ -185,7 +185,7 @@ async def reset_metrics():
     Clears all accumulated metrics. Useful for testing or after deployments.
     """
     try:
-        from backend.services.telemetry import get_telemetry_service
+        from backend.platform.telemetry.telemetry import get_telemetry_service
 
         service = get_telemetry_service()
         service.reset()

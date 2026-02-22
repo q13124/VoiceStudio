@@ -14,7 +14,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from backend.services.ab_testing import (
+from backend.ml.models.ab_testing import (
     ABTestingService,
     Experiment,
     ExperimentStatus,

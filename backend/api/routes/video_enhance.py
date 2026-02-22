@@ -85,7 +85,7 @@ async def start_enhancement(request: EnhanceRequest):
         Job information
     """
     try:
-        from backend.services.video_face_enhancer import (
+        from backend.media.video.video_face_enhancer import (
             EnhancementMode,
             QualityPreset,
             get_video_face_enhancer,
@@ -142,7 +142,7 @@ async def get_job_status(job_id: str):
         Job status
     """
     try:
-        from backend.services.video_face_enhancer import get_video_face_enhancer
+        from backend.media.video.video_face_enhancer import get_video_face_enhancer
 
         enhancer = get_video_face_enhancer()
         job = enhancer.get_job(job_id)
@@ -179,7 +179,7 @@ async def cancel_job(job_id: str) -> dict[str, Any]:
         Cancellation result
     """
     try:
-        from backend.services.video_face_enhancer import get_video_face_enhancer
+        from backend.media.video.video_face_enhancer import get_video_face_enhancer
 
         enhancer = get_video_face_enhancer()
         success = await enhancer.cancel_job(job_id)
@@ -199,7 +199,7 @@ async def cancel_job(job_id: str) -> dict[str, Any]:
 async def list_jobs():
     """List all enhancement jobs."""
     try:
-        from backend.services.video_face_enhancer import get_video_face_enhancer
+        from backend.media.video.video_face_enhancer import get_video_face_enhancer
 
         enhancer = get_video_face_enhancer()
         jobs = enhancer.list_jobs()
@@ -242,7 +242,7 @@ async def detect_faces(request: FaceDetectionRequest):
         import cv2
         import numpy as np
 
-        from backend.services.video_face_enhancer import get_video_face_enhancer
+        from backend.media.video.video_face_enhancer import get_video_face_enhancer
 
         # Load image
         image = cv2.imread(request.image_path)

@@ -206,7 +206,7 @@ class DockerRunner:
     def container_id(self) -> Optional[str]:
         """Get the Docker container ID if running."""
         if self._container:
-            return self._container.short_id
+            return str(self._container.short_id)
         return None
 
     @property
@@ -375,7 +375,7 @@ class DockerRunner:
 
         try:
             logs = await asyncio.to_thread(self._container.logs, tail=tail, decode=True)
-            return logs
+            return str(logs)
         except Exception as e:
             logger.warning(f"Failed to get container logs: {e}")
             return ""
@@ -425,6 +425,9 @@ class DockerRunner:
         if self._image_ready:
             return
 
+        if self._client is None:
+            raise RuntimeError("Docker client not initialized")
+
         try:
             # Check if image exists locally
             await asyncio.to_thread(self._client.images.get, self.config.image)
@@ -440,6 +443,9 @@ class DockerRunner:
 
     async def _create_container(self) -> None:
         """Create the Docker container."""
+        if self._client is None:
+            raise RuntimeError("Docker client not initialized")
+
         # Build environment variables
         env = {
             "VOICESTUDIO_PLUGIN_ID": self.config.plugin_id,
@@ -702,7 +708,7 @@ except ImportError:
 
     def _parse_stats(self, stats: Dict[str, Any]) -> Dict[str, Any]:
         """Parse Docker stats into a simpler format."""
-        result = {
+        result: Dict[str, Any] = {
             "timestamp": time.time(),
             "container_id": self.container_id,
             "plugin_id": self.config.plugin_id,

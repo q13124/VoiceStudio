@@ -61,7 +61,7 @@ except ImportError:
     OTLPSpanExporter = None  # type: ignore
 
 # Local imports
-from backend.services.telemetry import get_telemetry_service
+from backend.platform.telemetry.telemetry import get_telemetry_service
 
 logger = logging.getLogger(__name__)
 

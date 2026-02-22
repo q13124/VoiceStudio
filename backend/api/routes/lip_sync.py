@@ -100,7 +100,7 @@ async def generate_lip_sync(request: LipSyncRequest):
         Output video ID with sync metadata
     """
     try:
-        from backend.services.lip_sync_service import (
+        from backend.media.lip_sync.lip_sync_service import (
             LipSyncServiceUnavailable,
             get_lip_sync_service,
         )
@@ -152,7 +152,7 @@ async def preview_lip_sync(request: LipSyncPreviewRequest):
         Preview video segment
     """
     try:
-        from backend.services.lip_sync_service import get_lip_sync_service
+        from backend.media.lip_sync.lip_sync_service import get_lip_sync_service
 
         service = get_lip_sync_service()
         result = await service.generate_preview(
@@ -196,7 +196,7 @@ async def extract_phonemes(request: PhonemeExtractionRequest):
         Phoneme sequence with timing
     """
     try:
-        from backend.services.lip_sync_service import get_lip_sync_service
+        from backend.media.lip_sync.lip_sync_service import get_lip_sync_service
 
         service = get_lip_sync_service()
         result = await service.extract_phonemes(request.audio_id)
@@ -222,7 +222,7 @@ async def extract_phonemes(request: PhonemeExtractionRequest):
 async def list_engines():
     """List available lip sync engines."""
     try:
-        from backend.services.lip_sync_service import get_lip_sync_service
+        from backend.media.lip_sync.lip_sync_service import get_lip_sync_service
 
         service = get_lip_sync_service()
         engines = service.list_engines()
@@ -248,7 +248,7 @@ async def list_engines():
 async def get_engine_status(engine_id: str):
     """Get status and capabilities of a specific engine."""
     try:
-        from backend.services.lip_sync_service import get_lip_sync_service
+        from backend.media.lip_sync.lip_sync_service import get_lip_sync_service
 
         service = get_lip_sync_service()
         status = service.get_engine_status(engine_id)

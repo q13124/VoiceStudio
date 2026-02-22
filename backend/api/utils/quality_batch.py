@@ -109,9 +109,9 @@ def prioritize_batch_jobs(
         Sorted list of jobs by priority
     """
 
-    def get_priority(job: dict[str, Any]) -> tuple:
+    def get_priority(job: dict[str, Any]) -> tuple[float]:
         """Calculate priority score for a job."""
-        priority_score = 0
+        priority_score: float = 0.0
 
         # Check if job has quality threshold requirement
         job_threshold = job.get("quality_threshold")
@@ -170,7 +170,7 @@ def generate_batch_quality_report(
     quality_status = job.get("quality_status")
     quality_threshold = job.get("quality_threshold")
 
-    report = {
+    report: dict[str, Any] = {
         "job_id": job.get("id"),
         "job_name": job.get("name"),
         "quality_score": quality_score,
@@ -267,7 +267,7 @@ def calculate_batch_statistics(jobs: list[dict[str, Any]]) -> dict[str, Any]:
     """
     completed_jobs = [j for j in jobs if j.get("status") == "completed"]
 
-    stats = {
+    stats: dict[str, Any] = {
         "total_jobs": len(jobs),
         "completed_jobs": len(completed_jobs),
         "jobs_with_quality": 0,

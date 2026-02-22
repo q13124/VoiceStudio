@@ -19,8 +19,11 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
+
+_MISSING: Any = None
 
 try:
     import librosa
@@ -28,9 +31,9 @@ try:
     import soundfile as sf
 except ImportError as e:
     logging.warning(f"Audio libraries not fully installed: {e}")
-    librosa = None
-    sf = None
-    pyln = None
+    librosa = _MISSING
+    sf = _MISSING
+    pyln = _MISSING
 
 try:
     import noisereduce as nr
@@ -147,15 +150,17 @@ except ImportError:
     logging.debug("scipy not available. Advanced spectral enhancement will be limited.")
 
 # Try importing mutagen for audio metadata
+_id3_no_header_error: type[Exception]
 try:
     from mutagen import File as MutagenFile
     from mutagen.id3 import ID3NoHeaderError
 
+    _id3_no_header_error = ID3NoHeaderError
     HAS_MUTAGEN = True
 except ImportError:
     HAS_MUTAGEN = False
-    MutagenFile = None
-    ID3NoHeaderError = None
+    MutagenFile = _MISSING
+    _id3_no_header_error = Exception
     logging.debug("mutagen not installed. Audio metadata reading will be limited.")
 
 # Try importing spleeter for source separation
@@ -201,6 +206,8 @@ except ImportError:
     DEFAULT_OUTPUT_DIR = os.path.join(
         os.environ.get("APPDATA", os.path.expanduser("~")), "VoiceStudio", "output"
     )
+
+_lazy_caches: dict[str, Any] = {}
 
 
 def normalize_lufs(
@@ -258,7 +265,7 @@ def normalize_lufs(
     else:
         # Stereo audio - process channels in parallel for better performance
         num_channels = audio.shape[1]
-        normalized_channels = [None] * num_channels
+        normalized_channels: list[np.ndarray | None] = [None] * num_channels
         meter = pyln.Meter(sample_rate, block_size=block_size)
 
         # Process channels in parallel if more than 2 channels
@@ -299,9 +306,10 @@ def normalize_lufs(
                         channel_audio, loudness, target_lufs
                     )
 
-        normalized = np.column_stack(normalized_channels)
+        valid_channels = [ch for ch in normalized_channels if ch is not None]
+        normalized = np.column_stack(valid_channels)
 
-    return normalized.astype(np.float32)
+    return np.asarray(normalized, dtype=np.float32)
 
 
 def detect_silence(
@@ -356,13 +364,13 @@ def detect_silence(
         try:
             # silero-vad provides state-of-the-art voice activity detection
             # Load model (lazy initialization)
-            if not hasattr(detect_silence, "_silero_model"):
-                detect_silence._silero_model, detect_silence._silero_utils = load_silero_vad()
+            if "silero_model" not in _lazy_caches:
+                _lazy_caches["silero_model"], _lazy_caches["silero_utils"] = load_silero_vad()
 
             # Get speech timestamps
             speech_timestamps = get_speech_timestamps(
                 audio_mono,
-                detect_silence._silero_model,
+                _lazy_caches["silero_model"],
                 threshold=0.5,
                 sampling_rate=sample_rate,
             )
@@ -491,22 +499,22 @@ def detect_silence(
     # Find continuous silence regions
     silence_regions = []
     in_silence = False
-    silence_start = None
+    silence_start: float | None = None
 
     for i, is_silent in enumerate(silence_frames):
         if is_silent and not in_silence:
-            silence_start = frame_times[i]
+            silence_start = float(frame_times[i])
             in_silence = True
-        elif not is_silent and in_silence:
-            silence_end = frame_times[i]
+        elif not is_silent and in_silence and silence_start is not None:
+            silence_end = float(frame_times[i])
             duration = silence_end - silence_start
             if duration >= min_silence_duration:
                 silence_regions.append((silence_start, silence_end))
             in_silence = False
 
     # Handle silence at the end
-    if in_silence:
-        silence_end = frame_times[-1]
+    if in_silence and silence_start is not None:
+        silence_end = float(frame_times[-1])
         duration = silence_end - silence_start
         if duration >= min_silence_duration:
             silence_regions.append((silence_start, silence_end))
@@ -556,7 +564,7 @@ def resample_audio(
             # Convert to float64 for soxr (it handles conversion internally)
             audio_float64 = audio.astype(np.float64)
             resampled = soxr.resample(audio_float64, original_sr, target_sr, quality="VHQ")
-            return resampled.astype(audio.dtype)
+            return np.asarray(resampled, dtype=audio.dtype)
         except Exception as e:
             logger.warning(f"soxr resampling failed: {e}. Falling back to resampy/librosa.")
 
@@ -564,7 +572,7 @@ def resample_audio(
     if HAS_RESAMPY:
         try:
             resampled = resampy.resample(audio, original_sr, target_sr)
-            return resampled.astype(audio.dtype)
+            return np.asarray(resampled, dtype=audio.dtype)
         except Exception as e:
             logger.warning(f"resampy resampling failed: {e}. Falling back to librosa.")
 
@@ -713,16 +721,16 @@ def analyze_voice_characteristics(
             # Fallback to librosa.pyin
             f0, voiced_flag, voiced_probs = librosa.pyin(
                 audio_mono,
-                fmin=librosa.note_to_hz("C2"),  # ~65 Hz
-                fmax=librosa.note_to_hz("C7"),  # ~2093 Hz
+                fmin=float(librosa.note_to_hz("C2")),
+                fmax=float(librosa.note_to_hz("C7")),
             )
             f0_voiced = f0[voiced_flag]
     else:
         # Use librosa.pyin (probabilistic YIN algorithm)
         f0, voiced_flag, _voiced_probs = librosa.pyin(
             audio_mono,
-            fmin=librosa.note_to_hz("C2"),  # ~65 Hz
-            fmax=librosa.note_to_hz("C7"),  # ~2093 Hz
+            fmin=float(librosa.note_to_hz("C2")),
+            fmax=float(librosa.note_to_hz("C7")),
         )
         f0_voiced = f0[voiced_flag]
 
@@ -815,11 +823,11 @@ def enhance_voice_quality(
                 enhanced_44k = enhanced
 
             # Initialize VoiceFixer (lazy initialization)
-            if not hasattr(enhance_voice_quality, "_voicefixer"):
-                enhance_voice_quality._voicefixer = VoiceFixer()
+            if "voicefixer" not in _lazy_caches:
+                _lazy_caches["voicefixer"] = VoiceFixer()
 
             # Restore voice
-            enhanced_44k = enhance_voice_quality._voicefixer.restore(enhanced_44k, cuda=False)
+            enhanced_44k = _lazy_caches["voicefixer"].restore(enhanced_44k, cuda=False)
 
             # Resample back to original sample rate
             if sample_rate != 44100:
@@ -857,7 +865,7 @@ def enhance_voice_quality(
                     def denoise_channel(ch_idx):
                         return ch_idx, nr.reduce_noise(y=enhanced[:, ch_idx], sr=sample_rate)
 
-                    enhanced_channels = [None] * num_channels
+                    enhanced_channels: list[np.ndarray | None] = [None] * num_channels
                     with ThreadPoolExecutor(max_workers=min(num_channels, 4)) as executor:
                         futures = {
                             executor.submit(denoise_channel, ch): ch for ch in range(num_channels)
@@ -865,13 +873,14 @@ def enhance_voice_quality(
                         for future in as_completed(futures):
                             ch_idx, denoised = future.result()
                             enhanced_channels[ch_idx] = denoised
-                    enhanced = np.column_stack(enhanced_channels)
+                    valid_enhanced = [ch for ch in enhanced_channels if ch is not None]
+                    enhanced = np.column_stack(valid_enhanced)
                 else:
                     # Sequential for 1-2 channels (lower overhead)
-                    enhanced_channels = []
+                    seq_channels: list[np.ndarray] = []
                     for ch in range(num_channels):
-                        enhanced_channels.append(nr.reduce_noise(y=enhanced[:, ch], sr=sample_rate))
-                    enhanced = np.column_stack(enhanced_channels)
+                        seq_channels.append(np.asarray(nr.reduce_noise(y=enhanced[:, ch], sr=sample_rate)))
+                    enhanced = np.column_stack(seq_channels)
             else:
                 enhanced = nr.reduce_noise(y=enhanced, sr=sample_rate)
         except Exception as e:
@@ -990,7 +999,7 @@ def load_audio(file_path: str | Path) -> tuple[np.ndarray, int]:
             audio = audio.T
 
         logger.info(f"Loaded audio from {file_path}: shape={audio.shape}, sr={sample_rate}")
-        return audio, sample_rate
+        return audio, int(sample_rate)
 
     except Exception as e:
         logger.error(f"Failed to load audio from {file_path}: {e}")
@@ -1090,15 +1099,12 @@ def time_stretch_audio(
     if HAS_PYRUBBERBAND:
         try:
             if preserve_pitch:
-                # Time-stretch (change tempo, preserve pitch)
                 stretched = pyrb.time_stretch(audio, sample_rate, rate)
             else:
-                # Pitch-shift (change pitch, preserve tempo)
-                # Calculate pitch shift in semitones
                 semitones = 12 * np.log2(rate)
                 stretched = pyrb.pitch_shift(audio, sample_rate, semitones)
 
-            return stretched
+            return np.asarray(stretched)
         except Exception as e:
             logger.warning(f"pyrubberband time-stretching failed: {e}. Falling back to librosa.")
 
@@ -1107,14 +1113,12 @@ def time_stretch_audio(
         raise ImportError("librosa is required for time-stretching")
 
     if preserve_pitch:
-        # Use librosa's time_stretch
         stretched = librosa.effects.time_stretch(audio, rate=rate)
     else:
-        # Use librosa's pitch_shift
         semitones = 12 * np.log2(rate)
         stretched = librosa.effects.pitch_shift(audio, sr=sample_rate, n_steps=semitones)
 
-    return stretched
+    return np.asarray(stretched)
 
 
 def pitch_shift_audio(audio: np.ndarray, sample_rate: int, semitones: float) -> np.ndarray:
@@ -1139,7 +1143,7 @@ def pitch_shift_audio(audio: np.ndarray, sample_rate: int, semitones: float) -> 
     if HAS_PYRUBBERBAND:
         try:
             shifted = pyrb.pitch_shift(audio, sample_rate, semitones)
-            return shifted
+            return np.asarray(shifted)
         except Exception as e:
             logger.warning(f"pyrubberband pitch-shifting failed: {e}. Falling back to librosa.")
 
@@ -1228,7 +1232,7 @@ def separate_voice_from_music(
                     os.unlink(vocals_path)
 
                 if output_format == "numpy":
-                    return vocals_audio
+                    return np.asarray(vocals_audio)
                 else:
                     # Load all stems if available
                     result = {"vocals": vocals_audio}
@@ -1337,7 +1341,7 @@ def analyze_audio_wavelets(
     }
 
 
-def read_audio_metadata(file_path: str | Path) -> dict[str, any]:
+def read_audio_metadata(file_path: str | Path) -> dict[str, Any]:
     """
     Read audio file metadata using mutagen.
 
@@ -1375,7 +1379,7 @@ def read_audio_metadata(file_path: str | Path) -> dict[str, any]:
         if audio_file is None:
             raise ValueError(f"Unsupported audio format: {file_path.suffix}")
 
-        metadata = {
+        metadata: dict[str, Any] = {
             "title": None,
             "artist": None,
             "album": None,
@@ -1436,7 +1440,7 @@ def read_audio_metadata(file_path: str | Path) -> dict[str, any]:
 
         return metadata
 
-    except ID3NoHeaderError:
+    except _id3_no_header_error:
         # File exists but has no ID3 tags
         logger.debug(f"Audio file has no metadata tags: {file_path}")
         return {
@@ -1462,7 +1466,7 @@ def match_voice_profile(
     target_audio: np.ndarray,
     reference_sr: int,
     target_sr: int,
-) -> dict[str, float | np.ndarray]:
+) -> dict[str, float | np.ndarray | list[str]]:
     """
     Match voice profile between reference and target audio.
 
@@ -1506,10 +1510,9 @@ def match_voice_profile(
     target_chars = analyze_voice_characteristics(target_audio, target_sr)
 
     # Calculate F0 similarity with improved normalization
-    ref_f0 = ref_chars["f0_mean"]
-    target_f0 = target_chars["f0_mean"]
+    ref_f0 = cast(float, ref_chars["f0_mean"])
+    target_f0 = cast(float, target_chars["f0_mean"])
     if ref_f0 > 0 and target_f0 > 0:
-        # Use ratio-based similarity (handles different pitch ranges better)
         f0_ratio = min(ref_f0, target_f0) / max(ref_f0, target_f0)
         f0_similarity = f0_ratio
     else:
@@ -1518,8 +1521,10 @@ def match_voice_profile(
     # Calculate formant similarity with improved weighting
     # F1 and F2 are more important for voice identity than F3
     formant_weights = [0.4, 0.4, 0.2]  # F1, F2, F3 weights
-    formant_sims = []
-    for i, (ref, tgt) in enumerate(zip(ref_chars["formants"], target_chars["formants"])):
+    formant_sims: list[float] = []
+    ref_formants = cast(list[float], ref_chars["formants"])
+    target_formants = cast(list[float], target_chars["formants"])
+    for i, (ref, tgt) in enumerate(zip(ref_formants, target_formants)):
         if ref > 0 and tgt > 0:
             # Ratio-based similarity for each formant
             formant_ratio = min(ref, tgt) / max(ref, tgt)
@@ -1546,8 +1551,8 @@ def match_voice_profile(
         mfcc_cosine_similarity = 0.0
 
     # Calculate spectral centroid similarity
-    ref_centroid = ref_chars.get("spectral_centroid", 0)
-    target_centroid = target_chars.get("spectral_centroid", 0)
+    ref_centroid = cast(float, ref_chars.get("spectral_centroid", 0))
+    target_centroid = cast(float, target_chars.get("spectral_centroid", 0))
     if ref_centroid > 0 and target_centroid > 0:
         spectral_similarity = min(ref_centroid, target_centroid) / max(
             ref_centroid, target_centroid
@@ -1653,10 +1658,10 @@ def enhance_voice_cloning_quality(
                 else:
                     enhanced_44k = enhanced
 
-                if not hasattr(enhance_voice_cloning_quality, "_voicefixer"):
-                    enhance_voice_cloning_quality._voicefixer = VoiceFixer()
+                if "cloning_voicefixer" not in _lazy_caches:
+                    _lazy_caches["cloning_voicefixer"] = VoiceFixer()
 
-                enhanced_44k = enhance_voice_cloning_quality._voicefixer.restore(
+                enhanced_44k = _lazy_caches["cloning_voicefixer"].restore(
                     enhanced_44k, cuda=False
                 )
 
@@ -1675,7 +1680,7 @@ def enhance_voice_cloning_quality(
                 enhanced = nr.reduce_noise(y=enhanced, sr=sample_rate)
 
     # Step 3: Spectral smoothing for naturalness (if preserving prosody)
-    if preserve_prosody and HAS_LIBROSA:
+    if preserve_prosody and librosa is not None:
         try:
             # Gentle spectral smoothing to reduce artifacts while preserving prosody
             stft = librosa.stft(enhanced, hop_length=512, n_fft=2048)
@@ -1727,7 +1732,7 @@ def enhance_voice_cloning_quality(
             enhanced = remove_artifacts(enhanced, sample_rate)
 
     # Step 6: Advanced spectral enhancement (ultra mode)
-    if enhancement_level == "ultra" and HAS_LIBROSA:
+    if enhancement_level == "ultra" and librosa is not None:
         try:
             # Multi-band spectral enhancement
             stft = librosa.stft(enhanced, hop_length=512, n_fft=2048)
@@ -1770,7 +1775,7 @@ def enhance_voice_cloning_quality(
             enhanced = enhanced / np.max(np.abs(enhanced)) * 0.95
 
     # Step 8: Final quality pass (aggressive/ultra mode only)
-    if enhancement_level in ["aggressive", "ultra"] and HAS_LIBROSA:
+    if enhancement_level in ["aggressive", "ultra"] and librosa is not None:
         try:
             # Apply gentle high-frequency enhancement for clarity
             stft = librosa.stft(enhanced, hop_length=512)
@@ -1835,18 +1840,23 @@ def _apply_rvc_postprocessing(
 
             # Convert using RVC
             converted = rvc_engine.convert_voice(
-                audio=audio,
+                source_audio=audio,
                 reference_audio=ref_audio,
                 sample_rate=sample_rate,
                 reference_sample_rate=ref_sr,
             )
             if converted is not None:
-                return converted
+                if isinstance(converted, tuple):
+                    result_arr = converted[0]
+                    if result_arr is not None:
+                        return result_arr
+                else:
+                    return converted
     except (ImportError, Exception) as e:
         logger.debug(f"RVC engine not available: {e}, using spectral matching")
 
     # Fallback: Advanced spectral matching
-    if HAS_LIBROSA:
+    if librosa is not None:
         try:
             # Load reference audio
             if isinstance(reference_audio, (str, Path)):

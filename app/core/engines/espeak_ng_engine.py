@@ -188,20 +188,21 @@ class ESpeakNGEngine(EngineProtocol):
         super().__init__(device=device, gpu=gpu)
 
         self.espeak_path = espeak_path
-        self.executable_path = None
-        self.voices = []
-        self.available_languages = []
-        self._synthesis_cache = OrderedDict()  # LRU cache for synthesis results
+        self.executable_path: str | None = None
+        self.voices: list[str] = []
+        self.available_languages: list[str] = []
+        self._synthesis_cache: OrderedDict[str, dict] = OrderedDict()
         self._cache_max_size = 200  # Increased cache size for better hit rate
         self.enable_cache = True
         self.batch_size = 8  # Increased batch size for better parallelization
-        self._temp_dir = None  # Reusable temp directory
+        self._temp_dir: str | Path | None = None
         self._cache_stats = {
             "hits": 0,
             "misses": 0,
         }
 
-    def _find_executable(self, name: str, custom_path: str | None = None) -> str | None:
+    @staticmethod
+    def _find_executable(name: str, custom_path: str | None = None) -> str | None:
         """Find executable in PATH or custom path."""
         if custom_path and os.path.isfile(custom_path) and os.access(custom_path, os.X_OK):
             return custom_path
@@ -211,15 +212,14 @@ class ESpeakNGEngine(EngineProtocol):
             if os.path.isfile(exe_path) and os.access(exe_path, os.X_OK):
                 return exe_path
 
-        # Try espeak-ng first, then espeak
         for exe_name in [name, "espeak", "espeak-ng"]:
-            exe_path = shutil.which(exe_name)
-            if exe_path:
-                return exe_path
+            found = shutil.which(exe_name)
+            if found:
+                return found
 
-            exe_path = shutil.which(f"{exe_name}.exe")
-            if exe_path:
-                return exe_path
+            found = shutil.which(f"{exe_name}.exe")
+            if found:
+                return found
 
         return None
 
@@ -375,19 +375,21 @@ class ESpeakNGEngine(EngineProtocol):
                         )
                         return None
                     if calculate_quality:
-                        return cached_result["audio"], cached_result.get("quality_metrics", {})
-                    return cached_result["audio"]
+                        return np.asarray(cached_result["audio"]), cached_result.get("quality_metrics", {})
+                    return np.asarray(cached_result["audio"])
                 else:
                     self._cache_stats["misses"] += 1
 
-            # Create temporary output file (use reusable temp dir if available)
+            if self.executable_path is None:
+                logger.error("Executable path not set")
+                return None
+
             temp_dir = self._temp_dir if self._temp_dir else None
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False, dir=temp_dir) as tmp_file:
                 tmp_output = tmp_file.name
 
             try:
-                # Build command
-                cmd = [
+                cmd: list[str] = [
                     self.executable_path,
                     "-v",
                     language if not voice else voice.split("(")[0].strip(),
@@ -487,13 +489,12 @@ class ESpeakNGEngine(EngineProtocol):
                             return None
                         return audio
 
-                # Save to file if requested
                 if output_path:
                     sf.write(output_path, audio, sample_rate)
                     logger.info(f"Audio saved to: {output_path}")
                     return None
 
-                return audio
+                return np.asarray(audio)
 
             finally:
                 # Cleanup temporary files
@@ -521,11 +522,11 @@ class ESpeakNGEngine(EngineProtocol):
 
         if HAS_QUALITY_METRICS:
             try:
-                quality_metrics = calculate_all_metrics(audio, sample_rate)
+                quality_metrics = calculate_all_metrics(audio, reference_audio, sample_rate)
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
+                        similarity = calculate_similarity(audio, ref_audio)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -603,13 +604,16 @@ class ESpeakNGEngine(EngineProtocol):
 
         actual_batch_size = batch_size if batch_size is not None else self.batch_size
 
+        resolved_paths: list[str | Path | None]
         if output_paths is None:
-            output_paths = [None] * len(text_list)
+            resolved_paths = [None] * len(text_list)
         elif len(output_paths) != len(text_list):
             logger.warning("output_paths length doesn't match text_list, using None for extras")
-            output_paths = output_paths[: len(text_list)] + [None] * (
+            resolved_paths = list(output_paths[: len(text_list)]) + [None] * (
                 len(text_list) - len(output_paths)
             )
+        else:
+            resolved_paths = list(output_paths)
 
         def synthesize_single(args):
             text, output_path = args
@@ -650,11 +654,7 @@ class ESpeakNGEngine(EngineProtocol):
         results = []
         for i in range(0, len(text_list), actual_batch_size):
             batch_texts = text_list[i : i + actual_batch_size]
-            batch_outputs = (
-                output_paths[i : i + actual_batch_size]
-                if output_paths
-                else [None] * len(batch_texts)
-            )
+            batch_outputs = resolved_paths[i : i + actual_batch_size]
 
             with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
                 batch_results = list(

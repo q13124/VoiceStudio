@@ -40,7 +40,7 @@ try:
 
     # Try to import quality_metrics module
     spec = importlib.util.find_spec("app.core.engines.quality_metrics")
-    if spec is not None:
+    if spec is not None and spec.loader is not None:
         quality_metrics_module = importlib.util.module_from_spec(spec)
         try:
             spec.loader.exec_module(quality_metrics_module)
@@ -226,7 +226,7 @@ class EnhancedQualityMetrics:
             mfcc = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=13)
 
             # Chroma features
-            chroma = librosa.feature.chroma(y=audio, sr=sample_rate)
+            chroma = librosa.feature.chroma_stft(y=audio, sr=sample_rate)
 
             return {
                 "spectral_centroid_mean": float(np.mean(spectral_centroid)),
@@ -258,8 +258,8 @@ class EnhancedQualityMetrics:
             # Extract F0 (fundamental frequency)
             f0, voiced_flag, _voiced_probs = librosa.pyin(
                 audio,
-                fmin=librosa.note_to_hz("C2"),
-                fmax=librosa.note_to_hz("C7"),
+                fmin=float(librosa.note_to_hz("C2")),
+                fmax=float(librosa.note_to_hz("C7")),
             )
 
             # Calculate F0 statistics
@@ -359,7 +359,7 @@ class EnhancedQualityMetrics:
         audio1: np.ndarray,
         audio2: np.ndarray,
         sample_rate: int | None = None,
-    ) -> dict[str, float | dict]:
+    ) -> dict[str, float | dict | list]:
         """
         Compare two audio samples and calculate similarity metrics.
 
@@ -374,13 +374,11 @@ class EnhancedQualityMetrics:
         if sample_rate is None:
             sample_rate = self.sample_rate
 
-        comparison = {}
+        comparison: dict[str, float | dict | list] = {}
 
-        # Calculate metrics for both
         metrics1 = self.calculate_all(audio1, sample_rate, include_advanced=False)
         metrics2 = self.calculate_all(audio2, sample_rate, include_advanced=False)
 
-        # Similarity (if available)
         if HAS_QUALITY_METRICS:
             try:
                 similarity = calculate_similarity(audio1, audio2, method="embedding")
@@ -388,17 +386,20 @@ class EnhancedQualityMetrics:
             except Exception as e:
                 logger.warning(f"Similarity calculation failed: {e}")
 
-        # Difference metrics
-        if "mos_score" in metrics1 and "mos_score" in metrics2:
-            comparison["mos_difference"] = abs(metrics1["mos_score"] - metrics2["mos_score"])
+        mos1 = metrics1.get("mos_score")
+        mos2 = metrics2.get("mos_score")
+        if isinstance(mos1, (int, float)) and isinstance(mos2, (int, float)):
+            comparison["mos_difference"] = abs(mos1 - mos2)
 
-        if "snr" in metrics1 and "snr" in metrics2:
-            comparison["snr_difference"] = abs(metrics1["snr"] - metrics2["snr"])
+        snr1 = metrics1.get("snr")
+        snr2 = metrics2.get("snr")
+        if isinstance(snr1, (int, float)) and isinstance(snr2, (int, float)):
+            comparison["snr_difference"] = abs(snr1 - snr2)
 
-        if "lufs_integrated" in metrics1 and "lufs_integrated" in metrics2:
-            comparison["lufs_difference"] = abs(
-                metrics1["lufs_integrated"] - metrics2["lufs_integrated"]
-            )
+        lufs1 = metrics1.get("lufs_integrated")
+        lufs2 = metrics2.get("lufs_integrated")
+        if isinstance(lufs1, (int, float)) and isinstance(lufs2, (int, float)):
+            comparison["lufs_difference"] = abs(lufs1 - lufs2)
 
         comparison["metrics1"] = metrics1
         comparison["metrics2"] = metrics2

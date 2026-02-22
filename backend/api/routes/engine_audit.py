@@ -13,7 +13,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from backend.services.engine_service import IEngineService, get_engine_service
+from backend.ml.models.engine_service import IEngineService, get_engine_service
 
 logger = logging.getLogger(__name__)
 

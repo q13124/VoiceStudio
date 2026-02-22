@@ -107,7 +107,7 @@ async def register_publisher(request: PublisherRegisterRequest) -> dict[str, Any
         Publisher profile with verification status.
     """
     try:
-        from backend.services.marketplace_service import get_marketplace_service
+        from backend.marketplace.marketplace_service import get_marketplace_service
 
         service = get_marketplace_service()
         publisher = service.register_publisher(
@@ -127,7 +127,7 @@ async def get_publisher(publisher_id: str) -> dict[str, Any]:
     """Get publisher profile by ID."""
     if not publisher_id:
         raise HTTPException(status_code=400, detail="publisher_id required")
-    from backend.services.marketplace_service import get_marketplace_service
+    from backend.marketplace.marketplace_service import get_marketplace_service
 
     service = get_marketplace_service()
     publisher = service.get_publisher(publisher_id)
@@ -149,7 +149,7 @@ async def submit_plugin(request: SubmissionRequest) -> dict[str, Any]:
     Triggers automated vetting (SBOM check, sandbox test, signing).
     """
     try:
-        from backend.services.marketplace_service import get_marketplace_service
+        from backend.marketplace.marketplace_service import get_marketplace_service
 
         service = get_marketplace_service()
         submission = service.submit_plugin(
@@ -181,7 +181,7 @@ async def get_review_queue() -> list[dict[str, Any]]:
     Requires admin role in production.
     """
     try:
-        from backend.services.marketplace_service import get_marketplace_service
+        from backend.marketplace.marketplace_service import get_marketplace_service
 
         service = get_marketplace_service()
         items = service.get_review_queue()
@@ -202,7 +202,7 @@ async def review_submission(submission_id: str, request: SubmissionReviewRequest
     if not submission_id:
         raise HTTPException(status_code=400, detail="submission_id required")
     try:
-        from backend.services.marketplace_service import get_marketplace_service
+        from backend.marketplace.marketplace_service import get_marketplace_service
 
         service = get_marketplace_service()
         if request.action == "approve":
@@ -242,7 +242,7 @@ async def submit_review(plugin_id: str, request: ReviewRequest) -> dict[str, Any
     if not plugin_id:
         raise HTTPException(status_code=400, detail="plugin_id required")
     try:
-        from backend.services.marketplace_service import get_marketplace_service
+        from backend.marketplace.marketplace_service import get_marketplace_service
 
         service = get_marketplace_service()
         version = request.version or "latest"
@@ -266,7 +266,7 @@ async def get_plugin_reviews(plugin_id: str) -> list[dict[str, Any]]:
     if not plugin_id:
         raise HTTPException(status_code=400, detail="plugin_id required")
     try:
-        from backend.services.marketplace_service import get_marketplace_service
+        from backend.marketplace.marketplace_service import get_marketplace_service
 
         service = get_marketplace_service()
         return service.get_reviews(plugin_id)
@@ -281,7 +281,7 @@ async def get_my_review(plugin_id: str) -> dict[str, Any] | None:
     if not plugin_id:
         raise HTTPException(status_code=400, detail="plugin_id required")
     try:
-        from backend.services.marketplace_service import get_marketplace_service
+        from backend.marketplace.marketplace_service import get_marketplace_service
 
         service = get_marketplace_service()
         return service.get_my_review(plugin_id)
@@ -305,7 +305,7 @@ async def record_download(plugin_id: str) -> dict[str, Any]:
     if not plugin_id:
         raise HTTPException(status_code=400, detail="plugin_id required")
     try:
-        from backend.services.marketplace_service import get_marketplace_service
+        from backend.marketplace.marketplace_service import get_marketplace_service
 
         service = get_marketplace_service()
         count = service.record_download(plugin_id)
@@ -321,7 +321,7 @@ async def get_download_count(plugin_id: str) -> dict[str, Any]:
     if not plugin_id:
         raise HTTPException(status_code=400, detail="plugin_id required")
     try:
-        from backend.services.marketplace_service import get_marketplace_service
+        from backend.marketplace.marketplace_service import get_marketplace_service
 
         service = get_marketplace_service()
         count = service.get_download_count(plugin_id)

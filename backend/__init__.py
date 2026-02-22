@@ -1,10 +1,8 @@
 """
 VoiceStudio Backend Package.
 
-Contains the FastAPI backend API, services, and configuration.
+Contains the FastAPI backend API, bounded context services, and configuration.
+Services are organized by bounded context: voice, audio, media, project, ml, platform, plugins, marketplace.
 """
 
-# Import subpackages to make them accessible as backend.services, etc.
-from . import services
-
-__all__ = ["services"]
+__all__: list[str] = []

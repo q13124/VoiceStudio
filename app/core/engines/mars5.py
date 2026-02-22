@@ -52,7 +52,7 @@ class MARS5Engine(EngineProtocol):
     def __init__(self, config: MARS5Config | None = None):
         super().__init__()
         self.config = config or MARS5Config()
-        self._model = None
+        self._model: Any = None
         self._loaded = False
 
     def initialize(self) -> bool:
@@ -134,7 +134,7 @@ class MARS5Engine(EngineProtocol):
             Synthesized audio
         """
         if not self._loaded:
-            await self.initialize()
+            await self._async_initialize()
 
         if self._model is not None:
             return await self._synthesize_real(
@@ -186,7 +186,7 @@ class MARS5Engine(EngineProtocol):
                 rep_penalty=self.config.rep_penalty,
             )
 
-        return audio.cpu().numpy()
+        return np.asarray(audio.cpu().numpy())
 
     @property
     def is_loaded(self) -> bool:

@@ -193,7 +193,7 @@ class EngineHealthCheck(HealthCheck):
         """Check if engines are loaded and responsive."""
         try:
             # Try to get actual engine status from registry
-            from backend.services.engine_service import get_engine_service
+            from backend.ml.models.engine_service import get_engine_service
 
             engine_service = get_engine_service()
 

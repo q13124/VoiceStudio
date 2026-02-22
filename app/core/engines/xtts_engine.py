@@ -17,7 +17,7 @@ import sys
 import time
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import torch
@@ -48,7 +48,7 @@ try:
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
-    enhance_voice_cloning_quality = None
+    enhance_voice_cloning_quality = cast(Any, None)
 
 try:
     from TTS.api import TTS
@@ -103,7 +103,7 @@ def _ensure_torchaudio_load_fallback() -> None:
                 audio = audio.T
             return torch.from_numpy(audio), sample_rate
 
-    load_with_fallback._voicestudio_fallback = True
+    setattr(load_with_fallback, "_voicestudio_fallback", True)
     torchaudio.load = load_with_fallback
 
 
@@ -114,7 +114,7 @@ try:
     HAS_LIBROSA = True
 except ImportError:
     HAS_LIBROSA = False
-    librosa = None
+    librosa = cast(Any, None)
     logger.warning("librosa not available. Prosody control will be limited.")
 
 # Coqui TTS expects model IDs like: tts_models/<language>/<dataset>/<model_name>.
@@ -142,6 +142,7 @@ def _normalize_xtts_model_name(model_name: str | None) -> str:
 
 
 # Try importing general model cache
+_model_cache = None
 try:
     from app.core.models.cache import get_model_cache
 
@@ -149,7 +150,6 @@ try:
     HAS_MODEL_CACHE = True
 except ImportError:
     HAS_MODEL_CACHE = False
-    _model_cache = None
     logger.debug("General model cache not available, using XTTS-specific cache")
 
 # Fallback: XTTS-specific cache (for backward compatibility)
@@ -375,6 +375,10 @@ class XTTSEngine(EngineProtocol):
             start_time = time.time()
             self.tts = TTS(model_name=self.model_name, progress_bar=False)
 
+            if self.tts is None:
+                logger.error("Failed to create TTS instance")
+                return False
+
             # Move to device
             self.tts.to(self.device)
 
@@ -463,6 +467,10 @@ class XTTSEngine(EngineProtocol):
             # Check cancellation before synthesis
             self.check_cancellation()
 
+            if self.tts is None:
+                logger.error("XTTS model not loaded")
+                return None
+
             # Synthesize
             if output_path:
                 output_path = str(output_path)
@@ -523,7 +531,7 @@ class XTTSEngine(EngineProtocol):
                     if isinstance(audio, tuple):
                         return audio  # (audio, quality_metrics)
 
-                return audio
+                return np.asarray(audio)
 
         except OperationCancelledError:
             logger.info("Synthesis cancelled by user request")
@@ -700,7 +708,7 @@ class XTTSEngine(EngineProtocol):
                 # Use first reference
                 reference_audio = reference_audio[0]
 
-        kwargs = {}
+        kwargs: dict[str, Any] = {}
         if speed != 1.0:
             kwargs["speed"] = speed
 
@@ -1011,7 +1019,7 @@ class XTTSEngine(EngineProtocol):
         batch_size: int | None = None,
         parallel: bool = False,
         **kwargs,
-    ) -> list[np.ndarray | None]:
+    ) -> list[np.ndarray | None | tuple[np.ndarray | None, dict]]:
         """
         Synthesize multiple texts in batch with optimizations.
 
@@ -1038,9 +1046,11 @@ class XTTSEngine(EngineProtocol):
         results = []
 
         # Optimize: Pre-process speaker_wav once
+        speaker_wav_list: list[str | Path]
         if isinstance(speaker_wav, (str, Path)):
-            speaker_wav = [str(speaker_wav)]
-        speaker_wav = [str(path) for path in speaker_wav]
+            speaker_wav_list = [speaker_wav]
+        else:
+            speaker_wav_list = list(speaker_wav) if hasattr(speaker_wav, '__iter__') else [speaker_wav]
 
         # Process in batches for better memory management
         if batch_size > 1 and len(texts) > batch_size:
@@ -1061,7 +1071,7 @@ class XTTSEngine(EngineProtocol):
                         with torch.inference_mode():
                             audio = self.synthesize(
                                 text=text,
-                                speaker_wav=speaker_wav,
+                                speaker_wav=speaker_wav_list,
                                 language=language,
                                 output_path=output_path,
                                 **kwargs,
@@ -1085,7 +1095,7 @@ class XTTSEngine(EngineProtocol):
 
                 audio = self.synthesize(
                     text=text,
-                    speaker_wav=speaker_wav,
+                    speaker_wav=speaker_wav_list,
                     language=language,
                     output_path=output_path,
                     **kwargs,
@@ -1159,7 +1169,7 @@ class XTTSEngine(EngineProtocol):
         self._batch_size = max(1, batch_size)
         logger.debug(f"Batch size set to {self._batch_size}")
 
-    def enable_caching(self, enable: bool = True):
+    def set_caching_enabled(self, enable: bool = True) -> None:
         """
         Enable or disable model caching.
 
@@ -1169,7 +1179,7 @@ class XTTSEngine(EngineProtocol):
         self._use_cache = enable
         logger.debug(f"Model caching {'enabled' if enable else 'disabled'}")
 
-    def get_memory_usage(self) -> dict[str, float]:
+    def get_memory_usage(self) -> dict[str, Any]:
         """
         Get current GPU memory usage if using CUDA.
 
@@ -1230,7 +1240,7 @@ if __name__ == "__main__":
 
     audio = engine.clone_voice(reference_audio=reference_audio, text=text, language="en")
 
-    if audio is not None:
+    if audio is not None and isinstance(audio, np.ndarray):
         print(f"Generated audio shape: {audio.shape}")
 
     # Cleanup

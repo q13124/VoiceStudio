@@ -12,9 +12,9 @@ import logging
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from backend.services.slo_monitor import SLOAlert as SLOAlertModel
-from backend.services.slo_monitor import SLOStatus as SLOStatusModel
-from backend.services.slo_monitor import (
+from backend.platform.monitoring.slo_monitor import SLOAlert as SLOAlertModel
+from backend.platform.monitoring.slo_monitor import SLOStatus as SLOStatusModel
+from backend.platform.monitoring.slo_monitor import (
     get_slo_monitor,
 )
 

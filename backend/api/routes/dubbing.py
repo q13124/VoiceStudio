@@ -8,7 +8,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException
 
-from backend.services.engine_service import get_engine_service
+from backend.ml.models.engine_service import get_engine_service
 
 from ..models_additional import (
     DubSyncRequest,

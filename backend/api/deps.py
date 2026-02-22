@@ -18,212 +18,230 @@ Usage:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import Any, Annotated
 
 from fastapi import Depends
 
-if TYPE_CHECKING:
-    pass
-
 
 # EngineConfigService dependency
-def get_engine_config_service_dep():
+def get_engine_config_service_dep() -> Any:
     """Get the EngineConfigService singleton."""
-    from backend.services.EngineConfigService import get_engine_config_service
+    from backend.ml.models.engine_config_service import get_engine_config_service
 
     return get_engine_config_service()
 
 
+_EngineConfigService: type = object
 try:
-    from backend.services.EngineConfigService import EngineConfigService as _EngineConfigService
+    from backend.ml.models.engine_config_service import EngineConfigService
 
-    EngineConfigServiceDep: type | None = Annotated[
-        _EngineConfigService, Depends(get_engine_config_service_dep)
-    ]
+    _EngineConfigService = EngineConfigService
 except ImportError:
-    EngineConfigServiceDep = None
+    pass
+
+EngineConfigServiceDep = Annotated[Any, Depends(get_engine_config_service_dep)]
 
 
 # EngineService dependency
-def get_engine_service_dep():
+def get_engine_service_dep() -> Any:
     """Get the EngineService singleton."""
-    from backend.services.engine_service import get_engine_service
+    from backend.ml.models.engine_service import get_engine_service
 
     return get_engine_service()
 
 
+_IEngineService: type = object
 try:
-    from backend.services.engine_service import IEngineService as _IEngineService
+    from backend.ml.models.engine_service import IEngineService
 
-    EngineServiceDep: type | None = Annotated[_IEngineService, Depends(get_engine_service_dep)]
+    _IEngineService = IEngineService
 except ImportError:
-    EngineServiceDep = None
+    pass
+
+EngineServiceDep = Annotated[Any, Depends(get_engine_service_dep)]
 
 
 # AudioArtifactRegistry dependency
-def get_audio_registry_dep():
+def get_audio_registry_dep() -> Any:
     """Get the AudioArtifactRegistry singleton."""
-    from backend.services.AudioArtifactRegistry import get_audio_registry
+    from backend.audio.processing.audio_artifact_registry import get_audio_registry
 
     return get_audio_registry()
 
 
+_AudioArtifactRegistry: type = object
 try:
-    from backend.services.AudioArtifactRegistry import (
-        AudioArtifactRegistry as _AudioArtifactRegistry,
+    from backend.audio.processing.audio_artifact_registry import (
+        AudioArtifactRegistry,
     )
 
-    AudioRegistryDep: type | None = Annotated[
-        _AudioArtifactRegistry, Depends(get_audio_registry_dep)
-    ]
+    _AudioArtifactRegistry = AudioArtifactRegistry
 except ImportError:
-    AudioRegistryDep = None
+    pass
+
+AudioRegistryDep = Annotated[Any, Depends(get_audio_registry_dep)]
 
 
 # ContentAddressedAudioCache dependency
-def get_audio_cache_dep():
+def get_audio_cache_dep() -> Any:
     """Get the ContentAddressedAudioCache singleton."""
-    from backend.services.ContentAddressedAudioCache import get_audio_cache
+    from backend.audio.processing.content_addressed_audio_cache import get_audio_cache
 
     return get_audio_cache()
 
 
+_ContentAddressedAudioCache: type = object
 try:
-    from backend.services.ContentAddressedAudioCache import (
-        ContentAddressedAudioCache as _ContentAddressedAudioCache,
+    from backend.audio.processing.content_addressed_audio_cache import (
+        ContentAddressedAudioCache,
     )
 
-    AudioCacheDep: type | None = Annotated[
-        _ContentAddressedAudioCache, Depends(get_audio_cache_dep)
-    ]
+    _ContentAddressedAudioCache = ContentAddressedAudioCache
 except ImportError:
-    AudioCacheDep = None
+    pass
+
+AudioCacheDep = Annotated[Any, Depends(get_audio_cache_dep)]
 
 
 # JobStateStore dependency
-def get_job_state_store_dep():
+def get_job_state_store_dep() -> Any:
     """Get the JobStateStore singleton."""
-    from backend.services.JobStateStore import get_job_state_store
+    from backend.infrastructure.adapters.job_state_store import get_job_state_store
 
-    return get_job_state_store()
+    return get_job_state_store(namespace="default")
 
 
+_JobStateStore: type = object
 try:
-    from backend.services.JobStateStore import JobStateStore as _JobStateStore
+    from backend.infrastructure.adapters.job_state_store import JobStateStore
 
-    JobStateStoreDep: type | None = Annotated[_JobStateStore, Depends(get_job_state_store_dep)]
+    _JobStateStore = JobStateStore
 except ImportError:
-    JobStateStoreDep = None
+    pass
+
+JobStateStoreDep = Annotated[Any, Depends(get_job_state_store_dep)]
 
 
 # CircuitBreaker dependency (per-engine)
-def get_circuit_breaker_dep(engine_id: str):
+def get_circuit_breaker_dep(engine_id: str) -> Any:
     """Get circuit breaker for a specific engine."""
-    from backend.services.circuit_breaker import get_engine_breaker
+    from backend.core.circuit_breaker import get_engine_breaker
 
     return get_engine_breaker(engine_id)
 
 
 # ProjectStoreService dependency
-def get_project_store_service_dep():
+def get_project_store_service_dep() -> Any:
     """Get the ProjectStoreService singleton."""
-    from backend.services.ProjectStoreService import get_project_store_service
+    from backend.project.management.project_store_service import get_project_store_service
 
     return get_project_store_service()
 
 
+_ProjectStoreService: type = object
 try:
-    from backend.services.ProjectStoreService import ProjectStoreService as _ProjectStoreService
+    from backend.project.management.project_store_service import ProjectStoreService
 
-    ProjectStoreServiceDep: type | None = Annotated[
-        _ProjectStoreService, Depends(get_project_store_service_dep)
-    ]
+    _ProjectStoreService = ProjectStoreService
 except ImportError:
-    ProjectStoreServiceDep = None
+    pass
+
+ProjectStoreServiceDep = Annotated[Any, Depends(get_project_store_service_dep)]
 
 
 # ProfileStore dependency
-def get_profile_store_dep():
+def get_profile_store_dep() -> Any:
     """Get the ProfileStore singleton."""
-    from backend.services.profile_store import get_profile_store
+    from backend.project.management.profile_store import get_profile_store
 
     return get_profile_store()
 
 
+_ProfileStore: type = object
 try:
-    from backend.services.profile_store import ProfileStore as _ProfileStore
+    from backend.project.management.profile_store import ProfileStore
 
-    ProfileStoreDep: type | None = Annotated[_ProfileStore, Depends(get_profile_store_dep)]
+    _ProfileStore = ProfileStore
 except ImportError:
-    ProfileStoreDep = None
+    pass
+
+ProfileStoreDep = Annotated[Any, Depends(get_profile_store_dep)]
 
 
 # TrackStore dependency
-def get_track_store_dep():
+def get_track_store_dep() -> Any:
     """Get the TrackStore singleton."""
-    from backend.services.track_store import get_track_store
+    from backend.project.tracks.track_store import get_track_store
 
     return get_track_store()
 
 
+_TrackStore: type = object
 try:
-    from backend.services.track_store import TrackStore as _TrackStore
+    from backend.project.tracks.track_store import TrackStore
 
-    TrackStoreDep: type | None = Annotated[_TrackStore, Depends(get_track_store_dep)]
+    _TrackStore = TrackStore
 except ImportError:
-    TrackStoreDep = None
+    pass
+
+TrackStoreDep = Annotated[Any, Depends(get_track_store_dep)]
 
 
 # ArtifactRefCounter dependency
-def get_ref_counter_dep():
+def get_ref_counter_dep() -> Any:
     """Get the ArtifactRefCounter singleton."""
-    from backend.services.artifact_ref_counter import get_ref_counter
+    from backend.infrastructure.adapters.artifact_ref_counter import get_ref_counter
 
     return get_ref_counter()
 
 
+_ArtifactRefCounter: type = object
 try:
-    from backend.services.artifact_ref_counter import ArtifactRefCounter as _ArtifactRefCounter
+    from backend.infrastructure.adapters.artifact_ref_counter import ArtifactRefCounter
 
-    ArtifactRefCounterDep: type | None = Annotated[
-        _ArtifactRefCounter, Depends(get_ref_counter_dep)
-    ]
+    _ArtifactRefCounter = ArtifactRefCounter
 except ImportError:
-    ArtifactRefCounterDep = None
+    pass
+
+ArtifactRefCounterDep = Annotated[Any, Depends(get_ref_counter_dep)]
 
 
 # EditHistory dependency
-def get_edit_history_dep():
+def get_edit_history_dep() -> Any:
     """Get a project-scoped EditHistory instance."""
-    from backend.services.edit_history import EditHistory
+    from backend.project.versioning.edit_history import EditHistory
 
     return EditHistory()
 
 
+_EditHistory: type = object
 try:
-    from backend.services.edit_history import EditHistory as _EditHistory
+    from backend.project.versioning.edit_history import EditHistory as _EditHistoryClass
 
-    EditHistoryDep: type | None = Annotated[_EditHistory, Depends(get_edit_history_dep)]
+    _EditHistory = _EditHistoryClass
 except ImportError:
-    EditHistoryDep = None
+    pass
+
+EditHistoryDep = Annotated[Any, Depends(get_edit_history_dep)]
 
 
 # UnifiedConfigService dependency
-def get_unified_config_dep():
+def get_unified_config_dep() -> Any:
     """Get the UnifiedConfigService singleton."""
-    from backend.services.unified_config import get_config
+    from backend.platform.config.unified_config import get_config
 
     return get_config()
 
 
+_UnifiedConfigService: type = object
 try:
-    from backend.services.unified_config import UnifiedConfigService as _UnifiedConfigService
+    from backend.platform.config.unified_config import UnifiedConfigService
 
-    UnifiedConfigDep: type | None = Annotated[
-        _UnifiedConfigService, Depends(get_unified_config_dep)
-    ]
+    _UnifiedConfigService = UnifiedConfigService
 except ImportError:
-    UnifiedConfigDep = None
+    pass
+
+UnifiedConfigDep = Annotated[Any, Depends(get_unified_config_dep)]
 
 
 # Export all dependencies

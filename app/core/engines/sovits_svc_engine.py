@@ -24,6 +24,14 @@ from typing import Any
 
 import numpy as np
 
+# Optional dependency placeholders (overridden by actual imports when available)
+torch: Any = None
+librosa: Any = None
+enhance_voice_quality: Any = None
+normalize_lufs: Any = None
+remove_artifacts: Any = None
+calculate_all_metrics: Any = None
+
 # Initialize logger early
 logger = logging.getLogger(__name__)
 
@@ -51,7 +59,6 @@ try:
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
-    torch = None
     logger.warning("PyTorch not available. So-VITS-SVC engine will be limited.")
 
 # Try importing librosa for audio processing
@@ -61,18 +68,18 @@ try:
     HAS_LIBROSA = True
 except ImportError:
     HAS_LIBROSA = False
-    librosa = None
     logger.warning("librosa not available. Audio processing will be limited.")
 
 # Try importing soundfile
 try:
-    import soundfile as sf
+    import soundfile as _sf_mod
 
     HAS_SOUNDFILE = True
 except ImportError:
     HAS_SOUNDFILE = False
-    sf = None
+    _sf_mod = None
     logger.warning("soundfile not available. Audio I/O will be limited.")
+sf = _sf_mod
 
 # Try importing audio utilities for quality enhancement
 try:
@@ -81,9 +88,6 @@ try:
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
-    enhance_voice_quality = None
-    normalize_lufs = None
-    remove_artifacts = None
     logger.warning("Audio utilities not available. Quality enhancement will be limited.")
 
 # Try importing quality metrics
@@ -93,7 +97,6 @@ try:
     HAS_QUALITY_METRICS = True
 except ImportError:
     HAS_QUALITY_METRICS = False
-    calculate_all_metrics = None
     logger.warning("Quality metrics not available. Quality calculation will be limited.")
 
 # Import base protocol
@@ -262,10 +265,11 @@ class SoVITSSVCEngine(EngineProtocol):
 
     def _load_audio_path(self, path: str) -> tuple[np.ndarray, int] | None:
         if HAS_LIBROSA and librosa is not None:
-            return librosa.load(path, sr=self.sample_rate)
+            audio, sr = librosa.load(path, sr=self.sample_rate)
+            return np.asarray(audio), int(sr)
         if HAS_SOUNDFILE and sf is not None:
             audio, sr = sf.read(path)
-            return audio, sr
+            return np.asarray(audio), int(sr)
         return None
 
     def _run_infer_command(
@@ -282,7 +286,7 @@ class SoVITSSVCEngine(EngineProtocol):
 
         checkpoint = checkpoint_path or self.checkpoint_path
         config = config_path or self.config_path
-        kwargs = {
+        format_kwargs: dict[str, str | int] = {
             "input": input_path,
             "output": output_path,
             "checkpoint": str(checkpoint) if checkpoint else "",
@@ -291,7 +295,7 @@ class SoVITSSVCEngine(EngineProtocol):
             "device": self.device,
             "sample_rate": self.sample_rate,
         }
-        args = _format_template_to_args(self.infer_command, **kwargs)
+        args = _format_template_to_args(self.infer_command, **format_kwargs)
         result = subprocess.run(
             args,
             shell=False,
@@ -464,14 +468,14 @@ class SoVITSSVCEngine(EngineProtocol):
 
             # Apply quality processing if requested (matching RVC engine pattern)
             if enhance_quality or calculate_quality:
-                converted_audio = self._process_audio_quality(
+                quality_result = self._process_audio_quality(
                     converted_audio,
                     self.sample_rate,
                     enhance_quality,
                     calculate_quality,
                 )
-                if isinstance(converted_audio, tuple):
-                    enhanced_audio, quality_metrics = converted_audio
+                if isinstance(quality_result, tuple):
+                    enhanced_audio, quality_metrics = quality_result
                     if conversion_warning and isinstance(quality_metrics, dict):
                         quality_metrics["conversion_warning"] = conversion_warning
                     if output_path:
@@ -480,11 +484,14 @@ class SoVITSSVCEngine(EngineProtocol):
                         else:
                             logger.error("Cannot save audio: soundfile required")
                             return None
-                        return None, quality_metrics if calculate_quality else None
-                    return enhanced_audio, (
-                        quality_metrics if calculate_quality else enhanced_audio
-                    )
+                        if calculate_quality:
+                            return enhanced_audio, quality_metrics
+                        return None
+                    if calculate_quality:
+                        return enhanced_audio, quality_metrics
+                    return enhanced_audio
                 else:
+                    converted_audio = quality_result
                     if output_path:
                         if HAS_SOUNDFILE and sf is not None:
                             sf.write(output_path, converted_audio, self.sample_rate)

@@ -111,7 +111,7 @@ async def process_pipeline(request: PipelineRequest):
         audio_id = None
         if result.get("audio"):
             try:
-                from backend.services.AudioArtifactRegistry import get_audio_registry
+                from backend.audio.processing.audio_artifact_registry import get_audio_registry
 
                 get_audio_registry()
                 audio_id = f"pipe-{uuid.uuid4().hex[:8]}"
@@ -198,7 +198,7 @@ async def pipeline_stream(websocket: WebSocket):
 @router.get("/providers")
 async def list_pipeline_providers():
     """List available providers for each pipeline stage."""
-    from backend.services.llm_provider_service import get_llm_provider_service
+    from backend.ml.models.llm_provider_service import get_llm_provider_service
 
     provider_service = get_llm_provider_service()
     llm_providers = [

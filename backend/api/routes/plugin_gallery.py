@@ -125,7 +125,7 @@ async def get_catalog(refresh: bool = False):
 
         # Phase 7: Merge local download counts with catalog stats
         try:
-            from backend.services.marketplace_service import get_marketplace_service
+            from backend.marketplace.marketplace_service import get_marketplace_service
 
             marketplace = get_marketplace_service()
         except Exception:
@@ -354,7 +354,7 @@ async def install_plugin(request: InstallRequest):
         # Phase 7: Record download for analytics
         if result.success:
             try:
-                from backend.services.marketplace_service import get_marketplace_service
+                from backend.marketplace.marketplace_service import get_marketplace_service
 
                 get_marketplace_service().record_download(request.plugin_id)
             except Exception as dl_err:

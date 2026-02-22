@@ -116,7 +116,7 @@ async def diarize_speakers(request: DiarizationRequest):
         Speaker segments with timing
     """
     try:
-        from backend.services.multi_speaker_dubbing import get_multi_speaker_dubbing_service
+        from backend.media.video.multi_speaker_dubbing import get_multi_speaker_dubbing_service
 
         service = get_multi_speaker_dubbing_service()
         result = await service.diarize(
@@ -169,7 +169,7 @@ async def assign_voices(request: VoiceAssignmentRequest):
         Assignment confirmation
     """
     try:
-        from backend.services.multi_speaker_dubbing import get_multi_speaker_dubbing_service
+        from backend.media.video.multi_speaker_dubbing import get_multi_speaker_dubbing_service
 
         service = get_multi_speaker_dubbing_service()
 
@@ -218,7 +218,7 @@ async def generate_dubbing(request: DubbingRequest):
         Output audio ID
     """
     try:
-        from backend.services.multi_speaker_dubbing import get_multi_speaker_dubbing_service
+        from backend.media.video.multi_speaker_dubbing import get_multi_speaker_dubbing_service
 
         service = get_multi_speaker_dubbing_service()
         result = await service.generate(
@@ -251,7 +251,7 @@ async def generate_dubbing(request: DubbingRequest):
 async def list_projects():
     """List all dubbing projects."""
     try:
-        from backend.services.multi_speaker_dubbing import get_multi_speaker_dubbing_service
+        from backend.media.video.multi_speaker_dubbing import get_multi_speaker_dubbing_service
 
         service = get_multi_speaker_dubbing_service()
         projects = service.list_projects()
@@ -277,7 +277,7 @@ async def list_projects():
 async def get_project(project_id: str):
     """Get dubbing project details."""
     try:
-        from backend.services.multi_speaker_dubbing import get_multi_speaker_dubbing_service
+        from backend.media.video.multi_speaker_dubbing import get_multi_speaker_dubbing_service
 
         service = get_multi_speaker_dubbing_service()
         project = service.get_project(project_id)
@@ -305,7 +305,7 @@ async def get_project(project_id: str):
 async def delete_project(project_id: str):
     """Delete a dubbing project."""
     try:
-        from backend.services.multi_speaker_dubbing import get_multi_speaker_dubbing_service
+        from backend.media.video.multi_speaker_dubbing import get_multi_speaker_dubbing_service
 
         service = get_multi_speaker_dubbing_service()
         success = service.delete_project(project_id)
@@ -326,7 +326,7 @@ async def delete_project(project_id: str):
 async def get_project_speakers(project_id: str):
     """Get speakers detected in a project."""
     try:
-        from backend.services.multi_speaker_dubbing import get_multi_speaker_dubbing_service
+        from backend.media.video.multi_speaker_dubbing import get_multi_speaker_dubbing_service
 
         service = get_multi_speaker_dubbing_service()
         speakers = service.get_project_speakers(project_id)

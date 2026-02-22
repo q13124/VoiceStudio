@@ -33,12 +33,12 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from backend.config.path_config import get_models_path
-from backend.services.circuit_breaker import (
+from backend.core.circuit_breaker import (
     CircuitBreakerOpenError,
     get_engine_breaker,
 )
-from backend.services.engine_service import get_engine_service
-from backend.services.model_preflight import PreflightError, ensure_sovits
+from backend.ml.models.engine_service import get_engine_service
+from backend.ml.models.model_preflight import PreflightError, ensure_sovits
 
 from ..middleware.auth_middleware import require_auth_if_enabled
 from ..models import ApiOk

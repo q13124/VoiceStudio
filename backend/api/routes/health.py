@@ -20,13 +20,13 @@ from app.core.resilience.health_check import (
     get_health_checker,
 )
 from backend.config.path_config import get_models_path
-from backend.services.circuit_breaker import (
+from backend.core.circuit_breaker import (
     get_engine_breaker_metrics,
     get_engine_breaker_stats,
     get_engine_breaker_summary,
     reset_engine_breaker,
 )
-from backend.services.engine_service import get_engine_service
+from backend.ml.models.engine_service import get_engine_service
 from backend.settings import config
 
 from ..optimization import cache_response
@@ -699,11 +699,11 @@ def preflight_check() -> dict[str, Any]:
             return {"ok": False, "path": path, "error": str(e)}
 
     # Resolve core roots
-    from backend.services.AudioArtifactRegistry import get_audio_registry
-    from backend.services.ContentAddressedAudioCache import get_audio_cache
-    from backend.services.EngineConfigService import get_engine_config_service
-    from backend.services.JobStateStore import get_job_state_store
-    from backend.services.ProjectStoreService import get_project_store_service
+    from backend.audio.processing.audio_artifact_registry import get_audio_registry
+    from backend.audio.processing.content_addressed_audio_cache import get_audio_cache
+    from backend.ml.models.engine_config_service import get_engine_config_service
+    from backend.infrastructure.adapters.job_state_store import get_job_state_store
+    from backend.project.management.project_store_service import get_project_store_service
 
     projects_root = str(get_project_store_service().projects_dir)
     cache_root = str(get_audio_cache().cache_dir)
@@ -739,7 +739,7 @@ def preflight_check() -> dict[str, Any]:
 
     # XTTS preflight (deps + assets)
     try:
-        from backend.services.model_preflight import PreflightError, ensure_xtts
+        from backend.ml.models.model_preflight import PreflightError, ensure_xtts
 
         checks["xtts_v2"] = ensure_xtts(auto_download=False)
     except PreflightError as exc:
@@ -769,8 +769,8 @@ def preflight_check() -> dict[str, Any]:
 
     # So-VITS-SVC preflight (checkpoint + config)
     try:
-        from backend.services.model_preflight import PreflightError as PreflightErr
-        from backend.services.model_preflight import ensure_sovits
+        from backend.ml.models.model_preflight import PreflightError as PreflightErr
+        from backend.ml.models.model_preflight import ensure_sovits
 
         checks["sovits_svc"] = ensure_sovits(auto_download=False)
     except PreflightErr as exc:
@@ -1050,13 +1050,13 @@ async def get_feature_status() -> dict[str, Any]:
         - availability (fully_functional, placeholder, unavailable)
         - message explaining status
     """
-    from backend.services.feature_status_service import get_all_feature_statuses
+    from backend.platform.config.feature_status_service import get_all_feature_statuses
 
     features = await get_all_feature_statuses()
 
     # Lip sync
     try:
-        from backend.services.lip_sync_service import LipSyncService
+        from backend.media.lip_sync.lip_sync_service import LipSyncService
 
         LipSyncService()
         # LipSyncService uses multiple backends; check if any are available

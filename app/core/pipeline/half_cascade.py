@@ -111,7 +111,7 @@ class HalfCascadePipeline:
     async def _transcribe(self, audio_data: bytes) -> str:
         """Transcribe audio using STT engine."""
         try:
-            from backend.services.engine_service import get_engine_service
+            from backend.ml.models.engine_service import get_engine_service
 
             service = get_engine_service()
             result = await service.transcribe(audio_data=audio_data, language=self._language)
@@ -125,7 +125,7 @@ class HalfCascadePipeline:
         if not text.strip():
             return None
         try:
-            from backend.services.engine_service import get_engine_service
+            from backend.ml.models.engine_service import get_engine_service
 
             service = get_engine_service()
             result = await service.synthesize(

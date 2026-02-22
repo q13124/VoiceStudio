@@ -85,7 +85,7 @@ def _get_llm_provider():
 
     Uses LLMProviderService for clean architecture compliance.
     """
-    from backend.services.llm_provider_service import get_llm_provider_service
+    from backend.ml.models.llm_provider_service import get_llm_provider_service
 
     provider_service = get_llm_provider_service()
     return provider_service.get_best_provider_instance()
@@ -186,7 +186,7 @@ async def chat_with_assistant(request: ChatRequest):
     else:
         try:
             from app.core.engines.llm_interface import LLMConfig, Message, MessageRole
-            from backend.services.llm_function_calling import get_function_registry
+            from backend.ml.models.llm_function_calling import get_function_registry
 
             # Build message history
             llm_messages = []
@@ -379,7 +379,7 @@ async def suggest_tasks(
 @router.get("/providers")
 async def list_providers():
     """List available LLM providers and their status."""
-    from backend.services.llm_provider_service import get_llm_provider_service
+    from backend.ml.models.llm_provider_service import get_llm_provider_service
 
     provider_service = get_llm_provider_service()
     providers = []

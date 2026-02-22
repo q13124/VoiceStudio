@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/dataset", tags=["dataset"])
 
 # Import engine service for quality metrics (ADR-008 compliant)
-from backend.services.engine_service import get_engine_service
+from backend.ml.models.engine_service import get_engine_service
 
 # Try to import audio processing libraries
 try:

@@ -10,15 +10,18 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
-# GAP-ARCH-001: Import from app.core.plugins_api (ADR-038 migration)
-from app.core.plugins_api import Plugin, PluginMetadata
+from app.core.plugins_api import Plugin
 
 # PluginLoader remains in backend.plugins.core until full migration
 from backend.plugins.core.loader import PluginLoader
 
+# Use core PluginMetadata for loader compatibility
+from backend.plugins.core.base import PluginMetadata as CorePluginMetadata
+
 # PluginState enum from plugin_service (canonical location)
-from backend.services.plugin_service import PluginState
+from backend.plugins.plugin_service import PluginState
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +46,9 @@ class PluginRegistry:
         """
         self._loader = PluginLoader(plugin_dirs)
         self._plugins: dict[str, Plugin] = {}
-        self._metadata: dict[str, PluginMetadata] = {}
-        self._hooks: dict[str, list[Callable]] = {
+        self._metadata: dict[str, CorePluginMetadata] = {}
+        self._plugin_states: dict[str, PluginState] = {}
+        self._hooks: dict[str, list[Callable[..., Any]]] = {
             "on_load": [],
             "on_unload": [],
             "on_activate": [],
@@ -56,7 +60,7 @@ class PluginRegistry:
         """Add a directory to scan for plugins."""
         self._loader.add_plugin_directory(path)
 
-    async def discover_all(self) -> list[PluginMetadata]:
+    async def discover_all(self) -> list[CorePluginMetadata]:
         """
         Discover all available plugins.
 
@@ -69,12 +73,12 @@ class PluginRegistry:
             self._metadata[metadata.id] = metadata
 
         logger.info(f"Discovered {len(discovered)} plugins")
-        return discovered
+        return list(discovered)
 
     async def load(
         self,
         plugin_id: str,
-        config: dict | None = None,
+        config: dict[str, Any] | None = None,
     ) -> Plugin | None:
         """
         Load a plugin.
@@ -94,6 +98,7 @@ class PluginRegistry:
 
         if plugin:
             self._plugins[plugin_id] = plugin
+            self._plugin_states[plugin_id] = PluginState.LOADED
             await self._fire_hooks("on_load", plugin)
 
         return plugin
@@ -114,9 +119,10 @@ class PluginRegistry:
             return False
 
         try:
-            await plugin.unload()
+            plugin.cleanup()
             await self._loader.unload_plugin(plugin_id)
             del self._plugins[plugin_id]
+            self._plugin_states.pop(plugin_id, None)
             await self._fire_hooks("on_unload", plugin)
             return True
 
@@ -139,21 +145,23 @@ class PluginRegistry:
         if not plugin:
             return False
 
-        if plugin.state == PluginState.ACTIVE:
+        current_state = self._plugin_states.get(plugin_id)
+        if current_state == PluginState.ACTIVATED:
             return True
 
         try:
-            if plugin.state == PluginState.LOADED:
-                await plugin.initialize()
+            if current_state == PluginState.LOADED:
+                plugin.initialize()
 
             if await plugin.activate():
+                self._plugin_states[plugin_id] = PluginState.ACTIVATED
                 await self._fire_hooks("on_activate", plugin)
                 return True
             return False
 
         except Exception as e:
             logger.error(f"Error activating plugin {plugin_id}: {e}")
-            plugin.set_error(str(e))
+            self._plugin_states[plugin_id] = PluginState.ERROR
             await self._fire_hooks("on_error", plugin)
             return False
 
@@ -172,10 +180,12 @@ class PluginRegistry:
         if not plugin:
             return False
 
-        if plugin.state != PluginState.ACTIVE:
+        current_state = self._plugin_states.get(plugin_id)
+        if current_state != PluginState.ACTIVATED:
             return True
 
         if await plugin.deactivate():
+            self._plugin_states[plugin_id] = PluginState.DEACTIVATED
             await self._fire_hooks("on_deactivate", plugin)
             return True
 
@@ -185,7 +195,7 @@ class PluginRegistry:
         """Get a loaded plugin by ID."""
         return self._plugins.get(plugin_id)
 
-    def get_metadata(self, plugin_id: str) -> PluginMetadata | None:
+    def get_metadata(self, plugin_id: str) -> CorePluginMetadata | None:
         """Get plugin metadata by ID."""
         return self._metadata.get(plugin_id)
 
@@ -205,11 +215,15 @@ class PluginRegistry:
         plugins = list(self._plugins.values())
 
         if state:
-            plugins = [p for p in plugins if p.state == state]
+            plugins = [
+                p
+                for p in plugins
+                if self._plugin_states.get(p.metadata.plugin_id) == state
+            ]
 
         return plugins
 
-    def list_available(self) -> list[PluginMetadata]:
+    def list_available(self) -> list[CorePluginMetadata]:
         """List all discovered plugin metadata."""
         return list(self._metadata.values())
 
@@ -225,11 +239,12 @@ class PluginRegistry:
         """
         return [
             p
-            for p in self._plugins.values()
-            if p.has_capability(capability) and p.state == PluginState.ACTIVE
+            for pid, p in self._plugins.items()
+            if capability in (p.metadata.capabilities or {})
+            and self._plugin_states.get(pid) == PluginState.ACTIVATED
         ]
 
-    def add_hook(self, event: str, callback: Callable) -> None:
+    def add_hook(self, event: str, callback: Callable[..., Any]) -> None:
         """
         Add a hook for plugin events.
 
@@ -250,12 +265,13 @@ class PluginRegistry:
             except Exception as e:
                 logger.error(f"Hook error for {event}: {e}")
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """Get registry statistics."""
-        states = {}
-        for plugin in self._plugins.values():
-            state = plugin.state.value
-            states[state] = states.get(state, 0) + 1
+        states: dict[str, int] = {}
+        for plugin_id in self._plugins:
+            ps = self._plugin_states.get(plugin_id)
+            state_val = ps.value if ps else "unknown"
+            states[state_val] = states.get(state_val, 0) + 1
 
         return {
             "discovered": len(self._metadata),

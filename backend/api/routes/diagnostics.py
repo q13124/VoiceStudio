@@ -12,7 +12,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from backend.services.diagnostics import (
+from backend.platform.monitoring.diagnostics import (
     DiagnosticCheck,
     DiagnosticReport,
     get_diagnostics_service,

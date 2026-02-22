@@ -11,7 +11,7 @@ import time
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from backend.services.engine_service import IEngineService, get_engine_service
+from backend.ml.models.engine_service import IEngineService, get_engine_service
 
 from ..models_additional import Telemetry
 from ..optimization import cache_response

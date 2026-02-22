@@ -34,7 +34,7 @@ except ImportError:
 
 # Try importing UnifiedConfigService
 try:
-    from backend.services.unified_config import UnifiedConfigService, get_config
+    from backend.platform.config.unified_config import UnifiedConfigService, get_config
 
     HAS_UNIFIED_CONFIG = True
 except ImportError:

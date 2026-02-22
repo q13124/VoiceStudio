@@ -33,13 +33,13 @@ from urllib.parse import urlparse
 import numpy as np
 
 # Try to import HTTP client for URL downloads
+HAS_HTTPX = False
 try:
     import httpx
 
     HAS_HTTPX = True
 except ImportError:
-    HAS_HTTPX = False
-    httpx = None
+    pass
 from fastapi import (
     APIRouter,
     Depends,
@@ -59,17 +59,17 @@ from backend.core.security.file_validation import (
     validate_audio_file,
     validate_media_for_audio_extraction,
 )
-from backend.services.circuit_breaker import (
+from backend.core.circuit_breaker import (
     get_engine_breaker,
 )
-from backend.services.engine_service import get_engine_service
-from backend.services.model_preflight import (
+from backend.ml.models.engine_service import IEngineService, get_engine_service
+from backend.ml.models.model_preflight import (
     PreflightError,
     ensure_piper,
     ensure_sovits,
     ensure_xtts,
 )
-from backend.services.unified_config import get_config
+from backend.platform.config.unified_config import get_config
 
 from ...services.AudioArtifactRegistry import get_audio_registry
 from ...services.ContentAddressedAudioCache import get_audio_cache
@@ -94,12 +94,15 @@ from ..ws.protocol import (
     create_message,
 )
 
+HAS_PITCH_TRACKER = False
 try:
     from ..audio_processing import PitchTracker
-except Exception as e:
-    PitchTracker = None  # type: ignore[assignment]
+
+    HAS_PITCH_TRACKER = True
+except Exception as _pitch_import_err:
     logging.getLogger(__name__).warning(
-        "Pitch tracking unavailable (audio_processing import failed): %s", e
+        "Pitch tracking unavailable (audio_processing import failed): %s",
+        _pitch_import_err,
     )
 # Import correlation ID support for enhanced logging (Phase 3A, GAP-I08)
 import contextlib
@@ -157,6 +160,7 @@ def _log_context(**kwargs) -> dict[str, Any]:
 
 
 # Quality optimization via EngineService (ADR-008 compliant)
+_voice_engine_service: IEngineService | None = None
 HAS_QUALITY_OPTIMIZATION = False
 try:
     _voice_engine_service = get_engine_service()
@@ -199,6 +203,8 @@ async def _download_url_to_file(url: str, timeout: float = 30.0) -> str | None:
             return str(cache_path)
 
         # Download the file
+        import httpx  # safe: HAS_HTTPX guard above ensures availability
+
         async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.get(url, follow_redirects=True)
             response.raise_for_status()
@@ -710,7 +716,7 @@ async def _perform_synthesis_with_retry(
         Tuple of (result, error) - result is synthesis output, error is None on success
     """
     result = None
-    synthesis_error = None
+    synthesis_error: Exception | None = None
 
     # Get circuit breaker for this engine (TD-014)
     engine_breaker = get_engine_breaker(engine_id)
@@ -957,8 +963,8 @@ def _extract_quality_metrics(
 @router.post("/synthesize", response_model=VoiceSynthesizeResponse)
 async def synthesize(
     req: VoiceSynthesizeRequest,
-    request: Request,
-    config_service: EngineConfigServiceDep = None,
+    request: Request | None = None,
+    config_service: EngineConfigServiceDep | None = None,
 ) -> VoiceSynthesizeResponse:
     """
     Synthesize audio from text using a voice profile.
@@ -971,7 +977,7 @@ async def synthesize(
     _ensure_engine_router()
 
     # Get request ID from middleware
-    request_id = getattr(request.state, "request_id", None)
+    request_id = getattr(request.state, "request_id", None) if request else None
 
     # Select default engine if not specified (XTTS -> Piper -> eSpeak fallback)
     if not req.engine or not req.engine.strip():
@@ -1014,7 +1020,7 @@ async def synthesize(
             valid_engines: list[str] = []
             if ENGINE_AVAILABLE and engine_router:
                 valid_engines = engine_router.list_engines()
-            if not valid_engines:
+            if not valid_engines and engine_router is not None:
                 # If no engines loaded, try loading from manifests
                 try:
                     engine_router.load_all_engines("engines")
@@ -1144,6 +1150,10 @@ async def synthesize(
                         and req.quality_mode
                     ):
                         try:
+                            from app.core.engines.quality_presets import (
+                                get_synthesis_params_from_preset,
+                            )
+
                             # Get parameters from quality preset
                             preset_params = get_synthesis_params_from_preset(
                                 req.quality_mode, engine_name=engine_id
@@ -1199,7 +1209,7 @@ async def synthesize(
 
                         # Attempt synthesis with circuit breaker + error recovery
                         result = None
-                        synthesis_error = None
+                        synthesis_error: Exception | None = None
                         max_retries = 2
 
                         # Get circuit breaker for this engine (TD-014)
@@ -1513,6 +1523,7 @@ async def synthesize(
 @router.post("/synthesize/multipass", response_model=MultiPassSynthesisResponse)
 async def synthesize_multipass(
     req: MultiPassSynthesisRequest,
+    request: Request | None = None,
 ) -> MultiPassSynthesisResponse:
     """
     Multi-pass synthesis with quality refinement (IDEA 61).
@@ -1607,8 +1618,8 @@ async def synthesize_multipass(
         best_quality = 0.0
         previous_quality = 0.0
 
-        max_passes = req.max_passes
-        min_improvement = req.min_quality_improvement
+        max_passes = req.max_passes or 3
+        min_improvement = req.min_quality_improvement or 0.02
 
         for pass_num in range(1, max_passes + 1):
             logger.info(f"Multi-pass synthesis: Pass {pass_num}/{max_passes}")
@@ -1900,8 +1911,10 @@ async def analyze(
                     logger.debug(f"LUFS calculation failed: {e}")
 
                 # Calculate pitch stability using pitch tracking
-                if PitchTracker is not None:
+                if HAS_PITCH_TRACKER:
                     try:
+                        from ..audio_processing import PitchTracker
+
                         pitch_tracker = PitchTracker()
                         if pitch_tracker.crepe_available or pitch_tracker.pyin_available:
                             # Use crepe for higher accuracy, fallback to pyin
@@ -1976,7 +1989,7 @@ async def analyze(
 @router.post("/remove-artifacts", response_model=ArtifactRemovalResponse)
 async def remove_artifacts(
     req: ArtifactRemovalRequest,
-    engine_service: EngineServiceDep = None,
+    engine_service: EngineServiceDep | None = None,
 ) -> ArtifactRemovalResponse:
     """
     Advanced artifact removal and audio repair (IDEA 63).
@@ -2194,7 +2207,7 @@ async def remove_artifacts(
 
                 # Calculate quality improvement
                 original_artifact_score = artifact_results.get("artifact_score", 0.0)
-                repaired_results = detect_artifacts(repaired_audio, sample_rate)
+                repaired_results = _engine_svc.detect_artifacts(repaired_audio, sample_rate)
                 repaired_artifact_score = repaired_results.get("artifact_score", 0.0)
                 quality_improvement = max(0.0, original_artifact_score - repaired_artifact_score)
 
@@ -2205,7 +2218,7 @@ async def remove_artifacts(
                 artifacts_detected=artifacts_detected,
                 artifacts_removed=artifacts_removed,
                 quality_improvement=quality_improvement,
-                preview_available=req.preview,
+                preview_available=req.preview or False,
             )
 
         except ImportError as e:
@@ -2413,7 +2426,7 @@ async def prosody_control(req: ProsodyControlRequest) -> ProsodyControlResponse:
 
         # Apply prosody adjustments
         processed_audio = audio.copy()
-        prosody_applied = {}
+        prosody_applied: dict[str, Any] = {}
         quality_improvement = 0.0
 
         try:
@@ -2624,7 +2637,7 @@ async def post_process_pipeline(
                     processed_video_url=None,
                     stages_applied=stages_applied,
                     total_quality_improvement=total_quality_improvement,
-                    preview_available=req.preview,
+                    preview_available=req.preview or False,
                 )
 
             except ImportError as e:
@@ -2652,9 +2665,9 @@ async def post_process_pipeline(
                 from PIL import Image
 
                 # Add app directory to path if needed
-                app_path = Path(__file__).parent.parent.parent.parent / "app"
-                if str(app_path) not in sys.path:
-                    sys.path.insert(0, str(app_path))
+                app_dir = Path(__file__).parent.parent.parent.parent / "app"
+                if str(app_dir) not in sys.path:
+                    sys.path.insert(0, str(app_dir))
 
                 # Load image
                 input_image = Image.open(image_path)
@@ -2698,10 +2711,10 @@ async def post_process_pipeline(
                             # Apply image enhancement (sharpness, contrast)
                             from PIL import ImageEnhance
 
-                            enhancer = ImageEnhance.Sharpness(processed_image)
-                            processed_image = enhancer.enhance(1.2)
-                            enhancer = ImageEnhance.Contrast(processed_image)
-                            processed_image = enhancer.enhance(1.1)
+                            sharpness_enhancer = ImageEnhance.Sharpness(processed_image)
+                            processed_image = sharpness_enhancer.enhance(1.2)
+                            contrast_enhancer = ImageEnhance.Contrast(processed_image)
+                            processed_image = contrast_enhancer.enhance(1.1)
                             quality_after = min(1.0, quality_before + 0.1)
                         elif stage_name == "denoise":
                             # Apply denoising using median filter
@@ -2755,7 +2768,7 @@ async def post_process_pipeline(
                         processed_video_url=None,
                         stages_applied=stages_applied,
                         total_quality_improvement=total_quality_improvement,
-                        preview_available=req.preview,
+                        preview_available=req.preview or False,
                     )
 
                 except ImportError:
@@ -2786,9 +2799,9 @@ async def post_process_pipeline(
                 from pathlib import Path
 
                 # Add app directory to path if needed
-                app_path = Path(__file__).parent.parent.parent.parent / "app"
-                if str(app_path) not in sys.path:
-                    sys.path.insert(0, str(app_path))
+                app_dir = Path(__file__).parent.parent.parent.parent / "app"
+                if str(app_dir) not in sys.path:
+                    sys.path.insert(0, str(app_dir))
 
                 # Determine enhancement stages
                 stages = req.enhancement_stages or [
@@ -2802,6 +2815,7 @@ async def post_process_pipeline(
                     import cv2
                     import numpy as np
 
+                    _fourcc_fn: Any = getattr(cv2, "VideoWriter_fourcc")
                     processed_video_path = video_path
                     stages_applied = []
                     total_quality_improvement = 0.0
@@ -2825,7 +2839,7 @@ async def post_process_pipeline(
                             height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
                             output_path = tempfile.mktemp(suffix=".mp4")
-                            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+                            fourcc = _fourcc_fn(*"mp4v")
                             out = cv2.VideoWriter(output_path, fourcc, fps, (width * 2, height * 2))
 
                             while True:
@@ -2853,7 +2867,7 @@ async def post_process_pipeline(
                             height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
                             output_path = tempfile.mktemp(suffix=".mp4")
-                            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+                            fourcc = _fourcc_fn(*"mp4v")
                             out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
                             prev_frame = None
@@ -2882,7 +2896,7 @@ async def post_process_pipeline(
                             height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
                             output_path = tempfile.mktemp(suffix=".mp4")
-                            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+                            fourcc = _fourcc_fn(*"mp4v")
                             out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
                             while True:
@@ -2954,7 +2968,7 @@ async def post_process_pipeline(
                         processed_video_url=processed_video_url,
                         stages_applied=stages_applied,
                         total_quality_improvement=total_quality_improvement,
-                        preview_available=req.preview,
+                        preview_available=req.preview or False,
                     )
 
                 except ImportError:
@@ -2968,6 +2982,12 @@ async def post_process_pipeline(
             except Exception as e:
                 logger.error(f"Video post-processing failed: {e}", exc_info=True)
                 raise HTTPException(status_code=500, detail=f"Video post-processing failed: {e!s}")
+
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="No valid media ID provided for processing",
+            )
 
     except HTTPException:
         raise
@@ -3109,7 +3129,7 @@ async def clone(
                     from backend.core.audio.conversion import get_conversion_service
 
                     conversion_service = get_conversion_service()
-                    result = await conversion_service.convert_to_wav(
+                    conv_result = await conversion_service.convert_to_wav(
                         input_path=Path(tmp_path),
                         output_path=Path(wav_path),
                         sample_rate=44100,
@@ -3117,7 +3137,7 @@ async def clone(
                         bit_depth=16,
                     )
 
-                    if result.success:
+                    if conv_result.success:
                         ref_paths.append(wav_path)
                         # Clean up original temp file
                         with contextlib.suppress(OSError):
@@ -3132,7 +3152,7 @@ async def clone(
                         logger.warning(
                             "Audio conversion failed for '%s': %s (using original)",
                             ref_file.filename,
-                            result.error,
+                            conv_result.error,
                         )
                 except ImportError:
                     ref_paths.append(tmp_path)
@@ -3199,7 +3219,7 @@ async def clone(
                         if hasattr(engine_instance, "clone_voice"):
                             output_path = tempfile.mktemp(suffix=".wav")
                             if use_multi_reference and len(ref_paths) > 1:
-                                reference_audio_arg: Union[str, list[str]] = ref_paths
+                                reference_audio_arg: str | list[str] | None = ref_paths
                             else:
                                 reference_audio_arg = ref_paths[0] if ref_paths else ref_path
                             clone_kwargs = {
@@ -3281,7 +3301,7 @@ async def clone(
                         if isinstance(metrics, dict):
                             metrics = _normalize_metrics_payload(metrics)
 
-                        file_written = bool(output_path) and os.path.exists(output_path)
+                        file_written = output_path is not None and os.path.exists(output_path)
                         logger.info(
                             f"File check: output_path={output_path}, exists={os.path.exists(output_path) if output_path else False}, file_written={file_written}"
                         )
@@ -3375,9 +3395,9 @@ async def clone(
                             similarity = metrics.get("similarity")
                             quality_score_metric = metrics.get("quality_score")
                             if mos_score is not None:
-                                quality_score = _coerce_optional_float(mos_score)
-                                if quality_score is not None:
-                                    quality_score = quality_score / 5.0
+                                _mos_f = _coerce_optional_float(mos_score)
+                                if _mos_f is not None:
+                                    quality_score = _mos_f / 5.0
                             elif similarity is not None:
                                 quality_score = _coerce_optional_float(similarity) or quality_score
                             elif quality_score_metric is not None:
@@ -3648,10 +3668,10 @@ async def synthesize_with_style(
             duration = 2.5
 
         return VoiceSynthesizeResponse(
-            success=True,
             audio_id=audio_id,
             audio_url=f"/api/voice/audio/{audio_id}",
             duration=duration,
+            quality_score=0.85,
             quality_metrics=quality_metrics,
         )
 
@@ -3868,10 +3888,10 @@ async def synthesize_cross_lingual(
             duration = 2.5
 
         return VoiceSynthesizeResponse(
-            success=True,
             audio_id=audio_id,
             audio_url=f"/api/voice/audio/{audio_id}",
             duration=duration,
+            quality_score=0.85,
             quality_metrics=quality_metrics_obj,
         )
 

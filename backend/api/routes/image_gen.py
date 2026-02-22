@@ -21,11 +21,11 @@ from backend.core.security.file_validation import (
     FileValidationError,
     validate_image_file,
 )
-from backend.services.circuit_breaker import (
+from backend.core.circuit_breaker import (
     CircuitBreakerOpenError,
     get_engine_breaker,
 )
-from backend.services.engine_service import get_engine_service
+from backend.ml.models.engine_service import get_engine_service
 
 from ..models_additional import (
     FaceEnhancementRequest,
@@ -583,7 +583,7 @@ async def enhance_face(req: FaceEnhancementRequest) -> FaceEnhancementResponse:
         # For videos, delegate to video_face_enhancer service
         elif req.video_id:
             try:
-                from backend.services.video_face_enhancer import enhance_video_faces
+                from backend.media.video.video_face_enhancer import enhance_video_faces
 
                 enhanced_video_id = f"enhanced_{req.video_id}"
                 result = await enhance_video_faces(

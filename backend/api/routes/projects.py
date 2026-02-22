@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from backend.services.ProjectStoreService import (
+from backend.project.management.project_store_service import (
     ProjectRecord,
     get_project_store_service,
 )

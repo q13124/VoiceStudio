@@ -14,8 +14,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from backend.services.engine_service import IEngineService, get_engine_service
-from backend.services.model_preflight import run_preflight
+from backend.ml.models.engine_service import IEngineService, get_engine_service
+from backend.ml.models.model_preflight import run_preflight
 
 from ..optimization import cache_response
 
@@ -491,7 +491,7 @@ async def compare_engines(
 # Engine Configuration Management Endpoints
 
 try:
-    from backend.services.EngineConfigService import get_engine_config_service
+    from backend.ml.models.engine_config_service import get_engine_config_service
 
     HAS_CONFIG_SERVICE = True
 except ImportError:

@@ -16,6 +16,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from PIL import Image
 
 # Import base protocol
@@ -80,9 +81,9 @@ class FOMMEngine(EngineProtocol):
         self.generator = None
 
         # Caching for performance
-        self._video_cache = {}  # Cache for generated video results
-        self._keypoint_cache = {}  # Cache for extracted keypoints
-        self._video_frames_cache = {}  # Cache for loaded video frames
+        self._video_cache: dict[str, str] = {}
+        self._keypoint_cache: dict[str, dict] = {}
+        self._video_frames_cache: dict[str, list[np.ndarray]] = {}
         self._cache_max_size = 50  # Maximum number of cached videos
 
         if gpu and torch.cuda.is_available() and self.device == "cpu":
@@ -204,15 +205,17 @@ class FOMMEngine(EngineProtocol):
 
             if cache_key in self._video_cache:
                 logger.debug("Using cached FOMM video result")
-                cached_path = self._video_cache[cache_key]
+                cached_path: str = self._video_cache[cache_key]
                 if os.path.exists(cached_path):
-                    return cached_path
+                    return str(cached_path)
                 else:
                     del self._video_cache[cache_key]
 
             # Load source image
             if isinstance(source_image, (str, Path)):
                 source_img = cv2.imread(str(source_image))
+                if source_img is None:
+                    raise ValueError(f"Failed to load image: {source_image}")
                 source_img = cv2.cvtColor(source_img, cv2.COLOR_BGR2RGB)
             else:
                 source_img = np.array(source_image)
@@ -326,7 +329,7 @@ class FOMMEngine(EngineProtocol):
         if HAS_CV2:
             gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
             # Use ORB detector as fallback
-            orb = cv2.ORB_create()
+            orb = cv2.ORB.create()
             keypoints, descriptors = orb.detectAndCompute(gray, None)
             return {"keypoints": keypoints, "descriptors": descriptors, "type": "orb"}
 
@@ -390,6 +393,8 @@ class FOMMEngine(EngineProtocol):
         try:
 
             model_data = self.model
+            if model_data is None:
+                return self._generate_frame_fallback(source_img, source_kp, driving_kp)
             device = model_data["device"]
             checkpoint = model_data.get("checkpoint", {})
 
@@ -441,10 +446,10 @@ class FOMMEngine(EngineProtocol):
                 )
 
             # Convert back to numpy
-            output = output.squeeze(0).permute(1, 2, 0).cpu().numpy()
-            output = np.clip(output * 255.0, 0, 255).astype(np.uint8)
+            output_np: np.ndarray = output.squeeze(0).permute(1, 2, 0).cpu().numpy()
+            output_np = np.clip(output_np * 255.0, 0, 255).astype(np.uint8)
 
-            return output
+            return output_np
 
         except Exception as e:
             logger.warning(f"Model frame generation failed: {e}")
@@ -680,11 +685,11 @@ class FOMMEngine(EngineProtocol):
             grid = torch.stack([grid_x, grid_y], dim=-1)
 
             # Sample image using grid
-            output = F.grid_sample(
+            result: torch.Tensor = F.grid_sample(
                 image_tensor, grid, mode="bilinear", padding_mode="border", align_corners=False
             )
 
-            return output
+            return result
 
         except Exception as e:
             logger.debug(f"Dense motion application failed: {e}")
@@ -786,10 +791,10 @@ class FOMMEngine(EngineProtocol):
                 theta = torch.from_numpy(transform_matrix).float().unsqueeze(0).to(device)
 
                 # Apply affine transformation
-                grid = F.affine_grid(theta, image_tensor.size(), align_corners=False)
-                output = F.grid_sample(image_tensor, grid, align_corners=False)
+                grid = F.affine_grid(theta, list(image_tensor.size()), align_corners=False)
+                affine_result: torch.Tensor = F.grid_sample(image_tensor, grid, align_corners=False)
 
-                return output
+                return affine_result
 
             return image_tensor
 
@@ -899,7 +904,7 @@ class FOMMEngine(EngineProtocol):
 
                     # Apply grid_sample for transformation
                     grid = torch.nn.functional.affine_grid(
-                        theta, image_tensor.size(), align_corners=False
+                        theta, list(image_tensor.size()), align_corners=False
                     )
                     output = torch.nn.functional.grid_sample(
                         image_tensor, grid, align_corners=False
@@ -920,7 +925,8 @@ class FOMMEngine(EngineProtocol):
             raise ValueError("No frames to save")
 
         height, width = frames[0].shape[:2]
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        _fourcc_fn = getattr(cv2, "VideoWriter_fourcc")
+        fourcc = _fourcc_fn(*"mp4v")
         out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
         try:

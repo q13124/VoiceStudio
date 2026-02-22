@@ -22,6 +22,8 @@ from typing import Any
 import numpy as np
 import torch
 
+_MISSING: Any = None
+
 # Initialize logger early
 logger = logging.getLogger(__name__)
 
@@ -43,7 +45,7 @@ try:
     HAS_MODEL_CACHE = True
 except ImportError:
     HAS_MODEL_CACHE = False
-    _model_cache = None
+    _model_cache = _MISSING
     logger.debug("General model cache not available, using RVC-specific cache")
 
 # Fallback: RVC-specific cache (for backward compatibility)
@@ -157,7 +159,7 @@ try:
     HAS_LIBROSA = True
 except ImportError:
     HAS_LIBROSA = False
-    librosa = None
+    librosa = _MISSING
     logger.warning("librosa not available. " "Some audio processing features will be limited.")
 
 # Optional quality metrics import
@@ -233,40 +235,32 @@ except Exception as e:
     )
 
 # Try to import RVC SynthesizerTrn model classes
+import importlib as _importlib
+
 HAS_RVC_MODELS = False
-SynthesizerTrnMs256NSFsid = None
-SynthesizerTrnMs256NSFsid_nono = None
-SynthesizerTrnMs768NSFsid = None
-SynthesizerTrnMs768NSFsid_nono = None
+SynthesizerTrnMs256NSFsid: Any = None
+SynthesizerTrnMs256NSFsid_nono: Any = None
+SynthesizerTrnMs768NSFsid: Any = None
+SynthesizerTrnMs768NSFsid_nono: Any = None
 
-try:
-    # Try importing from rvc package
-    from rvc.lib.infer_pack.models import (
-        SynthesizerTrnMs256NSFsid,
-        SynthesizerTrnMs256NSFsid_nono,
-        SynthesizerTrnMs768NSFsid,
-        SynthesizerTrnMs768NSFsid_nono,
-    )
-
-    HAS_RVC_MODELS = True
-    logger.debug("RVC model classes imported from rvc package")
-except ImportError:
+for _rvc_pkg in ["rvc.lib.infer_pack.models", "infer.lib.infer_pack.models"]:
     try:
-        # Try alternative import path
-        from infer.lib.infer_pack.models import (
-            SynthesizerTrnMs256NSFsid,
-            SynthesizerTrnMs256NSFsid_nono,
-            SynthesizerTrnMs768NSFsid,
-            SynthesizerTrnMs768NSFsid_nono,
-        )
-
+        _rvc_models = _importlib.import_module(_rvc_pkg)
+        SynthesizerTrnMs256NSFsid = _rvc_models.SynthesizerTrnMs256NSFsid
+        SynthesizerTrnMs256NSFsid_nono = _rvc_models.SynthesizerTrnMs256NSFsid_nono
+        SynthesizerTrnMs768NSFsid = _rvc_models.SynthesizerTrnMs768NSFsid
+        SynthesizerTrnMs768NSFsid_nono = _rvc_models.SynthesizerTrnMs768NSFsid_nono
         HAS_RVC_MODELS = True
-        logger.debug("RVC model classes imported from infer package")
+        logger.debug("RVC model classes imported from %s", _rvc_pkg)
+        break
     except ImportError:
-        logger.debug(
-            "RVC SynthesizerTrn model classes not available. "
-            "RVC inference will use fallback methods."
-        )
+        continue
+
+if not HAS_RVC_MODELS:
+    logger.debug(
+        "RVC SynthesizerTrn model classes not available. "
+        "RVC inference will use fallback methods."
+    )
 
 # Import base protocol from canonical protocols module
 from .protocols import CancellationToken, EngineProtocol, OperationCancelledError
@@ -319,11 +313,12 @@ class RVCEngine(EngineProtocol):
         self.hubert_model = None
         self.net_g = None  # RVC synthesizer model (net_g)
         self.feature_extractor = None
-        self._model_cache = {}  # Cache for multiple models (legacy, kept for compatibility)
+        self._model_cache: dict[str, Any] = {}
         self._feature_cache: OrderedDict = OrderedDict()  # LRU cache for extracted features
         # Faiss index for vector similarity search (lazy initialization)
-        self._faiss_index = None
-        self._faiss_embedding_ids = []
+        self._faiss_index: Any = None
+        self._faiss_embedding_ids: list[str] = []
+        self._voice_embedding_cache: dict[str, np.ndarray] = {}
         self._big_npy = None  # Reconstructed embeddings for index search
         self._cache_max_size = 10  # Maximum number of cached models
         self.lazy_load = True
@@ -430,7 +425,7 @@ class RVCEngine(EngineProtocol):
                 return True
 
             logger.info(f"Loading RVC model from: {self.model_path}")
-            return self._load_models()
+            return bool(self._load_models())
 
         except Exception as e:
             logger.error(f"Failed to initialize RVC engine: {e}")
@@ -582,14 +577,14 @@ class RVCEngine(EngineProtocol):
 
             # Apply quality processing if requested
             if enhance_quality or calculate_quality:
-                converted_audio = self._process_audio_quality(
+                quality_result = self._process_audio_quality(
                     converted_audio,
                     self.sample_rate,
                     enhance_quality,
                     calculate_quality,
                 )
-                if isinstance(converted_audio, tuple):
-                    enhanced_audio, quality_metrics = converted_audio
+                if isinstance(quality_result, tuple):
+                    enhanced_audio, quality_metrics = quality_result
                     if output_path:
                         import soundfile as sf
 
@@ -597,6 +592,7 @@ class RVCEngine(EngineProtocol):
                         return None, quality_metrics
                     return enhanced_audio, quality_metrics
                 else:
+                    converted_audio = quality_result
                     if output_path:
                         import soundfile as sf
 
@@ -707,8 +703,14 @@ class RVCEngine(EngineProtocol):
             )
 
             # Yield in chunks
-            for i in range(0, len(converted), chunk_size):
-                yield converted[i : i + chunk_size]
+            if isinstance(converted, np.ndarray):
+                audio_data = converted
+            elif isinstance(converted, tuple) and converted[0] is not None:
+                audio_data = converted[0]
+            else:
+                return
+            for i in range(0, len(audio_data), chunk_size):
+                yield audio_data[i : i + chunk_size]
 
         except Exception as e:
             logger.error(f"Streaming RVC conversion failed: {e}")
@@ -902,7 +904,7 @@ class RVCEngine(EngineProtocol):
                 # Move to end (most recently used)
                 self._feature_cache.move_to_end(audio_hash)
                 logger.debug("Using cached features")
-                return self._feature_cache[audio_hash]
+                return np.asarray(self._feature_cache[audio_hash])
 
             # Try to use HuBERT if available
             if self.hubert_model is not None:
@@ -1069,7 +1071,7 @@ class RVCEngine(EngineProtocol):
 
         try:
             # Build faiss index if not exists
-            if not hasattr(self, "_faiss_index") or self._faiss_index is None:
+            if self._faiss_index is None:
                 # Create index from cached embeddings
                 if len(self._voice_embedding_cache) > 0:
                     # Convert embeddings to numpy array
@@ -1086,6 +1088,8 @@ class RVCEngine(EngineProtocol):
                     return []
 
             # Search for similar embeddings
+            if self._faiss_index is None:
+                return []
             query_vector = query_features.flatten()[: self._faiss_index.d].astype(np.float32)
             query_vector = query_vector.reshape(1, -1)
 
@@ -1224,12 +1228,12 @@ class RVCEngine(EngineProtocol):
                 cached = _get_cached_rvc_model(model_path, self.device)
                 if cached is not None:
                     logger.debug(f"Using cached RVC model: {model_path}")
-                    return cached
+                    return dict(cached)
 
             # Check legacy cache
             if model_path in self._model_cache:
                 logger.debug(f"Using legacy cached RVC model: {model_path}")
-                return self._model_cache[model_path]
+                return dict(self._model_cache[model_path])
 
             # Manage legacy cache size - remove oldest entries if cache is full
             if len(self._model_cache) >= self._cache_max_size:
@@ -1393,7 +1397,7 @@ class RVCEngine(EngineProtocol):
                     # Also add to legacy cache for compatibility
                     self._model_cache[model_path] = checkpoint
                     logger.info(f"Loaded RVC model checkpoint from: {model_path}")
-                    return checkpoint
+                    return dict(checkpoint)
                 except Exception as e:
                     logger.warning(f"Failed to load RVC model: {e}")
                     return None
@@ -1791,7 +1795,7 @@ class RVCEngine(EngineProtocol):
                     with torch.inference_mode():  # Faster than no_grad
                         audio_tensor = self.vocoder(features_tensor)
                     audio = audio_tensor.cpu().numpy().flatten()
-                    return audio.astype(np.float32)
+                    return np.asarray(audio, dtype=np.float32)
 
             # Fallback to Griffin-Lim or inverse mel
             return self._convert_features_fallback(features)
@@ -1936,7 +1940,7 @@ class RVCEngine(EngineProtocol):
         target_speaker_model: str | None,
         pitch_shift: int,
         **kwargs,
-    ) -> np.ndarray:
+    ) -> np.ndarray | None:
         """Convert audio chunk in real-time with low latency."""
         # Optimized for real-time processing
         # This would use optimized RVC inference
@@ -2007,7 +2011,7 @@ class RVCEngine(EngineProtocol):
         if calculate and HAS_QUALITY_METRICS:
             try:
                 # Calculate comprehensive quality metrics
-                quality_metrics = calculate_all_metrics(audio, sample_rate)
+                quality_metrics = calculate_all_metrics(audio, sample_rate=sample_rate)
 
                 # Add RVC-specific quality indicators
                 if HAS_LIBROSA:
@@ -2028,8 +2032,8 @@ class RVCEngine(EngineProtocol):
                     try:
                         f0 = librosa.pyin(
                             audio,
-                            fmin=librosa.note_to_hz("C2"),
-                            fmax=librosa.note_to_hz("C7"),
+                            fmin=float(librosa.note_to_hz("C2")),
+                            fmax=float(librosa.note_to_hz("C7")),
                         )[0]
                         f0_voiced = f0[~np.isnan(f0)]
                         if len(f0_voiced) > 0:
@@ -2080,7 +2084,7 @@ class RVCEngine(EngineProtocol):
         batch_size = self.batch_size
         for batch_start in range(0, len(source_audios), batch_size):
             batch_audios = source_audios[batch_start : batch_start + batch_size]
-            batch_results = []
+            batch_results: list[np.ndarray | None] = []
 
             for i, source_audio in enumerate(batch_audios):
                 try:
@@ -2091,14 +2095,20 @@ class RVCEngine(EngineProtocol):
                         **kwargs,
                     )
 
-                    if output_dir and result is not None:
+                    audio_result: np.ndarray | None = None
+                    if isinstance(result, np.ndarray):
+                        audio_result = result
+                    elif isinstance(result, tuple) and result[0] is not None:
+                        audio_result = result[0]
+
+                    if output_dir and audio_result is not None:
                         output_path = Path(output_dir) / f"output_{batch_start + i:04d}.wav"
                         import soundfile as sf
 
-                        sf.write(str(output_path), result, self.sample_rate)
+                        sf.write(str(output_path), audio_result, self.sample_rate)
                         batch_results.append(None)
                     else:
-                        batch_results.append(result)
+                        batch_results.append(audio_result)
                 except Exception as e:
                     logger.error(f"Batch conversion failed for audio {batch_start + i}: {e}")
                     batch_results.append(None)

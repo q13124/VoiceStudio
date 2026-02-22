@@ -76,7 +76,7 @@ class SynthesisEngineAdapter:
                 await self._engine.load()
             else:
                 # Try to load from engine registry
-                from backend.services.engine_service import get_engine_by_id
+                from backend.ml.models.engine_service import get_engine_by_id
 
                 self._engine = get_engine_by_id(self._engine_id)
                 if self._engine and hasattr(self._engine, "load"):
@@ -208,7 +208,7 @@ class TranscriptionEngineAdapter:
                 self._engine = WhisperEngine()
                 await self._engine.load()
             else:
-                from backend.services.engine_service import get_engine_by_id
+                from backend.ml.models.engine_service import get_engine_by_id
 
                 self._engine = get_engine_by_id(self._engine_id)
                 if self._engine and hasattr(self._engine, "load"):
@@ -521,7 +521,7 @@ class TranslationEngineAdapter:
     ) -> str:
         """Translate text to target language."""
         try:
-            from backend.services.translation_service import TranslationService
+            from backend.voice.translation.translation_service import TranslationService
 
             service = TranslationService()
             return await service._translate_text(

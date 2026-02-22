@@ -40,7 +40,7 @@ except ImportError:
 
 # Try importing UnifiedConfigService
 try:
-    from backend.services.unified_config import UnifiedConfigService, get_config
+    from backend.platform.config.unified_config import UnifiedConfigService, get_config
 
     HAS_UNIFIED_CONFIG = True
 except ImportError:
@@ -59,7 +59,7 @@ except ImportError:
 
 # Try importing ABTestingService for exposure tracking
 try:
-    from backend.services.ab_testing import ABTestingService
+    from backend.ml.models.ab_testing import ABTestingService
 
     HAS_AB_SERVICE = True
 except ImportError:

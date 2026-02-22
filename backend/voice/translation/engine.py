@@ -119,7 +119,7 @@ class TranslationEngine:
             config: Engine configuration
         """
         self._config = config or TranslationConfig()
-        self._model = None
+        self._model: dict[str, Any] | None = None
         self._loaded = False
         self._processing = False
 
@@ -375,7 +375,7 @@ class TranslationEngine:
             embedding = encoder.embed_utterance(wav)
 
             logger.debug(f"Extracted speaker embedding: shape={embedding.shape}")
-            return embedding
+            return np.asarray(embedding)
 
         except ImportError:
             logger.warning("resemblyzer not available, trying alternative")
@@ -394,7 +394,7 @@ class TranslationEngine:
             audio_tensor = torch.from_numpy(audio_data).float().unsqueeze(0)
             embedding = classifier.encode_batch(audio_tensor)
 
-            return embedding.squeeze().numpy()
+            return np.asarray(embedding.squeeze().numpy())
 
         except ImportError:
             logger.warning("speechbrain not available")
@@ -407,10 +407,10 @@ class TranslationEngine:
             mel = librosa.feature.melspectrogram(y=audio_data, sr=sample_rate, n_mels=128)
 
             # Take mean across time to get fixed-size vector
-            embedding = np.mean(mel, axis=1)
+            embedding = np.asarray(np.mean(mel, axis=1))
 
             # Normalize
-            embedding = embedding / (np.linalg.norm(embedding) + 1e-8)
+            embedding = np.asarray(embedding / (np.linalg.norm(embedding) + 1e-8))
 
             # Pad to 256 dimensions
             if len(embedding) < 256:
@@ -533,7 +533,7 @@ class TranslationEngine:
         audio_data: np.ndarray,
         sample_rate: int,
         source_lang: str,
-    ) -> tuple:
+    ) -> tuple[str, str, float]:
         """Transcribe audio to text."""
         if self._model and self._model.get("provider") == "seamless":
             return await self._transcribe_seamless(audio_data, sample_rate, source_lang)
@@ -548,10 +548,11 @@ class TranslationEngine:
         audio_data: np.ndarray,
         sample_rate: int,
         source_lang: str,
-    ) -> tuple:
+    ) -> tuple[str, str, float]:
         """Transcribe using SeamlessM4T."""
         import torch
 
+        assert self._model is not None
         processor = self._model["processor"]
         model = self._model["model"]
         device = self._model["device"]
@@ -573,8 +574,9 @@ class TranslationEngine:
         audio_data: np.ndarray,
         sample_rate: int,
         source_lang: str,
-    ) -> tuple:
+    ) -> tuple[str, str, float]:
         """Transcribe using Whisper."""
+        assert self._model is not None
         model = self._model["model"]
 
         # Whisper expects 16kHz audio
@@ -623,6 +625,7 @@ class TranslationEngine:
         try:
             import torch
 
+            assert self._model is not None
             tokenizer = self._model["tokenizer"]
             model = self._model["model"]
 
@@ -631,7 +634,7 @@ class TranslationEngine:
             with torch.no_grad():
                 outputs = model.generate(**inputs)
 
-            translated = tokenizer.decode(outputs[0], skip_special_tokens=True)
+            translated: str = tokenizer.decode(outputs[0], skip_special_tokens=True)
             return translated
 
         except Exception as e:
@@ -660,6 +663,7 @@ class TranslationEngine:
         """Synthesize using SeamlessM4T."""
         import torch
 
+        assert self._model is not None
         processor = self._model["processor"]
         model = self._model["model"]
         device = self._model["device"]
@@ -671,7 +675,7 @@ class TranslationEngine:
             output = model.generate(**inputs, tgt_lang=language, generate_speech=True)
 
         if hasattr(output, "waveform"):
-            return output.waveform.squeeze().cpu().numpy()
+            return np.asarray(output.waveform.squeeze().cpu().numpy())
 
         return np.zeros(sample_rate * 2)
 
@@ -703,13 +707,13 @@ class TranslationEngine:
     # File I/O helpers (Task 4.2.8)
     # ========================================================================
 
-    def _load_audio_file(self, path: str) -> tuple:
+    def _load_audio_file(self, path: str) -> tuple[np.ndarray, int]:
         """Load audio file."""
         try:
             import librosa
 
             audio, sr = librosa.load(path, sr=None, mono=True)
-            return audio, sr
+            return audio, int(sr)
         except ImportError:
             logger.debug("librosa not available, trying soundfile")
 

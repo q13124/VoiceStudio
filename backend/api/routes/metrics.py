@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends, Query, Response
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 
-from backend.services.engine_service import IEngineService, get_engine_service
+from backend.ml.models.engine_service import IEngineService, get_engine_service
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +193,7 @@ def collect_system_metrics(registry: MetricsRegistry) -> None:
 def collect_slo_metrics(registry: MetricsRegistry) -> None:
     """Collect SLO-related metrics from slo_monitor service."""
     try:
-        from backend.services.slo_monitor import get_slo_monitor
+        from backend.platform.monitoring.slo_monitor import get_slo_monitor
 
         monitor = get_slo_monitor()
         slo_statuses = monitor.get_all_slo_statuses()

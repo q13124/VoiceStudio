@@ -116,24 +116,25 @@ async def enhance_audio(request: EnhanceRequest):
         Enhanced audio ID and improvement metrics
     """
     try:
-        from backend.services.ai_audio_enhancement import get_ai_enhancement_service
+        from backend.audio.processing.ai_audio_enhancement import get_ai_enhancement_service
 
         service = get_ai_enhancement_service()
-        result = await service.enhance(
-            audio_id=request.audio_id,
-            mode=request.mode,
+        result = await service.one_click_enhance(
+            audio_path=request.audio_id,
             strength=request.strength,
-            preset=request.preset,
         )
 
-        if not result.get("success", False):
-            raise HTTPException(status_code=500, detail=result.get("error", "Enhancement failed"))
+        if not result.success:
+            raise HTTPException(
+                status_code=500,
+                detail=result.error_message or "Enhancement failed",
+            )
 
         return EnhanceResponse(
-            output_audio_id=result["output_audio_id"],
-            mode=result.get("mode", request.mode),
-            strength=result.get("strength", request.strength),
-            improvements=result.get("improvements", {}),
+            output_audio_id=result.output_path or "",
+            mode=request.mode,
+            strength=request.strength,
+            improvements=result.improvements,
         )
 
     except HTTPException:
@@ -157,23 +158,23 @@ async def isolate_voice(request: VoiceIsolationRequest):
         Processed audio ID
     """
     try:
-        from backend.services.ai_audio_enhancement import get_ai_enhancement_service
+        from backend.audio.processing.ai_audio_enhancement import get_ai_enhancement_service
 
         service = get_ai_enhancement_service()
-        result = await service.isolate_voice(
-            audio_id=request.audio_id,
-            preserve_vocals=request.preserve_vocals,
+        output_path, metadata = await service.isolate_voice(
+            audio_path=request.audio_id,
         )
 
-        if not result.get("success", False):
+        if output_path is None:
             raise HTTPException(
-                status_code=500, detail=result.get("error", "Voice isolation failed")
+                status_code=500,
+                detail=metadata.get("error", "Voice isolation failed"),
             )
 
         return VoiceIsolationResponse(
-            output_audio_id=result["output_audio_id"],
+            output_audio_id=output_path,
             vocals_removed=not request.preserve_vocals,
-            separation_quality=result.get("quality", 0.0),
+            separation_quality=float(metadata.get("processing_time_ms", 0.0)),
         )
 
     except HTTPException:
@@ -197,21 +198,24 @@ async def remove_reverb(request: DeReverbRequest):
         Processed audio ID
     """
     try:
-        from backend.services.ai_audio_enhancement import get_ai_enhancement_service
+        from backend.audio.processing.ai_audio_enhancement import get_ai_enhancement_service
 
         service = get_ai_enhancement_service()
-        result = await service.remove_reverb(
-            audio_id=request.audio_id,
+        output_path, metadata = await service.remove_reverb(
+            audio_path=request.audio_id,
             strength=request.strength,
         )
 
-        if not result.get("success", False):
-            raise HTTPException(status_code=500, detail=result.get("error", "De-reverb failed"))
+        if output_path is None:
+            raise HTTPException(
+                status_code=500,
+                detail=metadata.get("error", "De-reverb failed"),
+            )
 
         return DeReverbResponse(
-            output_audio_id=result["output_audio_id"],
-            reverb_reduction_db=result.get("reverb_reduction_db", 0.0),
-            estimated_rt60=result.get("estimated_rt60", 0.0),
+            output_audio_id=output_path,
+            reverb_reduction_db=float(metadata.get("reverb_reduction_db", 0.0)),
+            estimated_rt60=float(metadata.get("estimated_rt60", 0.0)),
         )
 
     except HTTPException:
@@ -222,7 +226,7 @@ async def remove_reverb(request: DeReverbRequest):
 
 
 @router.post("/repair", response_model=RepairResponse)
-async def repair_audio(request: RepairRequest):
+async def repair_audio_endpoint(request: RepairRequest):
     """
     Repair audio artifacts (clicks, clipping, noise).
 
@@ -235,24 +239,26 @@ async def repair_audio(request: RepairRequest):
         Repaired audio ID and repair stats
     """
     try:
-        from backend.services.ai_audio_enhancement import get_ai_enhancement_service
+        from backend.audio.processing.ai_audio_enhancement import get_ai_enhancement_service
 
         service = get_ai_enhancement_service()
-        result = await service.repair(
-            audio_id=request.audio_id,
+        output_path, metadata = await service.repair_audio(
+            audio_path=request.audio_id,
             repair_clicks=request.repair_clicks,
             repair_clipping=request.repair_clipping,
-            reduce_noise=request.reduce_noise,
         )
 
-        if not result.get("success", False):
-            raise HTTPException(status_code=500, detail=result.get("error", "Audio repair failed"))
+        if output_path is None:
+            raise HTTPException(
+                status_code=500,
+                detail=metadata.get("error", "Audio repair failed"),
+            )
 
         return RepairResponse(
-            output_audio_id=result["output_audio_id"],
-            clicks_repaired=result.get("clicks_repaired", 0),
-            clipping_repaired_samples=result.get("clipping_repaired_samples", 0),
-            noise_reduction_db=result.get("noise_reduction_db", 0.0),
+            output_audio_id=output_path,
+            clicks_repaired=0,
+            clipping_repaired_samples=0,
+            noise_reduction_db=0.0,
         )
 
     except HTTPException:
@@ -266,17 +272,17 @@ async def repair_audio(request: RepairRequest):
 async def list_presets():
     """List available enhancement presets."""
     try:
-        from backend.services.ai_audio_enhancement import get_ai_enhancement_service
+        from backend.audio.processing.ai_audio_enhancement import get_ai_enhancement_service
 
         service = get_ai_enhancement_service()
         presets = service.list_presets()
 
         return [
             PresetInfo(
-                name=p["name"],
-                description=p.get("description", ""),
-                mode=p.get("mode", "balanced"),
-                strength=p.get("strength", 0.5),
+                name=p.name,
+                description=p.description,
+                mode="balanced",
+                strength=p.noise_reduction,
             )
             for p in presets
         ]

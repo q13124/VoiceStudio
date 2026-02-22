@@ -27,7 +27,7 @@ from backend.core.security.file_validation import (
     FileValidationError,
     validate_archive_file,
 )
-from backend.services.engine_service import get_engine_service
+from backend.ml.models.engine_service import get_engine_service
 
 from ..middleware.auth_middleware import require_auth_if_enabled
 from ..ml_optimization import HyperparameterOptimizer

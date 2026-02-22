@@ -20,7 +20,7 @@ from ..plugins import get_plugin_loader
 
 # Phase 6A: Import plugin service for Wasm execution
 try:
-    from backend.services.plugin_service import get_plugin_service
+    from backend.plugins.plugin_service import get_plugin_service
 
     PLUGIN_SERVICE_AVAILABLE = True
 except ImportError:

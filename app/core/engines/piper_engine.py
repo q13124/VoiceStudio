@@ -21,6 +21,7 @@ import tempfile
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import soundfile as sf
@@ -191,12 +192,12 @@ class PiperEngine(EngineProtocol):
         self.model_path = model_path
         self.voice = voice
         self.piper_path = piper_path
-        self.executable_path = None
+        self.executable_path: str | None = None
         self.sample_rate = self.DEFAULT_SAMPLE_RATE
         self.lazy_load = lazy_load
         self.batch_size = batch_size
-        self.enable_caching = enable_caching
-        self._piper_instance = None  # Cached Piper instance (Python package)
+        self._caching_enabled = enable_caching
+        self._piper_instance: Any = None
 
         # Apply defaults for model/voice using the shared models root
         models_root = os.getenv("VOICESTUDIO_MODELS_PATH")
@@ -226,17 +227,17 @@ class PiperEngine(EngineProtocol):
             return custom_path
 
         if custom_path and os.path.isdir(custom_path):
-            exe_path = os.path.join(custom_path, name)
-            if os.path.isfile(exe_path) and os.access(exe_path, os.X_OK):
-                return exe_path
+            candidate = os.path.join(custom_path, name)
+            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+                return candidate
 
-        exe_path = shutil.which(name)
-        if exe_path:
-            return exe_path
+        found: str | None = shutil.which(name)
+        if found:
+            return found
 
-        exe_path = shutil.which(f"{name}.exe")
-        if exe_path:
-            return exe_path
+        found = shutil.which(f"{name}.exe")
+        if found:
+            return found
 
         return None
 
@@ -246,7 +247,7 @@ class PiperEngine(EngineProtocol):
             return self._piper_instance
 
         # Check cache first
-        if self.enable_caching:
+        if self._caching_enabled:
             cached = _get_cached_piper_instance(self.voice, self.model_path)
             if cached is not None:
                 logger.debug("Using cached Piper instance")
@@ -265,7 +266,7 @@ class PiperEngine(EngineProtocol):
                 piper = piper_tts.Piper()
 
             # Cache instance
-            if self.enable_caching:
+            if self._caching_enabled:
                 _cache_piper_instance(self.voice, self.model_path, piper)
 
             self._piper_instance = piper
@@ -417,7 +418,8 @@ class PiperEngine(EngineProtocol):
                         audio = np.array(audio, dtype=np.float32)
                 else:
                     # Use command-line interface
-                    cmd = [self.executable_path]
+                    assert self.executable_path is not None
+                    cmd: list[str] = [self.executable_path]
 
                     # Add model/voice
                     if self.model_path:
@@ -506,7 +508,7 @@ class PiperEngine(EngineProtocol):
                 logger.info(f"Audio saved to: {output_path}")
                 return None
 
-            return audio
+            return np.asarray(audio)
 
         except Exception as e:
             logger.error(f"Piper synthesis failed: {e}")
@@ -533,11 +535,11 @@ class PiperEngine(EngineProtocol):
 
         if calculate and HAS_QUALITY_METRICS:
             try:
-                quality_metrics = calculate_all_metrics(audio, sample_rate)
+                quality_metrics = calculate_all_metrics(audio, sample_rate=sample_rate)
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
+                        similarity = calculate_similarity(ref_audio, audio)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -620,7 +622,7 @@ class PiperEngine(EngineProtocol):
             batch_size = self.batch_size
             for batch_start in range(0, len(texts), batch_size):
                 batch_texts = texts[batch_start : batch_start + batch_size]
-                batch_results = []
+                batch_results: list[np.ndarray | None] = []
 
                 for i, text in enumerate(batch_texts):
                     try:
@@ -675,9 +677,9 @@ class PiperEngine(EngineProtocol):
 
         return results
 
-    def enable_caching(self, enable: bool = True):
+    def enable_caching(self, enable: bool = True) -> None:
         """Enable or disable caching."""
-        self.enable_caching = enable
+        self._caching_enabled = enable
         logger.info(f"Piper instance caching {'enabled' if enable else 'disabled'}")
 
     def set_batch_size(self, batch_size: int):

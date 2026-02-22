@@ -14,11 +14,11 @@ import logging
 import os
 from collections import OrderedDict
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import Any, Optional, cast
 
-if TYPE_CHECKING:
-    import numpy as np
-    import torch
+import numpy as np
+import torch
+import torch.nn.functional as F
 
 # Try importing requests for connection pooling
 try:
@@ -74,7 +74,7 @@ try:
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
-    enhance_voice_cloning_quality = None
+    enhance_voice_cloning_quality = cast(Any, None)
 
 
 class VoiceAIEngine(EngineProtocol):
@@ -120,9 +120,9 @@ class VoiceAIEngine(EngineProtocol):
         self.api_url = api_url
         self.use_local = use_local
         self.local_model = None
-        self._conversion_cache = OrderedDict()  # LRU cache for voice conversion results
-        self._cache_max_size = 100  # Maximum number of cached conversions
-        self._session = None  # For connection pooling
+        self._conversion_cache: OrderedDict[str, Any] = OrderedDict()
+        self._cache_max_size = 100
+        self._session: Any = None
 
     def initialize(self) -> bool:
         """Initialize the Voice.ai engine."""
@@ -235,7 +235,7 @@ class VoiceAIEngine(EngineProtocol):
             if cache_key in self._conversion_cache:
                 logger.debug("Using cached Voice.ai conversion result")
                 self._conversion_cache.move_to_end(cache_key)  # LRU update
-                cached_path = self._conversion_cache[cache_key]
+                cached_path: str = str(self._conversion_cache[cache_key])
                 # Verify cached file still exists
                 if os.path.exists(cached_path):
                     return cached_path
@@ -300,7 +300,7 @@ class VoiceAIEngine(EngineProtocol):
                     # Calculate quality metrics
                     if calculate_quality and HAS_QUALITY_METRICS:
                         try:
-                            quality_metrics = calculate_all_metrics(audio, sample_rate)
+                            quality_metrics = calculate_all_metrics(audio, sample_rate=sample_rate)
                         except Exception as e:
                             logger.warning(f"Quality metrics calculation failed: {e}")
                 except Exception as e:
@@ -449,13 +449,18 @@ class VoiceAIEngine(EngineProtocol):
 
             # Use model to convert
             model_data = self.local_model
+            if model_data is None:
+                logger.error("Local model not loaded")
+                return self._convert_with_fallback_engine(
+                    audio_path, target_voice_id, output_path, **kwargs
+                )
             device = model_data["device"]
 
             # Extract target voice embedding (if available)
             target_voice_embedding = self._get_target_voice_embedding(target_voice_id, device)
 
             # Apply model conversion
-            converted_audio = None
+            converted_audio: Any = None
             with torch.no_grad():
                 model = model_data.get("model")
 
@@ -615,7 +620,7 @@ class VoiceAIEngine(EngineProtocol):
                 embedding = np.pad(embedding, (0, 256 - len(embedding)))
             elif len(embedding) > 256:
                 embedding = embedding[:256]
-            return embedding
+            return np.asarray(embedding)
         except ImportError:
             # Fallback
             fft = np.fft.rfft(audio[: min(16000, len(audio))])

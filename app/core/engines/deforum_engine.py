@@ -19,6 +19,7 @@ import time
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import torch
@@ -135,8 +136,8 @@ class DeforumEngine(EngineProtocol):
         self.enable_response_cache = enable_response_cache
         self.response_cache_size = response_cache_size
 
-        self.pipeline = None
-        self._model_key = None
+        self.pipeline: Any = None
+        self._model_key: str | None = None
 
         # LRU response cache for generated animations (stores output paths)
         self._response_cache: OrderedDict[str, str] = OrderedDict()
@@ -403,7 +404,7 @@ class DeforumEngine(EngineProtocol):
 
             logger.info(f"Generating Deforum animation: {num_frames} frames")
 
-            frames = []
+            frames: list[Image.Image] = []
             for frame_idx in range(num_frames):
                 # Interpolate prompt
                 prompt = self._interpolate_prompt(prompt_dict, frame_idx, num_frames)
@@ -685,7 +686,7 @@ class DeforumEngine(EngineProtocol):
         pan_x = cam_params.get("pan_x", 0.0)
         pan_y = cam_params.get("pan_y", 0.0)
         if pan_x != 0.0 or pan_y != 0.0:
-            M = np.float32([[1, 0, pan_x * w], [0, 1, pan_y * h]])
+            M = np.array([[1, 0, pan_x * w], [0, 1, pan_y * h]], dtype=np.float32)
             img_array = cv2.warpAffine(img_array, M, (w, h))
 
         return Image.fromarray(img_array)
@@ -703,7 +704,8 @@ class DeforumEngine(EngineProtocol):
             raise ImportError("opencv-python required for video saving")
 
         height, width = frames[0].size[1], frames[0].size[0]
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        fourcc_fn = getattr(cv2, "VideoWriter_fourcc")
+        fourcc = fourcc_fn(*"mp4v")
         out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
         try:
@@ -720,7 +722,7 @@ class DeforumEngine(EngineProtocol):
         except ImportError:
             raise ImportError("imageio required for video saving")
 
-        frame_arrays = [np.array(frame) for frame in frames]
+        frame_arrays: list[Any] = [np.array(frame) for frame in frames]
         imageio.mimwrite(output_path, frame_arrays, fps=fps, codec="libx264", quality=8)
 
     def get_cache_stats(self) -> dict[str, int | float | str | bool]:

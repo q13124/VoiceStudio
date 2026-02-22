@@ -243,7 +243,7 @@ class BaseRepository(Repository[T]):
         self.entity_type = entity_type
         self.table_name = table_name
         self.config = config or ConnectionConfig()
-        self._connection = None
+        self._connection: Any = None
         self._lock = asyncio.Lock()
 
     async def connect(self) -> None:
@@ -488,7 +488,7 @@ class BaseRepository(Repository[T]):
 
     def _row_to_entity(self, row: dict[str, Any]) -> T:
         """Convert database row to entity."""
-        return self.entity_type(**row)  # type: ignore
+        return self.entity_type(**row)
 
 
 class UnitOfWork:

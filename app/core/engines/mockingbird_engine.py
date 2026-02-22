@@ -15,6 +15,7 @@ import logging
 import os
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 # Import base protocol
 try:
@@ -24,6 +25,8 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+_MISSING: Any = None
+
 # Try importing general model cache
 try:
     from app.core.models.cache import get_model_cache
@@ -32,7 +35,7 @@ try:
     HAS_MODEL_CACHE = True
 except ImportError:
     HAS_MODEL_CACHE = False
-    _model_cache = None
+    _model_cache = _MISSING
     logger.debug("General model cache not available, using MockingBird-specific cache")
 
 # Fallback: MockingBird-specific cache (for backward compatibility)
@@ -149,7 +152,7 @@ try:
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
-    enhance_voice_cloning_quality = None
+    enhance_voice_cloning_quality = _MISSING
 
 
 class MockingBirdEngine(EngineProtocol):
@@ -175,15 +178,15 @@ class MockingBirdEngine(EngineProtocol):
         self.device = device or ("cuda" if (HAS_TORCH and torch.cuda.is_available()) else "cpu")
 
         self._initialized = False
-        self._model = None
+        self._model: dict[str, Any] | None = None
         self._vocoder = None
-        self._response_cache = {}  # Cache for synthesis responses
-        self._embedding_cache = OrderedDict()  # LRU cache for speaker embeddings
-        self._cache_max_size = 100  # Maximum number of cached responses
-        self._embedding_cache_max_size = 50  # Maximum number of cached embeddings
+        self._response_cache: dict[str, bytes] = {}
+        self._embedding_cache: OrderedDict[str, Any] = OrderedDict()
+        self._cache_max_size = 100
+        self._embedding_cache_max_size = 50
         self.lazy_load = True
         self.batch_size = 2
-        self.enable_caching = True
+        self._caching_enabled = True
 
     def initialize(self) -> bool:
         """Initialize MockingBird model and components."""
@@ -304,7 +307,8 @@ class MockingBirdEngine(EngineProtocol):
             # Check response cache
             import hashlib
 
-            cache_key = hashlib.md5(f"{text}_{reference_audio}".encode()).hexdigest()
+            ref_repr = reference_audio.hex() if isinstance(reference_audio, bytes) else str(reference_audio)
+            cache_key = hashlib.md5(f"{text}_{ref_repr}".encode()).hexdigest()
             if cache_key in self._response_cache:
                 logger.debug("Using cached MockingBird synthesis result")
                 return self._response_cache[cache_key]
@@ -381,7 +385,7 @@ class MockingBirdEngine(EngineProtocol):
                 return True
 
             # Check cache first
-            if self.enable_caching:
+            if self._caching_enabled:
                 cached_model = _get_cached_mockingbird_model(self.model_path, self.device)
                 if cached_model is not None:
                     logger.debug(f"Using cached MockingBird model: {self.model_path}")
@@ -458,7 +462,7 @@ class MockingBirdEngine(EngineProtocol):
                 self._model = model_data
 
                 # Cache model
-                if self.enable_caching:
+                if self._caching_enabled:
                     _cache_mockingbird_model(self.model_path, self.device, model_data)
 
                 logger.info("MockingBird model loaded successfully")
@@ -510,6 +514,9 @@ class MockingBirdEngine(EngineProtocol):
             if not HAS_TORCH or torch is None:
                 return None
 
+            if self._model is None:
+                return None
+
             # Try to import MockingBird modules
             try:
                 from MockingBird.encoder import inference as encoder_inference
@@ -523,9 +530,10 @@ class MockingBirdEngine(EngineProtocol):
 
                     # Look for MockingBird in common locations
                     mockingbird_paths = [
-                        Path(self.model_path).parent / "MockingBird",
                         Path(__file__).parent.parent.parent / "MockingBird",
                     ]
+                    if self.model_path:
+                        mockingbird_paths.insert(0, Path(self.model_path).parent / "MockingBird")
 
                     for mb_path in mockingbird_paths:
                         if mb_path.exists():
@@ -637,7 +645,7 @@ class MockingBirdEngine(EngineProtocol):
                     f"Generated audio using MockingBird model: "
                     f"{len(audio)} samples at {sample_rate}Hz"
                 )
-                return audio.astype(np.float32)
+                return np.asarray(audio.astype(np.float32))
 
             except Exception as e:
                 logger.warning(f"Model synthesis failed: {e}")
@@ -684,12 +692,12 @@ class MockingBirdEngine(EngineProtocol):
                 result = response.json()
                 if "audio" in result:
                     audio_b64 = result["audio"]
-                    audio_bytes = base64.b64decode(audio_b64)
-                    audio, sr = sf.read(io.BytesIO(audio_bytes))
-                    return audio.astype(np.float32)
+                    decoded_audio = base64.b64decode(audio_b64)
+                    audio, sr = sf.read(io.BytesIO(decoded_audio))
+                    return np.asarray(audio.astype(np.float32))
                 elif "audio_path" in result:
                     audio, _sr = sf.read(result["audio_path"])
-                    return audio.astype(np.float32)
+                    return np.asarray(audio.astype(np.float32))
 
             logger.error(f"API request failed: {response.status_code}")
             return None
@@ -737,12 +745,12 @@ class MockingBirdEngine(EngineProtocol):
 
                     result = xtts_engine.synthesize(text=text, reference_audio=ref_path, **kwargs)
 
-                    if ref_audio is not None and isinstance(ref_audio, np.ndarray):
+                    if ref_path is not None and isinstance(ref_audio, np.ndarray):
                         with contextlib.suppress(BaseException):
                             os.remove(ref_path)
 
                     if result is not None:
-                        return result
+                        return np.asarray(result)
 
             except Exception as e:
                 logger.debug(f"Fallback TTS failed: {e}")
@@ -804,7 +812,7 @@ class MockingBirdEngine(EngineProtocol):
             logger.error("Engine not initialized")
             return [None] * len(texts)
 
-        results = []
+        results: list[bytes | None] = []
 
         # Process in batches for better GPU utilization
         actual_batch_size = min(batch_size, self.batch_size)
@@ -840,9 +848,9 @@ class MockingBirdEngine(EngineProtocol):
 
         return results
 
-    def enable_caching(self, enable: bool = True):
+    def enable_caching(self, enable: bool = True) -> None:
         """Enable or disable caching."""
-        self.enable_caching = enable
+        self._caching_enabled = enable
         logger.info(f"Model caching {'enabled' if enable else 'disabled'}")
 
     def set_batch_size(self, batch_size: int):
@@ -887,7 +895,7 @@ class MockingBirdEngine(EngineProtocol):
 
         if calculate and HAS_QUALITY_METRICS:
             try:
-                quality_metrics = calculate_all_metrics(audio, sample_rate)
+                quality_metrics = calculate_all_metrics(audio, sample_rate=sample_rate)
             except Exception as e:
                 logger.warning(f"Quality metrics calculation failed: {e}")
                 quality_metrics = {}

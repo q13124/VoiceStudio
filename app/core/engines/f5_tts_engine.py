@@ -18,6 +18,7 @@ import logging
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import soundfile as sf
@@ -26,14 +27,15 @@ import torch
 logger = logging.getLogger(__name__)
 
 # Try importing general model cache
+_model_cache: Any = None
+HAS_MODEL_CACHE = False
+
 try:
     from app.core.models.cache import get_model_cache
 
     _model_cache = get_model_cache(max_models=2, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
 except ImportError:
-    HAS_MODEL_CACHE = False
-    _model_cache = None
     logger.debug("General model cache not available, using F5-TTS-specific cache")
 
 # Fallback: F5-TTS-specific cache (for backward compatibility)
@@ -170,13 +172,13 @@ class F5TTSEngine(EngineProtocol):
         super().__init__(device=device, gpu=gpu)
 
         self.model_name = model_name
-        self.model = None
-        self.tokenizer = None
-        self.vocoder = None
+        self.model: Any = None
+        self.tokenizer: Any = None
+        self.vocoder: Any = None
         self.sample_rate = self.DEFAULT_SAMPLE_RATE
         self.lazy_load = True
         self.batch_size = 2  # Smaller batch size for F5-TTS (memory intensive)
-        self.enable_caching = True
+        self._caching_enabled = True
 
         # Override device if GPU requested and available
         if gpu and torch.cuda.is_available() and self.device == "cpu":
@@ -185,7 +187,7 @@ class F5TTSEngine(EngineProtocol):
     def _load_model(self) -> bool:
         """Load model with caching support."""
         # Check cache first
-        if self.enable_caching:
+        if self._caching_enabled:
             cached_models = _get_cached_f5tts_model(self.model_name, self.device)
             if cached_models is not None:
                 logger.debug(f"Using cached F5-TTS model: {self.model_name}")
@@ -228,7 +230,7 @@ class F5TTSEngine(EngineProtocol):
                 self.sample_rate = self.model.config.sample_rate
 
             # Cache models
-            if self.enable_caching:
+            if self._caching_enabled:
                 _cache_f5tts_model(
                     self.model_name,
                     self.device,
@@ -255,7 +257,7 @@ class F5TTSEngine(EngineProtocol):
                 self.sample_rate = 24000
 
                 # Cache model
-                if self.enable_caching:
+                if self._caching_enabled:
                     _cache_f5tts_model(
                         self.model_name,
                         self.device,
@@ -458,7 +460,7 @@ class F5TTSEngine(EngineProtocol):
                 logger.info(f"Audio saved to: {output_path}")
                 return None
 
-            return audio
+            return np.asarray(audio)
 
         except Exception as e:
             logger.error(f"F5-TTS synthesis failed: {e}")
@@ -485,11 +487,11 @@ class F5TTSEngine(EngineProtocol):
 
         if calculate and HAS_QUALITY_METRICS:
             try:
-                quality_metrics = calculate_all_metrics(audio, sample_rate)
+                quality_metrics = calculate_all_metrics(audio, sample_rate=sample_rate)
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
+                        similarity = calculate_similarity(ref_audio, audio)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -552,7 +554,7 @@ class F5TTSEngine(EngineProtocol):
         if not self._initialized and not self._load_model():
             return [None] * len(texts)
 
-        results = []
+        results: list[np.ndarray | tuple[np.ndarray | None, dict] | None] = []
 
         # Process in batches for better GPU utilization
         actual_batch_size = min(batch_size, self.batch_size)
@@ -606,9 +608,9 @@ class F5TTSEngine(EngineProtocol):
 
         return results
 
-    def enable_caching(self, enable: bool = True):
+    def enable_caching(self, enable: bool = True) -> None:
         """Enable or disable caching."""
-        self.enable_caching = enable
+        self._caching_enabled = enable
         logger.info(f"Model caching {'enabled' if enable else 'disabled'}")
 
     def set_batch_size(self, batch_size: int):

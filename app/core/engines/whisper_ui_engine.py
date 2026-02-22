@@ -13,8 +13,10 @@ import contextlib
 import logging
 import os
 from collections import OrderedDict
+from typing import Any
 
 # Try importing general model cache
+_model_cache: Any = None
 try:
     from app.core.models.cache import get_model_cache
 
@@ -23,7 +25,6 @@ try:
     HAS_MODEL_CACHE = True
 except ImportError:
     HAS_MODEL_CACHE = False
-    _model_cache = None
 
 logger = logging.getLogger(__name__)
 
@@ -166,8 +167,8 @@ class WhisperUIEngine(EngineProtocol):
         self._initialized = False
         self._model = None
         self.lazy_load = True
-        self.enable_caching = True
-        self._transcription_cache = OrderedDict()  # LRU cache for transcription results
+        self._caching_enabled = True
+        self._transcription_cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
         self._cache_max_size = 200  # Maximum number of cached transcriptions
 
     def initialize(self) -> bool:
@@ -288,14 +289,14 @@ class WhisperUIEngine(EngineProtocol):
                 self._transcription_cache.move_to_end(cache_key)  # LRU update
                 cached_result = self._transcription_cache[cache_key]
                 if output_format == "text":
-                    return cached_result.get("text", "")
+                    return str(cached_result.get("text", ""))
                 elif output_format == "json":
-                    return cached_result
+                    return dict(cached_result)
                 elif output_format == "srt":
-                    return self._format_srt(cached_result)
+                    return str(self._format_srt(cached_result))
                 elif output_format == "vtt":
-                    return self._format_vtt(cached_result)
-                return cached_result.get("text", "")
+                    return str(self._format_vtt(cached_result))
+                return str(cached_result.get("text", ""))
 
             # Lazy load model if needed
             if self._model is None and not self._load_model():
@@ -326,18 +327,17 @@ class WhisperUIEngine(EngineProtocol):
                 self._transcription_cache[cache_key] = result
                 self._transcription_cache.move_to_end(cache_key)  # LRU update
 
-            # Format output
             if output_format == "text":
-                return result.get("text", "")
+                return str(result.get("text", ""))
             elif output_format == "json":
                 return result
             elif output_format == "srt":
-                return self._format_srt(result)
+                return str(self._format_srt(result))
             elif output_format == "vtt":
-                return self._format_vtt(result)
+                return str(self._format_vtt(result))
             else:
                 logger.warning(f"Unknown output format: {output_format}, returning text")
-                return result.get("text", "")
+                return str(result.get("text", ""))
 
         except Exception as e:
             logger.error(f"Whisper UI transcription failed: {e}", exc_info=True)
@@ -347,7 +347,7 @@ class WhisperUIEngine(EngineProtocol):
         """Load Whisper model with caching support."""
         try:
             # Check cache first
-            if self.enable_caching:
+            if self._caching_enabled:
                 cached_model = _get_cached_whisper_ui_model(
                     self.model_size,
                     self.device,
@@ -376,8 +376,7 @@ class WhisperUIEngine(EngineProtocol):
                 logger.error("No Whisper implementation available")
                 return False
 
-            # Cache model
-            if self.enable_caching:
+            if self._caching_enabled:
                 _cache_whisper_ui_model(
                     self.model_size,
                     self.device,
@@ -525,9 +524,9 @@ class WhisperUIEngine(EngineProtocol):
         millis = int((seconds % 1) * 1000)
         return f"{hours:02d}:{minutes:02d}:{secs:02d}.{millis:03d}"
 
-    def enable_caching(self, enable: bool = True):
+    def set_caching(self, enable: bool = True) -> None:
         """Enable or disable caching."""
-        self.enable_caching = enable
+        self._caching_enabled = enable
         status = "enabled" if enable else "disabled"
         logger.info(f"Model caching {status}")
 
@@ -536,12 +535,12 @@ class WhisperUIEngine(EngineProtocol):
         self._transcription_cache.clear()
         logger.info("Transcription cache cleared")
 
-    def get_cache_stats(self) -> dict[str, int]:
+    def get_cache_stats(self) -> dict[str, int | bool]:
         """Get cache statistics."""
         return {
             "transcription_cache_size": len(self._transcription_cache),
             "max_transcription_cache_size": self._cache_max_size,
-            "cache_enabled": self.enable_caching,
+            "cache_enabled": self._caching_enabled,
         }
 
 

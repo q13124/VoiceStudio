@@ -425,7 +425,7 @@ class PipelineOrchestrator:
     async def _transcribe(self, audio_data: bytes, sample_rate: int) -> str:
         """Transcribe audio using the configured STT engine."""
         try:
-            from backend.services.engine_service import get_engine_service
+            from backend.ml.models.engine_service import get_engine_service
 
             service = get_engine_service()
             result = await service.transcribe(
@@ -450,7 +450,7 @@ class PipelineOrchestrator:
         functions = None
         if self._config.enable_function_calling:
             try:
-                from backend.services.llm_function_calling import get_function_registry
+                from backend.ml.models.llm_function_calling import get_function_registry
 
                 registry = get_function_registry()
                 functions = registry.get_specs()
@@ -466,7 +466,7 @@ class PipelineOrchestrator:
         if response.tool_calls and self._config.enable_function_calling:
             try:
                 from app.core.engines.llm_interface import Message, MessageRole
-                from backend.services.llm_function_calling import get_function_registry
+                from backend.ml.models.llm_function_calling import get_function_registry
 
                 registry = get_function_registry()
                 tool_results = await registry.process_tool_calls(response.tool_calls)
@@ -510,7 +510,7 @@ class PipelineOrchestrator:
             return None
 
         try:
-            from backend.services.engine_service import get_engine_service
+            from backend.ml.models.engine_service import get_engine_service
 
             service = get_engine_service()
             result = await service.synthesize(

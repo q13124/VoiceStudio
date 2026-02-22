@@ -13,9 +13,12 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import torch
+
+_MISSING: Any = None
 
 # Optional quality metrics import
 try:
@@ -36,12 +39,12 @@ try:
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
-    enhance_voice_cloning_quality = None
+    enhance_voice_cloning_quality = _MISSING
 
 try:
     from tortoise.api import TextToSpeech
 except ImportError:
-    TextToSpeech = None
+    TextToSpeech = _MISSING
     logging.warning("Tortoise TTS not installed. " "Install with: pip install tortoise-tts")
 
 logger = logging.getLogger(__name__)
@@ -56,7 +59,7 @@ try:
     HAS_MODEL_CACHE = True
 except ImportError:
     HAS_MODEL_CACHE = False
-    _model_cache = None
+    _model_cache = _MISSING
     logger.debug("General model cache not available, using Tortoise-specific cache")
 
 # Fallback: Tortoise-specific cache (for backward compatibility)
@@ -239,15 +242,15 @@ class TortoiseEngine(EngineProtocol):
             logger.warning(f"Unknown quality preset {quality_preset}, using 'high_quality'")
             self.quality_preset = "high_quality"
 
-        self.tts = None
+        self.tts: Any = None
         self.lazy_load = lazy_load
         self.batch_size = batch_size
-        self.enable_caching = enable_caching
+        self._enable_caching = enable_caching
 
-    def _load_model(self):
+    def _load_model(self) -> bool:
         """Load model with caching support."""
         # Check cache first
-        if self.enable_caching:
+        if self._enable_caching:
             cached_model = _get_cached_model(self.quality_preset, self.device)
             if cached_model is not None:
                 logger.debug(f"Using cached model: {self.quality_preset}")
@@ -281,7 +284,7 @@ class TortoiseEngine(EngineProtocol):
         )
 
         # Cache model
-        if self.enable_caching:
+        if self._enable_caching:
             _cache_model(self.quality_preset, self.device, self.tts)
 
         self._initialized = True
@@ -348,13 +351,13 @@ class TortoiseEngine(EngineProtocol):
             preset = quality_preset or self.quality_preset
 
             # Cache quality preset parameters for faster lookup
-            if self.enable_caching and preset in _QUALITY_PRESET_CACHE:
+            if self._enable_caching and preset in _QUALITY_PRESET_CACHE:
                 quality_params = _QUALITY_PRESET_CACHE[preset]
             else:
                 quality_params = self.QUALITY_PRESETS.get(
                     preset, self.QUALITY_PRESETS["high_quality"]
                 )
-                if self.enable_caching:
+                if self._enable_caching:
                     _QUALITY_PRESET_CACHE[preset] = quality_params
 
             # Convert speaker_wav to list if single path
@@ -384,7 +387,7 @@ class TortoiseEngine(EngineProtocol):
                     logger.warning(f"Failed to load voice references as tensors: {e}")
 
             conditioning_latents = None
-            if voice_tensors and self.enable_caching:
+            if voice_tensors and self._enable_caching:
                 cached = _get_cached_voice_embedding(voice_refs)
                 if cached is not None:
                     conditioning_latents = cached
@@ -450,7 +453,7 @@ class TortoiseEngine(EngineProtocol):
                     if isinstance(audio_np, tuple):
                         return audio_np
 
-                return audio_np
+                return np.asarray(audio_np)
 
         except Exception as e:
             logger.error(f"Synthesis failed: {e}")
@@ -561,7 +564,7 @@ class TortoiseEngine(EngineProtocol):
         Returns:
             Audio array or None, or tuple of (audio, quality_metrics) if calculate_quality=True
         """
-        kwargs = {}
+        kwargs: dict[str, Any] = {}
         if speed != 1.0:
             kwargs["speed"] = speed
 
@@ -607,17 +610,17 @@ class TortoiseEngine(EngineProtocol):
         preset = quality_preset or self.quality_preset
 
         # Cache quality preset parameters
-        if self.enable_caching and preset in _QUALITY_PRESET_CACHE:
+        if self._enable_caching and preset in _QUALITY_PRESET_CACHE:
             quality_params = _QUALITY_PRESET_CACHE[preset]
         else:
             quality_params = self.QUALITY_PRESETS.get(preset, self.QUALITY_PRESETS["high_quality"])
-            if self.enable_caching:
+            if self._enable_caching:
                 _QUALITY_PRESET_CACHE[preset] = quality_params
 
         # Pre-process voice samples once if caching enabled
-        voice_refs = [str(speaker_wav)]
+        voice_refs: list[str | Path] = [str(speaker_wav)]
         voice_embedding = None
-        if self.enable_caching and hasattr(self.tts, "get_voice_embedding"):
+        if self._enable_caching and hasattr(self.tts, "get_voice_embedding"):
             try:
                 voice_embedding = _get_cached_voice_embedding(voice_refs)
                 if voice_embedding is None:
@@ -688,9 +691,9 @@ class TortoiseEngine(EngineProtocol):
 
         return results
 
-    def enable_caching(self, enable: bool = True):
+    def set_caching(self, enable: bool = True) -> None:
         """Enable or disable caching."""
-        self.enable_caching = enable
+        self._enable_caching = enable
         logger.info(f"Model caching {'enabled' if enable else 'disabled'}")
 
     def set_batch_size(self, batch_size: int):
@@ -776,7 +779,7 @@ if __name__ == "__main__":
         reference_audio=reference_audio, text=text, quality_preset="ultra_quality"
     )
 
-    if audio is not None:
+    if isinstance(audio, np.ndarray):
         print(f"Generated audio shape: {audio.shape}")
 
     # Cleanup

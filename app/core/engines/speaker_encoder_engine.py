@@ -20,6 +20,7 @@ from pathlib import Path
 import numpy as np
 
 # Try importing general model cache
+_model_cache = None
 try:
     from app.core.models.cache import get_model_cache
 
@@ -27,7 +28,6 @@ try:
     HAS_MODEL_CACHE = True
 except ImportError:
     HAS_MODEL_CACHE = False
-    _model_cache = None
 
 logger = logging.getLogger(__name__)
 
@@ -205,7 +205,7 @@ class SpeakerEncoderEngine(EngineProtocol):
         self.cache_size = cache_size
         self.lazy_load = True
         self.batch_size = 4
-        self.enable_model_caching = True
+        self._model_caching_enabled = True
 
         # Backend models
         self.resemblyzer_encoder = None
@@ -232,7 +232,7 @@ class SpeakerEncoderEngine(EngineProtocol):
     def _load_model(self) -> bool:
         """Load model with caching support."""
         # Check cache first
-        if self.enable_model_caching:
+        if self._model_caching_enabled:
             cached_encoders = _get_cached_speaker_encoder_model(self.backend, self.device)
             if cached_encoders is not None:
                 logger.debug(f"Using cached Speaker Encoder model: {self.backend}")
@@ -279,7 +279,7 @@ class SpeakerEncoderEngine(EngineProtocol):
                     return False
 
         # Cache encoders
-        if self.enable_model_caching:
+        if self._model_caching_enabled:
             _cache_speaker_encoder_model(
                 self.backend,
                 self.device,
@@ -437,7 +437,10 @@ class SpeakerEncoderEngine(EngineProtocol):
             preprocessed = preprocess_wav(audio, sample_rate)
 
             # Extract embedding
-            embedding = self.resemblyzer_encoder.embed_utterance(preprocessed)
+            if self.resemblyzer_encoder is None:
+                logger.error("Resemblyzer encoder not loaded")
+                return None
+            embedding: np.ndarray = self.resemblyzer_encoder.embed_utterance(preprocessed)
 
             return embedding
 
@@ -469,11 +472,14 @@ class SpeakerEncoderEngine(EngineProtocol):
             audio_tensor = torch.tensor(audio, device=self.device).unsqueeze(0)
 
             # Extract embedding with inference mode for better performance
+            if self.speechbrain_encoder is None:
+                logger.error("SpeechBrain encoder not loaded")
+                return None
             with torch.inference_mode():  # Faster than no_grad
                 embedding_tensor = self.speechbrain_encoder.encode_batch(audio_tensor)
 
             # Convert to numpy
-            embedding = embedding_tensor.squeeze(0).cpu().numpy()
+            embedding: np.ndarray = embedding_tensor.squeeze(0).cpu().numpy()
 
             # Normalize
             norm = np.linalg.norm(embedding) + 1e-8
@@ -521,13 +527,13 @@ class SpeakerEncoderEngine(EngineProtocol):
             features.append([np.mean(zero_crossing_rate), np.std(zero_crossing_rate)])
 
             # Chroma features (pitch class)
-            chroma = librosa.feature.chroma(y=audio, sr=sample_rate)
+            chroma = librosa.feature.chroma_stft(y=audio, sr=sample_rate)
             features.append(np.mean(chroma, axis=1))  # Mean chroma
 
             # Prosodic features (pitch/F0)
             try:
                 f0, voiced_flag, _voiced_probs = librosa.pyin(
-                    audio, fmin=librosa.note_to_hz("C2"), fmax=librosa.note_to_hz("C7")
+                    audio, fmin=float(librosa.note_to_hz("C2")), fmax=float(librosa.note_to_hz("C7"))
                 )
                 f0_clean = f0[~np.isnan(f0)]
                 if len(f0_clean) > 0:
@@ -552,7 +558,7 @@ class SpeakerEncoderEngine(EngineProtocol):
                 np.std(acoustic_features) + 1e-8
             )
 
-            return acoustic_features
+            return np.asarray(acoustic_features)
 
         except Exception as e:
             logger.debug(f"Acoustic feature extraction failed: {e}")
@@ -614,7 +620,7 @@ class SpeakerEncoderEngine(EngineProtocol):
     def extract_batch_embeddings(
         self,
         audio_list: list[str | Path | np.ndarray],
-        sample_rates: list[int] | None = None,
+        sample_rates: list[int | None] | None = None,
         batch_size: int | None = None,
     ) -> list[np.ndarray | None]:
         """
@@ -714,7 +720,7 @@ class SpeakerEncoderEngine(EngineProtocol):
             logger.error(f"Find similar speakers failed: {e}")
             return []
 
-    def _get_file_hash(self, file_path: str | Path) -> str:
+    def _get_file_hash(self, file_path: str | Path) -> str | None:
         """Generate hash for file (based on path and mtime)."""
         try:
             path = Path(file_path)
@@ -731,7 +737,7 @@ class SpeakerEncoderEngine(EngineProtocol):
             logger.warning(f"Failed to generate file hash: {e}")
             return None
 
-    def _get_array_hash(self, audio: np.ndarray) -> str:
+    def _get_array_hash(self, audio: np.ndarray) -> str | None:
         """Generate hash for audio array."""
         try:
             # Use array shape and first/last samples for hash
@@ -773,9 +779,9 @@ class SpeakerEncoderEngine(EngineProtocol):
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
 
-    def enable_model_caching(self, enable: bool = True):
+    def set_model_caching_enabled(self, enable: bool = True) -> None:
         """Enable or disable model caching."""
-        self.enable_model_caching = enable
+        self._model_caching_enabled = enable
         logger.info(f"Model caching {'enabled' if enable else 'disabled'}")
 
     def _get_memory_usage(self) -> dict[str, float]:
@@ -860,7 +866,7 @@ class SpeakerEncoderEngine(EngineProtocol):
                 f"{embeddings_array.shape[1]}D to {n_components}D"
             )
 
-            return reduced_embeddings
+            return np.asarray(reduced_embeddings)
 
         except Exception as e:
             logger.error(f"Failed to visualize embeddings with UMAP: {e}")

@@ -154,7 +154,7 @@ async def handle_plugin_command(
         request_id: Request correlation ID
     """
     # Import here to avoid circular imports
-    from backend.services.plugin_service import get_plugin_service
+    from backend.plugins.plugin_service import get_plugin_service
 
     logger.info(f"Plugin command: {command} for {plugin_id}")
 
@@ -302,7 +302,7 @@ async def send_full_sync(websocket: WebSocket, request_id: str | None = None) ->
         websocket: Client WebSocket connection
         request_id: Request correlation ID
     """
-    from backend.services.plugin_service import get_plugin_service
+    from backend.plugins.plugin_service import get_plugin_service
 
     try:
         plugin_service = get_plugin_service()

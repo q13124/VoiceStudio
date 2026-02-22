@@ -43,7 +43,7 @@ except ImportError:
 # Try to import resilience features
 try:
     from app.core.resilience.circuit_breaker import CircuitBreaker, CircuitState
-    from app.core.resilience.retry import RetryHelper, RetryStrategy
+    from app.core.resilience.retry import RetryStrategy
 
     HAS_RESILIENCE = True
 except ImportError:
@@ -215,12 +215,15 @@ def to_v3_error_response(
     meta = RequestMeta(
         request_id=request_id,
         correlation_id=correlation_id,
+        duration_ms=None,
     )
 
     return StandardResponse(
         status=ResponseStatus.ERROR,
         message=message,
+        data=None,
         errors=[error_detail],
+        pagination=None,
         meta=meta,
     )
 
@@ -250,12 +253,14 @@ def to_v3_validation_errors(
             )
         )
 
-    meta = RequestMeta(request_id=request_id)
+    meta = RequestMeta(request_id=request_id, correlation_id=None, duration_ms=None)
 
     return StandardResponse(
         status=ResponseStatus.ERROR,
         message="Request validation failed",
+        data=None,
         errors=errors,
+        pagination=None,
         meta=meta,
     )
 
@@ -303,13 +308,30 @@ def generate_request_id() -> str:
     return str(uuid.uuid4())
 
 
+class VoiceStudioHTTPException(HTTPException):
+    """HTTPException subclass with additional VoiceStudio-specific fields."""
+
+    def __init__(
+        self,
+        status_code: int,
+        detail: str,
+        error_code: str | None = None,
+        recovery_suggestion: str | None = None,
+        context: dict[str, Any] | None = None,
+    ):
+        super().__init__(status_code=status_code, detail=detail)
+        self.error_code: str | None = error_code
+        self.recovery_suggestion: str | None = recovery_suggestion
+        self.context: dict[str, Any] = context or {}
+
+
 def raise_standardized_error(
     error_code: str,
     message: str,
     status_code: int = 400,
     details: dict[str, Any] | None = None,
     recovery_suggestion: str | None = None,
-) -> HTTPException:
+) -> VoiceStudioHTTPException:
     """
     Raise a standardized HTTPException with error code and context.
 
@@ -324,7 +346,7 @@ def raise_standardized_error(
         recovery_suggestion: Suggestion for resolving the error (optional)
 
     Returns:
-        HTTPException with standardized format
+        VoiceStudioHTTPException with standardized format
 
     Example:
         ```python
@@ -340,11 +362,13 @@ def raise_standardized_error(
             )
         ```
     """
-    exc = HTTPException(status_code=status_code, detail=message)
-    exc.error_code = error_code
-    exc.recovery_suggestion = recovery_suggestion
-    exc.context = details or {}
-    return exc
+    return VoiceStudioHTTPException(
+        status_code=status_code,
+        detail=message,
+        error_code=error_code,
+        recovery_suggestion=recovery_suggestion,
+        context=details,
+    )
 
 
 def create_error_response(
@@ -401,11 +425,13 @@ async def validation_exception_handler(
     )
 
     # Build v3 StandardResponse
-    meta = RequestMeta(request_id=request_id)
-    response = StandardResponse(
+    meta = RequestMeta(request_id=request_id, correlation_id=None, duration_ms=None)
+    response = StandardResponse[None](
         status=ResponseStatus.ERROR,
         message="Request validation failed. Please check your input.",
+        data=None,
         errors=error_details,
+        pagination=None,
         meta=meta,
     )
 
@@ -605,7 +631,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
 
 # Simple in-memory error tracking for metrics
 _error_counts: dict[str, int] = {}
-_recent_errors: list = []
+_recent_errors: list[dict[str, Any]] = []
 _MAX_RECENT_ERRORS = 100
 
 

@@ -104,7 +104,7 @@ except ImportError:
 # Initialize structured JSON logging if enabled
 if os.environ.get("VOICESTUDIO_JSON_LOGGING", "").lower() in ("1", "true", "yes"):
     try:
-        from backend.services.telemetry import setup_json_logging
+        from backend.platform.telemetry.telemetry import setup_json_logging
 
         setup_json_logging()
         logging.getLogger(__name__).info("JSON logging enabled via VOICESTUDIO_JSON_LOGGING")
@@ -242,7 +242,7 @@ def _perform_startup_sanity_checks():
 
     # Check XTTS model assets
     try:
-        from backend.services.model_preflight import ensure_xtts
+        from backend.ml.models.model_preflight import ensure_xtts
 
         # Run preflight check (non-blocking, auto-download disabled during startup)
         result = ensure_xtts(auto_download=False)
@@ -1706,7 +1706,7 @@ def api_metrics_history(window: str = "24h"):
     Query param: window (e.g. 24h, 48h, 168h for 1 week). Default 24h.
     """
     try:
-        from backend.services.metrics_history import get_metrics_history
+        from backend.platform.monitoring.metrics_history import get_metrics_history
 
         hours = 24
         if window.endswith("h"):

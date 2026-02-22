@@ -86,7 +86,7 @@ async def list_effect_presets():
         List of effect presets organized by category
     """
     try:
-        from backend.services.realtime_voice_changer import get_realtime_voice_changer
+        from backend.voice.synthesis.realtime_voice_changer import get_realtime_voice_changer
 
         service = get_realtime_voice_changer()
         presets = service.list_presets()
@@ -111,7 +111,7 @@ async def list_effect_presets():
 async def get_effect_preset(preset_id: str):
     """Get details of a specific effect preset."""
     try:
-        from backend.services.realtime_voice_changer import get_realtime_voice_changer
+        from backend.voice.synthesis.realtime_voice_changer import get_realtime_voice_changer
 
         service = get_realtime_voice_changer()
         preset = service.get_preset(preset_id)
@@ -146,7 +146,7 @@ async def apply_voice_effect(request: ApplyEffectRequest):
         Processed audio ID
     """
     try:
-        from backend.services.realtime_voice_changer import get_realtime_voice_changer
+        from backend.voice.synthesis.realtime_voice_changer import get_realtime_voice_changer
 
         service = get_realtime_voice_changer()
         result = await service.apply_effect(
@@ -198,7 +198,7 @@ async def list_hotkeys():
     Phase 9.3.5: Hotkey voice switching.
     """
     try:
-        from backend.services.realtime_voice_changer import get_realtime_voice_changer
+        from backend.voice.synthesis.realtime_voice_changer import get_realtime_voice_changer
 
         service = get_realtime_voice_changer()
         hotkeys = service.list_hotkeys()
@@ -221,7 +221,7 @@ async def list_hotkeys():
 async def set_hotkey(config: HotkeyConfig):
     """Configure a hotkey for voice switching."""
     try:
-        from backend.services.realtime_voice_changer import get_realtime_voice_changer
+        from backend.voice.synthesis.realtime_voice_changer import get_realtime_voice_changer
 
         service = get_realtime_voice_changer()
         success = service.set_hotkey(
@@ -246,7 +246,7 @@ async def set_hotkey(config: HotkeyConfig):
 async def remove_hotkey(hotkey: str):
     """Remove a configured hotkey."""
     try:
-        from backend.services.realtime_voice_changer import get_realtime_voice_changer
+        from backend.voice.synthesis.realtime_voice_changer import get_realtime_voice_changer
 
         service = get_realtime_voice_changer()
         success = service.remove_hotkey(hotkey)
@@ -274,7 +274,7 @@ async def start_realtime_session(request: RealtimeSessionRequest):
     Phase 9.3.2: Low-latency RVC pipeline.
     """
     try:
-        from backend.services.realtime_voice_changer import get_realtime_voice_changer
+        from backend.voice.synthesis.realtime_voice_changer import get_realtime_voice_changer
 
         service = get_realtime_voice_changer()
         result = await service.start_realtime_session(
@@ -308,7 +308,7 @@ async def start_realtime_session(request: RealtimeSessionRequest):
 async def stop_realtime_session(session_id: str):
     """Stop a realtime voice changer session."""
     try:
-        from backend.services.realtime_voice_changer import get_realtime_voice_changer
+        from backend.voice.synthesis.realtime_voice_changer import get_realtime_voice_changer
 
         service = get_realtime_voice_changer()
         success = await service.stop_realtime_session(session_id)
@@ -331,7 +331,7 @@ async def stop_realtime_session(session_id: str):
 async def change_realtime_effect(session_id: str, effect_id: str):
     """Change the active effect in a realtime session."""
     try:
-        from backend.services.realtime_voice_changer import get_realtime_voice_changer
+        from backend.voice.synthesis.realtime_voice_changer import get_realtime_voice_changer
 
         service = get_realtime_voice_changer()
         success = await service.change_effect(session_id, effect_id)
@@ -354,7 +354,7 @@ async def change_realtime_effect(session_id: str, effect_id: str):
 async def list_audio_devices():
     """List available audio input/output devices."""
     try:
-        from backend.services.realtime_voice_changer import get_realtime_voice_changer
+        from backend.voice.synthesis.realtime_voice_changer import get_realtime_voice_changer
 
         service = get_realtime_voice_changer()
         devices = service.list_audio_devices()

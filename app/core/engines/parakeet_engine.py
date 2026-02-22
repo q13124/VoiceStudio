@@ -23,7 +23,10 @@ import numpy as np
 import soundfile as sf
 import torch
 
+logger = logging.getLogger(__name__)
+
 # Try importing general model cache
+_model_cache = None
 try:
     from app.core.models.cache import get_model_cache
 
@@ -31,7 +34,6 @@ try:
     HAS_MODEL_CACHE = True
 except ImportError:
     HAS_MODEL_CACHE = False
-    _model_cache = None
     logger.debug("General model cache not available, using Parakeet-specific cache")
 
 # Fallback: Parakeet-specific cache (for backward compatibility)
@@ -117,8 +119,6 @@ try:
 except ImportError:
     HAS_AUDIO_UTILS = False
 
-logger = logging.getLogger(__name__)
-
 # Import base protocol from canonical source
 from .base import EngineProtocol
 
@@ -164,7 +164,7 @@ class ParakeetEngine(EngineProtocol):
         self.sample_rate = self.DEFAULT_SAMPLE_RATE
         self.lazy_load = True
         self.batch_size = 4
-        self.enable_caching = True
+        self._caching_enabled = True
 
         # Override device if GPU requested and available
         if gpu and torch.cuda.is_available() and self.device == "cpu":
@@ -173,7 +173,7 @@ class ParakeetEngine(EngineProtocol):
     def _load_model(self) -> bool:
         """Load model with caching support."""
         # Check cache first
-        if self.enable_caching:
+        if self._caching_enabled:
             cached_engine = _get_cached_parakeet_model(self.model_name, self.device)
             if cached_engine is not None:
                 logger.debug(f"Using cached Parakeet TTS executor: {self.model_name}")
@@ -200,7 +200,7 @@ class ParakeetEngine(EngineProtocol):
             self.sample_rate = 22050  # Default for most Parakeet models
 
             # Cache TTS executor
-            if self.enable_caching:
+            if self._caching_enabled:
                 _cache_parakeet_model(self.model_name, self.device, self.tts_engine)
 
             logger.info(
@@ -285,6 +285,9 @@ class ParakeetEngine(EngineProtocol):
             # Synthesize using PaddleSpeech
             if output_path:
                 output_path = str(output_path)
+                if self.tts_engine is None:
+                    logger.error("PaddleSpeech TTS engine not loaded")
+                    return None
                 # Use TTS executor to synthesize to file
                 self.tts_engine(
                     text=text,
@@ -341,6 +344,9 @@ class ParakeetEngine(EngineProtocol):
                     tmp_path = tmp_file.name
 
                 try:
+                    if self.tts_engine is None:
+                        logger.error("PaddleSpeech TTS engine not loaded")
+                        return None
                     # Synthesize to temp file
                     self.tts_engine(text=text, output=tmp_path, am=am, voc=voc, lang=lang, spk_id=0)
 
@@ -376,7 +382,7 @@ class ParakeetEngine(EngineProtocol):
                         if isinstance(audio, tuple):
                             return audio  # (audio, quality_metrics)
 
-                    return audio
+                    return np.asarray(audio)
 
                 finally:
                     # Cleanup temp file
@@ -411,11 +417,11 @@ class ParakeetEngine(EngineProtocol):
 
         if calculate and HAS_QUALITY_METRICS:
             try:
-                quality_metrics = calculate_all_metrics(audio, sample_rate)
+                quality_metrics = calculate_all_metrics(audio, sample_rate=sample_rate)
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
+                        similarity = calculate_similarity(ref_audio, audio)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -480,7 +486,7 @@ class ParakeetEngine(EngineProtocol):
         if not self._initialized and not self._load_model():
             return [None] * len(texts)
 
-        results = []
+        results: list[np.ndarray | None | tuple[np.ndarray | None, dict]] = []
 
         # Process in batches for better resource utilization
         actual_batch_size = min(batch_size, self.batch_size)
@@ -531,9 +537,9 @@ class ParakeetEngine(EngineProtocol):
 
         return results
 
-    def enable_caching(self, enable: bool = True):
+    def set_caching_enabled(self, enable: bool = True) -> None:
         """Enable or disable caching."""
-        self.enable_caching = enable
+        self._caching_enabled = enable
         logger.info(f"Model caching {'enabled' if enable else 'disabled'}")
 
     def set_batch_size(self, batch_size: int):

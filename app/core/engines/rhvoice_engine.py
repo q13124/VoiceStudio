@@ -21,6 +21,7 @@ import tempfile
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import soundfile as sf
@@ -91,14 +92,14 @@ class RHVoiceEngine(EngineProtocol):
         super().__init__(device=device, gpu=gpu)
 
         self.rhvoice_path = rhvoice_path
-        self.executable_path = None
-        self.voices = []
-        self.available_languages = []
+        self.executable_path: str | None = None
+        self.voices: list[str] = []
+        self.available_languages: list[str] = []
         self.batch_size = 4
         self.lazy_load = True
-        self._temp_dir = None
-        self._synthesis_cache = OrderedDict()  # LRU cache for synthesis results
-        self._cache_max_size = 100  # Maximum cached synthesis results
+        self._temp_dir: str | None = None
+        self._synthesis_cache: OrderedDict[str, Any] = OrderedDict()
+        self._cache_max_size = 100
 
     def _find_executable(self, name: str, custom_path: str | None = None) -> str | None:
         """Find executable in PATH or custom path."""
@@ -112,13 +113,13 @@ class RHVoiceEngine(EngineProtocol):
 
         # Try rhvoice-say or rhvoice-cli
         for exe_name in [name, "rhvoice-say", "rhvoice-cli", "RHVoice-test"]:
-            exe_path = shutil.which(exe_name)
-            if exe_path:
-                return exe_path
+            found = shutil.which(exe_name)
+            if found:
+                return found
 
-            exe_path = shutil.which(f"{exe_name}.exe")
-            if exe_path:
-                return exe_path
+            found = shutil.which(f"{exe_name}.exe")
+            if found:
+                return found
 
         return None
 
@@ -292,7 +293,9 @@ class RHVoiceEngine(EngineProtocol):
                         selected_voice = self.voices[0].split("(")[0].strip()
 
                 # Build command
-                cmd = [self.executable_path]
+                if self.executable_path is None:
+                    return None
+                cmd: list[str] = [self.executable_path]
 
                 # Add voice if specified
                 if selected_voice:
@@ -396,7 +399,7 @@ class RHVoiceEngine(EngineProtocol):
                     logger.info(f"Audio saved to: {output_path}")
                     return None
 
-                return audio
+                return np.asarray(audio)
 
             finally:
                 # Cleanup temporary files
@@ -434,11 +437,11 @@ class RHVoiceEngine(EngineProtocol):
 
         if calculate and HAS_QUALITY_METRICS:
             try:
-                quality_metrics = calculate_all_metrics(audio, sample_rate)
+                quality_metrics = calculate_all_metrics(audio, sample_rate=sample_rate)
                 if reference_audio:
                     try:
-                        ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
+                        ref_audio, _ = sf.read(reference_audio)
+                        similarity = calculate_similarity(ref_audio, audio)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -527,24 +530,27 @@ class RHVoiceEngine(EngineProtocol):
         # Use configured batch size if not specified
         actual_batch_size = batch_size if batch_size is not None else self.batch_size
 
-        # Prepare output paths
+        # Prepare output paths with proper type for None entries
+        resolved_paths: list[str | Path | None]
         if output_paths is None:
-            output_paths = [None] * len(text_list)
+            resolved_paths = [None] * len(text_list)
         elif len(output_paths) != len(text_list):
             logger.warning("output_paths length doesn't match text_list, using None for extras")
-            output_paths = output_paths[: len(text_list)] + [None] * (
-                len(text_list) - len(output_paths)
-            )
+            padded: list[str | Path | None] = list(output_paths[: len(text_list)])
+            padded.extend([None] * (len(text_list) - len(output_paths)))
+            resolved_paths = padded
+        else:
+            resolved_paths = list(output_paths)
 
         # Process in parallel batches for better performance
-        def synthesize_single(args):
-            text, output_path = args
+        def synthesize_single(args: tuple[str, str | Path | None]) -> np.ndarray | None | tuple[np.ndarray | None, dict[str, Any]]:
+            text, out_path = args
             try:
                 return self.synthesize(
                     text=text,
                     language=language,
                     voice=voice,
-                    output_path=output_path,
+                    output_path=out_path,
                     enhance_quality=enhance_quality,
                     calculate_quality=calculate_quality,
                     **kwargs,
@@ -555,7 +561,7 @@ class RHVoiceEngine(EngineProtocol):
 
         # Use ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
-            results = list(executor.map(synthesize_single, zip(text_list, output_paths)))
+            results = list(executor.map(synthesize_single, zip(text_list, resolved_paths)))
 
         return results
 

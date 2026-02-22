@@ -15,8 +15,10 @@ import os
 import subprocess
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 # Try importing general model cache
+_model_cache = None
 try:
     from app.core.models.cache import get_model_cache
 
@@ -25,7 +27,6 @@ try:
     HAS_MODEL_CACHE = True
 except ImportError:
     HAS_MODEL_CACHE = False
-    _model_cache = None
 
 logger = logging.getLogger(__name__)
 
@@ -175,14 +176,14 @@ class WhisperCPPEngine(EngineProtocol):
             )
         self.language = language
         self._initialized = False
-        self._model = None
-        self._ctx = None
+        self._model: dict[str, object] | None = None
+        self._ctx: Any = None
         # LRU cache for transcription results
-        self._transcription_cache = OrderedDict()
+        self._transcription_cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
         self._cache_max_size = 200  # Maximum number of cached transcriptions
         self.lazy_load = True
         self.batch_size = 4
-        self.enable_caching = True
+        self._caching_enabled = True
 
     def initialize(self) -> bool:
         """Initialize whisper.cpp model."""
@@ -304,14 +305,14 @@ class WhisperCPPEngine(EngineProtocol):
                 self._transcription_cache.move_to_end(cache_key)  # LRU update
                 cached_result = self._transcription_cache[cache_key]
                 if output_format == "text":
-                    return cached_result.get("text", "")
+                    return str(cached_result.get("text", ""))
                 elif output_format == "json":
-                    return cached_result
+                    return dict(cached_result)
                 elif output_format == "srt":
                     return self._format_srt(cached_result)
                 elif output_format == "vtt":
                     return self._format_vtt(cached_result)
-                return cached_result.get("text", "")
+                return str(cached_result.get("text", ""))
 
             # Lazy load model if needed
             if self._model is None and not self._load_model():
@@ -341,16 +342,16 @@ class WhisperCPPEngine(EngineProtocol):
 
             # Format output
             if output_format == "text":
-                return result.get("text", "")
+                return str(result.get("text", ""))
             elif output_format == "json":
-                return result
+                return dict(result)
             elif output_format == "srt":
                 return self._format_srt(result)
             elif output_format == "vtt":
                 return self._format_vtt(result)
             else:
                 logger.warning(f"Unknown output format: {output_format}, returning text")
-                return result.get("text", "")
+                return str(result.get("text", ""))
 
         except Exception as e:
             logger.error(f"whisper.cpp transcription failed: {e}", exc_info=True)
@@ -379,7 +380,7 @@ class WhisperCPPEngine(EngineProtocol):
                 return True
 
             # Check cache first
-            if self.enable_caching:
+            if self._caching_enabled:
                 cached_ctx = _get_cached_whisper_cpp_model(
                     self.model_path,
                     self.language,
@@ -405,7 +406,7 @@ class WhisperCPPEngine(EngineProtocol):
                 self._model = {"loaded": True, "path": self.model_path}
 
                 # Cache model
-                if self.enable_caching:
+                if self._caching_enabled:
                     _cache_whisper_cpp_model(
                         self.model_path,
                         self.language,
@@ -420,7 +421,7 @@ class WhisperCPPEngine(EngineProtocol):
                 }
 
                 # Cache model info even for binary mode
-                if self.enable_caching:
+                if self._caching_enabled:
                     _cache_whisper_cpp_model(
                         self.model_path,
                         self.language,
@@ -634,16 +635,15 @@ class WhisperCPPEngine(EngineProtocol):
 
                     whisper_engine = WhisperEngine()
                     if whisper_engine.initialize():
-                        # Convert audio to format whisper expects
-                        result = whisper_engine.transcribe(audio_data, language=language)
-                        if result:
+                        whisper_result = whisper_engine.transcribe(audio_data, language=language)
+                        if whisper_result and isinstance(whisper_result, dict):
                             return {
-                                "text": result.get("text", ""),
-                                "segments": result.get("segments", []),
-                                "language": result.get(
+                                "text": str(whisper_result.get("text", "")),
+                                "segments": list(whisper_result.get("segments", [])),
+                                "language": str(whisper_result.get(
                                     "language",
                                     language or "unknown",
-                                ),
+                                )),
                             }
                 except Exception as e:
                     logger.debug(f"Whisper fallback failed: {e}")
@@ -867,9 +867,9 @@ class WhisperCPPEngine(EngineProtocol):
 
         return results
 
-    def enable_caching(self, enable: bool = True):
+    def set_caching_enabled(self, enable: bool = True) -> None:
         """Enable or disable caching."""
-        self.enable_caching = enable
+        self._caching_enabled = enable
         status = "enabled" if enable else "disabled"
         logger.info(f"Model caching {status}")
 
@@ -888,7 +888,7 @@ class WhisperCPPEngine(EngineProtocol):
         return {
             "transcription_cache_size": len(self._transcription_cache),
             "max_transcription_cache_size": self._cache_max_size,
-            "cache_enabled": self.enable_caching,
+            "cache_enabled": self._caching_enabled,
         }
 
 

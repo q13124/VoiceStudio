@@ -17,6 +17,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from PIL import Image
 
 # Import base protocol
@@ -76,13 +77,13 @@ class SadTalkerEngine(EngineProtocol):
         super().__init__(device=device, gpu=gpu)
 
         self.model_path = model_path
-        self.model = None
+        self.model: dict | None = None
         self.face_aligner = None
 
         # Caching for performance
-        self._video_cache = {}  # Cache for generated video results
-        self._face_cache = {}  # Cache for extracted faces
-        self._audio_features_cache = {}  # Cache for audio features
+        self._video_cache: dict[str, str] = {}
+        self._face_cache: dict[str, tuple[np.ndarray, dict]] = {}
+        self._audio_features_cache: dict[str, list[dict]] = {}
         self._cache_max_size = 50  # Maximum number of cached videos
 
         if gpu and torch.cuda.is_available() and self.device == "cpu":
@@ -202,8 +203,10 @@ class SadTalkerEngine(EngineProtocol):
 
             # Load source image
             if isinstance(image_path, (str, Path)):
-                source_image = cv2.imread(str(image_path))
-                source_image = cv2.cvtColor(source_image, cv2.COLOR_BGR2RGB)
+                source_image_raw = cv2.imread(str(image_path))
+                if source_image_raw is None:
+                    raise ValueError(f"Failed to read image: {image_path}")
+                source_image = cv2.cvtColor(source_image_raw, cv2.COLOR_BGR2RGB)
             else:
                 source_image = np.array(image_path)
 
@@ -219,6 +222,8 @@ class SadTalkerEngine(EngineProtocol):
             )
 
             # Extract face from source image (with caching)
+            face_image: np.ndarray | None
+            face_bbox: dict | None
             image_hash = hashlib.md5(source_image.tobytes()).hexdigest()
             if image_hash in self._face_cache:
                 logger.debug("Using cached face extraction")
@@ -296,13 +301,13 @@ class SadTalkerEngine(EngineProtocol):
             import librosa
 
             audio, sr = librosa.load(audio_path, sr=None)
-            return audio, sr
+            return audio, int(sr)
         except ImportError:
             try:
                 import soundfile as sf
 
                 audio, sr = sf.read(audio_path)
-                return audio, sr
+                return audio, int(sr)
             except ImportError:
                 raise ImportError("librosa or soundfile required for audio loading")
 
@@ -479,6 +484,8 @@ class SadTalkerEngine(EngineProtocol):
         try:
 
             model_data = self.model
+            if model_data is None:
+                raise RuntimeError("Model not loaded")
             device = model_data["device"]
             checkpoint = model_data.get("checkpoint", {})
 
@@ -549,10 +556,10 @@ class SadTalkerEngine(EngineProtocol):
                 )
 
             # Convert back to numpy
-            output = output.squeeze(0).permute(1, 2, 0).cpu().numpy()
-            output = np.clip(output * 255.0, 0, 255).astype(np.uint8)
+            output_np: np.ndarray = output.squeeze(0).permute(1, 2, 0).cpu().numpy()
+            output_np = np.clip(output_np * 255.0, 0, 255).astype(np.uint8)
 
-            return output
+            return output_np
 
         except Exception as e:
             logger.warning(f"Model frame generation failed: {e}")
@@ -645,7 +652,7 @@ class SadTalkerEngine(EngineProtocol):
                                 theta = torch.matmul(rotation, theta)
 
                             # Apply grid sample for transformation
-                            grid = F.affine_grid(theta, output.size(), align_corners=False)
+                            grid = F.affine_grid(theta, list(output.size()), align_corners=False)
                             output = F.grid_sample(
                                 output, grid, align_corners=False, padding_mode="border"
                             )
@@ -654,7 +661,7 @@ class SadTalkerEngine(EngineProtocol):
                             f"Head movement transformation failed: {e}, continuing without it"
                         )
 
-            return output
+            return output  # type is Tensor from F.grid_sample or F.conv_transpose2d
 
         except Exception as e:
             logger.debug(f"SadTalker architecture inference error: {e}")
@@ -669,7 +676,6 @@ class SadTalkerEngine(EngineProtocol):
     ) -> torch.Tensor:
         """Infer using generic encoder-decoder approach."""
         try:
-            # Encode face
             face_features = F.conv2d(
                 face_tensor, torch.randn(64, 3, 5, 5, device=device) * 0.01, padding=2
             )
@@ -678,8 +684,7 @@ class SadTalkerEngine(EngineProtocol):
             audio_influence = audio_tensor.mean().item()
             face_features = face_features * (1.0 + audio_influence * 0.1)
 
-            # Decode
-            output = F.conv_transpose2d(
+            output: torch.Tensor = F.conv_transpose2d(
                 face_features, torch.randn(3, 64, 5, 5, device=device) * 0.01, padding=2
             )
 
@@ -887,7 +892,8 @@ class SadTalkerEngine(EngineProtocol):
             raise ValueError("No frames to save")
 
         height, width = frames[0].shape[:2]
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        fourcc_fn = getattr(cv2, "VideoWriter_fourcc")
+        fourcc = fourcc_fn(*"mp4v")
         out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
         try:

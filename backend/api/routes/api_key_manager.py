@@ -14,7 +14,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from backend.services.api_key_store import load_api_keys, save_api_keys
+from backend.security.api_key_store import load_api_keys, save_api_keys
 
 from ..middleware.auth_middleware import require_auth_if_enabled
 from ..optimization import cache_response

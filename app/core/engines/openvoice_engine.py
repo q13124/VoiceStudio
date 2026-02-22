@@ -27,6 +27,8 @@ import torch
 # Initialize logger early
 logger = logging.getLogger(__name__)
 
+_MISSING: Any = None
+
 # Try importing general model cache
 try:
     from app.core.models.cache import get_model_cache
@@ -35,7 +37,7 @@ try:
     HAS_MODEL_CACHE = True
 except ImportError:
     HAS_MODEL_CACHE = False
-    _model_cache = None
+    _model_cache = _MISSING
     logger.debug("General model cache not available, using OpenVoice-specific cache")
 
 # Fallback: OpenVoice-specific cache (for backward compatibility)
@@ -151,7 +153,7 @@ try:
     HAS_LIBROSA = True
 except ImportError:
     HAS_LIBROSA = False
-    librosa = None
+    librosa = _MISSING
     logger.warning("librosa not available. Some style control features will be limited.")
 
 # Optional quality metrics import
@@ -180,7 +182,7 @@ try:
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
-    enhance_voice_cloning_quality = None
+    enhance_voice_cloning_quality = _MISSING
 
 # Try to import OpenVoice
 try:
@@ -193,8 +195,8 @@ except ImportError:
     HAS_OPENVOICE = False
     logger.warning("OpenVoice not installed. Install with: pip install openvoice")
     # Create dummy classes for type hints
-    BaseSpeakerTTS = None
-    ToneColorConverter = None
+    BaseSpeakerTTS = _MISSING
+    ToneColorConverter = _MISSING
 
 # Import base protocol from canonical source
 from .base import EngineProtocol
@@ -272,19 +274,19 @@ class OpenVoiceEngine(EngineProtocol):
         self.base_speaker_model = base_speaker_model
         self.tone_color_converter_model = tone_color_converter_model
         self.enable_style_control = enable_style_control
-        self.base_speaker_tts = None
-        self.tone_color_converter = None
-        self._base_models_cache = {}  # Cache for language-specific base models
-        self._synthesis_cache: OrderedDict = OrderedDict()  # LRU cache for synthesis results
-        self._cache_max_size = 100  # Maximum number of cached synthesis results
+        self.base_speaker_tts: Any = None
+        self.tone_color_converter: Any = None
+        self._base_models_cache: dict[str, Any] = {}
+        self._synthesis_cache: OrderedDict = OrderedDict()
+        self._cache_max_size = 100
         self.lazy_load = True
-        self.batch_size = 2  # Smaller batch size for OpenVoice (memory intensive)
-        self.enable_caching = True
+        self.batch_size = 2
+        self._enable_caching = True
 
     def _load_models(self) -> bool:
         """Load models with caching support."""
         # Check cache first
-        if self.enable_caching:
+        if self._enable_caching:
             cached_models = _get_cached_openvoice_models(
                 self.base_speaker_model, self.tone_color_converter_model, self.device
             )
@@ -341,7 +343,7 @@ class OpenVoiceEngine(EngineProtocol):
             return False
 
         # Cache models
-        if self.enable_caching:
+        if self._enable_caching:
             _cache_openvoice_models(
                 self.base_speaker_model,
                 self.tone_color_converter_model,
@@ -425,7 +427,7 @@ class OpenVoiceEngine(EngineProtocol):
 
             # Check speaker embedding cache
             speaker_embedding = None
-            if self.enable_caching:
+            if self._enable_caching:
                 speaker_embedding = _get_cached_speaker_embedding(reference_audio_path)
                 if speaker_embedding is not None:
                     logger.debug("Using cached speaker embedding")
@@ -438,7 +440,7 @@ class OpenVoiceEngine(EngineProtocol):
                             reference_audio_path, self.tone_color_converter, vad=True
                         )
                     # Cache embedding
-                    if self.enable_caching:
+                    if self._enable_caching:
                         _cache_speaker_embedding(reference_audio_path, speaker_embedding)
                 except Exception as e:
                     logger.error(f"Failed to extract speaker embedding: {e}")
@@ -446,11 +448,6 @@ class OpenVoiceEngine(EngineProtocol):
 
             # Synthesize with base speaker
             try:
-                src_path = f"{self.base_speaker_model}/reference_audio/{language}/reference.wav"
-                if not os.path.exists(src_path):
-                    # Try alternative path
-                    src_path = None
-
                 # Generate base audio with inference mode
                 with torch.inference_mode():  # Faster inference
                     base_audio = self.base_speaker_tts.tts(
@@ -534,7 +531,7 @@ class OpenVoiceEngine(EngineProtocol):
                     logger.info(f"Audio saved to: {output_path}")
                     return None
 
-                return audio
+                return np.asarray(audio)
 
             except Exception as e:
                 logger.error(f"Tone color conversion failed: {e}")
@@ -582,13 +579,13 @@ class OpenVoiceEngine(EngineProtocol):
 
         if calculate and HAS_QUALITY_METRICS:
             try:
-                quality_metrics = calculate_all_metrics(audio, sample_rate)
+                quality_metrics = calculate_all_metrics(audio, sample_rate=sample_rate)
                 if reference_audio:
                     try:
                         import soundfile as sf
 
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
+                        similarity = calculate_similarity(ref_audio, audio)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -650,7 +647,7 @@ class OpenVoiceEngine(EngineProtocol):
             **kwargs,
         )
 
-        if base_audio is None:
+        if base_audio is None or isinstance(base_audio, tuple):
             return None
 
         # Apply style modifications
@@ -771,7 +768,7 @@ class OpenVoiceEngine(EngineProtocol):
                 logger.info(f"Cross-lingual audio saved to: {output_path}")
                 return None
 
-            return audio
+            return np.asarray(audio)
 
         except Exception as e:
             logger.error(f"Cross-lingual synthesis failed: {e}")
@@ -1221,11 +1218,10 @@ class OpenVoiceEngine(EngineProtocol):
         if not self._initialized and not self._load_models():
             return [None] * len(texts)
 
-        results = []
+        results: list[np.ndarray | tuple[np.ndarray | None, dict] | None] = []
 
         # Process in batches for better GPU utilization
         actual_batch_size = min(batch_size, self.batch_size)
-        (len(texts) + actual_batch_size - 1) // actual_batch_size
 
         def synthesize_single(text):
             try:
@@ -1280,9 +1276,9 @@ class OpenVoiceEngine(EngineProtocol):
 
         return results
 
-    def enable_caching(self, enable: bool = True):
+    def enable_caching(self, enable: bool = True) -> None:
         """Enable or disable caching."""
-        self.enable_caching = enable
+        self._enable_caching = enable
         logger.info(f"Model caching {'enabled' if enable else 'disabled'}")
 
     def set_batch_size(self, batch_size: int):

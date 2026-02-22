@@ -12,7 +12,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from backend.services.error_tracker import (
+from backend.platform.monitoring.error_tracker import (
     ErrorAggregate,
     ErrorCategory,
     ErrorSeverity,

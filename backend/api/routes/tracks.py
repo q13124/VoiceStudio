@@ -186,7 +186,7 @@ def create_track(
 
         track_id = str(uuid.uuid4())
 
-        track_data = {
+        track_data: dict[str, object] = {
             "id": track_id,
             "name": req.name.strip(),
             "project_id": project_id,
@@ -236,6 +236,8 @@ def update_track(
             updates["engine"] = req.engine
 
         updated_track = track_store.update_track(project_id, track_id, updates)
+        if updated_track is None:
+            raise HTTPException(status_code=404, detail="Track not found after update")
 
         logger.info(f"Updated track: {track_id} in project: {project_id}")
         return _track_dict_to_model(updated_track)
@@ -346,7 +348,17 @@ def create_clip(
         # Increment reference count for the audio artifact
         ref_counter.increment(req.audio_id, clip_id)
 
-        clip = AudioClip(**clip_data)
+        clip = AudioClip(
+            id=clip_id,
+            name=req.name.strip(),
+            profile_id=req.profile_id,
+            audio_id=req.audio_id,
+            audio_url=req.audio_url,
+            duration_seconds=req.duration_seconds,
+            start_time=req.start_time,
+            engine=req.engine,
+            quality_score=req.quality_score,
+        )
 
         logger.info(
             f"Added clip: {clip_id} ({req.name}) to track: {track_id} in project: {project_id}"
@@ -479,15 +491,15 @@ class UndoRedoResponse(BaseModel):
 
 
 # Store EditHistory instances per project for undo/redo functionality
-_project_histories: dict[str, EditHistoryDep] = {}
+from backend.project.versioning.edit_history import EditHistory as _EditHistoryType
+
+_project_histories: dict[str, _EditHistoryType] = {}
 
 
-def _get_project_history(project_id: str) -> EditHistoryDep:
+def _get_project_history(project_id: str) -> _EditHistoryType:
     """Get or create EditHistory for a project."""
-    from backend.services.edit_history import EditHistory
-
     if project_id not in _project_histories:
-        _project_histories[project_id] = EditHistory()
+        _project_histories[project_id] = _EditHistoryType()
     return _project_histories[project_id]
 
 

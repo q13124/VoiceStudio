@@ -251,7 +251,7 @@ async def zero_shot_clone(request: ZeroShotCloneRequest):
         audio_path = resolve_audio_id_to_path(request.audio_id)
         logger.info(f"Zero-shot clone: audio_id={request.audio_id} -> path={audio_path}")
 
-        from backend.services.instant_cloning_service import get_instant_cloning_service
+        from backend.voice.cloning.instant_cloning_service import get_instant_cloning_service
 
         service = get_instant_cloning_service()
 
@@ -301,7 +301,7 @@ async def extract_embedding(request: EmbeddingExtractionRequest):
         audio_path = resolve_audio_id_to_path(request.audio_id)
         logger.info(f"Extract embedding: audio_id={request.audio_id} -> path={audio_path}")
 
-        from backend.services.instant_cloning_service import get_instant_cloning_service
+        from backend.voice.cloning.instant_cloning_service import get_instant_cloning_service
 
         service = get_instant_cloning_service()
         embedding, metadata = await service.extract_speaker_embedding(audio_path)
@@ -349,7 +349,7 @@ async def instant_preview(request: InstantPreviewRequest):
         audio_path = resolve_audio_id_to_path(request.embedding_id)
         logger.info(f"Preview: embedding_id={request.embedding_id} -> path={audio_path}")
 
-        from backend.services.instant_cloning_service import get_instant_cloning_service
+        from backend.voice.cloning.instant_cloning_service import get_instant_cloning_service
 
         service = get_instant_cloning_service()
         preview_path, metadata = await service.generate_instant_preview(
@@ -394,7 +394,7 @@ async def estimate_quality(request: QualityEstimationRequest):
         audio_path = resolve_audio_id_to_path(request.reference_audio_id)
         logger.info(f"Estimate quality: audio_id={request.reference_audio_id} -> path={audio_path}")
 
-        from backend.services.instant_cloning_service import get_instant_cloning_service
+        from backend.voice.cloning.instant_cloning_service import get_instant_cloning_service
 
         service = get_instant_cloning_service()
         quality_estimate = await service.estimate_clone_quality(audio_path)
@@ -428,7 +428,7 @@ async def estimate_quality(request: QualityEstimationRequest):
 async def list_embeddings():
     """List all stored speaker embeddings."""
     try:
-        from backend.services.instant_cloning_service import get_instant_cloning_service
+        from backend.voice.cloning.instant_cloning_service import get_instant_cloning_service
 
         service = get_instant_cloning_service()
         embeddings = service.list_embeddings()
@@ -444,7 +444,7 @@ async def list_embeddings():
 async def delete_embedding(embedding_id: str):
     """Delete a stored speaker embedding."""
     try:
-        from backend.services.instant_cloning_service import get_instant_cloning_service
+        from backend.voice.cloning.instant_cloning_service import get_instant_cloning_service
 
         service = get_instant_cloning_service()
         success = service.delete_embedding(embedding_id)

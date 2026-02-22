@@ -22,14 +22,20 @@ from ..optimization import cache_response
 logger = logging.getLogger(__name__)
 
 # Try importing PostFXProcessor for professional effects
-try:
-    from app.core.audio.post_fx import PostFXProcessor, create_post_fx_processor
+from typing import Any as _AnyType
 
+_PostFXProcessor: _AnyType = None
+_create_post_fx_processor: _AnyType = None
+HAS_POST_FX = False
+
+try:
+    from app.core.audio.post_fx import PostFXProcessor as _PFX
+    from app.core.audio.post_fx import create_post_fx_processor as _create_pfx
+
+    _PostFXProcessor = _PFX
+    _create_post_fx_processor = _create_pfx
     HAS_POST_FX = True
 except ImportError:
-    HAS_POST_FX = False
-    PostFXProcessor = None
-    create_post_fx_processor = None
     logger.debug("PostFXProcessor not available. Effects will use basic implementations.")
 
 router = APIRouter(prefix="/api/effects", tags=["effects"])
@@ -104,7 +110,7 @@ class EffectProcessResponse(BaseModel):
 
 
 # GAP-BE-001: Persistent storage (migrated from in-memory Dict to JsonFileStore)
-from backend.services.effect_chain_store import (
+from backend.audio.effects.effect_chain_store import (
     get_effect_chain_store,
     get_effect_preset_store,
 )
@@ -439,9 +445,9 @@ def process_audio_with_chain(
         sorted_effects = sorted(enabled_effects, key=lambda e: e.order)
 
         # Try using PostFXProcessor for better quality effects (if available)
-        if HAS_POST_FX and PostFXProcessor:
+        if HAS_POST_FX and _PostFXProcessor is not None:
             try:
-                processor = create_post_fx_processor(sample_rate=sample_rate)
+                processor = _create_post_fx_processor(sample_rate=sample_rate)
                 # Convert effects to PostFXProcessor format
                 effects_list = []
                 for effect in sorted_effects:
@@ -1021,10 +1027,7 @@ async def process_project_effect_chain(
         if not enabled_effects:
             return EffectProcessResponse(
                 success=True,
-                output_id=audio_id,
-                output_path="",
-                effects_applied=[],
-                processing_time=0.0,
+                output_audio_id=audio_id,
                 message="No enabled effects in chain, audio unchanged",
             )
 
@@ -1069,9 +1072,10 @@ async def process_project_effect_chain(
             output_dir = tempfile.mkdtemp(prefix="effects_")
             out_name = output_filename or f"processed_{audio_id}.wav"
             output_path = os.path.join(output_dir, out_name)
-            save_audio(processed_audio, output_path, sample_rate)
+            save_audio(processed_audio, sample_rate, output_path)
 
-            output_id = _register_audio_file(output_path)
+            output_audio_id = f"effect_{uuid.uuid4().hex[:8]}"
+            _register_audio_file(output_audio_id, output_path)
             processing_time = time.time() - start_time
 
             logger.info(
@@ -1079,10 +1083,7 @@ async def process_project_effect_chain(
             )
             return EffectProcessResponse(
                 success=True,
-                output_id=output_id,
-                output_path=output_path,
-                effects_applied=[e.type for e in sorted_effects],
-                processing_time=processing_time,
+                output_audio_id=output_audio_id,
                 message=f"Applied {len(sorted_effects)} effects successfully",
             )
 

@@ -11,26 +11,28 @@ Compatible with:
 from __future__ import annotations
 
 import logging
+import os
 from collections import OrderedDict
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import torch
 
 # Optional audio utilities import
 try:
-    from app.core.audio.audio_utils import load_audio_file
+    from app.core.audio.audio_utils import load_audio
 
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
 
-    def load_audio_file(path: str, sr: int = 16000) -> np.ndarray:
+    def load_audio(file_path: str | Path) -> tuple[np.ndarray, int]:
         """Fallback audio loading."""
         import soundfile as sf
 
-        audio, _ = sf.read(path, sr=sr)
-        return audio
+        audio, sr = sf.read(str(file_path))
+        return np.asarray(audio), int(sr)
 
 
 try:
@@ -56,6 +58,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # Try importing general model cache
+_model_cache = None
 try:
     from app.core.models.cache import get_model_cache
 
@@ -63,7 +66,6 @@ try:
     HAS_MODEL_CACHE = True
 except ImportError:
     HAS_MODEL_CACHE = False
-    _model_cache = None
     logger.debug("General model cache not available, using Whisper-specific cache")
 
 # Fallback: Whisper-specific cache (for backward compatibility)
@@ -369,16 +371,16 @@ class WhisperEngine(EngineProtocol):
         self.model: WhisperModel | None = None
         self.lazy_load = lazy_load
         self.batch_size = batch_size
-        self.enable_caching = enable_caching
-        self.enable_vad = enable_vad and HAS_VAD
+        self._caching_enabled = enable_caching
+        self._vad_enabled = enable_vad and HAS_VAD
 
         # VAD model (loaded on demand)
         self._vad_model = None
 
-    def _load_model(self):
+    def _load_model(self) -> bool:
         """Load model with caching support."""
         # Check cache first
-        if self.enable_caching:
+        if self._caching_enabled:
             cached_model = _get_cached_model(
                 self.model_name, self.whisper_device, self.compute_type
             )
@@ -409,7 +411,7 @@ class WhisperEngine(EngineProtocol):
         )
 
         # Cache model
-        if self.enable_caching:
+        if self._caching_enabled:
             _cache_model(self.model_name, self.whisper_device, self.compute_type, self.model)
 
         self._initialized = True
@@ -436,7 +438,7 @@ class WhisperEngine(EngineProtocol):
 
     def _load_vad_model(self):
         """Load VAD model if enabled."""
-        if not self.enable_vad or not HAS_VAD:
+        if not self._vad_enabled or not HAS_VAD:
             return None
 
         if self._vad_model is None:
@@ -460,7 +462,7 @@ class WhisperEngine(EngineProtocol):
         temperature: float | list[float] = 0.0,
         initial_prompt: str | None = None,
         condition_on_previous_text: bool = True,
-    ) -> dict[str, any]:
+    ) -> dict[str, Any] | None:
         """
         Transcribe audio to text.
 
@@ -490,13 +492,14 @@ class WhisperEngine(EngineProtocol):
 
         try:
             # Check transcription cache
-            if self.enable_caching:
+            if self._caching_enabled:
                 cached_result = _get_cached_transcription(audio, language, task, word_timestamps)
                 if cached_result is not None:
                     logger.debug("Using cached transcription")
                     return cached_result.copy()
 
             # Load audio if path provided
+            audio_input: str | np.ndarray
             if isinstance(audio, (str, Path)):
                 audio_path = Path(audio)
                 if not audio_path.exists():
@@ -514,7 +517,7 @@ class WhisperEngine(EngineProtocol):
 
             # Optimize with VAD if enabled
             vad_segments = None
-            if self.enable_vad and isinstance(audio_input, (str, Path)):
+            if self._vad_enabled and isinstance(audio_input, (str, Path)):
                 vad_model = self._load_vad_model()
                 if vad_model is not None:
                     try:
@@ -533,6 +536,10 @@ class WhisperEngine(EngineProtocol):
             logger.debug(
                 f"Transcribing audio: language={language}, task={task}, word_timestamps={word_timestamps}"
             )
+
+            if self.model is None:
+                logger.error("Whisper model not loaded")
+                return None
 
             segments, info = self.model.transcribe(
                 audio_input,
@@ -589,7 +596,7 @@ class WhisperEngine(EngineProtocol):
             )
 
             # Cache transcription result
-            if self.enable_caching:
+            if self._caching_enabled:
                 _cache_transcription(audio, language, task, word_timestamps, result)
 
             return result
@@ -609,7 +616,7 @@ class WhisperEngine(EngineProtocol):
         task: str = "transcribe",
         word_timestamps: bool = False,
         **kwargs,
-    ) -> list[dict[str, any]]:
+    ) -> list[dict[str, Any] | None]:
         """
         Transcribe multiple audio files in batch.
 
@@ -657,9 +664,9 @@ class WhisperEngine(EngineProtocol):
 
         return results
 
-    def enable_caching(self, enable: bool = True):
+    def set_caching_enabled(self, enable: bool = True) -> None:
         """Enable or disable caching."""
-        self.enable_caching = enable
+        self._caching_enabled = enable
         logger.info(f"Transcription caching {'enabled' if enable else 'disabled'}")
 
     def set_batch_size(self, batch_size: int):
@@ -667,12 +674,12 @@ class WhisperEngine(EngineProtocol):
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
 
-    def enable_vad(self, enable: bool = True):
+    def set_vad_enabled(self, enable: bool = True) -> None:
         """Enable or disable VAD optimization."""
         if enable and not HAS_VAD:
             logger.warning("VAD not available, install silero-vad to enable")
             return
-        self.enable_vad = enable
+        self._vad_enabled = enable
         if enable:
             self._load_vad_model()
         logger.info(f"VAD optimization {'enabled' if enable else 'disabled'}")
@@ -698,7 +705,7 @@ class WhisperEngine(EngineProtocol):
         self._initialized = False
         logger.info("Whisper engine cleaned up")
 
-    def get_info(self) -> dict[str, any]:
+    def get_info(self) -> dict[str, Any]:
         """Get engine information."""
         info = super().get_info()
         info.update(

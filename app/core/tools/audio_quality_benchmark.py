@@ -31,7 +31,7 @@ try:
 
     # Try to import quality_metrics module directly
     spec = importlib.util.find_spec("app.core.engines.quality_metrics")
-    if spec is not None:
+    if spec is not None and spec.loader is not None:
         quality_metrics_module = importlib.util.module_from_spec(spec)
         try:
             spec.loader.exec_module(quality_metrics_module)
@@ -44,7 +44,7 @@ try:
 
     # Try to import enhanced_quality_metrics
     spec = importlib.util.find_spec("app.core.audio.enhanced_quality_metrics")
-    if spec is not None:
+    if spec is not None and spec.loader is not None:
         enhanced_metrics_module = importlib.util.module_from_spec(spec)
         try:
             spec.loader.exec_module(enhanced_metrics_module)
@@ -66,7 +66,7 @@ try:
 
     # Try to import router module directly
     spec = importlib.util.find_spec("app.core.engines.router")
-    if spec is not None:
+    if spec is not None and spec.loader is not None:
         router_module = importlib.util.module_from_spec(spec)
         try:
             spec.loader.exec_module(router_module)
@@ -94,7 +94,7 @@ class AudioQualityBenchmark:
 
     def __init__(
         self,
-        engine_router: EngineRouter | None = None,
+        engine_router: Any = None,
         sample_rate: int = 24000,
     ):
         """
@@ -104,11 +104,11 @@ class AudioQualityBenchmark:
             engine_router: Engine router instance (uses global if None)
             sample_rate: Default sample rate for processing
         """
-        self.engine_router = engine_router or (global_router if HAS_ENGINE_ROUTER else None)
+        self.engine_router: Any = engine_router or (global_router if HAS_ENGINE_ROUTER else None)
         self.sample_rate = sample_rate
-        self.quality_metrics = None
+        self.quality_metrics: Any = None
 
-        if HAS_QUALITY_METRICS:
+        if HAS_QUALITY_METRICS and EnhancedQualityMetrics is not None:
             try:
                 self.quality_metrics = EnhancedQualityMetrics(sample_rate=sample_rate)
             except Exception as e:
@@ -140,7 +140,7 @@ class AudioQualityBenchmark:
         if not self.engine_router:
             raise RuntimeError("Engine router not available")
 
-        results = {
+        results: dict[str, Any] = {
             "engine": engine_name,
             "success": False,
             "error": None,
@@ -160,7 +160,8 @@ class AudioQualityBenchmark:
                 init_start = time.time()
                 engine.initialize()
                 init_time = time.time() - init_start
-                results["performance"]["initialization_time"] = init_time
+                perf_dict: dict[str, Any] = results["performance"]
+                perf_dict["initialization_time"] = init_time
 
             # Synthesize
             synth_start = time.time()
@@ -175,7 +176,8 @@ class AudioQualityBenchmark:
             )
 
             synth_time = time.time() - synth_start
-            results["performance"]["synthesis_time"] = synth_time
+            perf_dict = results["performance"]
+            perf_dict["synthesis_time"] = synth_time
 
             # Extract quality metrics if returned
             if isinstance(audio, tuple) and len(audio) == 2:
@@ -185,7 +187,7 @@ class AudioQualityBenchmark:
                 metrics = None
 
             # Calculate quality metrics if not provided
-            if not metrics and self.quality_metrics:
+            if not metrics and self.quality_metrics is not None:
                 try:
                     metrics = self.quality_metrics.calculate_all(
                         audio_data, self.sample_rate, include_advanced=True
@@ -196,7 +198,7 @@ class AudioQualityBenchmark:
             # Calculate additional metrics using reference
             if metrics and isinstance(reference_audio, (str, Path)):
                 try:
-                    if HAS_QUALITY_METRICS:
+                    if HAS_QUALITY_METRICS and calculate_all_metrics is not None:
                         ref_metrics = calculate_all_metrics(
                             str(reference_audio), audio_data, self.sample_rate
                         )
@@ -281,10 +283,12 @@ class AudioQualityBenchmark:
         Returns:
             Dictionary with comparative analysis
         """
-        comparison = {
+        successful_engines_list: list[str] = []
+        failed_engines_list: list[str] = []
+        comparison: dict[str, Any] = {
             "engines": list(benchmark_results.keys()),
-            "successful_engines": [],
-            "failed_engines": [],
+            "successful_engines": successful_engines_list,
+            "failed_engines": failed_engines_list,
             "quality_rankings": {},
             "performance_rankings": {},
             "best_engine": None,
@@ -295,9 +299,9 @@ class AudioQualityBenchmark:
         for engine_name, results in benchmark_results.items():
             if results.get("success"):
                 successful_results[engine_name] = results
-                comparison["successful_engines"].append(engine_name)
+                successful_engines_list.append(engine_name)
             else:
-                comparison["failed_engines"].append(engine_name)
+                failed_engines_list.append(engine_name)
 
         if not successful_results:
             return comparison
@@ -346,11 +350,10 @@ class AudioQualityBenchmark:
         if quality_rankings:
             comparison["best_engine"] = quality_rankings[0][0]
 
-        # Summary statistics
         comparison["summary"] = {
             "total_engines": len(benchmark_results),
             "successful_count": len(successful_results),
-            "failed_count": len(comparison["failed_engines"]),
+            "failed_count": len(failed_engines_list),
             "average_quality": (
                 sum(quality_scores.values()) / len(quality_scores) if quality_scores else 0.0
             ),
@@ -477,7 +480,7 @@ class AudioQualityBenchmark:
 
 
 def create_audio_quality_benchmark(
-    engine_router: EngineRouter | None = None,
+    engine_router: Any = None,
     sample_rate: int = 24000,
 ) -> AudioQualityBenchmark:
     """

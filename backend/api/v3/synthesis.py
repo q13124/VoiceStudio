@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from backend.services.engine_service import IEngineService, get_engine_service
+from backend.ml.models.engine_service import IEngineService, get_engine_service
 
 from .models import StandardResponse, success_response
 

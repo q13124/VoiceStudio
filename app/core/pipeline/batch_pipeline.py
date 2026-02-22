@@ -183,7 +183,7 @@ class BatchPipeline:
     async def _transcribe(self, audio_data: bytes, sample_rate: int = 16000) -> str:
         """Full transcription using STT engine."""
         try:
-            from backend.services.engine_service import get_engine_service
+            from backend.ml.models.engine_service import get_engine_service
 
             service = get_engine_service()
             result = await service.transcribe(
@@ -218,7 +218,7 @@ class BatchPipeline:
         if not text.strip():
             return None
         try:
-            from backend.services.engine_service import get_engine_service
+            from backend.ml.models.engine_service import get_engine_service
 
             service = get_engine_service()
             result = await service.synthesize(
