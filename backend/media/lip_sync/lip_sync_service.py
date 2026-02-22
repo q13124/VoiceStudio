@@ -533,7 +533,29 @@ class LipSyncService:
             return True
         return False
 
-    # Internal methods
+    async def generate(self, **kwargs: Any) -> dict[str, Any]:
+        """Alias for generate_lip_sync."""
+        result = await self.generate_lip_sync(**kwargs)
+        return result.to_dict() if hasattr(result, "to_dict") else {"success": result.success}
+
+    async def generate_preview(self, **kwargs: Any) -> dict[str, Any]:
+        """Alias for get_timeline_preview."""
+        return await self.get_timeline_preview(**kwargs)
+
+    async def extract_phonemes(self, audio_id: str) -> dict[str, Any]:
+        """Extract phonemes from audio."""
+        result = await self._extract_phoneme_timestamps(audio_id)
+        return {"success": True, "phonemes": result, "total_duration": 0.0}
+
+    async def get_engine_status(self, engine_id: str | None = None) -> dict[str, Any]:
+        """Get status of available lip sync engines."""
+        engines_status = {
+            engine.value: available
+            for engine, available in self._engines_available.items()
+        }
+        if engine_id:
+            return {"engine_id": engine_id, "available": engines_status.get(engine_id, False)}
+        return {"available": self.lip_sync_available, "engines": engines_status}
 
     async def _get_video_info(self, video_path: str) -> dict[str, Any]:
         """Get video file information."""

@@ -250,8 +250,9 @@ class InstantCloningService:
 
             # Voice clarity (using zero-crossing rate variance)
             try:
-                frame_length = int(0.025 * sample_rate)  # 25ms frames
-                hop_length = int(0.010 * sample_rate)  # 10ms hop
+                _sr = sample_rate or 16000
+                frame_length = int(0.025 * _sr)
+                hop_length = int(0.010 * _sr)
 
                 zcr_values = []
                 for i in range(0, len(audio_mono) - frame_length, hop_length):
@@ -473,11 +474,11 @@ class InstantCloningService:
             elif engine == "chatterbox":
                 from app.core.engines.chatterbox_engine import ChatterboxEngine
 
-                synth_engine = ChatterboxEngine()
-                synth_engine.initialize()
-                result = synth_engine.synthesize(
+                chatterbox_engine = ChatterboxEngine()
+                chatterbox_engine.initialize()
+                result = chatterbox_engine.synthesize(
                     text=text,
-                    reference_audio=reference_audio,
+                    speaker_wav=reference_audio,
                     output_path=str(output_path),
                 )
                 if result:

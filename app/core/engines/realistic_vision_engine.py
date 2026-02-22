@@ -16,6 +16,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+from typing import Any
 
 import torch
 from PIL import Image
@@ -57,7 +58,7 @@ class RealisticVisionEngine(EngineProtocol):
 
         self.model_id = model_id
         self.vae = vae
-        self.pipe = None
+        self.pipe: Any = None
 
     def initialize(self) -> bool:
         """Initialize the Realistic Vision model."""
@@ -137,14 +138,14 @@ class RealisticVisionEngine(EngineProtocol):
             if not images:
                 return None
 
-            image = images[0]
+            result_image: Image.Image = images[0]
 
             if output_path:
-                image.save(output_path)
+                result_image.save(output_path)
                 logger.info(f"Image saved to: {output_path}")
-                return image
+                return result_image
 
-            return image
+            return result_image
 
         except Exception as e:
             logger.error(f"Realistic Vision generation failed: {e}")

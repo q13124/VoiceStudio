@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from queue import PriorityQueue
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from .resource_manager import (
     Job,
@@ -312,7 +312,7 @@ class EnhancedJobQueue:
 
                         # Job is ready
                         self.active_jobs[job.job_id] = job
-                        return job
+                        return cast(Job, job)
 
                     except Exception as e:
                         logger.error(f"Error getting job from queue: {e}")
@@ -575,7 +575,7 @@ class EnhancedJobQueue:
                     {
                         "batch_id": batch.batch_id,
                         "status": "completed",
-                        "completed_at": (batch.completed_at.isoformat()),
+                        "completed_at": (batch.completed_at.isoformat() if batch.completed_at else None),
                         "total_jobs": batch.total_jobs,
                         "completed_jobs": batch.completed_jobs,
                         "failed_jobs": batch.failed_jobs,
@@ -665,7 +665,7 @@ class EnhancedJobQueue:
             job = self.jobs[job_id]
             retry_count = self.job_retries.get(job_id, 0)
 
-            status = {
+            status: dict[str, Any] = {
                 "job_id": job_id,
                 "status": job.status.value,
                 "priority": job.priority.name,

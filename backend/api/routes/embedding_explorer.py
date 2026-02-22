@@ -39,14 +39,16 @@ try:
 except ImportError:
     logger.debug("SpeechBrain not installed. Install with: pip install speechbrain")
 
-# Try to import audio loading libraries
-try:
-    import librosa
+from typing import Any
 
+HAS_LIBROSA = False
+librosa: Any = None
+try:
+    import librosa as _librosa_mod
+    librosa = _librosa_mod
     HAS_LIBROSA = True
 except ImportError:
-    HAS_LIBROSA = False
-    librosa = None
+    pass
 
 router = APIRouter(prefix="/api/embedding-explorer", tags=["embedding-explorer"])
 
@@ -86,10 +88,12 @@ class EmbeddingVisualization(BaseModel):
     """2D/3D visualization data for embeddings."""
 
     embedding_id: str
-    x: float  # 2D/3D projection coordinate
+    x: float
     y: float
     z: float | None = None
     color: str | None = None
+    label: str | None = None
+    cluster: str | None = None
 
 
 class EmbeddingExtractRequest(BaseModel):
@@ -217,7 +221,7 @@ async def extract_embedding(request: EmbeddingExtractRequest):
             voice_profile_id=voice_profile_id,
             vector=embedding_vector,
             dimension=len(embedding_vector),
-            created=embedding_data["created"],
+            created=str(embedding_data["created"]),
         )
 
     except HTTPException:
@@ -472,7 +476,7 @@ async def cluster_embeddings(
         centroid = centroids[cluster_id].tolist() if cluster_id < len(centroids) else []
         results.append(
             EmbeddingCluster(
-                cluster_id=cluster_id,
+                cluster_id=str(cluster_id),
                 embedding_ids=cluster_groups[cluster_id],
                 centroid=centroid,
                 size=len(cluster_groups[cluster_id]),

@@ -294,8 +294,8 @@ def _validate_dataset(clips: list[str]) -> DatasetValidationResult:
     Returns:
         DatasetValidationResult with validation status
     """
-    errors = []
-    warnings = []
+    errors: list[str] = []
+    warnings: list[str] = []
     valid_clip_count = 0
 
     if not clips:
@@ -580,11 +580,12 @@ async def export_dataset(req: DatasetExportRequest):
         if req.format == "zip":
             # Create ZIP archive with audio files
             with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-                metadata = {
+                clips_list: list[dict[str, Any]] = []
+                metadata: dict[str, Any] = {
                     "dataset_id": req.dataset_id,
                     "export_date": datetime.utcnow().isoformat(),
                     "clip_count": len(req.clips),
-                    "clips": [],
+                    "clips": clips_list,
                 }
 
                 for clip in req.clips:
@@ -640,15 +641,16 @@ async def export_dataset(req: DatasetExportRequest):
 
         else:
             # Export as JSON metadata
+            clips_list2: list[dict[str, Any]] = []
             metadata = {
                 "dataset_id": req.dataset_id,
                 "export_date": datetime.utcnow().isoformat(),
                 "clip_count": len(req.clips),
-                "clips": [],
+                "clips": clips_list2,
             }
 
             for clip in req.clips:
-                clip_info: dict[str, Any] = {"clip_id": clip}
+                clip_info2: dict[str, Any] = {"clip_id": clip}
 
                 clip_path = clip
                 if not os.path.exists(clip_path):
@@ -656,20 +658,19 @@ async def export_dataset(req: DatasetExportRequest):
 
                     if clip in _audio_storage:
                         clip_path = _audio_storage[clip]
-                        clip_info["file_path"] = clip_path
+                        clip_info2["file_path"] = clip_path
                     else:
-                        clip_info["file_path"] = None
-                        clip_info["error"] = "Clip not found"
+                        clip_info2["file_path"] = None
+                        clip_info2["error"] = "Clip not found"
                 else:
-                    clip_info["file_path"] = clip_path
+                    clip_info2["file_path"] = clip_path
 
-                # Add scores if requested
                 if req.include_scores and HAS_AUDIO_PROCESSING:
                     try:
                         score_request = DatasetScoreRequest(clips=[clip])
                         score_results = await score(score_request)
                         if score_results:
-                            clip_info["scores"] = {
+                            clip_info2["scores"] = {
                                 "snr": score_results[0].snr,
                                 "lufs": score_results[0].lufs,
                                 "quality": score_results[0].quality,
@@ -677,7 +678,7 @@ async def export_dataset(req: DatasetExportRequest):
                     except Exception as e:
                         logger.warning(f"Failed to score clip for export: {e}")
 
-                metadata["clips"].append(clip_info)
+                clips_list2.append(clip_info2)
 
             # Write JSON file
             with open(output_path, "w", encoding="utf-8") as f:

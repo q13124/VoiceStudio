@@ -236,13 +236,13 @@ async def apply_quality_mode(mode: QualityMode) -> RealtimeSettings:
 
     _current_settings = RealtimeSettings(
         quality_mode=mode,
-        chunk_size=preset.get("chunk_size", 1024),
-        buffer_size=preset.get("buffer_size", 4),
+        chunk_size=int(str(preset.get("chunk_size", 1024))),
+        buffer_size=int(str(preset.get("buffer_size", 4))),
         sample_rate=_current_settings.sample_rate,
         use_gpu=_current_settings.use_gpu,
-        half_precision=preset.get("half_precision", True),
-        f0_method=preset.get("f0_method", F0Method.RMVPE),
-        enable_cuda_graphs=preset.get("enable_cuda_graphs", False),
+        half_precision=bool(preset.get("half_precision", True)),
+        f0_method=F0Method(preset.get("f0_method", F0Method.RMVPE)),
+        enable_cuda_graphs=bool(preset.get("enable_cuda_graphs", False)),
         denoise_input=_current_settings.denoise_input,
         normalize_output=_current_settings.normalize_output,
     )

@@ -7,7 +7,9 @@ Endpoints for voice morphing and blending between multiple voices.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
+import numpy as np
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -212,16 +214,16 @@ async def apply_morph(request: MorphApplyRequest):
         try:
             from app.core.audio.audio_utils import load_audio, save_audio
         except ImportError:
-            # Fallback to librosa
             import librosa
             import soundfile as sf
 
-            def load_audio(path):
-                audio, sr = librosa.load(path, sr=None)
-                return audio, sr
+            def load_audio(file_path: str | Path) -> tuple[np.ndarray, int]:
+                audio, sr = librosa.load(str(file_path), sr=None)
+                return np.asarray(audio), int(sr)
 
-            def save_audio(audio, sr, path):
-                sf.write(path, audio, sr)
+            def save_audio(audio: np.ndarray, sample_rate: int, file_path: str | Path, format: str = "wav", subtype: str = "PCM_16") -> Path:
+                sf.write(str(file_path), audio, sample_rate)
+                return Path(file_path)
 
         source_audio, sample_rate = load_audio(source_audio_path)
 
@@ -717,7 +719,9 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
                     embedding = []
                     embedding.append(characteristics.get("f0_mean", 0.0))
                     embedding.append(characteristics.get("f0_std", 0.0))
-                    embedding.extend(characteristics.get("formants", [0.0, 0.0, 0.0])[:3])
+                    formants = characteristics.get("formants", [0.0, 0.0, 0.0])
+                    formants_list = list(formants) if not isinstance(formants, float) else [formants]
+                    embedding.extend(formants_list[:3])
                     embedding.append(characteristics.get("spectral_centroid", 0.0))
                     embedding.append(characteristics.get("spectral_rolloff", 0.0))
                     embedding.append(characteristics.get("zero_crossing_rate", 0.0))

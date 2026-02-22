@@ -264,7 +264,7 @@ async def health_check() -> dict[str, Any]:
     overall_status = _health_checker.get_overall_status()
 
     # Get detailed information
-    details = {}
+    details: dict[str, Any] = {}
 
     # Database
     db_result = results.get("database")
@@ -360,7 +360,7 @@ def simple_health_check() -> dict[str, str]:
 
 def _get_system_metrics() -> dict[str, Any]:
     """Get comprehensive system metrics."""
-    metrics = {}
+    metrics: dict[str, Any] = {}
     try:
         import os
 
@@ -419,7 +419,7 @@ def _get_system_metrics() -> dict[str, Any]:
 
 def _get_resource_usage() -> dict[str, Any]:
     """Get resource usage information (enhanced)."""
-    resources = {}
+    resources: dict[str, Any] = {}
 
     # Safe-by-default: avoid importing app.core.* modules that may pull in native ML stacks.
     # These imports can hard-crash the process on some machines due to DLL/ABI mismatches.

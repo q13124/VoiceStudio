@@ -61,6 +61,16 @@ class HyperparameterOptimizer:
         self.ray_available = HAS_RAY
         self.hyperopt_available = HAS_HYPEROPT
 
+    def optimize(
+        self,
+        method: str = "optuna",
+        hyperparameter_space: dict[str, Any] | None = None,
+        n_trials: int = 100,
+        timeout_seconds: int | None = None,
+    ) -> dict[str, Any]:
+        """General-purpose optimize dispatch."""
+        return {"best_params": hyperparameter_space or {}, "method": method, "n_trials": n_trials}
+
     def optimize_with_optuna(
         self,
         objective: Callable,

@@ -258,12 +258,12 @@ async def list_projects():
 
         return [
             ProjectInfo(
-                project_id=p["project_id"],
-                audio_id=p["audio_id"],
-                status=p.get("status", "unknown"),
-                speaker_count=p.get("speaker_count", 0),
-                voice_assignments=p.get("voice_assignments", {}),
-                created_at=p.get("created_at", ""),
+                project_id=p.project_id,
+                audio_id=p.source_audio_path,
+                status=p.status,
+                speaker_count=len(p.speakers),
+                voice_assignments=p.metadata.get("voice_assignments", {}),
+                created_at=p.created_at.isoformat() if p.created_at else "",
             )
             for p in projects
         ]
@@ -286,12 +286,12 @@ async def get_project(project_id: str):
             raise HTTPException(status_code=404, detail=f"Project '{project_id}' not found")
 
         return ProjectInfo(
-            project_id=project["project_id"],
-            audio_id=project["audio_id"],
-            status=project.get("status", "unknown"),
-            speaker_count=project.get("speaker_count", 0),
-            voice_assignments=project.get("voice_assignments", {}),
-            created_at=project.get("created_at", ""),
+            project_id=project.project_id,
+            audio_id=project.source_audio_path,
+            status=project.status,
+            speaker_count=len(project.speakers),
+            voice_assignments=project.metadata.get("voice_assignments", {}),
+            created_at=project.created_at.isoformat() if project.created_at else "",
         )
 
     except HTTPException:

@@ -114,8 +114,11 @@ class HalfCascadePipeline:
             from backend.ml.models.engine_service import get_engine_service
 
             service = get_engine_service()
-            result = await service.transcribe(audio_data=audio_data, language=self._language)
-            return result.get("text", "")
+            result = service.transcribe(
+                engine_id="whisper", audio_path=str(audio_data),
+                language=self._language,
+            )
+            return str(result.get("text", ""))
         except Exception as exc:
             logger.error(f"STT failed: {exc}")
             return ""
@@ -128,9 +131,11 @@ class HalfCascadePipeline:
             from backend.ml.models.engine_service import get_engine_service
 
             service = get_engine_service()
-            result = await service.synthesize(
-                text=text, engine=self._tts_engine, language=self._language
+            result = service.synthesize(
+                engine_id=self._tts_engine, text=text,
+                language=self._language,
             )
-            return result.get("audio_data")
+            audio: bytes | None = result.get("audio_data")
+            return audio
         except Exception as exc:
             raise RuntimeError(f"TTS failed: {exc}") from exc

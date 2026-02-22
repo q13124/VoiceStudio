@@ -92,6 +92,24 @@ class MetricsRegistry:
             metric_type="gauge",
         )
 
+    def set_counter(
+        self,
+        name: str,
+        value: float,
+        labels: dict[str, str] | None = None,
+        help_text: str | None = None,
+    ) -> None:
+        """Set a counter metric to a specific value."""
+        key = self._make_key(name, labels or {})
+        self._metrics[key] = MetricValue(
+            name=name,
+            value=value,
+            labels=labels or {},
+            timestamp=time.time(),
+            help_text=help_text,
+            metric_type="counter",
+        )
+
     def inc_counter(
         self,
         name: str,

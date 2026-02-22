@@ -273,37 +273,27 @@ class LanguageDetector:
         scores: dict[str, float] = {}
 
         for char in text:
-            code = ord(char)
+            codepoint = ord(char)
 
-            # CJK
-            if 0x4E00 <= code <= 0x9FFF:
+            if 0x4E00 <= codepoint <= 0x9FFF:
                 scores["zh"] = scores.get("zh", 0) + 1
-            # Hiragana/Katakana
-            elif 0x3040 <= code <= 0x30FF:
+            elif 0x3040 <= codepoint <= 0x30FF:
                 scores["ja"] = scores.get("ja", 0) + 1
-            # Hangul
-            elif 0xAC00 <= code <= 0xD7AF:
+            elif 0xAC00 <= codepoint <= 0xD7AF:
                 scores["ko"] = scores.get("ko", 0) + 1
-            # Cyrillic
-            elif 0x0400 <= code <= 0x04FF:
+            elif 0x0400 <= codepoint <= 0x04FF:
                 scores["ru"] = scores.get("ru", 0) + 1
-            # Arabic
-            elif 0x0600 <= code <= 0x06FF:
+            elif 0x0600 <= codepoint <= 0x06FF:
                 scores["ar"] = scores.get("ar", 0) + 1
-            # Devanagari
-            elif 0x0900 <= code <= 0x097F:
+            elif 0x0900 <= codepoint <= 0x097F:
                 scores["hi"] = scores.get("hi", 0) + 1
-            # Thai
-            elif 0x0E00 <= code <= 0x0E7F:
+            elif 0x0E00 <= codepoint <= 0x0E7F:
                 scores["th"] = scores.get("th", 0) + 1
-            # Greek
-            elif 0x0370 <= code <= 0x03FF:
+            elif 0x0370 <= codepoint <= 0x03FF:
                 scores["el"] = scores.get("el", 0) + 1
-            # Hebrew
-            elif 0x0590 <= code <= 0x05FF:
+            elif 0x0590 <= codepoint <= 0x05FF:
                 scores["he"] = scores.get("he", 0) + 1
-            # Latin with diacritics
-            elif 0x00C0 <= code <= 0x00FF:
+            elif 0x00C0 <= codepoint <= 0x00FF:
                 scores["la"] = scores.get("la", 0) + 0.5
 
         # Default to English for plain Latin
@@ -379,7 +369,7 @@ class LanguageDetector:
 
     @property
     def is_loaded(self) -> bool:
-        return self._loaded
+        return bool(self._loaded)
 
     @property
     def supported_languages(self) -> list[str]:

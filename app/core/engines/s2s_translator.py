@@ -82,10 +82,10 @@ class SpeechToSpeechTranslator:
 
     def __init__(self, config: S2SConfig | None = None):
         self.config = config or S2SConfig()
-        self._asr_model = None
-        self._translation_model = None
-        self._tts_model = None
-        self._speaker_encoder = None
+        self._asr_model: dict[str, Any] | None = None
+        self._translation_model: dict[str, Any] | None = None
+        self._tts_model: dict[str, Any] | None = None
+        self._speaker_encoder: dict[str, Any] | None = None
         self._loaded = False
 
     async def load(self) -> bool:
@@ -269,7 +269,7 @@ class SpeechToSpeechTranslator:
 
             encoder = self._speaker_encoder["model"]
             wav = preprocess_wav(audio, source_sr=sample_rate)
-            return encoder.embed_utterance(wav)
+            return np.asarray(encoder.embed_utterance(wav))
 
         # Placeholder: return mel-based pseudo-embedding
         try:
@@ -277,7 +277,7 @@ class SpeechToSpeechTranslator:
 
             mel = librosa.feature.melspectrogram(y=audio, sr=sample_rate, n_mels=256)
             embedding = np.mean(mel, axis=1)
-            return embedding / (np.linalg.norm(embedding) + 1e-8)
+            return np.asarray(embedding / (np.linalg.norm(embedding) + 1e-8))
         except ImportError:
             return np.zeros(256)
 
@@ -345,7 +345,7 @@ class SpeechToSpeechTranslator:
                     max_length=512,
                 )
 
-            return tokenizer.decode(translated[0], skip_special_tokens=True)
+            return str(tokenizer.decode(translated[0], skip_special_tokens=True))
 
         # No translation model available - return original text unchanged
         # This is NOT a translation - the text is returned as-is because

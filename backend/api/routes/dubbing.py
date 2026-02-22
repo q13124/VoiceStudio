@@ -5,6 +5,8 @@ Endpoints for video dubbing operations including translation and synchronization
 """
 
 import logging
+import re
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
@@ -53,8 +55,7 @@ async def translate(req: DubTranslateRequest) -> DubTranslateResponse:
         if not transcription:
             try:
                 # Use transcription service
-                from ..models_additional import TranscriptionRequest
-                from .transcribe import transcribe_audio
+                from .transcribe import TranscriptionRequest, transcribe_audio
 
                 transcribe_req = TranscriptionRequest(
                     audio_id=audio_id, engine="whisper", language="auto"
@@ -78,8 +79,7 @@ async def translate(req: DubTranslateRequest) -> DubTranslateResponse:
             )
 
         # Translate the transcription
-        from ..models_additional import TranslationRequest
-        from .multilingual import translate_text
+        from .multilingual import TranslationRequest, translate_text
 
         translation_req = TranslationRequest(
             text=source_text,
@@ -174,8 +174,7 @@ async def sync(req: DubSyncRequest) -> DubSyncResponse:
 
                 # Use original timing if available, otherwise estimate
                 if original_timing and isinstance(original_timing, list):
-                    # Map translated text to original timing
-                    timing_segments = []
+                    timing_segments: list[dict[str, Any]] = []
                     sum(seg.get("end", 0) - seg.get("start", 0) for seg in original_timing)
 
                     # Distribute translated text proportionally

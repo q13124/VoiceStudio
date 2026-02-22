@@ -195,11 +195,16 @@ class OptimizedEngineRouter(EngineRouter):
 
     def select_engine(
         self,
-        task_type: str,
+        task_type: str = "tts",
+        text: str | None = None,
+        language: str | None = None,
+        quality_mode: str = "balanced",
+        ab_test_group: str | None = None,
+        prefer_low_load: bool = False,
         load_balancing_strategy: LoadBalancingStrategy | None = None,
         min_health_score: float = 0.5,
         prefer_fast: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> EngineProtocol | None:
         """
         Select best engine for a task using load balancing.
@@ -457,7 +462,7 @@ class OptimizedEngineRouter(EngineRouter):
                 # New engine, neutral score
                 score = 0.5
                 factors["health_score"] = 1.0
-                factors["average_response_time"] = None
+                factors["average_response_time"] = 0.0
                 factors["current_load"] = 0
 
             # Quality factors from manifest
@@ -476,7 +481,7 @@ class OptimizedEngineRouter(EngineRouter):
             )
 
         # Sort by score
-        recommendations.sort(key=lambda x: x["score"], reverse=True)
+        recommendations.sort(key=lambda x: float(str(x.get("score", 0))), reverse=True)
 
         if recommendations:
             best = recommendations[0]
@@ -503,14 +508,15 @@ class OptimizedEngineRouter(EngineRouter):
             Dictionary with performance statistics
         """
         with self.lock:
-            stats = {
+            engines_dict: dict[str, Any] = {}
+            stats: dict[str, Any] = {
                 "total_engines_tracked": len(self.performance_metrics),
                 "load_balancing_strategy": self.load_balancing_strategy.value,
-                "engines": {},
+                "engines": engines_dict,
             }
 
             for engine_id, metrics in self.performance_metrics.items():
-                stats["engines"][engine_id] = {
+                engines_dict[engine_id] = {
                     "total_requests": metrics.total_requests,
                     "successful_requests": metrics.successful_requests,
                     "failed_requests": metrics.failed_requests,

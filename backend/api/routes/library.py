@@ -26,12 +26,14 @@ from backend.data.repositories.library_repository import (
     get_library_folder_repository,
 )
 
+from typing import Callable
+
 try:
     from ..optimization import cache_response
 except ImportError:
 
-    def cache_response(ttl: int = 300):
-        def decorator(func):
+    def cache_response(ttl: int = 300, key_func: Callable | None = None):
+        def decorator(func: Callable) -> Callable:
             return func
 
         return decorator
@@ -109,15 +111,14 @@ def _entity_to_asset(entity: LibraryAssetEntity) -> LibraryAsset:
     """Convert LibraryAssetEntity to LibraryAsset response model."""
     import json
 
-    tags = []
+    tags: list[str] = []
     try:
         tags = json.loads(entity.tags) if entity.tags else []
     except (json.JSONDecodeError, TypeError) as e:
-        # GAP-PY-001: Best effort - corrupted tags JSON
         logger.debug(f"Failed to parse tags JSON for entity {entity.id}: {e}")
         tags = []
 
-    metadata = {}
+    metadata: dict[str, object] = {}
     try:
         metadata = json.loads(entity.metadata) if entity.metadata else {}
     except (json.JSONDecodeError, TypeError) as e:
@@ -539,7 +540,7 @@ async def update_asset(
         update_data["folder_id"] = folder_id
     if metadata is not None:
         # Merge with existing metadata
-        existing_metadata = {}
+        existing_metadata: dict[str, object] = {}
         with contextlib.suppress(json.JSONDecodeError, TypeError):
             existing_metadata = json.loads(entity.metadata) if entity.metadata else {}
         existing_metadata.update(metadata)

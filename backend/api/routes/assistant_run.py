@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
@@ -97,7 +98,7 @@ async def run(req: AssistantRunRequest) -> dict:
 
         # Execute action based on type
         execution_id = f"exec_{uuid.uuid4().hex[:8]}"
-        result = None
+        result: dict[str, Any] | None = None
         status = "completed"
         error_message = None
 
@@ -123,8 +124,7 @@ async def run(req: AssistantRunRequest) -> dict:
 
             elif action_id == "transcribe":
                 # Execute transcription
-                from ..models_additional import TranscriptionRequest
-                from .transcribe import transcribe_audio
+                from .transcribe import TranscriptionRequest, transcribe_audio
 
                 transcribe_req = TranscriptionRequest(
                     audio_id=params["audio_id"],
@@ -157,12 +157,9 @@ async def run(req: AssistantRunRequest) -> dict:
 
             elif action_id == "analyze_quality":
                 # Execute quality analysis
-                from ..models_additional import QualityAnalyzeRequest
-                from .quality import analyze_quality
+                from .quality import QualityAnalysisRequest, analyze_quality
 
-                quality_req = QualityAnalyzeRequest(
-                    audio_id=params["audio_id"],
-                )
+                quality_req = QualityAnalysisRequest()
 
                 quality_result = await analyze_quality(quality_req)
                 result = {

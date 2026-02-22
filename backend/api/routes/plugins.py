@@ -18,14 +18,16 @@ from pydantic import BaseModel, Field
 from ..optimization import cache_response
 from ..plugins import get_plugin_loader
 
-# Phase 6A: Import plugin service for Wasm execution
-try:
-    from backend.plugins.plugin_service import get_plugin_service
+import importlib as _il
 
+PLUGIN_SERVICE_AVAILABLE = False
+get_plugin_service: Any = None
+try:
+    _psm = _il.import_module("backend.plugins.plugin_service")
+    get_plugin_service = _psm.get_plugin_service
     PLUGIN_SERVICE_AVAILABLE = True
-except ImportError:
-    PLUGIN_SERVICE_AVAILABLE = False
-    get_plugin_service = None
+except (ImportError, AttributeError):
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +103,7 @@ def _discover_plugins() -> list[dict[str, Any]]:
     Returns:
         List of plugin manifests
     """
-    plugins = []
+    plugins: list[dict[str, Any]] = []
 
     if not PLUGINS_DIRECTORY.exists():
         logger.warning(f"Plugins directory does not exist: {PLUGINS_DIRECTORY}")
@@ -887,9 +889,10 @@ async def verify_plugin_signature(
         )
 
         SIGNING_AVAILABLE = check_signing_available()
+        _verify_fn = verify_package_auto
     except ImportError:
         SIGNING_AVAILABLE = False
-        verify_package_auto = None
+        _verify_fn = None
 
     if not SIGNING_AVAILABLE:
         return SignatureVerificationResponse(
@@ -914,7 +917,10 @@ async def verify_plugin_signature(
             detail=f"Plugin '{plugin_id}' not found",
         )
 
-    result = verify_package_auto(plugin_path)
+    if _verify_fn is None:
+        raise HTTPException(status_code=500, detail="Verification function unavailable")
+
+    result = _verify_fn(plugin_path)
 
     return SignatureVerificationResponse(
         plugin_id=plugin_id,
@@ -959,9 +965,10 @@ async def load_plugin_with_verification(
         )
 
         SIGNING_AVAILABLE = check_signing_available()
+        _verify_fn2 = verify_package_auto
     except ImportError:
         SIGNING_AVAILABLE = False
-        verify_package_auto = None
+        _verify_fn2 = None
 
     # Find plugin path
     discovered_plugins = _discover_plugins()
@@ -977,10 +984,9 @@ async def load_plugin_with_verification(
             detail=f"Plugin '{plugin_id}' not found",
         )
 
-    # Perform verification
     verification_result = None
-    if SIGNING_AVAILABLE and verify_package_auto:
-        result = verify_package_auto(plugin_path)
+    if SIGNING_AVAILABLE and _verify_fn2:
+        result = _verify_fn2(plugin_path)
         verification_result = SignatureVerificationResponse(
             plugin_id=plugin_id,
             verified=result.valid,

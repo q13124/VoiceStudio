@@ -71,8 +71,10 @@ except Exception as e:
 
 import importlib
 import logging
+import importlib as _il
 import os
 import time
+from typing import Any, cast
 
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.exceptions import RequestValidationError
@@ -80,11 +82,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
-# Import centralized configuration
+app_config: Any = None
 try:
-    from backend.settings import config as app_config
-except ImportError:
-    app_config = None
+    _settings_mod = _il.import_module("backend.settings")
+    app_config = _settings_mod.config
+except (ImportError, AttributeError):
+    pass
 
 # Try importing Prometheus for metrics
 try:
@@ -752,7 +755,7 @@ def custom_openapi():
     return app.openapi_schema
 
 
-app.openapi = custom_openapi
+setattr(app, "openapi", custom_openapi)
 
 logger = logging.getLogger(__name__)
 
@@ -1147,8 +1150,8 @@ def _initialize_compression_middleware():
 
 # Register exception handlers
 # Note: VoiceStudioException is a subclass of HTTPException, so it's handled by http_exception_handler
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, cast(Any, validation_exception_handler))
+app.add_exception_handler(StarletteHTTPException, cast(Any, http_exception_handler))
 app.add_exception_handler(Exception, general_exception_handler)
 
 

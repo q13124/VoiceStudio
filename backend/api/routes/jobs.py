@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
+from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
@@ -40,7 +41,7 @@ router = APIRouter(
 
 def get_repo() -> JobRepository:
     """Dependency injection for JobRepository."""
-    return get_job_repository()
+    return cast(JobRepository, get_job_repository())
 
 
 class JobType(str):
@@ -417,7 +418,7 @@ async def create_job(
         updated_at=datetime.now(),
     )
 
-    return await repo.create(entity)
+    return cast(JobEntity, await repo.create(entity))
 
 
 async def update_job_progress(
@@ -427,7 +428,7 @@ async def update_job_progress(
 ) -> JobEntity | None:
     """Update job progress."""
     repo = get_job_repository()
-    return await repo.update_progress(job_id, progress, current_step)
+    return cast(JobEntity | None, await repo.update_progress(job_id, progress, current_step))
 
 
 async def complete_job(
@@ -436,7 +437,7 @@ async def complete_job(
 ) -> JobEntity | None:
     """Mark job as completed."""
     repo = get_job_repository()
-    return await repo.mark_completed(job_id, result_path)
+    return cast(JobEntity | None, await repo.mark_completed(job_id, result_path))
 
 
 async def fail_job(
@@ -445,4 +446,4 @@ async def fail_job(
 ) -> JobEntity | None:
     """Mark job as failed."""
     repo = get_job_repository()
-    return await repo.mark_failed(job_id, error)
+    return cast(JobEntity | None, await repo.mark_failed(job_id, error))

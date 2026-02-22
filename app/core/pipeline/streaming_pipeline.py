@@ -230,8 +230,10 @@ class StreamingPipeline:
             from backend.ml.models.engine_service import get_engine_service
 
             service = get_engine_service()
-            result = await service.transcribe(audio_data=audio_data, engine=self._stt_engine)
-            return result.get("text", "")
+            result = service.transcribe(
+                engine_id=self._stt_engine, audio_path=str(audio_data)
+            )
+            return str(result.get("text", ""))
         except Exception as exc:
             logger.error(f"STT failed: {exc}")
             return ""
@@ -244,8 +246,11 @@ class StreamingPipeline:
             from backend.ml.models.engine_service import get_engine_service
 
             service = get_engine_service()
-            result = await service.synthesize(text=text, engine=self._tts_engine)
-            return result.get("audio_data")
+            result = service.synthesize(
+                engine_id=self._tts_engine, text=text
+            )
+            audio: bytes | None = result.get("audio_data")
+            return audio
         except Exception as exc:
             logger.error(f"TTS synthesis failed: {exc}")
             return None

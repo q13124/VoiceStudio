@@ -25,9 +25,13 @@ from backend.ml.models.model_preflight import PreflightError, ensure_whisper_cpp
 from ..models import ApiOk
 from ..optimization import cache_response
 
+from typing import Any
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/transcribe", tags=["transcribe"])
+
+_transcriptions: dict[str, dict[str, Any]] = {}
 
 
 # STT engine via EngineService (ADR-008 compliant)

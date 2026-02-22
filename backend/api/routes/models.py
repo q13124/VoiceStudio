@@ -20,6 +20,9 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+import importlib as _il
+from typing import Any
+
 from backend.core.security.file_validation import (
     FileValidationError,
     validate_archive_file,
@@ -29,7 +32,6 @@ from ..auth import require_auth_if_enabled
 from ..models import ApiOk
 from ..optimization import cache_response
 
-# Add app to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 from app.core.models.storage import ModelStorage
 
@@ -37,18 +39,16 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/models", tags=["models"])
 
-# Initialize model storage
 _model_storage = ModelStorage()
 
-# Initialize model cache
+HAS_MODEL_CACHE = False
+_model_cache: Any = None
 try:
-    from app.core.models.cache import get_model_cache
-
-    _model_cache = get_model_cache(max_models=10, max_memory_mb=4096.0)  # 4GB max
+    _cache_mod = _il.import_module("app.core.models.cache")
+    _model_cache = _cache_mod.get_model_cache(max_models=10, max_memory_mb=4096.0)
     HAS_MODEL_CACHE = True
-except ImportError:
-    HAS_MODEL_CACHE = False
-    _model_cache = None
+except (ImportError, AttributeError):
+    pass
 
 
 class ModelInfoResponse(BaseModel):
@@ -126,14 +126,14 @@ async def list_models(engine: str | None = None):
 # Model Registry (Phase 8 WS1) - lifecycle, activate, rollback
 # -------------------------------------------------------------------------
 
+HAS_MODEL_REGISTRY = False
+_model_registry: Any = None
 try:
-    from backend.ml.models.model_registry import get_model_registry_service
-
-    _model_registry = get_model_registry_service()
+    _mrm = _il.import_module("backend.ml.models.model_registry")
+    _model_registry = _mrm.get_model_registry_service()
     HAS_MODEL_REGISTRY = True
-except ImportError:
-    _model_registry = None
-    HAS_MODEL_REGISTRY = False
+except (ImportError, AttributeError):
+    pass
 
 
 @router.get("/registry")
@@ -533,7 +533,7 @@ async def import_model(
 
             # Save uploaded file temporarily
             temp_dir = tempfile.mkdtemp()
-            temp_file = Path(temp_dir) / file.filename
+            temp_file = Path(temp_dir) / (file.filename or "upload.zip")
 
             try:
                 # Write validated file
@@ -555,8 +555,8 @@ async def import_model(
                         detail="Invalid model archive: missing model_info.json",
                     )
 
-                with open(metadata_file) as f:
-                    metadata = json.load(f)
+                with open(metadata_file, "r") as mf:
+                    metadata = json.load(mf)
 
                 # Use provided engine or metadata engine
                 model_engine = engine or metadata.get("engine")

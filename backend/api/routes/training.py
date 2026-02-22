@@ -1362,7 +1362,7 @@ async def export_trained_model(request: ModelExportRequest, http_request: Reques
 async def import_trained_model(
     file: UploadFile = File(...),
     profile_id: str | None = Query(None),
-    request: Request = None,
+    request: Request | None = None,
 ):
     """Import a trained model from a ZIP package."""
     # Get request ID from middleware (Request is injected by FastAPI)
@@ -1398,7 +1398,7 @@ async def import_trained_model(
             import_dir.mkdir(parents=True, exist_ok=True)
 
             # Save uploaded file
-            zip_path = import_dir / file.filename
+            zip_path = import_dir / (file.filename or "upload.zip")
             with open(zip_path, "wb") as f:
                 f.write(content)
 

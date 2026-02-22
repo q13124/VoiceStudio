@@ -75,6 +75,7 @@ class VoiceStudioBaseModel(BaseModel):
 
 class ApiOk(VoiceStudioBaseModel):
     ok: bool = True
+    message: str | None = None
 
 
 # =============================================================================

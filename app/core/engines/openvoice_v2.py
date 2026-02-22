@@ -66,8 +66,9 @@ class OpenVoiceV2Engine(EngineProtocol):
     def __init__(self, config: OpenVoiceV2Config | None = None):
         super().__init__()
         self.config = config or OpenVoiceV2Config()
-        self._base_speaker = None
-        self._tone_converter = None
+        self._base_speaker: Any = None
+        self._tone_converter: Any = None
+        self._se_extractor: Any = None
         self._loaded = False
 
     def initialize(self) -> bool:
@@ -162,7 +163,7 @@ class OpenVoiceV2Engine(EngineProtocol):
             Synthesized audio
         """
         if not self._loaded:
-            await self.initialize()
+            await self._async_initialize()
 
         if self._base_speaker is not None and self._tone_converter is not None:
             return await self._synthesize_real(
@@ -229,7 +230,7 @@ class OpenVoiceV2Engine(EngineProtocol):
         else:
             audio, _sr = sf.read(base_path)
 
-        return audio.astype(np.float32)
+        return np.asarray(audio, dtype=np.float32)
 
     async def extract_speaker_embedding(
         self,
@@ -245,7 +246,7 @@ class OpenVoiceV2Engine(EngineProtocol):
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
                 sf.write(tmp.name, audio, sample_rate)
                 se, _ = self._se_extractor.get_se(tmp.name)
-                return se.cpu().numpy()
+                return np.asarray(se.cpu().numpy())
 
         return np.zeros(256)
 

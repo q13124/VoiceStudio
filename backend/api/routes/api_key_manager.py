@@ -206,27 +206,25 @@ def _encrypt_key(key_value: str) -> str:
 
         from cryptography.fernet import Fernet
 
-        # Get or generate encryption key
-        encryption_key = os.getenv("API_KEY_ENCRYPTION_KEY")
-        if not encryption_key:
-            # Generate a key if not set (in production, use a secure key)
+        encryption_key_bytes: bytes | None = None
+        encryption_key_str = os.getenv("API_KEY_ENCRYPTION_KEY")
+        if not encryption_key_str:
             key_file = os.path.join(
                 os.path.dirname(__file__), "..", "..", "..", ".api_key_encryption.key"
             )
             if os.path.exists(key_file):
                 with open(key_file, "rb") as f:
-                    encryption_key = f.read()
+                    encryption_key_bytes = f.read()
             else:
-                encryption_key = Fernet.generate_key()
+                encryption_key_bytes = Fernet.generate_key()
                 os.makedirs(os.path.dirname(key_file), exist_ok=True)
                 with open(key_file, "wb") as f:
-                    f.write(encryption_key)
+                    f.write(encryption_key_bytes)
                 logger.warning("Generated new encryption key. Store securely in production!")
+        else:
+            encryption_key_bytes = encryption_key_str.encode()
 
-        if isinstance(encryption_key, str):
-            encryption_key = encryption_key.encode()
-
-        fernet = Fernet(encryption_key)
+        fernet = Fernet(encryption_key_bytes)
         encrypted = fernet.encrypt(key_value.encode())
         return base64.b64encode(encrypted).decode()
     except ImportError:

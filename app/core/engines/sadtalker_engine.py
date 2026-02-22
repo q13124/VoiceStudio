@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import torch
@@ -872,10 +873,11 @@ class SadTalkerEngine(EngineProtocol):
         """Composite face frame back onto background."""
         result = background.copy()
 
-        # Resize face frame to match bbox
+        if bbox is None:
+            return result
+
         face_resized = cv2.resize(face_frame, (bbox["width"], bbox["height"]))
 
-        # Composite (simple alpha blending in production)
         result[
             bbox["y"] : bbox["y"] + bbox["height"],
             bbox["x"] : bbox["x"] + bbox["width"],

@@ -49,9 +49,10 @@ class ParlerTTSEngine(EngineProtocol):
     def __init__(self, config: ParlerTTSConfig | None = None):
         super().__init__()
         self.config = config or ParlerTTSConfig()
-        self._model = None
-        self._tokenizer = None
+        self._model: Any = None
+        self._tokenizer: Any = None
         self._loaded = False
+        self._device: str = "cpu"
 
     def initialize(self) -> bool:
         """Sync wrapper for EngineProtocol compliance."""
@@ -131,7 +132,7 @@ class ParlerTTSEngine(EngineProtocol):
             Synthesized audio at 44.1kHz
         """
         if not self._loaded:
-            await self.initialize()
+            await self._async_initialize()
 
         if self._model is not None and self._tokenizer is not None:
             return await self._synthesize_real(text, description)
@@ -163,7 +164,7 @@ class ParlerTTSEngine(EngineProtocol):
             )
 
         audio = generation.cpu().numpy().squeeze()
-        return audio.astype(np.float32)
+        return np.asarray(audio, dtype=np.float32)
 
     @property
     def is_loaded(self) -> bool:

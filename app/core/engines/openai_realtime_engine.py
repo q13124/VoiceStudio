@@ -16,6 +16,7 @@ import logging
 import os
 import time
 from collections.abc import AsyncIterator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +46,8 @@ class OpenAIRealtimeProvider(BaseS2SProvider):
             self._config.model = self.DEFAULT_MODEL
         if not self._config.api_key:
             self._config.api_key = os.getenv("OPENAI_API_KEY", "")
-        self._ws_connection = None
-        self._response_buffer: list = []
+        self._ws_connection: Any = None
+        self._response_buffer: list[Any] = []
 
     @property
     def provider_name(self) -> str:

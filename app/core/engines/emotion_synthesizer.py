@@ -143,10 +143,10 @@ class EmotionSynthesizer:
     - Real-time parameter control
     """
 
-    def __init__(self):
-        self._current_emotion = Emotion.NEUTRAL
-        self._current_params = EMOTION_PRESETS[Emotion.NEUTRAL]
-        self._intensity = 1.0
+    def __init__(self) -> None:
+        self._current_emotion: Emotion = Emotion.NEUTRAL
+        self._current_params: EmotionParams = EMOTION_PRESETS[Emotion.NEUTRAL]
+        self._intensity: float = 1.0
         self._transition_frames = 0
         self._target_params: EmotionParams | None = None
 
@@ -303,14 +303,13 @@ class EmotionSynthesizer:
         except ImportError:
             logger.debug("scipy not available for noise filtering, using unfiltered noise")
 
-        return audio + noise
+        return np.asarray(audio + noise)
 
     def _add_roughness(self, audio: np.ndarray, amount: float) -> np.ndarray:
         """Add rough/gravelly quality."""
-        # Soft clipping for distortion
         threshold = 1.0 - amount * 0.5
         output = np.tanh(audio / threshold) * threshold
-        return output
+        return np.asarray(output)
 
     @property
     def current_emotion(self) -> Emotion:

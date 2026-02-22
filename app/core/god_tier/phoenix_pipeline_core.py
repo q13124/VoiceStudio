@@ -186,7 +186,7 @@ class PhoenixPipelineCore:
                     logger.debug(
                         f"Extracted voice embedding using speaker encoder: {len(embedding)} dims"
                     )
-                    return embedding
+                    return np.asarray(embedding)
         except (ImportError, Exception) as e:
             logger.debug(f"Speaker encoder not available: {e}, using feature extraction")
 
@@ -194,7 +194,7 @@ class PhoenixPipelineCore:
         if HAS_LIBROSA:
             # Extract comprehensive acoustic features
             mfcc = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=13)
-            chroma = librosa.feature.chroma(y=audio, sr=sample_rate)
+            chroma = librosa.feature.chroma_stft(y=audio, sr=sample_rate)
             spectral_centroid = librosa.feature.spectral_centroid(y=audio, sr=sample_rate)
             spectral_rolloff = librosa.feature.spectral_rolloff(y=audio, sr=sample_rate)
             zero_crossing_rate = librosa.feature.zero_crossing_rate(audio)
@@ -248,7 +248,7 @@ class PhoenixPipelineCore:
             elif len(features) > 512:
                 features = features[:512]
 
-            return features.astype(np.float32)
+            return np.asarray(features, dtype=np.float32)
         else:
             # Minimal fallback: simple feature extraction
             return np.random.randn(512).astype(np.float32)
@@ -373,13 +373,13 @@ class PhoenixPipelineCore:
 
         # Generate audio (simplified - would use actual model)
         # In real implementation, this would use the loaded model
-        audio = np.random.randn(length).astype(np.float32) * 0.1
+        audio = np.random.randn(int(length)).astype(np.float32) * 0.1
 
         # Apply voice characteristics from embedding
         if len(voice_embedding) > 0:
             audio = audio * (1.0 + voice_embedding[0] * 0.1)
 
-        return audio
+        return np.asarray(audio)
 
     def _calculate_quality_metrics(
         self,

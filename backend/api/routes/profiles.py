@@ -89,8 +89,13 @@ class _ProfilesProxy:
             raise KeyError(profile_id)
         return self._wrap(result)
 
-    def __contains__(self, profile_id):
-        return self._store.get(profile_id) is not None
+    def __setitem__(self, profile_id: str, profile: object) -> None:
+        data = profile.__dict__ if hasattr(profile, '__dict__') else {}
+        data["id"] = profile_id
+        self._store.save(data)
+
+    def __contains__(self, profile_id: object) -> bool:
+        return self._store.get(str(profile_id)) is not None
 
     def __iter__(self):
         return iter(self._store.list_ids())

@@ -55,9 +55,9 @@ class S2SWebSocketConnection:
         self._heartbeat_interval = heartbeat_interval
         self._send_timeout = send_timeout
         self._receive_timeout = receive_timeout
-        self._ws = None
+        self._ws: Any = None
         self._connected = False
-        self._heartbeat_task: asyncio.Task | None = None
+        self._heartbeat_task: asyncio.Task[None] | None = None
         self._message_queue: asyncio.Queue = asyncio.Queue()
 
     @property

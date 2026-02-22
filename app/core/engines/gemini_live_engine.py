@@ -14,6 +14,7 @@ import logging
 import os
 import time
 from collections.abc import AsyncIterator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ class GeminiLiveProvider(BaseS2SProvider):
             self._config.model = self.DEFAULT_MODEL
         if not self._config.api_key:
             self._config.api_key = os.getenv("GOOGLE_API_KEY", "")
-        self._ws_connection = None
+        self._ws_connection: Any = None
 
     @property
     def provider_name(self) -> str:

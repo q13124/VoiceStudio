@@ -21,26 +21,31 @@ from pydantic import BaseModel, field_validator
 
 from ..auth import require_auth_if_enabled
 
+from typing import Any, Callable
+
 try:
     from ..optimization import cache_response
 except ImportError:
 
-    def cache_response(ttl: int = 300):
-        def decorator(func):
+    def cache_response(ttl: int = 300, key_func: Callable | None = None):
+        def decorator(func: Callable) -> Callable:
             return func
 
         return decorator
 
 
-# Try importing UnifiedConfigService
-try:
-    from backend.platform.config.unified_config import UnifiedConfigService, get_config
+import importlib as _il
 
+HAS_UNIFIED_CONFIG = False
+get_config: Any = None
+UnifiedConfigService: Any = None
+try:
+    _ucm = _il.import_module("backend.platform.config.unified_config")
+    UnifiedConfigService = _ucm.UnifiedConfigService
+    get_config = _ucm.get_config
     HAS_UNIFIED_CONFIG = True
-except ImportError:
-    HAS_UNIFIED_CONFIG = False
-    get_config = None
-    UnifiedConfigService = None
+except (ImportError, AttributeError):
+    pass
 
 logger = logging.getLogger(__name__)
 

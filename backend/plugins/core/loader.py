@@ -13,6 +13,7 @@ import json
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 # Import both unified Plugin (preferred) and deprecated Plugin for backward compatibility
 from app.core.plugins_api import Plugin as UnifiedPlugin
@@ -154,14 +155,13 @@ class PluginLoader:
                 logger.info(f"Loaded plugin: {plugin_id}")
                 return plugin
             else:
-                # Legacy Plugin takes config dict
                 merged_config = {**metadata.default_config, **(config or {})}
-                plugin = plugin_class(merged_config)
+                legacy_plugin: Any = plugin_class(merged_config)
 
-                # Load the plugin (legacy async lifecycle)
-                if await plugin.load():
+                if await legacy_plugin.load():
                     logger.info(f"Loaded plugin: {plugin_id}")
-                    return plugin
+                    loaded_plugin: Plugin = legacy_plugin
+                    return loaded_plugin
                 else:
                     logger.error(f"Plugin load failed: {plugin_id}")
                     return None

@@ -14,25 +14,29 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Try importing spacy for advanced NLP
+from typing import Any
+
+HAS_SPACY = False
+_spacy_module: Any = None
+_japanese_cls: Any = None
 try:
-    import spacy
-    from spacy.lang.ja import Japanese
+    import spacy as _spacy_module
+    from spacy.lang.ja import Japanese as _japanese_cls
 
     HAS_SPACY = True
 except ImportError:
-    HAS_SPACY = False
-    spacy = None
-    Japanese = None
     logger.debug(
         "spacy not installed. Advanced NLP processing will be limited. "
         "Install with: pip install spacy[ja]>=3.8.7"
     )
 
-# Cache for loaded spacy models
-_spacy_models: dict[str, any] = {}
+spacy = _spacy_module
+Japanese = _japanese_cls
+
+_spacy_models: dict[str, Any] = {}
 
 
-def load_spacy_model(language: str = "en") -> any | None:
+def load_spacy_model(language: str = "en") -> Any:
     """
     Load spacy model for a specific language.
 
@@ -250,7 +254,7 @@ def segment_text(text: str, language: str = "en", max_length: int = 200) -> list
     return segments if segments else [text]
 
 
-def analyze_text_quality(text: str, language: str = "en") -> dict[str, int | float | list[str]]:
+def analyze_text_quality(text: str, language: str = "en") -> dict[str, Any]:
     """
     Analyze text quality and characteristics.
 

@@ -76,7 +76,7 @@ def convert_pytorch_to_onnx(
         # Export to ONNX
         torch.onnx.export(
             model,
-            dummy_input,
+            (dummy_input,),
             output_path,
             export_params=True,
             opset_version=opset_version,
