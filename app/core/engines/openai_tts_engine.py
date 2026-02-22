@@ -17,19 +17,25 @@ import os
 from collections import OrderedDict
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
+import numpy.typing as npt
 
 # Try importing requests for connection pooling
+import types
+
+_requests_mod: types.ModuleType | None = None
 try:
     import requests
+
     from requests.adapters import HTTPAdapter
     from urllib3.util.retry import Retry
 
     HAS_REQUESTS = True
+    _requests_mod = requests
 except ImportError:
     HAS_REQUESTS = False
-    requests = None
 
 # Import base protocol
 try:
@@ -155,11 +161,11 @@ class OpenAITTSEngine(EngineProtocol):
         self.cache_size = cache_size
 
         # Initialize OpenAI client
-        self.client = None
-        self._session = None  # For connection pooling
+        self.client: Any = None
+        self._session: Any = None  # For connection pooling
 
         # Response cache (LRU: key: hash of (text, voice, model), value: audio)
-        self._response_cache: OrderedDict[str, np.ndarray] = OrderedDict()
+        self._response_cache: OrderedDict[str, npt.NDArray[np.float32]] = OrderedDict()
 
         # Validate voice
         if self.voice not in self.SUPPORTED_VOICES:
@@ -239,8 +245,8 @@ class OpenAITTSEngine(EngineProtocol):
         speed: float = 1.0,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
-        **kwargs,
-    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
+        **kwargs: Any,
+    ) -> npt.NDArray[np.float32] | None | tuple[npt.NDArray[np.float32] | None, dict[str, Any]]:
         """
         Synthesize speech from text using OpenAI TTS API.
 
@@ -339,8 +345,8 @@ class OpenAITTSEngine(EngineProtocol):
         format: str = "mp3",
         speed: float = 1.0,
         chunk_size: int = 100,
-        **kwargs,
-    ) -> Iterator[np.ndarray]:
+        **kwargs: Any,
+    ) -> Iterator[npt.NDArray[np.float32]]:
         """
         Stream synthesis in real-time chunks.
 
@@ -401,7 +407,7 @@ class OpenAITTSEngine(EngineProtocol):
         except Exception as e:
             logger.error(f"OpenAI TTS stream synthesis failed: {e}")
 
-    def _convert_audio_to_numpy(self, audio_data: bytes, format: str) -> np.ndarray | None:
+    def _convert_audio_to_numpy(self, audio_data: bytes, format: str) -> npt.NDArray[np.float32] | None:
         """Convert audio bytes to numpy array."""
         try:
             import tempfile
@@ -433,7 +439,7 @@ class OpenAITTSEngine(EngineProtocol):
                 if np.max(np.abs(audio)) > 0:
                     audio = audio / np.max(np.abs(audio)) * 0.95
 
-                return audio
+                return cast(npt.NDArray[np.float32], audio)
 
             finally:
                 # Clean up temporary file
@@ -446,11 +452,11 @@ class OpenAITTSEngine(EngineProtocol):
 
     def _process_audio_output(
         self,
-        audio: np.ndarray,
+        audio: npt.NDArray[np.float32],
         output_path: str | Path | None,
         enhance_quality: bool,
         calculate_quality: bool,
-    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
+    ) -> npt.NDArray[np.float32] | None | tuple[npt.NDArray[np.float32] | None, dict[str, Any]]:
         """Process audio output with quality enhancement and/or metrics."""
         quality_metrics = {}
 
@@ -466,7 +472,7 @@ class OpenAITTSEngine(EngineProtocol):
         # Calculate quality metrics if requested
         if calculate_quality and HAS_QUALITY_METRICS:
             try:
-                quality_metrics = calculate_all_metrics(audio, self.DEFAULT_SAMPLE_RATE)
+                quality_metrics = calculate_all_metrics(audio, sample_rate=self.DEFAULT_SAMPLE_RATE)
             except Exception as e:
                 logger.warning(f"Quality metrics calculation failed: {e}")
                 quality_metrics = {}
@@ -477,7 +483,9 @@ class OpenAITTSEngine(EngineProtocol):
                 if HAS_SOUNDFILE:
                     sf.write(str(output_path), audio, self.DEFAULT_SAMPLE_RATE)
                 elif HAS_LIBROSA:
-                    librosa.output.write_wav(str(output_path), audio, self.DEFAULT_SAMPLE_RATE)
+                    from scipy.io.wavfile import write as _wav_write
+
+                    _wav_write(str(output_path), self.DEFAULT_SAMPLE_RATE, audio)
                 else:
                     logger.error("Neither soundfile nor librosa available for saving")
                     return None
@@ -501,7 +509,7 @@ class OpenAITTSEngine(EngineProtocol):
         chunks = []
         words = text.split()
 
-        current_chunk = []
+        current_chunk: list[str] = []
         current_length = 0
 
         for word in words:
@@ -525,7 +533,7 @@ class OpenAITTSEngine(EngineProtocol):
         key_string = f"{text}_{voice}_{model}_{format}_{speed}"
         return hashlib.md5(key_string.encode()).hexdigest()
 
-    def _cache_response(self, key: str, audio: np.ndarray):
+    def _cache_response(self, key: str, audio: npt.NDArray[np.float32]) -> None:
         """Cache response with LRU eviction."""
         # Remove oldest entries if cache is full (LRU)
         if len(self._response_cache) >= self.cache_size:
@@ -535,7 +543,7 @@ class OpenAITTSEngine(EngineProtocol):
         self._response_cache[key] = audio.copy()
         self._response_cache.move_to_end(key)  # LRU update
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear response cache."""
         self._response_cache.clear()
         logger.info("Response cache cleared")
@@ -552,7 +560,7 @@ class OpenAITTSEngine(EngineProtocol):
         """Get available voices."""
         return self.SUPPORTED_VOICES.copy()
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources."""
         try:
             # Close session for connection pooling
@@ -570,7 +578,7 @@ class OpenAITTSEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during OpenAI TTS cleanup: {e}")
 
-    def get_info(self) -> dict:
+    def get_info(self) -> dict[str, Any]:
         """Get engine information."""
         info = super().get_info()
         info.update(

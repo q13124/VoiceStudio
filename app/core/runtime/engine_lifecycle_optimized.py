@@ -28,20 +28,22 @@ from .engine_lifecycle import (
 
 logger = logging.getLogger(__name__)
 
-# Import EnhancedRuntimeEngine (preferred) or RuntimeEngine as fallback
+HAS_RUNTIME_ENGINE = False
+RuntimeEngine: Any = None
+
 try:
     from .runtime_engine_enhanced import EnhancedRuntimeEngine
 
+    RuntimeEngine = EnhancedRuntimeEngine
     HAS_RUNTIME_ENGINE = True
-    RuntimeEngine = EnhancedRuntimeEngine  # Alias for compatibility
 except ImportError:
     try:
-        from .runtime_engine import RuntimeEngine
+        from .runtime_engine import RuntimeEngine as _FallbackRuntimeEngine
 
+        RuntimeEngine = _FallbackRuntimeEngine
         HAS_RUNTIME_ENGINE = True
     except ImportError:
-        HAS_RUNTIME_ENGINE = False
-        RuntimeEngine = None
+        pass
 
 
 class OptimizedEngineLifecycleManager(EngineLifecycleManager):
@@ -77,7 +79,11 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
             health_check_cache_ttl: Health check cache TTL in seconds
             enable_prewarming: Enable engine pre-warming
         """
-        super().__init__(workspace_root, port_manager, resource_manager)
+        super().__init__(
+            workspace_root=workspace_root,
+            port_manager=port_manager,
+            resource_manager=resource_manager,
+        )
 
         self.health_check_workers = health_check_workers
         self.health_check_cache_ttl = health_check_cache_ttl
@@ -243,15 +249,16 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
         event_type = event.get("type")
 
         if event_type == "health_check":
-            engine_id = event.get("engine_id")
-            with self._read_lock:
-                engine = self.engines.get(engine_id)
-            if engine:
-                self._check_health_cached(engine)
+            engine_id_val: str | None = event.get("engine_id")
+            if engine_id_val is not None:
+                with self._read_lock:
+                    engine = self.engines.get(engine_id_val)
+                if engine:
+                    self._check_health_cached(engine)
         elif event_type == "state_change":
-            # Invalidate health cache for engine
-            engine_id = event.get("engine_id")
-            self._health_cache.pop(engine_id, None)
+            engine_id_val_sc: str | None = event.get("engine_id")
+            if engine_id_val_sc is not None:
+                self._health_cache.pop(engine_id_val_sc, None)
 
     def acquire_engine(
         self, engine_id: str, job_id: str | None = None, auto_start: bool = True
@@ -342,8 +349,9 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
                         pool.remove(engine)
             else:
                 # Singleton - can only pre-warm if not already started
-                engine = self.singletons.get(engine_id)
-                if engine and engine.state == EngineState.STOPPED:
+                singleton = self.singletons.get(engine_id)
+                if singleton and singleton.state == EngineState.STOPPED:
+                    engine = singleton
                     if self._start_engine(engine):
                         prewarmed += 1
                         self._stats["prewarmed_engines"] += 1
@@ -393,10 +401,6 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
         if self._health_executor:
             self._health_executor.shutdown(wait=True)
             self._health_executor = None
-
-        # Call parent shutdown
-        if hasattr(super(), "shutdown"):
-            super().shutdown()
 
 
 # Factory function

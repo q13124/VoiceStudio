@@ -201,26 +201,30 @@ class AutoTrainer:
                             )
 
                             if synthesized_audio is not None:
-                                # Calculate similarity between validation and synthesized audio
+                                if not isinstance(synthesized_audio, np.ndarray):
+                                    raise RuntimeError("Synthesis returned unexpected type")
+
                                 similarity = calculate_similarity(
                                     reference_audio=validation_audio,
                                     generated_audio=synthesized_audio,
                                     method="embedding",
                                 )
 
-                                # Calculate MOS score for synthesized audio
-                                mos_score = calculate_mos_score(
-                                    synthesized_audio, sample_rate=val_sr
-                                )
+                                mos_score = calculate_mos_score(synthesized_audio)
 
-                                # Combine metrics into quality score (0.0 to 1.0)
-                                # Similarity weight: 0.6, MOS weight: 0.4 (normalized to 0-1)
-                                quality_score = (similarity * 0.6) + ((mos_score / 5.0) * 0.4)
-                                quality_score = max(0.0, min(1.0, quality_score))  # Clamp to [0, 1]
+                                if similarity is not None and mos_score is not None:
+                                    quality_score = (similarity * 0.6) + (
+                                        (mos_score / 5.0) * 0.4
+                                    )
+                                    quality_score = max(0.0, min(1.0, quality_score))
 
-                                logger.info(
-                                    f"Quality evaluation: similarity={similarity:.3f}, MOS={mos_score:.2f}, combined={quality_score:.3f}"
-                                )
+                                    logger.info(
+                                        f"Quality evaluation: similarity={similarity:.3f}, MOS={mos_score:.2f}, combined={quality_score:.3f}"
+                                    )
+                                else:
+                                    logger.warning(
+                                        "Quality metrics returned None, using loss-based score"
+                                    )
                             else:
                                 logger.warning("Synthesis failed, using loss-based quality score")
                                 raise RuntimeError("Synthesis failed")

@@ -13,6 +13,8 @@ Compatible with:
 
 from __future__ import annotations
 
+from typing import Any
+
 import hashlib
 import json
 import logging
@@ -64,7 +66,7 @@ class FastSDCPUEngine(EngineProtocol):
     SUPPORTED_FORMATS = ["png", "jpg", "webp"]
 
     # Class-level model cache (shared across instances)
-    _model_cache: OrderedDict[str, object] = OrderedDict()
+    _model_cache: OrderedDict[str, Any] = OrderedDict()
     _max_cache_size = 4  # Cache up to 4 models (increased from 2)
 
     def __init__(
@@ -95,8 +97,8 @@ class FastSDCPUEngine(EngineProtocol):
         self.enable_response_cache = enable_response_cache
         self.response_cache_size = response_cache_size
 
-        self.pipe = None
-        self._model_key = None
+        self.pipe: Any = None
+        self._model_key: str | None = None
 
         # LRU response cache for generated images
         self._response_cache: OrderedDict[str, Image.Image] = OrderedDict()
@@ -131,7 +133,7 @@ class FastSDCPUEngine(EngineProtocol):
             return True
         return False
 
-    def _save_model_to_cache(self):
+    def _save_model_to_cache(self) -> None:
         """Save model to cache."""
         if not self.enable_model_cache or self._model_key is None:
             return
@@ -224,7 +226,7 @@ class FastSDCPUEngine(EngineProtocol):
         steps: int,
         cfg_scale: float,
         seed: int | None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Generate cache key from generation parameters."""
         cache_data = {
@@ -252,8 +254,8 @@ class FastSDCPUEngine(EngineProtocol):
         sampler: str | None = None,
         seed: int | None = None,
         output_path: str | Path | None = None,
-        **kwargs,
-    ) -> Image.Image | None | tuple[Image.Image | None, dict]:
+        **kwargs: Any,
+    ) -> Image.Image | None | tuple[Image.Image | None, dict[str, Any]]:
         """Generate image using fast CPU-optimized Stable Diffusion."""
         # Lazy loading: initialize only when needed
         if not self._initialized and not self.initialize():
@@ -297,7 +299,7 @@ class FastSDCPUEngine(EngineProtocol):
                 self._cache_stats["misses"] += 1
 
         try:
-            generator = None
+            generator: Any = None
             if seed is not None:
                 if self.use_onnx:
                     import numpy as np
@@ -320,7 +322,7 @@ class FastSDCPUEngine(EngineProtocol):
             if not images:
                 return None
 
-            image = images[0]
+            image: Image.Image = images[0]
 
             # Cache result
             if self.enable_response_cache and cache_key is not None:
@@ -371,7 +373,7 @@ class FastSDCPUEngine(EngineProtocol):
         seeds: list[int | None] | None = None,
         output_paths: list[str | Path | None] | None = None,
         batch_size: int | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> list[Image.Image | None]:
         """
         Generate multiple images using batch processing.
@@ -406,7 +408,7 @@ class FastSDCPUEngine(EngineProtocol):
 
             # Process prompts in batches with ThreadPoolExecutor for better
             # parallelization
-            def generate_single(args):
+            def generate_single(args: tuple[Any, ...]) -> Any:
                 idx, prompt, neg_prompt, seed, out_path = args
                 try:
                     return self.generate(
@@ -480,7 +482,7 @@ class FastSDCPUEngine(EngineProtocol):
                 ...
             return [None] * len(prompts)
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources (enhanced)."""
         try:
             # Don't delete if in cache (other instances might be using it)
@@ -502,7 +504,7 @@ class FastSDCPUEngine(EngineProtocol):
             logger.warning(f"Error during cleanup: {e}")
 
     @classmethod
-    def clear_model_cache(cls):
+    def clear_model_cache(cls) -> None:
         """Clear the shared model cache."""
         for _key, pipe in cls._model_cache.items():
             del pipe
@@ -526,14 +528,14 @@ class FastSDCPUEngine(EngineProtocol):
             "hit_rate": f"{hit_rate:.2f}%",
         }
 
-    def clear_response_cache(self):
+    def clear_response_cache(self) -> None:
         """Clear the response cache."""
         if self.enable_response_cache:
             self._response_cache.clear()
             self._cache_stats = {"hits": 0, "misses": 0}
             logger.info("FastSD CPU response cache cleared")
 
-    def get_info(self) -> dict:
+    def get_info(self) -> dict[str, Any]:
         """Get engine information."""
         info = super().get_info()
         cache_stats = self.get_cache_stats()

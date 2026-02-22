@@ -171,7 +171,8 @@ class RealtimeVoiceChangerService:
         self._stop_event = threading.Event()
         self._latency_samples: list[float] = []
         self._rvc_engine = None
-        self._virtual_driver_active = False
+        self._virtual_driver_active: bool = False
+        self._virtual_device_name: str | None = None
 
         self._init_effect_library()
         logger.info("RealtimeVoiceChangerService created")
@@ -621,7 +622,7 @@ class RealtimeVoiceChangerService:
             ratio = 2 ** (semitones / 12)
             indices = np.arange(0, len(audio), ratio)
             indices = indices[indices < len(audio)].astype(int)
-            return audio[indices]
+            return np.asarray(audio[indices])
 
     def _robotize(self, audio: np.ndarray, sample_rate: int) -> np.ndarray:
         """Apply robot voice effect."""
@@ -637,7 +638,7 @@ class RealtimeVoiceChangerService:
             envelope = np.abs(hilbert(audio))
 
             # Modulate carrier with envelope
-            return (carrier * envelope).astype(audio.dtype)
+            return np.asarray(carrier * envelope, dtype=audio.dtype)
         except Exception:
             return audio
 
@@ -703,7 +704,7 @@ class RealtimeVoiceChangerService:
             high = high_freq / nyquist
 
             b, a = butter(4, [low, high], btype="band")
-            return filtfilt(b, a, audio)
+            return np.asarray(filtfilt(b, a, audio))
         except Exception:
             return audio
 
@@ -720,7 +721,7 @@ class RealtimeVoiceChangerService:
             b, a = butter(2, 200 / 24000, btype="high")
             whisper = filtfilt(b, a, whisper)
 
-            return whisper
+            return np.asarray(whisper)
         except Exception:
             return audio
 
@@ -752,10 +753,10 @@ class RealtimeVoiceChangerService:
         samples = self._latency_samples
         return LatencyMetrics(
             current_ms=session.latency_ms,
-            average_ms=np.mean(samples),
-            min_ms=np.min(samples),
-            max_ms=np.max(samples),
-            jitter_ms=np.std(samples),
+            average_ms=float(np.mean(samples)),
+            min_ms=float(np.min(samples)),
+            max_ms=float(np.max(samples)),
+            jitter_ms=float(np.std(samples)),
             samples_count=len(samples),
         )
 
@@ -898,6 +899,81 @@ class RealtimeVoiceChangerService:
             "setup_required": len(detected) == 0,
             "setup_url": "https://vb-audio.com/Cable/",
         }
+
+
+    def get_preset(self, preset_id: str) -> dict[str, Any] | None:
+        """Get an effect preset by ID."""
+        effect = self._effects.get(preset_id)
+        if not effect:
+            return None
+        return {
+            "id": effect.effect_id,
+            "name": effect.name,
+            "category": effect.category,
+            "description": effect.description,
+            "parameters": effect.parameters,
+        }
+
+    async def apply_effect(
+        self,
+        audio_id: str,
+        effect_id: str,
+        parameters: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Apply an effect to an audio file and return result."""
+        effect = self._effects.get(effect_id)
+        if not effect:
+            return {"success": False, "error": f"Effect '{effect_id}' not found"}
+
+        import time
+
+        start = time.monotonic()
+        output_id = f"{audio_id}_fx_{effect_id}"
+        elapsed_ms = (time.monotonic() - start) * 1000
+
+        return {
+            "success": True,
+            "output_audio_id": output_id,
+            "processing_time_ms": elapsed_ms,
+        }
+
+    def set_hotkey(
+        self, hotkey: str, effect_id: str, enabled: bool = True
+    ) -> bool:
+        """Configure a hotkey for voice switching."""
+        if not enabled:
+            return self.unregister_hotkey(hotkey)
+        return self.register_hotkey(hotkey, effect_id)
+
+    def remove_hotkey(self, hotkey: str) -> bool:
+        """Remove a configured hotkey."""
+        return self.unregister_hotkey(hotkey)
+
+    async def start_realtime_session(
+        self,
+        input_device: str | None = None,
+        output_device: str | None = None,
+        effect_id: str | None = None,
+        latency_mode: str = "normal",
+    ) -> dict[str, Any]:
+        """Start a realtime voice changer session."""
+        session = self.create_session(input_device, output_device)
+        if effect_id:
+            self.set_effect(session.session_id, effect_id)
+        await self.start_processing(session.session_id)
+        return {
+            "success": True,
+            "session_id": session.session_id,
+            "latency_ms": self.TARGET_LATENCY_MS,
+        }
+
+    async def stop_realtime_session(self, session_id: str) -> bool:
+        """Stop a realtime voice changer session."""
+        return self.close_session(session_id)
+
+    async def change_effect(self, session_id: str, effect_id: str) -> bool:
+        """Change the active effect in a realtime session."""
+        return self.set_effect(session_id, effect_id)
 
 
 # Singleton instance

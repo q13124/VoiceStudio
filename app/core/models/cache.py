@@ -16,7 +16,7 @@ from typing import Any
 
 # Try importing psutil for memory pressure detection
 try:
-    import psutil  # type: ignore
+    import psutil
 
     HAS_PSUTIL = True
 except ImportError:
@@ -144,16 +144,16 @@ class ModelCache:
                 try:
                     import torch
 
-                    total_params = sum(p.numel() for p in model.parameters())
-                    # Rough estimate: 4 bytes per float32 parameter
+                    total_params: int = sum(p.numel() for p in model.parameters())
                     memory_bytes = total_params * 4
-                    return memory_bytes / (1024 * 1024)
+                    return float(memory_bytes) / (1024 * 1024)
                 except ImportError:
                     ...
 
             # Try to get size attribute
             if hasattr(model, "__sizeof__"):
-                return model.__sizeof__() / (1024 * 1024)
+                size: int = model.__sizeof__()
+                return float(size) / (1024 * 1024)
 
             # Default estimate
             return 100.0  # 100 MB default estimate
@@ -257,8 +257,8 @@ class ModelCache:
             memory_info = self._process.memory_info()
             system_memory = psutil.virtual_memory()
             # Calculate process memory as percentage of system memory
-            process_memory_mb = memory_info.rss / (1024 * 1024)
-            total_memory_mb = system_memory.total / (1024 * 1024)
+            process_memory_mb: float = memory_info.rss / (1024 * 1024)
+            total_memory_mb: float = system_memory.total / (1024 * 1024)
             if total_memory_mb > 0:
                 return process_memory_mb / total_memory_mb
             return None
@@ -295,13 +295,14 @@ class ModelCache:
 
         # Reduce limits if under memory pressure
         if memory_usage >= self.memory_pressure_threshold:
-            # Reduce to 70% of original
-            if self.max_memory_mb is not None:
-                new_limit = self._original_max_memory_mb * 0.7
-                if self.max_memory_mb != new_limit:
+            cur_mem = self.max_memory_mb
+            orig_mem = self._original_max_memory_mb
+            if cur_mem is not None and orig_mem is not None:
+                new_limit = orig_mem * 0.7
+                if cur_mem != new_limit:
                     logger.info(
                         f"Reducing memory limit due to pressure: "
-                        f"{self.max_memory_mb:.1f}MB -> "
+                        f"{cur_mem:.1f}MB -> "
                         f"{new_limit:.1f}MB"
                     )
                     self.max_memory_mb = new_limit
@@ -318,14 +319,15 @@ class ModelCache:
 
         # Restore limits if memory pressure is low
         elif memory_usage < self.memory_pressure_threshold * 0.7:
-            if self.max_memory_mb is not None and self.max_memory_mb < self._original_max_memory_mb:
-                old_limit = self.max_memory_mb
+            cur_mem = self.max_memory_mb
+            orig_mem = self._original_max_memory_mb
+            if cur_mem is not None and orig_mem is not None and cur_mem < orig_mem:
                 logger.info(
                     f"Restoring memory limit: "
-                    f"{old_limit:.1f}MB -> "
-                    f"{self._original_max_memory_mb:.1f}MB"
+                    f"{cur_mem:.1f}MB -> "
+                    f"{orig_mem:.1f}MB"
                 )
-                self.max_memory_mb = self._original_max_memory_mb
+                self.max_memory_mb = orig_mem
                 self._stats["dynamic_adjustments"] += 1
 
             if self.max_models < self._original_max_models:
@@ -350,18 +352,20 @@ class ModelCache:
         target_usage = self.low_memory_threshold * 0.9  # Target 90% of threshold
 
         evicted_count = 0
-        while memory_usage > target_usage and self._cache and memory_usage is not None:
+        while memory_usage is not None and memory_usage > target_usage and self._cache:
             evicted_key = self._evict_oldest()
             if evicted_key:
                 evicted_count += 1
                 self._stats["proactive_evictions"] += 1
-                # Recalculate memory usage
                 memory_usage = self._get_system_memory_usage()
-                logger.debug(f"Proactive eviction: {evicted_key} " f"(usage: {memory_usage:.2%})")
+                if memory_usage is not None:
+                    logger.debug(
+                        f"Proactive eviction: {evicted_key} (usage: {memory_usage:.2%})"
+                    )
             else:
                 break
 
-        if evicted_count > 0:
+        if evicted_count > 0 and memory_usage is not None:
             logger.info(
                 f"Proactive eviction: removed {evicted_count} models "
                 f"(memory usage: {memory_usage:.2%})"
@@ -383,20 +387,21 @@ class ModelCache:
         target_usage = self.memory_pressure_threshold * 0.8
 
         evicted_count = 0
-        while memory_usage > target_usage and self._cache and memory_usage is not None:
+        while memory_usage is not None and memory_usage > target_usage and self._cache:
             evicted_key = self._evict_oldest()
             if evicted_key:
                 evicted_count += 1
                 self._stats["pressure_evictions"] += 1
-                # Recalculate memory usage
                 memory_usage = self._get_system_memory_usage()
-                logger.warning(
-                    f"Memory pressure eviction: {evicted_key} " f"(usage: {memory_usage:.2%})"
-                )
+                if memory_usage is not None:
+                    logger.warning(
+                        f"Memory pressure eviction: {evicted_key} "
+                        f"(usage: {memory_usage:.2%})"
+                    )
             else:
                 break
 
-        if evicted_count > 0:
+        if evicted_count > 0 and memory_usage is not None:
             logger.warning(
                 f"Memory pressure eviction: removed {evicted_count} models "
                 f"(memory usage: {memory_usage:.2%})"
@@ -613,7 +618,7 @@ class ModelCache:
 
         memory_usage = self._get_system_memory_usage()
 
-        stats = {
+        stats: dict[str, Any] = {
             "cache_size": len(self._cache),
             "max_models": self.max_models,
             "original_max_models": self._original_max_models,
@@ -637,7 +642,7 @@ class ModelCache:
 
         if memory_usage is not None:
             usage_str = f"{memory_usage:.2%}"
-            stats["system_memory_usage"] = usage_str  # type: ignore
+            stats["system_memory_usage"] = usage_str
             stats["memory_pressure"] = memory_usage >= self.memory_pressure_threshold
             stats["low_memory"] = memory_usage >= self.low_memory_threshold
 

@@ -59,67 +59,72 @@ class PluginMetadata:
     @property
     def name(self) -> str:
         """Plugin name from manifest."""
-        return self.manifest_data.get("name", "unknown")
+        return str(self.manifest_data.get("name", "unknown"))
 
     @property
     def version(self) -> str:
         """Plugin version string."""
-        return self.manifest_data.get("version", "1.0.0")
+        return str(self.manifest_data.get("version", "1.0.0"))
 
     @property
     def author(self) -> str:
         """Plugin author name."""
-        return self.manifest_data.get("author", "Unknown")
+        return str(self.manifest_data.get("author", "Unknown"))
 
     @property
     def description(self) -> str:
         """Plugin description."""
-        return self.manifest_data.get("description", "")
+        return str(self.manifest_data.get("description", ""))
 
     @property
     def plugin_id(self) -> str:
         """Unique plugin identifier."""
-        return self.manifest_data.get("id", self.name)
+        return str(self.manifest_data.get("id", self.name))
 
     @property
     def plugin_type(self) -> str:
         """Plugin type (engine, processor, exporter, etc.)."""
-        return self.manifest_data.get("type", "unknown")
+        return str(self.manifest_data.get("type", "unknown"))
 
     @property
     def capabilities(self) -> dict[str, Any]:
         """Plugin capabilities declaration."""
-        return self.manifest_data.get("capabilities", {})
+        caps: dict[str, Any] = self.manifest_data.get("capabilities", {})
+        return caps
 
     @property
     def dependencies(self) -> list[str]:
         """Plugin Python dependencies."""
-        return self.manifest_data.get("dependencies", [])
+        deps: list[str] = self.manifest_data.get("dependencies", [])
+        return deps
 
     @property
     def entry_points(self) -> dict[str, str]:
         """Plugin entry points for different integration points."""
-        return self.manifest_data.get("entry_points", {})
+        eps: dict[str, str] = self.manifest_data.get("entry_points", {})
+        return eps
 
     @property
     def security(self) -> dict[str, Any]:
         """Plugin security configuration."""
-        return self.manifest_data.get("security", {})
+        sec: dict[str, Any] = self.manifest_data.get("security", {})
+        return sec
 
     @property
     def isolation_mode(self) -> str:
         """Plugin isolation mode (in_process or sandboxed)."""
-        return self.security.get("isolation_mode", "in_process")
+        return str(self.security.get("isolation_mode", "in_process"))
 
     @property
     def permissions(self) -> list[str]:
         """Required permissions for this plugin."""
-        return self.security.get("permissions", [])
+        perms: list[str] = self.security.get("permissions", [])
+        return perms
 
     @property
     def min_app_version(self) -> str:
         """Minimum VoiceStudio version required."""
-        return self.manifest_data.get("min_app_version", "1.0.0")
+        return str(self.manifest_data.get("min_app_version", "1.0.0"))
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get arbitrary manifest field."""

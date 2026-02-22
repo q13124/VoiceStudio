@@ -187,8 +187,8 @@ async def list_engines(
         engines = [
             (
                 EngineInfo(
-                    id=e.get("id", e.get("name", "unknown")),
-                    name=e.get("name", e.get("id", "Unknown")),
+                    id=str(e.get("id", e.get("name", "unknown"))),
+                    name=str(e.get("name", e.get("id", "Unknown"))),
                     type=e.get("type", "tts"),
                     version=e.get("version"),
                     description=e.get("description"),
@@ -219,7 +219,8 @@ async def get_engines(
     `GET /api/engines` and receive:
       { "engines": [...], "available": bool, "count": int }.
     """
-    return await list_engines(engine_service)
+    result: EngineListResponse = await list_engines(engine_service)
+    return result
 
 
 @router.get("/preflight", response_model=PreflightResponse)
@@ -419,7 +420,7 @@ async def recommend_engine(
             recommendations.append(
                 EngineRecommendation(
                     engine_id=engine_id,
-                    engine_name=manifest.get("name", engine_id),
+                    engine_name=str(manifest.get("name", engine_id)),
                     recommendation_score=score,
                     quality_estimate=EngineQualityEstimate(
                         mos_score=mos_estimate,
@@ -644,15 +645,15 @@ async def update_gpu_settings(request: GPUSettingsRequest) -> dict:
         config_service = get_engine_config_service()
 
         # Build update dict (only include non-None values)
-        update_settings = {}
+        update_settings: dict[str, str | bool | float] = {}
         if request.enabled is not None:
             update_settings["enabled"] = request.enabled
         if request.device is not None:
-            update_settings["device"] = request.device
+            update_settings["device"] = str(request.device)
         if request.fallback_to_cpu is not None:
-            update_settings["fallback_to_cpu"] = request.fallback_to_cpu
+            update_settings["fallback_to_cpu"] = bool(request.fallback_to_cpu)
         if request.memory_fraction is not None:
-            update_settings["memory_fraction"] = request.memory_fraction
+            update_settings["memory_fraction"] = float(request.memory_fraction)
 
         config_service.set_gpu_settings(update_settings)
         gpu_settings = config_service.get_gpu_settings()
@@ -879,8 +880,8 @@ async def get_engine_voices(
                 if isinstance(v, dict):
                     voices.append(
                         EngineVoice(
-                            id=v.get("id", v.get("name", "unknown")),
-                            name=v.get("name", v.get("id", "Unknown")),
+                            id=str(v.get("id", v.get("name", "unknown"))),
+                            name=str(v.get("name", v.get("id", "Unknown"))),
                             language=v.get("language") or v.get("lang"),
                             gender=v.get("gender"),
                             style=v.get("style"),
@@ -1024,8 +1025,8 @@ async def get_engine_schema(engine_id: str):
         )
 
     # Extract groups from parameters
-    groups_seen = set()
-    groups = []
+    groups_seen: set[str] = set()
+    groups: list[ParameterGroupModel] = []
     for param in parameters:
         if param.group_id and param.group_id not in groups_seen:
             groups_seen.add(param.group_id)

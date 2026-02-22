@@ -18,8 +18,10 @@ import logging
 from collections import OrderedDict
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 import requests
 import soundfile as sf
 
@@ -100,11 +102,11 @@ class MaryTTSEngine(EngineProtocol):
         super().__init__(device=device, gpu=gpu)
 
         self.server_url = server_url.rstrip("/")
-        self.voices = []
-        self.available_languages = []
+        self.voices: list[str] = []
+        self.available_languages: list[str] = []
         self.session = requests.Session()
-        self.session.timeout = 30
-        self._synthesis_cache = OrderedDict()  # LRU cache for synthesis results
+        self._timeout: int = 30
+        self._synthesis_cache: OrderedDict[str, Any] = OrderedDict()
         self._cache_max_size = 100  # Maximum number of cached synthesis results
         self.enable_cache = True
 
@@ -212,8 +214,8 @@ class MaryTTSEngine(EngineProtocol):
         output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
-        **kwargs,
-    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
+        **kwargs: Any,
+    ) -> npt.NDArray[np.float32] | None | tuple[npt.NDArray[np.float32] | None, dict[str, Any]]:
         """
         Synthesize speech from text using MaryTTS.
 
@@ -255,7 +257,7 @@ class MaryTTSEngine(EngineProtocol):
                         return None
                     if calculate_quality:
                         return cached_result["audio"], cached_result.get("quality_metrics", {})
-                    return cached_result["audio"]
+                    return np.asarray(cached_result["audio"])
 
             # Build synthesis URL
             synthesis_url = f"{self.server_url}/process"
@@ -336,7 +338,7 @@ class MaryTTSEngine(EngineProtocol):
                     if output_path:
                         sf.write(output_path, audio, sample_rate)
                         return None
-                    return audio
+                    return np.asarray(audio)
 
             # Save to file if requested
             if output_path:
@@ -344,7 +346,7 @@ class MaryTTSEngine(EngineProtocol):
                 logger.info(f"Audio saved to: {output_path}")
                 return None
 
-            return audio
+            return np.asarray(audio)
 
         except Exception as e:
             logger.error(f"MaryTTS synthesis failed: {e}")
@@ -352,21 +354,21 @@ class MaryTTSEngine(EngineProtocol):
 
     def _calculate_quality_metrics(
         self,
-        audio: np.ndarray,
+        audio: npt.NDArray[np.float32],
         sample_rate: int,
         reference_audio: str | Path | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Calculate quality metrics for audio."""
         quality_metrics = {}
 
         if HAS_QUALITY_METRICS:
             try:
-                quality_metrics = calculate_all_metrics(audio, sample_rate)
+                quality_metrics = calculate_all_metrics(audio, sample_rate=sample_rate)
 
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
+                        similarity = calculate_similarity(ref_audio, audio)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -378,12 +380,12 @@ class MaryTTSEngine(EngineProtocol):
 
     def _process_audio_quality(
         self,
-        audio: np.ndarray,
+        audio: npt.NDArray[np.float32],
         sample_rate: int,
         reference_audio: str | Path | None = None,
         enhance: bool = False,
         calculate: bool = False,
-    ) -> np.ndarray | tuple[np.ndarray, dict]:
+    ) -> npt.NDArray[np.float32] | tuple[npt.NDArray[np.float32], dict[str, Any]]:
         """
         Process audio for quality enhancement and/or metrics calculation.
 
@@ -411,12 +413,12 @@ class MaryTTSEngine(EngineProtocol):
         # Calculate metrics if requested
         if calculate and HAS_QUALITY_METRICS:
             try:
-                quality_metrics = calculate_all_metrics(audio, sample_rate)
+                quality_metrics = calculate_all_metrics(audio, sample_rate=sample_rate)
 
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
+                        similarity = calculate_similarity(ref_audio, audio)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -457,7 +459,7 @@ class MaryTTSEngine(EngineProtocol):
 
         return self.available_languages if self.available_languages else self.SUPPORTED_LANGUAGES
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources."""
         try:
             if hasattr(self, "session"):
@@ -468,7 +470,7 @@ class MaryTTSEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during MaryTTS cleanup: {e}")
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear synthesis cache."""
         self._synthesis_cache.clear()
         logger.info("Synthesis cache cleared")
@@ -481,7 +483,7 @@ class MaryTTSEngine(EngineProtocol):
             "cache_enabled": self.enable_cache,
         }
 
-    def get_info(self) -> dict:
+    def get_info(self) -> dict[str, Any]:
         """Get engine information."""
         info = super().get_info()
         info.update(

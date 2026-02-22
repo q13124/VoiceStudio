@@ -14,12 +14,15 @@ import logging
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 logger = logging.getLogger(__name__)
 
 # Try importing general model cache
+_model_cache: Any
 try:
     from app.core.models.cache import get_model_cache
 
@@ -31,8 +34,8 @@ except ImportError:
     logger.debug("General model cache not available, using Vosk-specific cache")
 
 # Fallback: Vosk-specific cache (for backward compatibility)
-_VOSK_MODEL_CACHE: OrderedDict = OrderedDict()
-_TRANSCRIPTION_CACHE: dict[str, dict] = {}
+_VOSK_MODEL_CACHE: OrderedDict[str, Any] = OrderedDict()
+_TRANSCRIPTION_CACHE: dict[str, dict[str, Any]] = {}
 _MAX_CACHE_SIZE = 2  # Maximum number of models to cache in memory
 _MAX_TRANSCRIPTION_CACHE_SIZE = 200  # Maximum number of transcriptions to cache
 
@@ -42,7 +45,7 @@ def _get_cache_key(model_path: str | None, model_name: str) -> str:
     return f"vosk::{model_path or 'default'}::{model_name}"
 
 
-def _get_cached_vosk_model(model_path: str | None, model_name: str):
+def _get_cached_vosk_model(model_path: str | None, model_name: str) -> Any:
     """Get cached Vosk model if available."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -60,7 +63,7 @@ def _get_cached_vosk_model(model_path: str | None, model_name: str):
     return None
 
 
-def _cache_vosk_model(model_path: str | None, model_name: str, model):
+def _cache_vosk_model(model_path: str | None, model_name: str, model: Any) -> None:
     """Cache Vosk model with LRU eviction."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -96,7 +99,7 @@ def _cache_vosk_model(model_path: str | None, model_name: str, model):
 
 
 def _get_transcription_cache_key(
-    audio: str | np.ndarray | Path,
+    audio: str | npt.NDArray[Any] | Path,
     word_timestamps: bool,
 ) -> str | None:
     """Generate cache key for transcription."""
@@ -120,9 +123,9 @@ def _get_transcription_cache_key(
 
 
 def _get_cached_transcription(
-    audio: str | np.ndarray | Path,
+    audio: str | npt.NDArray[Any] | Path,
     word_timestamps: bool,
-) -> dict | None:
+) -> dict[str, Any] | None:
     """Get cached transcription if available."""
     cache_key = _get_transcription_cache_key(audio, word_timestamps)
     if cache_key:
@@ -131,10 +134,10 @@ def _get_cached_transcription(
 
 
 def _cache_transcription(
-    audio: str | np.ndarray | Path,
+    audio: str | npt.NDArray[Any] | Path,
     word_timestamps: bool,
-    result: dict,
-):
+    result: dict[str, Any],
+) -> None:
     """Cache transcription with LRU eviction."""
     cache_key = _get_transcription_cache_key(audio, word_timestamps)
     if not cache_key:
@@ -207,20 +210,20 @@ class VoskEngine(EngineProtocol):
         self.model_path = model_path
         self.model_name = model_name
         self.sample_rate = sample_rate
-        self.model = None
-        self.recognizer = None
+        self.model: Any = None
+        self.recognizer: Any = None
         self._initialized = False
         self.lazy_load = True
         self.batch_size = 4
-        self.enable_caching = True
+        self._caching_enabled = True
 
         if not HAS_VOSK:
             raise ImportError("vosk is required. Install with: pip install vosk>=0.3.45")
 
-    def _load_model(self):
+    def _load_model(self) -> bool:
         """Load model with caching support."""
         # Check cache first
-        if self.enable_caching:
+        if self._caching_enabled:
             cached_model = _get_cached_vosk_model(self.model_path, self.model_name)
             if cached_model is not None:
                 logger.debug(f"Using cached Vosk model: {self.model_name}")
@@ -233,10 +236,10 @@ class VoskEngine(EngineProtocol):
         # Load model
         try:
             # Determine model path
+            model_dir: Path | None
             if self.model_path:
                 model_dir = Path(self.model_path)
             else:
-                # Try to find model in common locations
                 model_dir = self._find_model()
 
             if not model_dir or not model_dir.exists():
@@ -251,7 +254,7 @@ class VoskEngine(EngineProtocol):
             self.recognizer.SetWords(True)  # Enable word-level timestamps
 
             # Cache model
-            if self.enable_caching:
+            if self._caching_enabled:
                 _cache_vosk_model(self.model_path, self.model_name, self.model)
 
             self._initialized = True
@@ -263,7 +266,7 @@ class VoskEngine(EngineProtocol):
             self._initialized = False
             return False
 
-    def initialize(self):
+    def initialize(self) -> bool:
         """Initialize Vosk model."""
         if self._initialized:
             return True
@@ -291,8 +294,8 @@ class VoskEngine(EngineProtocol):
         return None
 
     def batch_transcribe(
-        self, audio_files: list[str | Path | np.ndarray], word_timestamps: bool = True, **kwargs
-    ) -> list[dict[str, any]]:
+        self, audio_files: list[str | Path | npt.NDArray[Any]], word_timestamps: bool = True, **kwargs: Any
+    ) -> list[dict[str, Any]]:
         """
         Transcribe multiple audio files in batch with optimized processing.
 
@@ -313,7 +316,7 @@ class VoskEngine(EngineProtocol):
         # Process in batches with parallel processing
         batch_size = self.batch_size
 
-        def transcribe_single(audio_file):
+        def transcribe_single(audio_file: str | Path | npt.NDArray[Any]) -> dict[str, Any]:
             try:
                 return self.transcribe(audio=audio_file, word_timestamps=word_timestamps, **kwargs)
             except Exception as e:
@@ -326,17 +329,17 @@ class VoskEngine(EngineProtocol):
 
         return results
 
-    def enable_caching(self, enable: bool = True):
+    def set_caching_enabled(self, enable: bool = True) -> None:
         """Enable or disable caching."""
-        self.enable_caching = enable
+        self._caching_enabled = enable
         logger.info(f"Transcription caching {'enabled' if enable else 'disabled'}")
 
-    def set_batch_size(self, batch_size: int):
+    def set_batch_size(self, batch_size: int) -> None:
         """Set batch size for batch operations."""
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Cleanup Vosk resources."""
         # Don't delete cached model, just clear reference
         self.recognizer = None
@@ -346,10 +349,10 @@ class VoskEngine(EngineProtocol):
 
     def transcribe(
         self,
-        audio: str | Path | np.ndarray,
+        audio: str | Path | npt.NDArray[Any],
         language: str | None = None,
         word_timestamps: bool = True,
-    ) -> dict[str, any]:
+    ) -> dict[str, Any]:
         """
         Transcribe audio to text.
 
@@ -369,7 +372,7 @@ class VoskEngine(EngineProtocol):
             return {"text": "", "words": [], "confidence": 0.0}
 
         # Check transcription cache
-        if self.enable_caching:
+        if self._caching_enabled:
             cached_result = _get_cached_transcription(audio, word_timestamps)
             if cached_result is not None:
                 logger.debug("Using cached transcription")
@@ -419,12 +422,12 @@ class VoskEngine(EngineProtocol):
         }
 
         # Cache transcription result
-        if self.enable_caching:
+        if self._caching_enabled:
             _cache_transcription(audio, word_timestamps, result)
 
         return result
 
-    def _load_audio(self, audio_path: str | Path) -> np.ndarray:
+    def _load_audio(self, audio_path: str | Path) -> npt.NDArray[Any]:
         """Load audio file and resample to 16kHz if needed."""
         try:
             import soundfile as sf
@@ -441,12 +444,12 @@ class VoskEngine(EngineProtocol):
             if audio.dtype != np.int16:
                 audio = (audio * 32767).astype(np.int16)
 
-            return audio
+            return np.asarray(audio)
         except Exception as e:
             logger.error(f"Failed to load audio: {e}")
             raise
 
-    def _calculate_confidence(self, words: list[dict]) -> float:
+    def _calculate_confidence(self, words: list[dict[str, Any]]) -> float:
         """Calculate overall confidence from word confidences."""
         if not words:
             return 0.0

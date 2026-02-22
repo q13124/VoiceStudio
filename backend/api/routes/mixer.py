@@ -287,7 +287,7 @@ async def delete_send(project_id: str, send_id: str):
         _mixer_states[project_id] = state
 
         logger.info(f"Deleted send bus: {send_id}")
-        return ApiOk(message="Send bus deleted")
+        return ApiOk()
     except HTTPException:
         raise
     except Exception as e:
@@ -368,7 +368,7 @@ async def delete_return(project_id: str, return_id: str):
         _mixer_states[project_id] = state
 
         logger.info(f"Deleted return bus: {return_id}")
-        return ApiOk(message="Return bus deleted")
+        return ApiOk()
     except HTTPException:
         raise
     except Exception as e:
@@ -452,7 +452,7 @@ async def delete_subgroup(project_id: str, subgroup_id: str):
         _mixer_states[project_id] = state
 
         logger.info(f"Deleted sub-group: {subgroup_id}")
-        return ApiOk(message="Sub-group deleted")
+        return ApiOk()
     except HTTPException:
         raise
     except Exception as e:
@@ -605,7 +605,7 @@ async def delete_preset(project_id: str, preset_id: str):
     try:
         del _mixer_presets[preset_id]
         logger.info(f"Deleted mixer preset: {preset_id}")
-        return ApiOk(message="Preset deleted")
+        return ApiOk()
     except Exception as e:
         logger.error(f"Failed to delete preset: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -645,25 +645,14 @@ def _create_default_mixer_state(project_id: str) -> MixerState:
     """Create a default mixer state with 4 channels."""
     now = datetime.utcnow().isoformat()
 
-    # Create 4 default channels
-    channels = []
+    channels: list[MixerChannel] = []
     for i in range(1, 5):
         channels.append(
-            {
-                "id": str(uuid.uuid4()),
-                "channel_number": i,
-                "name": f"Ch {i}",
-                "peak_level": 0.0,
-                "rms_level": 0.0,
-                "volume": 1.0,
-                "pan": 0.0,
-                "is_muted": False,
-                "is_soloed": False,
-                "main_destination": "Master",
-                "sub_group_id": None,
-                "send_levels": {},
-                "send_enabled": {},
-            }
+            MixerChannel(
+                id=str(uuid.uuid4()),
+                channel_number=i,
+                name=f"Ch {i}",
+            )
         )
 
     return MixerState(
@@ -777,7 +766,7 @@ async def _simulate_meters(project_id: str, channels: list[dict], duration: int)
                 # Broadcast via WebSocket
                 await realtime.broadcast_meter_updates(
                     project_id=project_id,
-                    channel_id=channel.get("id"),
+                    channel_id=str(channel.get("id", "")),
                     meter_data={"peak_level": peak_level, "rms_level": rms_level},
                 )
 

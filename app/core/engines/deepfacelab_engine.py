@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 from PIL import Image
 
 # Import base protocol
@@ -68,6 +69,17 @@ except ImportError:
         "Install with: pip install insightface>=0.7.3"
     )
 
+# Try importing face_alignment
+try:
+    import face_alignment
+
+    HAS_FACE_ALIGNMENT = True
+except ImportError:
+    HAS_FACE_ALIGNMENT = False
+
+# cv2.data is valid at runtime but absent from type stubs
+_cv2_data: Any = getattr(cv2, "data", None) if HAS_CV2 else None
+
 
 class DeepFaceLabEngine(EngineProtocol):
     """
@@ -107,7 +119,7 @@ class DeepFaceLabEngine(EngineProtocol):
         self.model_path = model_path
         self.require_consent = require_consent
         self.consent_given = False
-        self.model = None
+        self.model: Any = None
 
         # InsightFace model for face recognition (if available)
         self.insightface_app = None
@@ -125,8 +137,8 @@ class DeepFaceLabEngine(EngineProtocol):
                 self.insightface_app = None
 
         # Caching for performance
-        self._result_cache = {}  # Cache for face swap results
-        self._face_detection_cache = {}  # Cache for face detection results
+        self._result_cache: dict[str, Any] = {}
+        self._face_detection_cache: dict[str, Any] = {}
         self._cache_max_size = 100  # Maximum number of cached results
 
         # Note: DeepFaceLab typically uses TensorFlow, not PyTorch
@@ -185,7 +197,7 @@ class DeepFaceLabEngine(EngineProtocol):
             self._initialized = False
             return False
 
-    def set_consent(self, consent: bool):
+    def set_consent(self, consent: bool) -> None:
         """Set user consent for face swap feature."""
         self.consent_given = consent
         if consent:
@@ -195,7 +207,7 @@ class DeepFaceLabEngine(EngineProtocol):
             if self._initialized:
                 self.cleanup()
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources and free memory."""
         try:
             if self.model is not None:
@@ -231,7 +243,7 @@ class DeepFaceLabEngine(EngineProtocol):
         target_image: str | Path | Image.Image,
         output_path: str | Path | None = None,
         blend_factor: float = 0.5,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """
         Swap face from source image to target image.
@@ -272,7 +284,7 @@ class DeepFaceLabEngine(EngineProtocol):
 
             if cache_key in self._result_cache:
                 logger.debug("Using cached DeepFaceLab result")
-                cached_path = self._result_cache[cache_key]
+                cached_path: str = self._result_cache[cache_key]
                 if os.path.exists(cached_path):
                     return cached_path
                 else:
@@ -280,14 +292,18 @@ class DeepFaceLabEngine(EngineProtocol):
 
             # Load images
             if isinstance(source_image, (str, Path)):
-                source_img = cv2.imread(str(source_image))
-                source_img = cv2.cvtColor(source_img, cv2.COLOR_BGR2RGB)
+                source_raw = cv2.imread(str(source_image))
+                if source_raw is None:
+                    raise ValueError(f"Failed to read source image: {source_image}")
+                source_img = cv2.cvtColor(source_raw, cv2.COLOR_BGR2RGB)
             else:
                 source_img = np.array(source_image)
 
             if isinstance(target_image, (str, Path)):
-                target_img = cv2.imread(str(target_image))
-                target_img = cv2.cvtColor(target_img, cv2.COLOR_BGR2RGB)
+                target_raw = cv2.imread(str(target_image))
+                if target_raw is None:
+                    raise ValueError(f"Failed to read target image: {target_image}")
+                target_img = cv2.cvtColor(target_raw, cv2.COLOR_BGR2RGB)
             else:
                 target_img = np.array(target_image)
 
@@ -359,7 +375,7 @@ class DeepFaceLabEngine(EngineProtocol):
             logger.error(f"Error performing face swap: {e}")
             raise RuntimeError(f"Failed to perform face swap: {e}")
 
-    def _detect_face_insightface(self, image: np.ndarray) -> dict[str, Any] | None:
+    def _detect_face_insightface(self, image: npt.NDArray[Any]) -> dict[str, Any] | None:
         """
         Detect face using InsightFace (if available).
 
@@ -405,8 +421,8 @@ class DeepFaceLabEngine(EngineProtocol):
             return None
 
     def _detect_and_extract_face(
-        self, image: np.ndarray, return_bbox: bool = False
-    ) -> np.ndarray | None | tuple[np.ndarray, dict] | None:
+        self, image: npt.NDArray[Any], return_bbox: bool = False
+    ) -> npt.NDArray[Any] | None | tuple[npt.NDArray[Any], dict[str, Any]] | None:
         """
         Detect and extract face from image.
 
@@ -443,7 +459,7 @@ class DeepFaceLabEngine(EngineProtocol):
 
         # Fallback to OpenCV's face detector
         face_cascade = cv2.CascadeClassifier(
-            cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+            _cv2_data.haarcascades + "haarcascade_frontalface_default.xml"
         )
         gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
@@ -468,7 +484,7 @@ class DeepFaceLabEngine(EngineProtocol):
             return face_image, bbox
         return face_image
 
-    def _swap_face_model(self, source_face: np.ndarray, target_face: np.ndarray) -> np.ndarray:
+    def _swap_face_model(self, source_face: npt.NDArray[Any], target_face: npt.NDArray[Any]) -> npt.NDArray[Any]:
         """Perform face swap using model."""
         try:
             # Use model if available
@@ -489,7 +505,7 @@ class DeepFaceLabEngine(EngineProtocol):
             swapped = cv2.resize(source_face, (target_w, target_h))
             return swapped
 
-    def _load_model(self, model_cache_dir: str):
+    def _load_model(self, model_cache_dir: str) -> dict[str, Any] | None:
         """Load DeepFaceLab model."""
         try:
             # Look for model files
@@ -534,7 +550,7 @@ class DeepFaceLabEngine(EngineProtocol):
             logger.warning(f"Failed to load DeepFaceLab model: {e}")
             return None
 
-    def _swap_with_model(self, source_face: np.ndarray, target_face: np.ndarray) -> np.ndarray:
+    def _swap_with_model(self, source_face: npt.NDArray[Any], target_face: npt.NDArray[Any]) -> npt.NDArray[Any]:
         """Perform face swap using loaded model."""
         if not HAS_TENSORFLOW:
             error_msg = (
@@ -578,7 +594,7 @@ class DeepFaceLabEngine(EngineProtocol):
             logger.warning("Attempting fallback method due to model inference error")
             return self._swap_with_fallback(source_face, target_face)
 
-    def _swap_with_fallback(self, source_face: np.ndarray, target_face: np.ndarray) -> np.ndarray:
+    def _swap_with_fallback(self, source_face: npt.NDArray[Any], target_face: npt.NDArray[Any]) -> npt.NDArray[Any]:
         """Perform face swap using fallback method (alignment and blending)."""
         try:
             # Align faces
@@ -602,7 +618,7 @@ class DeepFaceLabEngine(EngineProtocol):
             target_h, target_w = target_face.shape[:2]
             return cv2.resize(source_face, (target_w, target_h))
 
-    def _preprocess_face(self, face: np.ndarray) -> np.ndarray:
+    def _preprocess_face(self, face: npt.NDArray[Any]) -> npt.NDArray[Any]:
         """Preprocess face for model input."""
         # Resize to standard size (256x256 for most models)
         face_resized = cv2.resize(face, (256, 256))
@@ -610,13 +626,13 @@ class DeepFaceLabEngine(EngineProtocol):
         face_normalized = face_resized.astype(np.float32) / 255.0
         return face_normalized
 
-    def _postprocess_face(self, face: np.ndarray) -> np.ndarray:
+    def _postprocess_face(self, face: npt.NDArray[Any]) -> npt.NDArray[Any]:
         """Postprocess model output."""
         # Denormalize from [0, 1] to [0, 255]
         face_denormalized = np.clip(face * 255.0, 0, 255).astype(np.uint8)
         return face_denormalized
 
-    def _align_face(self, face: np.ndarray) -> np.ndarray:
+    def _align_face(self, face: npt.NDArray[Any]) -> npt.NDArray[Any]:
         """Align face using landmarks."""
         try:
             if HAS_FACE_ALIGNMENT and HAS_CV2:
@@ -693,7 +709,7 @@ class DeepFaceLabEngine(EngineProtocol):
                 try:
                     # Load face detector
                     face_cascade_path = (
-                        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+                        _cv2_data.haarcascades + "haarcascade_frontalface_default.xml"
                     )
                     face_cascade = cv2.CascadeClassifier(face_cascade_path)
 
@@ -722,7 +738,7 @@ class DeepFaceLabEngine(EngineProtocol):
             logger.warning(f"Face alignment failed: {e}")
             return face
 
-    def _color_correct(self, source_face: np.ndarray, target_face: np.ndarray) -> np.ndarray:
+    def _color_correct(self, source_face: npt.NDArray[Any], target_face: npt.NDArray[Any]) -> npt.NDArray[Any]:
         """Apply color correction to match target face."""
         try:
             # Compute mean and std for both faces
@@ -734,14 +750,12 @@ class DeepFaceLabEngine(EngineProtocol):
 
             # Apply color transfer
             corrected = (source_face - source_mean) * (target_std / source_std) + target_mean
-            corrected = np.clip(corrected, 0, 255).astype(np.uint8)
-
-            return corrected
+            return np.asarray(np.clip(corrected, 0, 255), dtype=np.uint8)
 
         except Exception:
             return source_face
 
-    def _blend_edges(self, swapped_face: np.ndarray, original_face: np.ndarray) -> np.ndarray:
+    def _blend_edges(self, swapped_face: npt.NDArray[Any], original_face: npt.NDArray[Any]) -> npt.NDArray[Any]:
         """Blend edges for seamless integration."""
         try:
             # Create mask for edge blending
@@ -770,12 +784,13 @@ class DeepFaceLabEngine(EngineProtocol):
             return swapped_face
 
     def _blend_faces(
-        self, swapped_face: np.ndarray, original_face: np.ndarray, blend_factor: float
-    ) -> np.ndarray:
+        self, swapped_face: npt.NDArray[Any], original_face: npt.NDArray[Any], blend_factor: float
+    ) -> npt.NDArray[Any]:
         """Blend swapped face with original."""
-        return (swapped_face * (1.0 - blend_factor) + original_face * blend_factor).astype(np.uint8)
+        blended = (swapped_face * (1.0 - blend_factor) + original_face * blend_factor)
+        return np.asarray(blended, dtype=np.uint8)
 
-    def _composite_face(self, background: np.ndarray, face: np.ndarray, bbox: dict) -> np.ndarray:
+    def _composite_face(self, background: npt.NDArray[Any], face: npt.NDArray[Any], bbox: dict[str, Any]) -> npt.NDArray[Any]:
         """Composite face back onto background."""
         result = background.copy()
 
@@ -790,7 +805,7 @@ class DeepFaceLabEngine(EngineProtocol):
 
         return result
 
-    def get_info(self) -> dict:
+    def get_info(self) -> dict[str, Any]:
         """Get engine information."""
         info = super().get_info()
         info.update(

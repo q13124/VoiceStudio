@@ -11,6 +11,8 @@ Compatible with:
 
 from __future__ import annotations
 
+from typing import Any
+
 import hashlib
 import json
 import logging
@@ -35,12 +37,21 @@ logger = logging.getLogger(__name__)
 # Optional imports for diffusers
 try:
     from diffusers import StableVideoDiffusionPipeline
-    from diffusers.utils import load_image
 
     HAS_DIFFUSERS = True
 except ImportError:
     HAS_DIFFUSERS = False
     logger.warning("diffusers not installed. Install with: pip install diffusers>=0.21.0")
+
+# load_image is not in diffusers type stubs; use getattr for mypy compat
+_load_image: Any = None
+if HAS_DIFFUSERS:
+    try:
+        import diffusers.utils as _diffusers_utils
+
+        _load_image = getattr(_diffusers_utils, "load_image", None)
+    except (ImportError, AttributeError):
+        pass
 
 # Optional image processing
 try:
@@ -64,7 +75,7 @@ class SVDEngine(EngineProtocol):
     """
 
     # Class-level model cache (shared across instances)
-    _model_cache: OrderedDict[str, object] = OrderedDict()
+    _model_cache: OrderedDict[str, Any] = OrderedDict()
     _max_cache_size = 4  # Cache up to 4 models (increased from 2)
 
     def __init__(
@@ -112,8 +123,8 @@ class SVDEngine(EngineProtocol):
         self.enable_response_cache = enable_response_cache
         self.response_cache_size = response_cache_size
 
-        self.pipeline = None
-        self._model_key = None
+        self.pipeline: Any = None
+        self._model_key: str | None = None
 
         # LRU response cache for generated videos (stores output paths)
         self._response_cache: OrderedDict[str, str] = OrderedDict()
@@ -148,7 +159,7 @@ class SVDEngine(EngineProtocol):
             return True
         return False
 
-    def _save_model_to_cache(self):
+    def _save_model_to_cache(self) -> None:
         """Save model to cache."""
         if not self.enable_model_cache or self._model_key is None:
             return
@@ -226,7 +237,7 @@ class SVDEngine(EngineProtocol):
             self._initialized = False
             return False
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources and free memory (enhanced)."""
         try:
             # Don't delete if in cache (other instances might be using it)
@@ -253,7 +264,7 @@ class SVDEngine(EngineProtocol):
             logger.error(f"Error during SVD cleanup: {e}")
 
     @classmethod
-    def clear_model_cache(cls):
+    def clear_model_cache(cls) -> None:
         """Clear the shared model cache."""
         for _key, pipeline in cls._model_cache.items():
             del pipeline
@@ -269,7 +280,7 @@ class SVDEngine(EngineProtocol):
         num_inference_steps: int,
         motion_bucket_id: int,
         seed: int | None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Generate cache key from generation parameters."""
         # Use image path hash for cache key
@@ -301,8 +312,8 @@ class SVDEngine(EngineProtocol):
         motion_bucket_id: int = 127,
         fps: int = 7,
         seed: int | None = None,
-        **kwargs,
-    ) -> str | tuple[str, dict]:
+        **kwargs: Any,
+    ) -> str | tuple[str, dict[str, Any]]:
         """
         Generate video from image.
 
@@ -369,8 +380,8 @@ class SVDEngine(EngineProtocol):
         try:
             # Load input image
             if isinstance(image_path, (str, Path)):
-                if HAS_DIFFUSERS:
-                    image = load_image(str(image_path))
+                if _load_image is not None:
+                    image = _load_image(str(image_path))
                 else:
                     image = Image.open(image_path).convert("RGB")
             else:
@@ -463,7 +474,7 @@ class SVDEngine(EngineProtocol):
         fps: int = 7,
         seeds: list[int | None] | None = None,
         batch_size: int | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> list[str | None]:
         """
         Generate multiple videos from images using batch processing.
@@ -499,10 +510,10 @@ class SVDEngine(EngineProtocol):
             # parallelization
             all_outputs = []
 
-            def generate_single(args):
+            def generate_single(args: tuple[Any, ...]) -> str | None:
                 idx, img_path, out_path, motion_id, seed = args
                 try:
-                    return self.generate_video(
+                    result = self.generate_video(
                         image_path=img_path,
                         output_path=out_path,
                         num_frames=num_frames,
@@ -512,6 +523,7 @@ class SVDEngine(EngineProtocol):
                         seed=seed,
                         **kwargs,
                     )
+                    return result if isinstance(result, str) else result[0]
                 except Exception as e:
                     logger.error(f"Batch video generation failed for {idx}: {e}")
                     # Record error metrics
@@ -575,7 +587,7 @@ class SVDEngine(EngineProtocol):
                 ...
             return [None] * len(image_paths)
 
-    def _save_video_cv2(self, frames: list[Image.Image], output_path: str, fps: int):
+    def _save_video_cv2(self, frames: list[Image.Image], output_path: str, fps: int) -> None:
         """Save frames as video using OpenCV."""
         if not HAS_CV2:
             raise ImportError("opencv-python required for video saving")
@@ -584,7 +596,8 @@ class SVDEngine(EngineProtocol):
         height, width = frames[0].size[1], frames[0].size[0]
 
         # Create video writer
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        _fourcc_fn: Any = getattr(cv2, "VideoWriter_fourcc", None)
+        fourcc: int = _fourcc_fn(*"mp4v")
         out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
         try:
@@ -595,7 +608,7 @@ class SVDEngine(EngineProtocol):
         finally:
             out.release()
 
-    def _save_video_pil(self, frames: list[Image.Image], output_path: str, fps: int):
+    def _save_video_pil(self, frames: list[Image.Image], output_path: str, fps: int) -> None:
         """Save frames as video using PIL/imageio fallback."""
         try:
             import imageio
@@ -604,7 +617,7 @@ class SVDEngine(EngineProtocol):
             raise ImportError("imageio and imageio-ffmpeg required for video saving")
 
         # Convert frames to numpy arrays
-        frame_arrays = [np.array(frame) for frame in frames]
+        frame_arrays: list[Any] = [np.array(frame) for frame in frames]
 
         # Save as video
         imageio.mimwrite(output_path, frame_arrays, fps=fps, codec="libx264", quality=8)
@@ -626,14 +639,14 @@ class SVDEngine(EngineProtocol):
             "hit_rate": f"{hit_rate:.2f}%",
         }
 
-    def clear_response_cache(self):
+    def clear_response_cache(self) -> None:
         """Clear the response cache."""
         if self.enable_response_cache:
             self._response_cache.clear()
             self._cache_stats = {"hits": 0, "misses": 0}
             logger.info("SVD response cache cleared")
 
-    def get_info(self) -> dict:
+    def get_info(self) -> dict[str, Any]:
         """Get engine information."""
         info = super().get_info()
         cache_stats = self.get_cache_stats()

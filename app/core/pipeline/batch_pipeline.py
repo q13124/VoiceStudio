@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -185,14 +186,16 @@ class BatchPipeline:
         try:
             from backend.ml.models.engine_service import get_engine_service
 
-            service = get_engine_service()
-            result = await service.transcribe(
+            service: Any = get_engine_service()
+            result = service.transcribe(
                 audio_data=audio_data,
                 sample_rate=sample_rate,
                 engine=self._stt_engine,
                 language=self._language,
             )
-            return result.get("text", "")
+            if hasattr(result, "__await__"):
+                result = await result
+            return str(result.get("text", ""))
         except Exception as exc:
             raise RuntimeError(f"Transcription failed: {exc}") from exc
 
@@ -211,7 +214,8 @@ class BatchPipeline:
         messages.append(Message(role=MessageRole.USER, content=text))
 
         response = await self._llm_provider.generate(messages)
-        return response.content
+        content: str = response.content
+        return content
 
     async def _synthesize(self, text: str) -> bytes | None:
         """Full TTS synthesis."""
@@ -220,12 +224,15 @@ class BatchPipeline:
         try:
             from backend.ml.models.engine_service import get_engine_service
 
-            service = get_engine_service()
-            result = await service.synthesize(
+            service: Any = get_engine_service()
+            result = service.synthesize(
                 text=text,
                 engine=self._tts_engine,
                 language=self._language,
             )
-            return result.get("audio_data")
+            if hasattr(result, "__await__"):
+                result = await result
+            audio: bytes | None = result.get("audio_data")
+            return audio
         except Exception as exc:
             raise RuntimeError(f"Synthesis failed: {exc}") from exc

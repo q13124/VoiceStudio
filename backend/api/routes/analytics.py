@@ -7,6 +7,7 @@ Endpoints for application analytics and usage statistics.
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -45,6 +46,8 @@ except ImportError:
     logger.debug("yellowbrick not available. Visualization features will be limited.")
 
 # Try importing matplotlib for visualizations
+matplotlib: Any = None
+plt: Any = None
 try:
     import matplotlib
 
@@ -54,8 +57,6 @@ try:
     HAS_MATPLOTLIB = True
 except ImportError:
     HAS_MATPLOTLIB = False
-    matplotlib = None
-    plt = None
     logger.debug("matplotlib not available. Visualization features will be limited.")
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
@@ -121,9 +122,9 @@ async def get_analytics_summary(
 
         # Get projects data
         try:
-            from .projects import _projects
+            from .projects import _store as _projects_store
 
-            projects = list(_projects.values())
+            projects = [{"created": p.get("created", end.isoformat())} for p in _projects_store().list_projects()]
             projects_in_period = [
                 p
                 for p in projects
@@ -265,12 +266,12 @@ async def get_category_metrics(
             elif category == "Projects":
                 # Count projects created in this interval
                 try:
-                    from .projects import _projects
+                    from .projects import _store as _projects_store2
 
-                    projects = list(_projects.values())
+                    all_projects = [{"created": p.get("created", end.isoformat())} for p in _projects_store2().list_projects()]
                     interval_projects = [
                         p
-                        for p in projects
+                        for p in all_projects
                         if datetime.fromisoformat(
                             p.get("created", end.isoformat()).replace("Z", "+00:00")
                         ).date()
@@ -552,7 +553,7 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
                                 if isinstance(v, (int, float))
                             ]
                             # Sort by weight descending
-                            explanation_list.sort(key=lambda x: x["weight"], reverse=True)
+                            explanation_list.sort(key=lambda x: float(x["weight"]) if isinstance(x["weight"], (int, float)) else 0.0, reverse=True)
                         else:
                             explanation_list = [
                                 {"feature": "mos_score", "weight": 0.3},
@@ -783,7 +784,7 @@ async def visualize_quality_metrics(
 
                     tier_counts = Counter(quality_tiers)
                     plt.figure(figsize=(10, 6))
-                    plt.bar(tier_counts.keys(), tier_counts.values())
+                    plt.bar(list(tier_counts.keys()), list(tier_counts.values()))
                     plt.xlabel("Quality Tier")
                     plt.ylabel("Count")
                     plt.title("Quality Classification Distribution")
@@ -791,11 +792,11 @@ async def visualize_quality_metrics(
 
             else:
                 # Default: scatter plot of metrics
-                mos_scores = [d["mos_score"] for d in metrics_data]
-                snr_values = [d["snr_db"] for d in metrics_data]
+                mos_list: list[Any] = [d["mos_score"] for d in metrics_data]
+                snr_list: list[Any] = [d["snr_db"] for d in metrics_data]
 
                 plt.figure(figsize=(10, 6))
-                plt.scatter(snr_values, mos_scores, alpha=0.6)
+                plt.scatter(snr_list, mos_list, alpha=0.6)
                 plt.xlabel("SNR (dB)")
                 plt.ylabel("MOS Score")
                 plt.title("Quality Metrics Scatter Plot")

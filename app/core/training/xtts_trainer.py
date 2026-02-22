@@ -17,7 +17,7 @@ import json
 import logging
 import os
 import shutil
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -173,7 +173,7 @@ class XTTSTrainer:
         enable_time_stretch: bool = True,
         enable_pitch_shift: bool = True,
         enable_shift: bool = True,
-    ) -> any | None:
+    ) -> Any | None:
         """
         Create audio augmentation pipeline for training data augmentation.
 
@@ -245,14 +245,20 @@ class XTTSTrainer:
         except ImportError:
             HAS_PROGRESS = False
 
-            def wrap_iterable(iterable, *args, **kwargs):
+            def wrap_iterable(
+                iterable: Iterator[Any],
+                desc: str | None = None,
+                total: int | None = None,
+                disable: bool = False,
+                **kwargs: Any,
+            ) -> Iterator[Any]:
                 return iterable
 
         # Validate audio files exist
         valid_files = []
-        audio_iter = (
+        audio_iter: Any = (
             wrap_iterable(
-                audio_files,
+                iter(audio_files),
                 desc="Validating audio files",
                 total=len(audio_files) if audio_files else None,
                 unit="file",
@@ -357,18 +363,17 @@ class XTTSTrainer:
                 if config_file.exists():
                     with open(config_file) as f:
                         config_dict = json.load(f)
-                    self.config = XttsConfig()
-                    self.config.from_dict(config_dict)
+                    xtts_config = XttsConfig()
+                    xtts_config.from_dict(config_dict)
+                    self.config = xtts_config
                 else:
-                    # Use default config
                     self.config = XttsConfig()
             else:
-                # Use default config
                 self.config = XttsConfig()
 
             # Initialize model
-            self.model = Xtts.init_from_config(self.config)
-            self.model.load_checkpoint(
+            xtts_model = Xtts.init_from_config(self.config)
+            xtts_model.load_checkpoint(
                 model_path=model_path,
                 config_path=(
                     config_path or str(Path(model_path).parent / "config.json")
@@ -377,7 +382,8 @@ class XTTSTrainer:
                 ),
                 vocab_path=None,
             )
-            self.model.to(self.device)
+            xtts_model.to(self.device)
+            self.model = xtts_model
 
             logger.info("XTTS model initialized for training")
             return True
@@ -679,9 +685,8 @@ class XTTSTrainer:
         Returns:
             Path to exported model
         """
-        output_path = output_path or str(self.output_dir / "exported_model")
-        output_path = Path(output_path)
-        output_path.mkdir(parents=True, exist_ok=True)
+        export_dir = Path(output_path or str(self.output_dir / "exported_model"))
+        export_dir.mkdir(parents=True, exist_ok=True)
 
         # Copy checkpoint files
         checkpoint_dir = Path(checkpoint_path)
@@ -689,15 +694,15 @@ class XTTSTrainer:
             # Copy model file
             model_file = checkpoint_dir / "model.pth"
             if model_file.exists():
-                shutil.copy2(model_file, output_path / "model.pth")
+                shutil.copy2(model_file, export_dir / "model.pth")
 
             # Copy config
             config_file = checkpoint_dir / "config.json"
             if config_file.exists():
-                shutil.copy2(config_file, output_path / "config.json")
+                shutil.copy2(config_file, export_dir / "config.json")
 
-            logger.info(f"Model exported to: {output_path}")
-            return str(output_path)
+            logger.info(f"Model exported to: {export_dir}")
+            return str(export_dir)
         else:
             raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
 

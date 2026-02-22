@@ -10,7 +10,9 @@ import logging
 import os
 import uuid
 from datetime import datetime
+from typing import Any
 
+import numpy as np
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
@@ -19,6 +21,19 @@ from ..models_additional import EmotionApplyRequest
 from ..optimization import cache_response
 
 logger = logging.getLogger(__name__)
+
+
+def _scalar_float(value: Any, default: float = 0.0) -> float:
+    """Extract a scalar float from a value that may be float, ndarray, or list."""
+    if value is None:
+        return default
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, np.ndarray):
+        return float(np.mean(value))
+    if isinstance(value, list):
+        return float(value[0]) if value else default
+    return default
 
 router = APIRouter(prefix="/api/emotion", tags=["emotion"])
 
@@ -151,10 +166,10 @@ async def analyze(req: dict) -> dict:
             # Extract voice characteristics
             try:
                 voice_chars = audio_utils.analyze_voice_characteristics(audio, sample_rate)
-                f0_mean = voice_chars.get("f0_mean", 0.0)
-                f0_std = voice_chars.get("f0_std", 0.0)
-                spectral_centroid = voice_chars.get("spectral_centroid", 0.0)
-                zero_crossing_rate = voice_chars.get("zero_crossing_rate", 0.0)
+                f0_mean = _scalar_float(voice_chars.get("f0_mean"), 0.0)
+                f0_std = _scalar_float(voice_chars.get("f0_std"), 0.0)
+                spectral_centroid = _scalar_float(voice_chars.get("spectral_centroid"), 0.0)
+                zero_crossing_rate = _scalar_float(voice_chars.get("zero_crossing_rate"), 0.0)
             except Exception as e:
                 logger.warning(f"Failed to extract voice characteristics: {e}")
                 f0_mean = 0.0
@@ -244,7 +259,7 @@ async def analyze(req: dict) -> dict:
                 emotion_scores = {k: v / total_score for k, v in emotion_scores.items()}
 
             # Find dominant emotion
-            dominant_emotion = max(emotion_scores, key=emotion_scores.get)
+            dominant_emotion = max(emotion_scores, key=lambda k: emotion_scores.get(k, 0.0))
             dominant_score = emotion_scores[dominant_emotion]
 
             # Calculate emotion detection accuracy/confidence

@@ -20,7 +20,7 @@ import logging
 import os
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -45,9 +45,9 @@ try:
     OPENTELEMETRY_AVAILABLE = True
 except ImportError:
     OPENTELEMETRY_AVAILABLE = False
-    trace = None  # type: ignore
-    TracerProvider = None  # type: ignore
-    SpanExporter = None  # type: ignore
+    trace = None
+    TracerProvider = None
+    SpanExporter = None
 
 # OTLP exporter (optional, Phase 7 Sprint 2)
 try:
@@ -58,7 +58,7 @@ try:
     OTLP_AVAILABLE = True
 except ImportError:
     OTLP_AVAILABLE = False
-    OTLPSpanExporter = None  # type: ignore
+    OTLPSpanExporter = None
 
 # Local imports
 from backend.platform.telemetry.telemetry import get_telemetry_service
@@ -103,10 +103,13 @@ SKIP_PATHS = frozenset(
 # Local File Exporter (No External Dependencies)
 # =============================================================================
 
-_base_class = SpanExporter if OPENTELEMETRY_AVAILABLE else object
+if TYPE_CHECKING:
+    from opentelemetry.sdk.trace.export import SpanExporter as _ExporterBase
+else:
+    _ExporterBase = SpanExporter if OPENTELEMETRY_AVAILABLE else object
 
 
-class LocalFileSpanExporter(_base_class):
+class LocalFileSpanExporter(_ExporterBase):
     """
     Exports spans to local JSON files for offline analysis.
 
@@ -408,17 +411,20 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
         """Process request with OpenTelemetry tracing."""
         # Skip if disabled or path excluded
         if not self.enabled or self._should_skip(request.url.path):
-            return await call_next(request)
+            response: Response = await call_next(request)
+            return response
 
         # Skip based on sampling
         if not self._should_sample():
-            return await call_next(request)
+            response = await call_next(request)
+            return response
 
         tracer = get_tracer()
 
         # Fallback to basic correlation if OpenTelemetry not available
         if not tracer or not OPENTELEMETRY_AVAILABLE:
-            return await call_next(request)
+            response = await call_next(request)
+            return response
 
         # Extract trace context from incoming headers
         carrier = dict(request.headers)

@@ -14,9 +14,11 @@ Compatible with:
 from __future__ import annotations
 
 import logging
+from typing import Any
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 import soundfile as sf
 import torch
 
@@ -49,6 +51,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # Try importing general model cache
+_model_cache: Any
 try:
     from app.core.models.cache import get_model_cache
 
@@ -62,7 +65,7 @@ except ImportError:
 # Fallback: Silero-specific cache (for backward compatibility)
 from collections import OrderedDict
 
-_MODEL_CACHE: OrderedDict = OrderedDict()
+_MODEL_CACHE: OrderedDict[str, Any] = OrderedDict()
 _MAX_CACHE_SIZE = 2  # Maximum number of models to cache in memory
 
 
@@ -71,7 +74,7 @@ def _get_cache_key(model_id: str, language: str, device: str) -> str:
     return f"silero::{model_id}::{language}::{device}"
 
 
-def _get_cached_model(model_id: str, language: str, device: str):
+def _get_cached_model(model_id: str, language: str, device: str) -> Any:
     """Get cached model if available."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -88,7 +91,7 @@ def _get_cached_model(model_id: str, language: str, device: str):
     return None
 
 
-def _cache_model(model_id: str, language: str, device: str, model):
+def _cache_model(model_id: str, language: str, device: str, model: Any) -> None:
     """Cache model with LRU eviction."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -227,21 +230,21 @@ class SileroEngine(EngineProtocol):
 
         self.model_id = model_id
         self.default_language = language
-        self.model = None
+        self.model: Any = None
         self.speaker = None
         self.sample_rate = self.DEFAULT_SAMPLE_RATE
         self.lazy_load = lazy_load
         self.batch_size = batch_size
-        self.enable_caching = enable_caching
+        self._caching_enabled = enable_caching
 
         # Override device if GPU requested and available
         if gpu and torch.cuda.is_available() and self.device == "cpu":
             self.device = "cuda"
 
-    def _load_model(self):
+    def _load_model(self) -> bool:
         """Load model with caching support."""
         # Check cache first
-        if self.enable_caching:
+        if self._caching_enabled:
             cached_model = _get_cached_model(self.model_id, self.default_language, self.device)
             if cached_model is not None:
                 logger.debug(f"Using cached model: {self.model_id} ({self.default_language})")
@@ -286,7 +289,7 @@ class SileroEngine(EngineProtocol):
                 self.sample_rate = model.config.sample_rate
 
             # Cache model
-            if self.enable_caching:
+            if self._caching_enabled:
                 _cache_model(self.model_id, self.default_language, self.device, self.model)
 
             logger.info(f"Silero TTS model loaded successfully (sample_rate: {self.sample_rate})")
@@ -327,7 +330,7 @@ class SileroEngine(EngineProtocol):
                 logger.debug("Lazy loading enabled, model will be loaded on first use")
                 return True
 
-            return self._load_model()
+            return bool(self._load_model())
 
         except Exception as e:
             logger.error(f"Failed to initialize Silero TTS engine: {e}")
@@ -342,8 +345,8 @@ class SileroEngine(EngineProtocol):
         output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
-        **kwargs,
-    ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
+        **kwargs: Any,
+    ) -> npt.NDArray[np.float32] | None | tuple[npt.NDArray[np.float32] | None, dict[str, Any]]:
         """
         Synthesize speech from text using Silero TTS.
 
@@ -461,7 +464,7 @@ class SileroEngine(EngineProtocol):
                 logger.info(f"Audio saved to: {output_path}")
                 return None
 
-            return audio
+            return np.asarray(audio)
 
         except Exception as e:
             logger.error(f"Silero TTS synthesis failed: {e}")
@@ -492,12 +495,12 @@ class SileroEngine(EngineProtocol):
 
     def _process_audio_quality(
         self,
-        audio: np.ndarray,
+        audio: npt.NDArray[np.float32],
         sample_rate: int,
         reference_audio: str | Path | None = None,
         enhance: bool = False,
         calculate: bool = False,
-    ) -> np.ndarray | tuple[np.ndarray, dict]:
+    ) -> npt.NDArray[np.float32] | tuple[npt.NDArray[np.float32], dict[str, Any]]:
         """Process audio for quality enhancement and/or metrics calculation."""
         quality_metrics = {}
 
@@ -511,11 +514,11 @@ class SileroEngine(EngineProtocol):
 
         if calculate and HAS_QUALITY_METRICS:
             try:
-                quality_metrics = calculate_all_metrics(audio, sample_rate)
+                quality_metrics = calculate_all_metrics(audio, sample_rate=sample_rate)
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
+                        similarity = calculate_similarity(ref_audio, audio)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -556,8 +559,8 @@ class SileroEngine(EngineProtocol):
         language: str = "en",
         voice: str | None = None,
         output_dir: str | Path | None = None,
-        **kwargs,
-    ) -> list[np.ndarray | None]:
+        **kwargs: Any,
+    ) -> list[npt.NDArray[np.float32] | None]:
         """
         Synthesize multiple texts in batch with optimized processing.
 
@@ -586,7 +589,7 @@ class SileroEngine(EngineProtocol):
         batch_size = self.batch_size
         for batch_start in range(0, len(texts), batch_size):
             batch_texts = texts[batch_start : batch_start + batch_size]
-            batch_results = []
+            batch_results: list[npt.NDArray[np.float32] | None] = []
 
             # Use inference mode for better performance
             with torch.inference_mode():
@@ -658,12 +661,12 @@ class SileroEngine(EngineProtocol):
 
         return results
 
-    def enable_caching(self, enable: bool = True):
+    def set_caching_enabled(self, enable: bool = True) -> None:
         """Enable or disable caching."""
-        self.enable_caching = enable
+        self._caching_enabled = enable
         logger.info(f"Model caching {'enabled' if enable else 'disabled'}")
 
-    def set_batch_size(self, batch_size: int):
+    def set_batch_size(self, batch_size: int) -> None:
         """Set batch size for batch operations."""
         self.batch_size = max(1, batch_size)
         logger.info(f"Batch size set to {self.batch_size}")
@@ -678,7 +681,7 @@ class SileroEngine(EngineProtocol):
             "gpu_memory_allocated_mb": torch.cuda.memory_allocated(0) / 1024**2,
         }
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources."""
         try:
             # Don't delete cached model, just clear reference
@@ -693,7 +696,7 @@ class SileroEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during Silero cleanup: {e}")
 
-    def get_info(self) -> dict:
+    def get_info(self) -> dict[str, Any]:
         """Get engine information."""
         info = super().get_info()
         info.update(

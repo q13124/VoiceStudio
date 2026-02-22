@@ -16,7 +16,7 @@ import os
 import random
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 try:
     import psutil
@@ -36,17 +36,16 @@ try:
     HAS_ENGINE_METRICS = True
 except ImportError:
     HAS_ENGINE_METRICS = False
-    get_engine_metrics = None
+    get_engine_metrics = cast(Any, None)
 
 # Try importing UnifiedConfigService
 try:
-    from backend.platform.config.unified_config import UnifiedConfigService, get_config
+    from backend.platform.config.unified_config import get_config
 
     HAS_UNIFIED_CONFIG = True
 except ImportError:
     HAS_UNIFIED_CONFIG = False
-    get_config = None
-    UnifiedConfigService = None
+    get_config = cast(Any, None)
 
 # Try importing language detection
 try:
@@ -58,13 +57,14 @@ except ImportError:
     langdetect = None
 
 # Try importing ABTestingService for exposure tracking
+_ABTestingServiceClass: type[Any] | None = None
 try:
     from backend.ml.models.ab_testing import ABTestingService
 
+    _ABTestingServiceClass = ABTestingService
     HAS_AB_SERVICE = True
 except ImportError:
     HAS_AB_SERVICE = False
-    ABTestingService = None
 
 logger = logging.getLogger(__name__)
 
@@ -149,7 +149,7 @@ class EngineRouter:
             except Exception as e:
                 logger.warning(f"Failed to get process: {e}")
 
-    def register_engine(self, name: str, engine_class: type[EngineProtocol]):
+    def register_engine(self, name: str, engine_class: type[EngineProtocol]) -> None:
         """
         Register an engine class.
 
@@ -167,7 +167,7 @@ class EngineRouter:
             )
         self._engine_types[name] = engine_class
 
-    def get_engine(self, name: str, **kwargs) -> EngineProtocol | None:
+    def get_engine(self, name: str, **kwargs: Any) -> EngineProtocol | None:
         """
         Get or create an engine instance.
 
@@ -238,7 +238,7 @@ class EngineRouter:
             logger.warning(f"Engine '{name}' not registered")
             return None
 
-    def list_engines(self) -> list:
+    def list_engines(self) -> list[str]:
         """
         List available engine names.
 
@@ -256,7 +256,7 @@ class EngineRouter:
         """
         return dict(self._failed_engines)
 
-    def unregister_engine(self, name: str):
+    def unregister_engine(self, name: str) -> None:
         """
         Unregister an engine and cleanup instance.
 
@@ -309,7 +309,7 @@ class EngineRouter:
         if name in self._engine_types:
             del self._engine_types[name]
 
-    def cleanup_all(self):
+    def cleanup_all(self) -> None:
         """Cleanup all engine instances."""
         memory_before = self._get_memory_usage_mb()
 
@@ -340,7 +340,7 @@ class EngineRouter:
 
         try:
             memory_info = self._process.memory_info()
-            return memory_info.rss / (1024 * 1024)  # Convert to MB
+            return float(memory_info.rss) / (1024 * 1024)
         except Exception as e:
             logger.warning(f"Failed to get memory usage: {e}")
             return 0.0
@@ -357,7 +357,7 @@ class EngineRouter:
 
         try:
             system_memory = psutil.virtual_memory()
-            return system_memory.percent / 100.0
+            return float(system_memory.percent) / 100.0
         except Exception as e:
             logger.debug(f"Failed to get system memory usage: {e}")
             return None
@@ -380,7 +380,7 @@ class EngineRouter:
             logger.debug(f"Failed to get GPU memory usage: {e}")
         return 0.0
 
-    def _cleanup_if_memory_high(self):
+    def _cleanup_if_memory_high(self) -> None:
         """
         Cleanup engines if memory usage exceeds threshold.
 
@@ -433,7 +433,7 @@ class EngineRouter:
             )
             self.unregister_engine(name)
 
-    def _aggressive_cleanup(self):
+    def _aggressive_cleanup(self) -> None:
         """
         Aggressive cleanup: unload all idle engines and some active ones.
         """
@@ -466,7 +466,7 @@ class EngineRouter:
             if system_memory_usage is None:
                 break
 
-    def _proactive_cleanup(self):
+    def _proactive_cleanup(self) -> None:
         """
         Proactive cleanup: unload idle engines to prevent memory pressure.
         """
@@ -490,7 +490,7 @@ class EngineRouter:
                 )
                 self.unregister_engine(name)
 
-    def _cleanup_idle_engines(self):
+    def _cleanup_idle_engines(self) -> None:
         """
         Unload engines that have been idle for longer than the timeout.
 
@@ -561,7 +561,7 @@ class EngineRouter:
         system_memory_usage = self._get_system_memory_usage()
         gpu_memory = self._get_gpu_memory_usage_mb()
 
-        stats = {
+        stats: dict[str, Any] = {
             "total_loaded": len(self._engines),
             "total_registered": len(self._engine_types),
             "idle_timeout_seconds": self._idle_timeout_seconds,
@@ -609,7 +609,7 @@ class EngineRouter:
 
         return stats
 
-    def load_engine_from_manifest(self, manifest_path: str):
+    def load_engine_from_manifest(self, manifest_path: str) -> None:
         """
         Load and register an engine from a manifest file.
 
@@ -656,7 +656,7 @@ class EngineRouter:
         self.register_engine(engine_id, engine_class)
         self._manifests[engine_id] = manifest
 
-    def load_all_engines(self, engines_root: str = "engines"):
+    def load_all_engines(self, engines_root: str = "engines") -> None:
         """
         Load all engines from manifest files in engines directory.
 
@@ -751,7 +751,7 @@ class EngineRouter:
             Engine instance that best matches requirements,
             or None if no match
         """
-        available_engines = []
+        available_engines: list[dict[str, Any]] = []
 
         # Score each available engine
         for engine_id in self.list_engines():
@@ -886,10 +886,10 @@ class EngineRouter:
             return None
 
         # Sort by final score (descending)
-        available_engines.sort(key=lambda x: x["final_score"], reverse=True)
+        available_engines.sort(key=lambda x: float(x.get("final_score", 0)), reverse=True)
 
         # Return best matching engine
-        best_engine_id = available_engines[0]["engine_id"]
+        best_engine_id = str(available_engines[0]["engine_id"])
         return self.get_engine(best_engine_id)
 
     # ==========================================================================
@@ -914,7 +914,7 @@ class EngineRouter:
             return None
 
         try:
-            detected = langdetect.detect(text)
+            detected = str(langdetect.detect(text))
             logger.debug(f"Detected language: {detected}")
             return detected
         except Exception as e:
@@ -1087,9 +1087,9 @@ class EngineRouter:
                 logger.debug(f"A/B test '{exp.id}': selected '{selected}' ({group})")
 
                 # Track exposure in ABTestingService for analytics
-                if HAS_AB_SERVICE and ABTestingService:
+                if HAS_AB_SERVICE and _ABTestingServiceClass is not None:
                     try:
-                        ab_service = ABTestingService()
+                        ab_service = _ABTestingServiceClass()
                         user_id = getattr(self, "_current_user_id", "anonymous")
                         ab_service.track_exposure(
                             user_id=user_id,
@@ -1292,7 +1292,7 @@ class EngineRouter:
         return None
 
     def select_engine_with_fallback(
-        self, task_type: str = "tts", **kwargs
+        self, task_type: str = "tts", **kwargs: Any
     ) -> tuple[EngineProtocol | None, list[str]]:
         """
         Select engine with automatic fallback chain.

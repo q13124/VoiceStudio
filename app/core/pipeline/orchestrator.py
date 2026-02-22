@@ -425,16 +425,28 @@ class PipelineOrchestrator:
     async def _transcribe(self, audio_data: bytes, sample_rate: int) -> str:
         """Transcribe audio using the configured STT engine."""
         try:
+            import asyncio
+            import tempfile
+
             from backend.ml.models.engine_service import get_engine_service
 
             service = get_engine_service()
-            result = await service.transcribe(
-                audio_data=audio_data,
-                sample_rate=sample_rate,
-                engine=self._config.stt_engine,
-                language=self._config.language,
-            )
-            return result.get("text", "")
+
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+                tmp.write(audio_data)
+                tmp_path = tmp.name
+
+            try:
+                result = await asyncio.to_thread(
+                    service.transcribe,
+                    engine_id=self._config.stt_engine,
+                    audio_path=tmp_path,
+                    language=self._config.language,
+                )
+            finally:
+                Path(tmp_path).unlink(missing_ok=True)
+
+            return str(result.get("text", ""))
         except Exception as exc:
             logger.error(f"STT failed: {exc}")
             raise RuntimeError(f"Transcription failed: {exc}") from exc
@@ -510,17 +522,23 @@ class PipelineOrchestrator:
             return None
 
         try:
+            import asyncio
+
             from backend.ml.models.engine_service import get_engine_service
 
             service = get_engine_service()
-            result = await service.synthesize(
+            result = await asyncio.to_thread(
+                service.synthesize,
+                engine_id=self._config.tts_engine,
                 text=text,
-                engine=self._config.tts_engine,
                 voice_id=self._config.tts_voice,
                 speaker_wav=self._config.tts_speaker_wav,
                 language=self._config.language,
             )
-            return result.get("audio_data")
+            audio_data_val = result.get("audio_data")
+            if isinstance(audio_data_val, bytes):
+                return audio_data_val
+            return None
         except Exception as exc:
             logger.error(f"TTS failed: {exc}")
             raise RuntimeError(f"Synthesis failed: {exc}") from exc

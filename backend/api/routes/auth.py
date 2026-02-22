@@ -124,13 +124,15 @@ async def login(request: LoginRequest):
                 )
 
     # Create tokens
-    access_token = get_jwt_manager().create_access_token(
+    jwt_mgr = get_jwt_manager()
+    assert jwt_mgr is not None
+    access_token = jwt_mgr.create_access_token(
         user_id=user.user_id,
         username=user.username,
         role=user.role,
     )
 
-    refresh_token = get_jwt_manager().create_refresh_token(
+    refresh_token = jwt_mgr.create_refresh_token(
         user_id=user.user_id,
         username=user.username,
     )
@@ -168,7 +170,9 @@ async def refresh_token(
 
     refresh_token = credentials.credentials
 
-    access_token = get_jwt_manager().refresh_access_token(refresh_token)
+    jwt_mgr = get_jwt_manager()
+    assert jwt_mgr is not None
+    access_token = jwt_mgr.refresh_access_token(refresh_token)
     if not access_token:
         logger.warning("Failed to refresh token: invalid refresh token")
         raise HTTPException(
@@ -177,11 +181,11 @@ async def refresh_token(
         )
 
     # Get new refresh token
-    payload = get_jwt_manager().verify_token(refresh_token)
+    payload = jwt_mgr.verify_token(refresh_token)
     if payload:
-        new_refresh_token = get_jwt_manager().create_refresh_token(
-            user_id=payload.get("sub"),
-            username=payload.get("username"),
+        new_refresh_token = jwt_mgr.create_refresh_token(
+            user_id=str(payload.get("sub", "")),
+            username=str(payload.get("username", "")),
         )
     else:
         raise HTTPException(

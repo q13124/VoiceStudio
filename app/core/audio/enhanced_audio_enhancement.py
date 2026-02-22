@@ -14,6 +14,7 @@ Compatible with:
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import numpy as np
 
@@ -217,7 +218,7 @@ class EnhancedAudioEnhancer:
             zcr = np.mean(librosa.feature.zero_crossing_rate(audio_mono))
 
             # Adaptive configuration based on characteristics
-            config = {}
+            config: dict[str, Any] = {}
 
             # Low RMS = quiet audio, apply more aggressive enhancement
             if rms < 0.1:

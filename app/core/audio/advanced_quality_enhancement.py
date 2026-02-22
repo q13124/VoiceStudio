@@ -148,7 +148,8 @@ def preserve_formants(
         # Blend original and filtered (preserve dynamics)
         preserved = 0.7 * audio + 0.3 * filtered
 
-        return preserved.astype(audio.dtype)
+        result: np.ndarray = preserved.astype(audio.dtype)
+        return result
 
     except Exception as e:
         logger.warning(f"Formant preservation failed: {e}")
@@ -176,10 +177,10 @@ def enhance_prosody(audio: np.ndarray, sample_rate: int, strength: float = 0.3) 
             audio = np.mean(audio, axis=0)
 
         # Extract fundamental frequency (F0)
-        f0, voiced_flag = librosa.pyin(
+        f0, voiced_flag, _voiced_probs = librosa.pyin(
             audio,
-            fmin=librosa.note_to_hz("C2"),
-            fmax=librosa.note_to_hz("C7"),
+            fmin=float(librosa.note_to_hz("C2")),
+            fmax=float(librosa.note_to_hz("C7")),
             sr=sample_rate,
         )
 
@@ -301,7 +302,8 @@ def advanced_denoise(
         if is_stereo:
             denoised = np.stack([denoised, denoised])
 
-        return denoised.astype(audio.dtype)
+        result: np.ndarray = denoised.astype(audio.dtype)
+        return result
 
     except Exception as e:
         logger.warning(f"Advanced denoising failed: {e}")
@@ -376,6 +378,10 @@ def remove_artifacts_advanced(
         return audio
 
 
+_preserve_formants_fn = preserve_formants
+_enhance_prosody_fn = enhance_prosody
+
+
 def enhance_voice_quality_advanced(
     audio: np.ndarray,
     sample_rate: int,
@@ -441,11 +447,11 @@ def enhance_voice_quality_advanced(
 
     # Stage 4: Formant preservation (maintain natural timbre)
     if preserve_formants:
-        enhanced = preserve_formants(enhanced, sample_rate, reference_audio=reference_audio)
+        enhanced = _preserve_formants_fn(enhanced, sample_rate, reference_audio=reference_audio)
 
     # Stage 5: Prosody enhancement (improve naturalness - optional, slower)
     if enhance_prosody:
-        enhanced = enhance_prosody(enhanced, sample_rate, strength=prosody_strength)
+        enhanced = _enhance_prosody_fn(enhanced, sample_rate, strength=prosody_strength)
 
     # Stage 6: Normalization (final loudness matching)
     if normalize and HAS_PYLOUDNORM:

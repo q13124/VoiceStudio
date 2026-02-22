@@ -412,7 +412,8 @@ async def enhance_temporal_consistency(
             processed_analysis = None
             quality_improvement = 0.0
 
-            if req.smoothing_strength > 0.0:
+            smoothing: float = req.smoothing_strength if req.smoothing_strength is not None else 0.0
+            if smoothing > 0.0:
                 # Apply temporal smoothing (simplified - would use proper temporal filtering)
                 processed_video_id = f"temporal_{req.video_id}_{uuid.uuid4().hex[:8]}"
                 output_dir = os.path.join(tempfile.gettempdir(), "voicestudio_videos")
@@ -421,7 +422,7 @@ async def enhance_temporal_consistency(
 
                 # Re-read video and apply smoothing
                 cap = cv2.VideoCapture(video_path)
-                fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+                fourcc: int = getattr(cv2, "VideoWriter_fourcc")(*"mp4v")
                 out = cv2.VideoWriter(
                     output_path,
                     fourcc,
@@ -439,9 +440,9 @@ async def enhance_temporal_consistency(
                         break
 
                     # Apply temporal smoothing
-                    if prev_frame is not None and req.smoothing_strength > 0:
+                    if prev_frame is not None and smoothing > 0:
                         # Blend with previous frame for smoothing
-                        alpha = req.smoothing_strength
+                        alpha: float = smoothing
                         frame = cv2.addWeighted(frame, 1.0 - alpha, prev_frame, alpha, 0)
 
                     out.write(frame)

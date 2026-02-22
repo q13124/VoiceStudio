@@ -246,7 +246,8 @@ class MasteringRack:
             gain_reduction[above_threshold] = compressed / rms[above_threshold]
 
         # Apply compression
-        return audio * gain_reduction
+        compressed_audio: np.ndarray = audio * gain_reduction
+        return compressed_audio
 
     def apply_final_eq(self, audio: np.ndarray, sample_rate: int, params: dict) -> np.ndarray:
         """Apply final EQ for mastering."""
@@ -411,13 +412,15 @@ class MasteringRack:
                 # Fallback to peak normalization
                 max_val = np.max(np.abs(audio))
                 if max_val > 0:
-                    return audio / max_val * 0.95
+                    peak_normalized: np.ndarray = audio / max_val * 0.95
+                    return peak_normalized
                 return audio
 
         # Fallback to peak normalization
         max_val = np.max(np.abs(audio))
         if max_val > 0:
-            return audio / max_val * 0.95
+            fallback_normalized: np.ndarray = audio / max_val * 0.95
+            return fallback_normalized
         return audio
 
     def apply_dithering(self, audio: np.ndarray, params: dict) -> np.ndarray:
@@ -436,7 +439,7 @@ class MasteringRack:
         dithered = audio + dither
 
         # Quantize
-        quantized = np.round(dithered * (2.0 ** (bit_depth - 1))) / (2.0 ** (bit_depth - 1))
+        quantized: np.ndarray = np.round(dithered * (2.0 ** (bit_depth - 1))) / (2.0 ** (bit_depth - 1))
 
         return quantized
 

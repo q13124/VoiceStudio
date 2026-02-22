@@ -12,6 +12,8 @@ Compatible with:
 
 from __future__ import annotations
 
+from typing import Any
+
 import hashlib
 import json
 import logging
@@ -41,7 +43,7 @@ class SDCPUEngine(EngineProtocol):
     """SD CPU Engine for CPU-only Stable Diffusion generation."""
 
     # Class-level model cache (shared across instances)
-    _model_cache: OrderedDict[str, object] = OrderedDict()
+    _model_cache: OrderedDict[str, Any] = OrderedDict()
     _max_cache_size = 4  # Cache up to 4 models (increased from 2)
 
     SUPPORTED_FORMATS = ["png", "jpg", "webp"]
@@ -85,8 +87,8 @@ class SDCPUEngine(EngineProtocol):
         self.enable_response_cache = enable_response_cache
         self.response_cache_size = response_cache_size
 
-        self.pipe = None
-        self._model_key = None
+        self.pipe: Any = None
+        self._model_key: str | None = None
 
         # LRU response cache for generated images
         self._response_cache: OrderedDict[str, Image.Image] = OrderedDict()
@@ -116,7 +118,7 @@ class SDCPUEngine(EngineProtocol):
             return True
         return False
 
-    def _save_model_to_cache(self):
+    def _save_model_to_cache(self) -> None:
         """Save model to cache."""
         if not self.enable_model_cache or self._model_key is None:
             return
@@ -195,7 +197,7 @@ class SDCPUEngine(EngineProtocol):
         steps: int,
         cfg_scale: float,
         seed: int | None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Generate cache key from generation parameters."""
         cache_data = {
@@ -222,8 +224,8 @@ class SDCPUEngine(EngineProtocol):
         sampler: str | None = None,
         seed: int | None = None,
         output_path: str | Path | None = None,
-        **kwargs,
-    ) -> Image.Image | None | tuple[Image.Image | None, dict]:
+        **kwargs: Any,
+    ) -> Image.Image | None | tuple[Image.Image | None, dict[str, Any]]:
         """Generate image using CPU-only Stable Diffusion."""
         # Lazy loading: initialize only when needed
         if not self._initialized and not self.initialize():
@@ -285,7 +287,7 @@ class SDCPUEngine(EngineProtocol):
             if not images:
                 return None
 
-            image = images[0]
+            image: Image.Image = images[0]
 
             # Cache result
             if self.enable_response_cache and cache_key is not None:
@@ -337,7 +339,7 @@ class SDCPUEngine(EngineProtocol):
         seeds: list[int | None] | None = None,
         output_paths: list[str | Path | None] | None = None,
         batch_size: int | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> list[Image.Image | None]:
         """
         Generate multiple images using batch processing.
@@ -434,7 +436,7 @@ class SDCPUEngine(EngineProtocol):
                 ...
             return [None] * len(prompts)
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources (enhanced)."""
         try:
             # Don't delete if in cache (other instances might be using it)
@@ -455,7 +457,7 @@ class SDCPUEngine(EngineProtocol):
             logger.warning(f"Error during cleanup: {e}")
 
     @classmethod
-    def clear_model_cache(cls):
+    def clear_model_cache(cls) -> None:
         """Clear the shared model cache."""
         for _key, pipe in cls._model_cache.items():
             del pipe
@@ -479,14 +481,14 @@ class SDCPUEngine(EngineProtocol):
             "hit_rate": f"{hit_rate:.2f}%",
         }
 
-    def clear_response_cache(self):
+    def clear_response_cache(self) -> None:
         """Clear the response cache."""
         if self.enable_response_cache:
             self._response_cache.clear()
             self._cache_stats = {"hits": 0, "misses": 0}
             logger.info("SD CPU response cache cleared")
 
-    def get_info(self) -> dict:
+    def get_info(self) -> dict[str, Any]:
         """Get engine information."""
         info = super().get_info()
         cache_stats = self.get_cache_stats()

@@ -34,7 +34,7 @@ def load_engine_manifest(manifest_path: str) -> dict[str, Any]:
         raise FileNotFoundError(f"Manifest not found: {manifest_path}")
 
     with open(manifest_file, encoding="utf-8") as f:
-        manifest = json.load(f)
+        manifest: dict[str, Any] = json.load(f)
 
     # Validate required fields
     required_fields = ["engine_id", "name", "type", "version", "entry_point", "dependencies"]
@@ -62,7 +62,7 @@ def find_engine_manifests(engines_root: str = "engines") -> dict[str, str]:
     Returns:
         Dictionary mapping engine_id to manifest file path
     """
-    manifests = {}
+    manifests: dict[str, str] = {}
     engines_dir = Path(engines_root)
 
     if not engines_dir.exists():
@@ -95,13 +95,13 @@ def get_engine_entry_point(manifest: dict[str, Any]) -> str | None:
         - "app.core.engines.xtts_engine:XTTSEngine" (already normalized)
         - "app.core.engines.xtts_engine.XTTSEngine" (dot-separated, will be converted)
     """
-    entry_point = manifest.get("entry_point")
+    entry_point: str | None = manifest.get("entry_point")
     if not entry_point:
         return None
 
     # Already in module:class format
     if ":" in entry_point:
-        return entry_point
+        return str(entry_point)
 
     # Convert dot-separated format to module:class format
     # e.g., "app.core.engines.xtts_engine.XTTSEngine" -> "app.core.engines.xtts_engine:XTTSEngine"
@@ -110,7 +110,7 @@ def get_engine_entry_point(manifest: dict[str, Any]) -> str | None:
         return f"{parts[0]}:{parts[1]}"
 
     # Fallback: return as-is if we can't parse it
-    return entry_point
+    return str(entry_point)
 
 
 def get_engine_config_schema(manifest: dict[str, Any]) -> dict[str, Any]:
@@ -123,7 +123,8 @@ def get_engine_config_schema(manifest: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Configuration schema dictionary
     """
-    return manifest.get("config_schema", {})
+    schema: dict[str, Any] = manifest.get("config_schema", {})
+    return schema
 
 
 def validate_engine_requirements(manifest: dict[str, Any]) -> dict[str, bool]:

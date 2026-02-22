@@ -33,7 +33,6 @@ try:
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
-    torch = None
 
 logger = logging.getLogger(__name__)
 
@@ -85,11 +84,11 @@ class AudioBufferPool:
         self._last_cleanup = time.time()
         self._lock = threading.Lock()
 
-    def _get_buffer_key(self, size: int, dtype: np.dtype) -> str:
+    def _get_buffer_key(self, size: int, dtype: np.dtype[Any] | type) -> str:
         """Generate buffer key from size and dtype."""
         return f"{size}_{dtype}"
 
-    def get_buffer(self, size: int, dtype: np.dtype = np.float32) -> np.ndarray:
+    def get_buffer(self, size: int, dtype: np.dtype | type = np.float32) -> np.ndarray:
         """
         Get buffer from pool or create new one (optimized).
 
@@ -177,7 +176,7 @@ class AudioBufferPool:
         if not HAS_PSUTIL:
             return None
         try:
-            return psutil.virtual_memory().percent / 100.0
+            return float(psutil.virtual_memory().percent) / 100.0
         except Exception as e:
             logger.debug(f"Failed to get system memory usage: {e}")
             return None
@@ -306,6 +305,7 @@ class AudioBufferManager:
         self.enable_memory_pressure_cleanup = enable_memory_pressure_cleanup
 
         # Buffer pool
+        self._pool: AudioBufferPool | None = None
         if enable_pooling:
             self._pool = AudioBufferPool(
                 max_pool_size=max_pool_size,
@@ -313,8 +313,6 @@ class AudioBufferManager:
                 memory_pressure_threshold=memory_pressure_threshold,
                 enable_memory_pressure_cleanup=enable_memory_pressure_cleanup,
             )
-        else:
-            self._pool = None
 
         # Active buffers tracking
         self._active_buffers: dict[int, tuple[np.ndarray, float]] = {}
@@ -322,12 +320,12 @@ class AudioBufferManager:
         self._lock = threading.Lock()
 
         # Statistics
-        self._total_allocated = 0
-        self._total_freed = 0
+        self._total_allocated = 0.0
+        self._total_freed = 0.0
         self._peak_memory_mb = 0.0
         self._pressure_cleanups = 0
 
-    def allocate_buffer(self, size: int, dtype: np.dtype = np.float32) -> tuple[int, np.ndarray]:
+    def allocate_buffer(self, size: int, dtype: np.dtype | type = np.float32) -> tuple[int, np.ndarray]:
         """
         Allocate a new audio buffer.
 
@@ -395,7 +393,7 @@ class AudioBufferManager:
         if not HAS_PSUTIL:
             return None
         try:
-            return psutil.virtual_memory().percent / 100.0
+            return float(psutil.virtual_memory().percent) / 100.0
         except Exception as e:
             logger.debug(f"Failed to get system memory usage: {e}")
             return None

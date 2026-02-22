@@ -309,8 +309,8 @@ class RVCEngine(EngineProtocol):
         self.model_path = model_path
         self.sample_rate = sample_rate
         self.hop_length = hop_length
-        self.model = None
-        self.hubert_model = None
+        self.model: dict[str, Any] | None = None
+        self.hubert_model: Any = None
         self.net_g = None  # RVC synthesizer model (net_g)
         self.feature_extractor = None
         self._model_cache: dict[str, Any] = {}
@@ -335,8 +335,8 @@ class RVCEngine(EngineProtocol):
         self.f0_mel_min = 1127 * np.log(1 + self.f0_min / 700)
         self.f0_mel_max = 1127 * np.log(1 + self.f0_max / 700)
         # Cache for pitch (initialized when device is known)
-        self.cache_pitch = None
-        self.cache_pitchf = None
+        self.cache_pitch: torch.Tensor | None = None
+        self.cache_pitchf: torch.Tensor | None = None
 
     def _load_models(self):
         """Load models with caching support."""
@@ -1928,7 +1928,8 @@ class RVCEngine(EngineProtocol):
             if len(features.shape) == 1:
                 features = features.reshape(-1, 1)
 
-            return features.astype(np.float32)
+            result: np.ndarray = features.astype(np.float32)
+            return result
 
         except Exception as e:
             logger.warning(f"HuBERT feature extraction failed: {e}, using fallback")

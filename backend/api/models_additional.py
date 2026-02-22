@@ -975,6 +975,16 @@ class FaceEnhancementRequest(BaseModel):
         default=True,
         description="Apply face-specific enhancement",
     )
+    model: str | None = Field(
+        default=None,
+        description="Enhancement model to use (e.g. realesrgan)",
+    )
+    strength: float | None = Field(
+        default=None,
+        description="Enhancement strength (0.0-1.0)",
+        ge=0.0,
+        le=1.0,
+    )
 
 
 class FaceQualityAnalysis(BaseModel):

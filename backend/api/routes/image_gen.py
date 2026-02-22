@@ -618,6 +618,11 @@ async def enhance_face(req: FaceEnhancementRequest) -> FaceEnhancementResponse:
                     detail=f"Video face enhancement failed: {ve!s}",
                 ) from ve
 
+        raise HTTPException(
+            status_code=400,
+            detail="Either image_id or video_id must be provided",
+        )
+
     except HTTPException:
         raise
     except Exception as e:

@@ -23,6 +23,7 @@ import tempfile
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -95,13 +96,13 @@ class AeneasEngine(EngineProtocol):
         super().__init__(device=device, gpu=gpu)
 
         self.aeneas_path = aeneas_path
-        self.executable_path = None
-        self.python_executable = None
-        self._alignment_cache = OrderedDict()  # LRU cache for alignment results
+        self.executable_path: str | None = None
+        self.python_executable: str | None = None
+        self._alignment_cache: OrderedDict[str, dict[str, Any]] = OrderedDict()
         self._cache_max_size = 100  # Maximum number of cached alignments
         self.enable_cache = True
-        self.batch_size = 4  # Default batch size for parallel processing
-        self._temp_dir = None  # Reusable temp directory
+        self.batch_size = 4
+        self._temp_dir: str | None = None
 
     def _find_executable(self, name: str, custom_path: str | None = None) -> str | None:
         """Find executable in PATH or custom path."""
@@ -109,17 +110,17 @@ class AeneasEngine(EngineProtocol):
             return custom_path
 
         if custom_path and os.path.isdir(custom_path):
-            exe_path = os.path.join(custom_path, name)
-            if os.path.isfile(exe_path) and os.access(exe_path, os.X_OK):
-                return exe_path
+            candidate = os.path.join(custom_path, name)
+            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+                return candidate
 
-        exe_path = shutil.which(name)
-        if exe_path:
-            return exe_path
+        found = shutil.which(name)
+        if found:
+            return found
 
-        exe_path = shutil.which(f"{name}.exe")
-        if exe_path:
-            return exe_path
+        found = shutil.which(f"{name}.exe")
+        if found:
+            return found
 
         return None
 
@@ -226,8 +227,8 @@ class AeneasEngine(EngineProtocol):
         language: str = "en",
         output_path: str | Path | None = None,
         output_format: str = "srt",
-        **kwargs,
-    ) -> dict | None:
+        **kwargs: Any,
+    ) -> dict[str, Any] | None:
         """
         Align audio with text and generate subtitles.
 
@@ -263,7 +264,7 @@ class AeneasEngine(EngineProtocol):
                 if audio_hash in self._alignment_cache:
                     logger.debug("Using cached Aeneas alignment result")
                     self._alignment_cache.move_to_end(audio_hash)  # LRU update
-                    return self._alignment_cache[audio_hash].copy()
+                    return dict(self._alignment_cache[audio_hash])
 
             # Validate output format
             if output_format not in self.SUPPORTED_FORMATS:
@@ -287,11 +288,11 @@ class AeneasEngine(EngineProtocol):
             if output_path:
                 output_file = Path(output_path)
             else:
-                output_file = tempfile.NamedTemporaryFile(
+                tmp_out = tempfile.NamedTemporaryFile(
                     suffix=f".{output_format}", delete=False, dir=temp_dir
                 )
-                output_file.close()
-                output_file = Path(output_file.name)
+                tmp_out.close()
+                output_file = Path(tmp_out.name)
 
             try:
                 # Try Python module first
@@ -335,6 +336,11 @@ class AeneasEngine(EngineProtocol):
 
                 except ImportError:
                     # Use command-line interface
+                    if self.executable_path is None and self.python_executable is None:
+                        logger.error("No aeneas executable available")
+                        return None
+
+                    cmd: list[str]
                     if "python" in str(self.executable_path) or " -m " in str(self.executable_path):
                         if isinstance(self.executable_path, str) and " -m " in self.executable_path:
                             cmd = [
@@ -349,7 +355,7 @@ class AeneasEngine(EngineProtocol):
                                 f"--boundary-percent={boundary_percent}",
                                 f"--output-format={output_format}",
                             ]
-                        else:
+                        elif self.python_executable is not None:
                             cmd = [
                                 self.python_executable,
                                 "-m",
@@ -364,7 +370,10 @@ class AeneasEngine(EngineProtocol):
                                 f"--boundary-percent={boundary_percent}",
                                 f"--output-format={output_format}",
                             ]
-                    else:
+                        else:
+                            logger.error("No python executable available for aeneas")
+                            return None
+                    elif self.executable_path is not None:
                         cmd = [
                             self.executable_path,
                             "sync",
@@ -377,6 +386,9 @@ class AeneasEngine(EngineProtocol):
                             f"--boundary-percent={boundary_percent}",
                             f"--output-format={output_format}",
                         ]
+                    else:
+                        logger.error("No aeneas executable configured")
+                        return None
 
                     result = subprocess.run(
                         cmd,
@@ -426,12 +438,13 @@ class AeneasEngine(EngineProtocol):
             logger.error(f"Aeneas alignment failed: {e}")
             return None
 
-    def _read_alignment_file(self, file_path: Path, format: str) -> dict:
+    def _read_alignment_file(self, file_path: Path, format: str) -> dict[str, Any]:
         """Read alignment data from file."""
         try:
             if format == "json":
                 with open(file_path, encoding="utf-8") as f:
-                    return json.load(f)
+                    data: dict[str, Any] = json.load(f)
+                    return data
             elif format == "srt":
                 # Parse SRT format
                 with open(file_path, encoding="utf-8") as f:
@@ -455,8 +468,8 @@ class AeneasEngine(EngineProtocol):
         self,
         alignments: list[tuple[str | Path, str, str, str | Path | None, str]],
         batch_size: int | None = None,
-        **kwargs,
-    ) -> list[dict | None]:
+        **kwargs: Any,
+    ) -> list[dict[str, Any] | None]:
         """
         Align multiple audio-text pairs in batch with parallel processing.
 
@@ -473,7 +486,7 @@ class AeneasEngine(EngineProtocol):
 
         actual_batch_size = batch_size if batch_size is not None else self.batch_size
 
-        def align_single(args):
+        def align_single(args: tuple[str | Path, str, str, str | Path | None, str]) -> dict[str, Any] | None:
             audio_path, text, language, output_path, output_format = args
             try:
                 return self.align(
@@ -493,7 +506,7 @@ class AeneasEngine(EngineProtocol):
 
         return results
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources."""
         try:
             # Cleanup temp directory
@@ -513,7 +526,7 @@ class AeneasEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during cleanup: {e}")
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear alignment cache."""
         self._alignment_cache.clear()
         logger.info("Alignment cache cleared")
@@ -526,7 +539,7 @@ class AeneasEngine(EngineProtocol):
             "cache_enabled": self.enable_cache,
         }
 
-    def get_info(self) -> dict:
+    def get_info(self) -> dict[str, Any]:
         """Get engine information."""
         info = super().get_info()
         info.update(

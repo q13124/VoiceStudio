@@ -353,9 +353,10 @@ class TranslationService:
             project.progress = 0.1
 
             # Load translation model
+            source_lang: str = project.source_language or "auto"
             translator = await self._load_translation_model(
                 project.translation_provider,
-                project.source_language,
+                source_lang,
                 project.target_language,
             )
             project.progress = 0.3
@@ -368,7 +369,7 @@ class TranslationService:
                 translated_text = await self._translate_text(
                     translator,
                     segment.text,
-                    project.source_language,
+                    source_lang,
                     project.target_language,
                 )
 
@@ -663,7 +664,7 @@ class TranslationService:
             result = translator_pipeline(text, max_length=512)
 
             if result and len(result) > 0:
-                return result[0].get("translation_text", text)
+                return str(result[0].get("translation_text", text))
 
         except ImportError:
             logger.debug("transformers not available, trying alternative")
@@ -679,7 +680,7 @@ class TranslationService:
             translator = Translator()
             result = translator.translate(text, dest=target_lang)
             if result and result.text:
-                return result.text
+                return str(result.text)
         except ImportError:
             logger.debug("googletrans not available")
         except Exception as e:
@@ -691,7 +692,7 @@ class TranslationService:
 
             result = GoogleTranslator(source="auto", target=target_lang).translate(text)
             if result:
-                return result
+                return str(result)
         except ImportError:
             logger.debug("deep-translator not available")
         except Exception as e:

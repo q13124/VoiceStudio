@@ -233,7 +233,8 @@ class PostFXProcessor:
         if method == "peak":
             max_val = np.max(np.abs(audio))
             if max_val > 0:
-                return audio / max_val * 0.95
+                normalized: np.ndarray = audio / max_val * 0.95
+                return normalized
             return audio
 
         return audio
@@ -250,7 +251,8 @@ class PostFXProcessor:
 
         if HAS_NOISEREDUCE:
             try:
-                return nr.reduce_noise(y=audio, sr=sample_rate, stationary=False)
+                denoised: np.ndarray = nr.reduce_noise(y=audio, sr=sample_rate, stationary=False)
+                return denoised
             except Exception as e:
                 logger.warning(f"Denoising failed: {e}")
 
@@ -410,7 +412,7 @@ class PostFXProcessor:
                 reverb_signal += delayed * (1.0 - damping) * 0.3
 
         # Mix dry and wet
-        result = audio * (1.0 - wet_level) + reverb_signal * wet_level
+        result: np.ndarray = audio * (1.0 - wet_level) + reverb_signal * wet_level
 
         # Normalize
         max_val = np.max(np.abs(result))
@@ -439,7 +441,7 @@ class PostFXProcessor:
                 delayed[delay_samples:] += feedback_signal[:-delay_samples]
 
         # Mix
-        result = audio * (1.0 - mix) + delayed * mix
+        result: np.ndarray = audio * (1.0 - mix) + delayed * mix
 
         # Normalize
         max_val = np.max(np.abs(result))
@@ -628,7 +630,7 @@ class PostFXProcessor:
         if processed.dtype != np.float32:
             processed = processed.astype(np.float32)
 
-        return processed
+        return np.asarray(processed)
 
 
 def create_post_fx_processor(sample_rate: int = 24000) -> PostFXProcessor:

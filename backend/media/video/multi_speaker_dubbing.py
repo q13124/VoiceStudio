@@ -656,7 +656,7 @@ class MultiSpeakerDubbingService:
             )
 
         # Convert to our format
-        segments = []
+        segments: list[SpeakerSegment] = []
         speakers_data: dict[str, dict[str, Any]] = {}
 
         for turn, _, speaker in diarization.itertracks(yield_label=True):
@@ -741,7 +741,7 @@ class MultiSpeakerDubbingService:
         labels = clustering.fit_predict(embeddings_array)
 
         # Create segments
-        segments = []
+        segments: list[SpeakerSegment] = []
         speakers_data: dict[str, dict[str, Any]] = {}
 
         for i, (time_start, label) in enumerate(zip(chunk_times, labels)):
@@ -792,7 +792,7 @@ class MultiSpeakerDubbingService:
         frame_duration = 0.5  # 500ms frames
         frame_samples = int(frame_duration * sample_rate)
 
-        segments = []
+        segments: list[SpeakerSegment] = []
         speakers_data: dict[str, dict[str, Any]] = {}
 
         current_speaker = "speaker_1"
@@ -879,19 +879,19 @@ class MultiSpeakerDubbingService:
             return {}
 
         # Combine speaker audio
-        speaker_audio = []
+        speaker_parts: list[Any] = []
         for seg in speaker_segments:
             start_sample = int(seg.start_time * sample_rate)
             end_sample = int(seg.end_time * sample_rate)
-            speaker_audio.extend(audio[start_sample:end_sample])
+            speaker_parts.extend(audio[start_sample:end_sample])
 
-        speaker_audio = np.array(speaker_audio)
+        speaker_audio = np.array(speaker_parts)
 
         if len(speaker_audio) == 0:
             return {}
 
         # Extract characteristics
-        rms = np.sqrt(np.mean(speaker_audio**2))
+        rms = float(np.sqrt(np.mean(speaker_audio**2)))
 
         # Estimate pitch range (simplified)
         # In production, use a proper pitch detection algorithm
@@ -946,26 +946,28 @@ class MultiSpeakerDubbingService:
         try:
             from app.core.engines.router import router as engine_router
 
+            synth_router: Any = engine_router
+
             # Find a synthesis-capable engine
-            engines = engine_router.list_engines()
+            engines = synth_router.list_engines()
             synthesis_engine = None
 
             for engine_id in engines:
-                info = engine_router.get_engine_info(engine_id)
+                info = synth_router.get_engine_info(engine_id)
                 if info and "synthesis" in info.get("capabilities", []):
                     synthesis_engine = engine_id
                     break
 
             if synthesis_engine and segment.text:
                 # Use actual synthesis
-                result = await engine_router.synthesize(
+                result = await synth_router.synthesize(
                     engine_id=synthesis_engine,
                     text=segment.text,
                     voice_id=voice_profile_id,
                 )
 
                 if result and "audio" in result:
-                    return result["audio"]
+                    return np.asarray(result["audio"])
 
         except ImportError:
             logger.debug("Engine router not available for dubbing synthesis")

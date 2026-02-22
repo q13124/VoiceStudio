@@ -7,17 +7,33 @@ Note: Migrated to use EnhancedRuntimeEngine (GAP-ENG-003)
 
 from __future__ import annotations
 
+from typing import Any
+
 from app.core.engines.protocols import EngineProtocol
 from app.core.engines.router import router
 
-# Prefer EnhancedRuntimeEngine, fallback to RuntimeEngine
+RuntimeEngine: Any = None
+RuntimeEngineManager: Any = None
+
 try:
-    from app.core.runtime.runtime_engine_enhanced import EnhancedRuntimeEngine as RuntimeEngine
+    from app.core.runtime.runtime_engine_enhanced import EnhancedRuntimeEngine
     from app.core.runtime.runtime_engine_enhanced import (
-        EnhancedRuntimeEngineManager as RuntimeEngineManager,
+        EnhancedRuntimeEngineManager,
     )
+
+    RuntimeEngine = EnhancedRuntimeEngine
+    RuntimeEngineManager = EnhancedRuntimeEngineManager
 except ImportError:
-    from app.core.runtime.runtime_engine import RuntimeEngine, RuntimeEngineManager
+    try:
+        from app.core.runtime.runtime_engine import (
+            RuntimeEngine as _FallbackRE,
+            RuntimeEngineManager as _FallbackREM,
+        )
+
+        RuntimeEngine = _FallbackRE
+        RuntimeEngineManager = _FallbackREM
+    except ImportError:
+        pass
 
 
 class EngineHook:

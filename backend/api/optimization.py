@@ -323,7 +323,8 @@ def optimize_json_serialization(data: Any) -> str:
     try:
         import orjson
 
-        return orjson.dumps(data).decode("utf-8")
+        result: str = orjson.dumps(data).decode("utf-8")
+        return result
     except ImportError:
         # Fallback to standard json with optimizations
         return json.dumps(data, separators=(",", ":"), ensure_ascii=False)

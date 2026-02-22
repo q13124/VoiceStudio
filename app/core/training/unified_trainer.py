@@ -16,7 +16,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-# Import XTTS trainer
+XTTSTrainer: Any = None
 try:
     from .xtts_trainer import XTTSTrainer
 
@@ -79,7 +79,7 @@ class UnifiedTrainer:
         self.output_dir = Path(output_dir) if output_dir else Path("models/trained")
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        self.trainer = None
+        self.trainer: Any = None
         self._is_training = False
         self._training_cancelled = False
 
@@ -158,7 +158,8 @@ class UnifiedTrainer:
             raise RuntimeError(f"Trainer for engine '{self.engine}' not available")
 
         if hasattr(self.trainer, "prepare_dataset"):
-            return self.trainer.prepare_dataset(audio_files, transcripts, output_metadata)
+            result: str = self.trainer.prepare_dataset(audio_files, transcripts, output_metadata)
+            return result
         else:
             raise RuntimeError(f"Dataset preparation unavailable for engine '{self.engine}'")
 
@@ -184,7 +185,8 @@ class UnifiedTrainer:
             raise RuntimeError(f"Trainer for engine '{self.engine}' not available")
 
         if hasattr(self.trainer, "initialize_model"):
-            return self.trainer.initialize_model(config_path)
+            result: bool = self.trainer.initialize_model(config_path)
+            return result
         else:
             # Engine handles initialization internally - this is valid behavior
             logger.info(
@@ -229,7 +231,7 @@ class UnifiedTrainer:
 
         try:
             if hasattr(self.trainer, "train"):
-                result = await self.trainer.train(
+                train_result: dict[str, Any] = await self.trainer.train(
                     metadata_path=metadata_path,
                     epochs=epochs,
                     batch_size=batch_size,
@@ -238,7 +240,7 @@ class UnifiedTrainer:
                     checkpoint_dir=checkpoint_dir,
                     **kwargs,
                 )
-                return result
+                return train_result
             else:
                 raise RuntimeError(f"Training unavailable for engine '{self.engine}'")
         finally:
@@ -269,10 +271,9 @@ class UnifiedTrainer:
         logger.info(f"Training cancellation requested for engine '{self.engine}'")
 
         if self.trainer and hasattr(self.trainer, "cancel_training"):
-            # Engine supports native cancellation
-            result = self.trainer.cancel_training()
-            logger.info(f"Engine-level cancellation returned: {result}")
-            return result
+            cancel_result: bool = self.trainer.cancel_training()
+            logger.info(f"Engine-level cancellation returned: {cancel_result}")
+            return cancel_result
         else:
             # Flag-based cancellation will be checked by training loop
             logger.info(
@@ -296,7 +297,8 @@ class UnifiedTrainer:
             raise RuntimeError(f"Trainer for engine '{self.engine}' not available")
 
         if hasattr(self.trainer, "export_model"):
-            return self.trainer.export_model(output_path, model_name)
+            exported_path: str = self.trainer.export_model(output_path, model_name)
+            return exported_path
         else:
             raise RuntimeError(f"Model export unavailable for engine '{self.engine}'")
 

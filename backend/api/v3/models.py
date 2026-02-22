@@ -148,6 +148,8 @@ def success_response(
         status=ResponseStatus.SUCCESS,
         message=message,
         data=data,
+        errors=None,
+        pagination=None,
         meta=meta,
     )
 
@@ -162,11 +164,14 @@ def error_response(
     meta = RequestMeta(
         request_id=request_id,
         correlation_id=correlation_id,
+        duration_ms=None,
     )
     return StandardResponse(
         status=ResponseStatus.ERROR,
         message=message,
+        data=None,
         errors=errors or [],
+        pagination=None,
         meta=meta,
     )
 
@@ -187,11 +192,16 @@ def paginated_response(
         total_count=total_count,
         page_size=page_size,
     )
-    meta = RequestMeta(request_id=request_id)
+    meta = RequestMeta(
+        request_id=request_id,
+        correlation_id=None,
+        duration_ms=None,
+    )
     return StandardResponse(
         status=ResponseStatus.SUCCESS,
         message=message,
         data=data,
+        errors=None,
         pagination=pagination,
         meta=meta,
     )

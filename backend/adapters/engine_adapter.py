@@ -47,7 +47,7 @@ class SynthesisEngineAdapter:
 
     def __init__(self, engine_id: str = "xtts"):
         self._engine_id = engine_id
-        self._engine = None
+        self._engine: Any = None
         self._loaded = False
 
     @property
@@ -170,13 +170,13 @@ class SynthesisEngineAdapter:
     def get_voices(self) -> list[dict[str, Any]]:
         """Get available voices for this engine."""
         if self._engine and hasattr(self._engine, "get_voices"):
-            return self._engine.get_voices()
+            return list(self._engine.get_voices())
         return [{"id": "default", "name": "Default Voice"}]
 
     def get_languages(self) -> list[str]:
         """Get supported languages."""
         if self._engine and hasattr(self._engine, "get_languages"):
-            return self._engine.get_languages()
+            return list(self._engine.get_languages())
         return ["en", "es", "fr", "de", "it", "pt", "pl", "ru", "zh", "ja", "ko"]
 
 
@@ -185,7 +185,7 @@ class TranscriptionEngineAdapter:
 
     def __init__(self, engine_id: str = "whisper"):
         self._engine_id = engine_id
-        self._engine = None
+        self._engine: Any = None
         self._loaded = False
 
     @property
@@ -296,7 +296,7 @@ class VoiceConversionEngineAdapter:
 
     def __init__(self, engine_id: str = "rvc"):
         self._engine_id = engine_id
-        self._engine = None
+        self._engine: Any = None
         self._loaded = False
 
     @property
@@ -368,7 +368,7 @@ class VoiceConversionEngineAdapter:
         if self._engine is None:
             return False
 
-        return await self._engine.load_model(model_path, index_path)
+        return bool(await self._engine.load_model(model_path, index_path))
 
     def get_models(self) -> list[dict[str, Any]]:
         """Get available voice models."""
@@ -381,7 +381,7 @@ class EmotionEngineAdapter:
     """Adapter for emotion engine implementing IEmotionEngine."""
 
     def __init__(self):
-        self._engine = None
+        self._engine: Any = None
         self._loaded = False
 
     @property
@@ -444,7 +444,8 @@ class EmotionEngineAdapter:
             else EmotionType.NEUTRAL
         )
 
-        return await self._engine.apply_emotion(audio_data, sample_rate, emotion_type, intensity)
+        result = await self._engine.apply_emotion(audio_data, sample_rate, emotion_type, intensity)
+        return np.asarray(result)
 
     def get_emotions(self) -> list[str]:
         """Get supported emotions."""
@@ -455,7 +456,7 @@ class TranslationEngineAdapter:
     """Adapter for translation engine implementing ITranslationEngine."""
 
     def __init__(self):
-        self._engine = None
+        self._engine: Any = None
         self._loaded = False
 
     @property
@@ -649,25 +650,25 @@ class EngineAdapter:
         """Load an engine into memory."""
         try:
             if engine_id in ["xtts", "piper"]:
-                engine = self.get_synthesis_engine(engine_id)
-                await engine._ensure_loaded()
-                return engine.is_loaded
+                synth_eng = self.get_synthesis_engine(engine_id)
+                await synth_eng._ensure_loaded()
+                return synth_eng.is_loaded
             elif engine_id == "whisper":
-                engine = self.get_transcription_engine(engine_id)
-                await engine._ensure_loaded()
-                return engine.is_loaded
+                trans_eng = self.get_transcription_engine(engine_id)
+                await trans_eng._ensure_loaded()
+                return trans_eng.is_loaded
             elif engine_id == "rvc":
-                engine = self.get_voice_conversion_engine(engine_id)
-                await engine._ensure_loaded()
-                return engine.is_loaded
+                vc_eng = self.get_voice_conversion_engine(engine_id)
+                await vc_eng._ensure_loaded()
+                return vc_eng.is_loaded
             elif engine_id == "emotion":
-                engine = self.get_emotion_engine()
-                await engine._ensure_loaded()
-                return engine.is_loaded
+                emo_eng = self.get_emotion_engine()
+                await emo_eng._ensure_loaded()
+                return emo_eng.is_loaded
             elif engine_id == "translation":
-                engine = self.get_translation_engine()
-                await engine._ensure_loaded()
-                return engine.is_loaded
+                tl_eng = self.get_translation_engine()
+                await tl_eng._ensure_loaded()
+                return tl_eng.is_loaded
             return False
         except Exception as e:
             logger.error(f"Failed to load engine {engine_id}: {e}")

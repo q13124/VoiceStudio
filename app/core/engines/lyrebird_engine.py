@@ -14,12 +14,10 @@ import logging
 import os
 from collections import OrderedDict
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
+from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 # Try importing requests for connection pooling
 try:
@@ -64,6 +62,7 @@ except ImportError:
     HAS_QUALITY_METRICS = False
 
 # Optional audio utilities import for quality enhancement
+enhance_voice_cloning_quality: Any = None
 try:
     from app.core.audio.audio_utils import (
         enhance_voice_cloning_quality,
@@ -75,7 +74,6 @@ try:
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
-    enhance_voice_cloning_quality = None
 
 
 class LyrebirdEngine(EngineProtocol):
@@ -118,10 +116,10 @@ class LyrebirdEngine(EngineProtocol):
         self.api_key = api_key or os.getenv("LYREBIRD_API_KEY") or os.getenv("DESCRIPT_API_KEY")
         self.api_url = api_url
         self.use_local = use_local
-        self.local_model = None
-        self._synthesis_cache = OrderedDict()  # LRU cache for synthesis results
-        self._cache_max_size = 100  # Maximum number of cached synthesis results
-        self._session = None  # For connection pooling
+        self.local_model: Any = None
+        self._synthesis_cache: OrderedDict[str, Any] = OrderedDict()
+        self._cache_max_size = 100
+        self._session: Any = None
 
     def initialize(self) -> bool:
         """Initialize the Lyrebird engine."""
@@ -167,7 +165,7 @@ class LyrebirdEngine(EngineProtocol):
             self._initialized = False
             return False
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources and free memory."""
         try:
             # Close session for connection pooling
@@ -188,7 +186,7 @@ class LyrebirdEngine(EngineProtocol):
         except Exception as e:
             logger.error(f"Error during Lyrebird cleanup: {e}")
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear synthesis cache."""
         self._synthesis_cache.clear()
         logger.info("Synthesis cache cleared")
@@ -208,8 +206,8 @@ class LyrebirdEngine(EngineProtocol):
         voice_name: str | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
-        **kwargs,
-    ) -> str | tuple[str, dict]:
+        **kwargs: Any,
+    ) -> str | tuple[str, dict[str, Any]]:
         """
         Clone voice from reference audio and synthesize text.
 
@@ -238,7 +236,7 @@ class LyrebirdEngine(EngineProtocol):
             if cache_key in self._synthesis_cache:
                 logger.debug("Using cached Lyrebird synthesis result")
                 self._synthesis_cache.move_to_end(cache_key)  # LRU update
-                cached_path = self._synthesis_cache[cache_key]
+                cached_path: str = self._synthesis_cache[cache_key]
                 # Verify cached file still exists
                 if os.path.exists(cached_path):
                     return cached_path
@@ -351,7 +349,7 @@ class LyrebirdEngine(EngineProtocol):
         text: str,
         output_path: str | Path | None,
         voice_name: str | None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """
         Clone voice using local model if available and usable.
@@ -390,7 +388,7 @@ class LyrebirdEngine(EngineProtocol):
         logger.info("Using XTTS engine for voice cloning (local model not available/usable)")
         return self._clone_with_fallback_engine(reference_audio_path, text, output_path, **kwargs)
 
-    def _load_local_model(self):
+    def _load_local_model(self) -> dict[str, Any] | None:
         """Load local voice cloning model."""
         try:
             # Try to find local model files
@@ -447,7 +445,7 @@ class LyrebirdEngine(EngineProtocol):
         reference_audio_path: str | Path,
         text: str,
         output_path: Path,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Synthesize using loaded local model."""
         try:
@@ -571,7 +569,7 @@ class LyrebirdEngine(EngineProtocol):
     # Instead, the engine now prefers using the fallback voice cloning engine (XTTS) for reliable,
     # high-quality synthesis when local model cannot be properly used.
 
-    def _extract_voice_embedding(self, audio: np.ndarray, sample_rate: int) -> np.ndarray:
+    def _extract_voice_embedding(self, audio: npt.NDArray[Any], sample_rate: int) -> npt.NDArray[Any]:
         """Extract voice embedding from audio."""
         try:
             import librosa
@@ -588,7 +586,7 @@ class LyrebirdEngine(EngineProtocol):
             # Average over time to get voice embedding
             embedding = np.mean(mel_spec_db, axis=1)
 
-            return embedding
+            return np.asarray(embedding)
 
         except ImportError:
             # Fallback: use simple spectral features
@@ -617,10 +615,19 @@ class LyrebirdEngine(EngineProtocol):
         self,
         reference_audio_path: str | Path,
         text: str,
-        output_path: Path,
-        **kwargs,
+        output_path: str | Path | None,
+        **kwargs: Any,
     ) -> str:
         """Clone voice using fallback TTS engine."""
+        if output_path is None:
+            _out_dir = os.path.join(
+                os.getenv("TEMP", "C:\\Temp"), "VoiceStudio", "lyrebird_output"
+            )
+            os.makedirs(_out_dir, exist_ok=True)
+            resolved: Path = Path(os.path.join(_out_dir, "cloned_voice.wav"))
+        else:
+            resolved = Path(output_path)
+
         try:
             import sys
 
@@ -650,31 +657,26 @@ class LyrebirdEngine(EngineProtocol):
                     import soundfile as sf
 
                     if isinstance(result, bytes):
-                        # Write bytes to file
-                        with open(output_path, "wb") as f:
+                        with open(resolved, "wb") as f:
                             f.write(result)
                     elif isinstance(result, np.ndarray):
-                        # Write numpy array to file
-                        sf.write(str(output_path), result, 22050)
+                        sf.write(str(resolved), result, 22050)
                     else:
-                        # Assume it's a file path
                         import shutil
 
-                        shutil.copy(str(result), str(output_path))
+                        shutil.copy(str(result), str(resolved))
 
-                    logger.info(f"Voice cloned (fallback): {output_path}")
-                    return str(output_path)
+                    logger.info(f"Voice cloned (fallback): {resolved}")
+                    return str(resolved)
 
-            # Last resort: create empty file (error case)
-            output_path.touch()
-            logger.warning(f"Fallback cloning failed, created empty file: {output_path}")
-            return str(output_path)
+            resolved.touch()
+            logger.warning(f"Fallback cloning failed, created empty file: {resolved}")
+            return str(resolved)
 
         except Exception as e:
             logger.error(f"Fallback engine cloning failed: {e}")
-            # Create empty file as last resort
-            output_path.touch()
-            return str(output_path)
+            resolved.touch()
+            return str(resolved)
 
     def _clone_cloud(
         self,
@@ -682,7 +684,7 @@ class LyrebirdEngine(EngineProtocol):
         text: str,
         output_path: str | Path | None,
         voice_name: str | None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str:
         """Clone voice using cloud API."""
         if not self.api_key:
@@ -743,7 +745,7 @@ class LyrebirdEngine(EngineProtocol):
         logger.info(f"Voice cloned (cloud): {output_path}")
         return str(output_path)
 
-    def get_info(self) -> dict:
+    def get_info(self) -> dict[str, Any]:
         """Get engine information."""
         info = super().get_info()
         info.update(

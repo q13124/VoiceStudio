@@ -17,7 +17,7 @@ import logging
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import torch
@@ -32,8 +32,8 @@ try:
     HAS_LIBROSA = True
 except ImportError:
     HAS_LIBROSA = False
-    librosa = None
-    sf = None
+    librosa = cast(Any, None)
+    sf = cast(Any, None)
     logger.warning("librosa/soundfile not installed. Install with: pip install librosa soundfile")
 
 # Try to import RVC library
@@ -43,13 +43,12 @@ try:
     HAS_RVC = True
 except ImportError:
     try:
-        # Alternative import path
         from rvc_python import RVC
 
         HAS_RVC = True
     except ImportError:
         HAS_RVC = False
-        RVC = None
+        RVC = cast(Any, None)
         logger.warning("RVC library not installed. Install with: pip install rvc-python")
 
 # Try to import fairseq for HuBERT
@@ -59,7 +58,7 @@ try:
     HAS_FAIRSEQ = True
 except ImportError:
     HAS_FAIRSEQ = False
-    fairseq = None
+    fairseq = cast(Any, None)
     logger.debug("fairseq not installed. Feature extraction will use fallback.")
 
 # Try importing audiomentations for data augmentation
@@ -78,9 +77,14 @@ try:
     HAS_AUDIOMENTATIONS = True
 except ImportError:
     HAS_AUDIOMENTATIONS = False
-    audiomentations = None
-    Compose = AddGaussianNoise = TimeStretch = PitchShift = None
-    Shift = Normalize = Gain = None
+    audiomentations = cast(Any, None)
+    Compose = cast(Any, None)
+    AddGaussianNoise = cast(Any, None)
+    TimeStretch = cast(Any, None)
+    PitchShift = cast(Any, None)
+    Shift = cast(Any, None)
+    Normalize = cast(Any, None)
+    Gain = cast(Any, None)
     logger.debug(
         "audiomentations not installed. Data augmentation will be limited. "
         "Install with: pip install audiomentations>=0.43.0"
@@ -177,25 +181,25 @@ class RVCTrainer:
             augmentation = self._create_augmentation_pipeline()
 
         # Process audio files
-        metadata_entries = []
+        metadata_entries: list[dict[str, Any]] = []
         processed_files = []
 
         for i, audio_path in enumerate(audio_files):
             try:
-                audio_path = Path(audio_path)
-                if not audio_path.exists():
-                    logger.warning(f"Audio file not found: {audio_path}")
+                audio_file = Path(audio_path)
+                if not audio_file.exists():
+                    logger.warning(f"Audio file not found: {audio_file}")
                     continue
 
                 # Load audio
-                audio, _sr = librosa.load(str(audio_path), sr=self.sample_rate)
+                audio, _sr = librosa.load(str(audio_file), sr=self.sample_rate)
 
                 # Apply augmentation if enabled
                 if augmentation is not None:
                     try:
                         audio = augmentation(samples=audio, sample_rate=self.sample_rate)
                     except Exception as e:
-                        logger.debug(f"Augmentation failed for {audio_path}: {e}")
+                        logger.debug(f"Augmentation failed for {audio_file}: {e}")
 
                 # Save processed audio
                 output_filename = f"{speaker_name}_{i:04d}.wav"
@@ -205,7 +209,7 @@ class RVCTrainer:
                 # Create metadata entry
                 entry = {
                     "audio_file": str(output_path),
-                    "original_file": str(audio_path),
+                    "original_file": str(audio_file),
                     "speaker": speaker_name,
                     "duration": len(audio) / self.sample_rate,
                 }
@@ -217,7 +221,7 @@ class RVCTrainer:
                 metadata_entries.append(entry)
                 processed_files.append(str(output_path))
 
-                logger.debug(f"Processed audio {i+1}/{len(audio_files)}: {audio_path.name}")
+                logger.debug(f"Processed audio {i+1}/{len(audio_files)}: {audio_file.name}")
 
             except Exception as e:
                 logger.warning(f"Failed to process {audio_path}: {e}")
@@ -233,7 +237,7 @@ class RVCTrainer:
                     "speaker": speaker_name,
                     "sample_rate": self.sample_rate,
                     "total_files": len(metadata_entries),
-                    "total_duration": sum(e["duration"] for e in metadata_entries),
+                    "total_duration": sum(float(e["duration"]) for e in metadata_entries),
                     "files": metadata_entries,
                 },
                 f,
@@ -242,7 +246,7 @@ class RVCTrainer:
 
         logger.info(
             f"Dataset prepared: {len(metadata_entries)} files, "
-            f"{sum(e['duration'] for e in metadata_entries):.2f}s total duration"
+            f"{sum(float(e['duration']) for e in metadata_entries):.2f}s total duration"
         )
 
         return metadata_path

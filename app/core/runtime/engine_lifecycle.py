@@ -17,7 +17,12 @@ from typing import Any
 from .port_manager import PortManager, get_port_manager
 from .resource_manager import ResourceManager, get_resource_manager
 
-# Import venv family manager for engine isolation
+HAS_VENV_FAMILIES = False
+VenvFamily: Any = None
+VenvFamilyManager: Any = None
+get_venv_manager: Any = None
+ENGINE_TO_FAMILY: dict[str, Any] = {}
+
 try:
     from .venv_family_manager import (
         ENGINE_TO_FAMILY,
@@ -28,29 +33,25 @@ try:
 
     HAS_VENV_FAMILIES = True
 except ImportError:
-    HAS_VENV_FAMILIES = False
-    VenvFamily = None
-    VenvFamilyManager = None
-    get_venv_manager = None
-    ENGINE_TO_FAMILY = {}
+    pass
 
 logger = logging.getLogger(__name__)
 
-# Try importing EnhancedRuntimeEngine for actual process management (preferred)
-# Falls back to RuntimeEngine if enhanced version is unavailable
+HAS_RUNTIME_ENGINE = False
+RuntimeEngine: Any = None
+
 try:
     from .runtime_engine_enhanced import EnhancedRuntimeEngine
 
+    RuntimeEngine = EnhancedRuntimeEngine
     HAS_RUNTIME_ENGINE = True
-    RuntimeEngine = EnhancedRuntimeEngine  # Alias for compatibility
 except ImportError:
     try:
-        from .runtime_engine import RuntimeEngine
+        from .runtime_engine import RuntimeEngine as _FallbackRuntimeEngine
 
+        RuntimeEngine = _FallbackRuntimeEngine
         HAS_RUNTIME_ENGINE = True
     except ImportError:
-        HAS_RUNTIME_ENGINE = False
-        RuntimeEngine = None
         logger.debug("RuntimeEngine not available. Process management will be limited.")
 
 
@@ -427,7 +428,8 @@ class EngineLifecycleManager:
         if not self.venv_manager.is_venv_created(family):
             return None
 
-        return self.venv_manager.get_python_executable(family)
+        result: Path | None = self.venv_manager.get_python_executable(family)
+        return result
 
     def _start_engine(self, engine: EngineInstance) -> bool:
         """Start an engine instance."""
@@ -587,11 +589,10 @@ class EngineLifecycleManager:
         if not health_config:
             if engine.process is not None:
                 if HAS_RUNTIME_ENGINE and isinstance(engine.process, RuntimeEngine):
-                    return engine.process.is_healthy()
+                    healthy: bool = engine.process.is_healthy()
+                    return healthy
                 elif hasattr(engine.process, "poll"):
-                    # Direct subprocess.Popen
                     return engine.process.poll() is None
-            # No process, assume healthy for in-process engines
             return True
 
         health_kind = health_config.get("kind", "process")
@@ -632,11 +633,10 @@ class EngineLifecycleManager:
         elif health_kind == "process" or health_kind is None:
             if engine.process is not None:
                 if HAS_RUNTIME_ENGINE and isinstance(engine.process, RuntimeEngine):
-                    return engine.process.is_running() and engine.process.is_healthy()
+                    running: bool = engine.process.is_running() and engine.process.is_healthy()
+                    return running
                 elif hasattr(engine.process, "poll"):
-                    # Direct subprocess.Popen
                     return engine.process.poll() is None
-            # No process, assume healthy for in-process engines
             return True
 
         # Unknown health check kind, fallback to process check

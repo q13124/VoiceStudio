@@ -123,8 +123,8 @@ class RVCEngine:
             config: Engine configuration
         """
         self._config = config or RVCConfig()
-        self._model = None
-        self._index = None
+        self._model: dict[str, Any] | None = None
+        self._index: dict[str, Any] | None = None
         self._loaded = False
 
         # Processing state
@@ -438,7 +438,7 @@ class RVCEngine:
                     from app.core.engines.rmvpe import RMVPE
 
                     rmvpe = RMVPE()
-                    return rmvpe.infer(audio, sample_rate)
+                    return np.asarray(rmvpe.infer(audio, sample_rate))
                 except ImportError:
                     logger.debug("RMVPE not available for F0 extraction")
 
@@ -452,7 +452,7 @@ class RVCEngine:
                         step_size=hop_size / sample_rate * 1000,
                         viterbi=True,
                     )
-                    return f0
+                    return np.asarray(f0)
                 except ImportError:
                     logger.debug("crepe not available for F0 extraction")
 
@@ -517,6 +517,7 @@ class RVCEngine:
         """
         import torch
 
+        assert self._model is not None
         checkpoint = self._model.get("checkpoint", {})
         device = self._model.get("device", "cpu")
         audio = audio_tensor.squeeze(0).cpu().numpy()
@@ -533,7 +534,7 @@ class RVCEngine:
 
             if state_dict is None:
                 logger.debug("No model weights found in checkpoint, using fallback")
-                return audio
+                return np.asarray(audio)
 
             # Try to use the RVC inference module if available
             try:
@@ -561,7 +562,7 @@ class RVCEngine:
                 )
 
                 if output_audio is not None:
-                    return output_audio
+                    return np.asarray(output_audio)
 
             except ImportError:
                 logger.debug("RVC infer module not available, using direct inference")
@@ -616,11 +617,11 @@ class RVCEngine:
             output_rms = np.sqrt(np.mean(output_audio**2) + 1e-8)
             output_audio = output_audio * (rms_mix * original_rms / output_rms + (1 - rms_mix))
 
-            return output_audio
+            return np.asarray(output_audio)
 
         except Exception as e:
             logger.warning(f"RVC inference failed: {e}")
-            return audio
+            return np.asarray(audio)
 
     def _apply_pitch_shift_fallback(
         self,

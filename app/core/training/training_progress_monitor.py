@@ -8,38 +8,37 @@ Compatible with:
 
 from __future__ import annotations
 
+import importlib
 import logging
 from collections import deque
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
-# Try importing tensorboard for training visualization
+HAS_TENSORBOARD = False
+SummaryWriter: Any = None
 try:
-    from torch.utils.tensorboard import SummaryWriter
-
+    _tb_mod = importlib.import_module("torch.utils.tensorboard")
+    SummaryWriter = getattr(_tb_mod, "SummaryWriter")
     HAS_TENSORBOARD = True
 except ImportError:
     try:
-        from tensorboard import SummaryWriter
-
+        _tb_mod = importlib.import_module("tensorboard")
+        SummaryWriter = getattr(_tb_mod, "SummaryWriter")
         HAS_TENSORBOARD = True
-    except ImportError:
-        HAS_TENSORBOARD = False
-        SummaryWriter = None
+    except (ImportError, AttributeError):
         logger.debug("tensorboard not installed. Training visualization will be limited.")
 
-# Try importing wandb for experiment tracking
 try:
     import wandb
 
     HAS_WANDB = True
 except ImportError:
     HAS_WANDB = False
-    wandb = None
+    wandb = cast(Any, None)
     logger.debug("wandb not installed. Experiment tracking will be limited.")
 
 
@@ -301,7 +300,7 @@ class TrainingProgressMonitor:
         Returns:
             Progress value between 0.0 and 1.0
         """
-        return self.current_status.get("progress", 0.0)
+        return float(self.current_status.get("progress", 0.0))
 
     def get_metrics(self) -> dict[str, float]:
         """
@@ -310,7 +309,8 @@ class TrainingProgressMonitor:
         Returns:
             Dictionary of current metrics
         """
-        return self.current_status.get("metrics", {}).copy()
+        metrics: dict[str, float] = self.current_status.get("metrics", {})
+        return metrics.copy()
 
     def get_metrics_history(self, metric_name: str | None = None) -> dict[str, list[float]]:
         """

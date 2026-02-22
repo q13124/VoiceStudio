@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 # Import base protocol
 try:
@@ -100,16 +101,16 @@ class StreamingEngine(EngineProtocol):
         self.overlap_size = overlap_size
 
         # Audio queue for streaming
-        self._audio_queue: queue.Queue = queue.Queue(maxsize=10)
+        self._audio_queue: queue.Queue[npt.NDArray[np.float32]] = queue.Queue(maxsize=10)
         self._is_streaming = False
         self._stream_thread: threading.Thread | None = None
 
         # Buffer for overlap-add
-        self._overlap_buffer: np.ndarray | None = None
+        self._overlap_buffer: npt.NDArray[np.float32] | None = None
 
         # LRU caching for performance (optimized)
         self._chunk_cache: OrderedDict[str, list[str]] = OrderedDict()  # LRU cache for text chunks
-        self._stream_cache: OrderedDict[str, list[np.ndarray]] = (
+        self._stream_cache: OrderedDict[str, list[npt.NDArray[np.float32]]] = (
             OrderedDict()
         )  # LRU cache for stream results
         self._cache_max_size = 200  # Increased cache size for better hit rate
@@ -122,7 +123,7 @@ class StreamingEngine(EngineProtocol):
         }
 
         # Buffer pool for reuse (optimized)
-        self._buffer_pool: list[np.ndarray] = []  # Pool of reusable buffers
+        self._buffer_pool: list[npt.NDArray[np.float32]] = []  # Pool of reusable buffers
         self._max_buffer_pool_size = 20  # Increased pool size for better reuse
         self._buffer_pool_stats = {"hits": 0, "misses": 0, "created": 0}
 
@@ -179,8 +180,8 @@ class StreamingEngine(EngineProtocol):
         text: str,
         speaker_wav: str | Path | None = None,
         language: str = "en",
-        **kwargs,
-    ) -> Iterator[np.ndarray]:
+        **kwargs: Any,
+    ) -> Iterator[npt.NDArray[np.float32]]:
         """
         Stream synthesis in real-time chunks (synchronous).
 
@@ -197,10 +198,11 @@ class StreamingEngine(EngineProtocol):
             return
 
         try:
-            # Check if engine supports streaming
-            if hasattr(self.engine, "synthesize_stream"):
-                # Use engine's native streaming
-                yield from self.engine.synthesize_stream(
+            if self.engine is None:
+                return
+            engine_ref: Any = self.engine
+            if hasattr(engine_ref, "synthesize_stream"):
+                yield from engine_ref.synthesize_stream(
                     text=text,
                     speaker_wav=speaker_wav,
                     language=language,
@@ -208,7 +210,6 @@ class StreamingEngine(EngineProtocol):
                     **kwargs,
                 )
             else:
-                # Fallback: chunk text and synthesize
                 yield from self._synthesize_chunked(text, speaker_wav, language, **kwargs)
 
         except Exception as e:
@@ -219,8 +220,8 @@ class StreamingEngine(EngineProtocol):
         text: str,
         speaker_wav: str | Path | None = None,
         language: str = "en",
-        **kwargs,
-    ) -> AsyncIterator[np.ndarray]:
+        **kwargs: Any,
+    ) -> AsyncIterator[npt.NDArray[np.float32]]:
         """
         Stream synthesis in real-time chunks (asynchronous).
 
@@ -240,7 +241,7 @@ class StreamingEngine(EngineProtocol):
             # Run synchronous streaming in executor
             loop = asyncio.get_event_loop()
 
-            def sync_stream():
+            def sync_stream() -> Iterator[npt.NDArray[np.float32]]:
                 return self.synthesize_stream(text, speaker_wav, language, **kwargs)
 
             # Create async generator
@@ -258,8 +259,8 @@ class StreamingEngine(EngineProtocol):
         text: str,
         speaker_wav: str | Path | None,
         language: str,
-        **kwargs,
-    ) -> Iterator[np.ndarray]:
+        **kwargs: Any,
+    ) -> Iterator[npt.NDArray[np.float32]]:
         """Synthesize text in chunks (fallback method)."""
         # Check stream cache (LRU) - optimized
         if self.enable_cache:
@@ -292,8 +293,10 @@ class StreamingEngine(EngineProtocol):
 
         for chunk_text in chunks:
             try:
-                # Synthesize chunk
-                audio = self.engine.synthesize(
+                if self.engine is None:
+                    continue
+                engine_ref: Any = self.engine
+                audio = engine_ref.synthesize(
                     text=chunk_text,
                     speaker_wav=speaker_wav,
                     language=language,
@@ -365,7 +368,7 @@ class StreamingEngine(EngineProtocol):
         chunks = []
         words = text.split()
 
-        current_chunk = []
+        current_chunk: list[str] = []
         current_length = 0
 
         for word in words:
@@ -394,7 +397,7 @@ class StreamingEngine(EngineProtocol):
 
         return chunks
 
-    def _get_buffer_from_pool(self, size: int) -> np.ndarray:
+    def _get_buffer_from_pool(self, size: int) -> npt.NDArray[np.float32]:
         """Get buffer from pool or create new one (optimized)."""
         # Try to find suitable buffer in pool (exact size match preferred)
         best_match_idx = None
@@ -424,7 +427,7 @@ class StreamingEngine(EngineProtocol):
         self._buffer_pool_stats["created"] += 1
         return np.zeros(size, dtype=np.float32)
 
-    def _return_buffer_to_pool(self, buffer: np.ndarray):
+    def _return_buffer_to_pool(self, buffer: npt.NDArray[np.float32]) -> None:
         """Return buffer to pool for reuse (optimized)."""
         if buffer is None or len(buffer) == 0:
             return
@@ -435,7 +438,7 @@ class StreamingEngine(EngineProtocol):
             buffer.fill(0)
             self._buffer_pool.append(buffer)
 
-    def _cleanup_buffer_pool(self):
+    def _cleanup_buffer_pool(self) -> None:
         """Clean up buffer pool if it's too large."""
         if len(self._buffer_pool) > self._max_buffer_pool_size:
             # Remove oldest buffers (FIFO)
@@ -444,7 +447,7 @@ class StreamingEngine(EngineProtocol):
                 if self._buffer_pool:
                     self._buffer_pool.pop(0)
 
-    def _apply_overlap_add(self, overlap: np.ndarray, audio: np.ndarray) -> np.ndarray:
+    def _apply_overlap_add(self, overlap: npt.NDArray[np.float32], audio: npt.NDArray[np.float32]) -> npt.NDArray[np.float32]:
         """Apply overlap-add for smooth transitions with optimized buffer management."""
         if len(overlap) == 0 or len(audio) == 0:
             return audio
@@ -456,7 +459,7 @@ class StreamingEngine(EngineProtocol):
 
         # Cache fade windows (avoid recreating)
         if not hasattr(self, "_fade_cache"):
-            self._fade_cache = {}
+            self._fade_cache: dict[int, tuple[npt.NDArray[np.float32], npt.NDArray[np.float32]]] = {}
 
         cache_key = overlap_len
         if cache_key not in self._fade_cache:
@@ -494,9 +497,9 @@ class StreamingEngine(EngineProtocol):
         text: str,
         speaker_wav: str | Path | None = None,
         language: str = "en",
-        callback: Callable[[np.ndarray], None] | None = None,
-        **kwargs,
-    ):
+        callback: Callable[[npt.NDArray[np.float32]], None] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """
         Start streaming synthesis in background thread.
 
@@ -514,7 +517,7 @@ class StreamingEngine(EngineProtocol):
         self._is_streaming = True
         self._audio_queue = queue.Queue(maxsize=10)
 
-        def stream_worker():
+        def stream_worker() -> None:
             try:
                 for chunk in self.synthesize_stream(text, speaker_wav, language, **kwargs):
                     if not self._is_streaming:
@@ -541,7 +544,7 @@ class StreamingEngine(EngineProtocol):
         self._stream_thread = threading.Thread(target=stream_worker, daemon=True)
         self._stream_thread.start()
 
-    def stop_streaming(self):
+    def stop_streaming(self) -> None:
         """Stop streaming synthesis."""
         self._is_streaming = False
 
@@ -556,7 +559,7 @@ class StreamingEngine(EngineProtocol):
             except queue.Empty:
                 break
 
-    def get_next_chunk(self, timeout: float = 1.0) -> np.ndarray | None:
+    def get_next_chunk(self, timeout: float = 1.0) -> npt.NDArray[np.float32] | None:
         """
         Get next audio chunk from stream.
 
@@ -581,8 +584,8 @@ class StreamingEngine(EngineProtocol):
         speaker_wav: str | Path | None = None,
         language: str = "en",
         output_path: str | Path | None = None,
-        **kwargs,
-    ) -> np.ndarray | None:
+        **kwargs: Any,
+    ) -> npt.NDArray[np.float32] | None:
         """
         Synthesize full text (non-streaming).
 
@@ -599,16 +602,19 @@ class StreamingEngine(EngineProtocol):
         if not self._initialized and not self.initialize():
             return None
 
-        # Delegate to underlying engine
-        return self.engine.synthesize(
+        if self.engine is None:
+            return None
+        engine_ref: Any = self.engine
+        result: npt.NDArray[np.float32] | None = engine_ref.synthesize(
             text=text,
             speaker_wav=speaker_wav,
             language=language,
             output_path=output_path,
             **kwargs,
         )
+        return result
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources."""
         try:
             # Stop streaming if active
@@ -634,7 +640,7 @@ class StreamingEngine(EngineProtocol):
         except Exception as e:
             logger.warning(f"Error during Streaming Engine cleanup: {e}")
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear all caches."""
         self._chunk_cache.clear()
         self._stream_cache.clear()
@@ -679,7 +685,7 @@ class StreamingEngine(EngineProtocol):
             "max_connections": self._max_connections,
         }
 
-    def get_info(self) -> dict:
+    def get_info(self) -> dict[str, Any]:
         """Get engine information."""
         info = super().get_info()
         info.update(

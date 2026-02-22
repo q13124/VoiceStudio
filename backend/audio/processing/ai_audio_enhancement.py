@@ -819,7 +819,7 @@ class AIAudioEnhancementService:
             elif len(cleaned) < len(audio):
                 cleaned = np.pad(cleaned, (0, len(audio) - len(cleaned)))
 
-            return cleaned.astype(np.float32)
+            return np.asarray(cleaned, dtype=np.float32)
 
         except Exception as e:
             logger.warning(f"Noise reduction failed: {e}")
@@ -864,7 +864,7 @@ class AIAudioEnhancementService:
             vocals = sources[:, 3, :, :].mean(dim=1).squeeze().cpu().numpy()
 
             logger.info("Voice isolated using Demucs")
-            return vocals.astype(np.float32)
+            return np.asarray(vocals, dtype=np.float32)
 
         except ImportError:
             logger.debug("Demucs not available, trying Spleeter")
@@ -890,7 +890,7 @@ class AIAudioEnhancementService:
                 vocals = prediction["vocals"].mean(axis=1)
 
                 logger.info("Voice isolated using Spleeter")
-                return vocals.astype(np.float32)
+                return np.asarray(vocals, dtype=np.float32)
 
         except ImportError:
             logger.debug("Spleeter not available")
@@ -915,7 +915,7 @@ class AIAudioEnhancementService:
             filtered = signal.filtfilt(b, a, harmonic)
 
             logger.info("Voice isolated using librosa HPSS + bandpass")
-            return filtered.astype(np.float32)
+            return np.asarray(filtered, dtype=np.float32)
 
         except ImportError:
             logger.debug("librosa not available")
@@ -936,7 +936,7 @@ class AIAudioEnhancementService:
             logger.warning(
                 "Voice isolation using basic bandpass filter (install demucs for better results)"
             )
-            return filtered.astype(np.float32)
+            return np.asarray(filtered, dtype=np.float32)
 
         except Exception as e:
             logger.warning(f"Voice isolation failed: {e}")
@@ -984,7 +984,7 @@ class AIAudioEnhancementService:
             elif len(dereverbed) < len(audio):
                 dereverbed = np.pad(dereverbed, (0, len(audio) - len(dereverbed)))
 
-            return dereverbed.astype(np.float32)
+            return np.asarray(dereverbed, dtype=np.float32)
 
         except Exception as e:
             logger.warning(f"De-reverb failed: {e}")
@@ -1141,7 +1141,7 @@ class AIAudioEnhancementService:
             if max_val > 0.95:
                 normalized = normalized / max_val * 0.95
 
-            return normalized.astype(np.float32)
+            return np.asarray(normalized, dtype=np.float32)
 
         except Exception as e:
             logger.warning(f"Normalization failed: {e}")

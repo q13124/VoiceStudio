@@ -11,6 +11,7 @@ import gc
 import json
 import logging
 import time
+import types
 import uuid
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -22,20 +23,21 @@ from typing import Any, Optional, TypeVar
 logger = logging.getLogger(__name__)
 
 # Lazy import for torch to avoid import errors when torch not installed
-_torch = None
+_torch: types.ModuleType | None = None
+_torch_unavailable: bool = False
 
 
-def _get_torch():
+def _get_torch() -> types.ModuleType | None:
     """Lazy import torch to avoid import errors."""
-    global _torch
-    if _torch is None:
+    global _torch, _torch_unavailable
+    if _torch is None and not _torch_unavailable:
         try:
             import torch
 
             _torch = torch
         except ImportError:
-            _torch = False  # Mark as unavailable
-    return _torch if _torch is not False else None
+            _torch_unavailable = True
+    return _torch
 
 
 # Type variable for generic function decorator
@@ -78,7 +80,7 @@ def traced(operation_name: str | None = None, record_args: bool = False) -> Call
             if args and hasattr(args[0], "__class__"):
                 class_name = args[0].__class__.__name__
 
-            span_data = {
+            span_data: dict[str, Any] = {
                 "trace_id": trace_id,
                 "span_id": span_id,
                 "operation_name": op_name,
@@ -172,7 +174,7 @@ class CancellationToken:
         token.cancel()
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._cancelled = threading.Event()
 
     def cancel(self) -> None:
@@ -181,7 +183,7 @@ class CancellationToken:
 
     def is_cancelled(self) -> bool:
         """Check if cancellation has been requested."""
-        return self._cancelled.is_set()
+        return bool(self._cancelled.is_set())
 
     def raise_if_cancelled(self) -> None:
         """Raise OperationCancelledError if cancellation requested."""
@@ -463,7 +465,7 @@ class EngineProtocol(ABC):
                 - reserved_mb: Currently reserved memory in MB
                 - free_mb: Estimated free memory in MB
         """
-        result = {
+        result: dict[str, Any] = {
             "cuda_available": False,
             "device_name": None,
             "total_memory_mb": None,

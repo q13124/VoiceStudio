@@ -10,6 +10,7 @@ Compatible with:
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import numpy as np
 
@@ -28,7 +29,8 @@ try:
     if spec is not None:
         router_module = importlib.util.module_from_spec(spec)
         try:
-            spec.loader.exec_module(router_module)
+            if spec.loader is not None:
+                spec.loader.exec_module(router_module)
             EngineRouter = router_module.EngineRouter
             global_router = getattr(router_module, "router", None)
             HAS_ENGINE_ROUTER = True
@@ -71,7 +73,7 @@ class EnhancedEnsembleRouter:
 
     def __init__(
         self,
-        engine_router: EngineRouter | None = None,
+        engine_router: Any | None = None,
         sample_rate: int = 24000,
     ):
         """
@@ -130,13 +132,12 @@ class EnhancedEnsembleRouter:
             )
 
             if engine:
-                # Find engine name
                 for name, eng in self.engine_router._engines.items():
                     if eng == engine:
-                        return name
+                        return str(name)
                 for name in self.engine_router.list_engines():
                     if self.engine_router.get_engine(name) == engine:
-                        return name
+                        return str(name)
 
             return None
 
@@ -215,7 +216,8 @@ class EnhancedEnsembleRouter:
                             audio, sample_rates[engine_name], include_advanced=False
                         )
                         engine_qualities[engine_name] = quality
-                        quality_score = quality.get("overall_quality_score", 0.0)
+                        raw_score = quality.get("overall_quality_score", 0.0)
+                        quality_score = float(raw_score) if isinstance(raw_score, (int, float)) else 0.0
                         if quality_score < quality_threshold:
                             logger.warning(
                                 f"Engine {engine_name} quality {quality_score:.3f} below threshold {quality_threshold}"
@@ -422,7 +424,7 @@ class EnhancedEnsembleRouter:
 
 
 def create_enhanced_ensemble_router(
-    engine_router: EngineRouter | None = None,
+    engine_router: Any | None = None,
     sample_rate: int = 24000,
 ) -> EnhancedEnsembleRouter:
     """

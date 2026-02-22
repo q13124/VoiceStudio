@@ -108,7 +108,7 @@ class _ProfilesProxy:
 
 # Export for backward compatibility
 _profiles = _ProfilesProxy()
-_profile_timestamps = {}  # Timestamps are not tracked in the new store - return empty dict
+_profile_timestamps: dict[str, float] = {}  # Timestamps not tracked in the new store
 
 router = APIRouter(
     prefix="/api/profiles",
@@ -341,14 +341,16 @@ def create_profile(
         # Save to persistent store
         profile_store.save(profile_data)
 
+        raw_tags = profile_data.get("tags")
+        tags_list: list[str] = [str(t) for t in raw_tags] if isinstance(raw_tags, list) else []
         profile = VoiceProfile(
             id=profile_id,
-            name=profile_data["name"],
-            language=profile_data["language"],
-            emotion=profile_data.get("emotion"),
-            tags=profile_data["tags"],
+            name=str(profile_data["name"]),
+            language=str(profile_data["language"]),
+            emotion=str(profile_data["emotion"]) if profile_data.get("emotion") else None,
+            tags=tags_list,
             quality_score=0.0,
-            avatar_url=profile_data.get("avatar_url"),
+            avatar_url=str(profile_data["avatar_url"]) if profile_data.get("avatar_url") else None,
         )
 
         logger.info(f"Created profile: {profile_id} - {profile.name}")
@@ -680,7 +682,7 @@ async def preprocess_reference_audio(
         if req.select_optimal_segments:
             try:
                 # Simple segment selection based on RMS energy (voice activity)
-                segment_duration = max(req.min_segment_duration, 1.0)
+                segment_duration = max(req.min_segment_duration or 1.0, 1.0)
                 hop_length = int(sample_rate * 0.5)  # 0.5s hop
                 frame_length = int(sample_rate * segment_duration)
 

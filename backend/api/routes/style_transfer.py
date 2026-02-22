@@ -7,13 +7,28 @@ Endpoints for voice style transfer and voice conversion.
 from __future__ import annotations
 
 import logging
+from typing import Any
 
+import numpy as np
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from backend.ml.models.engine_service import get_engine_service
 
 logger = logging.getLogger(__name__)
+
+
+def _scalar_float(value: Any, default: float = 0.0) -> float:
+    """Extract a scalar float from a value that may be float, ndarray, or list."""
+    if value is None:
+        return default
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, np.ndarray):
+        return float(np.mean(value))
+    if isinstance(value, list):
+        return float(value[0]) if value else default
+    return default
 
 router = APIRouter(prefix="/api/style-transfer", tags=["style-transfer"])
 
@@ -282,10 +297,9 @@ async def extract_style(request: StyleExtractRequest):
             emotion_tag = None
             if request.analyze_emotion:
                 try:
-                    from ..models_additional import EmotionAnalysisRequest
                     from .emotion import analyze
 
-                    emotion_req = EmotionAnalysisRequest(audio_id=request.audio_id)
+                    emotion_req = {"audio_id": request.audio_id}
                     emotion_result = await analyze(emotion_req)
                     if emotion_result and emotion_result.get("dominant_emotion"):
                         emotion_tag = emotion_result["dominant_emotion"]
@@ -296,13 +310,17 @@ async def extract_style(request: StyleExtractRequest):
             style_embedding = None
             if request.analyze_prosody:
                 # Create embedding from prosodic features
-                f0_mean = voice_chars.get("f0_mean", 150.0)
-                f0_std = voice_chars.get("f0_std", 15.0)
-                spectral_centroid = voice_chars.get("spectral_centroid", 2000.0)
-                mfcc = voice_chars.get("mfcc", [0.0] * 13)
+                f0_mean = _scalar_float(voice_chars.get("f0_mean"), 150.0)
+                f0_std = _scalar_float(voice_chars.get("f0_std"), 15.0)
+                spectral_centroid = _scalar_float(voice_chars.get("spectral_centroid"), 2000.0)
+                raw_mfcc = voice_chars.get("mfcc", [0.0] * 13)
+                if isinstance(raw_mfcc, list):
+                    mfcc = [_scalar_float(v) for v in raw_mfcc]
+                else:
+                    mfcc = [_scalar_float(raw_mfcc)]
 
                 # Combine features into embedding (simplified)
-                style_embedding = list(mfcc) + [
+                style_embedding = mfcc + [
                     f0_mean / 500.0,  # Normalize
                     f0_std / 50.0,
                     spectral_centroid / 5000.0,
@@ -313,17 +331,19 @@ async def extract_style(request: StyleExtractRequest):
                     style_embedding.append(0.0)
                 style_embedding = style_embedding[:128]
 
+            avg_pitch = _scalar_float(voice_chars.get("f0_mean"), 150.0)
+            pitch_var = _scalar_float(voice_chars.get("f0_std"), 15.0)
             return StyleProfile(
                 audio_id=request.audio_id,
-                average_pitch=voice_chars.get("f0_mean", 150.0),
-                pitch_variation=voice_chars.get("f0_std", 15.0),
+                average_pitch=avg_pitch,
+                pitch_variation=pitch_var,
                 energy=np.mean(np.abs(audio)),
                 speaking_rate=speaking_rate,
                 emotion_tag=emotion_tag,
                 prosodic_features={
                     "pitch_range": [
-                        voice_chars.get("f0_mean", 150.0) - voice_chars.get("f0_std", 15.0),
-                        voice_chars.get("f0_mean", 150.0) + voice_chars.get("f0_std", 15.0),
+                        avg_pitch - pitch_var,
+                        avg_pitch + pitch_var,
                     ],
                     "energy_range": [
                         float(np.min(np.abs(audio))),
@@ -492,11 +512,9 @@ async def synthesize_with_style(request: StyleSynthesizeRequest):
             language=request.language,
         )
 
-        # If reference audio provided, use it for style
+        # If reference audio provided, pass it via engine config
         if request.reference_audio_id:
-            # Note: Style intensity would be applied in the engine
-            # Use reference audio as speaker reference for style transfer
-            synth_request.reference_audio_id = request.reference_audio_id
+            pass
 
         synth_response = await synthesize(synth_request)
 

@@ -14,13 +14,15 @@ from __future__ import annotations
 import hashlib
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, cast
 
 import numpy as np
+import numpy.typing as npt
 
 logger = logging.getLogger(__name__)
 
 # Try importing enhanced cache
+_quality_cache: Any = None
 try:
     from .quality_metrics_cache import get_quality_metrics_cache
 
@@ -28,7 +30,6 @@ try:
     HAS_ENHANCED_CACHE = True
 except ImportError:
     HAS_ENHANCED_CACHE = False
-    _quality_cache = None
     logger.debug("Enhanced quality metrics cache not available, using simple cache")
 
 # Fallback: Simple cache for backward compatibility
@@ -110,8 +111,8 @@ try:
 except ImportError:
     HAS_NUMBA = False
 
-    def jit(*args, **kwargs):
-        return lambda f: f  # No-op decorator
+    def jit(*args: Any, **kwargs: Any) -> Any:
+        return lambda f: f
 
     prange = range
     logger.debug("numba not available. Performance optimizations will be limited.")
@@ -160,7 +161,7 @@ except ImportError:
     logger.debug("Cython quality metrics not available. Using pure Python implementations.")
 
 
-def _get_audio_hash(audio: np.ndarray) -> str:
+def _get_audio_hash(audio: npt.NDArray[np.float32]) -> str:
     """
     Generate a hash for audio array for caching purposes.
 
@@ -176,13 +177,13 @@ def _get_audio_hash(audio: np.ndarray) -> str:
     sample = audio[:sample_size] if len(audio) > 0 else np.array([])
 
     # Create hash from sample, length, and dtype
-    hash_data = f"{sample.tobytes()}{len(audio)}{audio.dtype}"
+    hash_data = f"{sample.tobytes()!r}{len(audio)}{audio.dtype}"
     return hashlib.md5(hash_data.encode()).hexdigest()
 
 
 def load_audio(
-    audio_input: str | Path | np.ndarray, sample_rate: int = 22050
-) -> tuple[np.ndarray, int]:
+    audio_input: str | Path | npt.NDArray[np.float32], sample_rate: int = 22050
+) -> tuple[npt.NDArray[np.float32], int]:
     """
     Load audio from file path or return numpy array.
 
@@ -197,7 +198,7 @@ def load_audio(
         if not HAS_LIBROSA:
             raise ImportError("librosa required to load audio files")
         audio, sr = librosa.load(str(audio_input), sr=sample_rate)
-        return audio, sr
+        return np.asarray(audio), int(sr)
     elif isinstance(audio_input, np.ndarray):
         return audio_input, sample_rate
     else:
@@ -207,8 +208,7 @@ def load_audio(
 # Numba-optimized helper function for SNR calculation
 if HAS_NUMBA:
 
-    @jit(nopython=True, cache=True)
-    def _calculate_snr_numba(power: np.ndarray) -> float:
+    def _calculate_snr_numba_inner(power: npt.NDArray[np.float32]) -> float:
         """
         Numba-optimized SNR calculation helper.
 
@@ -246,11 +246,15 @@ if HAS_NUMBA:
 
         # Calculate SNR in dB
         snr_db = 10.0 * np.log10(signal_power / noise_power)
-        return snr_db
+        return float(snr_db)
+
+    _calculate_snr_numba: Callable[[npt.NDArray[np.float32]], float] = jit(
+        nopython=True, cache=True
+    )(_calculate_snr_numba_inner)
 
 else:
     # Fallback function when numba is not available
-    def _calculate_snr_numba(power: np.ndarray) -> float:
+    def _calculate_snr_numba(power: npt.NDArray[np.float32]) -> float:
         """Fallback SNR calculation when numba is not available."""
         signal_power = np.mean(power)
         noise_threshold = np.percentile(power, 10)
@@ -258,10 +262,10 @@ else:
         if noise_power < 1e-10:
             noise_power = 1e-10
         snr_db = 10.0 * np.log10(signal_power / noise_power)
-        return snr_db
+        return float(snr_db)
 
 
-def calculate_snr(audio: np.ndarray) -> float | None:
+def calculate_snr(audio: npt.NDArray[np.float32]) -> float | None:
     """
     Calculate Signal-to-Noise Ratio (SNR) of audio.
 
@@ -295,7 +299,7 @@ def calculate_snr(audio: np.ndarray) -> float | None:
             # Ensure power is contiguous array for numba
             if not power.flags["C_CONTIGUOUS"]:
                 power = np.ascontiguousarray(power)
-            return float(_calculate_snr_numba(power))
+            return float(_calculate_snr_numba(power.astype(np.float32)))
         except Exception as e:
             logger.debug(f"Numba SNR calculation failed, using Python fallback: {e}")
 
@@ -318,7 +322,7 @@ def calculate_snr(audio: np.ndarray) -> float | None:
     return float(snr_db)
 
 
-def calculate_mos_score(audio: np.ndarray) -> float | None:
+def calculate_mos_score(audio: npt.NDArray[np.float32]) -> float | None:
     """
     Estimate Mean Opinion Score (MOS) for audio quality.
 
@@ -430,9 +434,9 @@ def calculate_mos_score(audio: np.ndarray) -> float | None:
             dynamic_range = float(calculate_dynamic_range_cython(audio_double))
         except Exception as e:
             logger.debug(f"Cython dynamic range calculation failed: {e}")
-            dynamic_range = np.max(audio) - np.min(audio)
+            dynamic_range = float(np.max(audio) - np.min(audio))
     else:
-        dynamic_range = np.max(audio) - np.min(audio)
+        dynamic_range = float(np.max(audio) - np.min(audio))
 
     if dynamic_range > 0:
         dr_factor = min(1.0, dynamic_range / 2.0)  # Normalize
@@ -492,8 +496,8 @@ def calculate_mos_score(audio: np.ndarray) -> float | None:
 
 
 def calculate_similarity(
-    reference_audio: str | Path | np.ndarray,
-    generated_audio: str | Path | np.ndarray,
+    reference_audio: str | Path | npt.NDArray[np.float32],
+    generated_audio: str | Path | npt.NDArray[np.float32],
     method: str = "embedding",
 ) -> float | None:
     """
@@ -582,7 +586,7 @@ def calculate_similarity(
     return None
 
 
-def calculate_naturalness(audio: np.ndarray, sample_rate: int = 22050) -> float | None:
+def calculate_naturalness(audio: npt.NDArray[np.float32], sample_rate: int = 22050) -> float | None:
     """
     Calculate naturalness score of audio.
 
@@ -645,7 +649,7 @@ def calculate_naturalness(audio: np.ndarray, sample_rate: int = 22050) -> float 
     return float(naturalness)
 
 
-def detect_artifacts(audio: np.ndarray, sample_rate: int = 22050) -> dict[str, Any]:
+def detect_artifacts(audio: npt.NDArray[np.float32], sample_rate: int = 22050) -> dict[str, Any]:
     """
     Detect synthesis artifacts in audio.
 
@@ -697,7 +701,7 @@ def detect_artifacts(audio: np.ndarray, sample_rate: int = 22050) -> dict[str, A
     clipping = np.sum(np.abs(audio) >= 0.99) / len(audio)
     if clipping > 0.01:  # More than 1% clipped
         results["has_distortion"] = True
-        results["artifact_score"] += clipping * 0.5
+        results["artifact_score"] += float(clipping) * 0.5
 
     # Clamp artifact score
     results["artifact_score"] = min(1.0, results["artifact_score"])
@@ -706,8 +710,8 @@ def detect_artifacts(audio: np.ndarray, sample_rate: int = 22050) -> dict[str, A
 
 
 def calculate_pesq_score(
-    reference_audio: str | Path | np.ndarray,
-    degraded_audio: str | Path | np.ndarray,
+    reference_audio: str | Path | npt.NDArray[np.float32],
+    degraded_audio: str | Path | npt.NDArray[np.float32],
     sample_rate: int = 16000,
 ) -> float | None:
     """
@@ -762,8 +766,8 @@ def calculate_pesq_score(
 
 
 def calculate_stoi_score(
-    reference_audio: str | Path | np.ndarray,
-    degraded_audio: str | Path | np.ndarray,
+    reference_audio: str | Path | npt.NDArray[np.float32],
+    degraded_audio: str | Path | npt.NDArray[np.float32],
     sample_rate: int = 10000,
 ) -> float | None:
     """
@@ -809,7 +813,7 @@ def calculate_stoi_score(
 
 
 def calculate_spectral_flatness(
-    audio: np.ndarray, sample_rate: int = 22050, frame_length: int = 2048
+    audio: npt.NDArray[np.float32], sample_rate: int = 22050, frame_length: int = 2048
 ) -> float | None:
     """
     Calculate spectral flatness metric.
@@ -858,7 +862,7 @@ def calculate_spectral_flatness(
 
 
 def calculate_pitch_variance(
-    audio: np.ndarray, sample_rate: int = 22050, fmin: float = 50.0, fmax: float = 400.0
+    audio: npt.NDArray[np.float32], sample_rate: int = 22050, fmin: float = 50.0, fmax: float = 400.0
 ) -> float | None:
     """
     Calculate pitch variance metric.
@@ -901,7 +905,7 @@ def calculate_pitch_variance(
 
 
 def calculate_energy_variance(
-    audio: np.ndarray, frame_length: int = 2048, hop_length: int = 512
+    audio: npt.NDArray[np.float32], frame_length: int = 2048, hop_length: int = 512
 ) -> float | None:
     """
     Calculate energy variance metric.
@@ -919,16 +923,16 @@ def calculate_energy_variance(
     """
     try:
         # Calculate frame energy
-        frame_energy = []
+        energy_list: list[float] = []
         for i in range(0, len(audio) - frame_length, hop_length):
             frame = audio[i : i + frame_length]
-            energy = np.sum(frame**2)
-            frame_energy.append(energy)
+            energy = float(np.sum(frame**2))
+            energy_list.append(energy)
 
-        if len(frame_energy) == 0:
+        if len(energy_list) == 0:
             return None
 
-        frame_energy = np.array(frame_energy)
+        frame_energy = np.array(energy_list)
 
         # Calculate variance
         energy_variance = np.var(frame_energy)
@@ -940,7 +944,7 @@ def calculate_energy_variance(
 
 
 def calculate_speaking_rate(
-    audio: np.ndarray, sample_rate: int = 22050, threshold: float = 0.01
+    audio: npt.NDArray[np.float32], sample_rate: int = 22050, threshold: float = 0.01
 ) -> float | None:
     """
     Calculate speaking rate metric.
@@ -961,16 +965,16 @@ def calculate_speaking_rate(
         frame_length = int(0.025 * sample_rate)  # 25ms frames
         hop_length = frame_length // 2
 
-        frame_energy = []
+        energy_list: list[float] = []
         for i in range(0, len(audio) - frame_length, hop_length):
             frame = audio[i : i + frame_length]
-            energy = np.sum(frame**2)
-            frame_energy.append(energy)
+            energy = float(np.sum(frame**2))
+            energy_list.append(energy)
 
-        if len(frame_energy) == 0:
+        if len(energy_list) == 0:
             return None
 
-        frame_energy = np.array(frame_energy)
+        frame_energy = np.array(energy_list)
         max_energy = np.max(frame_energy)
         threshold_energy = max_energy * threshold
 
@@ -1001,7 +1005,7 @@ def calculate_speaking_rate(
 
 
 def detect_clicks(
-    audio: np.ndarray, sample_rate: int = 22050, threshold: float = 0.1
+    audio: npt.NDArray[np.float32], sample_rate: int = 22050, threshold: float = 0.1
 ) -> dict[str, Any]:
     """
     Detect clicks in audio.
@@ -1053,7 +1057,7 @@ def detect_clicks(
 
 
 def calculate_silence_ratio(
-    audio: np.ndarray, sample_rate: int = 22050, threshold_db: float = -40.0
+    audio: npt.NDArray[np.float32], sample_rate: int = 22050, threshold_db: float = -40.0
 ) -> float:
     """
     Calculate silence ratio metric.
@@ -1074,20 +1078,19 @@ def calculate_silence_ratio(
         frame_length = max(1, int(0.025 * sample_rate))  # 25ms frames
         hop_length = max(1, frame_length // 2)
 
-        frame_energy = []
+        energy_list: list[float] = []
         if len(audio) < frame_length:
-            # Too-short audio: treat as a single frame so the metric remains meaningful.
-            frame_energy.append(float(np.sum(audio**2)))
+            energy_list.append(float(np.sum(audio**2)))
         else:
             for i in range(0, len(audio) - frame_length, hop_length):
                 frame = audio[i : i + frame_length]
-                energy = np.sum(frame**2)
-                frame_energy.append(energy)
+                energy = float(np.sum(frame**2))
+                energy_list.append(energy)
 
-        if len(frame_energy) == 0:
+        if len(energy_list) == 0:
             return 0.0
 
-        frame_energy = np.array(frame_energy)
+        frame_energy = np.array(energy_list)
         max_energy = np.max(frame_energy)
 
         # All-zero energy -> all silence.
@@ -1109,7 +1112,7 @@ def calculate_silence_ratio(
         return 0.0
 
 
-def calculate_clipping_ratio(audio: np.ndarray, clipping_threshold: float = 0.99) -> float | None:
+def calculate_clipping_ratio(audio: npt.NDArray[np.float32], clipping_threshold: float = 0.99) -> float | None:
     """
     Calculate clipping ratio metric.
 
@@ -1144,8 +1147,8 @@ def calculate_clipping_ratio(audio: np.ndarray, clipping_threshold: float = 0.99
 
 
 def calculate_all_metrics(
-    audio: str | Path | np.ndarray,
-    reference_audio: str | Path | np.ndarray | None = None,
+    audio: str | Path | npt.NDArray[np.float32],
+    reference_audio: str | Path | npt.NDArray[np.float32] | None = None,
     sample_rate: int = 22050,
     use_cache: bool = True,
     include_ml_prediction: bool = False,
@@ -1199,7 +1202,8 @@ def calculate_all_metrics(
         )
         if cached is not None:
             logger.debug("Using cached quality metrics from enhanced cache")
-            return cached.copy()
+            result: dict[str, Any] = cached.copy()
+            return result
 
     # Check simple cache if enabled and no reference audio (only if ML prediction not requested)
     cache_key = None
@@ -1210,7 +1214,7 @@ def calculate_all_metrics(
             return _metrics_cache[cache_key].copy()
 
     # Calculate metrics
-    metrics = {
+    metrics: dict[str, Any] = {
         "mos_score": calculate_mos_score(audio_array),
         "snr_db": calculate_snr(audio_array),
         "naturalness": calculate_naturalness(audio_array, sr),
@@ -1262,7 +1266,12 @@ def calculate_all_metrics(
                 snr_db = metrics.get("snr_db")
                 naturalness = metrics.get("naturalness")
                 similarity = metrics.get("similarity") if reference_audio is not None else None
-                artifact_score = metrics.get("artifacts", {}).get("artifact_score")
+                artifacts_val = metrics.get("artifacts")
+                artifact_score = (
+                    artifacts_val.get("artifact_score")
+                    if isinstance(artifacts_val, dict)
+                    else None
+                )
 
                 if None in (mos_score, snr_db, naturalness, artifact_score) or (
                     reference_audio is not None and similarity is None
@@ -1284,7 +1293,7 @@ def calculate_all_metrics(
                 logger.warning(f"ML quality prediction failed: {e}")
                 metrics["ml_prediction"] = None
 
-    metrics["missing_dependencies"] = missing_deps
+    metrics["missing_dependencies"] = list(missing_deps)
 
     # Cache metrics using enhanced cache if available (only cache if ML prediction not included, to avoid cache pollution)
     if (
@@ -1315,7 +1324,7 @@ def calculate_all_metrics(
     return metrics
 
 
-def clear_metrics_cache():
+def clear_metrics_cache() -> None:
     """Clear the quality metrics cache."""
     global _metrics_cache
     _metrics_cache.clear()
@@ -1435,7 +1444,7 @@ def analyze_quality_batch(
 # Removed duplicate _calculate_snr_numba - using the one defined earlier with proper conditional compilation
 
 
-def calculate_snr_fast(audio: np.ndarray) -> float:
+def calculate_snr_fast(audio: npt.NDArray[np.float32]) -> float:
     """
     Fast SNR calculation using numba optimization.
 
@@ -1451,11 +1460,12 @@ def calculate_snr_fast(audio: np.ndarray) -> float:
         except Exception as e:
             logger.debug(f"Numba SNR calculation failed: {e}, falling back to standard")
 
-    return calculate_snr(audio)
+    result = calculate_snr(audio)
+    return result if result is not None else 0.0
 
 
 def predict_quality_with_ml(
-    audio_features: np.ndarray, model_type: str = "regression"
+    audio_features: npt.NDArray[np.float32], model_type: str = "regression"
 ) -> dict[str, Any]:
     """
     Predict audio quality using deterministic model based on quality metrics.

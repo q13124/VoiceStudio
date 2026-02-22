@@ -79,8 +79,8 @@ class EmotionEngine:
             config: Engine configuration
         """
         self._config = config or EmotionConfig()
-        self._detection_model = None
-        self._synthesis_model = None
+        self._detection_model: dict[str, Any] | None = None
+        self._synthesis_model: dict[str, Any] | None = None
         self._loaded = False
 
     @property
@@ -582,6 +582,7 @@ class EmotionEngine:
         sample_rate: int,
     ) -> dict[str, float]:
         """Classify emotion using loaded ML model."""
+        assert self._detection_model is not None
         if self._detection_model.get("type") == "wav2vec":
             return await self._classify_wav2vec(audio, sample_rate)
         elif self._detection_model.get("type") == "speechbrain":
@@ -597,6 +598,7 @@ class EmotionEngine:
         """Classify using Wav2Vec2."""
         import torch
 
+        assert self._detection_model is not None
         processor = self._detection_model["processor"]
         model = self._detection_model["model"]
         device = self._detection_model["device"]
@@ -635,6 +637,7 @@ class EmotionEngine:
         sample_rate: int,
     ) -> dict[str, float]:
         """Classify using SpeechBrain."""
+        assert self._detection_model is not None
         classifier = self._detection_model["classifier"]
 
         # SpeechBrain expects file path or tensor

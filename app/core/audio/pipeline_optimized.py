@@ -197,7 +197,7 @@ class OptimizedAudioPipeline:
         executor_class = ProcessPoolExecutor if self.use_multiprocessing else ThreadPoolExecutor
         max_workers = self.max_workers or min(len(normalized_inputs), 4)
 
-        results = [None] * len(normalized_inputs)
+        results: list[np.ndarray | None] = [None] * len(normalized_inputs)
 
         with executor_class(max_workers=max_workers) as executor:
             # Submit all tasks
@@ -222,10 +222,9 @@ class OptimizedAudioPipeline:
                         progress_callback(completed, len(normalized_inputs))
                 except Exception as e:
                     logger.error(f"Failed to process audio {idx}: {e}")
-                    # Use original audio as fallback
                     results[idx] = normalized_inputs[idx][0]
 
-        return results
+        return [r for r in results if r is not None]
 
     def process_file(
         self,
@@ -252,10 +251,10 @@ class OptimizedAudioPipeline:
             raise FileNotFoundError(f"Audio file not found: {file_path}")
 
         # Load audio
-        audio, sample_rate = librosa.load(str(file_path), sr=None, mono=False)
+        audio, sr_loaded = librosa.load(str(file_path), sr=None, mono=False)
 
         # Process
-        processed = self.process_single(audio, sample_rate, config)
+        processed = self.process_single(audio, int(sr_loaded), config)
 
         # Save if output path provided
         if output_path:
@@ -299,30 +298,30 @@ class OptimizedAudioPipeline:
 
         # Load all files first (can be parallelized)
         def load_file(file_path: Path) -> tuple[np.ndarray, int]:
-            audio, sample_rate = librosa.load(str(file_path), sr=None, mono=False)
-            return audio, sample_rate
+            audio, sr_loaded = librosa.load(str(file_path), sr=None, mono=False)
+            return audio, int(sr_loaded)
 
         max_workers = self.max_workers or min(len(file_paths), 4)
         executor_class = ProcessPoolExecutor if self.use_multiprocessing else ThreadPoolExecutor
 
         # Load files in parallel
-        loaded_audio = []
+        loaded_audio: list[tuple[np.ndarray, int] | None] = [None] * len(file_paths)
         with executor_class(max_workers=max_workers) as executor:
             futures = {
                 executor.submit(load_file, Path(fp)): idx for idx, fp in enumerate(file_paths)
             }
 
-            loaded_audio = [None] * len(file_paths)
             for future in as_completed(futures):
                 idx = futures[future]
                 try:
                     loaded_audio[idx] = future.result()
                 except Exception as e:
                     logger.error(f"Failed to load file {file_paths[idx]}: {e}")
-                    loaded_audio[idx] = None
 
         # Filter out failed loads
-        valid_audio = [(audio, sr) for audio, sr in loaded_audio if audio is not None]
+        valid_audio: list[np.ndarray | tuple[np.ndarray, int]] = [
+            item for item in loaded_audio if item is not None
+        ]
 
         # Process in parallel
         processed = self.process_batch(valid_audio, config, progress_callback)

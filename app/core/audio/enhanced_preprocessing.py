@@ -178,12 +178,12 @@ class EnhancedPreprocessor:
     def _remove_dc_offset(self, audio: np.ndarray) -> np.ndarray:
         """Remove DC offset from audio (optimized with vectorized operations)."""
         if len(audio.shape) == 1:
-            # Vectorized for mono
-            return audio - np.mean(audio)
+            result: np.ndarray = audio - np.mean(audio)
+            return result
         else:
-            # Vectorized for multi-channel (process all channels at once)
             dc_offsets = np.mean(audio, axis=0, keepdims=True)
-            return audio - dc_offsets
+            result_mc: np.ndarray = audio - dc_offsets
+            return result_mc
 
     def _apply_highpass(
         self, audio: np.ndarray, sample_rate: int, cutoff: float = 80.0
@@ -203,7 +203,8 @@ class EnhancedPreprocessor:
             b, a = signal.iirfilter(4, normalized_cutoff, btype="highpass", ftype="butter")
 
             if len(audio.shape) == 1:
-                return signal.filtfilt(b, a, audio)
+                filtered: np.ndarray = signal.filtfilt(b, a, audio)
+                return filtered
             else:
                 # Process all channels (vectorized where possible)
                 # Note: filtfilt doesn't support multi-channel directly, but we can optimize
@@ -271,12 +272,13 @@ class EnhancedPreprocessor:
             try:
                 strength = config.get("denoise_strength", 0.5)
                 if len(audio.shape) == 1:
-                    return nr.reduce_noise(
+                    denoised: np.ndarray = nr.reduce_noise(
                         y=audio,
                         sr=sample_rate,
                         stationary=False,
                         prop_decrease=strength,
                     )
+                    return denoised
                 else:
                     processed = audio.copy()
                     for ch in range(audio.shape[1]):
@@ -388,7 +390,8 @@ class EnhancedPreprocessor:
         if max_val > 0.95:
             processed = processed / max_val * 0.95
 
-        return processed
+        result: np.ndarray = np.asarray(processed)
+        return result
 
     def _apply_normalization(
         self, audio: np.ndarray, sample_rate: int, target_lufs: float
@@ -396,19 +399,20 @@ class EnhancedPreprocessor:
         """Apply LUFS normalization."""
         if HAS_AUDIO_UTILS:
             try:
-                return normalize_lufs(audio, sample_rate, target_lufs)
+                normalized: np.ndarray = normalize_lufs(audio, sample_rate, target_lufs)
+                return normalized
             except Exception as e:
                 logger.warning(f"LUFS normalization failed: {e}")
-                # Fallback to peak normalization
                 max_val = np.max(np.abs(audio))
                 if max_val > 0:
-                    return audio / max_val * 0.95
+                    peak_norm: np.ndarray = audio / max_val * 0.95
+                    return peak_norm
                 return audio
 
-        # Fallback to peak normalization
         max_val = np.max(np.abs(audio))
         if max_val > 0:
-            return audio / max_val * 0.95
+            peak_norm_fb: np.ndarray = audio / max_val * 0.95
+            return peak_norm_fb
         return audio
 
     def get_preset(self, preset_name: str) -> dict:

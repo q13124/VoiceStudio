@@ -13,6 +13,7 @@ import os
 import secrets
 from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -225,7 +226,7 @@ class APIKeyManager:
         if HAS_BCRYPT:
             # Use bcrypt for secure password hashing
             salt = bcrypt.gensalt()
-            return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+            return str(bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8"))
         else:
             # Fallback to SHA256 (less secure, but better than plain text)
             logger.warning(
@@ -241,7 +242,7 @@ class APIKeyManager:
         if HAS_BCRYPT:
             try:
                 # Try bcrypt verification first
-                return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+                return bool(bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8")))
             except (ValueError, TypeError):
                 # If bcrypt fails, try SHA256 fallback
                 return hashlib.sha256(password.encode()).hexdigest() == password_hash
@@ -368,7 +369,7 @@ class JWTManager:
             "type": "access",
         }
 
-        return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
+        return str(jwt.encode(payload, self.secret_key, algorithm=self.algorithm))
 
     def create_refresh_token(
         self,
@@ -390,12 +391,12 @@ class JWTManager:
             "type": "refresh",
         }
 
-        return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
+        return str(jwt.encode(payload, self.secret_key, algorithm=self.algorithm))
 
-    def verify_token(self, token: str) -> dict | None:
+    def verify_token(self, token: str) -> dict[str, Any] | None:
         """Verify and decode a JWT token."""
         try:
-            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
+            payload: dict[str, Any] = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             return payload
         except PyJWTError as e:
             logger.warning(f"JWT verification failed: {e}")
@@ -407,8 +408,8 @@ class JWTManager:
         if not payload or payload.get("type") != "refresh":
             return None
 
-        user_id = payload.get("sub")
-        username = payload.get("username")
+        user_id = str(payload.get("sub", ""))
+        username = str(payload.get("username", ""))
         role_str = payload.get("role", UserRole.USER.value)
 
         try:
@@ -504,6 +505,6 @@ except ImportError:
     # Fallback if middleware not available
     from starlette.requests import Request
 
-    async def require_auth_if_enabled(request: Request = None):
+    async def require_auth_if_enabled(request: Request) -> User | None:
         """Stub when middleware not available."""
         return None

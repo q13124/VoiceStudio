@@ -107,39 +107,39 @@ async def list_engines(
     # Gracefully handle engine service failures
     try:
         engines = engine_service.list_engines()
-    except Exception as e:
-        logger.warning(f"Failed to list engines: {e}")
+    except Exception as exc:
+        logger.warning(f"Failed to list engines: {exc}")
         engines = []
 
     # Filter by type if specified
     if type:
-        engines = [e for e in engines if e.get("type") == type]
+        engines = [eng for eng in engines if eng.get("type") == type]
 
     # Filter by status if specified
     if status:
-        engines = [e for e in engines if e.get("status") == status]
+        engines = [eng for eng in engines if eng.get("status") == status]
 
     # Convert to response model
     engine_infos = []
-    for e in engines[:limit]:
+    for eng in engines[:limit]:
         try:
             engine_infos.append(
                 EngineInfo(
-                    id=e.get("id", ""),
-                    name=e.get("name", ""),
-                    version=e.get("version", "0.0.0"),
-                    type=e.get("type", "unknown"),
-                    status=e.get("status", "unknown"),
+                    id=eng.get("id", ""),
+                    name=eng.get("name", ""),
+                    version=eng.get("version", "0.0.0"),
+                    type=eng.get("type", "unknown"),
+                    status=eng.get("status", "unknown"),
                     capabilities=[
                         EngineCapability(feature=cap, supported=True)
-                        for cap in e.get("capabilities", [])
+                        for cap in eng.get("capabilities", [])
                     ],
-                    memory_usage_mb=e.get("memory_usage_mb"),
-                    gpu_usage_percent=e.get("gpu_usage_percent"),
+                    memory_usage_mb=eng.get("memory_usage_mb"),
+                    gpu_usage_percent=eng.get("gpu_usage_percent"),
                 )
             )
         except Exception as model_err:
-            logger.warning(f"Failed to parse engine info for {e.get('id', 'unknown')}: {model_err}")
+            logger.warning(f"Failed to parse engine info for {eng.get('id', 'unknown')}: {model_err}")
             continue
 
     return paginated_response(

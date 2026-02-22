@@ -278,24 +278,24 @@ async def align_transcript(request: AlignRequest):
         audio, sample_rate = load_audio(audio_path)
         duration = len(audio) / sample_rate
 
-        words = request.transcript.split()
-        words_per_second = len(words) / duration if duration > 0 else 2.0
+        word_tokens = request.transcript.split()
+        words_per_second = len(word_tokens) / duration if duration > 0 else 2.0
         segments = []
         current_time = 0.0
 
-        for word in words:
+        for token in word_tokens:
             word_duration = 1.0 / words_per_second
             word_start = current_time
             word_end = current_time + word_duration
 
             segments.append(
                 TranscriptSegment(
-                    text=word,
+                    text=token,
                     start_time=word_start,
                     end_time=word_end,
                     words=[
                         WordAlignment(
-                            word=word,
+                            word=token,
                             start_time=word_start,
                             end_time=word_end,
                             confidence=0.7,
@@ -376,7 +376,7 @@ async def merge_segments(request: MergeRequest):
                 # Apply crossfade if needed
                 crossfade_samples = int(request.crossfade_duration * sample_rate)
 
-                if len(merged_audio) > 0 and crossfade_samples > 0:
+                if merged_audio is not None and len(merged_audio) > 0 and crossfade_samples > 0:
                     # Create crossfade window
                     fade_out = np.linspace(1.0, 0.0, crossfade_samples)
                     fade_in = np.linspace(0.0, 1.0, crossfade_samples)

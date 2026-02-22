@@ -83,7 +83,8 @@ class SmartDiscovery:
         cache_key = f"{engine_type}_{capabilities}_{require_dependencies}_{check_health}"
         if self.cache_enabled and cache_key in self.discovery_cache and self.discovery_timestamp:
             logger.debug("Using cached discovery results")
-            return self.discovery_cache[cache_key]
+            cached: dict[str, dict[str, Any]] = self.discovery_cache[cache_key]
+            return cached
 
         # Find all manifests
         manifests = find_engine_manifests(str(self.engines_root))
@@ -249,7 +250,7 @@ class SmartDiscovery:
         Returns:
             Dictionary with health status
         """
-        health = {
+        health: dict[str, Any] = {
             "status": "unknown",
             "dependencies_ok": False,
             "entry_point_ok": False,
@@ -336,7 +337,7 @@ class SmartDiscovery:
         """
         all_engines = self.discover_engines(require_dependencies=False)
 
-        summary = {
+        summary: dict[str, Any] = {
             "total_engines": len(all_engines),
             "by_type": {},
             "by_capability": {},

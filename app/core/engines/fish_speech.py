@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 from app.core.engines.base import EngineProtocol
 
@@ -53,8 +54,8 @@ class FishSpeechEngine(EngineProtocol):
     def __init__(self, config: FishSpeechConfig | None = None):
         super().__init__()
         self.config = config or FishSpeechConfig()
-        self._model = None
-        self._vocoder = None
+        self._model: dict[str, Any] | None = None
+        self._vocoder: Any = None
         self._loaded = False
 
     def initialize(self) -> bool:
@@ -130,10 +131,10 @@ class FishSpeechEngine(EngineProtocol):
     async def synthesize(
         self,
         text: str,
-        reference_audio: np.ndarray | None = None,
+        reference_audio: npt.NDArray[np.float32] | None = None,
         reference_sample_rate: int = 44100,
         language: str = "en",
-    ) -> np.ndarray:
+    ) -> npt.NDArray[np.float32]:
         """
         Synthesize speech with optional voice cloning.
 
@@ -147,7 +148,7 @@ class FishSpeechEngine(EngineProtocol):
             Synthesized audio at 44.1kHz
         """
         if not self._loaded:
-            await self.initialize()
+            await self._async_initialize()
 
         if self._model and not self._model.get("placeholder"):
             return await self._synthesize_real(
@@ -167,13 +168,14 @@ class FishSpeechEngine(EngineProtocol):
     async def _synthesize_real(
         self,
         text: str,
-        reference_audio: np.ndarray | None,
+        reference_audio: npt.NDArray[np.float32] | None,
         reference_sample_rate: int,
         language: str,
-    ) -> np.ndarray:
+    ) -> npt.NDArray[np.float32]:
         """Real synthesis using Fish Speech."""
         import torch
 
+        assert self._model is not None
         vqgan = self._model["vqgan"]
         llama = self._model["llama"]
         device = self._model["device"]
@@ -198,11 +200,12 @@ class FishSpeechEngine(EngineProtocol):
         with torch.no_grad():
             audio = vqgan.decode(tokens)
 
-        return audio.squeeze().cpu().numpy()
+        result: npt.NDArray[np.float32] = audio.squeeze().cpu().numpy()
+        return result
 
     async def clone_voice(
         self,
-        reference_audio: np.ndarray,
+        reference_audio: npt.NDArray[np.float32],
         sample_rate: int,
     ) -> dict[str, Any]:
         """
@@ -216,7 +219,7 @@ class FishSpeechEngine(EngineProtocol):
             Voice profile dictionary
         """
         if not self._loaded:
-            await self.initialize()
+            await self._async_initialize()
 
         if self._model and not self._model.get("placeholder"):
             import torch
