@@ -247,7 +247,7 @@ class SLOMonitor:
         self._alert_counter = 0
 
         # Register SLOs
-        for slo in (slos or DEFAULT_SLOS):
+        for slo in slos or DEFAULT_SLOS:
             self.register_slo(slo)
 
         logger.info(f"SLOMonitor initialized with {len(self.slos)} SLOs")
@@ -336,10 +336,7 @@ class SLOMonitor:
     def _has_active_alert(self, slo_id: str, severity: AlertSeverity) -> bool:
         """Check if there's an active alert for this SLO."""
         return any(
-            a.slo_id == slo_id and
-            a.severity == severity and
-            not a.resolved
-            for a in self._alerts
+            a.slo_id == slo_id and a.severity == severity and not a.resolved for a in self._alerts
         )
 
     def _create_alert(
@@ -422,7 +419,7 @@ class SLOMonitor:
         window_fraction = min(
             (time.time() - window_samples[0].timestamp if window_samples else 0)
             / (slo.window_hours * 3600),
-            1.0
+            1.0,
         )
         expected_burn = window_fraction
         budget_remaining = max(0, (1.0 - (burn_rate * expected_burn)) * 100)
@@ -495,8 +492,7 @@ class SLOMonitor:
         total = len(statuses)
 
         critical_alerts = [
-            a for a in self._alerts
-            if a.severity == AlertSeverity.CRITICAL and not a.resolved
+            a for a in self._alerts if a.severity == AlertSeverity.CRITICAL and not a.resolved
         ]
 
         if critical_alerts:
@@ -510,7 +506,9 @@ class SLOMonitor:
 
     def export_status(self, filepath: Path | None = None) -> Path:
         """Export current SLO status to JSON file."""
-        filepath = filepath or (self._data_dir / f"slo_status_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json")
+        filepath = filepath or (
+            self._data_dir / f"slo_status_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+        )
 
         data = {
             "exported_at": datetime.utcnow().isoformat() + "Z",

@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class ShutdownPhase(Enum):
     """Phases of the shutdown process."""
+
     RUNNING = auto()
     INITIATED = auto()
     DRAINING = auto()  # Stop accepting new requests
@@ -33,6 +34,7 @@ class ShutdownPhase(Enum):
 @dataclass
 class ShutdownHandler:
     """Handler for a shutdown task."""
+
     name: str
     phase: ShutdownPhase
     handler: Callable[[], Awaitable[None]]
@@ -46,6 +48,7 @@ class ShutdownHandler:
 @dataclass
 class ShutdownResult:
     """Result of a shutdown handler execution."""
+
     handler_name: str
     phase: ShutdownPhase
     success: bool
@@ -121,15 +124,19 @@ class GracefulShutdownOrchestrator:
         priority: int = 0,
     ) -> Callable[[Callable[[], Awaitable[None]]], Callable[[], Awaitable[None]]]:
         """Decorator to register a shutdown handler."""
+
         def decorator(func: Callable[[], Awaitable[None]]) -> Callable[[], Awaitable[None]]:
-            self.register_handler(ShutdownHandler(
-                name=name,
-                phase=phase,
-                handler=func,
-                timeout_seconds=timeout_seconds,
-                priority=priority,
-            ))
+            self.register_handler(
+                ShutdownHandler(
+                    name=name,
+                    phase=phase,
+                    handler=func,
+                    timeout_seconds=timeout_seconds,
+                    priority=priority,
+                )
+            )
             return func
+
         return decorator
 
     def set_callbacks(
@@ -204,7 +211,9 @@ class GracefulShutdownOrchestrator:
             while self._in_flight_requests > 0:
                 elapsed = asyncio.get_event_loop().time() - drain_start
                 if elapsed > self.drain_timeout_seconds:
-                    logger.warning(f"Drain timeout, {self._in_flight_requests} requests still in flight")
+                    logger.warning(
+                        f"Drain timeout, {self._in_flight_requests} requests still in flight"
+                    )
                     break
                 await asyncio.sleep(0.1)
 
@@ -300,7 +309,9 @@ class GracefulShutdownOrchestrator:
             "in_flight_requests": self._in_flight_requests,
             "registered_handlers": len(self._handlers),
             "completed_results": len(self._results),
-            "shutdown_started": self._shutdown_started.isoformat() if self._shutdown_started else None,
+            "shutdown_started": (
+                self._shutdown_started.isoformat() if self._shutdown_started else None
+            ),
         }
 
 

@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class OperationType(Enum):
     """Types of operations to monitor."""
+
     HTTP_REQUEST = "http_request"
     DATABASE_QUERY = "database_query"
     SYNTHESIS = "synthesis"
@@ -32,6 +33,7 @@ class OperationType(Enum):
 @dataclass
 class OperationSpan:
     """A span representing an operation."""
+
     operation_id: str
     operation_type: OperationType
     name: str
@@ -48,10 +50,11 @@ class OperationSpan:
 @dataclass
 class PerformanceStats:
     """Performance statistics for an operation type."""
+
     operation_type: str
     count: int = 0
     total_duration_ms: float = 0.0
-    min_duration_ms: float = float('inf')
+    min_duration_ms: float = float("inf")
     max_duration_ms: float = 0.0
     avg_duration_ms: float = 0.0
     p50_ms: float = 0.0
@@ -64,12 +67,7 @@ class PerformanceStats:
 class PerformanceMonitor:
     """Monitor for tracking application performance."""
 
-    def __init__(
-        self,
-        sample_rate: float = 1.0,
-        max_spans: int = 10000,
-        retention_hours: int = 24
-    ):
+    def __init__(self, sample_rate: float = 1.0, max_spans: int = 10000, retention_hours: int = 24):
         self._sample_rate = sample_rate
         self._max_spans = max_spans
         self._retention_hours = retention_hours
@@ -99,7 +97,7 @@ class PerformanceMonitor:
         name: str,
         operation_type: OperationType,
         parent_id: str | None = None,
-        tags: dict[str, str] | None = None
+        tags: dict[str, str] | None = None,
     ) -> OperationSpan:
         """Start a new operation span."""
         import uuid
@@ -118,12 +116,7 @@ class PerformanceMonitor:
 
         return span
 
-    def end_span(
-        self,
-        span: OperationSpan,
-        status: str = "ok",
-        error: str | None = None
-    ) -> None:
+    def end_span(self, span: OperationSpan, status: str = "ok", error: str | None = None) -> None:
         """End an operation span."""
         span.end_time = datetime.now()
         span.duration_ms = (span.end_time - span.start_time).total_seconds() * 1000
@@ -160,14 +153,11 @@ class PerformanceMonitor:
 
         # Trim old spans
         if len(self._spans) > self._max_spans:
-            self._spans = self._spans[-self._max_spans:]
+            self._spans = self._spans[-self._max_spans :]
 
-    def track_operation(
-        self,
-        name: str,
-        operation_type: OperationType = OperationType.CUSTOM
-    ):
+    def track_operation(self, name: str, operation_type: OperationType = OperationType.CUSTOM):
         """Decorator to track operation performance."""
+
         def decorator(func: Callable) -> Callable:
             @functools.wraps(func)
             async def async_wrapper(*args, **kwargs):
@@ -198,9 +188,7 @@ class PerformanceMonitor:
         return decorator
 
     def get_stats(
-        self,
-        operation_type: str | None = None,
-        name: str | None = None
+        self, operation_type: str | None = None, name: str | None = None
     ) -> list[PerformanceStats]:
         """Get performance statistics."""
         stats = []
@@ -220,19 +208,21 @@ class PerformanceMonitor:
 
             error_count = self._error_counts.get(key, 0)
 
-            stats.append(PerformanceStats(
-                operation_type=key,
-                count=count,
-                total_duration_ms=sum(sorted_durations),
-                min_duration_ms=min(sorted_durations),
-                max_duration_ms=max(sorted_durations),
-                avg_duration_ms=statistics.mean(sorted_durations),
-                p50_ms=self._percentile(sorted_durations, 50),
-                p95_ms=self._percentile(sorted_durations, 95),
-                p99_ms=self._percentile(sorted_durations, 99),
-                error_count=error_count,
-                error_rate=error_count / count if count > 0 else 0,
-            ))
+            stats.append(
+                PerformanceStats(
+                    operation_type=key,
+                    count=count,
+                    total_duration_ms=sum(sorted_durations),
+                    min_duration_ms=min(sorted_durations),
+                    max_duration_ms=max(sorted_durations),
+                    avg_duration_ms=statistics.mean(sorted_durations),
+                    p50_ms=self._percentile(sorted_durations, 50),
+                    p95_ms=self._percentile(sorted_durations, 95),
+                    p99_ms=self._percentile(sorted_durations, 99),
+                    error_count=error_count,
+                    error_rate=error_count / count if count > 0 else 0,
+                )
+            )
 
         return stats
 
@@ -240,7 +230,7 @@ class PerformanceMonitor:
         self,
         count: int = 100,
         operation_type: OperationType | None = None,
-        status: str | None = None
+        status: str | None = None,
     ) -> list[OperationSpan]:
         """Get recent operation spans."""
         spans = self._spans
@@ -254,9 +244,7 @@ class PerformanceMonitor:
         return spans[-count:]
 
     def get_slow_operations(
-        self,
-        threshold_ms: float = 1000,
-        count: int = 20
+        self, threshold_ms: float = 1000, count: int = 20
     ) -> list[OperationSpan]:
         """Get slow operations above threshold."""
         slow = [s for s in self._spans if s.duration_ms > threshold_ms]

@@ -86,9 +86,7 @@ async def generate_sonography(request: SonographyGenerateRequest):
         try:
             import sys
 
-            app_path = os.path.join(
-                os.path.dirname(__file__), "..", "..", "..", "app"
-            )
+            app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
             if os.path.exists(app_path) and app_path not in sys.path:
                 sys.path.insert(0, app_path)
 
@@ -132,7 +130,7 @@ async def generate_sonography(request: SonographyGenerateRequest):
                 break
 
             # Extract window
-            window = audio[start_sample:min(end_sample, len(audio))]
+            window = audio[start_sample : min(end_sample, len(audio))]
 
             # Pad if needed
             if len(window) < window_samples:
@@ -152,9 +150,7 @@ async def generate_sonography(request: SonographyGenerateRequest):
                 magnitude = np.abs(stft)
 
                 # Get frequency bins
-                freqs = librosa.fft_frequencies(
-                    sr=sample_rate, n_fft=request.frequency_resolution
-                )
+                freqs = librosa.fft_frequencies(sr=sample_rate, n_fft=request.frequency_resolution)
 
                 # Take only positive frequencies
                 freqs = freqs[: magnitude.shape[0]]

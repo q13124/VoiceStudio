@@ -22,10 +22,7 @@ try:
         validate_audio_file,
     )
 except ImportError:
-    pytest.skip(
-        "Could not import file_validation module",
-        allow_module_level=True
-    )
+    pytest.skip("Could not import file_validation module", allow_module_level=True)
 
 
 class TestAudioSignatures:
@@ -33,32 +30,23 @@ class TestAudioSignatures:
 
     def test_wav_signature_present(self):
         """Test WAV magic bytes are defined."""
-        wav_found = any(
-            b"RIFF" in sig[0] for sig in AUDIO_SIGNATURES
-        )
+        wav_found = any(b"RIFF" in sig[0] for sig in AUDIO_SIGNATURES)
         assert wav_found, "WAV signature missing"
 
     def test_mp3_signature_present(self):
         """Test MP3 magic bytes are defined."""
         # MP3 has multiple magic bytes (ID3, 0xFF 0xFB, etc.)
-        mp3_found = any(
-            b"\xff\xfb" in sig[0] or b"ID3" in sig[0]
-            for sig in AUDIO_SIGNATURES
-        )
+        mp3_found = any(b"\xff\xfb" in sig[0] or b"ID3" in sig[0] for sig in AUDIO_SIGNATURES)
         assert mp3_found, "MP3 signature missing"
 
     def test_flac_signature_present(self):
         """Test FLAC magic bytes are defined."""
-        flac_found = any(
-            b"fLaC" in sig[0] for sig in AUDIO_SIGNATURES
-        )
+        flac_found = any(b"fLaC" in sig[0] for sig in AUDIO_SIGNATURES)
         assert flac_found, "FLAC signature missing"
 
     def test_ogg_signature_present(self):
         """Test OGG magic bytes are defined."""
-        ogg_found = any(
-            b"OggS" in sig[0] for sig in AUDIO_SIGNATURES
-        )
+        ogg_found = any(b"OggS" in sig[0] for sig in AUDIO_SIGNATURES)
         assert ogg_found, "OGG signature missing"
 
 
@@ -67,23 +55,18 @@ class TestExtensionCategories:
 
     def test_standard_audio_extensions_present(self):
         """Test all standard audio extensions are categorized."""
-        required_extensions = [
-            "wav", "mp3", "flac", "ogg", "m4a", "aac", "wma", "aiff"
-        ]
+        required_extensions = ["wav", "mp3", "flac", "ogg", "m4a", "aac", "wma", "aiff"]
         for ext in required_extensions:
-            assert ext in EXTENSION_CATEGORIES, \
-                f"Extension '{ext}' not in EXTENSION_CATEGORIES"
+            assert ext in EXTENSION_CATEGORIES, f"Extension '{ext}' not in EXTENSION_CATEGORIES"
             # FileCategory enum has AUDIO value
             cat = EXTENSION_CATEGORIES[ext]
-            assert cat.value == "audio", \
-                f"Extension '{ext}' should be categorized as 'audio'"
+            assert cat.value == "audio", f"Extension '{ext}' should be categorized as 'audio'"
 
     def test_extension_aliases_present(self):
         """Test extension aliases are included."""
         aliases = ["wave", "oga", "opus", "aif", "aifc"]
         for alias in aliases:
-            assert alias in EXTENSION_CATEGORIES, \
-                f"Alias '{alias}' not in EXTENSION_CATEGORIES"
+            assert alias in EXTENSION_CATEGORIES, f"Alias '{alias}' not in EXTENSION_CATEGORIES"
 
 
 class TestValidateAudioFile:
@@ -139,8 +122,19 @@ class TestValidateAudioFile:
         """Test that validate_audio_file accepts extended format list."""
         # Test with extended format set
         extended_formats = {
-            "wav", "wave", "mp3", "flac", "ogg", "oga",
-            "opus", "m4a", "aac", "wma", "aiff", "aif", "aifc"
+            "wav",
+            "wave",
+            "mp3",
+            "flac",
+            "ogg",
+            "oga",
+            "opus",
+            "m4a",
+            "aac",
+            "wma",
+            "aiff",
+            "aif",
+            "aifc",
         }
         try:
             file_info = validate_audio_file(

@@ -26,7 +26,9 @@ with warnings.catch_warnings():
             spec.loader.exec_module(quality_metrics)
         except AttributeError as e:
             if "list_audio_backends" in str(e):
-                logger.warning("Speechbrain/torchaudio compatibility issue detected. Some features may be limited.")
+                logger.warning(
+                    "Speechbrain/torchaudio compatibility issue detected. Some features may be limited."
+                )
                 # Try to continue anyway - most functions don't need speechbrain
                 ...
             else:
@@ -48,7 +50,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def generate_test_audio(duration_seconds: float = 1.0, sample_rate: int = 22050, frequency: float = 440.0) -> np.ndarray:
+def generate_test_audio(
+    duration_seconds: float = 1.0, sample_rate: int = 22050, frequency: float = 440.0
+) -> np.ndarray:
     """
     Generate a simple test audio signal (sine wave).
 
@@ -67,7 +71,9 @@ def generate_test_audio(duration_seconds: float = 1.0, sample_rate: int = 22050,
     return audio.astype(np.float32)
 
 
-def generate_noisy_audio(duration_seconds: float = 1.0, sample_rate: int = 22050, noise_level: float = 0.1) -> np.ndarray:
+def generate_noisy_audio(
+    duration_seconds: float = 1.0, sample_rate: int = 22050, noise_level: float = 0.1
+) -> np.ndarray:
     """
     Generate test audio with noise.
 
@@ -264,14 +270,22 @@ def test_engine_quality_comparison():
     mq_metrics = calculate_all_metrics(medium_quality, sample_rate=22050)
     lq_metrics = calculate_all_metrics(low_quality, sample_rate=22050)
 
-    logger.info(f"  High quality - MOS: {hq_metrics.get('mos_score', 0):.2f}, Naturalness: {hq_metrics.get('naturalness', 0):.3f}")
-    logger.info(f"  Medium quality - MOS: {mq_metrics.get('mos_score', 0):.2f}, Naturalness: {mq_metrics.get('naturalness', 0):.3f}")
-    logger.info(f"  Low quality - MOS: {lq_metrics.get('mos_score', 0):.2f}, Naturalness: {lq_metrics.get('naturalness', 0):.3f}")
+    logger.info(
+        f"  High quality - MOS: {hq_metrics.get('mos_score', 0):.2f}, Naturalness: {hq_metrics.get('naturalness', 0):.3f}"
+    )
+    logger.info(
+        f"  Medium quality - MOS: {mq_metrics.get('mos_score', 0):.2f}, Naturalness: {mq_metrics.get('naturalness', 0):.3f}"
+    )
+    logger.info(
+        f"  Low quality - MOS: {lq_metrics.get('mos_score', 0):.2f}, Naturalness: {lq_metrics.get('naturalness', 0):.3f}"
+    )
 
     # Verify all metrics are valid (quality ordering may vary with synthetic audio)
-    assert 1.0 <= hq_metrics.get('mos_score', 0) <= 5.0, "High quality MOS should be in valid range"
-    assert 1.0 <= mq_metrics.get('mos_score', 0) <= 5.0, "Medium quality MOS should be in valid range"
-    assert 1.0 <= lq_metrics.get('mos_score', 0) <= 5.0, "Low quality MOS should be in valid range"
+    assert 1.0 <= hq_metrics.get("mos_score", 0) <= 5.0, "High quality MOS should be in valid range"
+    assert (
+        1.0 <= mq_metrics.get("mos_score", 0) <= 5.0
+    ), "Medium quality MOS should be in valid range"
+    assert 1.0 <= lq_metrics.get("mos_score", 0) <= 5.0, "Low quality MOS should be in valid range"
 
     logger.info("  ✓ Engine quality comparison test passed")
     return True
@@ -292,10 +306,14 @@ def generate_quality_report():
     for name, audio in samples.items():
         metrics = calculate_all_metrics(audio, sample_rate=22050)
         report[name] = {
-            "mos_score": metrics.get('mos_score', 0),
-            "naturalness": metrics.get('naturalness', 0),
-            "snr_db": metrics.get('snr_db', 0),
-            "artifacts_score": metrics.get('artifacts', {}).get('overall_score', 0) if isinstance(metrics.get('artifacts'), dict) else 0
+            "mos_score": metrics.get("mos_score", 0),
+            "naturalness": metrics.get("naturalness", 0),
+            "snr_db": metrics.get("snr_db", 0),
+            "artifacts_score": (
+                metrics.get("artifacts", {}).get("overall_score", 0)
+                if isinstance(metrics.get("artifacts"), dict)
+                else 0
+            ),
         }
 
     logger.info("\nQuality Metrics Report:")
@@ -347,6 +365,7 @@ def run_all_tests():
             failed += 1
             logger.error(f"  ✗ {test_name} failed with error: {e}")
             import traceback
+
             logger.error(traceback.format_exc())
 
     logger.info("")

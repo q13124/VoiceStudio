@@ -19,6 +19,7 @@ try:
         GracefulDegradationHandler,
     )
     from app.core.resilience.retry import RetryConfig, RetryHelper, RetryStrategy
+
     HAS_RESILIENCE = True
 except ImportError:
     HAS_RESILIENCE = False
@@ -38,7 +39,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ErrorRecoveryManager:
@@ -57,9 +58,7 @@ class ErrorRecoveryManager:
 
         if service_name not in self.circuit_breakers:
             self.circuit_breakers[service_name] = CircuitBreaker(
-                name=service_name,
-                failure_threshold=5,
-                timeout=60.0
+                name=service_name, failure_threshold=5, timeout=60.0
             )
 
         return self.circuit_breakers[service_name]
@@ -104,10 +103,7 @@ class ErrorRecoveryManager:
 
         # Register fallback if provided
         if degradation_handler and fallback:
-            degradation_handler.register_fallback(
-                DegradationLevel.PARTIAL,
-                fallback
-            )
+            degradation_handler.register_fallback(DegradationLevel.PARTIAL, fallback)
 
         # Execute with circuit breaker
         if circuit_breaker:
@@ -126,10 +122,7 @@ class ErrorRecoveryManager:
         else:
             # Execute with retry if available
             if self.retry_helper and retry_config:
-                return self.retry_helper.execute_with_retry(
-                    func,
-                    config=retry_config
-                )
+                return self.retry_helper.execute_with_retry(func, config=retry_config)
             else:
                 # Direct execution
                 return func()
@@ -163,10 +156,7 @@ class ErrorRecoveryManager:
 
         # Register fallback if provided
         if degradation_handler and fallback:
-            degradation_handler.register_fallback(
-                DegradationLevel.PARTIAL,
-                fallback
-            )
+            degradation_handler.register_fallback(DegradationLevel.PARTIAL, fallback)
 
         # Execute with circuit breaker
         if circuit_breaker:
@@ -185,10 +175,7 @@ class ErrorRecoveryManager:
         else:
             # Execute with retry if available
             if self.retry_helper and retry_config:
-                return await self.retry_helper.execute_with_retry_async(
-                    func,
-                    config=retry_config
-                )
+                return await self.retry_helper.execute_with_retry_async(func, config=retry_config)
             else:
                 # Direct execution
                 return await func()
@@ -221,6 +208,7 @@ def with_error_recovery(
         retry_config: Retry configuration
         fallback: Fallback function
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
@@ -247,10 +235,10 @@ def with_error_recovery(
             )
 
         import asyncio
+
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         else:
             return sync_wrapper
 
     return decorator
-

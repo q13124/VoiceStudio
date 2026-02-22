@@ -23,9 +23,7 @@ class TestWhisperEngineImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            whisper_engine is not None
-        ), "Failed to import whisper_engine module"
+        assert whisper_engine is not None, "Failed to import whisper_engine module"
 
     def test_module_has_whisper_engine_class(self):
         """Test module has WhisperEngine class."""
@@ -46,4 +44,3 @@ class TestWhisperEngineClass:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

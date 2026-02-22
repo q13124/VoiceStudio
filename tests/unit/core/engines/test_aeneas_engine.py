@@ -21,6 +21,7 @@ import pytest
 # Try to import the engine
 try:
     from app.core.engines.aeneas_engine import AeneasEngine, create_aeneas_engine
+
     HAS_AENEAS = True
 except ImportError:
     HAS_AENEAS = False
@@ -58,6 +59,7 @@ class TestAeneasEngineImports:
         if not HAS_AENEAS:
             pytest.skip("Aeneas engine not available")
         from app.core.engines.aeneas_engine import AeneasEngine
+
         assert AeneasEngine is not None
 
     def test_import_create_function(self):
@@ -65,6 +67,7 @@ class TestAeneasEngineImports:
         if not HAS_AENEAS:
             pytest.skip("Aeneas engine not available")
         from app.core.engines.aeneas_engine import create_aeneas_engine
+
         assert create_aeneas_engine is not None
 
 
@@ -98,6 +101,7 @@ class TestAeneasEngineStructure:
     def test_engine_protocol_compliance(self, aeneas_engine):
         """Test that engine implements EngineProtocol."""
         from app.core.engines.protocols import EngineProtocol
+
         assert isinstance(aeneas_engine, EngineProtocol)
         assert hasattr(aeneas_engine, "initialize")
         assert hasattr(aeneas_engine, "cleanup")
@@ -247,7 +251,9 @@ class TestAeneasEngineOptimization:
             mock_mkdtemp.return_value = "/tmp/test_aeneas"
 
             # Mock initialization to succeed
-            with patch.object(aeneas_engine, "_find_python_executable", return_value="/usr/bin/python3"):
+            with patch.object(
+                aeneas_engine, "_find_python_executable", return_value="/usr/bin/python3"
+            ):
                 with patch("app.core.engines.aeneas_engine.subprocess.run") as mock_run:
                     mock_run.return_value.returncode = 0
                     mock_run.return_value.stdout = "aeneas 1.7.3"
@@ -279,6 +285,7 @@ class TestAeneasEngineCreateFunction:
         if not HAS_AENEAS:
             pytest.skip("Aeneas engine not available")
         from app.core.engines.aeneas_engine import create_aeneas_engine
+
         assert callable(create_aeneas_engine)
 
     def test_create_function_returns_engine(self):
@@ -286,9 +293,9 @@ class TestAeneasEngineCreateFunction:
         if not HAS_AENEAS:
             pytest.skip("Aeneas engine not available")
         from app.core.engines.aeneas_engine import create_aeneas_engine
+
         engine = create_aeneas_engine(device="cpu", gpu=False)
         assert engine is not None
         assert isinstance(engine, AeneasEngine)
         with contextlib.suppress(Exception):
             engine.cleanup()
-

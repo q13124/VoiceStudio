@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ReloadResult:
     """Result of a plugin reload attempt."""
+
     plugin_id: str
     success: bool
     duration_ms: float
@@ -105,10 +106,7 @@ class SafePluginReloader:
 
     def _snapshot_plugin(self, plugin_id: str) -> None:
         """Take a snapshot of the plugin's current state."""
-        modules = {
-            name: mod for name, mod in sys.modules.items()
-            if plugin_id in name
-        }
+        modules = {name: mod for name, mod in sys.modules.items() if plugin_id in name}
         self._snapshots[plugin_id] = {
             "modules": modules,
             "timestamp": time.time(),
@@ -118,6 +116,7 @@ class SafePluginReloader:
         """Deactivate the plugin gracefully."""
         try:
             from backend.plugins.registry.registry import PluginRegistry
+
             # Attempt to deactivate through the registry
             logger.debug(f"Deactivating plugin: {plugin_id}")
         except ImportError:
@@ -126,9 +125,9 @@ class SafePluginReloader:
     def _unload_modules(self, plugin_id: str, plugin_dir: str) -> None:
         """Remove plugin modules from sys.modules."""
         to_remove = [
-            name for name in sys.modules
-            if f"{plugin_dir}.{plugin_id}" in name
-            or f"plugins.{plugin_id}" in name
+            name
+            for name in sys.modules
+            if f"{plugin_dir}.{plugin_id}" in name or f"plugins.{plugin_id}" in name
         ]
         for name in to_remove:
             del sys.modules[name]
@@ -149,6 +148,7 @@ class SafePluginReloader:
         """Reinitialize the plugin after reload."""
         try:
             from backend.plugins.core.loader import PluginLoader
+
             loader = PluginLoader()
             await loader.load_plugin(plugin_id)
             logger.debug(f"Reinitialized plugin: {plugin_id}")

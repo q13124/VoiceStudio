@@ -93,9 +93,7 @@ async def get_scripts(
         # Sort by name
         scripts.sort(key=lambda s: s.get("name", ""))
 
-        logger.info(
-            f"Retrieved {len(scripts)} scripts (project_id={project_id}, search={search})"
-        )
+        logger.info(f"Retrieved {len(scripts)} scripts (project_id={project_id}, search={search})")
         return [
             Script(
                 id=str(s.get("id", "")),
@@ -233,9 +231,7 @@ async def create_script(request: ScriptCreateRequest):
         raise
     except Exception as e:
         logger.error(f"Error creating script: {e!s}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to create script: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to create script: {e!s}")
 
 
 @router.put("/{script_id}", response_model=Script)
@@ -308,9 +304,7 @@ async def update_script(script_id: str, request: ScriptUpdateRequest):
         raise
     except Exception as e:
         logger.error(f"Error updating script {script_id}: {e!s}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to update script: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to update script: {e!s}")
 
 
 @router.delete("/{script_id}")
@@ -331,9 +325,7 @@ async def delete_script(script_id: str):
         raise
     except Exception as e:
         logger.error(f"Error deleting script {script_id}: {e!s}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to delete script: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to delete script: {e!s}")
 
 
 @router.post("/{script_id}/segments", response_model=Script)
@@ -398,9 +390,7 @@ async def add_segment_to_script(script_id: str, segment: ScriptSegment):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error adding segment to script {script_id}: {e!s}", exc_info=True
-        )
+        logger.error(f"Error adding segment to script {script_id}: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to add segment: {e!s}")
 
 
@@ -420,14 +410,10 @@ async def remove_segment_from_script(script_id: str, segment_id: str):
         script = _scripts[script_id].copy()
         original_segment_count = len(script.get("segments", []))
 
-        script["segments"] = [
-            s for s in script.get("segments", []) if s.get("id") != segment_id
-        ]
+        script["segments"] = [s for s in script.get("segments", []) if s.get("id") != segment_id]
 
         if len(script["segments"]) == original_segment_count:
-            logger.warning(
-                f"Segment not found for removal: {segment_id} in script: {script_id}"
-            )
+            logger.warning(f"Segment not found for removal: {segment_id} in script: {script_id}")
             raise HTTPException(status_code=404, detail="Segment not found")
 
         script["modified"] = datetime.utcnow().isoformat()
@@ -443,9 +429,7 @@ async def remove_segment_from_script(script_id: str, segment_id: str):
             f"Error removing segment {segment_id} from script {script_id}: {e!s}",
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to remove segment: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to remove segment: {e!s}")
 
 
 @router.post("/{script_id}/synthesize")
@@ -462,9 +446,7 @@ async def synthesize_script(script_id: str):
         script = _scripts[script_id]
 
         if not script.get("segments") or len(script.get("segments", [])) == 0:
-            raise HTTPException(
-                status_code=400, detail="Script has no segments to synthesize"
-            )
+            raise HTTPException(status_code=400, detail="Script has no segments to synthesize")
 
         # Import audio processing utilities
         try:
@@ -485,17 +467,13 @@ async def synthesize_script(script_id: str):
             engine_service = get_engine_service()
             available_engines = engine_service.list_engines()
             if not available_engines:
-                raise HTTPException(
-                    status_code=503, detail="No voice synthesis engines available"
-                )
+                raise HTTPException(status_code=503, detail="No voice synthesis engines available")
 
             engine_name = available_engines[0].get("id", available_engines[0].get("name", ""))
             engine = engine_service.get_engine(engine_name)
 
             if not engine:
-                raise HTTPException(
-                    status_code=503, detail=f"Engine '{engine_name}' not available"
-                )
+                raise HTTPException(status_code=503, detail=f"Engine '{engine_name}' not available")
 
             # Synthesize each segment
             segment_audio_files = []
@@ -531,22 +509,16 @@ async def synthesize_script(script_id: str):
                         audio_utils.save_audio(segment_audio, segment_file.name)
                         segment_audio_files.append(segment_file.name)
 
-                        logger.debug(
-                            f"Synthesized segment {i+1}/{len(script.get('segments', []))}"
-                        )
+                        logger.debug(f"Synthesized segment {i+1}/{len(script.get('segments', []))}")
                     else:
-                        logger.warning(
-                            f"Engine {engine_name} does not support synthesize method"
-                        )
+                        logger.warning(f"Engine {engine_name} does not support synthesize method")
                         continue
                 except Exception as seg_error:
                     logger.error(f"Failed to synthesize segment {i+1}: {seg_error}")
                     continue
 
             if not segment_audio_files:
-                raise HTTPException(
-                    status_code=500, detail="Failed to synthesize any segments"
-                )
+                raise HTTPException(status_code=500, detail="Failed to synthesize any segments")
 
             # Combine all segments into final audio
             combined_audio = None
@@ -578,9 +550,7 @@ async def synthesize_script(script_id: str):
 
             audio_utils.save_audio(combined_audio, str(output_file))
 
-            logger.info(
-                f"Successfully synthesized script {script_id} to audio {audio_id}"
-            )
+            logger.info(f"Successfully synthesized script {script_id} to audio {audio_id}")
 
             return {
                 "audio_id": audio_id,
@@ -594,18 +564,12 @@ async def synthesize_script(script_id: str):
             raise
         except ImportError as import_error:
             logger.error(f"Failed to import required modules: {import_error}")
-            raise HTTPException(
-                status_code=503, detail="Voice synthesis engine not available"
-            )
+            raise HTTPException(status_code=503, detail="Voice synthesis engine not available")
         except Exception as e:
             logger.error(f"Error synthesizing script: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=500, detail=f"Failed to synthesize script: {e!s}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to synthesize script: {e!s}")
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error synthesizing script {script_id}: {e!s}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to synthesize script: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to synthesize script: {e!s}")

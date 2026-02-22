@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api import models_additional
 except ImportError:
-    pytest.skip(
-        "Could not import models_additional", allow_module_level=True
-    )
+    pytest.skip("Could not import models_additional", allow_module_level=True)
 
 
 class TestModelsAdditionalImports:
@@ -25,9 +23,7 @@ class TestModelsAdditionalImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            models_additional is not None
-        ), "Failed to import models_additional module"
+        assert models_additional is not None, "Failed to import models_additional module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
@@ -41,4 +37,3 @@ class TestModelsAdditionalImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

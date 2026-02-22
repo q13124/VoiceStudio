@@ -28,6 +28,7 @@ from typing import Any
 
 class EventCategory(Enum):
     """Categories for traced events."""
+
     WORKFLOW = "workflow"
     PANEL = "panel"
     API = "api"
@@ -40,6 +41,7 @@ class EventCategory(Enum):
 @dataclass
 class PanelTransition:
     """Represents a panel transition with timing."""
+
     from_panel: str
     to_panel: str
     start_time: float
@@ -57,12 +59,14 @@ class PanelTransition:
 @dataclass
 class TracedEvent:
     """Represents an inter-panel or application event."""
+
     event_name: str
     source_panel: str | None
     target_panel: str | None
     payload: dict[str, Any] | None
     timestamp: float
     category: str = "event"
+
 
 # HTML report template
 HTML_REPORT_TEMPLATE = """
@@ -204,12 +208,14 @@ class WorkflowTracer:
     def start(self) -> WorkflowTracer:
         """Start the workflow trace timer."""
         self._start_time = time.perf_counter()
-        self.trace_log.append({
-            "event": "workflow_start",
-            "workflow": self.workflow_name,
-            "timestamp": datetime.now().isoformat(),
-            "elapsed_ms": 0
-        })
+        self.trace_log.append(
+            {
+                "event": "workflow_start",
+                "workflow": self.workflow_name,
+                "timestamp": datetime.now().isoformat(),
+                "elapsed_ms": 0,
+            }
+        )
         return self
 
     def step(self, name: str, driver=None, capture_screenshot: bool = True) -> WorkflowTracer:
@@ -279,7 +285,9 @@ class WorkflowTracer:
             "method": method,
             "url": url,
             "status": response.status_code if hasattr(response, "status_code") else None,
-            "response_time_ms": response.elapsed.total_seconds() * 1000 if hasattr(response, "elapsed") else None,
+            "response_time_ms": (
+                response.elapsed.total_seconds() * 1000 if hasattr(response, "elapsed") else None
+            ),
             "timestamp": datetime.now().isoformat(),
             "elapsed_ms": elapsed_ms,
             "current_step": self._current_step,
@@ -321,24 +329,28 @@ class WorkflowTracer:
 
     def success(self, message: str = "") -> WorkflowTracer:
         """Mark the workflow as successfully completed."""
-        self.trace_log.append({
-            "event": "workflow_complete",
-            "status": "success",
-            "message": message,
-            "timestamp": datetime.now().isoformat(),
-            "elapsed_ms": self._elapsed_ms(),
-        })
+        self.trace_log.append(
+            {
+                "event": "workflow_complete",
+                "status": "success",
+                "message": message,
+                "timestamp": datetime.now().isoformat(),
+                "elapsed_ms": self._elapsed_ms(),
+            }
+        )
         return self
 
     def fail(self, message: str = "") -> WorkflowTracer:
         """Mark the workflow as failed."""
-        self.trace_log.append({
-            "event": "workflow_complete",
-            "status": "failed",
-            "message": message,
-            "timestamp": datetime.now().isoformat(),
-            "elapsed_ms": self._elapsed_ms(),
-        })
+        self.trace_log.append(
+            {
+                "event": "workflow_complete",
+                "status": "failed",
+                "message": message,
+                "timestamp": datetime.now().isoformat(),
+                "elapsed_ms": self._elapsed_ms(),
+            }
+        )
         return self
 
     # =========================================================================
@@ -346,11 +358,7 @@ class WorkflowTracer:
     # =========================================================================
 
     def start_panel_transition(
-        self,
-        from_panel: str,
-        to_panel: str,
-        driver=None,
-        capture_screenshot: bool = False
+        self, from_panel: str, to_panel: str, driver=None, capture_screenshot: bool = False
     ) -> WorkflowTracer:
         """
         Start tracking a panel transition.
@@ -385,7 +393,9 @@ class WorkflowTracer:
         self.trace_log.append(entry)
 
         if driver and capture_screenshot:
-            self._capture_screenshot(driver, f"transition_start_{to_panel}", len(self.screenshots) + 1)
+            self._capture_screenshot(
+                driver, f"transition_start_{to_panel}", len(self.screenshots) + 1
+            )
 
         return self
 
@@ -394,7 +404,7 @@ class WorkflowTracer:
         success: bool = True,
         error: str | None = None,
         driver=None,
-        capture_screenshot: bool = True
+        capture_screenshot: bool = True,
     ) -> WorkflowTracer:
         """
         End tracking the current panel transition.
@@ -449,7 +459,7 @@ class WorkflowTracer:
         to_panel: str,
         success: bool,
         duration_ms: float,
-        error: str | None = None
+        error: str | None = None,
     ) -> WorkflowTracer:
         """
         Record a complete panel transition (shorthand method).
@@ -662,7 +672,7 @@ class WorkflowTracer:
         element_id: str,
         details: dict[str, Any] | None = None,
         driver=None,
-        capture_screenshot: bool = False
+        capture_screenshot: bool = False,
     ) -> WorkflowTracer:
         """
         Track a UI interaction.
@@ -691,7 +701,9 @@ class WorkflowTracer:
         self.trace_log.append(entry)
 
         if driver and capture_screenshot:
-            self._capture_screenshot(driver, f"ui_{action_type}_{element_id}", len(self.screenshots) + 1)
+            self._capture_screenshot(
+                driver, f"ui_{action_type}_{element_id}", len(self.screenshots) + 1
+            )
 
         return self
 
@@ -774,14 +786,16 @@ class WorkflowTracer:
 
         if not passed and errors:
             for err in errors:
-                self.trace_log.append({
-                    "event": "audio_validation_error",
-                    "category": "audio",
-                    "error": err,
-                    "audio_path": str(path),
-                    "timestamp": datetime.now().isoformat(),
-                    "elapsed_ms": self._elapsed_ms(),
-                })
+                self.trace_log.append(
+                    {
+                        "event": "audio_validation_error",
+                        "category": "audio",
+                        "error": err,
+                        "audio_path": str(path),
+                        "timestamp": datetime.now().isoformat(),
+                        "elapsed_ms": self._elapsed_ms(),
+                    }
+                )
 
         return self
 
@@ -940,10 +954,7 @@ class WorkflowTracer:
         Returns:
             List of audio checkpoint entries.
         """
-        return [
-            entry for entry in self.trace_log
-            if entry.get("event") == "audio_checkpoint"
-        ]
+        return [entry for entry in self.trace_log if entry.get("event") == "audio_checkpoint"]
 
     def get_audio_summary(self) -> dict[str, Any]:
         """
@@ -996,10 +1007,7 @@ class WorkflowTracer:
     # =========================================================================
 
     def record_timing(
-        self,
-        operation_type: str,
-        duration_ms: float,
-        details: str | None = None
+        self, operation_type: str, duration_ms: float, details: str | None = None
     ) -> WorkflowTracer:
         """
         Record a timing metric.
@@ -1067,11 +1075,13 @@ class WorkflowTracer:
 
             driver.save_screenshot(str(filepath))
 
-            self.screenshots.append({
-                "step": step_name,
-                "path": str(filepath),
-                "timestamp": datetime.now().isoformat(),
-            })
+            self.screenshots.append(
+                {
+                    "step": step_name,
+                    "path": str(filepath),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
             return filepath
         except Exception as e:
@@ -1100,7 +1110,9 @@ class WorkflowTracer:
             Path to the exported JSON file.
         """
         if output_path is None:
-            output_path = self.output_dir / "reports" / "workflow_traces" / f"{self.workflow_name}_trace.json"
+            output_path = (
+                self.output_dir / "reports" / "workflow_traces" / f"{self.workflow_name}_trace.json"
+            )
 
         # Serialize panel transitions
         panel_transitions_data = [
@@ -1163,7 +1175,9 @@ class WorkflowTracer:
             Path to the exported HTML file.
         """
         if output_path is None:
-            output_path = self.output_dir / "reports" / "workflow_traces" / f"{self.workflow_name}_trace.html"
+            output_path = (
+                self.output_dir / "reports" / "workflow_traces" / f"{self.workflow_name}_trace.html"
+            )
 
         # Build steps HTML
         steps_html = ""
@@ -1177,7 +1191,9 @@ class WorkflowTracer:
 
                 screenshot_html = ""
                 if "screenshot" in entry:
-                    screenshot_html = f'<img class="screenshot" src="{entry["screenshot"]}" alt="Screenshot">'
+                    screenshot_html = (
+                        f'<img class="screenshot" src="{entry["screenshot"]}" alt="Screenshot">'
+                    )
 
                 steps_html += f"""
                 <div class="{step_class}">
@@ -1235,9 +1251,9 @@ class WorkflowTracer:
         phases_html = ""
         for phase in self.phases:
             phase_class = "success" if phase.get("success", True) else "error"
-            elapsed_ms = phase.get('elapsed_ms') or 0  # Handle None explicitly
-            description = phase.get('description') or ''
-            phase_name = phase.get('phase_name', 'Unknown Phase')
+            elapsed_ms = phase.get("elapsed_ms") or 0  # Handle None explicitly
+            description = phase.get("description") or ""
+            phase_name = phase.get("phase_name", "Unknown Phase")
             phases_html += f"""
             <div class="step {phase_class}">
                 <div class="step-header">
@@ -1249,9 +1265,13 @@ class WorkflowTracer:
             """
 
         # Determine overall status
-        completion = next((e for e in reversed(self.trace_log) if e.get("event") == "workflow_complete"), None)
+        completion = next(
+            (e for e in reversed(self.trace_log) if e.get("event") == "workflow_complete"), None
+        )
         status = completion.get("status", "incomplete") if completion else "incomplete"
-        status_color = "#4caf50" if status == "success" else "#d32f2f" if status == "failed" else "#ff9800"
+        status_color = (
+            "#4caf50" if status == "success" else "#d32f2f" if status == "failed" else "#ff9800"
+        )
 
         # Generate HTML using extended template
         html = self._build_extended_html_report(

@@ -2,6 +2,7 @@
 
 Validates message schemas for /ws/events, /ws/realtime, and /ws/plugins.
 """
+
 from __future__ import annotations
 
 import json

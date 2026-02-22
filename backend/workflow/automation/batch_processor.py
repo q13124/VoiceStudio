@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class BatchStatus(Enum):
     """Batch processing status."""
+
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -29,6 +30,7 @@ class BatchStatus(Enum):
 @dataclass
 class BatchItem:
     """A single item in a batch."""
+
     id: str
     input_data: Any
     output_data: Any | None = None
@@ -42,6 +44,7 @@ class BatchItem:
 @dataclass
 class BatchJob:
     """A batch processing job."""
+
     id: str
     name: str
     items: list[BatchItem]
@@ -58,8 +61,9 @@ class BatchJob:
         if not self.items:
             return 0.0
 
-        completed = sum(1 for i in self.items
-                       if i.status in (BatchStatus.COMPLETED, BatchStatus.FAILED))
+        completed = sum(
+            1 for i in self.items if i.status in (BatchStatus.COMPLETED, BatchStatus.FAILED)
+        )
         return completed / len(self.items) * 100
 
     @property
@@ -76,6 +80,7 @@ class BatchJob:
 @dataclass
 class BatchResult:
     """Result of batch processing."""
+
     job_id: str
     total_items: int
     completed: int
@@ -99,12 +104,11 @@ class BatchProcessor:
         name: str,
         items: list[Any],
         concurrency: int = 2,
-        stop_on_error: bool = False
+        stop_on_error: bool = False,
     ) -> BatchJob:
         """Create a new batch job."""
         batch_items = [
-            BatchItem(id=f"{job_id}_{i}", input_data=item)
-            for i, item in enumerate(items)
+            BatchItem(id=f"{job_id}_{i}", input_data=item) for i, item in enumerate(items)
         ]
 
         job = BatchJob(
@@ -122,7 +126,7 @@ class BatchProcessor:
         self,
         job_id: str,
         processor: Callable[[Any], Any],
-        progress_callback: Callable[[BatchJob], None] | None = None
+        progress_callback: Callable[[BatchJob], None] | None = None,
     ) -> BatchResult:
         """Process a batch job."""
         job = self._jobs.get(job_id)
@@ -152,8 +156,9 @@ class BatchProcessor:
                         if asyncio.iscoroutinefunction(processor):
                             item.output_data = await processor(item.input_data)
                         else:
-                            item.output_data = await asyncio.get_event_loop(). \
-                                run_in_executor(None, processor, item.input_data)
+                            item.output_data = await asyncio.get_event_loop().run_in_executor(
+                                None, processor, item.input_data
+                            )
 
                         item.status = BatchStatus.COMPLETED
                         item.progress = 100.0
@@ -255,7 +260,7 @@ class BatchSynthesizer:
         voice: str,
         engine: str = "xtts",
         output_dir: Path | None = None,
-        progress_callback: Callable[[BatchJob], None] | None = None
+        progress_callback: Callable[[BatchJob], None] | None = None,
     ) -> BatchResult:
         """Synthesize multiple texts in batch."""
         import uuid
@@ -289,11 +294,7 @@ class BatchSynthesizer:
                 "duration": len(item["text"]) * 0.05,
             }
 
-        return await self._processor.process_batch(
-            job_id,
-            synthesize_item,
-            progress_callback
-        )
+        return await self._processor.process_batch(job_id, synthesize_item, progress_callback)
 
 
 class BatchExporter:
@@ -307,7 +308,7 @@ class BatchExporter:
         audio_files: list[Path],
         output_format: str = "mp3",
         output_dir: Path | None = None,
-        progress_callback: Callable[[BatchJob], None] | None = None
+        progress_callback: Callable[[BatchJob], None] | None = None,
     ) -> BatchResult:
         """Export multiple audio files in batch."""
         import uuid
@@ -339,8 +340,4 @@ class BatchExporter:
                 "format": item["format"],
             }
 
-        return await self._processor.process_batch(
-            job_id,
-            export_item,
-            progress_callback
-        )
+        return await self._processor.process_batch(job_id, export_item, progress_callback)

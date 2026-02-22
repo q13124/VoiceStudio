@@ -57,9 +57,7 @@ def get_cached_schema(model: type[BaseModel]) -> dict[str, Any]:
                 schema = model.__pydantic_model__.schema()
             except AttributeError:
                 # Last resort: empty schema
-                logger.warning(
-                    f"Could not generate schema for {model.__name__}"
-                )
+                logger.warning(f"Could not generate schema for {model.__name__}")
                 schema = {"type": "object"}
 
     _schema_cache[model] = schema
@@ -124,9 +122,7 @@ def validate_early(
     return model(**data)
 
 
-def optimized_validate(
-    model: type[T], data: dict[str, Any], use_cache: bool = True
-) -> T:
+def optimized_validate(model: type[T], data: dict[str, Any], use_cache: bool = True) -> T:
     """
     Optimized validation with schema caching.
 
@@ -214,9 +210,7 @@ class ValidationOptimizer:
         self._cache_hits = 0
         self._cache_misses = 0
 
-    def validate(
-        self, model: type[T], data: dict[str, Any], early_validation: bool = True
-    ) -> T:
+    def validate(self, model: type[T], data: dict[str, Any], early_validation: bool = True) -> T:
         """
         Validate data against a model with optimizations.
 
@@ -270,9 +264,7 @@ class ValidationOptimizer:
             else 0.0
         )
         error_rate = (
-            self._validation_errors / self._validation_count
-            if self._validation_count > 0
-            else 0.0
+            self._validation_errors / self._validation_count if self._validation_count > 0 else 0.0
         )
 
         return {
@@ -300,4 +292,3 @@ _optimizer = ValidationOptimizer()
 def get_validation_optimizer() -> ValidationOptimizer:
     """Get the global validation optimizer instance."""
     return _optimizer
-

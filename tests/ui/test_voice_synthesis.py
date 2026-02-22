@@ -78,9 +78,7 @@ class TestSynthesisBasicAPI:
 
         try:
             response = requests.post(
-                f"{BACKEND_URL}/api/voice/synthesize",
-                json=payload,
-                timeout=60
+                f"{BACKEND_URL}/api/voice/synthesize", json=payload, timeout=60
             )
             tracer.api_call("POST", "/api/voice/synthesize", response)
 
@@ -118,9 +116,7 @@ class TestSynthesisBasicAPI:
 
         try:
             response = requests.post(
-                f"{BACKEND_URL}/api/voice/synthesize",
-                json=payload,
-                timeout=60
+                f"{BACKEND_URL}/api/voice/synthesize", json=payload, timeout=60
             )
             tracer.api_call("POST", "/api/voice/synthesize (with options)", response)
 
@@ -146,7 +142,7 @@ class TestSynthesisBasicAPI:
             response = requests.post(
                 f"{BACKEND_URL}/api/voice/synthesize",
                 json=payload,
-                timeout=120  # Longer timeout for long text
+                timeout=120,  # Longer timeout for long text
             )
             tracer.api_call("POST", "/api/voice/synthesize (long)", response)
 
@@ -174,12 +170,16 @@ class TestVoiceSelection:
 
             if response.status_code == 200:
                 voices = response.json()
-                tracer.step(f"Available voices: {len(voices) if isinstance(voices, list) else 'N/A'}")
+                tracer.step(
+                    f"Available voices: {len(voices) if isinstance(voices, list) else 'N/A'}"
+                )
 
                 if isinstance(voices, list) and len(voices) > 0:
                     for voice in voices[:5]:  # Log first 5
                         if isinstance(voice, dict):
-                            tracer.step(f"Voice: {voice.get('id', 'unknown')} - {voice.get('name', 'unnamed')}")
+                            tracer.step(
+                                f"Voice: {voice.get('id', 'unknown')} - {voice.get('name', 'unnamed')}"
+                            )
                         else:
                             tracer.step(f"Voice: {voice}")
 
@@ -204,8 +204,7 @@ class TestVoiceSelection:
 
                 if isinstance(profiles, list):
                     cloned_voices = [
-                        p for p in profiles
-                        if isinstance(p, dict) and p.get("type") == "cloned"
+                        p for p in profiles if isinstance(p, dict) and p.get("type") == "cloned"
                     ]
 
                 tracer.step(f"Cloned voices found: {len(cloned_voices)}")
@@ -246,9 +245,7 @@ class TestVoiceSelection:
             }
 
             response = requests.post(
-                f"{BACKEND_URL}/api/voice/synthesize",
-                json=payload,
-                timeout=60
+                f"{BACKEND_URL}/api/voice/synthesize", json=payload, timeout=60
             )
             tracer.api_call("POST", f"/api/voice/synthesize (voice={cloned_voice_id})", response)
 
@@ -279,9 +276,7 @@ class TestSynthesisFormats:
 
         try:
             response = requests.post(
-                f"{BACKEND_URL}/api/voice/synthesize",
-                json=payload,
-                timeout=60
+                f"{BACKEND_URL}/api/voice/synthesize", json=payload, timeout=60
             )
             tracer.api_call("POST", f"/api/voice/synthesize (format={output_format})", response)
 
@@ -314,9 +309,7 @@ class TestMultiVoiceSynthesis:
 
         try:
             response = requests.post(
-                f"{BACKEND_URL}/api/voice/multi-synthesize",
-                json=payload,
-                timeout=120
+                f"{BACKEND_URL}/api/voice/multi-synthesize", json=payload, timeout=120
             )
             tracer.api_call("POST", "/api/voice/multi-synthesize", response)
 
@@ -498,11 +491,7 @@ class TestSynthesisE2E:
             "voice_id": selected_voice,
         }
 
-        response = requests.post(
-            f"{BACKEND_URL}/api/voice/synthesize",
-            json=payload,
-            timeout=60
-        )
+        response = requests.post(f"{BACKEND_URL}/api/voice/synthesize", json=payload, timeout=60)
         tracer.api_call("POST", "/api/voice/synthesize", response)
 
         audio_result = None

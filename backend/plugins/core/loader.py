@@ -210,7 +210,7 @@ class PluginLoader:
 
     def _find_plugin_class(self, module: any) -> type[UnifiedPlugin] | type[LegacyPlugin] | None:
         """Find the Plugin subclass in a module.
-        
+
         Supports both unified Plugin (Phase 4+) and legacy Plugin (deprecated).
         Prefers unified Plugin if both are found.
         """
@@ -223,17 +223,11 @@ class PluginLoader:
                 continue
 
             # Check for unified Plugin (preferred)
-            if (
-                issubclass(obj, UnifiedPlugin) and
-                obj is not UnifiedPlugin
-            ):
+            if issubclass(obj, UnifiedPlugin) and obj is not UnifiedPlugin:
                 unified_class = obj
 
             # Check for legacy Plugin (deprecated)
-            if (
-                issubclass(obj, LegacyPlugin) and
-                obj is not LegacyPlugin
-            ):
+            if issubclass(obj, LegacyPlugin) and obj is not LegacyPlugin:
                 legacy_class = obj
 
         # Prefer unified Plugin

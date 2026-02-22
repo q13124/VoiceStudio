@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import script_editor
 except ImportError:
-    pytest.skip(
-        "Could not import script_editor route module", allow_module_level=True
-    )
+    pytest.skip("Could not import script_editor route module", allow_module_level=True)
 
 
 class TestScriptEditorRouteImports:
@@ -25,12 +23,8 @@ class TestScriptEditorRouteImports:
 
     def test_script_editor_module_imports(self):
         """Test script_editor module can be imported."""
-        assert (
-            script_editor is not None
-        ), "Failed to import script_editor module"
-        assert hasattr(
-            script_editor, "router"
-        ), "script_editor module missing router"
+        assert script_editor is not None, "Failed to import script_editor module"
+        assert hasattr(script_editor, "router"), "script_editor module missing router"
 
 
 class TestScriptEditorRouteHandlers:
@@ -39,16 +33,12 @@ class TestScriptEditorRouteHandlers:
     def test_save_script_handler_exists(self):
         """Test save_script handler exists."""
         if hasattr(script_editor, "save_script"):
-            assert callable(
-                script_editor.save_script
-            ), "save_script is not callable"
+            assert callable(script_editor.save_script), "save_script is not callable"
 
     def test_load_script_handler_exists(self):
         """Test load_script handler exists."""
         if hasattr(script_editor, "load_script"):
-            assert callable(
-                script_editor.load_script
-            ), "load_script is not callable"
+            assert callable(script_editor.load_script), "load_script is not callable"
 
 
 class TestScriptEditorRouter:
@@ -69,4 +59,3 @@ class TestScriptEditorRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

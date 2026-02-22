@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import video_edit
 except ImportError:
-    pytest.skip(
-        "Could not import video_edit route module", allow_module_level=True
-    )
+    pytest.skip("Could not import video_edit route module", allow_module_level=True)
 
 
 class TestVideoEditRouteImports:
@@ -56,4 +54,3 @@ class TestVideoEditRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

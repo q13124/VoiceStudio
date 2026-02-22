@@ -336,5 +336,4 @@ async def get_track_parameters(track_id: str):
         ]
     }
 
-
     # Endpoint moved above parametric routes

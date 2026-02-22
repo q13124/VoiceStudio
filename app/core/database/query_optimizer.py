@@ -281,8 +281,7 @@ class ConnectionPool:
                 else:
                     self.total_connection_errors += 1
                     logger.error(
-                        f"Failed to create connection after "
-                        f"{attempt + 1} attempts: {e}"
+                        f"Failed to create connection after " f"{attempt + 1} attempts: {e}"
                     )
         if last_error:
             raise last_error
@@ -479,13 +478,9 @@ class ConnectionPool:
     def get_stats(self) -> dict[str, Any]:
         """Get connection pool statistics (enhanced)."""
         with self.lock:
-            total_operations = (
-                self.total_connections_created + self.total_connections_reused
-            )
+            total_operations = self.total_connections_created + self.total_connections_reused
             reuse_rate = (
-                self.total_connections_reused / total_operations
-                if total_operations > 0
-                else 0.0
+                self.total_connections_reused / total_operations if total_operations > 0 else 0.0
             )
             health_check_success_rate = (
                 (self.total_health_checks - self.total_health_check_failures)
@@ -518,16 +513,12 @@ class ConnectionPool:
                 "reuse_rate": f"{reuse_rate * 100:.2f}%",
                 "total_health_checks": (self.total_health_checks),
                 "total_health_check_failures": (self.total_health_check_failures),
-                "health_check_success_rate": (
-                    f"{health_check_success_rate * 100:.2f}%"
-                ),
+                "health_check_success_rate": (f"{health_check_success_rate * 100:.2f}%"),
                 "total_connection_errors": (self.total_connection_errors),
                 "avg_connection_age_seconds": (avg_connection_age),
                 "avg_use_count": (avg_use_count),
                 "last_health_check": (
-                    self.last_health_check.isoformat()
-                    if self.last_health_check
-                    else None
+                    self.last_health_check.isoformat() if self.last_health_check else None
                 ),
             }
 
@@ -574,9 +565,7 @@ class DatabaseQueryOptimizer:
         self.db_path = db_path
         self.enable_cache = enable_cache
         self.cache = (
-            QueryCache(max_size=cache_size, ttl_seconds=cache_ttl)
-            if enable_cache
-            else None
+            QueryCache(max_size=cache_size, ttl_seconds=cache_ttl) if enable_cache else None
         )
         self.pool = ConnectionPool(db_path, max_connections=max_connections)
         self.query_stats: dict[str, QueryStats] = {}
@@ -635,11 +624,7 @@ class DatabaseQueryOptimizer:
 
                 if fetch_all:
                     # Get column names
-                    columns = (
-                        [desc[0] for desc in cursor.description]
-                        if cursor.description
-                        else []
-                    )
+                    columns = [desc[0] for desc in cursor.description] if cursor.description else []
                     rows = cursor.fetchall()
                     results = [dict(zip(columns, row)) for row in rows]
                 else:
@@ -698,8 +683,7 @@ class DatabaseQueryOptimizer:
         unique_str = "UNIQUE" if unique else ""
 
         query = (
-            f"CREATE {unique_str} INDEX IF NOT EXISTS "
-            f"{index_name} ON {table} ({columns_str})"
+            f"CREATE {unique_str} INDEX IF NOT EXISTS " f"{index_name} ON {table} ({columns_str})"
         )
 
         try:
@@ -788,9 +772,7 @@ class DatabaseQueryOptimizer:
             return {
                 "total_queries": total_queries,
                 "total_time": total_time,
-                "average_time": (
-                    total_time / total_queries if total_queries > 0 else 0.0
-                ),
+                "average_time": (total_time / total_queries if total_queries > 0 else 0.0),
                 "cache_hits": cache_hits,
                 "cache_misses": cache_misses,
                 "cache_hit_rate": (

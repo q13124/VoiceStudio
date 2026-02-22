@@ -11,6 +11,7 @@ from enum import Enum
 
 class TextComplexity(Enum):
     """Text complexity levels."""
+
     SIMPLE = "simple"
     MODERATE = "moderate"
     COMPLEX = "complex"
@@ -19,6 +20,7 @@ class TextComplexity(Enum):
 
 class ContentType(Enum):
     """Content type classification."""
+
     DIALOGUE = "dialogue"
     NARRATION = "narration"
     TECHNICAL = "technical"
@@ -40,7 +42,7 @@ class TextAnalysisResult:
         has_dialogue: bool,
         has_technical_terms: bool,
         detected_emotions: list[str],
-        language: str = "en"
+        language: str = "en",
     ):
         self.text = text
         self.complexity = complexity
@@ -66,7 +68,7 @@ class TextAnalysisResult:
             "has_dialogue": self.has_dialogue,
             "has_technical_terms": self.has_technical_terms,
             "detected_emotions": self.detected_emotions,
-            "language": self.language
+            "language": self.language,
         }
 
 
@@ -85,7 +87,7 @@ def analyze_text_complexity(text: str) -> TextComplexity:
         return TextComplexity.SIMPLE
 
     # Count sentences (basic heuristic)
-    sentences = re.split(r'[.!?]+', text)
+    sentences = re.split(r"[.!?]+", text)
     sentences = [s.strip() for s in sentences if s.strip()]
     sentence_count = len(sentences) if sentences else 1
 
@@ -97,7 +99,7 @@ def analyze_text_complexity(text: str) -> TextComplexity:
     long_word_ratio = long_words / len(words) if words else 0
 
     # Count complex punctuation (colons, semicolons, dashes)
-    complex_punct = len(re.findall(r'[:;—]', text))
+    complex_punct = len(re.findall(r"[:;—]", text))
 
     # Determine complexity
     if avg_words_per_sentence > 25 or long_word_ratio > 0.5 or complex_punct > 5:
@@ -123,17 +125,17 @@ def detect_content_type(text: str) -> ContentType:
     # Check for dialogue (quotes, dialogue markers)
     dialogue_indicators = [
         r'["\']',  # Quotes
-        r'said|says|asked|replied|responded',  # Dialogue verbs
-        r':\s*["\']'  # Colon followed by quote
+        r"said|says|asked|replied|responded",  # Dialogue verbs
+        r':\s*["\']',  # Colon followed by quote
     ]
     has_dialogue = any(re.search(pattern, text, re.IGNORECASE) for pattern in dialogue_indicators)
 
     # Check for technical terms (capitalized acronyms, numbers with units, technical keywords)
     technical_indicators = [
-        r'\b[A-Z]{2,}\b',  # Acronyms (2+ uppercase letters)
-        r'\d+\s*(?:Hz|kHz|MHz|GHz|GB|MB|KB|%|dB|ms|s|min|hr)',  # Technical units
-        r'\b(?:API|CPU|GPU|RAM|HTTP|HTTPS|JSON|XML|SQL|HTML|CSS|JS)\b',  # Tech terms
-        r'\b(?:function|method|parameter|variable|class|interface|protocol)\b',  # Programming terms
+        r"\b[A-Z]{2,}\b",  # Acronyms (2+ uppercase letters)
+        r"\d+\s*(?:Hz|kHz|MHz|GHz|GB|MB|KB|%|dB|ms|s|min|hr)",  # Technical units
+        r"\b(?:API|CPU|GPU|RAM|HTTP|HTTPS|JSON|XML|SQL|HTML|CSS|JS)\b",  # Tech terms
+        r"\b(?:function|method|parameter|variable|class|interface|protocol)\b",  # Programming terms
     ]
     has_technical = any(re.search(pattern, text, re.IGNORECASE) for pattern in technical_indicators)
 
@@ -159,11 +161,21 @@ def detect_emotions(text: str) -> list[str]:
         List of detected emotions
     """
     emotion_keywords = {
-        "happy": ["happy", "joy", "glad", "excited", "cheerful", "delighted", "pleased", "smile", "laugh"],
+        "happy": [
+            "happy",
+            "joy",
+            "glad",
+            "excited",
+            "cheerful",
+            "delighted",
+            "pleased",
+            "smile",
+            "laugh",
+        ],
         "sad": ["sad", "unhappy", "disappointed", "depressed", "sorrow", "tears", "cry"],
         "angry": ["angry", "mad", "furious", "annoyed", "irritated", "rage"],
         "neutral": ["okay", "fine", "alright", "normal"],
-        "surprised": ["surprised", "shocked", "amazed", "astonished", "wow"]
+        "surprised": ["surprised", "shocked", "amazed", "astonished", "wow"],
     }
 
     text_lower = text.lower()
@@ -200,7 +212,7 @@ def analyze_text(text: str, language: str = "en") -> TextAnalysisResult:
             has_dialogue=False,
             has_technical_terms=False,
             detected_emotions=["neutral"],
-            language=language
+            language=language,
         )
 
     # Basic statistics
@@ -209,7 +221,7 @@ def analyze_text(text: str, language: str = "en") -> TextAnalysisResult:
     character_count = len(text)
 
     # Count sentences
-    sentences = re.split(r'[.!?]+', text)
+    sentences = re.split(r"[.!?]+", text)
     sentences = [s.strip() for s in sentences if s.strip()]
     sentence_count = len(sentences) if sentences else 1
 
@@ -225,7 +237,9 @@ def analyze_text(text: str, language: str = "en") -> TextAnalysisResult:
     has_dialogue = bool(re.search(r'["\']', text))
 
     # Check for technical terms
-    has_technical = bool(re.search(r'\b[A-Z]{2,}\b|\d+\s*(?:Hz|kHz|MHz|GHz|GB|MB|KB|%|dB|ms|s|min|hr)', text))
+    has_technical = bool(
+        re.search(r"\b[A-Z]{2,}\b|\d+\s*(?:Hz|kHz|MHz|GHz|GB|MB|KB|%|dB|ms|s|min|hr)", text)
+    )
 
     # Detect emotions
     emotions = detect_emotions(text)
@@ -241,7 +255,7 @@ def analyze_text(text: str, language: str = "en") -> TextAnalysisResult:
         has_dialogue=has_dialogue,
         has_technical_terms=has_technical,
         detected_emotions=emotions,
-        language=language
+        language=language,
     )
 
 
@@ -265,4 +279,3 @@ def get_text_length_category(text: str) -> str:
         return "long"
     else:
         return "very_long"
-

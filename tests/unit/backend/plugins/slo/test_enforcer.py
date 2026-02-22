@@ -509,10 +509,12 @@ class TestSLOEnforcer:
 
     def test_record_batch(self, enforcer):
         """Test recording batch of samples."""
-        enforcer.record_batch({
-            BudgetType.MEMORY_MB: 200,
-            BudgetType.CPU_PERCENT: 30,
-        })
+        enforcer.record_batch(
+            {
+                BudgetType.MEMORY_MB: 200,
+                BudgetType.CPU_PERCENT: 30,
+            }
+        )
 
         stats = enforcer.get_sample_stats()
         assert stats["memory_mb"]["count"] == 1
@@ -520,48 +522,58 @@ class TestSLOEnforcer:
 
     def test_evaluate_healthy(self, enforcer):
         """Test evaluation with healthy values."""
-        result = enforcer.evaluate({
-            BudgetType.MEMORY_MB: 200,
-            BudgetType.CPU_PERCENT: 40,
-        })
+        result = enforcer.evaluate(
+            {
+                BudgetType.MEMORY_MB: 200,
+                BudgetType.CPU_PERCENT: 40,
+            }
+        )
         assert result.status == SLOStatus.HEALTHY
         assert len(result.violations) == 0
         assert len(result.warnings) == 0
 
     def test_evaluate_warning(self, enforcer):
         """Test evaluation with warning values."""
-        result = enforcer.evaluate({
-            BudgetType.MEMORY_MB: 300,  # Warning
-            BudgetType.CPU_PERCENT: 40,
-        })
+        result = enforcer.evaluate(
+            {
+                BudgetType.MEMORY_MB: 300,  # Warning
+                BudgetType.CPU_PERCENT: 40,
+            }
+        )
         assert result.status == SLOStatus.DEGRADED
         assert len(result.warnings) == 1
         assert result.warnings[0].severity == "warning"
 
     def test_evaluate_error(self, enforcer):
         """Test evaluation with error values."""
-        result = enforcer.evaluate({
-            BudgetType.MEMORY_MB: 600,  # Error
-            BudgetType.CPU_PERCENT: 40,
-        })
+        result = enforcer.evaluate(
+            {
+                BudgetType.MEMORY_MB: 600,  # Error
+                BudgetType.CPU_PERCENT: 40,
+            }
+        )
         assert result.status == SLOStatus.UNHEALTHY
         assert len(result.violations) == 1
         assert result.violations[0].severity == "error"
 
     def test_evaluate_critical(self, enforcer):
         """Test evaluation with critical values."""
-        result = enforcer.evaluate({
-            BudgetType.MEMORY_MB: 2000,  # Critical
-            BudgetType.CPU_PERCENT: 98,  # Critical
-        })
+        result = enforcer.evaluate(
+            {
+                BudgetType.MEMORY_MB: 2000,  # Critical
+                BudgetType.CPU_PERCENT: 98,  # Critical
+            }
+        )
         assert result.status == SLOStatus.CRITICAL
         assert len(result.violations) == 2
 
     def test_enforce_executes_actions(self, enforcer):
         """Test enforcement executes policy actions."""
-        result = enforcer.evaluate({
-            BudgetType.MEMORY_MB: 600,  # Error
-        })
+        result = enforcer.evaluate(
+            {
+                BudgetType.MEMORY_MB: 600,  # Error
+            }
+        )
 
         actions = enforcer.enforce(result)
         # Default policy should log for errors

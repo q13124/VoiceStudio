@@ -21,19 +21,21 @@ logger = logging.getLogger(__name__)
 
 class SelectionStrategy(Enum):
     """Engine selection strategies."""
-    QUALITY_FIRST = "quality_first"      # Best quality regardless of speed
-    SPEED_FIRST = "speed_first"          # Fastest engine
-    BALANCED = "balanced"                 # Balance quality and speed
-    ENSEMBLE = "ensemble"                 # Combine multiple outputs
-    FALLBACK = "fallback"                 # Try engines in order until success
+
+    QUALITY_FIRST = "quality_first"  # Best quality regardless of speed
+    SPEED_FIRST = "speed_first"  # Fastest engine
+    BALANCED = "balanced"  # Balance quality and speed
+    ENSEMBLE = "ensemble"  # Combine multiple outputs
+    FALLBACK = "fallback"  # Try engines in order until success
 
 
 @dataclass
 class EngineScore:
     """Score for an engine."""
+
     engine_id: str
-    quality_score: float = 0.5      # 0-1, higher is better
-    speed_score: float = 0.5        # 0-1, higher is faster
+    quality_score: float = 0.5  # 0-1, higher is better
+    speed_score: float = 0.5  # 0-1, higher is faster
     memory_usage_mb: float = 0.0
     last_latency_ms: float = 0.0
     success_rate: float = 1.0
@@ -46,6 +48,7 @@ class EngineScore:
 @dataclass
 class EnsembleConfig:
     """Configuration for engine ensemble."""
+
     strategy: SelectionStrategy = SelectionStrategy.BALANCED
     engines: list[str] = field(default_factory=list)
     quality_threshold: float = 0.7
@@ -248,9 +251,7 @@ class EngineEnsemble:
 
         # Filter successful results
         successful = [
-            (audio, engine_id)
-            for audio, engine_id in zip(results, engine_ids)
-            if audio is not None
+            (audio, engine_id) for audio, engine_id in zip(results, engine_ids) if audio is not None
         ]
 
         if not successful:
@@ -274,6 +275,7 @@ class EngineEnsemble:
     async def _run_engine(self, engine: Any, text: str, **kwargs) -> np.ndarray:
         """Run a single engine."""
         import time
+
         start = time.time()
 
         if hasattr(engine, "synthesize"):

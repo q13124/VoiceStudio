@@ -23,9 +23,7 @@ class TestTrainingQualityImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            training_quality is not None
-        ), "Failed to import training_quality module"
+        assert training_quality is not None, "Failed to import training_quality module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -35,4 +33,3 @@ class TestTrainingQualityImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

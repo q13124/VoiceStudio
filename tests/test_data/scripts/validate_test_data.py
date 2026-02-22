@@ -34,9 +34,7 @@ def validate_json_file(file_path: Path) -> tuple[bool, list[str]]:
             data = json.load(f)
 
         if not isinstance(data, (dict, list)):
-            errors.append(
-                f"Invalid JSON structure: expected dict or list, got {type(data)}"
-            )
+            errors.append(f"Invalid JSON structure: expected dict or list, got {type(data)}")
             return False, errors
 
     except json.JSONDecodeError as e:
@@ -80,9 +78,7 @@ def validate_profiles() -> tuple[bool, list[str]]:
             if "quality_score" in profile:
                 qs = profile["quality_score"]
                 if not isinstance(qs, (int, float)) or qs < 0.0 or qs > 1.0:
-                    errors.append(
-                        f"Profile {i} has invalid quality_score: {qs} (must be 0.0-1.0)"
-                    )
+                    errors.append(f"Profile {i} has invalid quality_score: {qs} (must be 0.0-1.0)")
 
     except Exception as e:
         errors.append(f"Error validating profiles: {e}")

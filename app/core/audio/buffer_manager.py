@@ -20,6 +20,7 @@ import numpy as np
 # Try importing psutil for system memory monitoring
 try:
     import psutil
+
     HAS_PSUTIL = True
 except ImportError:
     HAS_PSUTIL = False
@@ -28,6 +29,7 @@ except ImportError:
 # Try importing torch for GPU memory tracking
 try:
     import torch
+
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
@@ -87,9 +89,7 @@ class AudioBufferPool:
         """Generate buffer key from size and dtype."""
         return f"{size}_{dtype}"
 
-    def get_buffer(
-        self, size: int, dtype: np.dtype = np.float32
-    ) -> np.ndarray:
+    def get_buffer(self, size: int, dtype: np.dtype = np.float32) -> np.ndarray:
         """
         Get buffer from pool or create new one (optimized).
 
@@ -123,7 +123,7 @@ class AudioBufferPool:
 
             # Try to find suitable buffer (size >= requested)
             best_match_key = None
-            best_match_size = float('inf')
+            best_match_size = float("inf")
             for key, (buf, _) in self._pool.items():
                 buf_size = len(buf)
                 if buf_size >= size and buf_size < best_match_size:
@@ -185,9 +185,7 @@ class AudioBufferPool:
     def _cleanup_if_needed(self):
         """Clean up old buffers if cleanup interval has passed or memory pressure."""
         current_time = time.time()
-        should_cleanup = (
-            current_time - self._last_cleanup >= self.cleanup_interval_seconds
-        )
+        should_cleanup = current_time - self._last_cleanup >= self.cleanup_interval_seconds
 
         # Check for memory pressure
         memory_pressure = False
@@ -240,14 +238,11 @@ class AudioBufferPool:
         """Get pool statistics (enhanced)."""
         with self._lock:
             total_requests = self._hits + self._misses
-            hit_rate = (
-                (self._hits / total_requests * 100) if total_requests > 0 else 0
-            )
+            hit_rate = (self._hits / total_requests * 100) if total_requests > 0 else 0
 
             # Calculate memory usage
             total_memory_mb = sum(
-                buffer.nbytes / (1024 * 1024)
-                for buffer, _ in self._pool.values()
+                buffer.nbytes / (1024 * 1024) for buffer, _ in self._pool.values()
             )
 
             system_memory = self._get_system_memory_usage_percent()
@@ -268,9 +263,7 @@ class AudioBufferPool:
 
             if system_memory is not None:
                 stats["system_memory_usage_percent"] = f"{system_memory:.2%}"
-                stats["under_memory_pressure"] = (
-                    system_memory >= self.memory_pressure_threshold
-                )
+                stats["under_memory_pressure"] = system_memory >= self.memory_pressure_threshold
 
             return stats
 
@@ -334,9 +327,7 @@ class AudioBufferManager:
         self._peak_memory_mb = 0.0
         self._pressure_cleanups = 0
 
-    def allocate_buffer(
-        self, size: int, dtype: np.dtype = np.float32
-    ) -> tuple[int, np.ndarray]:
+    def allocate_buffer(self, size: int, dtype: np.dtype = np.float32) -> tuple[int, np.ndarray]:
         """
         Allocate a new audio buffer.
 
@@ -363,15 +354,13 @@ class AudioBufferManager:
             buffer_memory_mb = buffer.nbytes / (1024 * 1024)
             self._total_allocated += buffer_memory_mb
             current_memory = sum(
-                buf.nbytes / (1024 * 1024)
-                for buf, _ in self._active_buffers.values()
+                buf.nbytes / (1024 * 1024) for buf, _ in self._active_buffers.values()
             )
             if current_memory > self._peak_memory_mb:
                 self._peak_memory_mb = current_memory
 
             logger.debug(
-                f"Allocated buffer {buffer_id} ({size} samples, "
-                f"{buffer_memory_mb:.2f} MB)"
+                f"Allocated buffer {buffer_id} ({size} samples, " f"{buffer_memory_mb:.2f} MB)"
             )
 
             return buffer_id, buffer
@@ -399,9 +388,7 @@ class AudioBufferManager:
             buffer_memory_mb = buffer.nbytes / (1024 * 1024)
             self._total_freed += buffer_memory_mb
 
-            logger.debug(
-                f"Freed buffer {buffer_id} ({buffer_memory_mb:.2f} MB)"
-            )
+            logger.debug(f"Freed buffer {buffer_id} ({buffer_memory_mb:.2f} MB)")
 
     def _get_system_memory_usage_percent(self) -> float | None:
         """Get current system memory usage percentage."""
@@ -444,8 +431,7 @@ class AudioBufferManager:
             if memory_pressure and len(to_remove) < len(self._active_buffers) // 2:
                 # Remove oldest buffers until we've removed at least 50%
                 sorted_buffers = sorted(
-                    self._active_buffers.items(),
-                    key=lambda x: x[1][1]  # Sort by timestamp
+                    self._active_buffers.items(), key=lambda x: x[1][1]  # Sort by timestamp
                 )
                 target_removal = max(1, len(sorted_buffers) // 2)
                 for buffer_id, _ in sorted_buffers[:target_removal]:
@@ -467,8 +453,7 @@ class AudioBufferManager:
         """Get buffer manager statistics (enhanced)."""
         with self._lock:
             current_memory = sum(
-                buf.nbytes / (1024 * 1024)
-                for buf, _ in self._active_buffers.values()
+                buf.nbytes / (1024 * 1024) for buf, _ in self._active_buffers.values()
             )
 
             system_memory = self._get_system_memory_usage_percent()
@@ -487,9 +472,7 @@ class AudioBufferManager:
 
             if system_memory is not None:
                 stats["system_memory_usage_percent"] = f"{system_memory:.2%}"
-                stats["under_memory_pressure"] = (
-                    system_memory >= self.memory_pressure_threshold
-                )
+                stats["under_memory_pressure"] = system_memory >= self.memory_pressure_threshold
 
             if self._pool:
                 stats["pool"] = self._pool.get_stats()
@@ -536,4 +519,3 @@ __all__ = [
     "get_buffer_manager",
     "set_buffer_manager",
 ]
-

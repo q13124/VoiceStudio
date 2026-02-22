@@ -90,9 +90,7 @@ ALL_ENGINES = [
 test_results: dict[str, dict[str, Any]] = {}
 
 
-def generate_test_audio(
-    duration_seconds: float = 1.0, sample_rate: int = 22050
-) -> np.ndarray:
+def generate_test_audio(duration_seconds: float = 1.0, sample_rate: int = 22050) -> np.ndarray:
     """Generate test audio signal."""
     t = np.linspace(0, duration_seconds, int(sample_rate * duration_seconds), False)
     audio = np.sin(2 * np.pi * 440.0 * t)
@@ -153,17 +151,13 @@ def check_engine_initialization(engine_class, engine_type: str) -> tuple[bool, s
         return False, f"Initialization failed: {e}"
 
 
-def check_engine_functionality(
-    engine, engine_type: str
-) -> tuple[bool, str, Any | None]:
+def check_engine_functionality(engine, engine_type: str) -> tuple[bool, str, Any | None]:
     """Test basic engine functionality."""
     try:
         if engine_type == "TTS":
             if hasattr(engine, "synthesize"):
                 # Try synthesis with minimal params
-                result = engine.synthesize(
-                    text="Test", voice_profile_id="test", sample_rate=22050
-                )
+                result = engine.synthesize(text="Test", voice_profile_id="test", sample_rate=22050)
                 if result is not None:
                     return True, "Synthesis successful", result
                 return False, "Synthesis returned None", None
@@ -202,9 +196,7 @@ def check_engine_functionality(
 
         elif engine_type == "VIDEO":
             if hasattr(engine, "generate"):
-                result = engine.generate(
-                    prompt="test", width=512, height=512, duration=1.0
-                )
+                result = engine.generate(prompt="test", width=512, height=512, duration=1.0)
                 if result is not None:
                     return True, "Video generation successful", result
                 return False, "Video generation returned None", None
@@ -411,19 +403,13 @@ def generate_test_report():
     total_engines = len(ALL_ENGINES)
     imported = sum(1 for r in test_results.values() if r.get("status") == "IMPORTED")
     initialized = sum(
-        1
-        for r in test_results.values()
-        if r.get("initialization", {}).get("success", False)
+        1 for r in test_results.values() if r.get("initialization", {}).get("success", False)
     )
     functional = sum(
-        1
-        for r in test_results.values()
-        if r.get("functionality", {}).get("success", False)
+        1 for r in test_results.values() if r.get("functionality", {}).get("success", False)
     )
     violations = sum(
-        1
-        for r in test_results.values()
-        if r.get("code_quality", {}).get("violations", 0) > 0
+        1 for r in test_results.values() if r.get("code_quality", {}).get("violations", 0) > 0
     )
 
     report = f"""# Engine Integration Test Report
@@ -466,12 +452,8 @@ def generate_test_report():
         for engine_file in engines:
             result = test_results.get(engine_file, {})
             imported_status = "✅" if result.get("status") == "IMPORTED" else "❌"
-            init_status = (
-                "✅" if result.get("initialization", {}).get("success", False) else "❌"
-            )
-            func_status = (
-                "✅" if result.get("functionality", {}).get("success", False) else "❌"
-            )
+            init_status = "✅" if result.get("initialization", {}).get("success", False) else "❌"
+            func_status = "✅" if result.get("functionality", {}).get("success", False) else "❌"
             violations_count = result.get("code_quality", {}).get("violations", 0)
             violations_status = f"{violations_count}" if violations_count > 0 else "✅"
 

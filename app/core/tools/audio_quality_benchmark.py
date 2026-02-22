@@ -35,15 +35,9 @@ try:
         quality_metrics_module = importlib.util.module_from_spec(spec)
         try:
             spec.loader.exec_module(quality_metrics_module)
-            calculate_all_metrics = getattr(
-                quality_metrics_module, "calculate_all_metrics", None
-            )
-            calculate_pesq_score = getattr(
-                quality_metrics_module, "calculate_pesq_score", None
-            )
-            calculate_stoi_score = getattr(
-                quality_metrics_module, "calculate_stoi_score", None
-            )
+            calculate_all_metrics = getattr(quality_metrics_module, "calculate_all_metrics", None)
+            calculate_pesq_score = getattr(quality_metrics_module, "calculate_pesq_score", None)
+            calculate_stoi_score = getattr(quality_metrics_module, "calculate_stoi_score", None)
             HAS_QUALITY_METRICS = calculate_all_metrics is not None
         except Exception as e:
             logger.warning(f"Failed to load quality_metrics: {e}")
@@ -110,9 +104,7 @@ class AudioQualityBenchmark:
             engine_router: Engine router instance (uses global if None)
             sample_rate: Default sample rate for processing
         """
-        self.engine_router = engine_router or (
-            global_router if HAS_ENGINE_ROUTER else None
-        )
+        self.engine_router = engine_router or (global_router if HAS_ENGINE_ROUTER else None)
         self.sample_rate = sample_rate
         self.quality_metrics = None
 
@@ -279,9 +271,7 @@ class AudioQualityBenchmark:
 
         return all_results
 
-    def compare_engines(
-        self, benchmark_results: dict[str, dict[str, Any]]
-    ) -> dict[str, Any]:
+    def compare_engines(self, benchmark_results: dict[str, dict[str, Any]]) -> dict[str, Any]:
         """
         Compare benchmark results across engines.
 
@@ -341,12 +331,8 @@ class AudioQualityBenchmark:
             performance_scores[engine_name] = 1.0 / (1.0 + synth_time + init_time)
 
         # Sort rankings
-        quality_rankings = sorted(
-            quality_scores.items(), key=lambda x: x[1], reverse=True
-        )
-        performance_rankings = sorted(
-            performance_scores.items(), key=lambda x: x[1], reverse=True
-        )
+        quality_rankings = sorted(quality_scores.items(), key=lambda x: x[1], reverse=True)
+        performance_rankings = sorted(performance_scores.items(), key=lambda x: x[1], reverse=True)
 
         comparison["quality_rankings"] = {
             rank + 1: {"engine": name, "score": score}
@@ -366,9 +352,7 @@ class AudioQualityBenchmark:
             "successful_count": len(successful_results),
             "failed_count": len(comparison["failed_engines"]),
             "average_quality": (
-                sum(quality_scores.values()) / len(quality_scores)
-                if quality_scores
-                else 0.0
+                sum(quality_scores.values()) / len(quality_scores) if quality_scores else 0.0
             ),
             "average_synthesis_time": (
                 sum(
@@ -424,24 +408,18 @@ class AudioQualityBenchmark:
         report_lines.append("-" * 80)
         for engine_name, results in benchmark_results.items():
             report_lines.append(f"\n{engine_name}")
-            report_lines.append(
-                f"  Status: {'SUCCESS' if results.get('success') else 'FAILED'}"
-            )
+            report_lines.append(f"  Status: {'SUCCESS' if results.get('success') else 'FAILED'}")
             if results.get("error"):
                 report_lines.append(f"  Error: {results['error']}")
             if results.get("quality_metrics"):
                 metrics = results["quality_metrics"]
                 report_lines.append(f"  MOS Score: {metrics.get('mos_score', 'N/A')}")
                 report_lines.append(f"  Similarity: {metrics.get('similarity', 'N/A')}")
-                report_lines.append(
-                    f"  Naturalness: {metrics.get('naturalness', 'N/A')}"
-                )
+                report_lines.append(f"  Naturalness: {metrics.get('naturalness', 'N/A')}")
                 report_lines.append(f"  SNR: {metrics.get('snr_db', 'N/A')} dB")
             if results.get("performance"):
                 perf = results["performance"]
-                report_lines.append(
-                    f"  Synthesis Time: {perf.get('synthesis_time', 'N/A')}s"
-                )
+                report_lines.append(f"  Synthesis Time: {perf.get('synthesis_time', 'N/A')}s")
                 if "initialization_time" in perf:
                     report_lines.append(f"  Init Time: {perf['initialization_time']}s")
 

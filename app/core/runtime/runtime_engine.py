@@ -92,7 +92,9 @@ class RuntimeEngine:
                 cwd=str(self.workspace_root),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
+                creationflags=(
+                    subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0
+                ),
             )
 
             # Wait a bit for startup
@@ -175,7 +177,7 @@ class RuntimeEngine:
             "type": self.engine_type,
             "tasks": self.tasks,
             "running": self.is_running(),
-            "healthy": self.is_healthy()
+            "healthy": self.is_healthy(),
         }
 
 
@@ -204,7 +206,7 @@ class RuntimeEngineManager:
             RuntimeEngine instance or None
         """
         try:
-            with open(manifest_path, encoding='utf-8') as f:
+            with open(manifest_path, encoding="utf-8") as f:
                 manifest = json.load(f)
 
             # Store manifest path for relative path resolution
@@ -240,7 +242,7 @@ class RuntimeEngineManager:
         # Search for runtime.manifest.json files
         for manifest_file in engines_dir.rglob("runtime.manifest.json"):
             try:
-                with open(manifest_file, encoding='utf-8') as f:
+                with open(manifest_file, encoding="utf-8") as f:
                     manifest = json.load(f)
                 engine_id = manifest.get("id")
                 if engine_id:
@@ -294,7 +296,7 @@ class RuntimeEngineManager:
             "text_to_image": "image_gen",
             "image_to_image": "image_gen",
             "image_to_video": "video_gen",
-            "video_generation": "video_gen"
+            "video_generation": "video_gen",
         }
 
         task_type = task_type_map.get(task, task)
@@ -303,6 +305,7 @@ class RuntimeEngineManager:
         if prefer_default:
             try:
                 from app.core.engines.config import get_engine_config
+
                 config = get_engine_config()
                 default_id = config.get_default_engine(task_type)
                 if default_id and default_id in self.engines:
@@ -327,4 +330,3 @@ class RuntimeEngineManager:
         """Stop all engines."""
         for engine in self.engines.values():
             engine.stop()
-

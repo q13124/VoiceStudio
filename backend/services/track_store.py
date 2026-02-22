@@ -30,7 +30,8 @@ class TrackStore:
 
     def __init__(self, projects_dir: str | None = None):
         self._projects_dir = Path(
-            projects_dir or os.getenv("VOICESTUDIO_PROJECTS_PATH", "")
+            projects_dir
+            or os.getenv("VOICESTUDIO_PROJECTS_PATH", "")
             or Path.home() / ".voicestudio" / "projects"
         )
         self._projects_dir.mkdir(parents=True, exist_ok=True)

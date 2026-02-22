@@ -356,7 +356,9 @@ class TestFullEffectsWorkflow:
             if add_resp.status_code == 200:
                 added_count += 1
 
-        state["record_step"]("Added effects to chain", data={"added": added_count, "total": len(effects_to_add)})
+        state["record_step"](
+            "Added effects to chain", data={"added": added_count, "total": len(effects_to_add)}
+        )
 
         # Report
         success_count = sum(1 for s in state["steps"] if s["success"])
@@ -364,7 +366,7 @@ class TestFullEffectsWorkflow:
         print(f"\nEffects workflow: {success_count}/{total_count} steps successful")
         for step in state["steps"]:
             status = "✓" if step["success"] else "✗"
-            data_str = f" - {step['data']}" if step.get('data') else ""
+            data_str = f" - {step['data']}" if step.get("data") else ""
             print(f"  {status} {step['name']}{data_str}")
 
 

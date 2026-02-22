@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class DAWType(Enum):
     """Supported DAW types."""
+
     ABLETON = "ableton"
     FL_STUDIO = "fl_studio"
     LOGIC_PRO = "logic_pro"
@@ -35,6 +36,7 @@ class DAWType(Enum):
 @dataclass
 class DAWProject:
     """DAW project information."""
+
     path: Path
     name: str
     daw_type: DAWType
@@ -48,6 +50,7 @@ class DAWProject:
 @dataclass
 class DAWExportSettings:
     """Settings for exporting to DAW."""
+
     format: str = "wav"
     sample_rate: int = 44100
     bit_depth: int = 24
@@ -139,13 +142,15 @@ def get_daw_export_presets(daw_type: str | None = None) -> list[dict[str, Any]]:
             }
         else:
             settings_dict = dict(settings) if isinstance(settings, dict) else {}
-        out.append({
-            "id": p["id"],
-            "name": p["name"],
-            "daw_type": p["daw_type"],
-            "description": p["description"],
-            "settings": settings_dict,
-        })
+        out.append(
+            {
+                "id": p["id"],
+                "name": p["name"],
+                "daw_type": p["daw_type"],
+                "description": p["description"],
+                "settings": settings_dict,
+            }
+        )
     return out
 
 
@@ -196,20 +201,13 @@ class DAWIntegration(ABC):
 
     @abstractmethod
     async def export_to_daw(
-        self,
-        audio_path: Path,
-        project: DAWProject,
-        settings: DAWExportSettings
+        self, audio_path: Path, project: DAWProject, settings: DAWExportSettings
     ) -> Path:
         """Export audio to DAW project."""
         pass
 
     @abstractmethod
-    async def import_from_daw(
-        self,
-        project: DAWProject,
-        track_index: int
-    ) -> Path:
+    async def import_from_daw(self, project: DAWProject, track_index: int) -> Path:
         """Import audio from DAW project."""
         pass
 
@@ -255,10 +253,10 @@ class ReaperIntegration(DAWIntegration):
             daw_type=DAWType.REAPER,
         )
 
-        with open(project_path, encoding='utf-8', errors='ignore') as f:
+        with open(project_path, encoding="utf-8", errors="ignore") as f:
             content = f.read()
 
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         # Extract sample rate
         for line in lines:
@@ -282,10 +280,7 @@ class ReaperIntegration(DAWIntegration):
         return project
 
     async def export_to_daw(
-        self,
-        audio_path: Path,
-        project: DAWProject,
-        settings: DAWExportSettings
+        self, audio_path: Path, project: DAWProject, settings: DAWExportSettings
     ) -> Path:
         """Export audio to REAPER project."""
         import_dir = project.path.parent / "imports"
@@ -294,17 +289,14 @@ class ReaperIntegration(DAWIntegration):
         output_path = import_dir / audio_path.name
 
         import shutil
+
         shutil.copy2(audio_path, output_path)
 
         logger.info(f"Exported audio to REAPER project: {output_path}")
 
         return output_path
 
-    async def import_from_daw(
-        self,
-        project: DAWProject,
-        track_index: int
-    ) -> Path:
+    async def import_from_daw(self, project: DAWProject, track_index: int) -> Path:
         """Import audio from a REAPER project track.
 
         Resolves the audio file referenced by the track at ``track_index``.
@@ -350,7 +342,9 @@ class ReaperIntegration(DAWIntegration):
                 "The file may have been moved or deleted from the REAPER project directory."
             )
 
-        logger.info(f"Imported audio from REAPER track '{track.get('name', track_index)}': {audio_path}")
+        logger.info(
+            f"Imported audio from REAPER track '{track.get('name', track_index)}': {audio_path}"
+        )
         return audio_path
 
 
@@ -372,7 +366,7 @@ def _parse_rpp_tracks(content: str, project_dir: Path) -> list[dict[str, Any]]:
     track_index = 0
 
     # Split into lines and walk through looking for <TRACK blocks
-    lines = content.split('\n')
+    lines = content.split("\n")
     i = 0
     while i < len(lines):
         stripped = lines[i].strip()
@@ -416,11 +410,13 @@ def _parse_rpp_tracks(content: str, project_dir: Path) -> list[dict[str, Any]]:
 
                 i += 1
 
-            tracks.append({
-                "name": track_name,
-                "index": track_index,
-                "audio_files": audio_files,
-            })
+            tracks.append(
+                {
+                    "name": track_name,
+                    "index": track_index,
+                    "audio_files": audio_files,
+                }
+            )
             track_index += 1
         else:
             i += 1
@@ -469,7 +465,11 @@ def _parse_aup3_tracks(project_path: Path) -> tuple[list[dict[str, Any]], int]:
                     cursor.execute(f"SELECT doc FROM {table} LIMIT 1")
                     row = cursor.fetchone()
                     if row and row[0]:
-                        project_xml = row[0] if isinstance(row[0], str) else row[0].decode("utf-8", errors="ignore")
+                        project_xml = (
+                            row[0]
+                            if isinstance(row[0], str)
+                            else row[0].decode("utf-8", errors="ignore")
+                        )
                         break
                 except (sqlite3.OperationalError, UnicodeDecodeError) as e:
                     # GAP-PY-001: Table structure varies by Audacity version
@@ -509,11 +509,13 @@ def _parse_aup3_tracks(project_path: Path) -> tuple[list[dict[str, Any]], int]:
                     with contextlib.suppress(ValueError, TypeError):
                         channels = int(elem.get("channel", "1"))
 
-                    tracks.append({
-                        "name": name,
-                        "index": track_index,
-                        "channels": channels,
-                    })
+                    tracks.append(
+                        {
+                            "name": name,
+                            "index": track_index,
+                            "channels": channels,
+                        }
+                    )
                     track_index += 1
 
     except sqlite3.DatabaseError as e:
@@ -555,11 +557,13 @@ def _parse_aup_tracks(project_path: Path) -> tuple[list[dict[str, Any]], int]:
             with contextlib.suppress(ValueError, TypeError):
                 channels = int(elem.get("channel", "1"))
 
-            tracks.append({
-                "name": name,
-                "index": track_index,
-                "channels": channels,
-            })
+            tracks.append(
+                {
+                    "name": name,
+                    "index": track_index,
+                    "channels": channels,
+                }
+            )
             track_index += 1
 
     except (ET.ParseError, OSError) as e:
@@ -593,9 +597,7 @@ def _export_aup3_track_audio(project_path: Path, track_index: int, output_dir: P
         cursor = conn.cursor()
 
         # sampleblocks: blockid, sampleformat, summin, summax, sumrms, summary256, summary64k, samples
-        cursor.execute(
-            "SELECT samples FROM sampleblocks ORDER BY blockid"
-        )
+        cursor.execute("SELECT samples FROM sampleblocks ORDER BY blockid")
 
         all_samples = b""
         for row in cursor.fetchall():
@@ -616,13 +618,15 @@ def _export_aup3_track_audio(project_path: Path, track_index: int, output_dir: P
         channels = 1
         sample_rate = 44100
 
-        with wave.open(str(output_path), 'wb') as wf:
+        with wave.open(str(output_path), "wb") as wf:
             wf.setnchannels(channels)
             wf.setsampwidth(sample_width)
             wf.setframerate(sample_rate)
             wf.writeframes(all_samples)
 
-        logger.info(f"Exported AUP3 track {track_index} to {output_path} ({len(all_samples)} bytes)")
+        logger.info(
+            f"Exported AUP3 track {track_index} to {output_path} ({len(all_samples)} bytes)"
+        )
 
     except sqlite3.DatabaseError as e:
         raise FileNotFoundError(f"Failed to read audio from AUP3: {e}") from e
@@ -682,19 +686,12 @@ class AudacityIntegration(DAWIntegration):
         return project
 
     async def export_to_daw(
-        self,
-        audio_path: Path,
-        project: DAWProject,
-        settings: DAWExportSettings
+        self, audio_path: Path, project: DAWProject, settings: DAWExportSettings
     ) -> Path:
         """Export audio for Audacity (Audacity imports WAV directly)."""
         return audio_path
 
-    async def import_from_daw(
-        self,
-        project: DAWProject,
-        track_index: int
-    ) -> Path:
+    async def import_from_daw(self, project: DAWProject, track_index: int) -> Path:
         """Import audio from an Audacity project track.
 
         For AUP3 projects: extracts sample blocks from the SQLite database and exports
@@ -798,7 +795,7 @@ class DAWIntegrationManager:
         audio_path: Path,
         daw_type: DAWType,
         project_path: Path,
-        settings: DAWExportSettings | None = None
+        settings: DAWExportSettings | None = None,
     ) -> Path:
         """Export audio to a DAW project."""
         integration = self.get_integration(daw_type)

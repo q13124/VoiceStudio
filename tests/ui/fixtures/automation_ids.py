@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 @dataclass
 class PanelInfo:
     """Information about a VoiceStudio panel."""
+
     name: str
     view_class: str
     root_id: str
@@ -1128,7 +1129,5 @@ CATEGORIES = list(PANELS_BY_CATEGORY.keys())
 
 # Quick lookup - panel name to category
 PANEL_TO_CATEGORY = {
-    panel.name: category
-    for category, panels in PANELS_BY_CATEGORY.items()
-    for panel in panels
+    panel.name: category for category, panels in PANELS_BY_CATEGORY.items() for panel in panels
 }

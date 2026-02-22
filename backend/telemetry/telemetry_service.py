@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class TelemetryLevel(Enum):
     """Telemetry collection levels."""
+
     OFF = "off"
     MINIMAL = "minimal"  # Only crash reports
     STANDARD = "standard"  # + Usage statistics
@@ -28,6 +29,7 @@ class TelemetryLevel(Enum):
 
 class EventType(Enum):
     """Types of telemetry events."""
+
     APP_START = "app_start"
     APP_CLOSE = "app_close"
     FEATURE_USE = "feature_use"
@@ -41,6 +43,7 @@ class EventType(Enum):
 @dataclass
 class TelemetryEvent:
     """A telemetry event."""
+
     event_type: EventType
     timestamp: datetime
     session_id: str
@@ -52,6 +55,7 @@ class TelemetryEvent:
 @dataclass
 class TelemetrySettings:
     """Telemetry settings."""
+
     level: TelemetryLevel = TelemetryLevel.OFF
     consent_given: bool = False
     consent_date: datetime | None = None
@@ -63,11 +67,7 @@ class TelemetrySettings:
 class TelemetryService:
     """Service for privacy-respecting telemetry collection."""
 
-    def __init__(
-        self,
-        settings_path: Path | None = None,
-        endpoint_url: str | None = None
-    ):
+    def __init__(self, settings_path: Path | None = None, endpoint_url: str | None = None):
         self._settings_path = settings_path or Path.home() / ".voicestudio/telemetry.json"
         self._endpoint_url = endpoint_url
         self._settings = TelemetrySettings()
@@ -97,7 +97,7 @@ class TelemetryService:
         self,
         event_type: EventType,
         properties: dict[str, Any] | None = None,
-        metrics: dict[str, float] | None = None
+        metrics: dict[str, float] | None = None,
     ) -> None:
         """Track a telemetry event."""
         if not self.is_enabled:
@@ -128,14 +128,13 @@ class TelemetryService:
             properties={
                 "os_version": self._get_os_version(),
                 "app_version": self._get_app_version(),
-            }
+            },
         )
 
     def track_app_close(self, session_duration_seconds: float) -> None:
         """Track application close."""
         self.track_event(
-            EventType.APP_CLOSE,
-            metrics={"session_duration": session_duration_seconds}
+            EventType.APP_CLOSE, metrics={"session_duration": session_duration_seconds}
         )
 
     def track_feature_use(self, feature_name: str, details: dict[str, Any] | None = None) -> None:
@@ -145,14 +144,11 @@ class TelemetryService:
             properties={
                 "feature": feature_name,
                 **(details or {}),
-            }
+            },
         )
 
     def track_error(
-        self,
-        error_type: str,
-        error_message: str,
-        stack_trace: str | None = None
+        self, error_type: str, error_message: str, stack_trace: str | None = None
     ) -> None:
         """Track an error."""
         self.track_event(
@@ -161,7 +157,7 @@ class TelemetryService:
                 "error_type": error_type,
                 "error_message": self._sanitize_message(error_message),
                 "stack_trace": self._sanitize_stack_trace(stack_trace) if stack_trace else None,
-            }
+            },
         )
 
     def track_crash(self, exception: Exception, context: dict[str, Any] | None = None) -> None:
@@ -175,18 +171,13 @@ class TelemetryService:
                 "exception_type": type(exception).__name__,
                 "exception_message": self._sanitize_message(str(exception)),
                 **(self._sanitize_properties(context or {})),
-            }
+            },
         )
 
         # Immediately flush crash events
         asyncio.create_task(self.flush())
 
-    def track_synthesis(
-        self,
-        engine: str,
-        duration_seconds: float,
-        success: bool
-    ) -> None:
+    def track_synthesis(self, engine: str, duration_seconds: float, success: bool) -> None:
         """Track synthesis operation."""
         self.track_event(
             EventType.SYNTHESIS,
@@ -196,15 +187,10 @@ class TelemetryService:
             },
             metrics={
                 "duration": duration_seconds,
-            }
+            },
         )
 
-    def track_performance(
-        self,
-        operation: str,
-        duration_ms: float,
-        success: bool = True
-    ) -> None:
+    def track_performance(self, operation: str, duration_ms: float, success: bool = True) -> None:
         """Track performance metrics."""
         self.track_event(
             EventType.PERFORMANCE,
@@ -214,7 +200,7 @@ class TelemetryService:
             },
             metrics={
                 "duration_ms": duration_ms,
-            }
+            },
         )
 
     async def flush(self) -> bool:
@@ -261,6 +247,7 @@ class TelemetryService:
 
     def start_background_flush(self) -> None:
         """Start background flush task."""
+
         async def flush_loop():
             while True:
                 await asyncio.sleep(self._settings.flush_interval_seconds)
@@ -300,7 +287,7 @@ class TelemetryService:
         """Sanitize properties to remove PII."""
         sanitized = {}
 
-        pii_keys = {'email', 'name', 'username', 'path', 'file', 'directory'}
+        pii_keys = {"email", "name", "username", "path", "file", "directory"}
 
         for key, value in properties.items():
             if key.lower() in pii_keys:
@@ -318,14 +305,14 @@ class TelemetryService:
         import re
 
         # Remove file paths
-        message = re.sub(r'[A-Za-z]:\\[^\s]+', '[PATH]', message)
-        message = re.sub(r'/[^\s]+', '[PATH]', message)
+        message = re.sub(r"[A-Za-z]:\\[^\s]+", "[PATH]", message)
+        message = re.sub(r"/[^\s]+", "[PATH]", message)
 
         # Remove email addresses
-        message = re.sub(r'\S+@\S+\.\S+', '[EMAIL]', message)
+        message = re.sub(r"\S+@\S+\.\S+", "[EMAIL]", message)
 
         # Remove IP addresses
-        message = re.sub(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', '[IP]', message)
+        message = re.sub(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", "[IP]", message)
 
         return message
 
@@ -341,6 +328,7 @@ class TelemetryService:
     def _get_os_version(self) -> str:
         """Get OS version."""
         import platform
+
         return platform.platform()
 
     def _get_app_version(self) -> str:
@@ -356,7 +344,11 @@ class TelemetryService:
                 self._settings = TelemetrySettings(
                     level=TelemetryLevel(data.get("level", "off")),
                     consent_given=data.get("consent_given", False),
-                    consent_date=datetime.fromisoformat(data["consent_date"]) if data.get("consent_date") else None,
+                    consent_date=(
+                        datetime.fromisoformat(data["consent_date"])
+                        if data.get("consent_date")
+                        else None
+                    ),
                     anonymous_id=data.get("anonymous_id", str(uuid.uuid4())),
                 )
         except Exception as e:
@@ -370,7 +362,9 @@ class TelemetryService:
             data = {
                 "level": self._settings.level.value,
                 "consent_given": self._settings.consent_given,
-                "consent_date": self._settings.consent_date.isoformat() if self._settings.consent_date else None,
+                "consent_date": (
+                    self._settings.consent_date.isoformat() if self._settings.consent_date else None
+                ),
                 "anonymous_id": self._settings.anonymous_id,
             }
 

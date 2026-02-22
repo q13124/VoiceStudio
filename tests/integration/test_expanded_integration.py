@@ -45,20 +45,16 @@ class TestEngineIntegrationWorkflows:
 
                 # Step 2: Get engine info
                 if isinstance(engines_data, list) and len(engines_data) > 0:
-                    engine_id = engines_data[0].get("id") or engines_data[0].get(
-                        "engine_id"
-                    )
+                    engine_id = engines_data[0].get("id") or engines_data[0].get("engine_id")
                 elif "engines" in engines_data and len(engines_data["engines"]) > 0:
-                    engine_id = engines_data["engines"][0].get("id") or engines_data[
-                        "engines"
-                    ][0].get("engine_id")
+                    engine_id = engines_data["engines"][0].get("id") or engines_data["engines"][
+                        0
+                    ].get("engine_id")
                 else:
                     pytest.skip("No engines available for testing")
 
                 if engine_id:
-                    info_response = await client.get(
-                        f"{API_BASE_URL}/engines/{engine_id}"
-                    )
+                    info_response = await client.get(f"{API_BASE_URL}/engines/{engine_id}")
                     assert info_response.status_code in [
                         200,
                         404,
@@ -206,15 +202,11 @@ class TestProjectManagementWorkflows:
                 if create_response.status_code in [200, 201]:
                     project_data = create_response.json()
                     created_project_id = (
-                        project_data.get("project_id")
-                        or project_data.get("id")
-                        or project_id
+                        project_data.get("project_id") or project_data.get("id") or project_id
                     )
 
                     # Step 2: Get project
-                    get_response = await client.get(
-                        f"{API_BASE_URL}/projects/{created_project_id}"
-                    )
+                    get_response = await client.get(f"{API_BASE_URL}/projects/{created_project_id}")
                     if get_response.status_code == 200:
                         get_data = get_response.json()
                         assert (
@@ -236,9 +228,7 @@ class TestProjectManagementWorkflows:
 
                     # Step 4: List projects
                     list_response = await client.get(f"{API_BASE_URL}/projects")
-                    assert (
-                        list_response.status_code == 200
-                    ), "List projects should succeed"
+                    assert list_response.status_code == 200, "List projects should succeed"
 
                 logger.info("Project management workflow completed")
 
@@ -273,8 +263,7 @@ class TestQualityMetricsWorkflows:
                     if comparison_response.status_code == 200:
                         comparison_data = comparison_response.json()
                         assert (
-                            "comparison" in comparison_data
-                            or "metrics" in comparison_data
+                            "comparison" in comparison_data or "metrics" in comparison_data
                         ), "Comparison should return metrics"
 
                 logger.info("Quality comparison workflow completed")
@@ -305,8 +294,7 @@ class TestQualityMetricsWorkflows:
                     if benchmark_response.status_code == 200:
                         benchmark_data = benchmark_response.json()
                         assert (
-                            "results" in benchmark_data
-                            or "benchmark_id" in benchmark_data
+                            "results" in benchmark_data or "benchmark_id" in benchmark_data
                         ), "Benchmark should return results"
 
                 logger.info("Quality benchmark workflow completed")
@@ -370,9 +358,7 @@ class TestErrorHandlingAndResilience:
 
                 # Count successful responses
                 successful = sum(
-                    1
-                    for r in responses
-                    if isinstance(r, httpx.Response) and r.status_code == 200
+                    1 for r in responses if isinstance(r, httpx.Response) and r.status_code == 200
                 )
                 logger.info(f"Concurrent requests: {successful}/5 successful")
 
@@ -412,9 +398,7 @@ class TestDataPersistenceWorkflows:
 
                     if profile_id:
                         # Step 2: Retrieve profile
-                        get_response = await client.get(
-                            f"{API_BASE_URL}/profiles/{profile_id}"
-                        )
+                        get_response = await client.get(f"{API_BASE_URL}/profiles/{profile_id}")
                         if get_response.status_code == 200:
                             get_data = get_response.json()
                             assert (

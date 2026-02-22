@@ -121,9 +121,7 @@ class RVCModelManager:
         """Save model registry to disk."""
         registry_path = self._models_dir / self.REGISTRY_FILE
 
-        data = {
-            "models": [info.to_dict() for info in self._registry.values()]
-        }
+        data = {"models": [info.to_dict() for info in self._registry.values()]}
 
         with open(registry_path, "w") as f:
             json.dump(data, f, indent=2)
@@ -194,10 +192,7 @@ class RVCModelManager:
             models = [m for m in models if m.category == category]
 
         if tags:
-            models = [
-                m for m in models
-                if any(t in m.tags for t in tags)
-            ]
+            models = [m for m in models if any(t in m.tags for t in tags)]
 
         return models
 

@@ -30,15 +30,18 @@ def _get_request_id(request: Request) -> str | None:
 
 # --- Enums ---
 
+
 class SynthesisMode(str, Enum):
     """Synthesis modes."""
-    STANDARD = "standard"      # Standard TTS
-    CLONING = "cloning"        # Voice cloning
+
+    STANDARD = "standard"  # Standard TTS
+    CLONING = "cloning"  # Voice cloning
     CONVERSION = "conversion"  # Voice conversion
 
 
 class OutputFormat(str, Enum):
     """Audio output formats."""
+
     WAV = "wav"
     MP3 = "mp3"
     FLAC = "flac"
@@ -47,8 +50,10 @@ class OutputFormat(str, Enum):
 
 # --- Request/Response Models ---
 
+
 class SynthesisRequest(BaseModel):
     """Unified synthesis request."""
+
     text: str = Field(..., min_length=1, max_length=10000, description="Text to synthesize")
     engine_id: str = Field(default="xtts_v2", description="Engine to use")
     mode: SynthesisMode = Field(default=SynthesisMode.STANDARD, description="Synthesis mode")
@@ -80,6 +85,7 @@ class SynthesisRequest(BaseModel):
 
 class SynthesisResponse(BaseModel):
     """Synthesis response metadata."""
+
     job_id: str
     status: str
     audio_url: str | None = None
@@ -104,12 +110,14 @@ class SynthesisResponse(BaseModel):
 
 class BatchSynthesisRequest(BaseModel):
     """Batch synthesis request."""
+
     items: list[SynthesisRequest] = Field(..., min_length=1, max_length=100)
     parallel: bool = Field(default=True, description="Process items in parallel")
 
 
 class BatchSynthesisResponse(BaseModel):
     """Batch synthesis response."""
+
     batch_id: str
     total_items: int
     completed: int
@@ -118,6 +126,7 @@ class BatchSynthesisResponse(BaseModel):
 
 
 # --- Endpoints ---
+
 
 @router.post(
     "",
@@ -148,8 +157,7 @@ async def synthesize(
         if request.mode == SynthesisMode.CLONING:
             if not request.reference_audio_url:
                 raise HTTPException(
-                    status_code=400,
-                    detail="reference_audio_url is required for cloning mode"
+                    status_code=400, detail="reference_audio_url is required for cloning mode"
                 )
 
             result = engine_service.clone_voice(
@@ -215,7 +223,7 @@ async def synthesize_stream(
             chunk_size = 4096
 
             for i in range(0, len(audio_data), chunk_size):
-                yield audio_data[i:i + chunk_size]
+                yield audio_data[i : i + chunk_size]
 
         except Exception as e:
             logger.error(f"Streaming synthesis failed: {e}")
@@ -329,12 +337,14 @@ async def batch_synthesize(
                 failed += 1
         except Exception:
             failed += 1
-            results.append(SynthesisResponse(
-                job_id=f"syn_{uuid.uuid4().hex[:12]}",
-                status="failed",
-                characters_processed=len(item.text),
-                engine_used=item.engine_id,
-            ))
+            results.append(
+                SynthesisResponse(
+                    job_id=f"syn_{uuid.uuid4().hex[:12]}",
+                    status="failed",
+                    characters_processed=len(item.text),
+                    engine_used=item.engine_id,
+                )
+            )
 
     processing_time = (time.time() - start_time) * 1000
 

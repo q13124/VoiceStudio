@@ -61,9 +61,7 @@ async def render(req: ImgSamplerRequest) -> dict:
         sampler = req.sampler.lower()
 
         if not prompt or not prompt.strip():
-            raise HTTPException(
-                status_code=400, detail="prompt is required"
-            )
+            raise HTTPException(status_code=400, detail="prompt is required")
 
         # Validate sampler
         if sampler not in SUPPORTED_SAMPLERS:
@@ -121,9 +119,7 @@ async def render(req: ImgSamplerRequest) -> dict:
                 image_data = f.read()
                 image_base64 = base64.b64encode(image_data).decode("utf-8")
                 mime_type = "image/png"
-                if image_path.lower().endswith(".jpg") or image_path.lower().endswith(
-                    ".jpeg"
-                ):
+                if image_path.lower().endswith(".jpg") or image_path.lower().endswith(".jpeg"):
                     mime_type = "image/jpeg"
                 elif image_path.lower().endswith(".webp"):
                     mime_type = "image/webp"
@@ -164,19 +160,14 @@ async def render(req: ImgSamplerRequest) -> dict:
             )
             raise HTTPException(
                 status_code=502,
-                detail=(
-                    "Image generation failed. "
-                    "Check the image engine logs for details."
-                ),
+                detail=("Image generation failed. " "Check the image engine logs for details."),
             ) from e
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Image sampling failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Image sampling failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Image sampling failed: {e!s}") from e
 
 
 @router.get("/samplers")

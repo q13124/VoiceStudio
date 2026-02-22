@@ -97,9 +97,7 @@ class FileSystemAdapter(Adapter):
 
         # Use asyncio for non-blocking I/O
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None, resolved.read_bytes
-        )
+        return await loop.run_in_executor(None, resolved.read_bytes)
 
     async def write_file(self, path: str, data: bytes) -> None:
         """
@@ -113,9 +111,7 @@ class FileSystemAdapter(Adapter):
         resolved.parent.mkdir(parents=True, exist_ok=True)
 
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(
-            None, resolved.write_bytes, data
-        )
+        await loop.run_in_executor(None, resolved.write_bytes, data)
 
     async def delete_file(self, path: str) -> bool:
         """
@@ -217,9 +213,7 @@ class FileSystemAdapter(Adapter):
         dst_path.parent.mkdir(parents=True, exist_ok=True)
 
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(
-            None, shutil.copy2, src_path, dst_path
-        )
+        await loop.run_in_executor(None, shutil.copy2, src_path, dst_path)
 
     async def move_file(self, src: str, dst: str) -> None:
         """Move a file."""
@@ -229,6 +223,4 @@ class FileSystemAdapter(Adapter):
         dst_path.parent.mkdir(parents=True, exist_ok=True)
 
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(
-            None, shutil.move, src_path, dst_path
-        )
+        await loop.run_in_executor(None, shutil.move, src_path, dst_path)

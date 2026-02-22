@@ -26,9 +26,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class VideoEditRequest(BaseModel):
-    operation: (
-        str  # trim, split, effect, transition, export, resize, add_audio, upscale
-    )
+    operation: str  # trim, split, effect, transition, export, resize, add_audio, upscale
     input_path: str | None = None
     output_path: str | None = None
     start_time: float | None = None
@@ -72,9 +70,7 @@ def get_video_info(video_path: str) -> VideoInfo:
     """Get video information using FFprobe."""
     try:
         if not os.path.exists(video_path):
-            raise HTTPException(
-                status_code=404, detail=f"Video file not found: {video_path}"
-            )
+            raise HTTPException(status_code=404, detail=f"Video file not found: {video_path}")
 
         # Use ffprobe to get video info
         cmd = [
@@ -126,14 +122,10 @@ def get_video_info(video_path: str) -> VideoInfo:
         raise
     except Exception as e:
         logger.error(f"Failed to get video info: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get video info: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get video info: {e!s}")
 
 
-def trim_video(
-    input_path: str, output_path: str, start_time: float, end_time: float
-) -> bool:
+def trim_video(input_path: str, output_path: str, start_time: float, end_time: float) -> bool:
     """Trim video using FFmpeg."""
     try:
         cmd = [
@@ -402,9 +394,7 @@ def upscale_video(input_path: str, output_path: str, scale: float) -> bool:
         return False
 
 
-def export_video(
-    input_path: str, output_path: str, format: str, quality: int = 5
-) -> bool:
+def export_video(input_path: str, output_path: str, format: str, quality: int = 5) -> bool:
     """Export video in specified format and quality."""
     try:
         # Map quality (1-10) to FFmpeg quality settings
@@ -459,9 +449,7 @@ def export_video(
 
 @router.get("/info")
 @cache_response(ttl=300)  # Cache for 5 minutes (video info is static for a given file)
-async def get_video_info_endpoint(
-    path: str = Query(..., description="Path to video file")
-):
+async def get_video_info_endpoint(path: str = Query(..., description="Path to video file")):
     """Get video information."""
     try:
         if not check_ffmpeg():
@@ -473,9 +461,7 @@ async def get_video_info_endpoint(
         raise
     except Exception as e:
         logger.error(f"Failed to get video info: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get video info: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get video info: {e!s}")
 
 
 @router.post("", response_model=VideoEditResponse)
@@ -512,9 +498,7 @@ async def edit_video(request: VideoEditRequest):
                 request.start_time,
                 request.end_time,
             )
-            message = (
-                "Video trimmed successfully" if success else "Failed to trim video"
-            )
+            message = "Video trimmed successfully" if success else "Failed to trim video"
 
         elif request.operation == "split":
             if request.split_time is None:
@@ -522,9 +506,7 @@ async def edit_video(request: VideoEditRequest):
                     status_code=400,
                     detail="split_time required for split operation",
                 )
-            success = split_video(
-                request.input_path, request.output_path, request.split_time
-            )
+            success = split_video(request.input_path, request.output_path, request.split_time)
             message = "Video split successfully" if success else "Failed to split video"
 
         elif request.operation == "effect":
@@ -533,9 +515,7 @@ async def edit_video(request: VideoEditRequest):
                     status_code=400,
                     detail="effect required for effect operation",
                 )
-            success = apply_effect(
-                request.input_path, request.output_path, request.effect
-            )
+            success = apply_effect(request.input_path, request.output_path, request.effect)
             message = (
                 f"Effect '{request.effect}' applied successfully"
                 if success
@@ -564,9 +544,7 @@ async def edit_video(request: VideoEditRequest):
         elif request.operation == "export":
             format = request.format or "mp4"
             quality = request.quality or 5
-            success = export_video(
-                request.input_path, request.output_path, format, quality
-            )
+            success = export_video(request.input_path, request.output_path, format, quality)
             message = (
                 f"Video exported as {format} successfully"
                 if success
@@ -585,9 +563,7 @@ async def edit_video(request: VideoEditRequest):
                 request.width,
                 request.height,
             )
-            message = (
-                "Video resized successfully" if success else "Failed to resize video"
-            )
+            message = "Video resized successfully" if success else "Failed to resize video"
 
         elif request.operation == "add_audio":
             if not request.audio_path:
@@ -606,12 +582,8 @@ async def edit_video(request: VideoEditRequest):
                     status_code=400,
                     detail="scale required for upscale operation",
                 )
-            success = upscale_video(
-                request.input_path, request.output_path, request.scale
-            )
-            message = (
-                "Video upscaled successfully" if success else "Failed to upscale video"
-            )
+            success = upscale_video(request.input_path, request.output_path, request.scale)
+            message = "Video upscaled successfully" if success else "Failed to upscale video"
 
         else:
             raise HTTPException(

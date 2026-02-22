@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class AssetType(str, Enum):
     """Library asset type enumeration."""
+
     AUDIO = "audio"
     VOICE_PROFILE = "voice_profile"
     VIDEO = "video"
@@ -40,6 +41,7 @@ class LibraryFolderEntity(BaseEntity):
 
     Maps to library_folders table.
     """
+
     name: str = ""
     parent_id: str | None = None
     path: str = ""
@@ -53,6 +55,7 @@ class LibraryAssetEntity(BaseEntity):
 
     Maps to library_assets table.
     """
+
     name: str = ""
     type: str = AssetType.AUDIO.value
     path: str = ""
@@ -108,8 +111,16 @@ class LibraryFolderRepository(BaseRepository[LibraryFolderEntity]):
             "name": entity.name,
             "parent_id": entity.parent_id,
             "path": entity.path,
-            "created_at": entity.created_at.isoformat() if isinstance(entity.created_at, datetime) else entity.created_at,
-            "modified_at": entity.modified_at.isoformat() if isinstance(entity.modified_at, datetime) else entity.modified_at,
+            "created_at": (
+                entity.created_at.isoformat()
+                if isinstance(entity.created_at, datetime)
+                else entity.created_at
+            ),
+            "modified_at": (
+                entity.modified_at.isoformat()
+                if isinstance(entity.modified_at, datetime)
+                else entity.modified_at
+            ),
             "deleted_at": entity.deleted_at.isoformat() if entity.deleted_at else None,
         }
 
@@ -120,9 +131,21 @@ class LibraryFolderRepository(BaseRepository[LibraryFolderEntity]):
             name=row.get("name", ""),
             parent_id=row.get("parent_id"),
             path=row.get("path", ""),
-            created_at=datetime.fromisoformat(row["created_at"]) if row.get("created_at") else datetime.now(),
-            updated_at=datetime.fromisoformat(row.get("modified_at", row.get("updated_at", ""))) if row.get("modified_at") or row.get("updated_at") else datetime.now(),
-            modified_at=datetime.fromisoformat(row["modified_at"]) if row.get("modified_at") else datetime.now(),
+            created_at=(
+                datetime.fromisoformat(row["created_at"])
+                if row.get("created_at")
+                else datetime.now()
+            ),
+            updated_at=(
+                datetime.fromisoformat(row.get("modified_at", row.get("updated_at", "")))
+                if row.get("modified_at") or row.get("updated_at")
+                else datetime.now()
+            ),
+            modified_at=(
+                datetime.fromisoformat(row["modified_at"])
+                if row.get("modified_at")
+                else datetime.now()
+            ),
             deleted_at=datetime.fromisoformat(row["deleted_at"]) if row.get("deleted_at") else None,
         )
 
@@ -166,8 +189,16 @@ class LibraryAssetRepository(BaseRepository[LibraryAssetEntity]):
             "size": entity.size,
             "duration": entity.duration,
             "thumbnail_url": entity.thumbnail_url,
-            "created_at": entity.created_at.isoformat() if isinstance(entity.created_at, datetime) else entity.created_at,
-            "modified_at": entity.modified_at.isoformat() if isinstance(entity.modified_at, datetime) else entity.modified_at,
+            "created_at": (
+                entity.created_at.isoformat()
+                if isinstance(entity.created_at, datetime)
+                else entity.created_at
+            ),
+            "modified_at": (
+                entity.modified_at.isoformat()
+                if isinstance(entity.modified_at, datetime)
+                else entity.modified_at
+            ),
             "deleted_at": entity.deleted_at.isoformat() if entity.deleted_at else None,
         }
 
@@ -184,9 +215,21 @@ class LibraryAssetRepository(BaseRepository[LibraryAssetEntity]):
             size=row.get("size", 0),
             duration=row.get("duration"),
             thumbnail_url=row.get("thumbnail_url"),
-            created_at=datetime.fromisoformat(row["created_at"]) if row.get("created_at") else datetime.now(),
-            updated_at=datetime.fromisoformat(row.get("modified_at", row.get("updated_at", ""))) if row.get("modified_at") or row.get("updated_at") else datetime.now(),
-            modified_at=datetime.fromisoformat(row["modified_at"]) if row.get("modified_at") else datetime.now(),
+            created_at=(
+                datetime.fromisoformat(row["created_at"])
+                if row.get("created_at")
+                else datetime.now()
+            ),
+            updated_at=(
+                datetime.fromisoformat(row.get("modified_at", row.get("updated_at", "")))
+                if row.get("modified_at") or row.get("updated_at")
+                else datetime.now()
+            ),
+            modified_at=(
+                datetime.fromisoformat(row["modified_at"])
+                if row.get("modified_at")
+                else datetime.now()
+            ),
             deleted_at=datetime.fromisoformat(row["deleted_at"]) if row.get("deleted_at") else None,
         )
 
@@ -330,7 +373,14 @@ class LibraryAssetRepository(BaseRepository[LibraryAssetEntity]):
                     "total_size": row[5] or 0,
                 }
 
-        return {"total": 0, "audio": 0, "voice_profiles": 0, "video": 0, "images": 0, "total_size": 0}
+        return {
+            "total": 0,
+            "audio": 0,
+            "voice_profiles": 0,
+            "video": 0,
+            "images": 0,
+            "total_size": 0,
+        }
 
 
 # In-memory fallback repository for graceful degradation
@@ -354,18 +404,21 @@ class InMemoryLibraryAssetRepository:
             if options.order_by == "modified_at":
                 assets.sort(key=lambda a: a.modified_at or datetime.min, reverse=options.order_desc)
             if options.limit:
-                assets = assets[:options.limit]
+                assets = assets[: options.limit]
         return assets
 
-    async def find(self, filters: dict[str, Any], options: QueryOptions | None = None) -> list[LibraryAssetEntity]:
+    async def find(
+        self, filters: dict[str, Any], options: QueryOptions | None = None
+    ) -> list[LibraryAssetEntity]:
         """Find assets matching filters."""
         assets = [
-            asset for asset in self._assets.values()
+            asset
+            for asset in self._assets.values()
             if all(getattr(asset, k, None) == v for k, v in filters.items())
             and asset.deleted_at is None
         ]
         if options and options.limit:
-            assets = assets[:options.limit]
+            assets = assets[: options.limit]
         return assets
 
     async def get_by_id(self, asset_id: str) -> LibraryAssetEntity | None:
@@ -405,22 +458,27 @@ class InMemoryLibraryAssetRepository:
         assets = [a for a in self._assets.values() if a.deleted_at is None]
         if filters:
             assets = [
-                a for a in assets
-                if all(getattr(a, k, None) == v for k, v in filters.items())
+                a for a in assets if all(getattr(a, k, None) == v for k, v in filters.items())
             ]
         return len(assets)
 
-    async def get_by_type(self, asset_type: AssetType, options: QueryOptions | None = None) -> list[LibraryAssetEntity]:
+    async def get_by_type(
+        self, asset_type: AssetType, options: QueryOptions | None = None
+    ) -> list[LibraryAssetEntity]:
         """Get assets by type."""
         return await self.find({"type": asset_type.value}, options)
 
-    async def get_by_folder(self, folder_id: str | None, options: QueryOptions | None = None) -> list[LibraryAssetEntity]:
+    async def get_by_folder(
+        self, folder_id: str | None, options: QueryOptions | None = None
+    ) -> list[LibraryAssetEntity]:
         """Get assets in a folder."""
         return await self.find({"folder_id": folder_id}, options)
 
     async def get_recent(self, limit: int = 20) -> list[LibraryAssetEntity]:
         """Get recent assets."""
-        return await self.get_all(QueryOptions(limit=limit, order_by="modified_at", order_desc=True))
+        return await self.get_all(
+            QueryOptions(limit=limit, order_by="modified_at", order_desc=True)
+        )
 
     async def get_summary(self) -> dict[str, Any]:
         """Get library summary."""
@@ -457,18 +515,21 @@ class InMemoryLibraryFolderRepository:
         """Get all folders."""
         folders = [f for f in self._folders.values() if f.deleted_at is None]
         if options and options.limit:
-            folders = folders[:options.limit]
+            folders = folders[: options.limit]
         return folders
 
-    async def find(self, filters: dict[str, Any], options: QueryOptions | None = None) -> list[LibraryFolderEntity]:
+    async def find(
+        self, filters: dict[str, Any], options: QueryOptions | None = None
+    ) -> list[LibraryFolderEntity]:
         """Find folders matching filters."""
         folders = [
-            folder for folder in self._folders.values()
+            folder
+            for folder in self._folders.values()
             if all(getattr(folder, k, None) == v for k, v in filters.items())
             and folder.deleted_at is None
         ]
         if options and options.limit:
-            folders = folders[:options.limit]
+            folders = folders[: options.limit]
         return folders
 
     async def get_by_id(self, folder_id: str) -> LibraryFolderEntity | None:

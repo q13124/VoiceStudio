@@ -21,6 +21,7 @@ from ..plugins import get_plugin_loader
 # Phase 6A: Import plugin service for Wasm execution
 try:
     from backend.services.plugin_service import get_plugin_service
+
     PLUGIN_SERVICE_AVAILABLE = True
 except ImportError:
     PLUGIN_SERVICE_AVAILABLE = False
@@ -332,7 +333,7 @@ async def get_plugin_manifest(plugin_id: str):
 async def load_plugin(plugin_id: str, request: PluginLoadRequest | None = None):
     """
     Load a plugin dynamically.
-    
+
     GAP-PY-004: Wired to PluginService.load_plugin() for actual lifecycle management.
     """
     try:
@@ -365,17 +366,17 @@ async def load_plugin(plugin_id: str, request: PluginLoadRequest | None = None):
             raise HTTPException(
                 status_code=501,
                 detail="Plugin loading not available: PluginService not initialized. "
-                       "Plugins are loaded at application startup.",
+                "Plugins are loaded at application startup.",
             )
 
         plugin_service = get_plugin_service()
-        
+
         # Force reload requires unload first
         if status == "loaded" and request and request.force_reload:
             await plugin_service.unload_plugin(plugin_id)
 
         success = await plugin_service.load_plugin(plugin_id)
-        
+
         if success:
             return {
                 "message": f"Plugin '{plugin_id}' loaded successfully",
@@ -401,7 +402,7 @@ async def load_plugin(plugin_id: str, request: PluginLoadRequest | None = None):
 async def unload_plugin(plugin_id: str, request: PluginUnloadRequest | None = None):
     """
     Unload a plugin dynamically.
-    
+
     GAP-PY-004: Wired to PluginService.unload_plugin() for actual lifecycle management.
     """
     try:
@@ -438,7 +439,7 @@ async def unload_plugin(plugin_id: str, request: PluginUnloadRequest | None = No
 
         plugin_service = get_plugin_service()
         success = await plugin_service.unload_plugin(plugin_id)
-        
+
         if success:
             return {
                 "message": f"Plugin '{plugin_id}' unloaded successfully",
@@ -547,9 +548,7 @@ async def update_plugin_config(plugin_id: str, config: dict[str, Any]):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to update plugin config '{plugin_id}': {e}", exc_info=True
-        )
+        logger.error(f"Failed to update plugin config '{plugin_id}': {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Failed to update plugin config: {e!s}",
@@ -717,6 +716,7 @@ async def execute_wasm_plugin(plugin_id: str, request: WasmExecutionRequest):
         input_data = None
         if request.input_data:
             import base64
+
             try:
                 input_data = base64.b64decode(request.input_data)
             except Exception as decode_error:

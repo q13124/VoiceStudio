@@ -276,8 +276,12 @@ class TestSoakStability:
 
         # Assertions
         assert metrics.success_rate >= 99.0, f"Success rate too low: {metrics.success_rate}%"
-        assert metrics.memory_growth_mb < 50, f"Memory growth too high: {metrics.memory_growth_mb} MB"
-        assert metrics.latency_degradation_ratio < 2.0, f"Latency degradation: {metrics.latency_degradation_ratio}x"
+        assert (
+            metrics.memory_growth_mb < 50
+        ), f"Memory growth too high: {metrics.memory_growth_mb} MB"
+        assert (
+            metrics.latency_degradation_ratio < 2.0
+        ), f"Latency degradation: {metrics.latency_degradation_ratio}x"
 
     @pytest.mark.soak
     @pytest.mark.asyncio
@@ -286,6 +290,7 @@ class TestSoakStability:
         import httpx
 
         async with httpx.AsyncClient(base_url="http://localhost:8000", timeout=5.0) as client:
+
             async def operation():
                 response = await client.get("/health")
                 response.raise_for_status()
@@ -295,7 +300,9 @@ class TestSoakStability:
 
         # Backend should handle 100 health checks without issues
         assert metrics.success_rate >= 95.0, f"Success rate too low: {metrics.success_rate}%"
-        assert metrics.latency_degradation_ratio < 3.0, f"Latency degradation: {metrics.latency_degradation_ratio}x"
+        assert (
+            metrics.latency_degradation_ratio < 3.0
+        ), f"Latency degradation: {metrics.latency_degradation_ratio}x"
 
     @pytest.mark.soak
     def test_soak_audio_buffer_operations(self):
@@ -322,7 +329,9 @@ class TestSoakStability:
         metrics = runner.run_sync(operation, "audio_buffers")
 
         assert metrics.success_rate == 100.0, "Audio operations should not fail"
-        assert metrics.memory_growth_mb < 100, f"Memory leak detected: {metrics.memory_growth_mb} MB"
+        assert (
+            metrics.memory_growth_mb < 100
+        ), f"Memory leak detected: {metrics.memory_growth_mb} MB"
 
     @pytest.mark.soak
     def test_soak_file_operations(self):
@@ -366,20 +375,24 @@ def generate_soak_report(metrics_list: list[tuple[str, SoakTestMetrics]], output
         if status == "FAIL":
             overall_pass = False
 
-        lines.extend([
-            f"## {name}",
-            f"Status: {status}",
-            f"Success Rate: {metrics.success_rate:.1f}%",
-            f"Avg Latency: {metrics.avg_latency_ms:.2f} ms",
-            f"Memory Growth: {metrics.memory_growth_mb:.2f} MB",
-            f"Latency Degradation: {metrics.latency_degradation_ratio:.2f}x",
-            "",
-        ])
+        lines.extend(
+            [
+                f"## {name}",
+                f"Status: {status}",
+                f"Success Rate: {metrics.success_rate:.1f}%",
+                f"Avg Latency: {metrics.avg_latency_ms:.2f} ms",
+                f"Memory Growth: {metrics.memory_growth_mb:.2f} MB",
+                f"Latency Degradation: {metrics.latency_degradation_ratio:.2f}x",
+                "",
+            ]
+        )
 
-    lines.extend([
-        "---",
-        f"Overall: {'PASS' if overall_pass else 'FAIL'}",
-    ])
+    lines.extend(
+        [
+            "---",
+            f"Overall: {'PASS' if overall_pass else 'FAIL'}",
+        ]
+    )
 
     with open(output_path, "w") as f:
         f.write("\n".join(lines))

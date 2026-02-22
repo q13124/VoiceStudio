@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class Emotion(Enum):
     """Supported emotions."""
+
     NEUTRAL = "neutral"
     HAPPY = "happy"
     SAD = "sad"
@@ -35,19 +36,20 @@ class Emotion(Enum):
 @dataclass
 class EmotionParams:
     """Parameters for emotion synthesis."""
+
     # Prosody parameters
-    pitch_shift: float = 0.0       # Semitones (-12 to +12)
-    pitch_variance: float = 1.0    # Multiplier for pitch variation
-    speed: float = 1.0             # Speaking speed multiplier
-    energy: float = 1.0            # Volume/energy multiplier
+    pitch_shift: float = 0.0  # Semitones (-12 to +12)
+    pitch_variance: float = 1.0  # Multiplier for pitch variation
+    speed: float = 1.0  # Speaking speed multiplier
+    energy: float = 1.0  # Volume/energy multiplier
 
     # Voice quality
-    breathiness: float = 0.0       # 0-1
-    roughness: float = 0.0         # 0-1
-    tension: float = 0.5           # 0-1
+    breathiness: float = 0.0  # 0-1
+    roughness: float = 0.0  # 0-1
+    tension: float = 0.5  # 0-1
 
     # Articulation
-    vowel_duration: float = 1.0    # Multiplier
+    vowel_duration: float = 1.0  # Multiplier
     consonant_sharpness: float = 0.5  # 0-1
 
     def blend(self, other: EmotionParams, weight: float) -> EmotionParams:
@@ -71,32 +73,61 @@ class EmotionParams:
 EMOTION_PRESETS: dict[Emotion, EmotionParams] = {
     Emotion.NEUTRAL: EmotionParams(),
     Emotion.HAPPY: EmotionParams(
-        pitch_shift=2.0, pitch_variance=1.3, speed=1.1,
-        energy=1.2, breathiness=0.1, tension=0.6,
+        pitch_shift=2.0,
+        pitch_variance=1.3,
+        speed=1.1,
+        energy=1.2,
+        breathiness=0.1,
+        tension=0.6,
     ),
     Emotion.SAD: EmotionParams(
-        pitch_shift=-2.0, pitch_variance=0.7, speed=0.85,
-        energy=0.7, breathiness=0.2, tension=0.3,
+        pitch_shift=-2.0,
+        pitch_variance=0.7,
+        speed=0.85,
+        energy=0.7,
+        breathiness=0.2,
+        tension=0.3,
     ),
     Emotion.ANGRY: EmotionParams(
-        pitch_shift=1.0, pitch_variance=1.5, speed=1.15,
-        energy=1.4, roughness=0.3, tension=0.9, consonant_sharpness=0.8,
+        pitch_shift=1.0,
+        pitch_variance=1.5,
+        speed=1.15,
+        energy=1.4,
+        roughness=0.3,
+        tension=0.9,
+        consonant_sharpness=0.8,
     ),
     Emotion.FEARFUL: EmotionParams(
-        pitch_shift=3.0, pitch_variance=1.4, speed=1.2,
-        energy=0.9, breathiness=0.3, tension=0.8,
+        pitch_shift=3.0,
+        pitch_variance=1.4,
+        speed=1.2,
+        energy=0.9,
+        breathiness=0.3,
+        tension=0.8,
     ),
     Emotion.SURPRISED: EmotionParams(
-        pitch_shift=4.0, pitch_variance=1.6, speed=1.1,
-        energy=1.3, breathiness=0.1, tension=0.7,
+        pitch_shift=4.0,
+        pitch_variance=1.6,
+        speed=1.1,
+        energy=1.3,
+        breathiness=0.1,
+        tension=0.7,
     ),
     Emotion.EXCITED: EmotionParams(
-        pitch_shift=3.0, pitch_variance=1.5, speed=1.25,
-        energy=1.35, breathiness=0.15, tension=0.7,
+        pitch_shift=3.0,
+        pitch_variance=1.5,
+        speed=1.25,
+        energy=1.35,
+        breathiness=0.15,
+        tension=0.7,
     ),
     Emotion.CALM: EmotionParams(
-        pitch_shift=-1.0, pitch_variance=0.6, speed=0.9,
-        energy=0.8, breathiness=0.15, tension=0.3,
+        pitch_shift=-1.0,
+        pitch_variance=0.6,
+        speed=0.9,
+        energy=0.8,
+        breathiness=0.15,
+        tension=0.3,
     ),
 }
 
@@ -219,6 +250,7 @@ class EmotionSynthesizer:
         """Apply pitch shift using phase vocoder or resampling."""
         try:
             import librosa
+
             return librosa.effects.pitch_shift(audio, sr=sample_rate, n_steps=semitones)
         except ImportError:
             logger.debug("librosa not available for pitch_shift, using fallback resampling")
@@ -245,6 +277,7 @@ class EmotionSynthesizer:
         """Change speaking speed (time stretch)."""
         try:
             import librosa
+
             return librosa.effects.time_stretch(audio, rate=speed)
         except ImportError:
             logger.debug("librosa not available for time_stretch, using fallback resampling")
@@ -264,6 +297,7 @@ class EmotionSynthesizer:
         # Low-pass filter the noise for more natural sound
         try:
             from scipy.signal import butter, filtfilt
+
             b, a = butter(2, 0.3)
             noise = filtfilt(b, a, noise)
         except ImportError:

@@ -46,9 +46,7 @@ except ImportError:
     TrainerArgs = None
     AudioProcessor = None
     HAS_TTS = False
-    logger.warning(
-        "Coqui TTS not installed. Install with: pip install coqui-tts==0.27.2"
-    )
+    logger.warning("Coqui TTS not installed. Install with: pip install coqui-tts==0.27.2")
 
 # Try to import training utilities
 try:
@@ -108,9 +106,7 @@ except ImportError:
     tune = None
     CLIReporter = None
     ASHAScheduler = None
-    logger.debug(
-        "ray[tune] not installed. Distributed hyperparameter tuning will be limited."
-    )
+    logger.debug("ray[tune] not installed. Distributed hyperparameter tuning will be limited.")
 
 # Try importing hyperopt for hyperparameter optimization
 try:
@@ -160,9 +156,7 @@ class XTTSTrainer:
             )
 
         self.base_model = base_model
-        self.device = device or (
-            "cuda" if (gpu and torch.cuda.is_available()) else "cpu"
-        )
+        self.device = device or ("cuda" if (gpu and torch.cuda.is_available()) else "cpu")
         self.output_dir = Path(output_dir) if output_dir else Path("models/trained")
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -200,9 +194,7 @@ class XTTSTrainer:
             transforms = []
 
             if enable_noise:
-                transforms.append(
-                    AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.015, p=0.5)
-                )
+                transforms.append(AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.015, p=0.5))
 
             if enable_time_stretch:
                 transforms.append(TimeStretch(min_rate=0.8, max_rate=1.2, p=0.5))
@@ -220,9 +212,7 @@ class XTTSTrainer:
         except Exception as e:
             import logging
 
-            logging.getLogger(__name__).warning(
-                f"Failed to create augmentation pipeline: {e}"
-            )
+            logging.getLogger(__name__).warning(f"Failed to create augmentation pipeline: {e}")
             return None
 
     def prepare_dataset(
@@ -293,9 +283,7 @@ class XTTSTrainer:
                     with contextlib.suppress(Exception):
                         _, sample_rate = sf.read(valid_files[0], frames=1)
 
-                augmentation_pipeline = self.create_augmentation_pipeline(
-                    sample_rate=sample_rate
-                )
+                augmentation_pipeline = self.create_augmentation_pipeline(sample_rate=sample_rate)
                 if augmentation_pipeline:
                     logger.info("Audio augmentation pipeline created")
             except Exception as e:
@@ -316,8 +304,7 @@ class XTTSTrainer:
                     "audio_file": audio_file,
                     "text": transcript,
                     "speaker_name": "target_speaker",  # Single speaker fine-tuning
-                    "augmented": apply_augmentation
-                    and augmentation_pipeline is not None,
+                    "augmented": apply_augmentation and augmentation_pipeline is not None,
                 }
             )
 
@@ -438,9 +425,7 @@ class XTTSTrainer:
 
             # Prepare checkpoint directory
             checkpoint_path = (
-                Path(checkpoint_dir)
-                if checkpoint_dir
-                else self.output_dir / "checkpoints"
+                Path(checkpoint_dir) if checkpoint_dir else self.output_dir / "checkpoints"
             )
             checkpoint_path.mkdir(parents=True, exist_ok=True)
 
@@ -484,8 +469,7 @@ class XTTSTrainer:
                 output_path=str(checkpoint_path),
                 model=self.model,
                 train_samples=train_samples,
-                eval_samples=eval_samples
-                or train_samples[: min(10, len(train_samples))],
+                eval_samples=eval_samples or train_samples[: min(10, len(train_samples))],
                 training_assets={},
             )
 
@@ -508,11 +492,9 @@ class XTTSTrainer:
                 def create_progress_bar(*args, **kwargs):
                     return None
 
-                def update_progress(*args, **kwargs):
-                    ...
+                def update_progress(*args, **kwargs): ...
 
-                def close_progress(*args, **kwargs):
-                    ...
+                def close_progress(*args, **kwargs): ...
 
             # Create epoch progress bar
             epoch_pbar = (
@@ -549,9 +531,7 @@ class XTTSTrainer:
                 if epoch_loss < best_loss:
                     best_loss = epoch_loss
                     # Save best model checkpoint
-                    self._save_checkpoint(
-                        checkpoint_path, epoch, epoch_loss, is_best=True
-                    )
+                    self._save_checkpoint(checkpoint_path, epoch, epoch_loss, is_best=True)
 
                 # Progress callback
                 if progress_callback:
@@ -565,9 +545,7 @@ class XTTSTrainer:
                         }
                     )
 
-                logger.info(
-                    f"Epoch {epoch}/{epochs} completed - Loss: {epoch_loss:.4f}"
-                )
+                logger.info(f"Epoch {epoch}/{epochs} completed - Loss: {epoch_loss:.4f}")
 
             # Save final model
             final_checkpoint = checkpoint_path / "final_model"
@@ -656,9 +634,7 @@ class XTTSTrainer:
                         "model_state_dict": self.model.state_dict(),
                         "loss": loss,
                         "config": (
-                            self.config.to_dict()
-                            if hasattr(self.config, "to_dict")
-                            else {}
+                            self.config.to_dict() if hasattr(self.config, "to_dict") else {}
                         ),
                     },
                     model_path,
@@ -667,11 +643,7 @@ class XTTSTrainer:
             # Save config atomically (tmp + replace)
             if self.config:
                 config_path = checkpoint_path / "config.json"
-                cfg = (
-                    self.config.to_dict()
-                    if hasattr(self.config, "to_dict")
-                    else {}
-                )
+                cfg = self.config.to_dict() if hasattr(self.config, "to_dict") else {}
                 tmp_path = config_path.with_suffix(config_path.suffix + ".tmp")
                 try:
                     with open(tmp_path, "w", encoding="utf-8") as f:
@@ -696,9 +668,7 @@ class XTTSTrainer:
         self._training_cancelled = True
         logger.info("Training cancellation requested")
 
-    def export_model(
-        self, checkpoint_path: str, output_path: str | None = None
-    ) -> str:
+    def export_model(self, checkpoint_path: str, output_path: str | None = None) -> str:
         """
         Export trained model for inference.
 
@@ -774,9 +744,7 @@ class XTTSTrainer:
     ) -> dict[str, Any]:
         """Optimize hyperparameters using Optuna."""
         if not HAS_OPTUNA:
-            raise ImportError(
-                "optuna is required. Install with: pip install optuna>=4.5.0"
-            )
+            raise ImportError("optuna is required. Install with: pip install optuna>=4.5.0")
 
         # Default search space
         if search_space is None:
@@ -788,20 +756,14 @@ class XTTSTrainer:
 
         def objective(trial):
             # Suggest hyperparameters
-            lr = trial.suggest_float(
-                "learning_rate", *search_space["learning_rate"], log=True
-            )
-            batch_size = trial.suggest_categorical(
-                "batch_size", search_space["batch_size"]
-            )
+            lr = trial.suggest_float("learning_rate", *search_space["learning_rate"], log=True)
+            batch_size = trial.suggest_categorical("batch_size", search_space["batch_size"])
             weight_decay = trial.suggest_float(
                 "weight_decay", *search_space["weight_decay"], log=True
             )
 
             # Calculate validation score using short training epoch
-            score = self._evaluate_hyperparameters(
-                lr, batch_size, weight_decay, metadata_path
-            )
+            score = self._evaluate_hyperparameters(lr, batch_size, weight_decay, metadata_path)
 
             return score
 
@@ -868,20 +830,14 @@ class XTTSTrainer:
     ) -> dict[str, Any]:
         """Optimize hyperparameters using Hyperopt."""
         if not HAS_HYPEROPT:
-            raise ImportError(
-                "hyperopt is required. Install with: pip install hyperopt>=0.2.7"
-            )
+            raise ImportError("hyperopt is required. Install with: pip install hyperopt>=0.2.7")
 
         # Default search space
         if search_space is None:
             search_space = {
-                "learning_rate": hp.loguniform(
-                    "learning_rate", np.log(1e-5), np.log(1e-3)
-                ),
+                "learning_rate": hp.loguniform("learning_rate", np.log(1e-5), np.log(1e-3)),
                 "batch_size": hp.choice("batch_size", [4, 8, 16, 32]),
-                "weight_decay": hp.loguniform(
-                    "weight_decay", np.log(1e-6), np.log(1e-4)
-                ),
+                "weight_decay": hp.loguniform("weight_decay", np.log(1e-6), np.log(1e-4)),
             }
 
         def objective(params):
@@ -959,9 +915,7 @@ class XTTSTrainer:
                 return score
 
             except Exception as e:
-                logger.warning(
-                    f"Validation training failed: {e}, using heuristic score"
-                )
+                logger.warning(f"Validation training failed: {e}, using heuristic score")
                 # Fall through to heuristic
 
         # Heuristic-based scoring (fallback when training data not available)

@@ -25,12 +25,8 @@ class TestBatchPipeline:
     @pytest.mark.asyncio
     async def test_process_text_returns_batch_result(self):
         """Test process_text returns BatchResult with LLM response."""
-        with patch(
-            "backend.services.engine_service.get_engine_service"
-        ) as mock_service:
-            mock_service.return_value.synthesize = AsyncMock(
-                return_value={"audio_data": b"audio"}
-            )
+        with patch("backend.services.engine_service.get_engine_service") as mock_service:
+            mock_service.return_value.synthesize = AsyncMock(return_value={"audio_data": b"audio"})
 
             result = await self.pipeline.process_text("Hello", synthesize=False)
 
@@ -51,9 +47,7 @@ class TestBatchPipeline:
     @pytest.mark.asyncio
     async def test_process_text_with_synthesis(self):
         """Test process_text with TTS synthesis."""
-        with patch(
-            "backend.services.engine_service.get_engine_service"
-        ) as mock_service:
+        with patch("backend.services.engine_service.get_engine_service") as mock_service:
             mock_service.return_value.synthesize = AsyncMock(
                 return_value={"audio_data": b"test_audio"}
             )
@@ -66,12 +60,8 @@ class TestBatchPipeline:
     @pytest.mark.asyncio
     async def test_process_text_captures_metrics(self):
         """Test that processing captures timing metrics."""
-        with patch(
-            "backend.services.engine_service.get_engine_service"
-        ) as mock_service:
-            mock_service.return_value.synthesize = AsyncMock(
-                return_value={"audio_data": b"audio"}
-            )
+        with patch("backend.services.engine_service.get_engine_service") as mock_service:
+            mock_service.return_value.synthesize = AsyncMock(return_value={"audio_data": b"audio"})
 
             result = await self.pipeline.process_text("Hello", synthesize=True)
 
@@ -82,15 +72,11 @@ class TestBatchPipeline:
     @pytest.mark.asyncio
     async def test_process_audio_with_transcription(self):
         """Test process_audio transcribes and generates response."""
-        with patch(
-            "backend.services.engine_service.get_engine_service"
-        ) as mock_service:
+        with patch("backend.services.engine_service.get_engine_service") as mock_service:
             mock_service.return_value.transcribe = AsyncMock(
                 return_value={"text": "Transcribed text"}
             )
-            mock_service.return_value.synthesize = AsyncMock(
-                return_value={"audio_data": b"audio"}
-            )
+            mock_service.return_value.synthesize = AsyncMock(return_value={"audio_data": b"audio"})
 
             result = await self.pipeline.process_audio(b"audio_data")
 
@@ -100,12 +86,8 @@ class TestBatchPipeline:
     @pytest.mark.asyncio
     async def test_process_audio_empty_transcription(self):
         """Test process_audio handles empty transcription."""
-        with patch(
-            "backend.services.engine_service.get_engine_service"
-        ) as mock_service:
-            mock_service.return_value.transcribe = AsyncMock(
-                return_value={"text": ""}
-            )
+        with patch("backend.services.engine_service.get_engine_service") as mock_service:
+            mock_service.return_value.transcribe = AsyncMock(return_value={"text": ""})
 
             result = await self.pipeline.process_audio(b"audio_data")
 
@@ -115,12 +97,8 @@ class TestBatchPipeline:
     @pytest.mark.asyncio
     async def test_process_batch(self):
         """Test process_batch handles multiple items."""
-        with patch(
-            "backend.services.engine_service.get_engine_service"
-        ) as mock_service:
-            mock_service.return_value.synthesize = AsyncMock(
-                return_value={"audio_data": b"audio"}
-            )
+        with patch("backend.services.engine_service.get_engine_service") as mock_service:
+            mock_service.return_value.synthesize = AsyncMock(return_value={"audio_data": b"audio"})
 
             results = await self.pipeline.process_batch(
                 ["Item 1", "Item 2", "Item 3"],
@@ -143,12 +121,8 @@ class TestBatchPipeline:
     @pytest.mark.asyncio
     async def test_process_text_handles_tts_error(self):
         """Test process_text continues if TTS fails (non-fatal)."""
-        with patch(
-            "backend.services.engine_service.get_engine_service"
-        ) as mock_service:
-            mock_service.return_value.synthesize = AsyncMock(
-                side_effect=Exception("TTS error")
-            )
+        with patch("backend.services.engine_service.get_engine_service") as mock_service:
+            mock_service.return_value.synthesize = AsyncMock(side_effect=Exception("TTS error"))
 
             result = await self.pipeline.process_text("Hello", synthesize=True)
 

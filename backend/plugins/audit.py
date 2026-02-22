@@ -170,7 +170,7 @@ class PluginAuditLogger:
         # Store in memory for quick access
         self._in_memory_events.append(event)
         if len(self._in_memory_events) > self._max_in_memory:
-            self._in_memory_events = self._in_memory_events[-self._max_in_memory // 2:]
+            self._in_memory_events = self._in_memory_events[-self._max_in_memory // 2 :]
 
         # Map to base audit action
         base_action = self._map_category_to_action(category)

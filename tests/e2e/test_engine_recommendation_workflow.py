@@ -62,9 +62,7 @@ class TestEngineRecommendationWorkflow:
 
             # Step 3: Recommendation can be used for synthesis
             recommended_engine = recommendation["recommended_engine"]
-            print(
-                f"[E2E] Step 2: Using recommended engine '{recommended_engine}' for synthesis"
-            )
+            print(f"[E2E] Step 2: Using recommended engine '{recommended_engine}' for synthesis")
             # Note: Actual synthesis would require a profile and test text
 
         print("[E2E] ✅ Engine Recommendation workflow completed successfully")
@@ -91,7 +89,9 @@ class TestEngineRecommendationWorkflow:
                 recommendations[tier] = recommendation["recommended_engine"]
                 print(f"[E2E] Tier '{tier}': {recommendation['recommended_engine']}")
             elif response.status_code in [500, 503]:
-                print(f"[E2E] Service unavailable for tier '{tier}' (status {response.status_code})")
+                print(
+                    f"[E2E] Service unavailable for tier '{tier}' (status {response.status_code})"
+                )
 
         print(f"[E2E] ✅ Recommendations for {len(recommendations)} tiers completed")
         # Pass if we got at least one recommendation OR service is consistently unavailable

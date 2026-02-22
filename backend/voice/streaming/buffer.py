@@ -78,11 +78,11 @@ class CircularBuffer:
 
             if end_pos > self._write_pos:
                 # No wrap-around
-                self._buffer[self._write_pos:end_pos] = data[:to_write]
+                self._buffer[self._write_pos : end_pos] = data[:to_write]
             else:
                 # Wrap-around
                 first_part = self._capacity - self._write_pos
-                self._buffer[self._write_pos:] = data[:first_part]
+                self._buffer[self._write_pos :] = data[:first_part]
                 self._buffer[:end_pos] = data[first_part:to_write]
 
             self._write_pos = end_pos
@@ -111,11 +111,11 @@ class CircularBuffer:
 
             if end_pos > self._read_pos:
                 # No wrap-around
-                result[:] = self._buffer[self._read_pos:end_pos]
+                result[:] = self._buffer[self._read_pos : end_pos]
             else:
                 # Wrap-around
                 first_part = self._capacity - self._read_pos
-                result[:first_part] = self._buffer[self._read_pos:]
+                result[:first_part] = self._buffer[self._read_pos :]
                 result[first_part:] = self._buffer[:end_pos]
 
             self._read_pos = end_pos
@@ -142,10 +142,10 @@ class CircularBuffer:
             end_pos = (self._read_pos + num_samples) % self._capacity
 
             if end_pos > self._read_pos:
-                result[:] = self._buffer[self._read_pos:end_pos]
+                result[:] = self._buffer[self._read_pos : end_pos]
             else:
                 first_part = self._capacity - self._read_pos
-                result[:first_part] = self._buffer[self._read_pos:]
+                result[:first_part] = self._buffer[self._read_pos :]
                 result[first_part:] = self._buffer[:end_pos]
 
             return result
@@ -216,14 +216,14 @@ class AudioBuffer:
                 return self._buffers[0].write(data)
             else:
                 # Duplicate to all channels
-                written = float('inf')
+                written = float("inf")
                 for buf in self._buffers:
                     w = buf.write(data)
                     written = min(written, w)
                 return int(written)
         else:
             # Multi-channel
-            written = float('inf')
+            written = float("inf")
             for i, buf in enumerate(self._buffers):
                 if i < data.shape[1]:
                     w = buf.write(data[:, i])

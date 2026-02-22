@@ -42,10 +42,7 @@ async def analyze(req: dict) -> dict:
     try:
         audio_id = req.get("audio_id")
         if not audio_id:
-            raise HTTPException(
-                status_code=400,
-                detail="audio_id is required"
-            )
+            raise HTTPException(status_code=400, detail="audio_id is required")
 
         # Check cache first
         if audio_id in _formant_analyses:
@@ -55,16 +52,12 @@ async def analyze(req: dict) -> dict:
         from .voice import _audio_storage
 
         if audio_id not in _audio_storage:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Audio file '{audio_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file '{audio_id}' not found")
 
         audio_path = _audio_storage[audio_id]
         if not os.path.exists(audio_path):
             raise HTTPException(
-                status_code=404,
-                detail=f"Audio file at '{audio_path}' does not exist"
+                status_code=404, detail=f"Audio file at '{audio_path}' does not exist"
             )
 
         # Try to load audio processing libraries
@@ -77,7 +70,7 @@ async def analyze(req: dict) -> dict:
                 detail=(
                     "Formant analysis requires librosa and soundfile. "
                     "Install with: pip install librosa soundfile"
-                )
+                ),
             )
 
         # Load audio
@@ -105,10 +98,7 @@ async def analyze(req: dict) -> dict:
 
             # Pre-emphasis filter (high-pass to emphasize formants)
             pre_emphasis = 0.97
-            audio_preemph = np.append(
-                audio[0],
-                audio[1:] - pre_emphasis * audio[:-1]
-            )
+            audio_preemph = np.append(audio[0], audio[1:] - pre_emphasis * audio[:-1])
 
             # Calculate formants frame by frame
             formant_tracks = []
@@ -142,9 +132,7 @@ async def analyze(req: dict) -> dict:
                         frequencies = angles * sample_rate / (2 * np.pi)
 
                         # Filter valid formant frequencies (typically 50-4000 Hz)
-                        valid_freqs = frequencies[
-                            (frequencies >= 50) & (frequencies <= 4000)
-                        ]
+                        valid_freqs = frequencies[(frequencies >= 50) & (frequencies <= 4000)]
                         valid_freqs = np.sort(valid_freqs)
 
                         # Get F1, F2, F3 (first three formants)
@@ -152,21 +140,25 @@ async def analyze(req: dict) -> dict:
                         f2 = float(valid_freqs[1]) if len(valid_freqs) > 1 else 1500.0
                         f3 = float(valid_freqs[2]) if len(valid_freqs) > 2 else 2500.0
 
-                        formant_tracks.append({
-                            "time": float(start / sample_rate),
-                            "f1": f1,
-                            "f2": f2,
-                            "f3": f3,
-                        })
+                        formant_tracks.append(
+                            {
+                                "time": float(start / sample_rate),
+                                "f1": f1,
+                                "f2": f2,
+                                "f3": f3,
+                            }
+                        )
                     except Exception as e:
                         logger.debug(f"LPC analysis failed for frame {i}: {e}")
                         # Use default formant values
-                        formant_tracks.append({
-                            "time": float(start / sample_rate),
-                            "f1": 500.0,
-                            "f2": 1500.0,
-                            "f3": 2500.0,
-                        })
+                        formant_tracks.append(
+                            {
+                                "time": float(start / sample_rate),
+                                "f1": 500.0,
+                                "f2": 1500.0,
+                                "f3": 2500.0,
+                            }
+                        )
 
             # Extract F1, F2, F3 tracks
             f1_track = [f["f1"] for f in formant_tracks]
@@ -179,11 +171,15 @@ async def analyze(req: dict) -> dict:
             avg_f3 = np.mean(f3_track) if f3_track else 2500.0
 
             result = {
-                "tracks": [{
-                    "f1": f1_track[:100] if len(f1_track) > 100 else f1_track,  # Limit to 100 points
-                    "f2": f2_track[:100] if len(f2_track) > 100 else f2_track,
-                    "f3": f3_track[:100] if len(f3_track) > 100 else f3_track,
-                }],
+                "tracks": [
+                    {
+                        "f1": (
+                            f1_track[:100] if len(f1_track) > 100 else f1_track
+                        ),  # Limit to 100 points
+                        "f2": f2_track[:100] if len(f2_track) > 100 else f2_track,
+                        "f3": f3_track[:100] if len(f3_track) > 100 else f3_track,
+                    }
+                ],
                 "averages": {
                     "f1": float(avg_f1),
                     "f2": float(avg_f2),
@@ -221,11 +217,13 @@ async def analyze(req: dict) -> dict:
             f3_approx = avg_centroid * 2.5
 
             result = {
-                "tracks": [{
-                    "f1": [float(f1_approx)] * 100,
-                    "f2": [float(f2_approx)] * 100,
-                    "f3": [float(f3_approx)] * 100,
-                }],
+                "tracks": [
+                    {
+                        "f1": [float(f1_approx)] * 100,
+                        "f2": [float(f2_approx)] * 100,
+                        "f3": [float(f3_approx)] * 100,
+                    }
+                ],
                 "averages": {
                     "f1": float(f1_approx),
                     "f2": float(f2_approx),
@@ -242,10 +240,7 @@ async def analyze(req: dict) -> dict:
         raise
     except Exception as e:
         logger.error(f"Formant analysis failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Formant analysis failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Formant analysis failed: {e!s}") from e
 
 
 @router.post("/apply")
@@ -267,31 +262,21 @@ async def apply(req: FormantEditRequest) -> ApiOk:
         shifts = req.shifts
 
         if not audio_id:
-            raise HTTPException(
-                status_code=400,
-                detail="audio_id is required"
-            )
+            raise HTTPException(status_code=400, detail="audio_id is required")
 
         if not shifts:
-            raise HTTPException(
-                status_code=400,
-                detail="shifts dictionary is required"
-            )
+            raise HTTPException(status_code=400, detail="shifts dictionary is required")
 
         # Get audio file path
         from .voice import _audio_storage, _register_audio_file
 
         if audio_id not in _audio_storage:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Audio file '{audio_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file '{audio_id}' not found")
 
         audio_path = _audio_storage[audio_id]
         if not os.path.exists(audio_path):
             raise HTTPException(
-                status_code=404,
-                detail=f"Audio file at '{audio_path}' does not exist"
+                status_code=404, detail=f"Audio file at '{audio_path}' does not exist"
             )
 
         # Try to load audio processing libraries
@@ -304,7 +289,7 @@ async def apply(req: FormantEditRequest) -> ApiOk:
                 detail=(
                     "Formant editing requires librosa and soundfile. "
                     "Install with: pip install librosa soundfile"
-                )
+                ),
             )
 
         # Load audio
@@ -352,7 +337,9 @@ async def apply(req: FormantEditRequest) -> ApiOk:
                     f"F1={f1_shift:.2f}x, F2={f2_shift:.2f}x, F3={f3_shift:.2f}x"
                 )
             except Exception as e:
-                logger.warning(f"Phase vocoder formant shift failed: {e}, using pitch shift fallback")
+                logger.warning(
+                    f"Phase vocoder formant shift failed: {e}, using pitch shift fallback"
+                )
                 # Fallback: Use pitch shift (less accurate but works)
                 semitones = 12 * np.log2(avg_shift)
                 processed_audio = librosa.effects.pitch_shift(
@@ -369,9 +356,7 @@ async def apply(req: FormantEditRequest) -> ApiOk:
         output_audio_id = f"formant_{uuid.uuid4().hex[:8]}"
         _register_audio_file(output_audio_id, output_path)
 
-        logger.info(
-            f"Formant editing completed: {audio_id} -> {output_audio_id}"
-        )
+        logger.info(f"Formant editing completed: {audio_id} -> {output_audio_id}")
 
         return ApiOk()
 
@@ -379,7 +364,4 @@ async def apply(req: FormantEditRequest) -> ApiOk:
         raise
     except Exception as e:
         logger.error(f"Formant editing failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Formant editing failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Formant editing failed: {e!s}") from e

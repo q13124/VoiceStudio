@@ -22,14 +22,13 @@ logger = logging.getLogger(__name__)
 try:
     import onnx
     import onnxruntime as ort
+
     HAS_ONNX = True
 except ImportError:
     HAS_ONNX = False
     onnx = None
     ort = None
-    logger.warning(
-        "ONNX not installed. Install with: pip install onnx onnxruntime"
-    )
+    logger.warning("ONNX not installed. Install with: pip install onnx onnxruntime")
 
 
 def convert_pytorch_to_onnx(
@@ -136,8 +135,7 @@ def optimize_onnx_model(
                 return True
             except ImportError:
                 logger.warning(
-                    "ONNX Runtime transformers not available. "
-                    "Using basic optimization."
+                    "ONNX Runtime transformers not available. " "Using basic optimization."
                 )
                 # Fallback to basic optimization
                 optimized_model = onnx.optimizer.optimize(model)
@@ -199,8 +197,7 @@ def get_onnx_model_info(model_path: str) -> dict[str, Any] | None:
         info = {
             "ir_version": model.ir_version,
             "opset_import": [
-                {"domain": op.domain, "version": op.version}
-                for op in model.opset_import
+                {"domain": op.domain, "version": op.version} for op in model.opset_import
             ],
             "producer_name": model.producer_name,
             "producer_version": model.producer_version,
@@ -280,4 +277,3 @@ def quantize_onnx_model(
     except Exception as e:
         logger.error(f"Failed to quantize ONNX model: {e}", exc_info=True)
         return False
-

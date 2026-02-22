@@ -2,6 +2,7 @@
 Unit Tests for PDF API Route
 Tests PDF processing endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -40,15 +41,15 @@ class TestPdfRouteImports:
         assert hasattr(pdf, "router"), "pdf module missing router"
         assert hasattr(pdf, "PDFReadRequest"), "pdf module missing PDFReadRequest model"
         assert hasattr(pdf, "PDFReadResponse"), "pdf module missing PDFReadResponse model"
-        assert hasattr(pdf, "PDFTextExtractRequest"), "pdf module missing PDFTextExtractRequest model"
+        assert hasattr(
+            pdf, "PDFTextExtractRequest"
+        ), "pdf module missing PDFTextExtractRequest model"
 
     def test_router_exists(self):
         """Test router exists and is configured."""
         assert pdf.router is not None, "Router should exist"
         assert hasattr(pdf.router, "prefix"), "Router should have prefix"
-        assert (
-            pdf.router.prefix == "/api/pdf"
-        ), "Router prefix should be /api/pdf"
+        assert pdf.router.prefix == "/api/pdf", "Router prefix should be /api/pdf"
 
     def test_router_has_routes(self):
         """Test router has expected routes."""
@@ -99,7 +100,7 @@ class TestPdfRouteFunctionality:
             "metadata": {"title": "Test PDF"},
             "content": {"1": "Page 1 content"},
             "error": None,
-            "password_required": False
+            "password_required": False,
         }
         mock_get_pdf_client.return_value = mock_client
 
@@ -129,7 +130,7 @@ class TestPdfRouteFunctionality:
             "metadata": {},
             "content": {"1": "Page 1 content"},
             "error": None,
-            "password_required": False
+            "password_required": False,
         }
         mock_get_pdf_client.return_value = mock_client
 
@@ -143,9 +144,7 @@ class TestPdfRouteFunctionality:
         assert result.success is True
         assert result.is_encrypted is True
         mock_client.read_pdf.assert_called_once_with(
-            file_path="/path/to/test.pdf",
-            password="testpass",
-            pages=None
+            file_path="/path/to/test.pdf", password="testpass", pages=None
         )
 
     @patch("backend.api.routes.pdf.get_pdf_client")
@@ -153,10 +152,7 @@ class TestPdfRouteFunctionality:
         """Test read_pdf with failure."""
         # Mock PDF client
         mock_client = MagicMock()
-        mock_client.read_pdf.return_value = {
-            "success": False,
-            "error": "Failed to read PDF"
-        }
+        mock_client.read_pdf.return_value = {"success": False, "error": "Failed to read PDF"}
         mock_get_pdf_client.return_value = mock_client
 
         # Create request
@@ -174,7 +170,7 @@ class TestPdfRouteFunctionality:
         mock_client.read_pdf.return_value = {
             "success": True,
             "total_pages": 3,
-            "content": {"1": "Page 1", "2": "Page 2", "3": "Page 3"}
+            "content": {"1": "Page 1", "2": "Page 2", "3": "Page 3"},
         }
         mock_client.extract_text_for_tts.return_value = "Page 1 Page 2 Page 3"
         mock_get_pdf_client.return_value = mock_client
@@ -281,4 +277,3 @@ class TestPdfRouteErrorHandling:
 
         with pytest.raises(Exception):  # Should raise HTTPException
             pdf.get_page_count("/path/to/test.pdf")
-

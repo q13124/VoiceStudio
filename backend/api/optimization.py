@@ -48,9 +48,7 @@ class ResponseCache:
         self.timestamps: dict[str, float] = {}
         self.ttls: dict[str, int] = {}
 
-    def _generate_key(
-        self, path: str, query_params: str, body: bytes | None = None
-    ) -> str:
+    def _generate_key(self, path: str, query_params: str, body: bytes | None = None) -> str:
         """Generate cache key from request."""
         key_data = f"{path}?{query_params}"
         if body:
@@ -161,9 +159,7 @@ def cache_response(ttl: int = 300, key_func: Callable | None = None):
                 cache_key = key_func(request, *args, **kwargs)
             elif request is not None:
                 query_string = str(request.query_params)
-                cache_key = _response_cache._generate_key(
-                    request.url.path, query_string
-                )
+                cache_key = _response_cache._generate_key(request.url.path, query_string)
             else:
                 try:
                     payload = json.dumps(
@@ -184,9 +180,7 @@ def cache_response(ttl: int = 300, key_func: Callable | None = None):
             if cached:
                 response_data, headers = cached
                 logger.debug(f"Cache hit for {cache_key[:16]}...")
-                return JSONResponse(
-                    content=response_data, headers={**headers, "X-Cache": "HIT"}
-                )
+                return JSONResponse(content=response_data, headers={**headers, "X-Cache": "HIT"})
 
             # Call endpoint (sync or async)
             if inspect.iscoroutinefunction(func):
@@ -442,9 +436,7 @@ def async_task(task_func: Callable):
     return wrapper
 
 
-def get_pagination_params(
-    request: Request, default_page_size: int = 50
-) -> PaginationParams:
+def get_pagination_params(request: Request, default_page_size: int = 50) -> PaginationParams:
     """
     Extract pagination parameters from request.
 

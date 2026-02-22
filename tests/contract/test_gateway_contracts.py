@@ -129,12 +129,13 @@ class TestTimelineGatewayContract:
         "CreateTrackAsync": ("POST", "/api/projects/{project_id}/timeline/tracks"),
         "UpdateTrackAsync": ("PUT", "/api/projects/{project_id}/tracks/{track_id}"),
         "DeleteTrackAsync": ("DELETE", "/api/projects/{project_id}/tracks/{track_id}"),
-
         # Clip operations - NOTE: API currently only has POST/PUT/DELETE, no GET for clips list
         "CreateClipAsync": ("POST", "/api/projects/{project_id}/tracks/{track_id}/clips"),
         "UpdateClipAsync": ("PUT", "/api/projects/{project_id}/tracks/{track_id}/clips/{clip_id}"),
-        "DeleteClipAsync": ("DELETE", "/api/projects/{project_id}/tracks/{track_id}/clips/{clip_id}"),
-
+        "DeleteClipAsync": (
+            "DELETE",
+            "/api/projects/{project_id}/tracks/{track_id}/clips/{clip_id}",
+        ),
         # Marker operations (project-scoped)
         "GetMarkersAsync": ("GET", "/api/projects/{project_id}/timeline/markers"),
         "CreateMarkerAsync": ("POST", "/api/projects/{project_id}/timeline/markers"),
@@ -186,7 +187,7 @@ class TestTimelineGatewayContract:
         import re
 
         # Convert {param} to regex pattern
-        regex_pattern = re.sub(r'\{[^}]+\}', r'[^/]+', pattern)
+        regex_pattern = re.sub(r"\{[^}]+\}", r"[^/]+", pattern)
         regex = re.compile(f"^{regex_pattern}$")
 
         return any(regex.match(path) and method in methods for path, methods in api_paths.items())
@@ -253,13 +254,14 @@ class TestEngineGatewayContract:
         # Control endpoints are optional - warn only
         if missing:
             import warnings
+
             warnings.warn(f"IEngineGateway control endpoints not found: {missing}", stacklevel=2)
 
     def _find_parameterized_endpoint(self, api_paths: dict, pattern: str, method: str) -> bool:
         """Find parameterized endpoint in paths."""
         import re
 
-        regex_pattern = re.sub(r'\{[^}]+\}', r'[^/]+', pattern)
+        regex_pattern = re.sub(r"\{[^}]+\}", r"[^/]+", pattern)
         regex = re.compile(f"^{regex_pattern}$")
 
         return any(regex.match(path) and method in methods for path, methods in api_paths.items())
@@ -294,6 +296,7 @@ class TestJobGatewayContract:
 
         if not found:
             import warnings
+
             warnings.warn(f"IJobGateway GET {path} not found", stacklevel=2)
 
 
@@ -382,11 +385,11 @@ class TestGatewayResponseSchemas:
             # Note: Generic object type is allowed for dict returns (common for paginated responses)
             schema_type = schema.get("type")
             is_valid = (
-                schema_type == "array" or
-                schema_type == "object" or  # Allow object for paginated responses
-                "items" in schema.get("properties", {}) or
-                "data" in schema.get("properties", {}) or
-                "$ref" in schema  # Allow refs
+                schema_type == "array"
+                or schema_type == "object"  # Allow object for paginated responses
+                or "items" in schema.get("properties", {})
+                or "data" in schema.get("properties", {})
+                or "$ref" in schema  # Allow refs
             )
 
             assert is_valid, f"GET {path} should return array or object, got: {schema_type}"

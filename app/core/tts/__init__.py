@@ -11,11 +11,4 @@ from .tts_utilities import (
     synthesize_with_utility,
 )
 
-__all__ = [
-    'GTTSWrapper',
-    'Pyttsx3Wrapper',
-    'get_gtts',
-    'get_pyttsx3',
-    'synthesize_with_utility'
-]
-
+__all__ = ["GTTSWrapper", "Pyttsx3Wrapper", "get_gtts", "get_pyttsx3", "synthesize_with_utility"]

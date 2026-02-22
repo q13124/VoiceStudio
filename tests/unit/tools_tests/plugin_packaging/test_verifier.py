@@ -10,6 +10,7 @@ import pytest
 # Check if cryptography is available
 try:
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
     HAS_CRYPTOGRAPHY = True
 except ImportError:
     HAS_CRYPTOGRAPHY = False
@@ -113,11 +114,13 @@ class TestPluginVerifier:
         pkg_path = tmp_path / "valid.vspkg"
 
         # Create content
-        manifest_content = json.dumps({
-            "id": "valid-plugin",
-            "name": "Valid Plugin",
-            "version": "1.0.0",
-        }).encode("utf-8")
+        manifest_content = json.dumps(
+            {
+                "id": "valid-plugin",
+                "name": "Valid Plugin",
+                "version": "1.0.0",
+            }
+        ).encode("utf-8")
 
         plugin_content = b"# Plugin code"
 
@@ -128,15 +131,20 @@ class TestPluginVerifier:
         checksums = f"{manifest_hash}  manifest.json\n{plugin_hash}  plugin.py\n"
 
         with zipfile.ZipFile(pkg_path, "w") as zf:
-            zf.writestr("MANIFEST.json", json.dumps({
-                "format_version": "1.0.0",
-                "package_id": "valid-plugin",
-                "package_version": "1.0.0",
-                "plugin_manifest": "manifest.json",
-                "created_at": "2026-02-17T00:00:00",
-                "created_by": "test",
-                "min_voicestudio_version": "1.0.0",
-            }))
+            zf.writestr(
+                "MANIFEST.json",
+                json.dumps(
+                    {
+                        "format_version": "1.0.0",
+                        "package_id": "valid-plugin",
+                        "package_version": "1.0.0",
+                        "plugin_manifest": "manifest.json",
+                        "created_at": "2026-02-17T00:00:00",
+                        "created_by": "test",
+                        "min_voicestudio_version": "1.0.0",
+                    }
+                ),
+            )
             zf.writestr("manifest.json", manifest_content)
             zf.writestr("CHECKSUMS.sha256", checksums)
             zf.writestr("plugin.py", plugin_content)
@@ -159,15 +167,20 @@ class TestPluginVerifier:
         pkg_path = tmp_path / "invalid-checksum.vspkg"
 
         with zipfile.ZipFile(pkg_path, "w") as zf:
-            zf.writestr("MANIFEST.json", json.dumps({
-                "format_version": "1.0.0",
-                "package_id": "bad-checksum",
-                "package_version": "1.0.0",
-                "plugin_manifest": "manifest.json",
-                "created_at": "2026-02-17T00:00:00",
-                "created_by": "test",
-                "min_voicestudio_version": "1.0.0",
-            }))
+            zf.writestr(
+                "MANIFEST.json",
+                json.dumps(
+                    {
+                        "format_version": "1.0.0",
+                        "package_id": "bad-checksum",
+                        "package_version": "1.0.0",
+                        "plugin_manifest": "manifest.json",
+                        "created_at": "2026-02-17T00:00:00",
+                        "created_by": "test",
+                        "min_voicestudio_version": "1.0.0",
+                    }
+                ),
+            )
             zf.writestr("manifest.json", json.dumps({"id": "bad-checksum"}))
             # Wrong checksum
             zf.writestr("CHECKSUMS.sha256", "wronghash  manifest.json\n")
@@ -260,11 +273,13 @@ class TestPluginVerifierWithSigning:
         pkg_path = tmp_path / "signed.vspkg"
 
         # Create content with correct checksums
-        manifest_content = json.dumps({
-            "id": "signed-plugin",
-            "name": "Signed Plugin",
-            "version": "1.0.0",
-        }).encode("utf-8")
+        manifest_content = json.dumps(
+            {
+                "id": "signed-plugin",
+                "name": "Signed Plugin",
+                "version": "1.0.0",
+            }
+        ).encode("utf-8")
 
         plugin_content = b"# Signed plugin code"
 
@@ -274,15 +289,20 @@ class TestPluginVerifierWithSigning:
         checksums = f"{manifest_hash}  manifest.json\n{plugin_hash}  plugin.py\n"
 
         with zipfile.ZipFile(pkg_path, "w") as zf:
-            zf.writestr("MANIFEST.json", json.dumps({
-                "format_version": "1.0.0",
-                "package_id": "signed-plugin",
-                "package_version": "1.0.0",
-                "plugin_manifest": "manifest.json",
-                "created_at": "2026-02-17T00:00:00",
-                "created_by": "test",
-                "min_voicestudio_version": "1.0.0",
-            }))
+            zf.writestr(
+                "MANIFEST.json",
+                json.dumps(
+                    {
+                        "format_version": "1.0.0",
+                        "package_id": "signed-plugin",
+                        "package_version": "1.0.0",
+                        "plugin_manifest": "manifest.json",
+                        "created_at": "2026-02-17T00:00:00",
+                        "created_by": "test",
+                        "min_voicestudio_version": "1.0.0",
+                    }
+                ),
+            )
             zf.writestr("manifest.json", manifest_content)
             zf.writestr("CHECKSUMS.sha256", checksums)
             zf.writestr("plugin.py", plugin_content)
@@ -327,15 +347,20 @@ class TestVerifyPackageConvenience:
         manifest_hash = hashlib.sha256(manifest_content).hexdigest()
 
         with zipfile.ZipFile(pkg_path, "w") as zf:
-            zf.writestr("MANIFEST.json", json.dumps({
-                "format_version": "1.0.0",
-                "package_id": "conv-test",
-                "package_version": "1.0.0",
-                "plugin_manifest": "manifest.json",
-                "created_at": "2026-02-17T00:00:00",
-                "created_by": "test",
-                "min_voicestudio_version": "1.0.0",
-            }))
+            zf.writestr(
+                "MANIFEST.json",
+                json.dumps(
+                    {
+                        "format_version": "1.0.0",
+                        "package_id": "conv-test",
+                        "package_version": "1.0.0",
+                        "plugin_manifest": "manifest.json",
+                        "created_at": "2026-02-17T00:00:00",
+                        "created_by": "test",
+                        "min_voicestudio_version": "1.0.0",
+                    }
+                ),
+            )
             zf.writestr("manifest.json", manifest_content)
             zf.writestr("CHECKSUMS.sha256", f"{manifest_hash}  manifest.json\n")
 

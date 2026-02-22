@@ -24,9 +24,7 @@ class TestAutomatic1111EngineImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            automatic1111_engine is not None
-        ), "Failed to import automatic1111_engine module"
+        assert automatic1111_engine is not None, "Failed to import automatic1111_engine module"
 
     def test_module_has_automatic1111_engine_class(self):
         """Test module has Automatic1111Engine class."""
@@ -62,9 +60,7 @@ class TestAutomatic1111EngineClass:
             )
             required_methods = ["initialize", "cleanup", "generate"]
             for method in required_methods:
-                assert hasattr(
-                    engine, method
-                ), f"Automatic1111Engine missing method: {method}"
+                assert hasattr(engine, method), f"Automatic1111Engine missing method: {method}"
 
     def test_automatic1111_engine_has_optimization_features(self):
         """Test Automatic1111Engine has optimization features."""
@@ -80,9 +76,7 @@ class TestAutomatic1111EngineClass:
                 pool_maxsize=40,
             )
             # Check for caching support
-            assert hasattr(
-                engine, "enable_cache"
-            ), "Automatic1111Engine should support caching"
+            assert hasattr(engine, "enable_cache"), "Automatic1111Engine should support caching"
             assert engine.enable_cache is True
             assert engine.cache_size == 200
             # Check for batch processing
@@ -288,4 +282,3 @@ class TestAutomatic1111EngineCleanup:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

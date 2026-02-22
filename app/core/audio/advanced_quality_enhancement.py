@@ -26,9 +26,7 @@ try:
     HAS_LIBROSA = True
 except ImportError:
     HAS_LIBROSA = False
-    logger.warning(
-        "librosa not available. Advanced quality enhancement will be limited."
-    )
+    logger.warning("librosa not available. Advanced quality enhancement will be limited.")
 
 try:
     import noisereduce as nr
@@ -100,9 +98,7 @@ def enhance_spectral_quality(
 
         # Match original length
         if len(enhanced_audio) < len(audio):
-            enhanced_audio = np.pad(
-                enhanced_audio, (0, len(audio) - len(enhanced_audio))
-            )
+            enhanced_audio = np.pad(enhanced_audio, (0, len(audio) - len(enhanced_audio)))
         elif len(enhanced_audio) > len(audio):
             enhanced_audio = enhanced_audio[: len(audio)]
 
@@ -159,9 +155,7 @@ def preserve_formants(
         return audio
 
 
-def enhance_prosody(
-    audio: np.ndarray, sample_rate: int, strength: float = 0.3
-) -> np.ndarray:
+def enhance_prosody(audio: np.ndarray, sample_rate: int, strength: float = 0.3) -> np.ndarray:
     """
     Enhance prosody (rhythm, stress, intonation) for more natural speech.
 
@@ -202,9 +196,7 @@ def enhance_prosody(
 
             # Apply gentle prosody enhancement
             # This helps make speech more natural
-            f0_enhanced = f0_smooth + strength * 0.1 * (
-                f0_smooth - np.nanmean(f0_smooth)
-            )
+            f0_enhanced = f0_smooth + strength * 0.1 * (f0_smooth - np.nanmean(f0_smooth))
 
             # Re-synthesize with enhanced F0 (simplified)
             # In practice, this would use vocoder
@@ -360,10 +352,7 @@ def remove_artifacts_advanced(
             cleaned[clipped] = np.sign(clipped_samples) * (
                 clipping_threshold
                 + (1 - clipping_threshold)
-                * np.tanh(
-                    (np.abs(clipped_samples) - clipping_threshold)
-                    / (1 - clipping_threshold)
-                )
+                * np.tanh((np.abs(clipped_samples) - clipping_threshold) / (1 - clipping_threshold))
             )
 
         # Remove high-frequency artifacts (common in synthesis)
@@ -444,21 +433,15 @@ def enhance_voice_quality_advanced(
 
     # Stage 2: Artifact removal (remove synthesis artifacts)
     if remove_artifacts:
-        enhanced = remove_artifacts_advanced(
-            enhanced, sample_rate, strength=artifact_strength
-        )
+        enhanced = remove_artifacts_advanced(enhanced, sample_rate, strength=artifact_strength)
 
     # Stage 3: Spectral enhancement (boost voice frequencies)
     if spectral_enhance:
-        enhanced = enhance_spectral_quality(
-            enhanced, sample_rate, strength=spectral_strength
-        )
+        enhanced = enhance_spectral_quality(enhanced, sample_rate, strength=spectral_strength)
 
     # Stage 4: Formant preservation (maintain natural timbre)
     if preserve_formants:
-        enhanced = preserve_formants(
-            enhanced, sample_rate, reference_audio=reference_audio
-        )
+        enhanced = preserve_formants(enhanced, sample_rate, reference_audio=reference_audio)
 
     # Stage 5: Prosody enhancement (improve naturalness - optional, slower)
     if enhance_prosody:

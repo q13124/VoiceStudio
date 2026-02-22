@@ -120,12 +120,27 @@ class TestPanelInventory:
     def test_all_categories_present(self):
         """Verify all categories are defined."""
         expected_categories = [
-            "synthesis", "transcription", "voice_cloning", "voice_conversion",
-            "emotion_prosody", "training", "profiles", "library_media",
-            "timeline_editing", "audio_analysis", "audio_effects", "video_image",
-            "lexicon_pronunciation", "batch_automation", "quality_testing",
-            "system_diagnostics", "models_engines", "settings_config",
-            "plugins", "organization", "assistant_help"
+            "synthesis",
+            "transcription",
+            "voice_cloning",
+            "voice_conversion",
+            "emotion_prosody",
+            "training",
+            "profiles",
+            "library_media",
+            "timeline_editing",
+            "audio_analysis",
+            "audio_effects",
+            "video_image",
+            "lexicon_pronunciation",
+            "batch_automation",
+            "quality_testing",
+            "system_diagnostics",
+            "models_engines",
+            "settings_config",
+            "plugins",
+            "organization",
+            "assistant_help",
         ]
         for cat in expected_categories:
             assert cat in CATEGORIES, f"Missing category: {cat}"
@@ -206,7 +221,9 @@ class TestPanelNavigationByCategory:
     def test_navigate_to_category_panels(self, category, driver, app_launched, tracer):
         """Test navigation to all panels in a category."""
         panels = get_panels_by_category(category)
-        tracer.step(f"Testing {len(panels)} panels in category: {category}", driver, SCREENSHOTS_ENABLED)
+        tracer.step(
+            f"Testing {len(panels)} panels in category: {category}", driver, SCREENSHOTS_ENABLED
+        )
 
         found_count = 0
         missing_count = 0
@@ -234,8 +251,11 @@ class TestPanelNavigationByCategory:
 class TestSynthesisPanels:
     """Tests for synthesis-related panels."""
 
-    @pytest.mark.parametrize("panel", get_panels_by_category("synthesis"),
-                             ids=[p.name for p in get_panels_by_category("synthesis")])
+    @pytest.mark.parametrize(
+        "panel",
+        get_panels_by_category("synthesis"),
+        ids=[p.name for p in get_panels_by_category("synthesis")],
+    )
     def test_synthesis_panel_elements(self, panel, driver, app_launched, tracer):
         """Test synthesis panel navigation and key elements."""
         tracer.step(f"Testing synthesis panel: {panel.name}", driver, SCREENSHOTS_ENABLED)
@@ -276,8 +296,11 @@ class TestSynthesisPanels:
 class TestTranscriptionPanels:
     """Tests for transcription-related panels."""
 
-    @pytest.mark.parametrize("panel", get_panels_by_category("transcription"),
-                             ids=[p.name for p in get_panels_by_category("transcription")])
+    @pytest.mark.parametrize(
+        "panel",
+        get_panels_by_category("transcription"),
+        ids=[p.name for p in get_panels_by_category("transcription")],
+    )
     def test_transcription_panel_elements(self, panel, driver, app_launched, tracer):
         """Test transcription panel navigation and key elements."""
         tracer.step(f"Testing transcription panel: {panel.name}", driver, SCREENSHOTS_ENABLED)
@@ -308,8 +331,11 @@ class TestTranscriptionPanels:
 class TestVoiceCloningPanels:
     """Tests for voice cloning panels."""
 
-    @pytest.mark.parametrize("panel", get_panels_by_category("voice_cloning"),
-                             ids=[p.name for p in get_panels_by_category("voice_cloning")])
+    @pytest.mark.parametrize(
+        "panel",
+        get_panels_by_category("voice_cloning"),
+        ids=[p.name for p in get_panels_by_category("voice_cloning")],
+    )
     def test_cloning_panel(self, panel, driver, app_launched, tracer):
         """Test voice cloning panel."""
         tracer.step(f"Testing cloning panel: {panel.name}", driver, SCREENSHOTS_ENABLED)
@@ -332,8 +358,11 @@ class TestVoiceCloningPanels:
 class TestVoiceConversionPanels:
     """Tests for voice conversion panels."""
 
-    @pytest.mark.parametrize("panel", get_panels_by_category("voice_conversion"),
-                             ids=[p.name for p in get_panels_by_category("voice_conversion")])
+    @pytest.mark.parametrize(
+        "panel",
+        get_panels_by_category("voice_conversion"),
+        ids=[p.name for p in get_panels_by_category("voice_conversion")],
+    )
     def test_conversion_panel(self, panel, driver, app_launched, tracer):
         """Test voice conversion panel."""
         tracer.step(f"Testing conversion panel: {panel.name}", driver, SCREENSHOTS_ENABLED)
@@ -356,8 +385,11 @@ class TestVoiceConversionPanels:
 class TestTrainingPanels:
     """Tests for training-related panels."""
 
-    @pytest.mark.parametrize("panel", get_panels_by_category("training"),
-                             ids=[p.name for p in get_panels_by_category("training")])
+    @pytest.mark.parametrize(
+        "panel",
+        get_panels_by_category("training"),
+        ids=[p.name for p in get_panels_by_category("training")],
+    )
     def test_training_panel(self, panel, driver, app_launched, tracer):
         """Test training panel."""
         tracer.step(f"Testing training panel: {panel.name}", driver, SCREENSHOTS_ENABLED)
@@ -380,8 +412,11 @@ class TestTrainingPanels:
 class TestProfilesPanels:
     """Tests for profile management panels."""
 
-    @pytest.mark.parametrize("panel", get_panels_by_category("profiles"),
-                             ids=[p.name for p in get_panels_by_category("profiles")])
+    @pytest.mark.parametrize(
+        "panel",
+        get_panels_by_category("profiles"),
+        ids=[p.name for p in get_panels_by_category("profiles")],
+    )
     def test_profiles_panel(self, panel, driver, app_launched, tracer):
         """Test profiles panel."""
         tracer.step(f"Testing profiles panel: {panel.name}", driver, SCREENSHOTS_ENABLED)
@@ -404,8 +439,11 @@ class TestProfilesPanels:
 class TestSystemDiagnosticsPanels:
     """Tests for system and diagnostics panels."""
 
-    @pytest.mark.parametrize("panel", get_panels_by_category("system_diagnostics"),
-                             ids=[p.name for p in get_panels_by_category("system_diagnostics")])
+    @pytest.mark.parametrize(
+        "panel",
+        get_panels_by_category("system_diagnostics"),
+        ids=[p.name for p in get_panels_by_category("system_diagnostics")],
+    )
     def test_diagnostics_panel(self, panel, driver, app_launched, tracer):
         """Test diagnostics panel with key elements."""
         tracer.step(f"Testing diagnostics panel: {panel.name}", driver, SCREENSHOTS_ENABLED)
@@ -440,8 +478,11 @@ class TestSystemDiagnosticsPanels:
 class TestSettingsPanels:
     """Tests for settings and configuration panels."""
 
-    @pytest.mark.parametrize("panel", get_panels_by_category("settings_config"),
-                             ids=[p.name for p in get_panels_by_category("settings_config")])
+    @pytest.mark.parametrize(
+        "panel",
+        get_panels_by_category("settings_config"),
+        ids=[p.name for p in get_panels_by_category("settings_config")],
+    )
     def test_settings_panel(self, panel, driver, app_launched, tracer):
         """Test settings panel."""
         tracer.step(f"Testing settings panel: {panel.name}", driver, SCREENSHOTS_ENABLED)
@@ -464,8 +505,11 @@ class TestSettingsPanels:
 class TestVideoImagePanels:
     """Tests for video and image generation panels."""
 
-    @pytest.mark.parametrize("panel", get_panels_by_category("video_image"),
-                             ids=[p.name for p in get_panels_by_category("video_image")])
+    @pytest.mark.parametrize(
+        "panel",
+        get_panels_by_category("video_image"),
+        ids=[p.name for p in get_panels_by_category("video_image")],
+    )
     def test_video_image_panel(self, panel, driver, app_launched, tracer):
         """Test video/image panel."""
         tracer.step(f"Testing video/image panel: {panel.name}", driver, SCREENSHOTS_ENABLED)
@@ -488,8 +532,11 @@ class TestVideoImagePanels:
 class TestAudioAnalysisPanels:
     """Tests for audio analysis panels."""
 
-    @pytest.mark.parametrize("panel", get_panels_by_category("audio_analysis"),
-                             ids=[p.name for p in get_panels_by_category("audio_analysis")])
+    @pytest.mark.parametrize(
+        "panel",
+        get_panels_by_category("audio_analysis"),
+        ids=[p.name for p in get_panels_by_category("audio_analysis")],
+    )
     def test_audio_analysis_panel(self, panel, driver, app_launched, tracer):
         """Test audio analysis panel."""
         tracer.step(f"Testing audio analysis panel: {panel.name}", driver, SCREENSHOTS_ENABLED)
@@ -512,8 +559,11 @@ class TestAudioAnalysisPanels:
 class TestBatchAutomationPanels:
     """Tests for batch processing and automation panels."""
 
-    @pytest.mark.parametrize("panel", get_panels_by_category("batch_automation"),
-                             ids=[p.name for p in get_panels_by_category("batch_automation")])
+    @pytest.mark.parametrize(
+        "panel",
+        get_panels_by_category("batch_automation"),
+        ids=[p.name for p in get_panels_by_category("batch_automation")],
+    )
     def test_batch_automation_panel(self, panel, driver, app_launched, tracer):
         """Test batch/automation panel."""
         tracer.step(f"Testing batch panel: {panel.name}", driver, SCREENSHOTS_ENABLED)
@@ -536,8 +586,9 @@ class TestBatchAutomationPanels:
 class TestAllPanelsComprehensive:
     """Comprehensive test across all panels."""
 
-    @pytest.mark.parametrize("panel", get_all_panels(),
-                             ids=[f"{p.category}/{p.name}" for p in get_all_panels()])
+    @pytest.mark.parametrize(
+        "panel", get_all_panels(), ids=[f"{p.category}/{p.name}" for p in get_all_panels()]
+    )
     def test_panel_navigation_and_root(self, panel, driver, app_launched, tracer):
         """Test navigation and root element for every panel."""
         tracer.step(f"Testing [{panel.category}] {panel.name}", driver, False)
@@ -576,8 +627,10 @@ class TestAllPanelsComprehensive:
                 pass
 
         status = "✓" if result["nav_found"] else "✗"
-        tracer.step(f"{status} {panel.name}: nav={result['nav_found']}, root={result['root_found']}, "
-                   f"elements={result['key_elements_found']}/{result['key_elements_total']}")
+        tracer.step(
+            f"{status} {panel.name}: nav={result['nav_found']}, root={result['root_found']}, "
+            f"elements={result['key_elements_found']}/{result['key_elements_total']}"
+        )
 
 
 class TestPanelMatrixReport:
@@ -596,7 +649,7 @@ class TestPanelMatrixReport:
                 "panels_missing": 0,
                 "total_key_elements": 0,
                 "key_elements_found": 0,
-            }
+            },
         }
 
         for category in CATEGORIES:
@@ -629,7 +682,7 @@ class TestPanelMatrixReport:
         tracer.step(f"Total panels defined: {TOTAL_PANELS}")
         tracer.step(f"Panels found: {report['summary']['panels_found']}")
         tracer.step(f"Panels missing: {report['summary']['panels_missing']}")
-        coverage = (report['summary']['panels_found'] / TOTAL_PANELS * 100)
+        coverage = report["summary"]["panels_found"] / TOTAL_PANELS * 100
         tracer.step(f"Coverage: {coverage:.1f}%")
 
         # Category breakdown

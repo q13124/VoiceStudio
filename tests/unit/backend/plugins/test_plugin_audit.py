@@ -33,10 +33,21 @@ class TestPluginAuditCategory:
 
     def test_security_categories(self):
         """Test security categories exist."""
-        assert PluginAuditCategory.SECURITY_SIGNATURE_VALID.value == "plugin.security.signature_valid"
-        assert PluginAuditCategory.SECURITY_PERMISSION_DENIED.value == "plugin.security.permission_denied"
-        assert PluginAuditCategory.SECURITY_POLICY_VIOLATION.value == "plugin.security.policy_violation"
-        assert PluginAuditCategory.SECURITY_SANDBOX_VIOLATION.value == "plugin.security.sandbox_violation"
+        assert (
+            PluginAuditCategory.SECURITY_SIGNATURE_VALID.value == "plugin.security.signature_valid"
+        )
+        assert (
+            PluginAuditCategory.SECURITY_PERMISSION_DENIED.value
+            == "plugin.security.permission_denied"
+        )
+        assert (
+            PluginAuditCategory.SECURITY_POLICY_VIOLATION.value
+            == "plugin.security.policy_violation"
+        )
+        assert (
+            PluginAuditCategory.SECURITY_SANDBOX_VIOLATION.value
+            == "plugin.security.sandbox_violation"
+        )
 
     def test_policy_categories(self):
         """Test policy categories exist."""
@@ -419,28 +430,34 @@ class TestPluginAuditLogger:
     def test_category_to_action_mapping(self, plugin_audit):
         """Test category to action mapping."""
         # Lifecycle
-        assert plugin_audit._map_category_to_action(
-            PluginAuditCategory.LIFECYCLE_INSTALL
-        ) == AuditAction.CREATE
-        assert plugin_audit._map_category_to_action(
-            PluginAuditCategory.LIFECYCLE_UNINSTALL
-        ) == AuditAction.DELETE
-        assert plugin_audit._map_category_to_action(
-            PluginAuditCategory.LIFECYCLE_UPDATE
-        ) == AuditAction.UPDATE
+        assert (
+            plugin_audit._map_category_to_action(PluginAuditCategory.LIFECYCLE_INSTALL)
+            == AuditAction.CREATE
+        )
+        assert (
+            plugin_audit._map_category_to_action(PluginAuditCategory.LIFECYCLE_UNINSTALL)
+            == AuditAction.DELETE
+        )
+        assert (
+            plugin_audit._map_category_to_action(PluginAuditCategory.LIFECYCLE_UPDATE)
+            == AuditAction.UPDATE
+        )
 
         # Execution
-        assert plugin_audit._map_category_to_action(
-            PluginAuditCategory.EXECUTION_START
-        ) == AuditAction.EXECUTE
+        assert (
+            plugin_audit._map_category_to_action(PluginAuditCategory.EXECUTION_START)
+            == AuditAction.EXECUTE
+        )
 
         # Marketplace
-        assert plugin_audit._map_category_to_action(
-            PluginAuditCategory.MARKETPLACE_DOWNLOAD
-        ) == AuditAction.IMPORT
-        assert plugin_audit._map_category_to_action(
-            PluginAuditCategory.MARKETPLACE_PUBLISH
-        ) == AuditAction.EXPORT
+        assert (
+            plugin_audit._map_category_to_action(PluginAuditCategory.MARKETPLACE_DOWNLOAD)
+            == AuditAction.IMPORT
+        )
+        assert (
+            plugin_audit._map_category_to_action(PluginAuditCategory.MARKETPLACE_PUBLISH)
+            == AuditAction.EXPORT
+        )
 
 
 class TestGlobalPluginAuditLogger:

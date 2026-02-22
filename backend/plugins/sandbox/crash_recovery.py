@@ -58,7 +58,7 @@ class BackoffConfig:
         import random
 
         delay = min(
-            self.initial_delay_sec * (self.multiplier ** attempt),
+            self.initial_delay_sec * (self.multiplier**attempt),
             self.max_delay_sec,
         )
 
@@ -134,9 +134,7 @@ class PluginState:
         return cls(
             plugin_id=data["plugin_id"],
             last_active=(
-                datetime.fromisoformat(data["last_active"])
-                if data.get("last_active")
-                else None
+                datetime.fromisoformat(data["last_active"]) if data.get("last_active") else None
             ),
             invocation_context=data.get("invocation_context", {}),
             user_data=data.get("user_data", {}),
@@ -203,9 +201,7 @@ class CircuitBreaker:
 
         if self._failure_count >= self._threshold:
             self._state = CircuitState.OPEN
-            logger.warning(
-                f"Circuit breaker opened after {self._failure_count} failures"
-            )
+            logger.warning(f"Circuit breaker opened after {self._failure_count} failures")
 
     def _check_reset(self) -> None:
         """Check if circuit should reset to half-open."""
@@ -372,17 +368,14 @@ class CrashRecoveryManager:
         """
         delay = self._config.backoff.calculate_delay(attempt)
         logger.info(
-            f"Scheduling restart for {self._plugin_id} in {delay:.2f}s "
-            f"(attempt {attempt + 1})"
+            f"Scheduling restart for {self._plugin_id} in {delay:.2f}s " f"(attempt {attempt + 1})"
         )
 
         await asyncio.sleep(delay)
 
         # Double-check we can still restart
         if not self._circuit_breaker.allows_request:
-            logger.warning(
-                f"Restart cancelled for {self._plugin_id}: circuit breaker open"
-            )
+            logger.warning(f"Restart cancelled for {self._plugin_id}: circuit breaker open")
             return False
 
         # Execute restart
@@ -410,14 +403,10 @@ class CrashRecoveryManager:
                 logger.error(f"Error restarting {self._plugin_id}: {e}")
                 return False
         else:
-            logger.warning(
-                f"No restart callback configured for {self._plugin_id}"
-            )
+            logger.warning(f"No restart callback configured for {self._plugin_id}")
             return False
 
-    def set_restart_callback(
-        self, callback: Callable[[], Awaitable[bool]]
-    ) -> None:
+    def set_restart_callback(self, callback: Callable[[], Awaitable[bool]]) -> None:
         """Set the restart callback function."""
         self._restart_callback = callback
 
@@ -510,9 +499,7 @@ class CrashRecoveryManager:
 
         state_file = self._config.state_dir / f"{self._plugin_id}_state.json"
         try:
-            state_file.write_text(
-                json.dumps(self._preserved_state.to_dict(), indent=2)
-            )
+            state_file.write_text(json.dumps(self._preserved_state.to_dict(), indent=2))
         except Exception as e:
             logger.error(f"Failed to save state for {self._plugin_id}: {e}")
 

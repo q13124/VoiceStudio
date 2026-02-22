@@ -20,9 +20,7 @@ try:
 except ImportError:
     HAS_QUERY_OPTIMIZER = False
     logger = logging.getLogger(__name__)
-    logger.warning(
-        "Query optimizer not available. Database operations will be limited."
-    )
+    logger.warning("Query optimizer not available. Database operations will be limited.")
 
 logger = logging.getLogger(__name__)
 
@@ -60,9 +58,7 @@ class WatermarkDatabase:
     def _init_database(self):
         """Initialize database schema."""
         if not self.optimizer:
-            logger.warning(
-                "Query optimizer not available. Schema initialization skipped."
-            )
+            logger.warning("Query optimizer not available. Schema initialization skipped.")
             return
 
         try:
@@ -227,9 +223,7 @@ class WatermarkDatabase:
             logger.error(f"Failed to log verification: {e}")
             raise
 
-    def get_verification_history(
-        self, watermark_id: str, limit: int = 100
-    ) -> list[dict]:
+    def get_verification_history(self, watermark_id: str, limit: int = 100) -> list[dict]:
         """
         Get verification history for a watermark.
 

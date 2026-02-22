@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def ai_enhancement_client():
     """Create test client for AI enhancement routes."""
     from backend.api.routes.ai_enhancement import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)

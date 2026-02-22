@@ -16,6 +16,7 @@ from backend.domain.entities.base import AggregateRoot
 
 class ClipStatus(Enum):
     """Audio clip processing status."""
+
     PENDING = "pending"
     PROCESSING = "processing"
     READY = "ready"
@@ -24,10 +25,11 @@ class ClipStatus(Enum):
 
 class ClipType(Enum):
     """Type of audio clip."""
-    ORIGINAL = "original"     # Original recorded/imported audio
+
+    ORIGINAL = "original"  # Original recorded/imported audio
     SYNTHESIZED = "synthesized"  # Generated via TTS
-    CLONED = "cloned"         # Generated via voice cloning
-    PROCESSED = "processed"   # Post-processed audio
+    CLONED = "cloned"  # Generated via voice cloning
+    PROCESSED = "processed"  # Post-processed audio
 
 
 @dataclass
@@ -151,29 +153,31 @@ class AudioClip(AggregateRoot):
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for persistence."""
         base = super().to_dict()
-        base.update({
-            "name": self.name,
-            "description": self.description,
-            "file_path": self.file_path,
-            "duration_seconds": self.duration_seconds,
-            "sample_rate": self.sample_rate,
-            "channels": self.channels,
-            "bit_depth": self.bit_depth,
-            "file_size_bytes": self.file_size_bytes,
-            "transcript": self.transcript,
-            "language": self.language,
-            "status": self.status.value,
-            "clip_type": self.clip_type.value,
-            "error_message": self.error_message,
-            "project_id": self.project_id,
-            "voice_profile_id": self.voice_profile_id,
-            "source_clip_id": self.source_clip_id,
-            "start_time": self.start_time,
-            "end_time": self.end_time,
-            "track_index": self.track_index,
-            "tags": self.tags,
-            "metadata": self.metadata,
-        })
+        base.update(
+            {
+                "name": self.name,
+                "description": self.description,
+                "file_path": self.file_path,
+                "duration_seconds": self.duration_seconds,
+                "sample_rate": self.sample_rate,
+                "channels": self.channels,
+                "bit_depth": self.bit_depth,
+                "file_size_bytes": self.file_size_bytes,
+                "transcript": self.transcript,
+                "language": self.language,
+                "status": self.status.value,
+                "clip_type": self.clip_type.value,
+                "error_message": self.error_message,
+                "project_id": self.project_id,
+                "voice_profile_id": self.voice_profile_id,
+                "source_clip_id": self.source_clip_id,
+                "start_time": self.start_time,
+                "end_time": self.end_time,
+                "track_index": self.track_index,
+                "tags": self.tags,
+                "metadata": self.metadata,
+            }
+        )
         return base
 
     @classmethod

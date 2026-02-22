@@ -24,16 +24,18 @@ T = TypeVar("T")
 
 class RequestPriority(IntEnum):
     """Priority levels for requests."""
+
     CRITICAL = 0  # System-critical requests
-    HIGH = 1      # User-initiated real-time requests
-    NORMAL = 2    # Standard requests
-    LOW = 3       # Background tasks
-    BATCH = 4     # Batch processing jobs
+    HIGH = 1  # User-initiated real-time requests
+    NORMAL = 2  # Standard requests
+    LOW = 3  # Background tasks
+    BATCH = 4  # Batch processing jobs
 
 
 @dataclass
 class QueuedRequest(Generic[T]):
     """A request in the queue."""
+
     id: str
     priority: RequestPriority
     payload: T
@@ -53,6 +55,7 @@ class QueuedRequest(Generic[T]):
 @dataclass
 class QueueStats:
     """Statistics for the request queue."""
+
     total_enqueued: int = 0
     total_processed: int = 0
     total_failed: int = 0
@@ -165,7 +168,9 @@ class RequestQueue(Generic[T]):
             if wait_time > request.timeout_seconds:
                 logger.warning(f"Request {request.id} timed out in queue")
                 self._stats.total_timeout += 1
-                raise TimeoutError(f"Request waited {wait_time:.1f}s, timeout is {request.timeout_seconds}s")
+                raise TimeoutError(
+                    f"Request waited {wait_time:.1f}s, timeout is {request.timeout_seconds}s"
+                )
 
             # Track wait time
             self._wait_times.append(wait_time * 1000)
@@ -195,7 +200,9 @@ class RequestQueue(Generic[T]):
                     self._process_times.append(process_time)
                     if len(self._process_times) > 1000:
                         self._process_times = self._process_times[-500:]
-                    self._stats.avg_process_time_ms = sum(self._process_times) / len(self._process_times)
+                    self._stats.avg_process_time_ms = sum(self._process_times) / len(
+                        self._process_times
+                    )
 
                     self._stats.total_processed += 1
                     return request.id, result

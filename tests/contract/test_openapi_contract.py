@@ -143,13 +143,15 @@ class TestSchemaDefinitions:
             if not isinstance(schema, dict):
                 continue
 
-            has_type = any([
-                "type" in schema,
-                "$ref" in schema,
-                "allOf" in schema,
-                "anyOf" in schema,
-                "oneOf" in schema,
-            ])
+            has_type = any(
+                [
+                    "type" in schema,
+                    "$ref" in schema,
+                    "allOf" in schema,
+                    "anyOf" in schema,
+                    "oneOf" in schema,
+                ]
+            )
 
             if not has_type:
                 untyped.append(name)
@@ -186,6 +188,7 @@ class TestBackwardCompatibility:
 # =============================================================================
 # ENHANCED OPENAPI SCHEMA VALIDATION
 # =============================================================================
+
 
 class TestOpenAPISchemaValidation:
     """Comprehensive OpenAPI schema validation tests."""
@@ -395,10 +398,7 @@ class TestResponseValidation:
                     continue
 
                 responses = details.get("responses", {})
-                has_success = any(
-                    str(code).startswith("2")
-                    for code in responses
-                )
+                has_success = any(str(code).startswith("2") for code in responses)
 
                 if not has_success:
                     missing.append(f"{method.upper()} {path}")
@@ -452,8 +452,13 @@ class TestSecurityDefinitions:
         paths = openapi_schema.get("paths", {})
 
         sensitive_patterns = [
-            "/admin", "/user", "/profile", "/settings",
-            "/delete", "/update", "/create"
+            "/admin",
+            "/user",
+            "/profile",
+            "/settings",
+            "/delete",
+            "/update",
+            "/create",
         ]
 
         # Check if any sensitive endpoints exist without security
@@ -468,10 +473,7 @@ class TestSecurityDefinitions:
                 if method not in ["post", "put", "delete", "patch"]:
                     continue
 
-                has_security = (
-                    "security" in details or
-                    "security" in openapi_schema
-                )
+                has_security = "security" in details or "security" in openapi_schema
 
                 if not has_security:
                     unsecured.append(f"{method.upper()} {path}")
@@ -479,6 +481,7 @@ class TestSecurityDefinitions:
         if unsecured:
             # Warning only, not a failure
             import warnings
+
             warnings.warn(f"Potentially unsecured endpoints: {unsecured[:5]}", stacklevel=2)
 
 
@@ -495,10 +498,7 @@ class TestDocumentation:
                 if method not in ["get", "post", "put", "delete", "patch"]:
                     continue
 
-                has_docs = (
-                    details.get("summary") or
-                    details.get("description")
-                )
+                has_docs = details.get("summary") or details.get("description")
 
                 if not has_docs:
                     undocumented.append(f"{method.upper()} {path}")
@@ -521,6 +521,7 @@ class TestDocumentation:
             # Advisory: at least 30% should have descriptions
             if coverage < 0.3:
                 import warnings
+
                 warnings.warn(f"Schema description coverage: {coverage:.0%}", stacklevel=2)
 
     def test_examples_provided(self, openapi_schema: dict[str, Any]):
@@ -551,4 +552,7 @@ class TestDocumentation:
             # Advisory only
             if coverage < 0.2:
                 import warnings
-                warnings.warn(f"Example coverage: {coverage:.0%} ({with_examples}/{total})", stacklevel=2)
+
+                warnings.warn(
+                    f"Example coverage: {coverage:.0%} ({with_examples}/{total})", stacklevel=2
+                )

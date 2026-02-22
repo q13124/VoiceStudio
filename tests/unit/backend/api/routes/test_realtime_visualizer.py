@@ -17,6 +17,7 @@ from fastapi.testclient import TestClient
 def reset_visualizer_state():
     """Reset visualizer state before each test."""
     from backend.api.routes import realtime_visualizer
+
     realtime_visualizer._visualizer_sessions = {}
     yield
     realtime_visualizer._visualizer_sessions = {}

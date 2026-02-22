@@ -2,7 +2,6 @@
 Unit tests for IntentBuffer (Phase 11.2.4)
 """
 
-
 from app.core.supervisor.intent_buffer import BufferedUtterance, IntentBuffer
 
 

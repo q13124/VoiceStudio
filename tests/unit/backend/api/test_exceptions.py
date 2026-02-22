@@ -28,9 +28,7 @@ class TestExceptionsImports:
     def test_module_has_classes(self):
         """Test module has expected classes."""
         classes = [
-            name
-            for name in dir(exceptions)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(exceptions) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "module should have classes"
 
@@ -42,11 +40,8 @@ class TestExceptionsClasses:
         """Test VoiceStudioException class exists."""
         if hasattr(exceptions, "VoiceStudioException"):
             cls = exceptions.VoiceStudioException
-            assert isinstance(
-                cls, type
-            ), "VoiceStudioException should be a class"
+            assert isinstance(cls, type), "VoiceStudioException should be a class"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

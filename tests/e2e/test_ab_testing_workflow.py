@@ -98,16 +98,12 @@ class TestABTestingWorkflow:
         print("\n[E2E] Testing error recovery in A/B testing...")
 
         # Try invalid request
-        invalid_response = client.post(
-            "/api/eval/abx/start", json={"items": []}  # Empty items
-        )
+        invalid_response = client.post("/api/eval/abx/start", json={"items": []})  # Empty items
         # Should return validation error (400 for business logic, 422 for schema)
         assert invalid_response.status_code in [400, 422]
 
         # Recover with valid request
-        valid_response = client.post(
-            "/api/eval/abx/start", json={"items": ["audio-1", "audio-2"]}
-        )
+        valid_response = client.post("/api/eval/abx/start", json={"items": ["audio-1", "audio-2"]})
         assert valid_response.status_code == 200
 
         print("[E2E] ✅ Error recovery successful")

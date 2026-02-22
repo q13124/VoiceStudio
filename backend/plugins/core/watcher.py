@@ -31,6 +31,7 @@ try:
         FileSystemEventHandler,
     )
     from watchdog.observers import Observer
+
     _HAS_WATCHDOG = True
 except ImportError:
     _HAS_WATCHDOG = False
@@ -215,6 +216,7 @@ class PluginFileWatcher:
 
 
 if _HAS_WATCHDOG:
+
     class _PluginEventHandler(FileSystemEventHandler):
         """Watchdog event handler that delegates to the watcher."""
 

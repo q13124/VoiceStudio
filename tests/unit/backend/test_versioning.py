@@ -61,9 +61,7 @@ class TestVersionInfo:
 
     def test_is_deprecated_true(self):
         """Test is_deprecated is True when deprecated is set."""
-        info = VersionInfo(
-            introduced=APIVersion.V1_0, deprecated=APIVersion.V1_1
-        )
+        info = VersionInfo(introduced=APIVersion.V1_0, deprecated=APIVersion.V1_1)
         assert info.is_deprecated
 
     def test_is_sunset_false_when_no_date(self):
@@ -192,6 +190,7 @@ class TestDeprecatedDecorator:
     @pytest.mark.asyncio
     async def test_deprecated_decorator_stores_info(self):
         """Test that deprecated decorator stores version info."""
+
         @deprecated(since=APIVersion.V1_1, replacement="/new")
         async def old_endpoint():
             return {"result": "ok"}
@@ -205,6 +204,7 @@ class TestDeprecatedDecorator:
     @pytest.mark.asyncio
     async def test_deprecated_decorator_executes_function(self):
         """Test that deprecated decorator still executes the function."""
+
         @deprecated(since=APIVersion.V1_1)
         async def old_endpoint():
             return {"result": "ok"}
@@ -219,6 +219,7 @@ class TestRequiresVersionDecorator:
     @pytest.mark.asyncio
     async def test_requires_version_passes(self):
         """Test requires_version passes when version is sufficient."""
+
         @requires_version(APIVersion.V1_0)
         async def new_endpoint(request):
             return {"result": "ok"}

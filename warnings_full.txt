@@ -1,6 +1,0 @@
-  VoiceStudio.Core -> E:\VoiceStudio\src\VoiceStudio.Core\bin\Debug\net8.0\VoiceStudio.Core.dll
-  Running XAML compiler...
-  Compiler: "C:\Users\Tyler\.nuget\packages\microsoft.windowsappsdk.winui\1.8.251105000\tools\net472\XamlCompiler.exe"
-  Arguments: "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\input.json" "obj\x64\Debug\net8.0-windows10.0.19041.0\win-x64\output.json"
-  
-  Raw log: "E:\VoiceStudio\xaml_compiler_raw_19149.log"

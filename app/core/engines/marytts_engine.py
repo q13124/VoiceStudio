@@ -146,17 +146,13 @@ class MaryTTSEngine(EngineProtocol):
                     # Parse voices list (format: "voice_name (language)")
                     voices_text = response.text.strip()
                     if voices_text:
-                        self.voices = [
-                            v.strip() for v in voices_text.split("\n") if v.strip()
-                        ]
+                        self.voices = [v.strip() for v in voices_text.split("\n") if v.strip()]
                         # Extract languages from voices
                         self.available_languages = list(
                             {
-
-                                    v.split("(")[1].split(")")[0].strip()
-                                    for v in self.voices
-                                    if "(" in v and ")" in v
-
+                                v.split("(")[1].split(")")[0].strip()
+                                for v in self.voices
+                                if "(" in v and ")" in v
                             }
                         )
                         logger.info(
@@ -167,9 +163,7 @@ class MaryTTSEngine(EngineProtocol):
                         self.voices = []
                         self.available_languages = []
                 else:
-                    logger.warning(
-                        f"MaryTTS server returned status {response.status_code}"
-                    )
+                    logger.warning(f"MaryTTS server returned status {response.status_code}")
                     # Continue anyway - voices might be available via synthesis endpoint
                     self.voices = []
                     self.available_languages = []
@@ -200,12 +194,8 @@ class MaryTTSEngine(EngineProtocol):
 
             except requests.exceptions.RequestException as e:
                 logger.error(f"Failed to connect to MaryTTS server: {e}")
-                logger.error(
-                    f"Make sure MaryTTS server is running at {self.server_url}"
-                )
-                logger.error(
-                    "Install MaryTTS server from: https://github.com/marytts/marytts"
-                )
+                logger.error(f"Make sure MaryTTS server is running at {self.server_url}")
+                logger.error("Install MaryTTS server from: https://github.com/marytts/marytts")
                 self._initialized = False
                 return False
 
@@ -264,9 +254,7 @@ class MaryTTSEngine(EngineProtocol):
                         )
                         return None
                     if calculate_quality:
-                        return cached_result["audio"], cached_result.get(
-                            "quality_metrics", {}
-                        )
+                        return cached_result["audio"], cached_result.get("quality_metrics", {})
                     return cached_result["audio"]
 
             # Build synthesis URL
@@ -315,9 +303,7 @@ class MaryTTSEngine(EngineProtocol):
             if self.enable_cache:
                 # Process quality if needed for caching
                 if calculate_quality:
-                    quality_metrics_result = self._calculate_quality_metrics(
-                        audio, sample_rate
-                    )
+                    quality_metrics_result = self._calculate_quality_metrics(audio, sample_rate)
 
                 # Manage cache size - remove oldest entries if cache is full
                 if len(self._synthesis_cache) >= self._cache_max_size:
@@ -330,9 +316,7 @@ class MaryTTSEngine(EngineProtocol):
                 self._synthesis_cache[cache_key] = {
                     "audio": audio.copy(),
                     "sample_rate": sample_rate,
-                    "quality_metrics": (
-                        quality_metrics_result if calculate_quality else {}
-                    ),
+                    "quality_metrics": (quality_metrics_result if calculate_quality else {}),
                 }
                 self._synthesis_cache.move_to_end(cache_key)  # LRU update
 
@@ -382,9 +366,7 @@ class MaryTTSEngine(EngineProtocol):
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(
-                            audio, sample_rate, ref_audio, ref_sr
-                        )
+                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -434,9 +416,7 @@ class MaryTTSEngine(EngineProtocol):
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(
-                            audio, sample_rate, ref_audio, ref_sr
-                        )
+                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -475,11 +455,7 @@ class MaryTTSEngine(EngineProtocol):
         if not self._initialized and not self.initialize():
             return []
 
-        return (
-            self.available_languages
-            if self.available_languages
-            else self.SUPPORTED_LANGUAGES
-        )
+        return self.available_languages if self.available_languages else self.SUPPORTED_LANGUAGES
 
     def cleanup(self):
         """Clean up resources."""

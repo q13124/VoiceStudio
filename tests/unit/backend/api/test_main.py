@@ -141,9 +141,7 @@ class TestCacheEndpoints:
             mock_get_cache = MagicMock(return_value=mock_cache)
             mock_import.return_value = (mock_get_cache, mock_middleware)
 
-            response = client.post(
-                "/api/cache/invalidate", params={"tags": "tag1,tag2"}
-            )
+            response = client.post("/api/cache/invalidate", params={"tags": "tag1,tag2"})
             assert response.status_code == 200
             data = response.json()
             assert "message" in data
@@ -163,9 +161,7 @@ class TestCacheEndpoints:
             mock_get_cache = MagicMock(return_value=mock_cache)
             mock_import.return_value = (mock_get_cache, mock_middleware)
 
-            response = client.post(
-                "/api/cache/invalidate", params={"path_prefix": "/api/profiles"}
-            )
+            response = client.post("/api/cache/invalidate", params={"path_prefix": "/api/profiles"})
             assert response.status_code == 200
             data = response.json()
             assert "message" in data
@@ -222,11 +218,11 @@ class TestCacheEndpoints:
             assert data["pattern"] is None
             assert data["tags"] is None
             assert data["path_prefix"] is None
-            mock_cache.invalidate.assert_called_once_with(
-                pattern=None, tags=None, path_prefix=None
-            )
+            mock_cache.invalidate.assert_called_once_with(pattern=None, tags=None, path_prefix=None)
 
-    @pytest.mark.skip(reason="Mock patch doesn't affect endpoint behavior - cache initialized elsewhere")
+    @pytest.mark.skip(
+        reason="Mock patch doesn't affect endpoint behavior - cache initialized elsewhere"
+    )
     def test_cache_stats_endpoint_cache_not_available(self, client):
         """Test GET /api/cache/stats when cache is not available."""
 
@@ -305,10 +301,9 @@ class TestEndpointMetricsEndpoints:
     def test_endpoint_metrics_all(self, client, mock_middleware):
         """Test GET /api/endpoints/metrics endpoint."""
         # Patch both the function and the global variable
-        with patch(
-            "backend.api.main._get_performance_middleware"
-        ) as mock_get, patch.object(
-            main, "_performance_middleware", mock_middleware, create=True
+        with (
+            patch("backend.api.main._get_performance_middleware") as mock_get,
+            patch.object(main, "_performance_middleware", mock_middleware, create=True),
         ):
             mock_get.return_value = mock_middleware
 
@@ -326,10 +321,9 @@ class TestEndpointMetricsEndpoints:
 
     def test_endpoint_metrics_detail(self, client, mock_middleware):
         """Test GET /api/endpoints/metrics/{endpoint_key} endpoint."""
-        with patch(
-            "backend.api.main._get_performance_middleware"
-        ) as mock_get, patch.object(
-            main, "_performance_middleware", mock_middleware, create=True
+        with (
+            patch("backend.api.main._get_performance_middleware") as mock_get,
+            patch.object(main, "_performance_middleware", mock_middleware, create=True),
         ):
             mock_get.return_value = mock_middleware
 
@@ -348,10 +342,9 @@ class TestEndpointMetricsEndpoints:
     @pytest.mark.skip(reason="Rate limiting middleware returns 429 before endpoint is reached")
     def test_endpoint_metrics_reset(self, client, mock_middleware):
         """Test POST /api/endpoints/metrics/reset endpoint."""
-        with patch(
-            "backend.api.main._get_performance_middleware"
-        ) as mock_get, patch.object(
-            main, "_performance_middleware", mock_middleware, create=True
+        with (
+            patch("backend.api.main._get_performance_middleware") as mock_get,
+            patch.object(main, "_performance_middleware", mock_middleware, create=True),
         ):
             mock_get.return_value = mock_middleware
 
@@ -391,9 +384,7 @@ class TestEndpointMetricsEndpoints:
                     return mock_mw
                 return None
 
-            with patch(
-                "backend.api.main._get_performance_middleware", side_effect=mock_get
-            ):
+            with patch("backend.api.main._get_performance_middleware", side_effect=mock_get):
                 response = client.post("/api/endpoints/metrics/reset")
                 assert response.status_code == 200
                 data = response.json()

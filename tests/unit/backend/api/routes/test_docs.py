@@ -2,6 +2,7 @@
 Unit Tests for Docs API Route
 Tests documentation endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -151,11 +152,7 @@ class TestDocsEndpoints:
                             "description": "A test endpoint",
                             "responses": {
                                 "200": {
-                                    "content": {
-                                        "application/json": {
-                                            "example": {"status": "ok"}
-                                        }
-                                    }
+                                    "content": {"application/json": {"example": {"status": "ok"}}}
                                 }
                             },
                         }

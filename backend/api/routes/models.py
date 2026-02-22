@@ -212,6 +212,7 @@ async def rollback_registry_model(
 # Engine A/B Experiment (Phase 8 WS1)
 # -------------------------------------------------------------------------
 
+
 class CreateModelExperimentRequest(BaseModel):
     """Request to create an engine A/B experiment for model version testing."""
 
@@ -275,7 +276,10 @@ async def create_model_experiment(
         return {
             "experiment_id": exp.id,
             "status": exp.status.value,
-            "variants": [{"id": v.id, "name": v.name, "weight": v.weight, "config": v.config} for v in exp.variants],
+            "variants": [
+                {"id": v.id, "name": v.name, "weight": v.weight, "config": v.config}
+                for v in exp.variants
+            ],
         }
     except ImportError as e:
         raise HTTPException(status_code=503, detail=f"A/B testing not available: {e}")
@@ -291,6 +295,7 @@ async def create_model_experiment(
 # -------------------------------------------------------------------------
 # Model Storage (engine/model_name)
 # -------------------------------------------------------------------------
+
 
 @router.get("/{engine}/{model_name}", response_model=ModelInfoResponse)
 @cache_response(ttl=300)  # Cache for 5 minutes (model info is relatively static)
@@ -502,9 +507,7 @@ async def import_model(
 ):
     """Import a model from a ZIP archive."""
     # Get request ID from middleware
-    request_id = (
-        getattr(request.state, "request_id", None) if request is not None else None
-    )
+    request_id = getattr(request.state, "request_id", None) if request is not None else None
 
     # Instrument import flow
     from ..utils.instrumentation import EventType, instrument_flow
@@ -562,20 +565,14 @@ async def import_model(
 
                 model_name = metadata.get("model_name")
                 if not model_name:
-                    raise HTTPException(
-                        status_code=400, detail="Model name not found in metadata"
-                    )
+                    raise HTTPException(status_code=400, detail="Model name not found in metadata")
 
                 # Find model files (exclude metadata file)
                 model_files = [
-                    f
-                    for f in extract_dir.rglob("*")
-                    if f.is_file() and f.name != "model_info.json"
+                    f for f in extract_dir.rglob("*") if f.is_file() and f.name != "model_info.json"
                 ]
                 if not model_files:
-                    raise HTTPException(
-                        status_code=400, detail="No model files found in archive"
-                    )
+                    raise HTTPException(status_code=400, detail="No model files found in archive")
 
                 # Determine model path (use first file's parent or the file itself)
                 if len(model_files) == 1:

@@ -393,8 +393,7 @@ async def merge_segments(request: MergeRequest):
                         merged_audio = np.concatenate(
                             [
                                 merged_audio[:overlap_start],
-                                merged_audio[overlap_start:]
-                                + segment_audio[:crossfade_samples],
+                                merged_audio[overlap_start:] + segment_audio[:crossfade_samples],
                                 segment_audio[crossfade_samples:],
                             ]
                         )
@@ -407,9 +406,7 @@ async def merge_segments(request: MergeRequest):
             total_duration += seg.get("duration", len(segment_audio) / sample_rate)
 
         if merged_audio is None or sample_rate is None:
-            raise HTTPException(
-                status_code=400, detail="No valid audio segments to merge"
-            )
+            raise HTTPException(status_code=400, detail="No valid audio segments to merge")
 
         # Save merged audio
         output_path = tempfile.mktemp(suffix=".wav")
@@ -454,9 +451,7 @@ async def remove_filler_words(request: RemoveFillerWordsRequest):
         for filler in request.filler_words:
             # Simple word removal (in real implementation, would be more sophisticated)
             words = updated_transcript.split()
-            filtered_words = [
-                w for w in words if w.lower().strip(".,!?") != filler.lower()
-            ]
+            filtered_words = [w for w in words if w.lower().strip(".,!?") != filler.lower()]
             if len(filtered_words) < len(words):
                 removed_count += len(words) - len(filtered_words)
                 removed_words.append(filler)
@@ -501,9 +496,7 @@ async def insert_text(request: InsertTextRequest):
 
         # Validate profile exists
         if request.profile_id not in _profiles:
-            raise HTTPException(
-                status_code=404, detail=f"Profile not found: {request.profile_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Profile not found: {request.profile_id}")
 
         # Synthesize text using TTS
         if not ENGINE_AVAILABLE or not engine_router:
@@ -559,9 +552,7 @@ async def insert_text(request: InsertTextRequest):
             )
 
             if not result or not os.path.exists(output_path):
-                raise HTTPException(
-                    status_code=500, detail="Synthesis failed - no audio generated"
-                )
+                raise HTTPException(status_code=500, detail="Synthesis failed - no audio generated")
 
             # Load synthesized audio to get duration
             audio, sample_rate = load_audio(output_path)
@@ -661,9 +652,7 @@ async def replace_word(request: ReplaceWordRequest):
 
         # Validate profile exists
         if request.profile_id not in _profiles:
-            raise HTTPException(
-                status_code=404, detail=f"Profile not found: {request.profile_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Profile not found: {request.profile_id}")
 
         # Synthesize replacement word using TTS
         if not ENGINE_AVAILABLE or not engine_router:
@@ -719,9 +708,7 @@ async def replace_word(request: ReplaceWordRequest):
             )
 
             if not result or not os.path.exists(output_path):
-                raise HTTPException(
-                    status_code=500, detail="Synthesis failed - no audio generated"
-                )
+                raise HTTPException(status_code=500, detail="Synthesis failed - no audio generated")
 
             # Load synthesized audio to get duration
             audio, sample_rate = load_audio(output_path)
@@ -875,8 +862,7 @@ async def apply_edits(request: ApplyEditsRequest):
                         final_audio = np.concatenate(
                             [
                                 final_audio[:overlap_start],
-                                final_audio[overlap_start:]
-                                + segment_audio[:crossfade_samples],
+                                final_audio[overlap_start:] + segment_audio[:crossfade_samples],
                                 segment_audio[crossfade_samples:],
                             ]
                         )
@@ -1009,6 +995,7 @@ async def get_edit_session(session_id: str):
 
 class SessionCreateRequest(BaseModel):
     """Request to create an edit session."""
+
     audio_id: str | None = None
     transcript: str | None = ""
     name: str | None = None
@@ -1016,12 +1003,14 @@ class SessionCreateRequest(BaseModel):
 
 class SessionUpdateRequest(BaseModel):
     """Request to update an edit session."""
+
     edited_transcript: str | None = None
     name: str | None = None
 
 
 class SynthesizeRequest(BaseModel):
     """Request to synthesize from session."""
+
     engine_id: str | None = None
     voice_id: str | None = None
 
@@ -1031,14 +1020,16 @@ async def list_sessions():
     """List all edit sessions."""
     sessions = []
     for _sid, session in _edit_sessions.items():
-        sessions.append({
-            "session_id": session.session_id,
-            "audio_id": session.audio_id,
-            "original_transcript": session.original_transcript,
-            "edited_transcript": session.edited_transcript,
-            "created_at": session.created_at,
-            "updated_at": session.updated_at,
-        })
+        sessions.append(
+            {
+                "session_id": session.session_id,
+                "audio_id": session.audio_id,
+                "original_transcript": session.original_transcript,
+                "edited_transcript": session.edited_transcript,
+                "created_at": session.created_at,
+                "updated_at": session.updated_at,
+            }
+        )
     return sessions
 
 

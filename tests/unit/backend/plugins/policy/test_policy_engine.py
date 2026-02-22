@@ -528,9 +528,7 @@ class TestPolicyLoader:
             policy_data = {
                 "version": "1.0",
                 "default_action": "allow",
-                "rules": [
-                    {"rule_id": "test-rule", "action": "warn"}
-                ],
+                "rules": [{"rule_id": "test-rule", "action": "warn"}],
             }
             policy_path = Path(tmpdir) / "valid.json"
             policy_path.write_text(json.dumps(policy_data))
@@ -556,9 +554,7 @@ class TestPolicyLoader:
         """Test validating policy with missing rule_id."""
         with tempfile.TemporaryDirectory() as tmpdir:
             policy_data = {
-                "rules": [
-                    {"action": "allow"}  # Missing rule_id
-                ],
+                "rules": [{"action": "allow"}],  # Missing rule_id
             }
             policy_path = Path(tmpdir) / "invalid.json"
             policy_path.write_text(json.dumps(policy_data))

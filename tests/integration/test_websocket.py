@@ -56,6 +56,7 @@ pytestmark = [
 @dataclass
 class WebSocketTestResult:
     """Result of a WebSocket connection test."""
+
     endpoint: str
     connected: bool
     messages_received: int
@@ -68,6 +69,7 @@ class WebSocketTestResult:
 @dataclass
 class WebSocketMessage:
     """A received WebSocket message."""
+
     timestamp: datetime
     data: Any
     message_type: str = "text"
@@ -102,7 +104,9 @@ class WebSocketTester:
             self.error = str(e)
             return False
 
-    def receive_messages(self, max_count: int = 5, wait_seconds: float = 2.0) -> list[WebSocketMessage]:
+    def receive_messages(
+        self, max_count: int = 5, wait_seconds: float = 2.0
+    ) -> list[WebSocketMessage]:
         """Receive messages from the WebSocket."""
         if not self._ws or not self.connected:
             return []
@@ -124,7 +128,7 @@ class WebSocketTester:
                     msg = WebSocketMessage(
                         timestamp=datetime.now(),
                         data=parsed,
-                        message_type="json" if isinstance(parsed, dict) else "text"
+                        message_type="json" if isinstance(parsed, dict) else "text",
                     )
                     messages.append(msg)
                     self.messages.append(msg)
@@ -291,8 +295,9 @@ class TestWebSocketConnectivity:
             # These are common endpoints that should exist
             pass  # Don't fail test, just log
 
-        assert result.closed_cleanly or not result.connected, \
-            f"Connection to {endpoint_name} did not close cleanly"
+        assert (
+            result.closed_cleanly or not result.connected
+        ), f"Connection to {endpoint_name} did not close cleanly"
 
 
 class TestJobsWebSocket:
@@ -328,7 +333,7 @@ class TestJobsWebSocket:
                 requests.post(
                     f"{BACKEND_URL}/api/voice/synthesize",
                     json={"text": "Test", "engine": "piper"},
-                    timeout=5
+                    timeout=5,
                 )
 
             messages = tester.receive_messages(max_count=5, wait_seconds=3)
@@ -430,7 +435,9 @@ class TestAudioMetersWebSocket:
             # Calculate update frequency
             duration = 2.0
             frequency = len(messages) / duration
-            print(f"Meter update frequency: {frequency:.1f} Hz ({len(messages)} messages in {duration}s)")
+            print(
+                f"Meter update frequency: {frequency:.1f} Hz ({len(messages)} messages in {duration}s)"
+            )
 
             # Meters should update at least a few times per second
             # No assertion since this depends on backend configuration
@@ -574,16 +581,20 @@ class TestWebSocketReport:
         report_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(report_path, "w") as f:
-            json.dump({
-                "timestamp": datetime.now().isoformat(),
-                "base_url": WS_BASE_URL,
-                "summary": {
-                    "total": total_count,
-                    "connected": connected_count,
-                    "success_rate": connected_count / total_count,
+            json.dump(
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "base_url": WS_BASE_URL,
+                    "summary": {
+                        "total": total_count,
+                        "connected": connected_count,
+                        "success_rate": connected_count / total_count,
+                    },
+                    "endpoints": results,
                 },
-                "endpoints": results,
-            }, f, indent=2)
+                f,
+                indent=2,
+            )
 
         print(f"\nReport saved to: {report_path}")
 

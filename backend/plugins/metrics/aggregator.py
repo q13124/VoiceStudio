@@ -43,9 +43,7 @@ class PluginHealthSummary:
             "avg_latency_ms": self.avg_latency_ms,
             "total_calls": self.total_calls,
             "total_errors": self.total_errors,
-            "last_activity": (
-                self.last_activity.isoformat() if self.last_activity else None
-            ),
+            "last_activity": (self.last_activity.isoformat() if self.last_activity else None),
             "memory_bytes": self.memory_bytes,
             "crash_count": self.crash_count,
         }
@@ -172,9 +170,7 @@ class MetricsAggregator:
                 # Invalid timestamp format - leave last_activity as None
                 logger.debug(f"Could not parse last_activity for {plugin_id}: {e}")
 
-        status = self._determine_health_status(
-            error_rate, avg_latency, crash_count, last_activity
-        )
+        status = self._determine_health_status(error_rate, avg_latency, crash_count, last_activity)
 
         return PluginHealthSummary(
             plugin_id=plugin_id,
@@ -217,14 +213,10 @@ class MetricsAggregator:
         total_errors = sum(p.total_errors for p in plugin_summaries)
         total_memory = sum(p.memory_bytes or 0 for p in plugin_summaries)
 
-        system_error_rate = (
-            (total_errors / total_calls * 100) if total_calls > 0 else 0.0
-        )
+        system_error_rate = (total_errors / total_calls * 100) if total_calls > 0 else 0.0
 
         # Weighted average latency
-        total_latency_weighted = sum(
-            p.avg_latency_ms * p.total_calls for p in plugin_summaries
-        )
+        total_latency_weighted = sum(p.avg_latency_ms * p.total_calls for p in plugin_summaries)
         avg_latency = total_latency_weighted / total_calls if total_calls > 0 else 0.0
 
         summary = SystemHealthSummary(
@@ -342,14 +334,16 @@ class MetricsAggregator:
         for timestamp, plugin_values in sorted(buckets.items()):
             result[timestamp] = []
             for plugin_id, values in plugin_values.items():
-                result[timestamp].append({
-                    "plugin_id": plugin_id,
-                    "count": len(values),
-                    "sum": sum(values),
-                    "avg": sum(values) / len(values) if values else 0,
-                    "min": min(values) if values else 0,
-                    "max": max(values) if values else 0,
-                })
+                result[timestamp].append(
+                    {
+                        "plugin_id": plugin_id,
+                        "count": len(values),
+                        "sum": sum(values),
+                        "avg": sum(values) / len(values) if values else 0,
+                        "min": min(values) if values else 0,
+                        "max": max(values) if values else 0,
+                    }
+                )
 
         return result
 

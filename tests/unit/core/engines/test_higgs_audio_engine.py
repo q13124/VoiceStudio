@@ -23,9 +23,7 @@ class TestHiggsAudioEngineImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            higgs_audio_engine is not None
-        ), "Failed to import higgs_audio_engine module"
+        assert higgs_audio_engine is not None, "Failed to import higgs_audio_engine module"
 
     def test_module_has_higgs_audio_engine_class(self):
         """Test module has HiggsAudioEngine class."""
@@ -57,18 +55,14 @@ class TestHiggsAudioEngineClass:
             engine = higgs_audio_engine.HiggsAudioEngine(device="cpu", gpu=False)
             required_methods = ["initialize", "cleanup", "synthesize"]
             for method in required_methods:
-                assert hasattr(
-                    engine, method
-                ), f"HiggsAudioEngine missing method: {method}"
+                assert hasattr(engine, method), f"HiggsAudioEngine missing method: {method}"
 
     def test_higgs_audio_engine_has_optimization_features(self):
         """Test HiggsAudioEngine has optimization features."""
         if hasattr(higgs_audio_engine, "HiggsAudioEngine"):
             engine = higgs_audio_engine.HiggsAudioEngine(device="cpu", gpu=False)
             # Check for caching support
-            assert hasattr(
-                engine, "enable_caching"
-            ), "HiggsAudioEngine should support caching"
+            assert hasattr(engine, "enable_caching"), "HiggsAudioEngine should support caching"
             # Check for batch processing (method is called batch_synthesize)
             assert hasattr(
                 engine, "batch_synthesize"
@@ -96,9 +90,7 @@ class TestHiggsAudioEngineCaching:
         if hasattr(higgs_audio_engine, "HiggsAudioEngine"):
             engine = higgs_audio_engine.HiggsAudioEngine(device="cpu", gpu=False)
             # Check initial state (should be True by default)
-            assert (
-                engine.enable_caching is True
-            ), "Caching should be enabled by default"
+            assert engine.enable_caching is True, "Caching should be enabled by default"
             # Test that enable_caching method exists and can be called
             assert hasattr(engine, "enable_caching"), "enable_caching should exist"
             # The method sets self.enable_caching, so after calling it becomes a property
@@ -109,18 +101,14 @@ class TestHiggsAudioEngineCaching:
                 enable_caching_method(False)
                 # After calling, enable_caching becomes a boolean property
                 # Verify it was set correctly by checking the attribute directly
-                assert hasattr(
-                    engine, "enable_caching"
-                ), "enable_caching should still exist"
+                assert hasattr(engine, "enable_caching"), "enable_caching should still exist"
 
     def test_speaker_cache_support(self):
         """Test speaker audio cache support."""
         if hasattr(higgs_audio_engine, "HiggsAudioEngine"):
             engine = higgs_audio_engine.HiggsAudioEngine(device="cpu", gpu=False)
             # Check for speaker cache support (Higgs Audio has LRU speaker cache)
-            assert hasattr(
-                higgs_audio_engine, "_HIGGS_AUDIO_SPEAKER_CACHE"
-            ) or hasattr(
+            assert hasattr(higgs_audio_engine, "_HIGGS_AUDIO_SPEAKER_CACHE") or hasattr(
                 engine, "_speaker_cache"
             ), "HiggsAudioEngine should support speaker audio caching"
 
@@ -140,12 +128,8 @@ class TestHiggsAudioEngineBatchProcessing:
         """Test batch_size attribute exists and is valid."""
         if hasattr(higgs_audio_engine, "HiggsAudioEngine"):
             engine = higgs_audio_engine.HiggsAudioEngine(device="cpu", gpu=False)
-            assert hasattr(
-                engine, "batch_size"
-            ), "HiggsAudioEngine should have batch_size"
-            assert isinstance(
-                engine.batch_size, int
-            ), "batch_size should be an integer"
+            assert hasattr(engine, "batch_size"), "HiggsAudioEngine should have batch_size"
+            assert isinstance(engine.batch_size, int), "batch_size should be an integer"
             assert engine.batch_size > 0, "batch_size should be positive"
 
 
@@ -159,9 +143,7 @@ class TestHiggsAudioEngineProtocol:
             # Check for protocol methods
             assert hasattr(engine, "initialize"), "Should implement initialize"
             assert hasattr(engine, "cleanup"), "Should implement cleanup"
-            assert hasattr(
-                engine, "is_initialized"
-            ), "Should implement is_initialized"
+            assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
             assert hasattr(engine, "get_device"), "Should implement get_device"
 
     def test_device_management(self):
@@ -170,9 +152,7 @@ class TestHiggsAudioEngineProtocol:
             engine = higgs_audio_engine.HiggsAudioEngine(device="cpu", gpu=False)
             assert engine.get_device() == "cpu"
             # Test with cuda if available
-            engine_cuda = higgs_audio_engine.HiggsAudioEngine(
-                device="cuda", gpu=True
-            )
+            engine_cuda = higgs_audio_engine.HiggsAudioEngine(device="cuda", gpu=True)
             assert engine_cuda.get_device() == "cuda"
 
 
@@ -183,12 +163,8 @@ class TestHiggsAudioEngineConfiguration:
         """Test default sample rate is set."""
         if hasattr(higgs_audio_engine, "HiggsAudioEngine"):
             engine = higgs_audio_engine.HiggsAudioEngine(device="cpu", gpu=False)
-            assert hasattr(
-                engine, "sample_rate"
-            ), "Should have sample_rate attribute"
-            assert isinstance(
-                engine.sample_rate, int
-            ), "sample_rate should be an integer"
+            assert hasattr(engine, "sample_rate"), "Should have sample_rate attribute"
+            assert isinstance(engine.sample_rate, int), "sample_rate should be an integer"
             assert engine.sample_rate > 0, "sample_rate should be positive"
 
     def test_model_name_attribute(self):
@@ -276,4 +252,3 @@ class TestHiggsAudioEngineModule:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

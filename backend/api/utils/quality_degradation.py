@@ -128,17 +128,11 @@ def calculate_quality_baseline(
         return None
 
     # Filter entries by time period
-    cutoff_date = (
-        datetime.utcnow() - timedelta(days=time_period_days)
-    ).isoformat() + "Z"
-    recent_entries = [
-        e for e in quality_history if e.get("timestamp", "") >= cutoff_date
-    ]
+    cutoff_date = (datetime.utcnow() - timedelta(days=time_period_days)).isoformat() + "Z"
+    recent_entries = [e for e in quality_history if e.get("timestamp", "") >= cutoff_date]
 
     if len(recent_entries) < min_samples:
-        logger.warning(
-            f"Insufficient samples for baseline: {len(recent_entries)} < {min_samples}"
-        )
+        logger.warning(f"Insufficient samples for baseline: {len(recent_entries)} < {min_samples}")
         return None
 
     # Calculate averages for each metric
@@ -167,9 +161,7 @@ def calculate_quality_baseline(
         if "quality_score" in entry:
             quality_scores.append(float(entry["quality_score"]))
 
-    baseline_quality_score = (
-        sum(quality_scores) / len(quality_scores) if quality_scores else 0.0
-    )
+    baseline_quality_score = sum(quality_scores) / len(quality_scores) if quality_scores else 0.0
 
     # Get profile_id from first entry
     profile_id = recent_entries[0].get("profile_id", "unknown")
@@ -215,12 +207,8 @@ def detect_quality_degradation(
             return []
 
     # Get recent entries (within time window)
-    cutoff_date = (
-        datetime.utcnow() - timedelta(days=time_window_days)
-    ).isoformat() + "Z"
-    recent_entries = [
-        e for e in quality_history if e.get("timestamp", "") >= cutoff_date
-    ]
+    cutoff_date = (datetime.utcnow() - timedelta(days=time_window_days)).isoformat() + "Z"
+    recent_entries = [e for e in quality_history if e.get("timestamp", "") >= cutoff_date]
 
     if not recent_entries:
         return []
@@ -250,9 +238,7 @@ def detect_quality_degradation(
             current_quality_scores.append(float(entry["quality_score"]))
 
     current_quality_score = (
-        sum(current_quality_scores) / len(current_quality_scores)
-        if current_quality_scores
-        else 0.0
+        sum(current_quality_scores) / len(current_quality_scores) if current_quality_scores else 0.0
     )
 
     # Detect degradation for each metric

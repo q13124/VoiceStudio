@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class SyncStatus(Enum):
     """Sync status."""
+
     SYNCED = "synced"
     PENDING = "pending"
     SYNCING = "syncing"
@@ -29,6 +30,7 @@ class SyncStatus(Enum):
 
 class SyncDirection(Enum):
     """Sync direction."""
+
     UPLOAD = "upload"
     DOWNLOAD = "download"
     BIDIRECTIONAL = "bidirectional"
@@ -37,6 +39,7 @@ class SyncDirection(Enum):
 @dataclass
 class SyncItem:
     """Item to be synced."""
+
     local_path: Path
     remote_path: str
     content_hash: str
@@ -48,6 +51,7 @@ class SyncItem:
 @dataclass
 class SyncResult:
     """Result of a sync operation."""
+
     success: bool
     items_uploaded: int = 0
     items_downloaded: int = 0
@@ -59,6 +63,7 @@ class SyncResult:
 @dataclass
 class CloudConfig:
     """Cloud provider configuration."""
+
     provider: str
     endpoint: str | None = None
     bucket: str | None = None
@@ -143,6 +148,7 @@ class LocalStorageProvider(CloudProvider):
         target.parent.mkdir(parents=True, exist_ok=True)
 
         import shutil
+
         shutil.copy2(local_path, target)
 
         return True
@@ -159,6 +165,7 @@ class LocalStorageProvider(CloudProvider):
         local_path.parent.mkdir(parents=True, exist_ok=True)
 
         import shutil
+
         shutil.copy2(source, local_path)
 
         return True
@@ -187,11 +194,13 @@ class LocalStorageProvider(CloudProvider):
         files = []
         for path in base.rglob("*"):
             if path.is_file():
-                files.append({
-                    "path": str(path.relative_to(self._base_path)),
-                    "size": path.stat().st_size,
-                    "modified": datetime.fromtimestamp(path.stat().st_mtime),
-                })
+                files.append(
+                    {
+                        "path": str(path.relative_to(self._base_path)),
+                        "size": path.stat().st_size,
+                        "modified": datetime.fromtimestamp(path.stat().st_mtime),
+                    }
+                )
 
         return files
 
@@ -222,11 +231,7 @@ class CloudSyncService:
         self._is_syncing = False
         self._last_sync: datetime | None = None
 
-    async def configure(
-        self,
-        config: CloudConfig,
-        provider: CloudProvider | None = None
-    ) -> bool:
+    async def configure(self, config: CloudConfig, provider: CloudProvider | None = None) -> bool:
         """Configure the sync service."""
         self._config = config
 
@@ -239,9 +244,7 @@ class CloudSyncService:
         return await self._provider.connect(config)
 
     async def sync_project(
-        self,
-        project_path: Path,
-        direction: SyncDirection = SyncDirection.BIDIRECTIONAL
+        self, project_path: Path, direction: SyncDirection = SyncDirection.BIDIRECTIONAL
     ) -> SyncResult:
         """Sync a project with cloud storage."""
         if not self._provider or not self._config:
@@ -270,20 +273,20 @@ class CloudSyncService:
 
                     # Check if needs upload
                     remote_meta = await self._provider.get_metadata(remote_path)
-                    if not remote_meta or local_file['modified'] > remote_meta['modified']:
-                        if await self._provider.upload(local_file['path'], remote_path):
+                    if not remote_meta or local_file["modified"] > remote_meta["modified"]:
+                        if await self._provider.upload(local_file["path"], remote_path):
                             result.items_uploaded += 1
                         else:
                             result.errors.append(f"Failed to upload {local_file['path']}")
 
             if direction in (SyncDirection.DOWNLOAD, SyncDirection.BIDIRECTIONAL):
                 for remote_file in remote_files:
-                    relative = remote_file['path'].replace(f"{remote_prefix}/", "")
+                    relative = remote_file["path"].replace(f"{remote_prefix}/", "")
                     local_path = project_path / relative
 
                     # Check if needs download
                     if not local_path.exists():
-                        if await self._provider.download(remote_file['path'], local_path):
+                        if await self._provider.download(remote_file["path"], local_path):
                             result.items_downloaded += 1
                         else:
                             result.errors.append(f"Failed to download {remote_file['path']}")
@@ -330,8 +333,9 @@ class CloudSyncService:
             "is_syncing": self._is_syncing,
             "last_sync": self._last_sync.isoformat() if self._last_sync else None,
             "provider": self._provider.name if self._provider else None,
-            "items_pending": len([i for i in self._sync_items.values()
-                                  if i.status == SyncStatus.PENDING]),
+            "items_pending": len(
+                [i for i in self._sync_items.values() if i.status == SyncStatus.PENDING]
+            ),
         }
 
     async def _scan_local_files(self, path: Path) -> list[dict[str, Any]]:
@@ -341,13 +345,15 @@ class CloudSyncService:
         for file_path in path.rglob("*"):
             if file_path.is_file():
                 stat = file_path.stat()
-                files.append({
-                    "path": file_path,
-                    "relative": str(file_path.relative_to(path)),
-                    "size": stat.st_size,
-                    "modified": datetime.fromtimestamp(stat.st_mtime),
-                    "hash": await self._compute_hash(file_path),
-                })
+                files.append(
+                    {
+                        "path": file_path,
+                        "relative": str(file_path.relative_to(path)),
+                        "size": stat.st_size,
+                        "modified": datetime.fromtimestamp(stat.st_mtime),
+                        "hash": await self._compute_hash(file_path),
+                    }
+                )
 
         return files
 
@@ -355,8 +361,8 @@ class CloudSyncService:
         """Compute file hash."""
         hasher = hashlib.sha256()
 
-        with open(path, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), b''):
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
                 hasher.update(chunk)
 
         return hasher.hexdigest()

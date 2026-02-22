@@ -49,7 +49,9 @@ def t02_library_list():
         assets = data.get("assets", data.get("items", data if isinstance(data, list) else []))
         print(f"  Assets returned: {len(assets)}")
         if assets and isinstance(assets[0], dict):
-            print(f"  First: id={assets[0].get('id', '?')[:12]}... name={assets[0].get('name', '?')}")
+            print(
+                f"  First: id={assets[0].get('id', '?')[:12]}... name={assets[0].get('name', '?')}"
+            )
         return {"status_code": r.status_code, "count": len(assets), "works": len(assets) > 0}
     else:
         print(f"  ERROR: {r.text[:300]}")
@@ -96,7 +98,11 @@ def t05_upload_real_file():
         )
     print(f"  Status: {r.status_code}")
     print(f"  Response: {r.text[:500]}")
-    return {"status_code": r.status_code, "works": r.status_code in (200, 201), "response": r.text[:500]}
+    return {
+        "status_code": r.status_code,
+        "works": r.status_code in (200, 201),
+        "response": r.text[:500],
+    }
 
 
 def t06_list_engines():
@@ -131,7 +137,12 @@ def t07_voice_profiles():
         for p in profiles[:5]:
             if isinstance(p, dict):
                 print(f"    - {p.get('name', p.get('id', '?'))}")
-        return {"status_code": r.status_code, "count": len(profiles), "works": True, "profiles": profiles}
+        return {
+            "status_code": r.status_code,
+            "count": len(profiles),
+            "works": True,
+            "profiles": profiles,
+        }
     print(f"  ERROR: {r.text[:300]}")
     return {"status_code": r.status_code, "works": False}
 
@@ -147,7 +158,11 @@ def t08_transcription_submit():
     )
     print(f"  Status: {r.status_code}")
     print(f"  Response: {r.text[:500]}")
-    return {"status_code": r.status_code, "works": r.status_code in (200, 201, 202), "response": r.text[:500]}
+    return {
+        "status_code": r.status_code,
+        "works": r.status_code in (200, 201, 202),
+        "response": r.text[:500],
+    }
 
 
 def t09_synthesis_submit():
@@ -178,7 +193,11 @@ def t09_synthesis_submit():
     )
     print(f"  Status: {r.status_code}")
     print(f"  Response: {r.text[:500]}")
-    return {"status_code": r.status_code, "works": r.status_code in (200, 201, 202), "response": r.text[:500]}
+    return {
+        "status_code": r.status_code,
+        "works": r.status_code in (200, 201, 202),
+        "response": r.text[:500],
+    }
 
 
 def t10_voice_clone():
@@ -202,7 +221,11 @@ def t10_voice_clone():
         )
     print(f"  Status: {r.status_code}")
     print(f"  Response: {r.text[:500]}")
-    return {"status_code": r.status_code, "works": r.status_code in (200, 201, 202), "response": r.text[:500]}
+    return {
+        "status_code": r.status_code,
+        "works": r.status_code in (200, 201, 202),
+        "response": r.text[:500],
+    }
 
 
 def t11_audio_formats():

@@ -12,9 +12,7 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )
-    config.addinivalue_line(
-        "markers", "performance: marks tests as performance tests"
-    )
+    config.addinivalue_line("markers", "performance: marks tests as performance tests")
 
 
 @pytest.fixture(scope="session")

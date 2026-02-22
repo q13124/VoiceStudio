@@ -69,7 +69,7 @@ def _check_gpu() -> dict[str, Any]:
                 ),
             }
 
-        import torch  # type: ignore
+        import torch
 
         if torch.cuda.is_available():
             return {
@@ -77,9 +77,7 @@ def _check_gpu() -> dict[str, Any]:
                 "available": True,
                 "device_count": torch.cuda.device_count(),
                 "device_name": (
-                    torch.cuda.get_device_name(0)
-                    if torch.cuda.device_count() > 0
-                    else None
+                    torch.cuda.get_device_name(0) if torch.cuda.device_count() > 0 else None
                 ),
             }
 
@@ -129,9 +127,7 @@ def _check_engines() -> dict[str, Any]:
         repo_root = Path(__file__).resolve().parents[3]
         engines_root = repo_root / "engines"
         manifests = (
-            list(engines_root.rglob("engine.manifest.json"))
-            if engines_root.exists()
-            else []
+            list(engines_root.rglob("engine.manifest.json")) if engines_root.exists() else []
         )
 
         engine_ids = []
@@ -164,9 +160,7 @@ def _check_engines() -> dict[str, Any]:
 
 # Register health checks
 _health_checker.register_check("database", _check_database, critical=True)
-_health_checker.register_check(
-    "gpu", lambda: _check_gpu()["status"] == "healthy", critical=False
-)
+_health_checker.register_check("gpu", lambda: _check_gpu()["status"] == "healthy", critical=False)
 _health_checker.register_check(
     "engines", lambda: _check_engines()["status"] == "healthy", critical=False
 )
@@ -631,9 +625,7 @@ async def readiness_check() -> dict[str, Any]:
             "timestamp": datetime.utcnow().isoformat(),
         }
     else:
-        raise HTTPException(
-            status_code=503, detail="Service not ready - critical checks failed"
-        )
+        raise HTTPException(status_code=503, detail="Service not ready - critical checks failed")
 
 
 @router.get("/ready")
@@ -672,7 +664,7 @@ def get_performance_middleware():
     try:
         from backend.api.middleware.performance_monitoring import (
             get_performance_middleware as _get_performance_middleware,
-        )  # type: ignore
+        )
 
         return _get_performance_middleware()
     except Exception as e:
@@ -724,9 +716,7 @@ def preflight_check() -> dict[str, Any]:
         "projects_root": ensure_dir(projects_root),
         "cache_root": ensure_dir(cache_root),
         "model_root": ensure_dir(model_root),
-        "audio_registry_dir": ensure_dir(
-            os.path.dirname(audio_registry_path) or cache_root
-        ),
+        "audio_registry_dir": ensure_dir(os.path.dirname(audio_registry_path) or cache_root),
         "jobs_root": ensure_dir(jobs_root),
     }
 
@@ -811,21 +801,14 @@ def preflight_check() -> dict[str, Any]:
     # Native tool discovery (report-only; hardening handled in
     # dedicated task)
     ffmpeg_env = os.getenv("VOICESTUDIO_FFMPEG_PATH")
-    ffmpeg = (
-        ffmpeg_env
-        if (ffmpeg_env and os.path.exists(ffmpeg_env))
-        else shutil.which("ffmpeg")
-    )
+    ffmpeg = ffmpeg_env if (ffmpeg_env and os.path.exists(ffmpeg_env)) else shutil.which("ffmpeg")
     checks["ffmpeg"] = {
         "ok": bool(ffmpeg),
         "path": ffmpeg or None,
         "message": (
             "ffmpeg found"
             if ffmpeg
-            else (
-                "ffmpeg not found (set VOICESTUDIO_FFMPEG_PATH or "
-                "install ffmpeg on PATH)"
-            )
+            else ("ffmpeg not found (set VOICESTUDIO_FFMPEG_PATH or " "install ffmpeg on PATH)")
         ),
     }
 
@@ -907,23 +890,29 @@ def circuit_breaker_health() -> dict[str, Any]:
         # Format metrics for JSON response
         circuit_breakers = []
         for m in metrics:
-            circuit_breakers.append({
-                "name": m.name,
-                "state": m.state,
-                "failure_count": m.failure_count,
-                "success_count": m.success_count,
-                "total_calls": m.total_calls,
-                "blocked_requests": m.blocked_requests,
-                "failure_rate": round(m.failure_rate, 4),
-                "last_failure_time": m.last_failure_time,
-                "last_state_change": m.last_state_change,
-                "config": {
-                    "failure_threshold": m.config.failure_threshold,
-                    "success_threshold": m.config.success_threshold,
-                    "recovery_timeout": m.config.recovery_timeout,
-                    "half_open_max_calls": m.config.half_open_max_calls,
-                } if m.config else None,
-            })
+            circuit_breakers.append(
+                {
+                    "name": m.name,
+                    "state": m.state,
+                    "failure_count": m.failure_count,
+                    "success_count": m.success_count,
+                    "total_calls": m.total_calls,
+                    "blocked_requests": m.blocked_requests,
+                    "failure_rate": round(m.failure_rate, 4),
+                    "last_failure_time": m.last_failure_time,
+                    "last_state_change": m.last_state_change,
+                    "config": (
+                        {
+                            "failure_threshold": m.config.failure_threshold,
+                            "success_threshold": m.config.success_threshold,
+                            "recovery_timeout": m.config.recovery_timeout,
+                            "half_open_max_calls": m.config.half_open_max_calls,
+                        }
+                        if m.config
+                        else None
+                    ),
+                }
+            )
 
         return {
             "timestamp": datetime.utcnow().isoformat(),
@@ -944,7 +933,7 @@ def circuit_breaker_health() -> dict[str, Any]:
 def reset_circuit_breaker(engine_id: str) -> dict[str, Any]:
     """
     GAP-I24: Manually reset a circuit breaker to CLOSED state.
-    
+
     Use with caution - this allows requests to flow even if the engine
     may still be unhealthy.
     """
@@ -1068,6 +1057,7 @@ async def get_feature_status() -> dict[str, Any]:
     # Lip sync
     try:
         from backend.services.lip_sync_service import LipSyncService
+
         LipSyncService()
         # LipSyncService uses multiple backends; check if any are available
         features["lip_sync"] = {
@@ -1089,8 +1079,11 @@ async def get_feature_status() -> dict[str, Any]:
         tts_engines = [e for e in engines if e.get("type") == "tts"]
         features["text_to_speech"] = {
             "status": "fully_functional" if tts_engines else "unavailable",
-            "message": f"{len(tts_engines)} TTS engines available" if tts_engines
-                       else "No TTS engines loaded",
+            "message": (
+                f"{len(tts_engines)} TTS engines available"
+                if tts_engines
+                else "No TTS engines loaded"
+            ),
             "requires_model": True,
             "available_engines": [e.get("id") for e in tts_engines[:5]],
         }
@@ -1103,7 +1096,9 @@ async def get_feature_status() -> dict[str, Any]:
 
     # Count status summary
     summary = {
-        "fully_functional": sum(1 for f in features.values() if f.get("status") == "fully_functional"),
+        "fully_functional": sum(
+            1 for f in features.values() if f.get("status") == "fully_functional"
+        ),
         "placeholder": sum(1 for f in features.values() if f.get("status") == "placeholder"),
         "unavailable": sum(1 for f in features.values() if f.get("status") == "unavailable"),
         "total": len(features),

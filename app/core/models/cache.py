@@ -110,9 +110,7 @@ class ModelCache:
             f"low_memory_threshold={low_memory_threshold:.1%}"
         )
 
-    def _generate_key(
-        self, engine: str, model_name: str, device: str | None = None
-    ) -> str:
+    def _generate_key(self, engine: str, model_name: str, device: str | None = None) -> str:
         """
         Generate cache key for model.
 
@@ -194,6 +192,7 @@ class ModelCache:
 
         try:
             import torch
+
             if torch.cuda.is_available():
                 return torch.cuda.memory_allocated(0) / (1024 * 1024)  # Convert to MB
         except ImportError:
@@ -232,6 +231,7 @@ class ModelCache:
         if evicted.get("device") == "cuda":
             try:
                 import torch
+
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
                     logger.debug(f"Cleared GPU cache after evicting: {oldest_key}")
@@ -311,18 +311,14 @@ class ModelCache:
                 new_max = max(1, int(self._original_max_models * 0.7))
                 if self.max_models != new_max:
                     logger.info(
-                        f"Reducing model limit due to pressure: "
-                        f"{self.max_models} -> {new_max}"
+                        f"Reducing model limit due to pressure: " f"{self.max_models} -> {new_max}"
                     )
                     self.max_models = new_max
                     self._stats["dynamic_adjustments"] += 1
 
         # Restore limits if memory pressure is low
         elif memory_usage < self.memory_pressure_threshold * 0.7:
-            if (
-                self.max_memory_mb is not None
-                and self.max_memory_mb < self._original_max_memory_mb
-            ):
+            if self.max_memory_mb is not None and self.max_memory_mb < self._original_max_memory_mb:
                 old_limit = self.max_memory_mb
                 logger.info(
                     f"Restoring memory limit: "
@@ -334,8 +330,7 @@ class ModelCache:
 
             if self.max_models < self._original_max_models:
                 logger.info(
-                    f"Restoring model limit: {self.max_models} -> "
-                    f"{self._original_max_models}"
+                    f"Restoring model limit: {self.max_models} -> " f"{self._original_max_models}"
                 )
                 self.max_models = self._original_max_models
                 self._stats["dynamic_adjustments"] += 1
@@ -362,10 +357,7 @@ class ModelCache:
                 self._stats["proactive_evictions"] += 1
                 # Recalculate memory usage
                 memory_usage = self._get_system_memory_usage()
-                logger.debug(
-                    f"Proactive eviction: {evicted_key} "
-                    f"(usage: {memory_usage:.2%})"
-                )
+                logger.debug(f"Proactive eviction: {evicted_key} " f"(usage: {memory_usage:.2%})")
             else:
                 break
 
@@ -399,8 +391,7 @@ class ModelCache:
                 # Recalculate memory usage
                 memory_usage = self._get_system_memory_usage()
                 logger.warning(
-                    f"Memory pressure eviction: {evicted_key} "
-                    f"(usage: {memory_usage:.2%})"
+                    f"Memory pressure eviction: {evicted_key} " f"(usage: {memory_usage:.2%})"
                 )
             else:
                 break
@@ -510,6 +501,7 @@ class ModelCache:
         if gpu_memory_mb is None and device == "cuda" and self.track_gpu_memory:
             try:
                 import torch
+
                 if torch.cuda.is_available():
                     # Get GPU memory before and after (rough estimate)
                     gpu_memory_mb = self._get_gpu_memory_usage_mb()
@@ -646,12 +638,8 @@ class ModelCache:
         if memory_usage is not None:
             usage_str = f"{memory_usage:.2%}"
             stats["system_memory_usage"] = usage_str  # type: ignore
-            stats["memory_pressure"] = (
-                memory_usage >= self.memory_pressure_threshold
-            )
-            stats["low_memory"] = (
-                memory_usage >= self.low_memory_threshold
-            )
+            stats["memory_pressure"] = memory_usage >= self.memory_pressure_threshold
+            stats["low_memory"] = memory_usage >= self.low_memory_threshold
 
         return stats
 
@@ -692,24 +680,18 @@ class ModelCache:
             try:
                 # Check if already cached
                 if self.get(engine, model_name, device) is not None:
-                    logger.debug(
-                        f"Model already cached: " f"{engine}::{model_name}::{device}"
-                    )
+                    logger.debug(f"Model already cached: " f"{engine}::{model_name}::{device}")
                     continue
 
                 # Load model
-                logger.debug(
-                    f"Loading model for cache warming: " f"{engine}::{model_name}"
-                )
+                logger.debug(f"Loading model for cache warming: " f"{engine}::{model_name}")
                 model = load_func()
 
                 # Cache it
                 self.set(engine, model_name, model, device=device)
 
             except Exception as e:
-                logger.warning(
-                    f"Failed to warm cache for " f"{engine}::{model_name}: {e}"
-                )
+                logger.warning(f"Failed to warm cache for " f"{engine}::{model_name}: {e}")
 
         logger.info("Cache warming complete")
 

@@ -27,6 +27,7 @@ def _load_manifest_loader():
             get_engine_entry_point,
             load_engine_manifest,
         )
+
         return find_engine_manifests, get_engine_entry_point, load_engine_manifest
     except ImportError as e:
         pytest.skip(f"Cannot import manifest_loader: {e}")
@@ -41,21 +42,25 @@ def get_all_manifests():
         try:
             m = load_manifest(path)
             status = m.get("implementation_status") or m.get("status") or "unknown"
-            result.append({
-                "engine_id": engine_id,
-                "path": path,
-                "manifest": m,
-                "status": status,
-                "entry_point": m.get("entry_point"),
-            })
+            result.append(
+                {
+                    "engine_id": engine_id,
+                    "path": path,
+                    "manifest": m,
+                    "status": status,
+                    "entry_point": m.get("entry_point"),
+                }
+            )
         except Exception as e:
-            result.append({
-                "engine_id": engine_id,
-                "path": path,
-                "manifest": None,
-                "status": "load_error",
-                "error": str(e),
-            })
+            result.append(
+                {
+                    "engine_id": engine_id,
+                    "path": path,
+                    "manifest": None,
+                    "status": "load_error",
+                    "error": str(e),
+                }
+            )
     return result
 
 
@@ -74,18 +79,23 @@ def engine_health_report():
     """Build engine health report as fixture for tests and final dump."""
     find_manifests, get_entry, load_manifest = _load_manifest_loader()
     manifests = find_manifests(str(ENGINES_ROOT))
-    report = {"engines": [], "summary": {"total": 0, "full": 0, "basic": 0, "placeholder": 0, "external": 0, "error": 0}}
+    report = {
+        "engines": [],
+        "summary": {"total": 0, "full": 0, "basic": 0, "placeholder": 0, "external": 0, "error": 0},
+    }
 
     for engine_id, path in sorted(manifests.items()):
         try:
             m = load_manifest(path)
         except Exception as e:
-            report["engines"].append({
-                "engine_id": engine_id,
-                "status": "load_error",
-                "pass": False,
-                "error": str(e),
-            })
+            report["engines"].append(
+                {
+                    "engine_id": engine_id,
+                    "status": "load_error",
+                    "pass": False,
+                    "error": str(e),
+                }
+            )
             report["summary"]["error"] += 1
             report["summary"]["total"] += 1
             continue
@@ -98,12 +108,14 @@ def engine_health_report():
 
         entry = m.get("entry_point")
         if not entry:
-            report["engines"].append({
-                "engine_id": engine_id,
-                "status": status,
-                "pass": False,
-                "error": "No entry_point",
-            })
+            report["engines"].append(
+                {
+                    "engine_id": engine_id,
+                    "status": status,
+                    "pass": False,
+                    "error": "No entry_point",
+                }
+            )
             continue
 
         passed = False
@@ -138,12 +150,14 @@ def engine_health_report():
         except Exception as e:
             err_msg = str(e)
 
-        report["engines"].append({
-            "engine_id": engine_id,
-            "status": status,
-            "pass": passed,
-            "error": err_msg,
-        })
+        report["engines"].append(
+            {
+                "engine_id": engine_id,
+                "status": status,
+                "pass": passed,
+                "error": err_msg,
+            }
+        )
 
     BUILDLOGS.mkdir(parents=True, exist_ok=True)
     report_path = BUILDLOGS / "engine_health_report.json"

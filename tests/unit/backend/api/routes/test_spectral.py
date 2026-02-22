@@ -33,9 +33,7 @@ class TestSpectralRouteHandlers:
     def test_process_spectral_handler_exists(self):
         """Test process_spectral handler exists."""
         if hasattr(spectral, "process_spectral"):
-            assert callable(
-                spectral.process_spectral
-            ), "process_spectral is not callable"
+            assert callable(spectral.process_spectral), "process_spectral is not callable"
 
 
 class TestSpectralRouter:
@@ -56,4 +54,3 @@ class TestSpectralRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

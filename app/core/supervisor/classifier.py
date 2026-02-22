@@ -19,19 +19,21 @@ logger = logging.getLogger(__name__)
 
 class ComplexityLevel(str, Enum):
     """Complexity level of user input."""
-    LOW = "low"          # Simple greeting, short response expected
-    MEDIUM = "medium"    # Regular conversation
-    HIGH = "high"        # Complex reasoning, tool calling needed
+
+    LOW = "low"  # Simple greeting, short response expected
+    MEDIUM = "medium"  # Regular conversation
+    HIGH = "high"  # Complex reasoning, tool calling needed
 
 
 @dataclass
 class ClassificationResult:
     """Result from intent classification."""
+
     complexity: ComplexityLevel
-    confidence: float           # 0.0 to 1.0
+    confidence: float  # 0.0 to 1.0
     requires_tool_call: bool
     requires_reasoning: bool
-    suggested_route: str        # "s2s", "cascade", "half_cascade"
+    suggested_route: str  # "s2s", "cascade", "half_cascade"
     latency_ms: float
     features: dict[str, Any]
 
@@ -45,27 +47,83 @@ class IntentClassifier:
     """
 
     # Keywords indicating complex reasoning needs
-    COMPLEX_KEYWORDS = frozenset({
-        "explain", "analyze", "compare", "calculate", "debug",
-        "optimize", "recommend", "why", "how does", "what if",
-        "summarize", "translate", "write", "code", "implement",
-        "review", "evaluate", "plan", "design", "research",
-    })
+    COMPLEX_KEYWORDS = frozenset(
+        {
+            "explain",
+            "analyze",
+            "compare",
+            "calculate",
+            "debug",
+            "optimize",
+            "recommend",
+            "why",
+            "how does",
+            "what if",
+            "summarize",
+            "translate",
+            "write",
+            "code",
+            "implement",
+            "review",
+            "evaluate",
+            "plan",
+            "design",
+            "research",
+        }
+    )
 
     # Keywords indicating tool/action invocation
-    TOOL_KEYWORDS = frozenset({
-        "generate", "synthesize", "clone", "convert", "create",
-        "adjust", "change", "set", "apply", "export", "import",
-        "train", "process", "render", "mix", "master", "record",
-        "play", "stop", "pause", "save", "load", "delete",
-    })
+    TOOL_KEYWORDS = frozenset(
+        {
+            "generate",
+            "synthesize",
+            "clone",
+            "convert",
+            "create",
+            "adjust",
+            "change",
+            "set",
+            "apply",
+            "export",
+            "import",
+            "train",
+            "process",
+            "render",
+            "mix",
+            "master",
+            "record",
+            "play",
+            "stop",
+            "pause",
+            "save",
+            "load",
+            "delete",
+        }
+    )
 
     # Keywords indicating casual interaction
-    CASUAL_KEYWORDS = frozenset({
-        "hi", "hello", "hey", "thanks", "thank you", "bye",
-        "yes", "no", "ok", "sure", "maybe", "good", "great",
-        "nice", "cool", "awesome", "fine", "right",
-    })
+    CASUAL_KEYWORDS = frozenset(
+        {
+            "hi",
+            "hello",
+            "hey",
+            "thanks",
+            "thank you",
+            "bye",
+            "yes",
+            "no",
+            "ok",
+            "sure",
+            "maybe",
+            "good",
+            "great",
+            "nice",
+            "cool",
+            "awesome",
+            "fine",
+            "right",
+        }
+    )
 
     def __init__(self):
         self._classification_count = 0
@@ -97,7 +155,9 @@ class IntentClassifier:
         features: dict[str, Any] = {
             "word_count": word_count,
             "has_question": "?" in text,
-            "has_command": any(text_lower.startswith(w) for w in ("please", "can you", "could you")),
+            "has_command": any(
+                text_lower.startswith(w) for w in ("please", "can you", "could you")
+            ),
         }
 
         # Check for tool keywords

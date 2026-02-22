@@ -24,8 +24,14 @@ class TestButtonClicks:
     def test_navigation_button_clicks(self, driver, app_launched):
         """Test that all navigation button clicks work correctly."""
         nav_buttons = [
-            "NavStudio", "NavProfiles", "NavLibrary", "NavEffects",
-            "NavTrain", "NavAnalyze", "NavSettings", "NavLogs",
+            "NavStudio",
+            "NavProfiles",
+            "NavLibrary",
+            "NavEffects",
+            "NavTrain",
+            "NavAnalyze",
+            "NavSettings",
+            "NavLogs",
         ]
 
         for nav_id in nav_buttons:
@@ -92,9 +98,7 @@ class TestPanelInteractions:
 
         # Try to find settings panel content
         try:
-            categories_list = driver.find_element(
-                "accessibility id", "SettingsView_CategoriesList"
-            )
+            categories_list = driver.find_element("accessibility id", "SettingsView_CategoriesList")
             assert categories_list is not None
         except RuntimeError:
             # Panel loaded but specific element ID may differ
@@ -108,9 +112,7 @@ class TestPanelInteractions:
 
         # Try to find library panel content
         try:
-            search_box = driver.find_element(
-                "accessibility id", "LibraryView_SearchBox"
-            )
+            search_box = driver.find_element("accessibility id", "LibraryView_SearchBox")
             assert search_box is not None
         except RuntimeError:
             # Panel loaded but specific element ID may differ
@@ -137,9 +139,7 @@ class TestPanelInteractions:
                 pass
 
         # Navigation should work even if specific content not found
-        profiles_button_after = driver.find_element(
-            "accessibility id", "NavProfiles"
-        )
+        profiles_button_after = driver.find_element("accessibility id", "NavProfiles")
         assert profiles_button_after is not None
 
 
@@ -241,8 +241,14 @@ class TestSequentialNavigation:
     def test_full_navigation_sequence(self, driver, app_launched):
         """Test navigating through all panels sequentially."""
         nav_sequence = [
-            "NavStudio", "NavProfiles", "NavLibrary", "NavEffects",
-            "NavTrain", "NavAnalyze", "NavSettings", "NavLogs",
+            "NavStudio",
+            "NavProfiles",
+            "NavLibrary",
+            "NavEffects",
+            "NavTrain",
+            "NavAnalyze",
+            "NavSettings",
+            "NavLogs",
         ]
 
         for nav_id in nav_sequence:
@@ -262,8 +268,14 @@ class TestSequentialNavigation:
     def test_reverse_navigation_sequence(self, driver, app_launched):
         """Test navigating through all panels in reverse."""
         nav_sequence = [
-            "NavLogs", "NavSettings", "NavAnalyze", "NavTrain",
-            "NavEffects", "NavLibrary", "NavProfiles", "NavStudio",
+            "NavLogs",
+            "NavSettings",
+            "NavAnalyze",
+            "NavTrain",
+            "NavEffects",
+            "NavLibrary",
+            "NavProfiles",
+            "NavStudio",
         ]
 
         for nav_id in nav_sequence:
@@ -321,8 +333,14 @@ class TestButtonStates:
     def test_all_nav_buttons_enabled(self, driver, app_launched):
         """Test that all navigation buttons are enabled."""
         nav_buttons = [
-            "NavStudio", "NavProfiles", "NavLibrary", "NavEffects",
-            "NavTrain", "NavAnalyze", "NavSettings", "NavLogs",
+            "NavStudio",
+            "NavProfiles",
+            "NavLibrary",
+            "NavEffects",
+            "NavTrain",
+            "NavAnalyze",
+            "NavSettings",
+            "NavLogs",
         ]
 
         for nav_id in nav_buttons:
@@ -332,8 +350,14 @@ class TestButtonStates:
     def test_button_accessibility(self, driver, app_launched):
         """Test that buttons are accessible for automation."""
         nav_buttons = [
-            "NavStudio", "NavProfiles", "NavLibrary", "NavEffects",
-            "NavTrain", "NavAnalyze", "NavSettings", "NavLogs",
+            "NavStudio",
+            "NavProfiles",
+            "NavLibrary",
+            "NavEffects",
+            "NavTrain",
+            "NavAnalyze",
+            "NavSettings",
+            "NavLogs",
         ]
 
         for nav_id in nav_buttons:

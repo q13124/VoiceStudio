@@ -125,9 +125,7 @@ async def generate_advanced_spectrogram(request: AdvancedSpectrogramRequest):
         # Apply time range if specified
         if request.time_range:
             start_sample = int(request.time_range.get("start", 0.0) * sample_rate)
-            end_sample = int(
-                request.time_range.get("end", len(audio) / sample_rate) * sample_rate
-            )
+            end_sample = int(request.time_range.get("end", len(audio) / sample_rate) * sample_rate)
             audio = audio[start_sample:end_sample]
 
         # Generate spectrogram based on view_type
@@ -401,11 +399,7 @@ async def compare_spectrograms(request: SpectrogramCompareRequest):
                 if correlations
                 else np.array([], dtype=float)
             )
-            mean_corr = (
-                np.mean(correlation_values).item()
-                if len(correlation_values) > 0
-                else 0.0
-            )
+            mean_corr = np.mean(correlation_values).item() if len(correlation_values) > 0 else 0.0
             result_data = {
                 "correlations": correlations,
                 "mean_correlation": mean_corr,
@@ -528,8 +522,7 @@ async def export_spectrogram(
             if view.get("time_range"):
                 start_sample = int(view["time_range"].get("start", 0.0) * sample_rate)
                 end_sample = int(
-                    view["time_range"].get("end", len(audio) / sample_rate)
-                    * sample_rate
+                    view["time_range"].get("end", len(audio) / sample_rate) * sample_rate
                 )
                 audio = audio[start_sample:end_sample]
 
@@ -566,9 +559,7 @@ async def export_spectrogram(
 
             # Header: frequency bins as columns, time frames as rows
             freqs = librosa.fft_frequencies(sr=sample_rate, n_fft=view["n_fft"])
-            header = ["time"] + [
-                f"freq_{f:.1f}Hz" for f in freqs[: spectrogram.shape[0]]
-            ]
+            header = ["time"] + [f"freq_{f:.1f}Hz" for f in freqs[: spectrogram.shape[0]]]
             writer.writerow(header)
 
             # Data rows
@@ -579,8 +570,7 @@ async def export_spectrogram(
             )
             for t_idx, time_val in enumerate(time_axis):
                 row = [time_val] + [
-                    float(spectrogram[f_idx, t_idx])
-                    for f_idx in range(spectrogram.shape[0])
+                    float(spectrogram[f_idx, t_idx]) for f_idx in range(spectrogram.shape[0])
                 ]
                 writer.writerow(row)
 
@@ -590,19 +580,14 @@ async def export_spectrogram(
                 content=output.getvalue(),
                 media_type="text/csv",
                 headers={
-                    "Content-Disposition": (
-                        f'attachment; filename="spectrogram_{view_id}.csv"'
-                    )
+                    "Content-Disposition": (f'attachment; filename="spectrogram_{view_id}.csv"')
                 },
             )
         else:
             # PNG format - return data URL from view
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    "PNG export not available via this endpoint. "
-                    "Use /generate endpoint."
-                ),
+                detail=("PNG export not available via this endpoint. " "Use /generate endpoint."),
             )
 
     except HTTPException:

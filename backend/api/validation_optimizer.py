@@ -120,9 +120,7 @@ def _validate_early(model: type[BaseModel], data: dict[str, Any]) -> str | None:
         return None
 
 
-def validate_optimized(
-    model: type[T], data: dict[str, Any], use_cache: bool = True
-) -> T:
+def validate_optimized(model: type[T], data: dict[str, Any], use_cache: bool = True) -> T:
     """
     Optimized validation with caching and early failure detection.
 

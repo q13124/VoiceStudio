@@ -89,9 +89,7 @@ class AudioFileNotFoundException(VoiceStudioException):
 class InvalidInputException(VoiceStudioException):
     """Raised when input validation fails."""
 
-    def __init__(
-        self, message: str, field: str | None = None, value: Any | None = None
-    ):
+    def __init__(self, message: str, field: str | None = None, value: Any | None = None):
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=message,

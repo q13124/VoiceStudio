@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.utils import quality_recommendations
 except ImportError:
-    pytest.skip(
-        "Could not import quality_recommendations", allow_module_level=True
-    )
+    pytest.skip("Could not import quality_recommendations", allow_module_level=True)
 
 
 class TestQualityRecommendationsImports:
@@ -37,4 +35,3 @@ class TestQualityRecommendationsImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

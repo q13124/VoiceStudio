@@ -27,11 +27,7 @@ class TestEngineConfigImports:
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
-        classes = [
-            name
-            for name in dir(config)
-            if name[0].isupper() and not name.startswith("_")
-        ]
+        classes = [name for name in dir(config) if name[0].isupper() and not name.startswith("_")]
         assert len(classes) > 0, "module should have classes"
 
 
@@ -51,11 +47,8 @@ class TestEngineConfigFunctions:
     def test_get_engine_config_function_exists(self):
         """Test get_engine_config function exists."""
         if hasattr(config, "get_engine_config"):
-            assert callable(
-                config.get_engine_config
-            ), "get_engine_config should be callable"
+            assert callable(config.get_engine_config), "get_engine_config should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

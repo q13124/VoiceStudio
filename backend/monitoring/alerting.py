@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class AlertSeverity(Enum):
     """Alert severity levels."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -27,6 +28,7 @@ class AlertSeverity(Enum):
 
 class AlertStatus(Enum):
     """Alert status."""
+
     ACTIVE = "active"
     ACKNOWLEDGED = "acknowledged"
     RESOLVED = "resolved"
@@ -36,6 +38,7 @@ class AlertStatus(Enum):
 @dataclass
 class AlertCondition:
     """Condition that triggers an alert."""
+
     name: str
     description: str
     metric_name: str
@@ -49,6 +52,7 @@ class AlertCondition:
 @dataclass
 class Alert:
     """An alert instance."""
+
     alert_id: str
     condition_name: str
     severity: AlertSeverity
@@ -86,8 +90,7 @@ class LogAlertChannel(AlertChannel):
         }.get(alert.severity, logging.WARNING)
 
         logger.log(
-            log_level,
-            f"ALERT [{alert.severity.value.upper()}] {alert.title}: {alert.message}"
+            log_level, f"ALERT [{alert.severity.value.upper()}] {alert.title}: {alert.message}"
         )
 
         return True
@@ -98,6 +101,7 @@ class FileAlertChannel(AlertChannel):
 
     def __init__(self, file_path: str):
         from pathlib import Path
+
         self.file_path = Path(file_path)
         self.file_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -114,8 +118,8 @@ class FileAlertChannel(AlertChannel):
                 "threshold": alert.threshold,
             }
 
-            with open(self.file_path, 'a') as f:
-                f.write(json.dumps(entry) + '\n')
+            with open(self.file_path, "a") as f:
+                f.write(json.dumps(entry) + "\n")
 
             return True
         except Exception as e:
@@ -175,15 +179,17 @@ class AlertManager:
         condition_name: str | None = None,
         severity: AlertSeverity | None = None,
         tags: list[str] | None = None,
-        duration_minutes: int = 60
+        duration_minutes: int = 60,
     ) -> None:
         """Add a suppression rule."""
-        self._suppression_rules.append({
-            "condition_name": condition_name,
-            "severity": severity,
-            "tags": tags,
-            "expires_at": datetime.now() + timedelta(minutes=duration_minutes),
-        })
+        self._suppression_rules.append(
+            {
+                "condition_name": condition_name,
+                "severity": severity,
+                "tags": tags,
+                "expires_at": datetime.now() + timedelta(minutes=duration_minutes),
+            }
+        )
 
     async def check_metric(self, metric_name: str, value: float) -> list[Alert]:
         """Check a metric value against conditions."""
@@ -242,19 +248,18 @@ class AlertManager:
 
         return True
 
-    async def _trigger_alert(
-        self,
-        condition: AlertCondition,
-        value: float
-    ) -> Alert | None:
+    async def _trigger_alert(self, condition: AlertCondition, value: float) -> Alert | None:
         """Trigger an alert."""
         import uuid
 
         # Check if alert already exists for this condition
         existing = next(
-            (a for a in self._alerts.values()
-             if a.condition_name == condition.name and a.status == AlertStatus.ACTIVE),
-            None
+            (
+                a
+                for a in self._alerts.values()
+                if a.condition_name == condition.name and a.status == AlertStatus.ACTIVE
+            ),
+            None,
         )
 
         if existing:
@@ -336,7 +341,7 @@ class AlertManager:
         self,
         status: AlertStatus | None = None,
         severity: AlertSeverity | None = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> list[Alert]:
         """Get filtered alerts."""
         alerts = list(self._alerts.values())

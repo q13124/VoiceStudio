@@ -40,18 +40,18 @@ def main():
         # Run PowerShell script
         ps_cmd = [
             "powershell.exe",
-            "-ExecutionPolicy", "Bypass",
-            "-File", str(script_path),
-            "-Src", str(src),
-            "-Dst", str(dst)
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(script_path),
+            "-Src",
+            str(src),
+            "-Dst",
+            str(dst),
         ]
 
         result = subprocess.run(
-            ps_cmd,
-            capture_output=True,
-            text=True,
-            encoding='utf-8',
-            errors='replace'
+            ps_cmd, capture_output=True, text=True, encoding="utf-8", errors="replace"
         )
 
         # Print output
@@ -73,7 +73,7 @@ def main():
             # Check panel registry
             registry_file = dst / "app" / "core" / "PanelRegistry.Auto.cs"
             if registry_file.exists():
-                content = registry_file.read_text(encoding='utf-8')
+                content = registry_file.read_text(encoding="utf-8")
                 content.count('"')
                 print(f"✓ Panel registry generated: {registry_file}")
                 print("  Found panels in registry")
@@ -88,9 +88,10 @@ def main():
     except Exception as e:
         print(f"ERROR: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
+
 if __name__ == "__main__":
     sys.exit(main())
-

@@ -33,9 +33,7 @@ class TestEvalABXRouteHandlers:
     def test_run_abx_evaluation_handler_exists(self):
         """Test run_abx_evaluation handler exists."""
         if hasattr(eval_abx, "run_abx_evaluation"):
-            assert callable(
-                eval_abx.run_abx_evaluation
-            ), "run_abx_evaluation is not callable"
+            assert callable(eval_abx.run_abx_evaluation), "run_abx_evaluation is not callable"
 
 
 class TestEvalABXRouter:
@@ -56,4 +54,3 @@ class TestEvalABXRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

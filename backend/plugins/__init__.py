@@ -36,9 +36,7 @@ from backend.plugins.core.base import (
     PluginMetadata,
     PluginState,
 )
-from backend.plugins.core.loader import (
-    PluginLoader as CorePluginLoader,
-)
+from backend.plugins.core.loader import PluginLoader as CorePluginLoader
 from backend.plugins.registry.registry import (
     PluginRegistry,
     get_plugin_registry,

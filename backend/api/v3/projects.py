@@ -26,8 +26,10 @@ def _get_request_id(request: Request) -> str | None:
 
 # --- Request/Response Models ---
 
+
 class TrackInfo(BaseModel):
     """Track information."""
+
     id: str
     name: str
     type: str = "audio"
@@ -39,6 +41,7 @@ class TrackInfo(BaseModel):
 
 class ProjectInfo(BaseModel):
     """Project information."""
+
     id: str
     name: str
     description: str | None = None
@@ -65,11 +68,13 @@ class ProjectInfo(BaseModel):
 
 class ProjectDetail(ProjectInfo):
     """Detailed project information with tracks."""
+
     tracks: list[TrackInfo] = []
 
 
 class ProjectListResponse(BaseModel):
     """Paginated project list (cursor-based)."""
+
     projects: list[ProjectInfo]
     cursor: str | None = None
     has_more: bool = False
@@ -78,6 +83,7 @@ class ProjectListResponse(BaseModel):
 
 class CreateProjectRequest(BaseModel):
     """Request to create a project."""
+
     name: str = Field(..., min_length=1, max_length=200)
     description: str | None = Field(None, max_length=1000)
     sample_rate: int = Field(default=44100, ge=8000, le=192000)
@@ -85,11 +91,13 @@ class CreateProjectRequest(BaseModel):
 
 class UpdateProjectRequest(BaseModel):
     """Request to update a project."""
+
     name: str | None = Field(None, min_length=1, max_length=200)
     description: str | None = Field(None, max_length=1000)
 
 
 # --- Endpoints ---
+
 
 @router.get(
     "",
@@ -215,6 +223,7 @@ async def update_project(request: Request, project_id: str, update_request: Upda
 
 class DeleteProjectResult(BaseModel):
     """Result of project deletion."""
+
     project_id: str
     deleted: bool = True
 
@@ -267,6 +276,7 @@ async def duplicate_project(
 
 class ExportProjectResult(BaseModel):
     """Result of project export request."""
+
     project_id: str
     format: str
     status: str = "queued"

@@ -26,11 +26,22 @@ API_BASE_URL = "http://localhost:8000/api"
 # Forbidden terms that indicate placeholder/stub code
 # Only match when these appear as standalone markers, not as part of legitimate code
 FORBIDDEN_TERMS = [
-    "TODO", "FIXME", "HACK", "XXX",
-    "placeholder", "stub", "dummy",
-    "NotImplementedError", "NotImplementedException",
-    "incomplete", "unfinished", "coming soon", "not yet implemented",
-    "WIP", "tbd", "tba"
+    "TODO",
+    "FIXME",
+    "HACK",
+    "XXX",
+    "placeholder",
+    "stub",
+    "dummy",
+    "NotImplementedError",
+    "NotImplementedException",
+    "incomplete",
+    "unfinished",
+    "coming soon",
+    "not yet implemented",
+    "WIP",
+    "tbd",
+    "tba",
 ]
 
 # Terms that are OK in specific contexts (not flagged)
@@ -55,7 +66,7 @@ def get_all_route_files() -> list[Path]:
 
 def check_file_for_forbidden_terms(file_path: Path) -> list[str]:
     """Check file for forbidden placeholder terms.
-    
+
     Uses word boundary matching to avoid false positives:
     - 'sample' won't match 'sample_rate' or 'downsampling'
     - 'stub' won't match 'stubborn'
@@ -63,9 +74,9 @@ def check_file_for_forbidden_terms(file_path: Path) -> list[str]:
     """
     violations = []
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
-            lines = content.split('\n')
+            lines = content.split("\n")
 
             for line_num, line in enumerate(lines, 1):
                 line_lower = line.lower()
@@ -73,16 +84,23 @@ def check_file_for_forbidden_terms(file_path: Path) -> list[str]:
                     term_lower = term.lower()
                     # Use word boundary matching to avoid false positives
                     # Match term only as a complete word or at comment start
-                    pattern = r'\b' + re.escape(term_lower) + r'\b'
+                    pattern = r"\b" + re.escape(term_lower) + r"\b"
                     if re.search(pattern, line_lower):
                         # Skip if it's inside a string that's clearly not a placeholder
                         # e.g., error messages, docstrings with "NotImplementedError" as expected exception
-                        if 'raise ' + term_lower in line_lower or 'except ' + term_lower in line_lower:
+                        if (
+                            "raise " + term_lower in line_lower
+                            or "except " + term_lower in line_lower
+                        ):
                             # This is actual code raising/catching the exception, not a placeholder
-                            violations.append(f"Line {line_num}: Found '{term}' - {line.strip()[:80]}")
-                        elif re.search(r'#\s*' + re.escape(term_lower), line_lower):
+                            violations.append(
+                                f"Line {line_num}: Found '{term}' - {line.strip()[:80]}"
+                            )
+                        elif re.search(r"#\s*" + re.escape(term_lower), line_lower):
                             # Comment-based TODO/FIXME/etc. markers
-                            violations.append(f"Line {line_num}: Found '{term}' - {line.strip()[:80]}")
+                            violations.append(
+                                f"Line {line_num}: Found '{term}' - {line.strip()[:80]}"
+                            )
     except Exception as e:
         logger.warning(f"Could not read {file_path}: {e}")
 
@@ -94,26 +112,30 @@ def extract_endpoints_from_route_file(file_path: Path) -> list[dict[str, Any]]:
     endpoints = []
 
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
             route_patterns = [
-                (r'@router\.(get|post|put|delete|patch)\("([^"]+)"', r'\1', r'\2'),
-                (r'@app\.(get|post|put|delete|patch)\("([^"]+)"', r'\1', r'\2'),
-                (r'@.*\.route\("([^"]+)",\s*methods=\[["\']([^"\']+)["\']', r'\2', r'\1'),
+                (r'@router\.(get|post|put|delete|patch)\("([^"]+)"', r"\1", r"\2"),
+                (r'@app\.(get|post|put|delete|patch)\("([^"]+)"', r"\1", r"\2"),
+                (r'@.*\.route\("([^"]+)",\s*methods=\[["\']([^"\']+)["\']', r"\2", r"\1"),
             ]
 
             for pattern, method_group, path_group in route_patterns:
                 matches = re.finditer(pattern, content)
                 for match in matches:
-                    method = match.group(method_group).upper() if method_group.isdigit() else match.group(int(method_group))
-                    path = match.group(path_group) if path_group.isdigit() else match.group(int(path_group))
+                    method = (
+                        match.group(method_group).upper()
+                        if method_group.isdigit()
+                        else match.group(int(method_group))
+                    )
+                    path = (
+                        match.group(path_group)
+                        if path_group.isdigit()
+                        else match.group(int(path_group))
+                    )
 
-                    endpoints.append({
-                        "method": method,
-                        "path": path,
-                        "file": file_path.name
-                    })
+                    endpoints.append({"method": method, "path": path, "file": file_path.name})
     except Exception as e:
         logger.warning(f"Could not extract endpoints from {file_path}: {e}")
 
@@ -146,8 +168,10 @@ class TestBackendRoutePlaceholderDetection:
 class TestBackendEndpointAvailability:
     """Test suite for endpoint availability."""
 
-    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
-                         reason="Backend not available (set BACKEND_AVAILABLE=true)")
+    @pytest.mark.skipif(
+        os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
+        reason="Backend not available (set BACKEND_AVAILABLE=true)",
+    )
     def test_health_endpoint(self, backend_available):
         """Test health endpoint is available."""
         if not backend_available:
@@ -162,8 +186,10 @@ class TestBackendEndpointAvailability:
         except Exception as e:
             pytest.fail(f"Health endpoint test failed: {e}")
 
-    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
-                         reason="Backend not available (set BACKEND_AVAILABLE=true)")
+    @pytest.mark.skipif(
+        os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
+        reason="Backend not available (set BACKEND_AVAILABLE=true)",
+    )
     def test_profiles_endpoint(self, backend_available):
         """Test profiles endpoint is available."""
         if not backend_available:
@@ -171,8 +197,11 @@ class TestBackendEndpointAvailability:
 
         try:
             response = requests.get(f"{API_BASE_URL}/profiles", timeout=5)
-            assert response.status_code in [200, 401, 403], \
-                f"Profiles endpoint returned {response.status_code}"
+            assert response.status_code in [
+                200,
+                401,
+                403,
+            ], f"Profiles endpoint returned {response.status_code}"
         except Exception as e:
             pytest.skip(f"Profiles endpoint test failed: {e}")
 
@@ -180,8 +209,10 @@ class TestBackendEndpointAvailability:
 class TestBackendEndpointFunctionality:
     """Test suite for endpoint functionality."""
 
-    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
-                         reason="Backend not available (set BACKEND_AVAILABLE=true)")
+    @pytest.mark.skipif(
+        os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
+        reason="Backend not available (set BACKEND_AVAILABLE=true)",
+    )
     def test_profiles_crud(self, backend_available):
         """Test profiles CRUD operations."""
         if not backend_available:
@@ -192,9 +223,9 @@ class TestBackendEndpointFunctionality:
                 f"{API_BASE_URL}/profiles",
                 json={
                     "name": "Test Profile",
-                    "description": "Test profile for integration testing"
+                    "description": "Test profile for integration testing",
                 },
-                timeout=5
+                timeout=5,
             )
 
             if create_response.status_code == 200:
@@ -205,7 +236,9 @@ class TestBackendEndpointFunctionality:
                     get_response = requests.get(f"{API_BASE_URL}/profiles/{profile_id}", timeout=5)
                     assert get_response.status_code == 200, "Failed to retrieve created profile"
 
-                    delete_response = requests.delete(f"{API_BASE_URL}/profiles/{profile_id}", timeout=5)
+                    delete_response = requests.delete(
+                        f"{API_BASE_URL}/profiles/{profile_id}", timeout=5
+                    )
                     assert delete_response.status_code in [200, 204], "Failed to delete profile"
         except Exception as e:
             pytest.skip(f"Profiles CRUD test failed: {e}")
@@ -214,8 +247,10 @@ class TestBackendEndpointFunctionality:
 class TestBackendEndpointErrorHandling:
     """Test suite for endpoint error handling."""
 
-    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
-                         reason="Backend not available (set BACKEND_AVAILABLE=true)")
+    @pytest.mark.skipif(
+        os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
+        reason="Backend not available (set BACKEND_AVAILABLE=true)",
+    )
     def test_invalid_endpoint_returns_404(self, backend_available):
         """Test invalid endpoints return 404."""
         if not backend_available:
@@ -223,8 +258,9 @@ class TestBackendEndpointErrorHandling:
 
         try:
             response = requests.get(f"{API_BASE_URL}/nonexistent-endpoint", timeout=5)
-            assert response.status_code == 404, \
-                f"Invalid endpoint should return 404, got {response.status_code}"
+            assert (
+                response.status_code == 404
+            ), f"Invalid endpoint should return 404, got {response.status_code}"
         except Exception as e:
             pytest.skip(f"Error handling test failed: {e}")
 
@@ -235,10 +271,9 @@ def pytest_addoption(parser):
         "--backend-available",
         action="store_true",
         default=False,
-        help="Run tests that require backend to be available"
+        help="Run tests that require backend to be available",
     )
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--backend-available"])
-

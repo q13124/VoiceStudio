@@ -33,16 +33,12 @@ class TestDubbingRouteHandlers:
     def test_create_dubbing_job_handler_exists(self):
         """Test create_dubbing_job handler exists."""
         if hasattr(dubbing, "create_dubbing_job"):
-            assert callable(
-                dubbing.create_dubbing_job
-            ), "create_dubbing_job is not callable"
+            assert callable(dubbing.create_dubbing_job), "create_dubbing_job is not callable"
 
     def test_get_dubbing_status_handler_exists(self):
         """Test get_dubbing_status handler exists."""
         if hasattr(dubbing, "get_dubbing_status"):
-            assert callable(
-                dubbing.get_dubbing_status
-            ), "get_dubbing_status is not callable"
+            assert callable(dubbing.get_dubbing_status), "get_dubbing_status is not callable"
 
 
 class TestDubbingRouter:

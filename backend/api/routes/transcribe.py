@@ -142,9 +142,7 @@ async def get_supported_languages():
                 }
 
                 return [
-                    SupportedLanguage(
-                        code=code, name=language_names.get(code, code.title())
-                    )
+                    SupportedLanguage(code=code, name=language_names.get(code, code.title()))
                     for code in supported
                 ]
         except Exception as e:
@@ -178,7 +176,7 @@ async def get_supported_languages():
 
 class TranscriptionEngine(BaseModel):
     """Information about an available transcription engine."""
-    
+
     id: str
     name: str
     description: str = ""
@@ -193,42 +191,43 @@ class TranscriptionEngine(BaseModel):
 async def list_transcription_engines():
     """
     List available transcription (STT) engines.
-    
+
     GAP-CS-003: Enables dynamic engine discovery for the frontend.
     """
     engines: list[TranscriptionEngine] = []
-    
+
     # Get engines from EngineService
     if STT_ENGINE_AVAILABLE:
         try:
             engine_service = get_engine_service()
             all_engines = engine_service.list_engines()
-            
+
             # Filter to STT-capable engines
             stt_types = {"stt", "transcription", "speech_recognition", "whisper"}
             for eng in all_engines:
                 eng_type = eng.get("type", "").lower()
                 eng_id = eng.get("id", eng.get("name", ""))
                 eng_name = eng.get("name", eng_id)
-                
+
                 # Include if type matches or name suggests STT
-                is_stt = (
-                    eng_type in stt_types or
-                    any(s in eng_id.lower() for s in ["whisper", "vosk", "stt", "transcri"])
+                is_stt = eng_type in stt_types or any(
+                    s in eng_id.lower() for s in ["whisper", "vosk", "stt", "transcri"]
                 )
-                
+
                 if is_stt:
-                    engines.append(TranscriptionEngine(
-                        id=eng_id,
-                        name=eng_name,
-                        description=eng.get("description", ""),
-                        supports_word_timestamps=eng.get("supports_word_timestamps", True),
-                        supports_diarization=eng.get("supports_diarization", False),
-                        supports_vad=eng.get("supports_vad", False),
-                    ))
+                    engines.append(
+                        TranscriptionEngine(
+                            id=eng_id,
+                            name=eng_name,
+                            description=eng.get("description", ""),
+                            supports_word_timestamps=eng.get("supports_word_timestamps", True),
+                            supports_diarization=eng.get("supports_diarization", False),
+                            supports_vad=eng.get("supports_vad", False),
+                        )
+                    )
         except Exception as e:
             logger.warning(f"Failed to get engines from EngineService: {e}")
-    
+
     # Fallback: return known engines if none discovered
     if not engines:
         engines = [
@@ -257,16 +256,14 @@ async def list_transcription_engines():
                 supports_vad=True,
             ),
         ]
-    
+
     return engines
 
 
 @router.post("/", response_model=TranscriptionResponse)
 async def transcribe_audio(
     request: TranscriptionRequest,
-    project_id: str | None = Query(
-        None, description="Project ID to associate transcription with"
-    ),
+    project_id: str | None = Query(None, description="Project ID to associate transcription with"),
 ):
     """
     Transcribe audio file using Whisper or other STT engines.
@@ -357,7 +354,9 @@ async def transcribe_audio(
                         audio_dir_resolved = Path(audio_dir).resolve()
                         if not str(resolved).startswith(str(audio_dir_resolved)):
                             logger.warning(f"Path traversal attempt blocked: {request.audio_id}")
-                            raise PathValidationError("Invalid audio path", request.audio_id, "traversal")
+                            raise PathValidationError(
+                                "Invalid audio path", request.audio_id, "traversal"
+                            )
 
                         if os.path.exists(potential_path):
                             audio_path = potential_path
@@ -365,14 +364,13 @@ async def transcribe_audio(
                             # Try matching by filename (without extension)
                             for filename in os.listdir(audio_dir):
                                 base_name = os.path.splitext(filename)[0]
-                                if (
-                                    base_name == safe_audio_id
-                                    or filename == safe_audio_id
-                                ):
+                                if base_name == safe_audio_id or filename == safe_audio_id:
                                     audio_path = os.path.join(audio_dir, filename)
                                     break
                     except PathValidationError as e:
-                        logger.warning(f"Path validation failed for audio_id '{request.audio_id}': {e}")
+                        logger.warning(
+                            f"Path validation failed for audio_id '{request.audio_id}': {e}"
+                        )
                         raise HTTPException(status_code=400, detail="Invalid audio identifier")
             except HTTPException:
                 raise
@@ -384,9 +382,7 @@ async def transcribe_audio(
             error_msg = f"Audio file not found for audio_id: {request.audio_id}. "
             if project_id:
                 error_msg += f"Checked project '{project_id}' audio directory. "
-            error_msg += (
-                "Please ensure the audio has been synthesized or uploaded first."
-            )
+            error_msg += "Please ensure the audio has been synthesized or uploaded first."
             raise HTTPException(status_code=404, detail=error_msg)
 
         # Transcribe using Whisper engine
@@ -548,9 +544,7 @@ async def get_transcription(transcription_id: str):
 
 
 @router.get("/", response_model=list[TranscriptionResponse])
-@cache_response(
-    ttl=30
-)  # Cache for 30 seconds (transcription list may change frequently)
+@cache_response(ttl=30)  # Cache for 30 seconds (transcription list may change frequently)
 async def list_transcriptions(
     audio_id: str | None = Query(None, description="Filter by audio ID"),
     project_id: str | None = Query(None, description="Filter by project ID"),

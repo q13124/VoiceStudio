@@ -263,8 +263,7 @@ async def validate_dataset(dataset_id: str):
 
     if len(audio_files) < 10:
         warnings.append(
-            "Dataset has fewer than 10 audio files. "
-            "More files may improve training quality."
+            "Dataset has fewer than 10 audio files. " "More files may improve training quality."
         )
 
     transcripts_missing = sum(1 for af in audio_files if not af.get("transcript"))

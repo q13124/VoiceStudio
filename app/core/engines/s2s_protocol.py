@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class S2SConnectionState(str, Enum):
     """Connection state for S2S providers."""
+
     DISCONNECTED = "disconnected"
     CONNECTING = "connecting"
     CONNECTED = "connected"
@@ -31,6 +32,7 @@ class S2SConnectionState(str, Enum):
 @dataclass
 class S2SConfig:
     """Configuration for S2S provider."""
+
     model: str = ""
     voice: str = "alloy"
     language: str = "en"
@@ -56,6 +58,7 @@ class S2SConfig:
 @dataclass
 class S2SResponse:
     """Response from an S2S provider."""
+
     audio_data: bytes | None = None
     transcript: str | None = None  # If provider generates transcript
     response_text: str | None = None
@@ -91,9 +94,7 @@ class S2SProviderProtocol(Protocol):
 
     async def receive_audio(self) -> AsyncIterator[S2SResponse]: ...
 
-    async def respond(
-        self, audio_data: bytes, context: str | None = None
-    ) -> S2SResponse: ...
+    async def respond(self, audio_data: bytes, context: str | None = None) -> S2SResponse: ...
 
     async def interrupt(self) -> None: ...
 
@@ -109,7 +110,9 @@ class BaseS2SProvider(EngineProtocol):
     engine router and lifecycle management.
     """
 
-    def __init__(self, config: S2SConfig | None = None, device: str | None = None, gpu: bool = False):
+    def __init__(
+        self, config: S2SConfig | None = None, device: str | None = None, gpu: bool = False
+    ):
         # S2S providers are typically cloud-based, so default to cpu (no local GPU needed)
         super().__init__(device=device, gpu=gpu)
         self._config = config or S2SConfig()
@@ -169,9 +172,7 @@ class BaseS2SProvider(EngineProtocol):
     async def receive_audio(self) -> AsyncIterator[S2SResponse]: ...
 
     @abstractmethod
-    async def respond(
-        self, audio_data: bytes, context: str | None = None
-    ) -> S2SResponse: ...
+    async def respond(self, audio_data: bytes, context: str | None = None) -> S2SResponse: ...
 
     async def interrupt(self) -> None:
         """Interrupt current generation. Override for provider-specific logic."""
@@ -187,7 +188,8 @@ class BaseS2SProvider(EngineProtocol):
             "token_ceiling": self._config.token_ceiling,
             "at_ceiling": (
                 self._config.token_ceiling > 0
-                and (self._total_input_tokens + self._total_output_tokens) >= self._config.token_ceiling
+                and (self._total_input_tokens + self._total_output_tokens)
+                >= self._config.token_ceiling
             ),
         }
 
@@ -219,9 +221,7 @@ class BaseS2SProvider(EngineProtocol):
                 f"{self.provider_name}"
             )
 
-    def _update_token_counts(
-        self, input_tokens: int = 0, output_tokens: int = 0
-    ) -> None:
+    def _update_token_counts(self, input_tokens: int = 0, output_tokens: int = 0) -> None:
         """Update token counts after a turn."""
         self._total_input_tokens += input_tokens
         self._total_output_tokens += output_tokens
@@ -230,4 +230,5 @@ class BaseS2SProvider(EngineProtocol):
 
 class TokenCeilingExceeded(Exception):
     """Raised when S2S token ceiling is exceeded."""
+
     pass

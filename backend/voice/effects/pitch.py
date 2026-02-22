@@ -91,10 +91,10 @@ class PitchShiftEffect(AudioEffect):
         if len(resampled) < len(audio):
             # Pitch went up - loop/pad to fill
             repeats = int(np.ceil(len(audio) / len(resampled)))
-            resampled = np.tile(resampled, repeats)[:len(audio)]
+            resampled = np.tile(resampled, repeats)[: len(audio)]
         elif len(resampled) > len(audio):
             # Pitch went down - truncate
-            resampled = resampled[:len(audio)]
+            resampled = resampled[: len(audio)]
 
         return resampled
 

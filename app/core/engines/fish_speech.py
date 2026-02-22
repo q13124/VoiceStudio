@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class FishSpeechConfig:
     """Configuration for Fish Speech engine."""
+
     model_path: str | None = None
     use_gpu: bool = True
     sample_rate: int = 44100
@@ -118,6 +119,7 @@ class FishSpeechEngine(EngineProtocol):
 
         try:
             import torch
+
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except ImportError:
@@ -155,7 +157,9 @@ class FishSpeechEngine(EngineProtocol):
         # Graceful degradation: Generate silence when fish-speech library is not installed.
         # To enable full functionality, install fish-speech: pip install fish-speech
         # See: https://github.com/fishaudio/fish-speech for installation instructions.
-        logger.warning("Fish Speech model not loaded - returning silence. Install fish-speech for actual synthesis.")
+        logger.warning(
+            "Fish Speech model not loaded - returning silence. Install fish-speech for actual synthesis."
+        )
         duration = len(text) * 0.06  # ~60ms per character
         samples = int(duration * self.config.sample_rate)
         return np.zeros(samples, dtype=np.float32)
@@ -224,6 +228,7 @@ class FishSpeechEngine(EngineProtocol):
             if sample_rate != self.config.sample_rate:
                 try:
                     import librosa
+
                     reference_audio = librosa.resample(
                         reference_audio,
                         orig_sr=sample_rate,

@@ -35,11 +35,15 @@ def temp_plugin_dir(tmp_path):
 
     # Create minimal plugin structure
     (plugin_dir / "main.py").write_text('print("Hello from plugin")')
-    (plugin_dir / "manifest.json").write_text(json.dumps({
-        "id": "test-plugin",
-        "name": "Test Plugin",
-        "version": "1.0.0",
-    }))
+    (plugin_dir / "manifest.json").write_text(
+        json.dumps(
+            {
+                "id": "test-plugin",
+                "name": "Test Plugin",
+                "version": "1.0.0",
+            }
+        )
+    )
 
     return plugin_dir
 
@@ -79,7 +83,11 @@ def mock_docker_client():
     container.put_archive.return_value = True
     container.stats.return_value = {
         "memory_stats": {"usage": 100000000, "limit": 256000000},
-        "cpu_stats": {"cpu_usage": {"total_usage": 1000}, "system_cpu_usage": 10000, "online_cpus": 4},
+        "cpu_stats": {
+            "cpu_usage": {"total_usage": 1000},
+            "system_cpu_usage": 10000,
+            "online_cpus": 4,
+        },
         "precpu_stats": {"cpu_usage": {"total_usage": 500}, "system_cpu_usage": 5000},
     }
     container.exec_run.return_value = MagicMock(exit_code=0, output=b'{"result": "ok"}')
@@ -235,6 +243,7 @@ class TestDockerRunnerAvailability:
         with patch("backend.plugins.sandbox.docker_runner.DOCKER_AVAILABLE", True):
             # Need to reimport to get the patched version
             from backend.plugins.sandbox.docker_runner import DockerRunner
+
             result = DockerRunner.is_available()
             assert result is True
 

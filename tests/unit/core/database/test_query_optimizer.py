@@ -149,9 +149,7 @@ class TestConnectionPool:
 
         # Initialize database
         conn = sqlite3.connect(db_path)
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS test " "(id INTEGER PRIMARY KEY, name TEXT)"
-        )
+        conn.execute("CREATE TABLE IF NOT EXISTS test " "(id INTEGER PRIMARY KEY, name TEXT)")
         conn.commit()
         conn.close()
 
@@ -297,9 +295,7 @@ class TestDatabaseQueryOptimizer:
 
         # Initialize database
         conn = sqlite3.connect(db_path)
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS test " "(id INTEGER PRIMARY KEY, name TEXT)"
-        )
+        conn.execute("CREATE TABLE IF NOT EXISTS test " "(id INTEGER PRIMARY KEY, name TEXT)")
         conn.execute("INSERT INTO test (name) VALUES ('test1')")
         conn.execute("INSERT INTO test (name) VALUES ('test2')")
         conn.commit()
@@ -419,8 +415,7 @@ class TestDatabaseQueryOptimizer:
 
         # Verify index exists by querying
         results = optimizer.execute_query(
-            "SELECT name FROM sqlite_master "
-            "WHERE type='index' AND name LIKE 'idx_test_%'"
+            "SELECT name FROM sqlite_master " "WHERE type='index' AND name LIKE 'idx_test_%'"
         )
         assert len(results) > 0
 

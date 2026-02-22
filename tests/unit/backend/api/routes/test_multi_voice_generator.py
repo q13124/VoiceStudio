@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def reset_multi_voice_state():
     """Reset multi-voice state before each test."""
     from backend.api.routes import multi_voice_generator
+
     multi_voice_generator._jobs = {}
     yield
     multi_voice_generator._jobs = {}
@@ -22,6 +23,7 @@ def reset_multi_voice_state():
 def multi_voice_client():
     """Create test client for multi-voice generator routes."""
     from backend.api.routes.multi_voice_generator import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)

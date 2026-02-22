@@ -47,7 +47,7 @@ class TestAudioPipelines:
                 highpass_cutoff=80.0,
                 denoise=True,
                 normalize=True,
-                trim_silence=True
+                trim_silence=True,
             )
 
             assert processed is not None, "Preprocessing returned None"
@@ -67,11 +67,7 @@ class TestAudioPipelines:
 
             # Enhance
             enhanced = enhance_voice_quality(
-                audio,
-                sample_rate=24000,
-                normalize=True,
-                denoise=True,
-                remove_artifacts=True
+                audio, sample_rate=24000, normalize=True, denoise=True, remove_artifacts=True
             )
 
             assert enhanced is not None, "Enhancement returned None"
@@ -94,8 +90,7 @@ class TestAudioPipelines:
 
             # Generate test audio files (simulated)
             audio_arrays = [
-                generate_test_audio(duration_seconds=1.0, sample_rate=24000)
-                for _ in range(3)
+                generate_test_audio(duration_seconds=1.0, sample_rate=24000) for _ in range(3)
             ]
 
             # Process batch
@@ -104,14 +99,16 @@ class TestAudioPipelines:
                 max_workers=2,
                 preprocessing=True,
                 enhancement=True,
-                postprocessing=True
+                postprocessing=True,
             )
 
             assert results is not None, "Batch processing returned None"
-            assert len(results) == len(audio_arrays), \
-                "Batch processing returned wrong number of results"
-            assert all(isinstance(audio, np.ndarray) for audio in results), \
-                "Batch processing returned wrong types"
+            assert len(results) == len(
+                audio_arrays
+            ), "Batch processing returned wrong number of results"
+            assert all(
+                isinstance(audio, np.ndarray) for audio in results
+            ), "Batch processing returned wrong types"
 
         except ImportError:
             pytest.skip("Optimized pipeline not available")
@@ -127,16 +124,14 @@ class TestAudioPipelines:
 
             # Calculate metrics
             metrics = calculate_all_metrics(
-                audio,
-                reference_audio=reference,
-                sample_rate=24000,
-                use_cache=True
+                audio, reference_audio=reference, sample_rate=24000, use_cache=True
             )
 
             assert metrics is not None, "Metrics calculation returned None"
             assert isinstance(metrics, dict), "Metrics returned wrong type"
-            assert "mos_score" in metrics or "similarity" in metrics, \
-                "Metrics missing expected keys"
+            assert (
+                "mos_score" in metrics or "similarity" in metrics
+            ), "Metrics missing expected keys"
 
         except ImportError:
             pytest.skip("Quality metrics not available")
@@ -150,18 +145,9 @@ class TestAudioPipelines:
             processor = create_post_fx_processor(sample_rate=24000)
 
             # Configure effects
-            processor.set_compressor(
-                threshold=-12.0,
-                ratio=4.0,
-                attack=5.0,
-                release=50.0
-            )
+            processor.set_compressor(threshold=-12.0, ratio=4.0, attack=5.0, release=50.0)
 
-            processor.set_reverb(
-                room_size=0.5,
-                damping=0.3,
-                wet_level=0.2
-            )
+            processor.set_reverb(room_size=0.5, damping=0.3, wet_level=0.2)
 
             # Generate test audio
             audio = generate_test_audio(duration_seconds=2.0, sample_rate=24000)
@@ -186,15 +172,10 @@ class TestAudioPipelines:
 
             # Configure mastering
             rack.set_multiband_compressor(
-                low_threshold=-12.0,
-                mid_threshold=-10.0,
-                high_threshold=-8.0
+                low_threshold=-12.0, mid_threshold=-10.0, high_threshold=-8.0
             )
 
-            rack.set_limiter(
-                threshold=-1.0,
-                release=50.0
-            )
+            rack.set_limiter(threshold=-1.0, release=50.0)
 
             rack.set_loudness_target(-23.0)
 
@@ -227,19 +208,11 @@ class TestAudioPipelines:
 
             # Step 1: Preprocess
             preprocessor = create_enhanced_preprocessor(sample_rate=24000)
-            processed = preprocessor.process(
-                audio,
-                remove_dc=True,
-                denoise=True,
-                normalize=True
-            )
+            processed = preprocessor.process(audio, remove_dc=True, denoise=True, normalize=True)
 
             # Step 2: Enhance
             enhanced = enhance_voice_quality(
-                processed,
-                sample_rate=24000,
-                normalize=True,
-                denoise=True
+                processed, sample_rate=24000, normalize=True, denoise=True
             )
 
             # Step 3: Apply effects
@@ -253,4 +226,3 @@ class TestAudioPipelines:
 
         except ImportError:
             pytest.skip("Audio processing modules not available")
-

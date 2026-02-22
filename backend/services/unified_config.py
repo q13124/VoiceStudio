@@ -43,6 +43,7 @@ T = TypeVar("T")
 @dataclass
 class PathsConfig:
     """Path configuration."""
+
     data_root: str = "data"
     models_root: str = "models"
     cache_root: str = "cache"
@@ -53,6 +54,7 @@ class PathsConfig:
 @dataclass
 class GeneralConfig:
     """General application settings."""
+
     theme: str = "Dark"
     language: str = "en-US"
     auto_save: bool = True
@@ -62,6 +64,7 @@ class GeneralConfig:
 @dataclass
 class AudioConfig:
     """Audio device settings."""
+
     output_device: str = "Default"
     input_device: str = "Default"
     sample_rate: int = 44100
@@ -71,6 +74,7 @@ class AudioConfig:
 @dataclass
 class PerformanceConfig:
     """Performance tuning settings."""
+
     caching_enabled: bool = True
     cache_size_mb: int = 512
     max_threads: int = 4
@@ -80,6 +84,7 @@ class PerformanceConfig:
 @dataclass
 class QualityConfig:
     """Quality settings."""
+
     default_preset: str = "standard"
     auto_enhance: bool = True
     min_mos_score: float = 3.5
@@ -90,6 +95,7 @@ class QualityConfig:
 @dataclass
 class VoiceStudioConfig:
     """Main application configuration."""
+
     version: str = "1.0.0"
     paths: PathsConfig = field(default_factory=PathsConfig)
     general: GeneralConfig = field(default_factory=GeneralConfig)
@@ -102,6 +108,7 @@ class VoiceStudioConfig:
 @dataclass
 class RoutingPolicy:
     """Engine routing policy."""
+
     language_mapping: dict[str, str] = field(default_factory=dict)
     fallback_chains: dict[str, list[str]] = field(default_factory=dict)
     quality_tiers: dict[str, dict[str, Any]] = field(default_factory=dict)
@@ -110,6 +117,7 @@ class RoutingPolicy:
 @dataclass
 class ABExperiment:
     """A/B testing experiment."""
+
     id: str
     description: str = ""
     engines: list[str] = field(default_factory=list)
@@ -121,6 +129,7 @@ class ABExperiment:
 @dataclass
 class ABTestingConfig:
     """A/B testing configuration."""
+
     enabled: bool = False
     experiments: list[ABExperiment] = field(default_factory=list)
 
@@ -128,6 +137,7 @@ class ABTestingConfig:
 @dataclass
 class GPUSettings:
     """GPU and hardware settings."""
+
     enabled: bool = True
     device: str = "cuda"
     fallback_to_cpu: bool = True
@@ -138,6 +148,7 @@ class GPUSettings:
 @dataclass
 class EnginesConfig:
     """Engine configuration."""
+
     version: str = "1.0.0"
     defaults: dict[str, str] = field(default_factory=dict)
     routing_policy: RoutingPolicy = field(default_factory=RoutingPolicy)
@@ -150,6 +161,7 @@ class EnginesConfig:
 @dataclass
 class BackendConfig:
     """Backend service configuration."""
+
     host: str = "127.0.0.1"
     port: int = 8000
     workers: int = 4
@@ -160,6 +172,7 @@ class BackendConfig:
 @dataclass
 class LoggingConfig:
     """Logging configuration."""
+
     level: str = "INFO"
     format: str = "text"
     file_enabled: bool = True
@@ -169,6 +182,7 @@ class LoggingConfig:
 @dataclass
 class TelemetryConfig:
     """Telemetry configuration."""
+
     enabled: bool = False
     prometheus_enabled: bool = False
     metrics_port: int = 9090
@@ -177,6 +191,7 @@ class TelemetryConfig:
 @dataclass
 class DeploymentConfig:
     """Deployment configuration."""
+
     version: str = "1.0.0"
     environment: str = "development"
     backend: BackendConfig = field(default_factory=BackendConfig)
@@ -204,7 +219,7 @@ def expand_env_vars(value: str) -> str:
     if not isinstance(value, str):
         return value
 
-    pattern = r'\$\{([^}:]+)(?::([^}]*))?\}'
+    pattern = r"\$\{([^}:]+)(?::([^}]*))?\}"
 
     def replacer(match: re.Match) -> str:
         var_name = match.group(1)
@@ -257,7 +272,9 @@ class ConfigLoader:
     def _load_yaml(self, filename: str) -> dict[str, Any]:
         """Load a YAML file with environment variable expansion."""
         if yaml is None:
-            raise ImportError("PyYAML is required for YAML configuration. Install with: pip install pyyaml")
+            raise ImportError(
+                "PyYAML is required for YAML configuration. Install with: pip install pyyaml"
+            )
 
         filepath = self.config_dir / filename
         if not filepath.exists():
@@ -400,15 +417,9 @@ class UnifiedConfigService:
 
     def _load_configs(self) -> None:
         """Load all configuration files into typed dataclasses."""
-        self._voicestudio = self._parse_voicestudio_config(
-            self._loader.load_voicestudio_config()
-        )
-        self._engines = self._parse_engines_config(
-            self._loader.load_engines_config()
-        )
-        self._deployment = self._parse_deployment_config(
-            self._loader.load_deployment_config()
-        )
+        self._voicestudio = self._parse_voicestudio_config(self._loader.load_voicestudio_config())
+        self._engines = self._parse_engines_config(self._loader.load_engines_config())
+        self._deployment = self._parse_deployment_config(self._loader.load_deployment_config())
 
     def _parse_voicestudio_config(self, data: dict[str, Any]) -> VoiceStudioConfig:
         """Parse raw dict into VoiceStudioConfig."""

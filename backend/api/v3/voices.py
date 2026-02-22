@@ -28,6 +28,7 @@ def _get_request_id(request: Request) -> str | None:
     """Extract request ID from request state if available."""
     return getattr(request.state, "request_id", None)
 
+
 # Sample cache directory
 VOICE_SAMPLES_DIR = Path("data/voice_samples")
 SAMPLE_TEXT = "Hello, this is a sample of my voice."
@@ -35,8 +36,10 @@ SAMPLE_TEXT = "Hello, this is a sample of my voice."
 
 # --- Request/Response Models ---
 
+
 class VoiceProfile(BaseModel):
     """Voice profile information."""
+
     id: str
     name: str
     description: str | None = None
@@ -66,6 +69,7 @@ class VoiceProfile(BaseModel):
 
 class VoiceListResponse(BaseModel):
     """Paginated voice list response (cursor-based)."""
+
     voices: list[VoiceProfile]
     cursor: str | None = None
     has_more: bool = False
@@ -74,6 +78,7 @@ class VoiceListResponse(BaseModel):
 
 class CreateVoiceRequest(BaseModel):
     """Request to create a custom voice."""
+
     name: str = Field(..., min_length=1, max_length=100)
     description: str | None = Field(None, max_length=500)
     language: str = Field(default="en")
@@ -82,6 +87,7 @@ class CreateVoiceRequest(BaseModel):
 
 class CreateVoiceResponse(BaseModel):
     """Response after creating a voice."""
+
     id: str
     name: str
     status: str
@@ -89,6 +95,7 @@ class CreateVoiceResponse(BaseModel):
 
 
 # --- Endpoints ---
+
 
 @router.get(
     "",
@@ -204,6 +211,7 @@ async def create_voice(request: Request, create_request: CreateVoiceRequest):
 
 class DeleteVoiceResult(BaseModel):
     """Result of voice deletion."""
+
     voice_id: str
     deleted: bool = True
 
@@ -227,6 +235,7 @@ async def delete_voice(request: Request, voice_id: str):
 
 class VoiceSampleResponse(BaseModel):
     """Response containing voice sample info."""
+
     voice_id: str
     sample_url: str
     duration_seconds: float

@@ -4,6 +4,7 @@ This module tests:
 - BUG-001/BUG-002: CLI argument parsing for --level and --part
 - BUG-003/BUG-004/BUG-005: MCP adapter _measure() usage pattern
 """
+
 from __future__ import annotations
 
 import argparse
@@ -19,6 +20,7 @@ from tools.context.sources.linear_adapter import LinearAdapter
 # -----------------------------------------------------------------------------
 # BUG-001/BUG-002: CLI Argument Parsing Tests
 # -----------------------------------------------------------------------------
+
 
 class TestCLIArgumentParsing:
     """Tests for allocate.py CLI argument fixes."""
@@ -88,8 +90,12 @@ class TestCLIArgumentParsing:
         parser.add_argument("--include-git", action="store_true")
         parser.add_argument("--preamble", action="store_true")
         parser.add_argument("--part", action="store_true", help="Output P.A.R.T. structured format")
-        parser.add_argument("--level", choices=["high", "mid", "low"], default="mid",
-                            help="Context level (high=minimal, mid=normal, low=all)")
+        parser.add_argument(
+            "--level",
+            choices=["high", "mid", "low"],
+            default="mid",
+            help="Context level (high=minimal, mid=normal, low=all)",
+        )
         parser.add_argument("--config", help="Config path")
         return parser
 
@@ -97,6 +103,7 @@ class TestCLIArgumentParsing:
 # -----------------------------------------------------------------------------
 # BUG-003/BUG-004/BUG-005: MCP Adapter _measure() Usage Tests
 # -----------------------------------------------------------------------------
+
 
 class TestMCPAdapterMeasurePattern:
     """Tests for correct _measure() usage in MCP adapters."""
@@ -188,11 +195,13 @@ class TestMCPAdapterMeasureWithLoader:
         measure_calls = []
 
         def tracking_measure(loader, ctx):
-            measure_calls.append({
-                "loader_callable": callable(loader),
-                "loader_result": loader() if callable(loader) else None,
-                "context": ctx
-            })
+            measure_calls.append(
+                {
+                    "loader_callable": callable(loader),
+                    "loader_result": loader() if callable(loader) else None,
+                    "context": ctx,
+                }
+            )
             return original_measure(loader, ctx)
 
         adapter._measure = tracking_measure
@@ -204,6 +213,7 @@ class TestMCPAdapterMeasureWithLoader:
 
     def test_measure_handles_exception_in_loader(self) -> None:
         """_measure() should handle exceptions from loader gracefully."""
+
         class FailingAdapter(BaseSourceAdapter):
             def __init__(self):
                 super().__init__(source_name="failing", priority=0, offline=True)
@@ -211,6 +221,7 @@ class TestMCPAdapterMeasureWithLoader:
             def fetch(self, context: AllocationContext) -> SourceResult:
                 def _load() -> dict:
                     raise RuntimeError("Simulated failure")
+
                 return self._measure(_load, context)
 
         adapter = FailingAdapter()
@@ -229,6 +240,7 @@ class TestMCPAdapterTelemetry:
     def test_successful_fetch_updates_health_status(self) -> None:
         """Successful fetch should update health status."""
         from tools.context.sources.base import reset_source_telemetry
+
         reset_source_telemetry()
 
         adapter = Context7Adapter()
@@ -243,6 +255,7 @@ class TestMCPAdapterTelemetry:
     def test_multiple_adapters_track_independently(self) -> None:
         """Each adapter should track its own health status."""
         from tools.context.sources.base import reset_source_telemetry
+
         reset_source_telemetry()
 
         context7 = Context7Adapter()

@@ -59,9 +59,7 @@ router = APIRouter(
 # In-memory storage (replace with database in production)
 _training_jobs: dict[str, dict] = {}
 _training_logs: dict[str, list[dict]] = {}
-_training_quality_history: dict[str, list[dict]] = (
-    {}
-)  # job_id -> list of quality metrics (IDEA 54)
+_training_quality_history: dict[str, list[dict]] = {}  # job_id -> list of quality metrics (IDEA 54)
 _MAX_TRAINING_JOBS = 100  # Maximum number of training jobs
 _MAX_TRAINING_LOGS_PER_JOB = 1000  # Maximum log entries per job
 _MAX_QUALITY_HISTORY_PER_JOB = 1000  # Maximum quality history entries per job
@@ -235,9 +233,7 @@ async def create_dataset(request: DatasetCreateRequest):
         raise
     except Exception as e:
         logger.error(f"Error creating training dataset: {e!s}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to create dataset: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to create dataset: {e!s}")
 
 
 @router.get("/datasets", response_model=list[TrainingDataset])
@@ -246,17 +242,13 @@ async def list_datasets():
     """List all training datasets."""
     try:
         datasets = [
-            TrainingDataset(**v)
-            for k, v in _training_jobs.items()
-            if k.startswith("dataset_")
+            TrainingDataset(**v) for k, v in _training_jobs.items() if k.startswith("dataset_")
         ]
         logger.debug(f"Listed {len(datasets)} training datasets")
         return datasets
     except Exception as e:
         logger.error(f"Error listing training datasets: {e!s}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to list datasets: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to list datasets: {e!s}")
 
 
 @router.get("/datasets/{dataset_id}", response_model=TrainingDataset)
@@ -277,9 +269,7 @@ async def get_dataset(dataset_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error getting training dataset {dataset_id}: {e!s}", exc_info=True
-        )
+        logger.error(f"Error getting training dataset {dataset_id}: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get dataset: {e!s}")
 
 
@@ -378,24 +368,16 @@ async def optimize_hyperparameters(
         if "learning_rate" in best_params:
             lr = best_params["learning_rate"]
             if lr < 1e-4:
-                recommendations.append(
-                    "Low learning rate detected - training may be slow"
-                )
+                recommendations.append("Low learning rate detected - training may be slow")
             elif lr > 5e-4:
-                recommendations.append(
-                    "High learning rate detected - may cause instability"
-                )
+                recommendations.append("High learning rate detected - may cause instability")
 
         if "batch_size" in best_params:
             bs = best_params["batch_size"]
             if bs < 8:
-                recommendations.append(
-                    "Small batch size - consider GPU memory constraints"
-                )
+                recommendations.append("Small batch size - consider GPU memory constraints")
             elif bs > 24:
-                recommendations.append(
-                    "Large batch size - ensure sufficient GPU memory"
-                )
+                recommendations.append("Large batch size - ensure sufficient GPU memory")
 
         return HyperparameterOptimizationResponse(
             best_params=best_params,
@@ -420,9 +402,7 @@ async def optimize_hyperparameters(
         )
 
 
-@router.post(
-    "/datasets/{dataset_id}/optimize", response_model=TrainingDataOptimizationResponse
-)
+@router.post("/datasets/{dataset_id}/optimize", response_model=TrainingDataOptimizationResponse)
 async def optimize_training_data(
     dataset_id: str, req: TrainingDataOptimizationRequest
 ) -> TrainingDataOptimizationResponse:
@@ -477,18 +457,13 @@ async def optimize_training_data(
 
                 if quality_scores:
                     # Calculate average quality
-                    avg_quality = sum(score[1] for score in quality_scores) / len(
-                        quality_scores
-                    )
-                    quality_score = min(
-                        10.0, (avg_quality / 5.0) * 10.0
-                    )  # Normalize to 1-10
+                    avg_quality = sum(score[1] for score in quality_scores) / len(quality_scores)
+                    quality_score = min(10.0, (avg_quality / 5.0) * 10.0)  # Normalize to 1-10
 
                     # Select optimal samples (top quality)
                     quality_scores.sort(key=lambda x: x[1], reverse=True)
                     optimal_samples = [
-                        sample[0]
-                        for sample in quality_scores[: min(10, len(quality_scores))]
+                        sample[0] for sample in quality_scores[: min(10, len(quality_scores))]
                     ]
 
                     if quality_score < 6.0:
@@ -499,9 +474,7 @@ async def optimize_training_data(
                             "Apply noise reduction to low-quality samples"
                         )
             except ImportError:
-                logger.warning(
-                    "Quality metrics not available for training data analysis"
-                )
+                logger.warning("Quality metrics not available for training data analysis")
 
         if req.analyze_diversity and dataset.audio_files:
             # Analyze diversity (simplified - would use audio features)
@@ -510,9 +483,7 @@ async def optimize_training_data(
             )  # More files = more diversity
 
             if diversity_score < 5.0:
-                recommendations.append(
-                    "Low diversity detected - add more varied audio samples"
-                )
+                recommendations.append("Low diversity detected - add more varied audio samples")
                 augmentation_suggestions.append("Apply pitch shifting for diversity")
                 augmentation_suggestions.append("Apply time stretching for diversity")
                 augmentation_suggestions.append("Apply speed variation for diversity")
@@ -520,9 +491,7 @@ async def optimize_training_data(
         if req.select_optimal and dataset.audio_files:
             # Select optimal samples if not already selected
             if not optimal_samples:
-                optimal_samples = dataset.audio_files[
-                    : min(10, len(dataset.audio_files))
-                ]
+                optimal_samples = dataset.audio_files[: min(10, len(dataset.audio_files))]
 
         # Create optimized dataset if requested
         optimized_dataset_id = None
@@ -537,9 +506,7 @@ async def optimize_training_data(
                 description=f"Optimized version of {dataset.name}",
                 audio_files=optimal_samples,
                 transcripts=(
-                    dataset.transcripts[: len(optimal_samples)]
-                    if dataset.transcripts
-                    else None
+                    dataset.transcripts[: len(optimal_samples)] if dataset.transcripts else None
                 ),
                 created=datetime.utcnow(),
                 modified=datetime.utcnow(),
@@ -597,13 +564,9 @@ async def start_training(request: TrainingRequest):
         if request.epochs <= 0:
             raise HTTPException(status_code=400, detail="Epochs must be greater than 0")
         if request.batch_size <= 0:
-            raise HTTPException(
-                status_code=400, detail="Batch size must be greater than 0"
-            )
+            raise HTTPException(status_code=400, detail="Batch size must be greater than 0")
         if request.learning_rate <= 0:
-            raise HTTPException(
-                status_code=400, detail="Learning rate must be greater than 0"
-            )
+            raise HTTPException(status_code=400, detail="Learning rate must be greater than 0")
 
         training_id = str(uuid.uuid4())
 
@@ -648,9 +611,7 @@ async def start_training(request: TrainingRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to start training: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to start training: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to start training: {e!s}")
 
 
 async def _start_real_training(training_id: str, request: TrainingRequest):
@@ -716,8 +677,7 @@ async def _execute_real_training(training_id: str, request: TrainingRequest):
 
         # Initialize trainer
         trainer = XTTSTrainer(
-            base_model=request.engine
-            or "tts_models/multilingual/multi-dataset/xtts_v2",
+            base_model=request.engine or "tts_models/multilingual/multi-dataset/xtts_v2",
             device=None,  # Auto-detect
             gpu=request.gpu if hasattr(request, "gpu") else True,
         )
@@ -775,13 +735,10 @@ async def _execute_real_training(training_id: str, request: TrainingRequest):
                 _training_quality_history[training_id].append(quality_metrics)
 
                 # Clean up old quality history
-                if (
-                    len(_training_quality_history[training_id])
-                    > _MAX_QUALITY_HISTORY_PER_JOB
-                ):
-                    _training_quality_history[training_id] = _training_quality_history[
-                        training_id
-                    ][-_MAX_QUALITY_HISTORY_PER_JOB:]
+                if len(_training_quality_history[training_id]) > _MAX_QUALITY_HISTORY_PER_JOB:
+                    _training_quality_history[training_id] = _training_quality_history[training_id][
+                        -_MAX_QUALITY_HISTORY_PER_JOB:
+                    ]
 
                 # Detect quality alerts and early stopping (every 5 epochs)
                 if epoch >= 5 and epoch % 5 == 0:
@@ -828,9 +785,7 @@ async def _execute_real_training(training_id: str, request: TrainingRequest):
                 {
                     "timestamp": datetime.utcnow().isoformat(),
                     "level": "info",
-                    "message": progress_data.get(
-                        "message", f"Epoch {epoch}/{total_epochs}"
-                    ),
+                    "message": progress_data.get("message", f"Epoch {epoch}/{total_epochs}"),
                     "epoch": epoch,
                     "loss": loss,
                 }
@@ -976,13 +931,10 @@ async def _simulate_training(training_id: str, request: TrainingRequest):
             _training_quality_history[training_id].append(quality_metrics)
 
             # Clean up old quality history entries
-            if (
-                len(_training_quality_history[training_id])
-                > _MAX_QUALITY_HISTORY_PER_JOB
-            ):
-                _training_quality_history[training_id] = _training_quality_history[
-                    training_id
-                ][-_MAX_QUALITY_HISTORY_PER_JOB:]
+            if len(_training_quality_history[training_id]) > _MAX_QUALITY_HISTORY_PER_JOB:
+                _training_quality_history[training_id] = _training_quality_history[training_id][
+                    -_MAX_QUALITY_HISTORY_PER_JOB:
+                ]
 
             # Detect quality alerts
             quality_alerts = []
@@ -1076,9 +1028,7 @@ async def _simulate_training(training_id: str, request: TrainingRequest):
 
 
 @router.get("/status/{training_id}", response_model=TrainingStatus)
-@cache_response(
-    ttl=5
-)  # Cache for 5 seconds (status changes frequently during training)
+@cache_response(ttl=5)  # Cache for 5 seconds (status changes frequently during training)
 async def get_training_status(training_id: str):
     """Get training job status."""
     try:
@@ -1109,21 +1059,15 @@ async def get_training_status(training_id: str):
                 # Convert best_metrics if present
                 if rec.get("best_metrics"):
                     rec["best_metrics"] = TrainingQualityMetrics(**rec["best_metrics"])
-                status_dict["early_stopping_recommendation"] = (
-                    EarlyStoppingRecommendation(**rec)
-                )
+                status_dict["early_stopping_recommendation"] = EarlyStoppingRecommendation(**rec)
 
         logger.debug(f"Retrieved training status: {training_id}")
         return TrainingStatus(**status_dict)
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error getting training status {training_id}: {e!s}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get training status: {e!s}"
-        )
+        logger.error(f"Error getting training status {training_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get training status: {e!s}")
 
 
 @router.get("/status", response_model=list[TrainingStatus])
@@ -1134,11 +1078,7 @@ async def list_training_jobs(
 ):
     """List all training jobs, optionally filtered."""
     try:
-        jobs = [
-            TrainingStatus(**v)
-            for k, v in _training_jobs.items()
-            if k.startswith("training_")
-        ]
+        jobs = [TrainingStatus(**v) for k, v in _training_jobs.items() if k.startswith("training_")]
 
         if profile_id:
             jobs = [j for j in jobs if j.profile_id == profile_id]
@@ -1146,28 +1086,18 @@ async def list_training_jobs(
         if status:
             jobs = [j for j in jobs if j.status == status]
 
-        logger.debug(
-            f"Listed {len(jobs)} training jobs (profile_id={profile_id}, status={status})"
-        )
+        logger.debug(f"Listed {len(jobs)} training jobs (profile_id={profile_id}, status={status})")
         return jobs
     except Exception as e:
         logger.error(f"Error listing training jobs: {e!s}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to list training jobs: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to list training jobs: {e!s}")
 
 
-@router.get(
-    "/{training_id}/quality-history", response_model=list[TrainingQualityMetrics]
-)
-@cache_response(
-    ttl=5
-)  # Cache for 5 seconds (quality history updates frequently during training)
+@router.get("/{training_id}/quality-history", response_model=list[TrainingQualityMetrics])
+@cache_response(ttl=5)  # Cache for 5 seconds (quality history updates frequently during training)
 async def get_training_quality_history(
     training_id: str,
-    limit: int | None = Query(
-        100, description="Maximum number of entries to return"
-    ),
+    limit: int | None = Query(100, description="Maximum number of entries to return"),
 ):
     """
     Get quality metrics history for a training job (IDEA 54).
@@ -1217,12 +1147,8 @@ async def get_training_quality_history(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error getting quality history for {training_id}: {e!s}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get quality history: {e!s}"
-        )
+        logger.error(f"Error getting quality history for {training_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get quality history: {e!s}")
 
 
 @router.post("/cancel/{training_id}", response_model=ApiOk)
@@ -1263,21 +1189,15 @@ async def cancel_training(training_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error cancelling training job {training_id}: {e!s}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to cancel training: {e!s}"
-        )
+        logger.error(f"Error cancelling training job {training_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to cancel training: {e!s}")
 
 
 @router.get("/logs/{training_id}", response_model=list[TrainingLogEntry])
 @cache_response(ttl=5)  # Cache for 5 seconds (logs update frequently during training)
 async def get_training_logs(
     training_id: str,
-    limit: int | None = Query(
-        100, description="Maximum number of log entries to return"
-    ),
+    limit: int | None = Query(100, description="Maximum number of log entries to return"),
 ):
     """Get training logs for a training job."""
     try:
@@ -1299,19 +1219,13 @@ async def get_training_logs(
             log["timestamp"] = datetime.fromisoformat(log["timestamp"])
             log_entries.append(TrainingLogEntry(**log))
 
-        logger.debug(
-            f"Retrieved {len(log_entries)} log entries for training job: {training_id}"
-        )
+        logger.debug(f"Retrieved {len(log_entries)} log entries for training job: {training_id}")
         return log_entries
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error getting training logs for {training_id}: {e!s}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get training logs: {e!s}"
-        )
+        logger.error(f"Error getting training logs for {training_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get training logs: {e!s}")
 
 
 @router.delete("/{training_id}", response_model=ApiOk)
@@ -1342,12 +1256,8 @@ async def delete_training_job(training_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error deleting training job {training_id}: {e!s}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to delete training job: {e!s}"
-        )
+        logger.error(f"Error deleting training job {training_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete training job: {e!s}")
 
 
 class ModelExportRequest(BaseModel):
@@ -1428,9 +1338,7 @@ async def export_trained_model(request: ModelExportRequest, http_request: Reques
                     "profile_id": request.profile_id,
                     "exported": datetime.utcnow().isoformat(),
                     "model_type": status_dict.get("engine", "xtts"),
-                    "training_metadata": (
-                        status_dict if request.include_metadata else None
-                    ),
+                    "training_metadata": (status_dict if request.include_metadata else None),
                 }
                 zipf.writestr("metadata.json", json.dumps(metadata, indent=2))
 
@@ -1447,9 +1355,7 @@ async def export_trained_model(request: ModelExportRequest, http_request: Reques
             raise
         except Exception as e:
             logger.error(f"Failed to export model: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=500, detail=f"Failed to export model: {e!s}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to export model: {e!s}")
 
 
 @router.post("/import", response_model=TrainingStatus)
@@ -1518,15 +1424,11 @@ async def import_trained_model(
             model_dir = extract_dir / "model"
             if not model_dir.exists():
                 # Try to find model files
-                model_files = list(extract_dir.glob("*.pth")) + list(
-                    extract_dir.glob("*.pt")
-                )
+                model_files = list(extract_dir.glob("*.pth")) + list(extract_dir.glob("*.pt"))
                 if model_files:
                     model_dir = extract_dir
                 else:
-                    raise HTTPException(
-                        status_code=400, detail="Model files not found in package"
-                    )
+                    raise HTTPException(status_code=400, detail="Model files not found in package")
 
             # Move model to trained models directory
             final_model_dir = Path("models/trained") / training_id
@@ -1568,9 +1470,7 @@ async def import_trained_model(
             raise
         except Exception as e:
             logger.error(f"Failed to import model: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=500, detail=f"Failed to import model: {e!s}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to import model: {e!s}")
 
 
 @router.get("/exports/{export_id}/download")
@@ -1583,6 +1483,4 @@ async def download_export(export_id: str):
         raise HTTPException(status_code=404, detail="Export not found")
 
     zip_path = zip_files[0]
-    return FileResponse(
-        path=str(zip_path), filename=zip_path.name, media_type="application/zip"
-    )
+    return FileResponse(path=str(zip_path), filename=zip_path.name, media_type="application/zip")

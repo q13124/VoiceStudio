@@ -26,12 +26,8 @@ class TestHuggingFaceFixRouteImports:
 
     def test_huggingface_fix_module_imports(self):
         """Test huggingface_fix module can be imported."""
-        assert (
-            huggingface_fix is not None
-        ), "Failed to import huggingface_fix module"
-        assert hasattr(
-            huggingface_fix, "router"
-        ), "huggingface_fix module missing router"
+        assert huggingface_fix is not None, "Failed to import huggingface_fix module"
+        assert hasattr(huggingface_fix, "router"), "huggingface_fix module missing router"
 
 
 class TestHuggingFaceFixRouteHandlers:
@@ -40,9 +36,7 @@ class TestHuggingFaceFixRouteHandlers:
     def test_apply_fix_handler_exists(self):
         """Test apply_fix handler exists."""
         if hasattr(huggingface_fix, "apply_fix"):
-            assert callable(
-                huggingface_fix.apply_fix
-            ), "apply_fix is not callable"
+            assert callable(huggingface_fix.apply_fix), "apply_fix is not callable"
 
 
 class TestHuggingFaceFixRouter:
@@ -63,4 +57,3 @@ class TestHuggingFaceFixRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -23,9 +23,7 @@ class TestMockingBirdEngineImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            mockingbird_engine is not None
-        ), "Failed to import mockingbird_engine module"
+        assert mockingbird_engine is not None, "Failed to import mockingbird_engine module"
 
     def test_module_has_mockingbird_engine_class(self):
         """Test module has MockingBirdEngine class."""
@@ -61,9 +59,7 @@ class TestMockingBirdEngineClass:
                 engine = mockingbird_engine.MockingBirdEngine(device="cpu", gpu=False)
                 required_methods = ["initialize", "cleanup", "synthesize"]
                 for method in required_methods:
-                    assert hasattr(
-                        engine, method
-                    ), f"MockingBirdEngine missing method: {method}"
+                    assert hasattr(engine, method), f"MockingBirdEngine missing method: {method}"
             except (ImportError, Exception):
                 pytest.skip("mockingbird dependencies not installed")
 
@@ -72,9 +68,7 @@ class TestMockingBirdEngineClass:
         if hasattr(mockingbird_engine, "MockingBirdEngine"):
             try:
                 engine = mockingbird_engine.MockingBirdEngine(device="cpu", gpu=False)
-                assert hasattr(
-                    engine, "enable_caching"
-                ), "MockingBirdEngine should support caching"
+                assert hasattr(engine, "enable_caching"), "MockingBirdEngine should support caching"
                 assert hasattr(
                     engine, "batch_synthesize"
                 ), "MockingBirdEngine should support batch processing"
@@ -104,12 +98,8 @@ class TestMockingBirdEngineBatchProcessing:
         if hasattr(mockingbird_engine, "MockingBirdEngine"):
             try:
                 engine = mockingbird_engine.MockingBirdEngine(device="cpu", gpu=False)
-                assert hasattr(
-                    engine, "batch_size"
-                ), "MockingBirdEngine should have batch_size"
-                assert isinstance(
-                    engine.batch_size, int
-                ), "batch_size should be an integer"
+                assert hasattr(engine, "batch_size"), "MockingBirdEngine should have batch_size"
+                assert isinstance(engine.batch_size, int), "batch_size should be an integer"
                 assert engine.batch_size > 0, "batch_size should be positive"
             except (ImportError, Exception):
                 pytest.skip("mockingbird dependencies not installed")
@@ -125,9 +115,7 @@ class TestMockingBirdEngineProtocol:
                 engine = mockingbird_engine.MockingBirdEngine(device="cpu", gpu=False)
                 assert hasattr(engine, "initialize"), "Should implement initialize"
                 assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                assert hasattr(
-                    engine, "is_initialized"
-                ), "Should implement is_initialized"
+                assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                 assert hasattr(engine, "get_device"), "Should implement get_device"
             except (ImportError, Exception):
                 pytest.skip("mockingbird dependencies not installed")

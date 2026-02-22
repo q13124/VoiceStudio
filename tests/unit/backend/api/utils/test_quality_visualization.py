@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.utils import quality_visualization
 except ImportError:
-    pytest.skip(
-        "Could not import quality_visualization", allow_module_level=True
-    )
+    pytest.skip("Could not import quality_visualization", allow_module_level=True)
 
 
 class TestQualityVisualizationImports:
@@ -25,9 +23,7 @@ class TestQualityVisualizationImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            quality_visualization is not None
-        ), "Failed to import quality_visualization module"
+        assert quality_visualization is not None, "Failed to import quality_visualization module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -37,4 +33,3 @@ class TestQualityVisualizationImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

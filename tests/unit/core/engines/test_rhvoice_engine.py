@@ -59,9 +59,7 @@ class TestRHVoiceEngineClass:
                 engine = rhvoice_engine.RHVoiceEngine(device="cpu", gpu=False)
                 required_methods = ["initialize", "cleanup", "synthesize"]
                 for method in required_methods:
-                    assert hasattr(
-                        engine, method
-                    ), f"RHVoiceEngine missing method: {method}"
+                    assert hasattr(engine, method), f"RHVoiceEngine missing method: {method}"
             except (ImportError, Exception):
                 pytest.skip("rhvoice dependencies not installed")
 
@@ -126,9 +124,7 @@ class TestRHVoiceEngineProtocol:
                 engine = rhvoice_engine.RHVoiceEngine(device="cpu", gpu=False)
                 assert hasattr(engine, "initialize"), "Should implement initialize"
                 assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                assert hasattr(
-                    engine, "is_initialized"
-                ), "Should implement is_initialized"
+                assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                 assert hasattr(engine, "get_device"), "Should implement get_device"
             except (ImportError, Exception):
                 pytest.skip("rhvoice dependencies not installed")
@@ -169,13 +165,9 @@ class TestRHVoiceEngineOptimization:
             try:
                 engine = rhvoice_engine.RHVoiceEngine(device="cpu", gpu=False)
                 # Check for LRU cache (OrderedDict)
-                assert hasattr(
-                    engine, "_synthesis_cache"
-                ), "Should have synthesis cache"
+                assert hasattr(engine, "_synthesis_cache"), "Should have synthesis cache"
                 # Check for cache stats method
-                assert hasattr(
-                    engine, "get_cache_stats"
-                ), "Should have get_cache_stats method"
+                assert hasattr(engine, "get_cache_stats"), "Should have get_cache_stats method"
             except (ImportError, Exception):
                 pytest.skip("rhvoice dependencies not installed")
 
@@ -185,13 +177,10 @@ class TestRHVoiceEngineOptimization:
             try:
                 engine = rhvoice_engine.RHVoiceEngine(device="cpu", gpu=False)
                 # Check for reusable temp directory
-                assert hasattr(
-                    engine, "_temp_dir"
-                ), "Should have reusable temp directory"
+                assert hasattr(engine, "_temp_dir"), "Should have reusable temp directory"
             except (ImportError, Exception):
                 pytest.skip("rhvoice dependencies not installed")
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -17,6 +17,7 @@ from fastapi.testclient import TestClient
 def reset_macros_state():
     """Reset macros state before each test."""
     from backend.api.routes import macros
+
     macros._macros = {}
     macros._automation_curves = {}
     macros._macro_execution_status = {}
@@ -49,9 +50,7 @@ def sample_source_node():
         "y": 100.0,
         "properties": {},
         "input_ports": [],
-        "output_ports": [
-            {"id": "out-1", "name": "Output", "type": "audio", "is_required": False}
-        ],
+        "output_ports": [{"id": "out-1", "name": "Output", "type": "audio", "is_required": False}],
     }
 
 
@@ -65,9 +64,7 @@ def sample_output_node():
         "x": 300.0,
         "y": 100.0,
         "properties": {},
-        "input_ports": [
-            {"id": "in-1", "name": "Input", "type": "audio", "is_required": True}
-        ],
+        "input_ports": [{"id": "in-1", "name": "Input", "type": "audio", "is_required": True}],
         "output_ports": [],
     }
 
@@ -187,7 +184,7 @@ class TestMacroCRUD:
         data1["name"] = "P1 Macro"
         data1["project_id"] = "proj-1"
         macros_client.post("/api/macros", json=data1)
-        
+
         # Macro for project 2
         data2 = sample_macro_data.copy()
         data2["name"] = "P2 Macro"
@@ -300,7 +297,7 @@ class TestMacroExecution:
 
     def test_get_macro_execution_status(self, macros_client, sample_macro_data):
         """Test GET /api/macros/{id}/execution-status returns status.
-        
+
         Note: This endpoint has async decorator issues in tests, skipping.
         """
         # TODO: Fix async decorator issue with cache_response in test context
@@ -497,8 +494,9 @@ class TestMacroScheduling:
 
         # Schedule the macro - use correct field name
         from datetime import datetime, timedelta
+
         scheduled_at = (datetime.utcnow() + timedelta(hours=1)).isoformat()
-        
+
         response = macros_client.post(
             f"/api/macros/{macro_id}/schedule",
             json={"scheduled_at": scheduled_at, "priority": "normal"},
@@ -515,6 +513,7 @@ class TestMacroScheduling:
         macro_id = create_response.json()["id"]
 
         from datetime import datetime, timedelta
+
         scheduled_at = (datetime.utcnow() + timedelta(hours=1)).isoformat()
         schedule_response = macros_client.post(
             f"/api/macros/{macro_id}/schedule",
@@ -537,6 +536,7 @@ class TestMacroScheduling:
         macro_id = create_response.json()["id"]
 
         from datetime import datetime, timedelta
+
         scheduled_at = (datetime.utcnow() + timedelta(hours=1)).isoformat()
         schedule_response = macros_client.post(
             f"/api/macros/{macro_id}/schedule",

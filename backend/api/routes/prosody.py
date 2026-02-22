@@ -36,9 +36,7 @@ try:
     HAS_PHONEMIZER = True
 except ImportError:
     HAS_PHONEMIZER = False
-    logger.debug(
-        "Phonemizer not available. Phoneme analysis will use fallback methods."
-    )
+    logger.debug("Phonemizer not available. Phoneme analysis will use fallback methods.")
 
 router = APIRouter(prefix="/api/prosody", tags=["prosody"])
 
@@ -245,9 +243,7 @@ async def analyze_phonemes(text: str, language: str = "en"):
         }
     except Exception as e:
         logger.warning(f"Phoneme estimation failed: {e}")
-        raise HTTPException(
-            status_code=503, detail=f"Phoneme analysis unavailable: {e!s}"
-        )
+        raise HTTPException(status_code=503, detail=f"Phoneme analysis unavailable: {e!s}")
 
 
 @router.post("/apply")
@@ -317,9 +313,7 @@ async def apply_prosody(request: ProsodyApplyRequest):
                 if HAS_AUDIO_UTILS:
                     # Use audio_utils which has pyrubberband support
                     audio = pitch_shift_audio(audio, sample_rate, semitones)
-                    logger.info(
-                        f"Applied pitch shift using audio_utils: {semitones:.2f} semitones"
-                    )
+                    logger.info(f"Applied pitch shift using audio_utils: {semitones:.2f} semitones")
                 else:
                     # Fallback to librosa
                     import librosa
@@ -329,9 +323,7 @@ async def apply_prosody(request: ProsodyApplyRequest):
                         sr=sample_rate,
                         n_steps=semitones,
                     )
-                    logger.info(
-                        f"Applied pitch shift using librosa: {semitones:.2f} semitones"
-                    )
+                    logger.info(f"Applied pitch shift using librosa: {semitones:.2f} semitones")
             except ImportError:
                 logger.warning(
                     "Audio processing libraries not available, skipping pitch modification"
@@ -347,17 +339,13 @@ async def apply_prosody(request: ProsodyApplyRequest):
                     audio = time_stretch_audio(
                         audio, sample_rate, rate=config.rate, preserve_pitch=True
                     )
-                    logger.info(
-                        f"Applied rate modification using audio_utils: {config.rate:.2f}x"
-                    )
+                    logger.info(f"Applied rate modification using audio_utils: {config.rate:.2f}x")
                 else:
                     # Fallback to librosa
                     import librosa
 
                     audio = librosa.effects.time_stretch(audio, rate=config.rate)
-                    logger.info(
-                        f"Applied rate modification using librosa: {config.rate:.2f}x"
-                    )
+                    logger.info(f"Applied rate modification using librosa: {config.rate:.2f}x")
             except ImportError:
                 logger.warning(
                     "Audio processing libraries not available, skipping rate modification"
@@ -401,6 +389,4 @@ async def apply_prosody(request: ProsodyApplyRequest):
         }
     except Exception as e:
         logger.error(f"Prosody application failed: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to apply prosody: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to apply prosody: {e!s}")

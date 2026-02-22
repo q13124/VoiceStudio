@@ -26,6 +26,7 @@ router = APIRouter(prefix="/api/engines", tags=["engines"])
 
 class PreflightResult(BaseModel):
     """Result of a single engine preflight check."""
+
     ok: bool
     downloaded: bool = False
     message: str | None = None
@@ -34,6 +35,7 @@ class PreflightResult(BaseModel):
 
 class PreflightResponse(BaseModel):
     """Response model for preflight checks."""
+
     results: dict[str, PreflightResult]
     all_ready: bool
     ready_count: int
@@ -47,6 +49,7 @@ class PreflightResponse(BaseModel):
 
 class EngineInfo(BaseModel):
     """Information about a single engine."""
+
     id: str = Field(description="Engine identifier")
     name: str = Field(description="Display name")
     type: str = Field(default="tts", description="Engine type (e.g., tts, vc, stt)")
@@ -58,6 +61,7 @@ class EngineInfo(BaseModel):
 
 class EngineListResponse(BaseModel):
     """Response model for listing engines."""
+
     engines: list[EngineInfo] = Field(default_factory=list, description="List of engines")
     available: bool = Field(description="Whether engine service is available")
     count: int = Field(description="Number of engines")
@@ -66,6 +70,7 @@ class EngineListResponse(BaseModel):
 
 class EngineStartResponse(BaseModel):
     """Response model for starting an engine."""
+
     status: str = Field(description="Start status (started, drain_requested)")
     engine_id: str = Field(description="Engine identifier")
     port: int | None = Field(default=None, description="Engine port if applicable")
@@ -73,6 +78,7 @@ class EngineStartResponse(BaseModel):
 
 class EngineStopResponse(BaseModel):
     """Response model for stopping an engine."""
+
     status: str = Field(description="Stop status (released, drain_requested)")
     engine_id: str = Field(description="Engine identifier")
     job_id: str | None = Field(default=None, description="Job ID if applicable")
@@ -80,6 +86,7 @@ class EngineStopResponse(BaseModel):
 
 class EngineStatusResponse(BaseModel):
     """Response model for engine status."""
+
     engine_id: str = Field(description="Engine identifier")
     state: str = Field(description="Engine state (idle, running, busy, stopped, etc.)")
     available: bool = Field(description="Whether engine is available for use")
@@ -89,6 +96,7 @@ class EngineStatusResponse(BaseModel):
 
 class EngineVoice(BaseModel):
     """Voice available in an engine."""
+
     id: str = Field(description="Voice identifier")
     name: str = Field(description="Voice display name")
     language: str | None = Field(default=None, description="Language code (e.g., en-US)")
@@ -99,6 +107,7 @@ class EngineVoice(BaseModel):
 
 class EngineVoicesResponse(BaseModel):
     """Response model for listing engine voices."""
+
     engine_id: str = Field(description="Engine identifier")
     voices: list[EngineVoice] = Field(default_factory=list, description="Available voices")
     count: int = Field(description="Number of voices")
@@ -107,9 +116,7 @@ class EngineVoicesResponse(BaseModel):
 class EngineRecommendationRequest(BaseModel):
     """Request for engine recommendation."""
 
-    task_type: str = Field(
-        default="tts", description="Task type (e.g., 'tts', 'voice_cloning')"
-    )
+    task_type: str = Field(default="tts", description="Task type (e.g., 'tts', 'voice_cloning')")
     min_mos_score: float | None = Field(
         default=None, ge=1.0, le=5.0, description="Minimum MOS score required (1.0-5.0)"
     )
@@ -137,15 +144,9 @@ class EngineRecommendationRequest(BaseModel):
 class EngineQualityEstimate(BaseModel):
     """Quality estimate for an engine."""
 
-    mos_score: float | None = Field(
-        default=None, description="Estimated MOS score (1.0-5.0)"
-    )
-    similarity: float | None = Field(
-        default=None, description="Estimated similarity (0.0-1.0)"
-    )
-    naturalness: float | None = Field(
-        default=None, description="Estimated naturalness (0.0-1.0)"
-    )
+    mos_score: float | None = Field(default=None, description="Estimated MOS score (1.0-5.0)")
+    similarity: float | None = Field(default=None, description="Estimated similarity (0.0-1.0)")
+    naturalness: float | None = Field(default=None, description="Estimated naturalness (0.0-1.0)")
     speed_estimate: str | None = Field(
         default=None, description="Speed estimate (e.g., 'fast', 'medium', 'slow')"
     )
@@ -159,15 +160,9 @@ class EngineRecommendation(BaseModel):
     recommendation_score: float = Field(
         ge=0.0, le=1.0, description="Recommendation score (0.0-1.0, higher is better)"
     )
-    quality_estimate: EngineQualityEstimate = Field(
-        description="Estimated quality metrics"
-    )
-    meets_requirements: bool = Field(
-        description="Whether engine meets all minimum requirements"
-    )
-    reasoning: str = Field(
-        description="Explanation for why this engine was recommended"
-    )
+    quality_estimate: EngineQualityEstimate = Field(description="Estimated quality metrics")
+    meets_requirements: bool = Field(description="Whether engine meets all minimum requirements")
+    reasoning: str = Field(description="Explanation for why this engine was recommended")
 
 
 class EngineRecommendationResponse(BaseModel):
@@ -177,9 +172,7 @@ class EngineRecommendationResponse(BaseModel):
         description="List of engine recommendations, sorted by score"
     )
     total_engines: int = Field(description="Total number of engines evaluated")
-    matching_engines: int = Field(
-        description="Number of engines that meet requirements"
-    )
+    matching_engines: int = Field(description="Number of engines that meet requirements")
 
 
 @router.get("/list", response_model=EngineListResponse)
@@ -192,15 +185,19 @@ async def list_engines(
         engines_raw = engine_service.list_engines()
         # Convert raw engine data to EngineInfo models for contract compliance
         engines = [
-            EngineInfo(
-                id=e.get("id", e.get("name", "unknown")),
-                name=e.get("name", e.get("id", "Unknown")),
-                type=e.get("type", "tts"),
-                version=e.get("version"),
-                description=e.get("description"),
-                available=e.get("available", True),
-                status=e.get("status"),
-            ) if isinstance(e, dict) else EngineInfo(id=str(e), name=str(e))
+            (
+                EngineInfo(
+                    id=e.get("id", e.get("name", "unknown")),
+                    name=e.get("name", e.get("id", "Unknown")),
+                    type=e.get("type", "tts"),
+                    version=e.get("version"),
+                    description=e.get("description"),
+                    available=e.get("available", True),
+                    status=e.get("status"),
+                )
+                if isinstance(e, dict)
+                else EngineInfo(id=str(e), name=str(e))
+            )
             for e in engines_raw
         ]
         return EngineListResponse(engines=engines, available=True, count=len(engines))
@@ -276,10 +273,7 @@ async def recommend_engine(
     try:
         # Get all available engines for the task type via service layer
         engines_list = engine_service.list_engines()
-        available_engines = [
-            e.get("id") if isinstance(e, dict) else e
-            for e in engines_list
-        ]
+        available_engines = [e.get("id") if isinstance(e, dict) else e for e in engines_list]
         recommendations = []
 
         for engine_id in available_engines:
@@ -297,13 +291,14 @@ async def recommend_engine(
             if manifest_type != "audio":
                 continue
 
-            if (request.task_type == "tts" and manifest_subtype not in [
-                "tts",
-                "voice_cloning",
-            ]) or (
-                request.task_type == "voice_cloning"
-                and manifest_subtype != "voice_cloning"
-            ):
+            if (
+                request.task_type == "tts"
+                and manifest_subtype
+                not in [
+                    "tts",
+                    "voice_cloning",
+                ]
+            ) or (request.task_type == "voice_cloning" and manifest_subtype != "voice_cloning"):
                 continue
 
             # Get quality features from manifest
@@ -334,9 +329,7 @@ async def recommend_engine(
             # Parse naturalness estimate
             if "naturalness_estimate" in quality_features:
                 with contextlib.suppress(ValueError, TypeError):
-                    naturalness_estimate = float(
-                        quality_features["naturalness_estimate"]
-                    )
+                    naturalness_estimate = float(quality_features["naturalness_estimate"])
 
             # Get speed estimate
             speed_estimate = quality_features.get("speed_estimate", "medium")
@@ -353,20 +346,14 @@ async def recommend_engine(
                     )
 
             if request.min_similarity is not None:
-                if (
-                    similarity_estimate is None
-                    or similarity_estimate < request.min_similarity
-                ):
+                if similarity_estimate is None or similarity_estimate < request.min_similarity:
                     meets_requirements = False
                     reasoning_parts.append(
                         f"Similarity {similarity_estimate or 'unknown'} below required {request.min_similarity}"
                     )
 
             if request.min_naturalness is not None:
-                if (
-                    naturalness_estimate is None
-                    or naturalness_estimate < request.min_naturalness
-                ):
+                if naturalness_estimate is None or naturalness_estimate < request.min_naturalness:
                     meets_requirements = False
                     reasoning_parts.append(
                         f"Naturalness {naturalness_estimate or 'unknown'} below required {request.min_naturalness}"
@@ -381,9 +368,7 @@ async def recommend_engine(
                 tier = quality_features.get("quality_tier", "standard")
                 if tier == request.quality_tier:
                     score += 0.3
-                    score_factors.append(
-                        f"Matches quality tier '{request.quality_tier}'"
-                    )
+                    score_factors.append(f"Matches quality tier '{request.quality_tier}'")
                 elif tier in ["high", "ultra"] and request.quality_tier in [
                     "high",
                     "ultra",
@@ -461,9 +446,7 @@ async def recommend_engine(
 
     except Exception as e:
         logger.error(f"Error getting engine recommendations: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get engine recommendations: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get engine recommendations: {e!s}")
 
 
 @router.get("/compare")
@@ -502,9 +485,7 @@ async def compare_engines(
 
     except Exception as e:
         logger.error(f"Error comparing engines: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to compare engines: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to compare engines: {e!s}")
 
 
 # Engine Configuration Management Endpoints
@@ -530,9 +511,7 @@ class GPUSettingsRequest(BaseModel):
 
     enabled: bool | None = Field(None, description="Enable GPU")
     device: str | None = Field(None, description="Device (cuda, cpu, auto)")
-    fallback_to_cpu: bool | None = Field(
-        None, description="Fallback to CPU if GPU unavailable"
-    )
+    fallback_to_cpu: bool | None = Field(None, description="Fallback to CPU if GPU unavailable")
     memory_fraction: float | None = Field(
         None, ge=0.0, le=1.0, description="GPU memory fraction (0.0-1.0)"
     )
@@ -555,9 +534,7 @@ async def get_engine_configuration() -> dict:
         Complete engine configuration including defaults, GPU settings, and engine-specific configs
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(
-            status_code=503, detail="Engine configuration service not available"
-        )
+        raise HTTPException(status_code=503, detail="Engine configuration service not available")
 
     try:
         config_service = get_engine_config_service()
@@ -565,9 +542,7 @@ async def get_engine_configuration() -> dict:
         return config
     except Exception as e:
         logger.error(f"Error getting engine configuration: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get engine configuration: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get engine configuration: {e!s}")
 
 
 @router.get("/config/{engine_id}")
@@ -583,21 +558,15 @@ async def get_engine_config(engine_id: str) -> EngineConfigResponse:
         Engine configuration
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(
-            status_code=503, detail="Engine configuration service not available"
-        )
+        raise HTTPException(status_code=503, detail="Engine configuration service not available")
 
     try:
         config_service = get_engine_config_service()
         config = config_service.get_engine_config(engine_id)
         return EngineConfigResponse(engine_id=engine_id, config=config)
     except Exception as e:
-        logger.error(
-            f"Error getting engine configuration for {engine_id}: {e}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get engine configuration: {e!s}"
-        )
+        logger.error(f"Error getting engine configuration for {engine_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get engine configuration: {e!s}")
 
 
 @router.put("/config/{engine_id}")
@@ -615,9 +584,7 @@ async def update_engine_config(
         Updated engine configuration
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(
-            status_code=503, detail="Engine configuration service not available"
-        )
+        raise HTTPException(status_code=503, detail="Engine configuration service not available")
 
     try:
         config_service = get_engine_config_service()
@@ -634,12 +601,8 @@ async def update_engine_config(
 
         return EngineConfigResponse(engine_id=engine_id, config=config)
     except Exception as e:
-        logger.error(
-            f"Error updating engine configuration for {engine_id}: {e}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to update engine configuration: {e!s}"
-        )
+        logger.error(f"Error updating engine configuration for {engine_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to update engine configuration: {e!s}")
 
 
 @router.get("/config/gpu/settings")
@@ -652,9 +615,7 @@ async def get_gpu_settings() -> dict:
         GPU settings dictionary
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(
-            status_code=503, detail="Engine configuration service not available"
-        )
+        raise HTTPException(status_code=503, detail="Engine configuration service not available")
 
     try:
         config_service = get_engine_config_service()
@@ -662,9 +623,7 @@ async def get_gpu_settings() -> dict:
         return gpu_settings
     except Exception as e:
         logger.error(f"Error getting GPU settings: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get GPU settings: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get GPU settings: {e!s}")
 
 
 @router.put("/config/gpu/settings")
@@ -679,9 +638,7 @@ async def update_gpu_settings(request: GPUSettingsRequest) -> dict:
         Updated GPU settings
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(
-            status_code=503, detail="Engine configuration service not available"
-        )
+        raise HTTPException(status_code=503, detail="Engine configuration service not available")
 
     try:
         config_service = get_engine_config_service()
@@ -703,9 +660,7 @@ async def update_gpu_settings(request: GPUSettingsRequest) -> dict:
         return gpu_settings
     except Exception as e:
         logger.error(f"Error updating GPU settings: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to update GPU settings: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to update GPU settings: {e!s}")
 
 
 @router.get("/config/defaults")
@@ -718,9 +673,7 @@ async def get_default_engines() -> dict:
         Dictionary of task types to default engine IDs
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(
-            status_code=503, detail="Engine configuration service not available"
-        )
+        raise HTTPException(status_code=503, detail="Engine configuration service not available")
 
     try:
         config_service = get_engine_config_service()
@@ -728,9 +681,7 @@ async def get_default_engines() -> dict:
         return {"defaults": defaults}
     except Exception as e:
         logger.error(f"Error getting default engines: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get default engines: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get default engines: {e!s}")
 
 
 @router.put("/config/defaults/{task_type}")
@@ -746,9 +697,7 @@ async def set_default_engine(task_type: str, engine_id: str) -> dict:
         Updated defaults
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(
-            status_code=503, detail="Engine configuration service not available"
-        )
+        raise HTTPException(status_code=503, detail="Engine configuration service not available")
 
     try:
         config_service = get_engine_config_service()
@@ -757,9 +706,7 @@ async def set_default_engine(task_type: str, engine_id: str) -> dict:
         return {"defaults": defaults}
     except Exception as e:
         logger.error(f"Error setting default engine: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to set default engine: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to set default engine: {e!s}")
 
 
 @router.post("/config/validate")
@@ -771,9 +718,7 @@ async def validate_configuration() -> dict:
         Validation result with any errors
     """
     if not HAS_CONFIG_SERVICE:
-        raise HTTPException(
-            status_code=503, detail="Engine configuration service not available"
-        )
+        raise HTTPException(status_code=503, detail="Engine configuration service not available")
 
     try:
         config_service = get_engine_config_service()
@@ -782,9 +727,7 @@ async def validate_configuration() -> dict:
         return {"valid": is_valid, "errors": errors}
     except Exception as e:
         logger.error(f"Error validating configuration: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to validate configuration: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to validate configuration: {e!s}")
 
 
 # Engine Lifecycle Management
@@ -813,9 +756,7 @@ async def start_engine(
             manifest = engine_service.get_engine_manifest(engine_id)
             if manifest:
                 lifecycle.register_engine(engine_id, manifest)
-                engine = lifecycle.acquire_engine(
-                    engine_id, job_id=job_id, auto_start=True
-                )
+                engine = lifecycle.acquire_engine(engine_id, job_id=job_id, auto_start=True)
 
         if not engine:
             raise HTTPException(
@@ -911,9 +852,7 @@ async def get_engine_status(
         )
     except Exception as e:
         logger.error(f"Error getting engine status {engine_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get engine status: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get engine status: {e!s}")
 
 
 @router.get("/{engine_id}/voices", response_model=EngineVoicesResponse)
@@ -938,14 +877,16 @@ async def get_engine_voices(
         if voices_raw:
             for v in voices_raw:
                 if isinstance(v, dict):
-                    voices.append(EngineVoice(
-                        id=v.get("id", v.get("name", "unknown")),
-                        name=v.get("name", v.get("id", "Unknown")),
-                        language=v.get("language") or v.get("lang"),
-                        gender=v.get("gender"),
-                        style=v.get("style"),
-                        preview_url=v.get("preview_url") or v.get("preview"),
-                    ))
+                    voices.append(
+                        EngineVoice(
+                            id=v.get("id", v.get("name", "unknown")),
+                            name=v.get("name", v.get("id", "Unknown")),
+                            language=v.get("language") or v.get("lang"),
+                            gender=v.get("gender"),
+                            style=v.get("style"),
+                            preview_url=v.get("preview_url") or v.get("preview"),
+                        )
+                    )
                 else:
                     voices.append(EngineVoice(id=str(v), name=str(v)))
 
@@ -961,6 +902,7 @@ async def get_engine_voices(
 
 class ParameterDefinitionModel(BaseModel):
     """Definition of a single engine parameter."""
+
     name: str
     display_name: str = ""
     description: str = ""
@@ -978,6 +920,7 @@ class ParameterDefinitionModel(BaseModel):
 
 class ParameterGroupModel(BaseModel):
     """Group for organizing parameters in UI."""
+
     id: str
     display_name: str
     description: str = ""
@@ -987,6 +930,7 @@ class ParameterGroupModel(BaseModel):
 
 class EngineParameterSchemaResponse(BaseModel):
     """Response model for engine parameter schema."""
+
     engine_id: str
     schema_version: str = "1.0"
     parameters: list[ParameterDefinitionModel]
@@ -1057,26 +1001,27 @@ async def get_engine_schema(engine_id: str):
 
         if "enum" in param_def:
             enum_options = [
-                {"value": str(v), "display_name": str(v)}
-                for v in param_def.get("enum", [])
+                {"value": str(v), "display_name": str(v)} for v in param_def.get("enum", [])
             ]
             param_type = "enum"
 
-        parameters.append(ParameterDefinitionModel(
-            name=param_name,
-            display_name=param_def.get("display_name", param_name.replace("_", " ").title()),
-            description=param_def.get("description", ""),
-            type=param_type,
-            default_value=param_def.get("default"),
-            min_value=param_def.get("minimum"),
-            max_value=param_def.get("maximum"),
-            step=param_def.get("step"),
-            enum_options=enum_options,
-            group_id=param_def.get("ui_group"),
-            order=param_def.get("ui_order", idx),
-            is_advanced=param_def.get("advanced", False),
-            is_required=param_def.get("required", False),
-        ))
+        parameters.append(
+            ParameterDefinitionModel(
+                name=param_name,
+                display_name=param_def.get("display_name", param_name.replace("_", " ").title()),
+                description=param_def.get("description", ""),
+                type=param_type,
+                default_value=param_def.get("default"),
+                min_value=param_def.get("minimum"),
+                max_value=param_def.get("maximum"),
+                step=param_def.get("step"),
+                enum_options=enum_options,
+                group_id=param_def.get("ui_group"),
+                order=param_def.get("ui_order", idx),
+                is_advanced=param_def.get("advanced", False),
+                is_required=param_def.get("required", False),
+            )
+        )
 
     # Extract groups from parameters
     groups_seen = set()
@@ -1084,11 +1029,13 @@ async def get_engine_schema(engine_id: str):
     for param in parameters:
         if param.group_id and param.group_id not in groups_seen:
             groups_seen.add(param.group_id)
-            groups.append(ParameterGroupModel(
-                id=param.group_id,
-                display_name=param.group_id.replace("_", " ").title(),
-                order=len(groups),
-            ))
+            groups.append(
+                ParameterGroupModel(
+                    id=param.group_id,
+                    display_name=param.group_id.replace("_", " ").title(),
+                    order=len(groups),
+                )
+            )
 
     return EngineParameterSchemaResponse(
         engine_id=engine_id,

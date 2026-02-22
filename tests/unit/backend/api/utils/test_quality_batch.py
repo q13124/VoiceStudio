@@ -23,9 +23,7 @@ class TestQualityBatchImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            quality_batch is not None
-        ), "Failed to import quality_batch module"
+        assert quality_batch is not None, "Failed to import quality_batch module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -35,4 +33,3 @@ class TestQualityBatchImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

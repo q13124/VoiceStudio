@@ -34,18 +34,10 @@ logger = logging.getLogger(__name__)
 
 def pytest_configure(config):
     """Register custom markers for sentinel tests."""
-    config.addinivalue_line(
-        "markers", "sentinel: marks tests as sentinel workflow tests"
-    )
-    config.addinivalue_line(
-        "markers", "smoke: marks tests as smoke tests (quick validation)"
-    )
-    config.addinivalue_line(
-        "markers", "backend_required: marks tests that require backend server"
-    )
-    config.addinivalue_line(
-        "markers", "slow: marks tests as slow running"
-    )
+    config.addinivalue_line("markers", "sentinel: marks tests as sentinel workflow tests")
+    config.addinivalue_line("markers", "smoke: marks tests as smoke tests (quick validation)")
+    config.addinivalue_line("markers", "backend_required: marks tests that require backend server")
+    config.addinivalue_line("markers", "slow: marks tests as slow running")
 
 
 @pytest.fixture(scope="session")
@@ -65,10 +57,9 @@ def api_base() -> str:
 @pytest.fixture(scope="session")
 def fixture_path() -> Path:
     """Get path to sentinel audio fixture."""
-    path = Path(os.environ.get(
-        "VOICESTUDIO_SENTINEL_FIXTURE",
-        str(PROJECT_ROOT / SENTINEL_FIXTURE_PATH)
-    ))
+    path = Path(
+        os.environ.get("VOICESTUDIO_SENTINEL_FIXTURE", str(PROJECT_ROOT / SENTINEL_FIXTURE_PATH))
+    )
     return path
 
 
@@ -106,11 +97,7 @@ def backend_available(api_base: str) -> bool:
 
 
 @pytest.fixture
-def sentinel_runner(
-    api_base: str,
-    fixture_path: Path,
-    artifacts_dir: Path
-) -> SentinelRunner:
+def sentinel_runner(api_base: str, fixture_path: Path, artifacts_dir: Path) -> SentinelRunner:
     """Create a fresh SentinelRunner instance for each test."""
     return SentinelRunner(
         api_base=api_base,
@@ -139,6 +126,7 @@ async def completed_run(
 # -----------------------------------------------------------------------------
 # Test Data Fixtures
 # -----------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_health_response() -> dict:

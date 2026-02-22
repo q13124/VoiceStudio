@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Session:
     """A user session."""
+
     session_id: str
     user_id: str
     created_at: datetime
@@ -49,6 +50,7 @@ class Session:
 @dataclass
 class SessionConfig:
     """Configuration for session management."""
+
     session_lifetime_hours: int = 24
     idle_timeout_minutes: int = 30
     max_sessions_per_user: int = 5
@@ -277,7 +279,8 @@ class SessionManager:
         """Get all sessions for a user."""
         session_ids = self._user_sessions.get(user_id, [])
         return [
-            self._sessions[sid] for sid in session_ids
+            self._sessions[sid]
+            for sid in session_ids
             if sid in self._sessions and self._sessions[sid].is_valid
         ]
 

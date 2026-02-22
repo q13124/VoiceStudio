@@ -282,9 +282,7 @@ def _generate_reasoning(
 
     # Engine reasoning
     if engine == "tortoise":
-        reasons.append(
-            "Tortoise engine selected for maximum quality on complex content"
-        )
+        reasons.append("Tortoise engine selected for maximum quality on complex content")
     elif engine == "chatterbox":
         reasons.append("Chatterbox engine selected for balanced quality and speed")
     else:
@@ -313,16 +311,12 @@ def _generate_reasoning(
         TextComplexity.COMPLEX,
         TextComplexity.VERY_COMPLEX,
     ]:
-        reasons.append(
-            f"Higher quality settings for {text_analysis.complexity.value} text"
-        )
+        reasons.append(f"Higher quality settings for {text_analysis.complexity.value} text")
 
     return ". ".join(reasons) + "."
 
 
-def _calculate_confidence(
-    text_analysis: TextAnalysisResult, target_quality: float | None
-) -> float:
+def _calculate_confidence(text_analysis: TextAnalysisResult, target_quality: float | None) -> float:
     """
     Calculate confidence in recommendations (0.0-1.0).
 

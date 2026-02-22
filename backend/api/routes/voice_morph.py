@@ -120,9 +120,7 @@ async def get_morph_config(config_id: str):
 
 
 @router.put("/configs/{config_id}", response_model=MorphConfig)
-async def update_morph_config(
-    config_id: str, request: MorphConfigCreateRequest
-):
+async def update_morph_config(config_id: str, request: MorphConfigCreateRequest):
     """Update a morph configuration."""
     if config_id not in _morph_configs:
         raise HTTPException(status_code=404, detail="Config not found")
@@ -262,6 +260,7 @@ async def apply_morph(request: MorphApplyRequest):
                         if target_sr != sample_rate:
                             try:
                                 import librosa
+
                                 target_audio = librosa.resample(
                                     target_audio, orig_sr=target_sr, target_sr=sample_rate
                                 )
@@ -277,9 +276,7 @@ async def apply_morph(request: MorphApplyRequest):
                         target_weights.append(target_voice.weight)
 
             except Exception as e:
-                logger.warning(
-                    f"Failed to get target voice {target_voice.voice_profile_id}: {e}"
-                )
+                logger.warning(f"Failed to get target voice {target_voice.voice_profile_id}: {e}")
                 continue
 
         # Step 3: Apply morphing transformation
@@ -505,12 +502,7 @@ async def blend_voices(request: VoiceBlendRequest):
                 )
                 result_b = await synthesize(synth_b)
 
-                if (
-                    result_a
-                    and result_a.audio_id
-                    and result_b
-                    and result_b.audio_id
-                ):
+                if result_a and result_a.audio_id and result_b and result_b.audio_id:
                     # Load both audio files
                     from app.core.audio.audio_utils import (
                         load_audio,
@@ -535,15 +527,12 @@ async def blend_voices(request: VoiceBlendRequest):
                         # Resample to same rate if needed
                         if sr_a != sr_b:
                             import librosa
+
                             if sr_a < sr_b:
-                                audio_b = librosa.resample(
-                                    audio_b, orig_sr=sr_b, target_sr=sr_a
-                                )
+                                audio_b = librosa.resample(audio_b, orig_sr=sr_b, target_sr=sr_a)
                                 sr_b = sr_a
                             else:
-                                audio_a = librosa.resample(
-                                    audio_a, orig_sr=sr_a, target_sr=sr_b
-                                )
+                                audio_a = librosa.resample(audio_a, orig_sr=sr_a, target_sr=sr_b)
                                 sr_a = sr_b
 
                         # Match lengths (pad shorter one)
@@ -573,12 +562,8 @@ async def blend_voices(request: VoiceBlendRequest):
                             blended_audio = blended_audio * (0.95 / max_amp)
 
                         # Save blended audio
-                        preview_audio_id = (
-                            f"blend_preview_{uuid.uuid4().hex[:8]}"
-                        )
-                        output_path = os.path.join(
-                            tempfile.gettempdir(), f"{preview_audio_id}.wav"
-                        )
+                        preview_audio_id = f"blend_preview_{uuid.uuid4().hex[:8]}"
+                        output_path = os.path.join(tempfile.gettempdir(), f"{preview_audio_id}.wav")
                         save_audio(blended_audio, sr_a, output_path)
                         _register_audio_file(preview_audio_id, output_path)
 
@@ -597,9 +582,7 @@ async def blend_voices(request: VoiceBlendRequest):
                 from .profiles import VoiceProfile, _profiles
 
                 blended_profile_id = f"blend_{uuid.uuid4().hex[:8]}"
-                profile_name = (
-                    f"Blend: {request.voice_a_id} + {request.voice_b_id}"
-                )
+                profile_name = f"Blend: {request.voice_a_id} + {request.voice_b_id}"
 
                 # Create blended profile (references both source profiles)
                 blended_profile = VoiceProfile(
@@ -620,9 +603,7 @@ async def blend_voices(request: VoiceBlendRequest):
             blended_profile_id=blended_profile_id,
             preview_audio_id=preview_audio_id,
             preview_audio_url=(
-                f"/api/voice/audio/{preview_audio_id}"
-                if preview_audio_id
-                else None
+                f"/api/voice/audio/{preview_audio_id}" if preview_audio_id else None
             ),
             blend_ratio=request.blend_ratio,
         )
@@ -693,10 +674,7 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
             if not profile:
                 raise HTTPException(
                     status_code=404,
-                    detail=(
-                        f"Voice profile not found: "
-                        f"{request.voice_profile_id}"
-                    ),
+                    detail=(f"Voice profile not found: " f"{request.voice_profile_id}"),
                 )
 
             # Get reference audio path
@@ -732,27 +710,17 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
                     )
 
                     audio, sample_rate = load_audio(reference_audio_path)
-                    characteristics = analyze_voice_characteristics(
-                        audio, sample_rate
-                    )
+                    characteristics = analyze_voice_characteristics(audio, sample_rate)
 
                     # Create embedding from characteristics
                     # Combine various features into a feature vector
                     embedding = []
                     embedding.append(characteristics.get("f0_mean", 0.0))
                     embedding.append(characteristics.get("f0_std", 0.0))
-                    embedding.extend(
-                        characteristics.get("formants", [0.0, 0.0, 0.0])[:3]
-                    )
-                    embedding.append(
-                        characteristics.get("spectral_centroid", 0.0)
-                    )
-                    embedding.append(
-                        characteristics.get("spectral_rolloff", 0.0)
-                    )
-                    embedding.append(
-                        characteristics.get("zero_crossing_rate", 0.0)
-                    )
+                    embedding.extend(characteristics.get("formants", [0.0, 0.0, 0.0])[:3])
+                    embedding.append(characteristics.get("spectral_centroid", 0.0))
+                    embedding.append(characteristics.get("spectral_rolloff", 0.0))
+                    embedding.append(characteristics.get("zero_crossing_rate", 0.0))
                     mfcc = characteristics.get("mfcc", [])
                     if isinstance(mfcc, np.ndarray):
                         embedding.extend(mfcc.flatten()[:13].tolist())
@@ -788,9 +756,7 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
                         embedding_dim=embedding_dim,
                     )
                 except Exception as e:
-                    logger.warning(
-                        f"Failed to extract embedding from audio characteristics: {e}"
-                    )
+                    logger.warning(f"Failed to extract embedding from audio characteristics: {e}")
                     # Try fallback method: direct librosa features
                     try:
                         import librosa
@@ -825,9 +791,7 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
                         embedding.extend([float(x) for x in np.mean(chroma, axis=1)])
 
                         # Tonnetz features (6 dimensions)
-                        tonnetz = librosa.feature.tonnetz(
-                            y=audio, sr=sample_rate
-                        )
+                        tonnetz = librosa.feature.tonnetz(y=audio, sr=sample_rate)
                         embedding.extend([float(x) for x in np.mean(tonnetz, axis=1)])
 
                         # Pad or truncate to standard size (256 dimensions)
@@ -844,7 +808,9 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
                             ]
                             # Repeat stats to fill padding
                             while len(embedding) < embedding_dim:
-                                embedding.extend(audio_stats[:min(padding_needed, len(audio_stats))])
+                                embedding.extend(
+                                    audio_stats[: min(padding_needed, len(audio_stats))]
+                                )
                                 padding_needed = embedding_dim - len(embedding)
                         elif len(embedding) > embedding_dim:
                             # Truncate
@@ -868,9 +834,7 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
                             embedding_dim=embedding_dim,
                         )
                     except Exception as e2:
-                        logger.warning(
-                            f"Fallback embedding extraction also failed: {e2}"
-                        )
+                        logger.warning(f"Fallback embedding extraction also failed: {e2}")
                         # Last resort: try speaker encoder if available (ADR-008 compliant)
                         try:
                             engine_service = get_engine_service()
@@ -888,7 +852,11 @@ async def get_voice_embedding(request: VoiceEmbeddingRequest):
 
                                     return VoiceEmbeddingResponse(
                                         voice_profile_id=request.voice_profile_id,
-                                        embedding=embedding.tolist() if hasattr(embedding, 'tolist') else embedding,
+                                        embedding=(
+                                            embedding.tolist()
+                                            if hasattr(embedding, "tolist")
+                                            else embedding
+                                        ),
                                         embedding_dim=embedding_dim,
                                     )
                         except Exception as e3:
@@ -979,12 +947,7 @@ async def preview_voice(request: VoicePreviewRequest):
                 )
                 result_b = await synthesize(synth_b)
 
-                if (
-                    result_a
-                    and result_a.audio_id
-                    and result_b
-                    and result_b.audio_id
-                ):
+                if result_a and result_a.audio_id and result_b and result_b.audio_id:
                     # Blend the audio (same logic as blend_voices)
                     import numpy as np
 
@@ -1008,15 +971,12 @@ async def preview_voice(request: VoicePreviewRequest):
                         # Resample to same rate if needed
                         if sr_a != sr_b:
                             import librosa
+
                             if sr_a < sr_b:
-                                audio_b = librosa.resample(
-                                    audio_b, orig_sr=sr_b, target_sr=sr_a
-                                )
+                                audio_b = librosa.resample(audio_b, orig_sr=sr_b, target_sr=sr_a)
                                 sr_b = sr_a
                             else:
-                                audio_a = librosa.resample(
-                                    audio_a, orig_sr=sr_a, target_sr=sr_b
-                                )
+                                audio_a = librosa.resample(audio_a, orig_sr=sr_a, target_sr=sr_b)
                                 sr_a = sr_b
 
                         # Match lengths
@@ -1046,9 +1006,7 @@ async def preview_voice(request: VoicePreviewRequest):
 
                         # Save blended audio
                         preview_audio_id = f"preview_{uuid.uuid4().hex[:8]}"
-                        output_path = os.path.join(
-                            tempfile.gettempdir(), f"{preview_audio_id}.wav"
-                        )
+                        output_path = os.path.join(tempfile.gettempdir(), f"{preview_audio_id}.wav")
                         save_audio(blended_audio, sr_a, output_path)
                         _register_audio_file(preview_audio_id, output_path)
 

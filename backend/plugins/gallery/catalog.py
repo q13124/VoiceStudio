@@ -2,12 +2,14 @@
 Plugin Catalog Service.
 
 D.1 Enhancement: Fetches and caches the remote plugin catalog.
+Phase 10: Supports local catalog via VOICESTUDIO_PLUGIN_CATALOG_URL (file path).
 """
 
 from __future__ import annotations
 
 import json
 import logging
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -81,6 +83,18 @@ class PluginCatalogService:
         if not force_refresh and self._catalog and self._last_fetch:
             if datetime.now() - self._last_fetch < CACHE_DURATION:
                 return self._catalog
+
+        # Phase 10: Load from local file when VOICESTUDIO_PLUGIN_CATALOG_URL is a file path
+        local_path = self._get_local_catalog_path()
+        if local_path is not None:
+            try:
+                catalog = self._load_local_catalog(local_path)
+                self._catalog = catalog
+                self._last_fetch = datetime.now()
+                logger.info(f"Loaded local catalog with {len(catalog.plugins)} plugins")
+                return catalog
+            except Exception as e:
+                logger.warning(f"Failed to load local catalog from {local_path}: {e}")
 
         # Try to fetch from remote
         try:
@@ -158,6 +172,30 @@ class PluginCatalogService:
         catalog = await self.get_catalog()
         return catalog.categories
 
+    def _get_local_catalog_path(self) -> Path | None:
+        """Return Path if catalog URL is a local file, else None."""
+        url = os.environ.get("VOICESTUDIO_PLUGIN_CATALOG_URL", "").strip() or self._catalog_url
+        if not url:
+            return None
+        # file:// URL
+        if url.startswith("file://"):
+            path = Path(url[7:].lstrip("/"))
+            return path if path.exists() else None
+        # Absolute or relative path (no scheme)
+        if "://" not in url:
+            path = Path(url)
+            if not path.is_absolute():
+                # Resolve relative to project root (parent of backend/)
+                backend_dir = Path(__file__).resolve().parent.parent.parent
+                path = (backend_dir / url).resolve()
+            return path if path.exists() else None
+        return None
+
+    def _load_local_catalog(self, path: Path) -> PluginCatalog:
+        """Load catalog from local filesystem."""
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return self._parse_catalog(data)
+
     async def _fetch_remote(self) -> PluginCatalog:
         """Fetch catalog from remote URL."""
         timeout = aiohttp.ClientTimeout(total=self._request_timeout)
@@ -173,16 +211,18 @@ class PluginCatalogService:
         for plugin_data in data.get("plugins", []):
             versions = []
             for ver_data in plugin_data.get("versions", []):
-                versions.append(PluginVersion(
-                    version=ver_data.get("version", "0.0.0"),
-                    release_date=ver_data.get("release_date", ""),
-                    download_url=ver_data.get("download_url", ""),
-                    checksum_sha256=ver_data.get("checksum_sha256", ""),
-                    size_bytes=ver_data.get("size_bytes", 0),
-                    min_voicestudio_version=ver_data.get("min_voicestudio_version", "1.0.0"),
-                    dependencies=ver_data.get("dependencies", {}),
-                    changelog=ver_data.get("changelog", ""),
-                ))
+                versions.append(
+                    PluginVersion(
+                        version=ver_data.get("version", "0.0.0"),
+                        release_date=ver_data.get("release_date", ""),
+                        download_url=ver_data.get("download_url", ""),
+                        checksum_sha256=ver_data.get("checksum_sha256", ""),
+                        size_bytes=ver_data.get("size_bytes", 0),
+                        min_voicestudio_version=ver_data.get("min_voicestudio_version", "1.0.0"),
+                        dependencies=ver_data.get("dependencies", {}),
+                        changelog=ver_data.get("changelog", ""),
+                    )
+                )
 
             stats_data = plugin_data.get("stats", {})
             stats = PluginStats(
@@ -191,33 +231,37 @@ class PluginCatalogService:
                 reviews=stats_data.get("reviews", 0),
             )
 
-            plugins.append(CatalogPlugin(
-                id=plugin_data.get("id", ""),
-                name=plugin_data.get("name", ""),
-                description=plugin_data.get("description", ""),
-                category=plugin_data.get("category", ""),
-                subcategory=plugin_data.get("subcategory", ""),
-                author=plugin_data.get("author", ""),
-                license=plugin_data.get("license", ""),
-                homepage=plugin_data.get("homepage", ""),
-                icon_url=plugin_data.get("icon_url", ""),
-                tags=plugin_data.get("tags", []),
-                versions=versions,
-                stats=stats,
-                featured=plugin_data.get("featured", False),
-                verified=plugin_data.get("verified", False),
-            ))
+            plugins.append(
+                CatalogPlugin(
+                    id=plugin_data.get("id", ""),
+                    name=plugin_data.get("name", ""),
+                    description=plugin_data.get("description", ""),
+                    category=plugin_data.get("category", ""),
+                    subcategory=plugin_data.get("subcategory", ""),
+                    author=plugin_data.get("author", ""),
+                    license=plugin_data.get("license", ""),
+                    homepage=plugin_data.get("homepage", ""),
+                    icon_url=plugin_data.get("icon_url", ""),
+                    tags=plugin_data.get("tags", []),
+                    versions=versions,
+                    stats=stats,
+                    featured=plugin_data.get("featured", False),
+                    verified=plugin_data.get("verified", False),
+                )
+            )
 
         categories = []
         for cat_data in data.get("categories", []):
-            categories.append(CatalogCategory(
-                id=cat_data.get("id", ""),
-                name=cat_data.get("name", ""),
-                icon=cat_data.get("icon", ""),
-            ))
+            categories.append(
+                CatalogCategory(
+                    id=cat_data.get("id", ""),
+                    name=cat_data.get("name", ""),
+                    icon=cat_data.get("icon", ""),
+                )
+            )
 
         return PluginCatalog(
-            catalog_version=data.get("catalog_version", "1.0.0"),
+            catalog_version=data.get("catalog_version") or data.get("version", "1.0.0"),
             last_updated=data.get("last_updated", datetime.now().isoformat()),
             plugins=plugins,
             categories=categories,
@@ -232,8 +276,7 @@ class PluginCatalogService:
                 "cached_at": datetime.now().isoformat(),
                 "plugins": [p.to_dict() for p in catalog.plugins],
                 "categories": [
-                    {"id": c.id, "name": c.name, "icon": c.icon}
-                    for c in catalog.categories
+                    {"id": c.id, "name": c.name, "icon": c.icon} for c in catalog.categories
                 ],
             }
             self._cache_file.write_text(json.dumps(cache_data, indent=2))
@@ -267,5 +310,6 @@ def get_catalog_service() -> PluginCatalogService:
     """Get or create the global catalog service."""
     global _catalog_service
     if _catalog_service is None:
-        _catalog_service = PluginCatalogService()
+        url = os.environ.get("VOICESTUDIO_PLUGIN_CATALOG_URL", DEFAULT_CATALOG_URL)
+        _catalog_service = PluginCatalogService(catalog_url=url)
     return _catalog_service

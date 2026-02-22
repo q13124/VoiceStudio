@@ -90,16 +90,13 @@ STANDARD_AUDIO_FORMATS: dict[AudioFormat, AudioFormatInfo] = {
         description="Waveform Audio File Format (uncompressed PCM)",
         extensions=("wav", "wave"),
         mime_types=("audio/wav", "audio/x-wav", "audio/wave"),
-        magic_bytes=(
-            (b"RIFF", 0),  # RIFF header (requires secondary check for WAVE)
-        ),
+        magic_bytes=((b"RIFF", 0),),  # RIFF header (requires secondary check for WAVE)
         ffmpeg_codec="pcm_s16le",
         ffmpeg_format="wav",
         is_lossy=False,
         supports_metadata=False,
         default_bit_depth=16,
     ),
-
     AudioFormat.MP3: AudioFormatInfo(
         format=AudioFormat.MP3,
         name="MP3",
@@ -107,81 +104,68 @@ STANDARD_AUDIO_FORMATS: dict[AudioFormat, AudioFormatInfo] = {
         extensions=("mp3",),
         mime_types=("audio/mpeg", "audio/mp3"),
         magic_bytes=(
-            (b"ID3", 0),        # ID3v2 tag
-            (b"\xff\xfb", 0),   # MPEG frame sync (Layer III)
-            (b"\xff\xfa", 0),   # MPEG frame sync (Layer III)
-            (b"\xff\xf3", 0),   # MPEG frame sync (Layer III)
-            (b"\xff\xf2", 0),   # MPEG frame sync (Layer III)
+            (b"ID3", 0),  # ID3v2 tag
+            (b"\xff\xfb", 0),  # MPEG frame sync (Layer III)
+            (b"\xff\xfa", 0),  # MPEG frame sync (Layer III)
+            (b"\xff\xf3", 0),  # MPEG frame sync (Layer III)
+            (b"\xff\xf2", 0),  # MPEG frame sync (Layer III)
         ),
         ffmpeg_codec="libmp3lame",
         is_lossy=True,
         supports_metadata=True,
         default_bitrate_kbps=192,
     ),
-
     AudioFormat.FLAC: AudioFormatInfo(
         format=AudioFormat.FLAC,
         name="FLAC",
         description="Free Lossless Audio Codec",
         extensions=("flac",),
         mime_types=("audio/flac", "audio/x-flac"),
-        magic_bytes=(
-            (b"fLaC", 0),
-        ),
+        magic_bytes=((b"fLaC", 0),),
         ffmpeg_codec="flac",
         is_lossy=False,
         supports_metadata=True,
         default_bit_depth=16,
     ),
-
     AudioFormat.OGG: AudioFormatInfo(
         format=AudioFormat.OGG,
         name="OGG Vorbis",
         description="OGG container with Vorbis audio",
         extensions=("ogg", "oga"),
         mime_types=("audio/ogg", "audio/vorbis", "application/ogg"),
-        magic_bytes=(
-            (b"OggS", 0),
-        ),
+        magic_bytes=((b"OggS", 0),),
         ffmpeg_codec="libvorbis",
         ffmpeg_format="ogg",
         is_lossy=True,
         supports_metadata=True,
         default_bitrate_kbps=192,
     ),
-
     AudioFormat.OPUS: AudioFormatInfo(
         format=AudioFormat.OPUS,
         name="Opus",
         description="Opus audio codec (OGG container)",
         extensions=("opus",),
         mime_types=("audio/opus", "audio/ogg; codecs=opus"),
-        magic_bytes=(
-            (b"OggS", 0),  # OGG container (requires secondary check for Opus)
-        ),
+        magic_bytes=((b"OggS", 0),),  # OGG container (requires secondary check for Opus)
         ffmpeg_codec="libopus",
         ffmpeg_format="opus",
         is_lossy=True,
         supports_metadata=True,
         default_bitrate_kbps=128,
     ),
-
     AudioFormat.M4A: AudioFormatInfo(
         format=AudioFormat.M4A,
         name="M4A",
         description="MPEG-4 Audio (AAC in MP4 container)",
         extensions=("m4a",),
         mime_types=("audio/mp4", "audio/x-m4a", "audio/m4a"),
-        magic_bytes=(
-            (b"ftyp", 4),  # MP4 container (offset 4, requires secondary check)
-        ),
+        magic_bytes=((b"ftyp", 4),),  # MP4 container (offset 4, requires secondary check)
         ffmpeg_codec="aac",
         ffmpeg_format="ipod",  # Creates compatible M4A
         is_lossy=True,
         supports_metadata=True,
         default_bitrate_kbps=192,
     ),
-
     AudioFormat.AAC: AudioFormatInfo(
         format=AudioFormat.AAC,
         name="AAC",
@@ -191,7 +175,7 @@ STANDARD_AUDIO_FORMATS: dict[AudioFormat, AudioFormatInfo] = {
         magic_bytes=(
             (b"\xff\xf1", 0),  # AAC ADTS frame sync (MPEG-4)
             (b"\xff\xf9", 0),  # AAC ADTS frame sync (MPEG-2)
-            (b"ftyp", 4),      # May be in MP4 container
+            (b"ftyp", 4),  # May be in MP4 container
         ),
         ffmpeg_codec="aac",
         ffmpeg_format="adts",  # Raw AAC ADTS stream
@@ -199,32 +183,26 @@ STANDARD_AUDIO_FORMATS: dict[AudioFormat, AudioFormatInfo] = {
         supports_metadata=False,  # Raw AAC has limited metadata
         default_bitrate_kbps=192,
     ),
-
     AudioFormat.WMA: AudioFormatInfo(
         format=AudioFormat.WMA,
         name="WMA",
         description="Windows Media Audio",
         extensions=("wma",),
         mime_types=("audio/x-ms-wma", "audio/wma"),
-        magic_bytes=(
-            (b"\x30\x26\xb2\x75\x8e\x66\xcf\x11", 0),  # ASF header GUID
-        ),
+        magic_bytes=((b"\x30\x26\xb2\x75\x8e\x66\xcf\x11", 0),),  # ASF header GUID
         ffmpeg_codec="wmav2",
         ffmpeg_format="asf",
         is_lossy=True,
         supports_metadata=True,
         default_bitrate_kbps=192,
     ),
-
     AudioFormat.AIFF: AudioFormatInfo(
         format=AudioFormat.AIFF,
         name="AIFF",
         description="Audio Interchange File Format",
         extensions=("aiff", "aif", "aifc"),
         mime_types=("audio/aiff", "audio/x-aiff"),
-        magic_bytes=(
-            (b"FORM", 0),  # FORM header (requires secondary check for AIFF)
-        ),
+        magic_bytes=((b"FORM", 0),),  # FORM header (requires secondary check for AIFF)
         ffmpeg_codec="pcm_s16be",
         ffmpeg_format="aiff",
         is_lossy=False,
@@ -260,6 +238,7 @@ _ALL_MIME_TYPES: frozenset[str] = frozenset(_MIME_TO_FORMAT.keys())
 # =============================================================================
 # PUBLIC API
 # =============================================================================
+
 
 def get_format_info(fmt: AudioFormat) -> AudioFormatInfo:
     """
@@ -385,13 +364,15 @@ def get_magic_bytes_for_validation() -> list[tuple[bytes, int, str, str, str]]:
     signatures = []
     for fmt_info in STANDARD_AUDIO_FORMATS.values():
         for magic, offset in fmt_info.magic_bytes:
-            signatures.append((
-                magic,
-                offset,
-                fmt_info.primary_extension,
-                fmt_info.primary_mime_type,
-                fmt_info.description,
-            ))
+            signatures.append(
+                (
+                    magic,
+                    offset,
+                    fmt_info.primary_extension,
+                    fmt_info.primary_mime_type,
+                    fmt_info.description,
+                )
+            )
     return signatures
 
 

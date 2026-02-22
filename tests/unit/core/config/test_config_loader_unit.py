@@ -23,9 +23,7 @@ class TestConfigLoaderImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            config_loader is not None
-        ), "Failed to import config_loader module"
+        assert config_loader is not None, "Failed to import config_loader module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -39,18 +37,13 @@ class TestConfigLoaderFunctions:
     def test_load_config_function_exists(self):
         """Test load_config function exists."""
         if hasattr(config_loader, "load_config"):
-            assert callable(
-                config_loader.load_config
-            ), "load_config should be callable"
+            assert callable(config_loader.load_config), "load_config should be callable"
 
     def test_save_config_function_exists(self):
         """Test save_config function exists."""
         if hasattr(config_loader, "save_config"):
-            assert callable(
-                config_loader.save_config
-            ), "save_config should be callable"
+            assert callable(config_loader.save_config), "save_config should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -218,9 +218,7 @@ class NeuralAudioProcessor:
         if not HAS_TORCH or not HAS_LIBROSA:
             # Fallback to librosa resampling
             if HAS_LIBROSA:
-                upsampled = librosa.resample(
-                    audio, orig_sr=source_rate, target_sr=target_rate
-                )
+                upsampled = librosa.resample(audio, orig_sr=source_rate, target_sr=target_rate)
                 return upsampled, target_rate
             return audio, source_rate
 
@@ -244,9 +242,7 @@ class NeuralAudioProcessor:
                     upsampled = self.model(audio_tensor)
             else:
                 # Fallback: torchaudio resampling
-                resampler = torchaudio.transforms.Resample(source_rate, target_rate).to(
-                    self.device
-                )
+                resampler = torchaudio.transforms.Resample(source_rate, target_rate).to(self.device)
                 upsampled = resampler(audio_tensor)
 
             # Convert back to numpy
@@ -258,9 +254,7 @@ class NeuralAudioProcessor:
             logger.error(f"Neural upsampling failed: {e}")
             # Fallback to librosa
             if HAS_LIBROSA:
-                upsampled = librosa.resample(
-                    audio, orig_sr=source_rate, target_sr=target_rate
-                )
+                upsampled = librosa.resample(audio, orig_sr=source_rate, target_sr=target_rate)
                 return upsampled, target_rate
             return audio, source_rate
 
@@ -284,9 +278,7 @@ class NeuralAudioProcessor:
             Tuple of (styled_audio, sample_rate)
         """
         if not HAS_TORCH or not HAS_LIBROSA:
-            logger.warning(
-                "Neural style transfer not available, returning original audio"
-            )
+            logger.warning("Neural style transfer not available, returning original audio")
             return audio, sample_rate
 
         try:
@@ -310,9 +302,7 @@ class NeuralAudioProcessor:
                     styled = self.model(audio_tensor, style_tensor, intensity)
             else:
                 # Fallback: spectral style transfer
-                styled = self._spectral_style_transfer(
-                    audio_tensor, style_tensor, intensity
-                )
+                styled = self._spectral_style_transfer(audio_tensor, style_tensor, intensity)
 
             # Convert back to numpy
             styled_np = styled.cpu().squeeze().numpy()
@@ -323,9 +313,7 @@ class NeuralAudioProcessor:
             logger.error(f"Neural style transfer failed: {e}")
             return audio, sample_rate
 
-    def _spectral_enhancement(
-        self, audio_tensor: torch.Tensor, intensity: float
-    ) -> torch.Tensor:
+    def _spectral_enhancement(self, audio_tensor: torch.Tensor, intensity: float) -> torch.Tensor:
         """Spectral enhancement fallback."""
         # Simple spectral enhancement
         # Compute STFT

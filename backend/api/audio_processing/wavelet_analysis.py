@@ -118,9 +118,9 @@ class WaveletAnalyzer:
 
             features = {
                 "num_levels": len(coeffs),
-                "energy_approximation": float(np.sum(approx ** 2)),
-                "energy_details": [float(np.sum(c ** 2)) for c in coeffs],
-                "total_energy": float(np.sum(signal ** 2)),
+                "energy_approximation": float(np.sum(approx**2)),
+                "energy_details": [float(np.sum(c**2)) for c in coeffs],
+                "total_energy": float(np.sum(signal**2)),
             }
 
             # Calculate energy distribution
@@ -150,4 +150,3 @@ class WaveletAnalyzer:
             return pywt.wavelist()
         except Exception:
             return []
-

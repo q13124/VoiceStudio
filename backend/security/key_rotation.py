@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class KeyStatus(Enum):
     """Status of an API key."""
+
     ACTIVE = "active"
     ROTATING = "rotating"  # Grace period - both old and new work
     EXPIRED = "expired"
@@ -31,6 +32,7 @@ class KeyStatus(Enum):
 @dataclass
 class APIKey:
     """An API key."""
+
     key_id: str
     key_hash: str  # We store hash, not the actual key
     owner: str
@@ -60,6 +62,7 @@ class APIKey:
 @dataclass
 class RotationConfig:
     """Configuration for key rotation."""
+
     rotation_interval_days: int = 90
     grace_period_hours: int = 24
     auto_rotation: bool = True
@@ -222,8 +225,7 @@ class KeyRotationService:
                 return api_key
 
             # Check previous key in grace period
-            if (api_key.in_grace_period and
-                api_key.previous_key_hash == key_hash):
+            if api_key.in_grace_period and api_key.previous_key_hash == key_hash:
                 return api_key
 
         return None

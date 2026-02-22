@@ -2,6 +2,7 @@
 Unit Tests for Analytics API Route
 Tests analytics and statistics endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -108,9 +109,7 @@ class TestAnalyticsEndpoints:
         client = TestClient(app)
 
         for interval in ["hour", "day", "week", "month"]:
-            response = client.get(
-                f"/api/analytics/metrics/Synthesis?interval={interval}"
-            )
+            response = client.get(f"/api/analytics/metrics/Synthesis?interval={interval}")
             assert response.status_code == 200
             data = response.json()
             assert isinstance(data, list)
@@ -150,9 +149,7 @@ class TestAnalyticsEndpoints:
 
         with patch("os.path.exists", return_value=True):
             with patch("backend.api.routes.analytics._quality_history", {}):
-                response = client.get(
-                    f"/api/analytics/explain-quality?audio_id={audio_id}"
-                )
+                response = client.get(f"/api/analytics/explain-quality?audio_id={audio_id}")
                 # Verify ModelExplainer was used
                 mock_get_explainer.assert_called()
                 assert response.status_code in [200, 500]
@@ -181,13 +178,9 @@ class TestAnalyticsEndpoints:
         with patch("os.path.exists", return_value=True):
             with patch("backend.api.routes.analytics._quality_history", {}):
                 # First request
-                response1 = client.get(
-                    f"/api/analytics/explain-quality?audio_id={audio_id}"
-                )
+                response1 = client.get(f"/api/analytics/explain-quality?audio_id={audio_id}")
                 # Second request (should use cache)
-                response2 = client.get(
-                    f"/api/analytics/explain-quality?audio_id={audio_id}"
-                )
+                response2 = client.get(f"/api/analytics/explain-quality?audio_id={audio_id}")
                 # Both should succeed (caching handled by decorator)
                 assert response1.status_code in [200, 500]
                 assert response2.status_code in [200, 500]
@@ -208,9 +201,10 @@ class TestAnalyticsEndpoints:
             # Fallback if voice module not available
             ...
 
-        with patch("os.path.exists", return_value=True), patch(
-            "backend.api.routes.analytics._get_model_explainer"
-        ) as mock_get_explainer:
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("backend.api.routes.analytics._get_model_explainer") as mock_get_explainer,
+        ):
             mock_explainer = MagicMock()
             mock_explainer.get_available_methods.return_value = [
                 "shap",
@@ -221,9 +215,7 @@ class TestAnalyticsEndpoints:
 
             # Mock quality history
             with patch("backend.api.routes.analytics._quality_history", {}):
-                response = client.get(
-                    f"/api/analytics/explain-quality?audio_id={audio_id}"
-                )
+                response = client.get(f"/api/analytics/explain-quality?audio_id={audio_id}")
                 # May return 200 or 500 depending on dependencies
                 assert response.status_code in [200, 500]
 
@@ -233,16 +225,12 @@ class TestAnalyticsEndpoints:
         app.include_router(analytics.router)
         client = TestClient(app)
 
-        with patch(
-            "backend.api.routes.analytics._get_model_explainer"
-        ) as mock_get_explainer:
+        with patch("backend.api.routes.analytics._get_model_explainer") as mock_get_explainer:
             mock_explainer = MagicMock()
             mock_explainer.get_available_methods.return_value = ["lime"]
             mock_get_explainer.return_value = mock_explainer
 
-            response = client.get(
-                "/api/analytics/explain-quality?audio_id=test&method=shap"
-            )
+            response = client.get("/api/analytics/explain-quality?audio_id=test&method=shap")
             assert response.status_code == 400
             assert "not available" in response.json()["detail"].lower()
 
@@ -260,9 +248,10 @@ class TestAnalyticsEndpoints:
         except ImportError:
             ...
 
-        with patch("os.path.exists", return_value=True), patch(
-            "backend.api.routes.analytics._get_model_explainer"
-        ) as mock_get_explainer:
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("backend.api.routes.analytics._get_model_explainer") as mock_get_explainer,
+        ):
             mock_explainer = MagicMock()
             mock_explainer.get_available_methods.return_value = [
                 "shap",
@@ -273,8 +262,7 @@ class TestAnalyticsEndpoints:
 
             with patch("backend.api.routes.analytics._quality_history", {}):
                 response = client.get(
-                    f"/api/analytics/explain-quality?"
-                    f"audio_id={audio_id}&method=lime"
+                    f"/api/analytics/explain-quality?" f"audio_id={audio_id}&method=lime"
                 )
                 # May return 200 or 500 depending on dependencies
                 assert response.status_code in [200, 500]
@@ -293,9 +281,7 @@ class TestAnalyticsEndpoints:
         except ImportError:
             ...
 
-        with patch(
-            "backend.api.routes.analytics._get_model_explainer"
-        ) as mock_get_explainer:
+        with patch("backend.api.routes.analytics._get_model_explainer") as mock_get_explainer:
             mock_explainer = MagicMock()
             mock_explainer.get_available_methods.return_value = ["shap"]
             mock_explainer.shap_available = True

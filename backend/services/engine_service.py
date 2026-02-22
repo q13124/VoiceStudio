@@ -138,9 +138,7 @@ class IEngineService(ABC):
         ...
 
     @abstractmethod
-    def detect_artifacts(
-        self, audio_path: AudioPath, sample_rate: int = 22050
-    ) -> dict[str, Any]:
+    def detect_artifacts(self, audio_path: AudioPath, sample_rate: int = 22050) -> dict[str, Any]:
         """Detect audio artifacts (clipping, distortion, noise)."""
         ...
 
@@ -381,8 +379,7 @@ class EngineService(IEngineService):
     def get_all_engine_health(self) -> dict[str, dict[str, Any]]:
         """Get health status for all engines with circuit breakers."""
         return {
-            engine_id: self.get_engine_health(engine_id)
-            for engine_id in self._circuit_breakers
+            engine_id: self.get_engine_health(engine_id) for engine_id in self._circuit_breakers
         }
 
     def _ensure_engines_loaded(self):
@@ -392,24 +389,28 @@ class EngineService(IEngineService):
 
         try:
             from app.core.engines import router
+
             self._engine_router = router
         except ImportError:
             self._engine_router = None
 
         try:
             from app.core.engines import quality_metrics
+
             self._quality_metrics = quality_metrics
         except ImportError:
             self._quality_metrics = None
 
         try:
             from app.core.engines import quality_optimizer
+
             self._quality_optimizer = quality_optimizer
         except ImportError:
             self._quality_optimizer = None
 
         try:
             from app.core.engines import quality_presets
+
             self._quality_presets = quality_presets
         except ImportError:
             self._quality_presets = None
@@ -564,7 +565,7 @@ class EngineService(IEngineService):
                     continue
 
                 # Check if engine supports voice cloning
-                if not hasattr(engine, 'clone_voice'):
+                if not hasattr(engine, "clone_voice"):
                     continue
 
                 result = engine.clone_voice(
@@ -681,9 +682,7 @@ class EngineService(IEngineService):
             logger.debug(f"Failed to calculate MOS score: {e}")
             return 0.0
 
-    def calculate_snr(
-        self, audio: AudioPath | Any, sample_rate: int | None = None
-    ) -> float:
+    def calculate_snr(self, audio: AudioPath | Any, sample_rate: int | None = None) -> float:
         """Calculate Signal-to-Noise Ratio for audio (path or numpy array)."""
         self._ensure_engines_loaded()
         if self._quality_metrics is None:
@@ -699,9 +698,7 @@ class EngineService(IEngineService):
             logger.debug(f"Failed to calculate SNR: {e}")
             return 0.0
 
-    def detect_artifacts(
-        self, audio: AudioPath | Any, sample_rate: int = 22050
-    ) -> dict[str, Any]:
+    def detect_artifacts(self, audio: AudioPath | Any, sample_rate: int = 22050) -> dict[str, Any]:
         """Detect audio artifacts (clipping, distortion, noise)."""
         self._ensure_engines_loaded()
         if self._quality_metrics is None:
@@ -721,6 +718,7 @@ class EngineService(IEngineService):
         self._ensure_engines_loaded()
         try:
             from app.core.engines.performance_metrics import get_engine_metrics
+
             metrics = get_engine_metrics()
             # Normalize to dict format for API consumption
             return {
@@ -858,6 +856,7 @@ class EngineService(IEngineService):
         self._ensure_engines_loaded()
         try:
             from app.core.engines.whisper_engine import WhisperEngine
+
             return WhisperEngine()
         except ImportError:
             return None
@@ -869,6 +868,7 @@ class EngineService(IEngineService):
         self._ensure_engines_loaded()
         try:
             from app.core.engines.aeneas_engine import AeneasEngine
+
             return AeneasEngine()
         except ImportError:
             return None
@@ -880,6 +880,7 @@ class EngineService(IEngineService):
         self._ensure_engines_loaded()
         try:
             from app.core.engines.rvc_engine import RVCEngine
+
             return RVCEngine()
         except ImportError:
             return None
@@ -891,6 +892,7 @@ class EngineService(IEngineService):
         self._ensure_engines_loaded()
         try:
             from app.core.engines.realesrgan_engine import RealESRGANEngine
+
             return RealESRGANEngine()
         except ImportError:
             return None
@@ -902,6 +904,7 @@ class EngineService(IEngineService):
         self._ensure_engines_loaded()
         try:
             from app.core.engines.deepfacelab_engine import DeepFaceLabEngine
+
             return DeepFaceLabEngine()
         except ImportError:
             return None
@@ -913,6 +916,7 @@ class EngineService(IEngineService):
         self._ensure_engines_loaded()
         try:
             from app.core.engines.speaker_encoder_engine import SpeakerEncoderEngine
+
             return SpeakerEncoderEngine()
         except ImportError:
             return None
@@ -965,6 +969,7 @@ class EngineService(IEngineService):
         """Get the LLMConfig class for building LLM configurations."""
         try:
             from app.core.engines.llm_interface import LLMConfig
+
             return LLMConfig
         except ImportError:
             return None
@@ -973,6 +978,7 @@ class EngineService(IEngineService):
         """Get the Message and MessageRole classes for LLM messaging."""
         try:
             from app.core.engines.llm_interface import Message, MessageRole
+
             return (Message, MessageRole)
         except ImportError:
             return None
@@ -985,6 +991,7 @@ class EngineService(IEngineService):
         """Get an EngineAuditor instance for auditing engines."""
         try:
             from app.core.engines.engine_audit import EngineAuditor
+
             return EngineAuditor()
         except ImportError:
             return None
@@ -996,6 +1003,7 @@ class EngineService(IEngineService):
         """Get the engine registry for accessing registered engines."""
         try:
             from app.core.engines.engine_registry import get_engine_registry
+
             return get_engine_registry()
         except ImportError:
             return None
@@ -1121,6 +1129,7 @@ class EngineService(IEngineService):
         try:
             # Try to import metrics from the engine layer
             from app.core.engines.metrics import get_engine_metrics
+
             return get_engine_metrics()
         except ImportError:
             logger.debug("Engine metrics module not available")
@@ -1204,6 +1213,7 @@ def get_engine_port():
         result = await tts_engine.synthesize(request)
     """
     from backend.adapters.engine_adapter import get_engine_service as get_adapter
+
     return get_adapter()
 
 

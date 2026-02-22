@@ -59,9 +59,7 @@ class EnginePerformanceMetrics:
         """Record a request."""
         self.total_requests += 1
         self.total_response_time += response_time
-        self.average_response_time = (
-            self.total_response_time / self.total_requests
-        )
+        self.average_response_time = self.total_response_time / self.total_requests
         self.min_response_time = min(self.min_response_time, response_time)
         self.max_response_time = max(self.max_response_time, response_time)
         self.last_request_time = datetime.now()
@@ -77,9 +75,7 @@ class EnginePerformanceMetrics:
 
         # Update health score (0.0 to 1.0)
         success_rate = (
-            self.successful_requests / self.total_requests
-            if self.total_requests > 0
-            else 1.0
+            self.successful_requests / self.total_requests if self.total_requests > 0 else 1.0
         )
         # Penalize consecutive failures
         failure_penalty = min(self.consecutive_failures * 0.1, 0.5)
@@ -115,12 +111,10 @@ class EnginePerformanceMetrics:
             # Combined score: health, speed, load
             health_factor = self.health_score
             speed_factor = (
-                1.0 / (1.0 + self.average_response_time)
-                if self.average_response_time > 0
-                else 1.0
+                1.0 / (1.0 + self.average_response_time) if self.average_response_time > 0 else 1.0
             )
             load_factor = 1.0 / (1.0 + self.current_load)
-            return (health_factor * 0.5 + speed_factor * 0.3 + load_factor * 0.2)
+            return health_factor * 0.5 + speed_factor * 0.3 + load_factor * 0.2
         else:
             return 1.0  # Default score
 
@@ -221,9 +215,7 @@ class OptimizedEngineRouter(EngineRouter):
             Selected engine instance or None
         """
         strategy = (
-            load_balancing_strategy
-            if load_balancing_strategy
-            else self.load_balancing_strategy
+            load_balancing_strategy if load_balancing_strategy else self.load_balancing_strategy
         )
 
         # Get available engines for task type
@@ -250,9 +242,7 @@ class OptimizedEngineRouter(EngineRouter):
             healthy_engines = available_engines
 
         # Select engine based on strategy
-        selected_engine_id = self._select_engine_by_strategy(
-            healthy_engines, strategy, prefer_fast
-        )
+        selected_engine_id = self._select_engine_by_strategy(healthy_engines, strategy, prefer_fast)
 
         if not selected_engine_id:
             return None
@@ -385,7 +375,9 @@ class OptimizedEngineRouter(EngineRouter):
             manifest_type = manifest.get("type", "")
             manifest_subtype = manifest.get("subtype", "")
 
-            if (manifest_type == "audio" and manifest_subtype == task_type) or manifest_type == task_type:
+            if (
+                manifest_type == "audio" and manifest_subtype == task_type
+            ) or manifest_type == task_type:
                 engines.append(engine_id)
 
         # Update cache
@@ -394,27 +386,19 @@ class OptimizedEngineRouter(EngineRouter):
 
         return engines
 
-    def _record_engine_access(
-        self, engine_id: str, response_time: float, success: bool
-    ):
+    def _record_engine_access(self, engine_id: str, response_time: float, success: bool):
         """Record engine access for performance tracking."""
         with self.lock:
             metrics = self._get_or_create_metrics(engine_id)
             metrics.record_request(response_time, success)
 
-    def _get_or_create_metrics(
-        self, engine_id: str
-    ) -> EnginePerformanceMetrics:
+    def _get_or_create_metrics(self, engine_id: str) -> EnginePerformanceMetrics:
         """Get or create performance metrics for engine."""
         if engine_id not in self.performance_metrics:
-            self.performance_metrics[engine_id] = EnginePerformanceMetrics(
-                engine_id=engine_id
-            )
+            self.performance_metrics[engine_id] = EnginePerformanceMetrics(engine_id=engine_id)
         return self.performance_metrics[engine_id]
 
-    def record_request_completion(
-        self, engine_id: str, response_time: float, success: bool
-    ):
+    def record_request_completion(self, engine_id: str, response_time: float, success: bool):
         """
         Record request completion.
 
@@ -609,4 +593,3 @@ __all__ = [
     "OptimizedEngineRouter",
     "create_optimized_router",
 ]
-

@@ -146,50 +146,61 @@ class DiagnosticsService:
         duration_ms: float = 0.0,
     ) -> None:
         """Add a diagnostic check result."""
-        self._checks.append(DiagnosticCheck(
-            name=name,
-            category=category,
-            status=status,
-            message=message,
-            details=details or {},
-            duration_ms=duration_ms,
-        ))
+        self._checks.append(
+            DiagnosticCheck(
+                name=name,
+                category=category,
+                status=status,
+                message=message,
+                details=details or {},
+                duration_ms=duration_ms,
+            )
+        )
 
     def _check_python_environment(self) -> None:
         """Check Python environment."""
         import time
+
         start = time.perf_counter()
 
         # Python version
         major, minor = sys.version_info[:2]
         if major >= 3 and minor >= 9:
             self._add_check(
-                "python_version", "environment", "pass",
+                "python_version",
+                "environment",
+                "pass",
                 f"Python {major}.{minor} meets requirements (3.9+)",
-                {"version": sys.version}
+                {"version": sys.version},
             )
         else:
             self._add_check(
-                "python_version", "environment", "fail",
+                "python_version",
+                "environment",
+                "fail",
                 f"Python {major}.{minor} below required 3.9",
-                {"version": sys.version}
+                {"version": sys.version},
             )
 
         # Virtual environment
-        in_venv = hasattr(sys, 'real_prefix') or (
-            hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix
+        in_venv = hasattr(sys, "real_prefix") or (
+            hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
         )
         if in_venv:
             self._add_check(
-                "virtual_env", "environment", "pass",
+                "virtual_env",
+                "environment",
+                "pass",
                 "Running in virtual environment",
-                {"prefix": sys.prefix}
+                {"prefix": sys.prefix},
             )
         else:
             self._add_check(
-                "virtual_env", "environment", "warn",
+                "virtual_env",
+                "environment",
+                "warn",
                 "Not running in virtual environment",
-                {"prefix": sys.prefix}
+                {"prefix": sys.prefix},
             )
 
         elapsed = (time.perf_counter() - start) * 1000
@@ -198,6 +209,7 @@ class DiagnosticsService:
     def _check_system_resources(self) -> None:
         """Check system resources."""
         import time
+
         start = time.perf_counter()
 
         try:
@@ -207,49 +219,61 @@ class DiagnosticsService:
             memory = psutil.virtual_memory()
             if memory.available / (1024**3) >= 4:
                 self._add_check(
-                    "memory", "resources", "pass",
+                    "memory",
+                    "resources",
+                    "pass",
                     f"Sufficient memory available ({memory.available / (1024**3):.1f} GB)",
                     {
                         "available_gb": memory.available / (1024**3),
                         "total_gb": memory.total / (1024**3),
                         "percent_used": memory.percent,
-                    }
+                    },
                 )
             else:
                 self._add_check(
-                    "memory", "resources", "warn",
+                    "memory",
+                    "resources",
+                    "warn",
                     f"Low memory ({memory.available / (1024**3):.1f} GB available)",
-                    {"available_gb": memory.available / (1024**3)}
+                    {"available_gb": memory.available / (1024**3)},
                 )
 
             # Disk
             disk = psutil.disk_usage("/")
             if disk.free / (1024**3) >= 10:
                 self._add_check(
-                    "disk", "resources", "pass",
+                    "disk",
+                    "resources",
+                    "pass",
                     f"Sufficient disk space ({disk.free / (1024**3):.1f} GB free)",
-                    {"free_gb": disk.free / (1024**3), "percent_used": disk.percent}
+                    {"free_gb": disk.free / (1024**3), "percent_used": disk.percent},
                 )
             else:
                 self._add_check(
-                    "disk", "resources", "warn",
+                    "disk",
+                    "resources",
+                    "warn",
                     f"Low disk space ({disk.free / (1024**3):.1f} GB free)",
-                    {"free_gb": disk.free / (1024**3)}
+                    {"free_gb": disk.free / (1024**3)},
                 )
 
             # CPU
             cpu_count = psutil.cpu_count()
             self._add_check(
-                "cpu", "resources", "pass",
+                "cpu",
+                "resources",
+                "pass",
                 f"CPU available ({cpu_count} cores)",
-                {"cores": cpu_count, "percent": psutil.cpu_percent(interval=0.1)}
+                {"cores": cpu_count, "percent": psutil.cpu_percent(interval=0.1)},
             )
 
         except ImportError:
             self._add_check(
-                "psutil", "resources", "warn",
+                "psutil",
+                "resources",
+                "warn",
                 "psutil not installed - cannot check system resources",
-                {}
+                {},
             )
 
         elapsed = (time.perf_counter() - start) * 1000
@@ -258,6 +282,7 @@ class DiagnosticsService:
     def _check_dependencies(self) -> None:
         """Check required dependencies."""
         import time
+
         start = time.perf_counter()
 
         required_packages = [
@@ -278,30 +303,38 @@ class DiagnosticsService:
             try:
                 __import__(package)
                 self._add_check(
-                    f"dep_{package}", "dependencies", "pass",
+                    f"dep_{package}",
+                    "dependencies",
+                    "pass",
                     f"{description} ({package}) installed",
-                    {}
+                    {},
                 )
             except ImportError:
                 self._add_check(
-                    f"dep_{package}", "dependencies", "fail",
+                    f"dep_{package}",
+                    "dependencies",
+                    "fail",
                     f"{description} ({package}) not installed",
-                    {}
+                    {},
                 )
 
         for package, description in optional_packages:
             try:
                 __import__(package)
                 self._add_check(
-                    f"dep_{package}", "dependencies", "pass",
+                    f"dep_{package}",
+                    "dependencies",
+                    "pass",
                     f"{description} ({package}) installed",
-                    {}
+                    {},
                 )
             except ImportError:
                 self._add_check(
-                    f"dep_{package}", "dependencies", "warn",
+                    f"dep_{package}",
+                    "dependencies",
+                    "warn",
                     f"{description} ({package}) not installed (optional)",
-                    {}
+                    {},
                 )
 
         elapsed = (time.perf_counter() - start) * 1000
@@ -310,6 +343,7 @@ class DiagnosticsService:
     def _check_paths(self) -> None:
         """Check required paths and directories."""
         import time
+
         start = time.perf_counter()
 
         paths_to_check = [
@@ -324,63 +358,53 @@ class DiagnosticsService:
                 if os.path.exists(path):
                     if os.access(path, os.W_OK):
                         self._add_check(
-                            f"path_{env_var.lower()}", "paths", "pass",
+                            f"path_{env_var.lower()}",
+                            "paths",
+                            "pass",
                             f"{description} exists and writable",
-                            {"path": path}
+                            {"path": path},
                         )
                     else:
                         self._add_check(
-                            f"path_{env_var.lower()}", "paths", "fail",
+                            f"path_{env_var.lower()}",
+                            "paths",
+                            "fail",
                             f"{description} not writable",
-                            {"path": path}
+                            {"path": path},
                         )
                 else:
                     self._add_check(
-                        f"path_{env_var.lower()}", "paths", "warn",
+                        f"path_{env_var.lower()}",
+                        "paths",
+                        "warn",
                         f"{description} does not exist",
-                        {"path": path}
+                        {"path": path},
                     )
             else:
                 self._add_check(
-                    f"path_{env_var.lower()}", "paths", "warn",
+                    f"path_{env_var.lower()}",
+                    "paths",
+                    "warn",
                     f"{description} not configured ({env_var})",
-                    {}
+                    {},
                 )
 
         # Check ffmpeg
         ffmpeg_path = os.environ.get("VOICESTUDIO_FFMPEG_PATH")
         if ffmpeg_path and os.path.exists(ffmpeg_path):
             self._add_check(
-                "ffmpeg", "paths", "pass",
-                "ffmpeg configured and found",
-                {"path": ffmpeg_path}
+                "ffmpeg", "paths", "pass", "ffmpeg configured and found", {"path": ffmpeg_path}
             )
         else:
             # Try to find ffmpeg in PATH
             try:
-                result = subprocess.run(
-                    ["ffmpeg", "-version"],
-                    capture_output=True,
-                    timeout=5
-                )
+                result = subprocess.run(["ffmpeg", "-version"], capture_output=True, timeout=5)
                 if result.returncode == 0:
-                    self._add_check(
-                        "ffmpeg", "paths", "pass",
-                        "ffmpeg found in PATH",
-                        {}
-                    )
+                    self._add_check("ffmpeg", "paths", "pass", "ffmpeg found in PATH", {})
                 else:
-                    self._add_check(
-                        "ffmpeg", "paths", "warn",
-                        "ffmpeg not found",
-                        {}
-                    )
+                    self._add_check("ffmpeg", "paths", "warn", "ffmpeg not found", {})
             except (subprocess.TimeoutExpired, FileNotFoundError):
-                self._add_check(
-                    "ffmpeg", "paths", "warn",
-                    "ffmpeg not found",
-                    {}
-                )
+                self._add_check("ffmpeg", "paths", "warn", "ffmpeg not found", {})
 
         elapsed = (time.perf_counter() - start) * 1000
         logger.debug(f"Path checks: {elapsed:.2f}ms")
@@ -388,54 +412,38 @@ class DiagnosticsService:
     def _check_backend_services(self) -> None:
         """Check backend services."""
         import time
+
         start = time.perf_counter()
 
         # Telemetry service
         try:
             from backend.services.telemetry import get_telemetry_service
+
             get_telemetry_service()
-            self._add_check(
-                "telemetry", "services", "pass",
-                "Telemetry service available",
-                {}
-            )
+            self._add_check("telemetry", "services", "pass", "Telemetry service available", {})
         except Exception as e:
             self._add_check(
-                "telemetry", "services", "warn",
-                f"Telemetry service unavailable: {e}",
-                {}
+                "telemetry", "services", "warn", f"Telemetry service unavailable: {e}", {}
             )
 
         # SLO monitor
         try:
             from backend.services.slo_monitor import get_slo_monitor
+
             get_slo_monitor()
-            self._add_check(
-                "slo_monitor", "services", "pass",
-                "SLO monitor available",
-                {}
-            )
+            self._add_check("slo_monitor", "services", "pass", "SLO monitor available", {})
         except Exception as e:
-            self._add_check(
-                "slo_monitor", "services", "warn",
-                f"SLO monitor unavailable: {e}",
-                {}
-            )
+            self._add_check("slo_monitor", "services", "warn", f"SLO monitor unavailable: {e}", {})
 
         # Trace exporter
         try:
             from backend.services.trace_export import get_trace_exporter
+
             get_trace_exporter()
-            self._add_check(
-                "trace_exporter", "services", "pass",
-                "Trace exporter available",
-                {}
-            )
+            self._add_check("trace_exporter", "services", "pass", "Trace exporter available", {})
         except Exception as e:
             self._add_check(
-                "trace_exporter", "services", "warn",
-                f"Trace exporter unavailable: {e}",
-                {}
+                "trace_exporter", "services", "warn", f"Trace exporter unavailable: {e}", {}
             )
 
         elapsed = (time.perf_counter() - start) * 1000
@@ -444,34 +452,30 @@ class DiagnosticsService:
     def _check_network(self) -> None:
         """Check network connectivity."""
         import time
+
         start = time.perf_counter()
 
         # Check localhost binding
         import socket
+
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(2)
-            result = sock.connect_ex(('127.0.0.1', 8000))
+            result = sock.connect_ex(("127.0.0.1", 8000))
             sock.close()
 
             if result == 0:
                 self._add_check(
-                    "port_8000", "network", "pass",
+                    "port_8000",
+                    "network",
+                    "pass",
                     "Port 8000 is in use (backend may be running)",
-                    {}
+                    {},
                 )
             else:
-                self._add_check(
-                    "port_8000", "network", "pass",
-                    "Port 8000 is available",
-                    {}
-                )
+                self._add_check("port_8000", "network", "pass", "Port 8000 is available", {})
         except Exception as e:
-            self._add_check(
-                "port_8000", "network", "warn",
-                f"Could not check port 8000: {e}",
-                {}
-            )
+            self._add_check("port_8000", "network", "warn", f"Could not check port 8000: {e}", {})
 
         elapsed = (time.perf_counter() - start) * 1000
         logger.debug(f"Network checks: {elapsed:.2f}ms")
@@ -479,6 +483,7 @@ class DiagnosticsService:
     def _check_model_drift(self) -> None:
         """Check model data drift status (Phase 9 Sprint 2)."""
         import time
+
         start = time.perf_counter()
 
         try:
@@ -489,7 +494,9 @@ class DiagnosticsService:
 
             if not statuses:
                 self._add_check(
-                    "model_drift", "services", "pass",
+                    "model_drift",
+                    "services",
+                    "pass",
                     "Model drift detection: no baselines set (no drift to report)",
                     {"engines_with_baselines": 0},
                 )
@@ -501,7 +508,9 @@ class DiagnosticsService:
             if drifted:
                 engines = ", ".join(s.engine_id for s in drifted)
                 self._add_check(
-                    "model_drift", "services", "warn",
+                    "model_drift",
+                    "services",
+                    "warn",
                     f"Model drift detected for: {engines}",
                     {
                         "drifted_engines": [s.engine_id for s in drifted],
@@ -511,14 +520,18 @@ class DiagnosticsService:
                 )
             else:
                 self._add_check(
-                    "model_drift", "services", "pass",
+                    "model_drift",
+                    "services",
+                    "pass",
                     f"Model drift: no significant drift ({len(statuses)} engines monitored)",
                     {"engines_monitored": len(statuses), "total_metrics": total_metrics},
                 )
         except Exception as e:
             logger.debug("Model drift check failed: %s", e)
             self._add_check(
-                "model_drift", "services", "warn",
+                "model_drift",
+                "services",
+                "warn",
                 f"Model drift check unavailable: {e}",
                 {},
             )
@@ -562,25 +575,17 @@ class DiagnosticsService:
         for check in self._checks:
             if check.status == "fail":
                 if "python_version" in check.name:
-                    recommendations.append(
-                        "Upgrade Python to 3.9 or later"
-                    )
+                    recommendations.append("Upgrade Python to 3.9 or later")
                 elif "memory" in check.name:
-                    recommendations.append(
-                        "Consider adding more RAM or closing other applications"
-                    )
+                    recommendations.append("Consider adding more RAM or closing other applications")
                 elif "disk" in check.name:
-                    recommendations.append(
-                        "Free up disk space or expand storage"
-                    )
+                    recommendations.append("Free up disk space or expand storage")
                 elif "dep_" in check.name:
                     pkg = check.name.replace("dep_", "")
                     recommendations.append(f"Install missing package: pip install {pkg}")
             elif check.status == "warn":
                 if "virtual_env" in check.name:
-                    recommendations.append(
-                        "Consider using a virtual environment for isolation"
-                    )
+                    recommendations.append("Consider using a virtual environment for isolation")
                 elif "path_" in check.name:
                     recommendations.append(
                         f"Configure {check.name.replace('path_', '').upper()} "

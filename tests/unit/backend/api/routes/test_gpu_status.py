@@ -2,6 +2,7 @@
 Unit Tests for GPU Status API Route
 Tests GPU status and monitoring endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -30,9 +31,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import gpu_status
 except ImportError:
-    pytest.skip(
-        "Could not import gpu_status route module", allow_module_level=True
-    )
+    pytest.skip("Could not import gpu_status route module", allow_module_level=True)
 
 
 class TestGPUStatusRouteImports:
@@ -40,12 +39,8 @@ class TestGPUStatusRouteImports:
 
     def test_gpu_status_module_imports(self):
         """Test gpu_status module can be imported."""
-        assert (
-            gpu_status is not None
-        ), "Failed to import gpu_status module"
-        assert hasattr(
-            gpu_status, "router"
-        ), "gpu_status module missing router"
+        assert gpu_status is not None, "Failed to import gpu_status module"
+        assert hasattr(gpu_status, "router"), "gpu_status module missing router"
 
     def test_router_exists(self):
         """Test router exists and is configured."""
@@ -73,8 +68,7 @@ class TestGPUStatusEndpoints:
             mock_result = MagicMock()
             mock_result.returncode = 0
             mock_result.stdout = (
-                "0, NVIDIA GeForce RTX 3080, 10240, 5120, 45.5, 65.0, 250.0, "
-                "470.63.01\n"
+                "0, NVIDIA GeForce RTX 3080, 10240, 5120, 45.5, 65.0, 250.0, " "470.63.01\n"
             )
             mock_run.return_value = mock_result
 
@@ -149,8 +143,7 @@ class TestGPUStatusEndpoints:
             mock_result = MagicMock()
             mock_result.returncode = 0
             mock_result.stdout = (
-                "0, NVIDIA GeForce RTX 3080, 10240, 5120, 45.5, 65.0, 250.0, "
-                "470.63.01\n"
+                "0, NVIDIA GeForce RTX 3080, 10240, 5120, 45.5, 65.0, 250.0, " "470.63.01\n"
             )
             mock_run.return_value = mock_result
 
@@ -184,8 +177,7 @@ class TestGPUStatusEndpoints:
             mock_result = MagicMock()
             mock_result.returncode = 0
             mock_result.stdout = (
-                "0, NVIDIA GeForce RTX 3080, 10240, 5120, 45.5, 65.0, 250.0, "
-                "470.63.01\n"
+                "0, NVIDIA GeForce RTX 3080, 10240, 5120, 45.5, 65.0, 250.0, " "470.63.01\n"
             )
             mock_run.return_value = mock_result
 
@@ -205,8 +197,7 @@ class TestGPUStatusEndpoints:
             mock_result = MagicMock()
             mock_result.returncode = 0
             mock_result.stdout = (
-                "0, NVIDIA GeForce RTX 3080, 10240, 5120, 45.5, 65.0, 250.0, "
-                "470.63.01\n"
+                "0, NVIDIA GeForce RTX 3080, 10240, 5120, 45.5, 65.0, 250.0, " "470.63.01\n"
             )
             mock_run.return_value = mock_result
 

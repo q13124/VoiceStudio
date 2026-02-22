@@ -48,6 +48,7 @@ logger = logging.getLogger(__name__)
 
 class RVCVersion(Enum):
     """RVC version/variant."""
+
     V1 = "v1"
     V2 = "v2"
     RVCH = "rvch"  # RVC Hubert
@@ -196,6 +197,7 @@ class RVCEngine:
                 if index_path and Path(index_path).exists():
                     try:
                         import faiss
+
                         index = faiss.read_index(index_path)
                         self._index = {
                             "path": index_path,
@@ -233,6 +235,7 @@ class RVCEngine:
         # Clear GPU cache to free VRAM
         try:
             import torch
+
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 logger.debug("GPU cache cleared after RVC model unload")
@@ -264,6 +267,7 @@ class RVCEngine:
             raise RuntimeError("No model loaded")
 
         import time
+
         start_time = time.time()
 
         pitch = pitch_shift if pitch_shift is not None else self._config.pitch_shift
@@ -341,6 +345,7 @@ class RVCEngine:
         logger.info(f"Converting file: {input_path} -> {output_path}")
 
         import time
+
         start_time = time.time()
 
         try:
@@ -431,6 +436,7 @@ class RVCEngine:
                 # Try RMVPE for best quality
                 try:
                     from app.core.engines.rmvpe import RMVPE
+
                     rmvpe = RMVPE()
                     return rmvpe.infer(audio, sample_rate)
                 except ImportError:
@@ -439,8 +445,10 @@ class RVCEngine:
             elif self._config.f0_method == "crepe":
                 try:
                     import crepe
+
                     _, f0, _, _ = crepe.predict(
-                        audio, sample_rate,
+                        audio,
+                        sample_rate,
                         step_size=hop_size / sample_rate * 1000,
                         viterbi=True,
                     )
@@ -476,7 +484,7 @@ class RVCEngine:
 
             # Autocorrelation
             corr = np.correlate(frame, frame, mode="full")
-            corr = corr[len(corr) // 2:]
+            corr = corr[len(corr) // 2 :]
 
             # Find peak in voice range (50-500 Hz)
             min_lag = int(sample_rate / 500)
@@ -568,10 +576,7 @@ class RVCEngine:
             window = torch.hann_window(n_fft).to(device)
 
             audio_t = torch.from_numpy(audio).float().to(device)
-            stft = torch.stft(
-                audio_t, n_fft, hop_length,
-                window=window, return_complex=True
-            )
+            stft = torch.stft(audio_t, n_fft, hop_length, window=window, return_complex=True)
             mel = torch.abs(stft).pow(0.5)  # Simple power spectrogram
 
             # Step 2: Apply FAISS index matching for voice similarity
@@ -597,24 +602,19 @@ class RVCEngine:
 
             # Apply RMS mixing to preserve energy
             rms_mix = self._config.rms_mix_rate
-            original_rms = np.sqrt(np.mean(audio ** 2) + 1e-8)
+            original_rms = np.sqrt(np.mean(audio**2) + 1e-8)
 
             # Apply protect to preserve consonants (unvoiced sections)
 
             # Step 4: Inverse STFT (simplified vocoder)
             output_stft = stft  # In full RVC, this would be transformed
-            output = torch.istft(
-                output_stft, n_fft, hop_length,
-                window=window, length=len(audio)
-            )
+            output = torch.istft(output_stft, n_fft, hop_length, window=window, length=len(audio))
 
             output_audio = output.cpu().numpy()
 
             # Apply RMS normalization
-            output_rms = np.sqrt(np.mean(output_audio ** 2) + 1e-8)
-            output_audio = output_audio * (
-                rms_mix * original_rms / output_rms + (1 - rms_mix)
-            )
+            output_rms = np.sqrt(np.mean(output_audio**2) + 1e-8)
+            output_audio = output_audio * (rms_mix * original_rms / output_rms + (1 - rms_mix))
 
             return output_audio
 
@@ -669,6 +669,7 @@ class RVCEngine:
         """Load audio file using librosa or soundfile."""
         try:
             import librosa
+
             audio, sr = librosa.load(path, sr=self._sample_rate, mono=True)
             return audio, sr
         except ImportError:
@@ -676,6 +677,7 @@ class RVCEngine:
 
         try:
             import soundfile as sf
+
             audio, sr = sf.read(path)
             if len(audio.shape) > 1:
                 audio = audio.mean(axis=1)  # Convert to mono
@@ -694,6 +696,7 @@ class RVCEngine:
         """Save audio file using soundfile or scipy."""
         try:
             import soundfile as sf
+
             sf.write(path, audio, sample_rate)
             return
         except ImportError:
@@ -701,6 +704,7 @@ class RVCEngine:
 
         try:
             from scipy.io import wavfile
+
             # Normalize to int16
             audio_int = (audio * 32767).astype(np.int16)
             wavfile.write(path, sample_rate, audio_int)

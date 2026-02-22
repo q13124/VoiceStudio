@@ -43,16 +43,12 @@ class TestTracksRouteHandlers:
     def test_update_track_handler_exists(self):
         """Test update_track handler exists."""
         if hasattr(tracks, "update_track"):
-            assert callable(
-                tracks.update_track
-            ), "update_track is not callable"
+            assert callable(tracks.update_track), "update_track is not callable"
 
     def test_delete_track_handler_exists(self):
         """Test delete_track handler exists."""
         if hasattr(tracks, "delete_track"):
-            assert callable(
-                tracks.delete_track
-            ), "delete_track is not callable"
+            assert callable(tracks.delete_track), "delete_track is not callable"
 
 
 class TestTracksRouter:
@@ -73,4 +69,3 @@ class TestTracksRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

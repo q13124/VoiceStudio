@@ -112,7 +112,9 @@ class Phonemizer:
                     word_data = {
                         "text": word.text,
                         "phonemes": word.phonemes if hasattr(word, "phonemes") else [],
-                        "phonemes_str": " ".join(word.phonemes) if hasattr(word, "phonemes") else "",
+                        "phonemes_str": (
+                            " ".join(word.phonemes) if hasattr(word, "phonemes") else ""
+                        ),
                     }
                     result.append(word_data)
 
@@ -134,4 +136,3 @@ class Phonemizer:
         if self.gruut_available:
             backends.append("gruut")
         return backends
-

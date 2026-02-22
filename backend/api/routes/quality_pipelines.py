@@ -81,9 +81,7 @@ async def list_presets(engine_id: str):
         raise HTTPException(status_code=500, detail=f"Failed to list presets: {e!s}")
 
 
-@router.get(
-    "/engines/{engine_id}/presets/{preset_name}", response_model=PipelineConfiguration
-)
+@router.get("/engines/{engine_id}/presets/{preset_name}", response_model=PipelineConfiguration)
 async def get_preset(engine_id: str, preset_name: str = "default"):
     """
     Get pipeline configuration for an engine preset (IDEA 58).
@@ -113,9 +111,7 @@ async def apply_pipeline(
     audio_id: str = Query(..., description="Audio ID to enhance"),
     preset_name: str = Query("default", description="Preset name"),
     pipeline_config: PipelineConfiguration | None = None,
-    reference_audio_id: str | None = Query(
-        None, description="Optional reference audio ID"
-    ),
+    reference_audio_id: str | None = Query(None, description="Optional reference audio ID"),
 ):
     """
     Apply quality enhancement pipeline to audio (IDEA 58).
@@ -182,9 +178,7 @@ async def apply_pipeline(
         raise
     except Exception as e:
         logger.error(f"Error applying pipeline: {e!s}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to apply pipeline: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to apply pipeline: {e!s}")
 
 
 @router.post("/engines/{engine_id}/preview", response_model=PipelinePreviewResponse)
@@ -199,9 +193,7 @@ async def preview_pipeline(engine_id: str, request: PipelinePreviewRequest):
 
         audio_path = _audio_storage.get(request.audio_id)
         if not audio_path or not os.path.exists(audio_path):
-            raise HTTPException(
-                status_code=404, detail=f"Audio not found: {request.audio_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio not found: {request.audio_id}")
 
         # Load audio
         try:
@@ -280,9 +272,7 @@ async def preview_pipeline(engine_id: str, request: PipelinePreviewRequest):
         raise
     except Exception as e:
         logger.error(f"Error previewing pipeline: {e!s}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to preview pipeline: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to preview pipeline: {e!s}")
 
 
 @router.post("/engines/{engine_id}/compare", response_model=PipelineComparisonResponse)
@@ -291,9 +281,7 @@ async def compare_pipeline(
     audio_id: str = Query(..., description="Audio ID to compare"),
     preset_name: str = Query("default", description="Preset name"),
     pipeline_config: PipelineConfiguration | None = None,
-    reference_audio_id: str | None = Query(
-        None, description="Optional reference audio ID"
-    ),
+    reference_audio_id: str | None = Query(None, description="Optional reference audio ID"),
 ):
     """
     Compare audio before and after enhancement (IDEA 58).
@@ -348,6 +336,4 @@ async def compare_pipeline(
         raise
     except Exception as e:
         logger.error(f"Error comparing pipeline: {e!s}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to compare pipeline: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to compare pipeline: {e!s}")

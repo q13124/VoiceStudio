@@ -2,6 +2,7 @@
 Unit Tests for Ultimate Dashboard API Route
 Tests ultimate dashboard endpoints comprehensively including retry logic, circuit breaker, and caching.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -41,27 +42,19 @@ class TestUltimateDashboardRouteImports:
 
     def test_ultimate_dashboard_module_imports(self):
         """Test ultimate_dashboard module can be imported."""
-        assert (
-            ultimate_dashboard is not None
-        ), "Failed to import ultimate_dashboard module"
-        assert hasattr(
-            ultimate_dashboard, "router"
-        ), "ultimate_dashboard module missing router"
+        assert ultimate_dashboard is not None, "Failed to import ultimate_dashboard module"
+        assert hasattr(ultimate_dashboard, "router"), "ultimate_dashboard module missing router"
 
     def test_router_exists(self):
         """Test router exists and is configured."""
-        assert (
-            ultimate_dashboard.router is not None
-        ), "Router should exist"
+        assert ultimate_dashboard.router is not None, "Router should exist"
         if hasattr(ultimate_dashboard.router, "prefix"):
             pass  # Router configuration is valid
 
     def test_router_has_routes(self):
         """Test router has registered routes."""
         if hasattr(ultimate_dashboard.router, "routes"):
-            routes = [
-                route.path for route in ultimate_dashboard.router.routes
-            ]
+            routes = [route.path for route in ultimate_dashboard.router.routes]
             assert len(routes) > 0, "Router should have routes registered"
 
 
@@ -82,6 +75,7 @@ class TestUltimateDashboardEndpoints:
         mock_analytics_response = {"total_requests": 100}
 
         with patch("backend.api.routes.ultimate_dashboard._http_get_with_retry") as mock_get:
+
             def mock_get_side_effect(client, url, endpoint_name, **kwargs):
                 if "projects" in url:
                     return mock_projects_response
@@ -112,11 +106,7 @@ class TestUltimateDashboardEndpoints:
 
         with patch("backend.api.routes.ultimate_dashboard.get_dashboard_data") as mock_data:
             mock_data.return_value = {
-                "summary": {
-                    "total_projects": 5,
-                    "total_profiles": 10,
-                    "system_status": "healthy"
-                }
+                "summary": {"total_projects": 5, "total_profiles": 10, "system_status": "healthy"}
             }
 
             response = client.get("/api/ultimate-dashboard/summary")
@@ -209,4 +199,3 @@ class TestUltimateDashboardEndpoints:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

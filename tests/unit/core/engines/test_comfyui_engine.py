@@ -24,9 +24,7 @@ class TestComfyUIEngineImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            comfyui_engine is not None
-        ), "Failed to import comfyui_engine module"
+        assert comfyui_engine is not None, "Failed to import comfyui_engine module"
 
     def test_module_has_comfyui_engine_class(self):
         """Test module has ComfyUIEngine class."""
@@ -62,9 +60,7 @@ class TestComfyUIEngineClass:
             )
             required_methods = ["initialize", "cleanup", "generate"]
             for method in required_methods:
-                assert hasattr(
-                    engine, method
-                ), f"ComfyUIEngine missing method: {method}"
+                assert hasattr(engine, method), f"ComfyUIEngine missing method: {method}"
 
     def test_comfyui_engine_has_optimization_features(self):
         """Test ComfyUIEngine has optimization features."""
@@ -80,15 +76,11 @@ class TestComfyUIEngineClass:
                 pool_maxsize=40,
             )
             # Check for caching support
-            assert hasattr(
-                engine, "enable_cache"
-            ), "ComfyUIEngine should support caching"
+            assert hasattr(engine, "enable_cache"), "ComfyUIEngine should support caching"
             assert engine.enable_cache is True
             assert engine.cache_size == 200
             # Check for batch processing
-            assert hasattr(
-                engine, "batch_size"
-            ), "ComfyUIEngine should support batch processing"
+            assert hasattr(engine, "batch_size"), "ComfyUIEngine should support batch processing"
             assert engine.batch_size >= 8
             # Check for connection pooling
             assert engine.pool_connections >= 20
@@ -148,7 +140,9 @@ class TestComfyUIEngineCache:
             assert "cache_misses" in stats or "misses" in stats
             assert "hit_rate" in stats
             # ComfyUI returns workflow_cache_size and response_cache_size instead of size
-            assert "workflow_cache_size" in stats or "response_cache_size" in stats or "size" in stats
+            assert (
+                "workflow_cache_size" in stats or "response_cache_size" in stats or "size" in stats
+            )
             hits = stats.get("cache_hits", stats.get("hits", 0))
             misses = stats.get("cache_misses", stats.get("misses", 0))
             assert hits == 0
@@ -295,4 +289,3 @@ class TestComfyUIEngineCleanup:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 # Try to import psutil for accurate memory measurements
 try:
     import psutil
+
     HAS_PSUTIL = True
 except ImportError:
     HAS_PSUTIL = False
@@ -47,6 +48,7 @@ except ImportError:
 # Try to import tracemalloc for memory tracing
 try:
     import tracemalloc
+
     HAS_TRACEMALLOC = True
 except ImportError:
     HAS_TRACEMALLOC = False
@@ -56,9 +58,11 @@ except ImportError:
 # MEMORY PROFILING UTILITIES
 # =============================================================================
 
+
 @dataclass
 class MemorySnapshot:
     """Snapshot of memory state at a point in time."""
+
     timestamp: float
     rss_bytes: int  # Resident Set Size
     vms_bytes: int  # Virtual Memory Size
@@ -96,8 +100,7 @@ class MemoryProfiler:
             vms = mem_info.vms
         else:
             # Fallback: estimate from sys.getsizeof on gc objects
-            rss = sum(sys.getsizeof(obj) for obj in gc.get_objects()
-                     if hasattr(obj, '__sizeof__'))
+            rss = sum(sys.getsizeof(obj) for obj in gc.get_objects() if hasattr(obj, "__sizeof__"))
             vms = rss
 
         heap = 0
@@ -110,7 +113,7 @@ class MemoryProfiler:
             rss_bytes=rss,
             vms_bytes=vms,
             heap_bytes=heap,
-            description=description
+            description=description,
         )
         self.snapshots.append(snap)
         return snap
@@ -139,7 +142,7 @@ class MemoryProfiler:
             return ["tracemalloc not available"]
 
         snapshot = tracemalloc.take_snapshot()
-        top_stats = snapshot.statistics('lineno')[:limit]
+        top_stats = snapshot.statistics("lineno")[:limit]
         return [str(stat) for stat in top_stats]
 
 
@@ -184,6 +187,7 @@ def generate_large_audio(duration_seconds: float, sample_rate: int = 22050) -> n
 # =============================================================================
 # MEMORY PROFILING TESTS
 # =============================================================================
+
 
 @pytest.mark.performance
 class TestMemoryBaseline:
@@ -236,8 +240,9 @@ class TestAudioBufferMemory:
         audio = generate_large_audio(duration, sample_rate)
         actual_bytes = audio.nbytes
 
-        assert actual_bytes == expected_bytes, \
-            f"Buffer size mismatch: {actual_bytes} != {expected_bytes}"
+        assert (
+            actual_bytes == expected_bytes
+        ), f"Buffer size mismatch: {actual_bytes} != {expected_bytes}"
 
         # 1 minute of audio at 22050Hz should be ~5.3MB
         expected_mb = expected_bytes / (1024 * 1024)
@@ -264,8 +269,9 @@ class TestAudioBufferMemory:
         total_expected_mb = 31.5
         growth = profiler.get_growth(0, -1)
 
-        assert growth < total_expected_mb * 1.5, \
-            f"Buffer memory {growth:.1f}MB exceeds expected {total_expected_mb * 1.5:.1f}MB"
+        assert (
+            growth < total_expected_mb * 1.5
+        ), f"Buffer memory {growth:.1f}MB exceeds expected {total_expected_mb * 1.5:.1f}MB"
 
         logger.info(f"10 x 30s buffers: {growth:.1f}MB")
 
@@ -393,7 +399,9 @@ class TestLeakDetection:
         # Note: Method references might keep handlers alive
         leaks = detector.check_leaks()
         # This is expected behavior - method refs hold handler refs
-        logger.info(f"Callback pattern: {len(leaks)} references remaining (expected due to method refs)")
+        logger.info(
+            f"Callback pattern: {len(leaks)} references remaining (expected due to method refs)"
+        )
 
 
 @pytest.mark.performance
@@ -410,7 +418,7 @@ class TestMockComponentMemory:
             mock_service = Mock()
             mock_service.synthesize.return_value = {
                 "audio": generate_large_audio(2.0),
-                "sample_rate": 22050
+                "sample_rate": 22050,
             }
 
             # Simulate usage
@@ -445,6 +453,7 @@ class TestMockComponentMemory:
 
         # Run concurrent operations
         import concurrent.futures
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = [executor.submit(mock_operation) for _ in range(50)]
             [f.result() for f in futures]
@@ -464,10 +473,10 @@ class TestMemoryThresholds:
 
     # Memory thresholds (MB)
     THRESHOLDS = {
-        "audio_buffer_per_minute": 6.0,   # 22050 * 60 * 4 bytes ≈ 5.3MB + overhead
-        "mock_engine_instance": 10.0,     # Mock engine with minimal state
-        "concurrent_operations": 50.0,    # 10 concurrent operations
-        "processing_pipeline": 100.0,     # Full processing pipeline
+        "audio_buffer_per_minute": 6.0,  # 22050 * 60 * 4 bytes ≈ 5.3MB + overhead
+        "mock_engine_instance": 10.0,  # Mock engine with minimal state
+        "concurrent_operations": 50.0,  # 10 concurrent operations
+        "processing_pipeline": 100.0,  # Full processing pipeline
     }
 
     def test_audio_threshold(self):
@@ -475,8 +484,9 @@ class TestMemoryThresholds:
         audio = generate_large_audio(60.0)  # 1 minute
         memory_mb = audio.nbytes / (1024 * 1024)
 
-        assert memory_mb < self.THRESHOLDS["audio_buffer_per_minute"], \
-            f"Audio buffer {memory_mb:.2f}MB exceeds threshold"
+        assert (
+            memory_mb < self.THRESHOLDS["audio_buffer_per_minute"]
+        ), f"Audio buffer {memory_mb:.2f}MB exceeds threshold"
 
     def test_mock_engine_threshold(self):
         """Test mock engine instance stays within threshold."""
@@ -494,8 +504,9 @@ class TestMemoryThresholds:
         profiler.snapshot("after")
 
         growth = profiler.get_growth()
-        assert growth < self.THRESHOLDS["mock_engine_instance"], \
-            f"Mock engine {growth:.2f}MB exceeds threshold"
+        assert (
+            growth < self.THRESHOLDS["mock_engine_instance"]
+        ), f"Mock engine {growth:.2f}MB exceeds threshold"
 
     def test_concurrent_threshold(self):
         """Test concurrent operations stay within threshold."""
@@ -514,8 +525,9 @@ class TestMemoryThresholds:
         profiler.snapshot("after")
 
         growth = profiler.get_growth()
-        assert growth < self.THRESHOLDS["concurrent_operations"], \
-            f"Concurrent operations {growth:.2f}MB exceeds threshold"
+        assert (
+            growth < self.THRESHOLDS["concurrent_operations"]
+        ), f"Concurrent operations {growth:.2f}MB exceeds threshold"
 
         # Cleanup
         del active_buffers
@@ -527,11 +539,7 @@ class TestMemoryReport:
 
     def test_generate_memory_report(self):
         """Generate comprehensive memory report."""
-        report = {
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "tests": {},
-            "summary": {}
-        }
+        report = {"timestamp": time.strftime("%Y-%m-%d %H:%M:%S"), "tests": {}, "summary": {}}
 
         profiler = MemoryProfiler()
 
@@ -556,7 +564,7 @@ class TestMemoryReport:
             growth = profiler.get_growth(-2, -1)
             report["tests"][name] = {
                 "memory_growth_mb": round(growth, 2),
-                "passed": growth < 100  # 100MB limit per operation
+                "passed": growth < 100,  # 100MB limit per operation
             }
 
             del result
@@ -567,13 +575,15 @@ class TestMemoryReport:
             "total_tests": len(report["tests"]),
             "max_growth_mb": max(all_growths),
             "avg_growth_mb": sum(all_growths) / len(all_growths),
-            "all_passed": all(t["passed"] for t in report["tests"].values())
+            "all_passed": all(t["passed"] for t in report["tests"].values()),
         }
 
         assert report["summary"]["all_passed"], f"Memory tests failed: {report['tests']}"
 
-        logger.info(f"Memory Report: max={report['summary']['max_growth_mb']:.2f}MB, "
-                   f"avg={report['summary']['avg_growth_mb']:.2f}MB")
+        logger.info(
+            f"Memory Report: max={report['summary']['max_growth_mb']:.2f}MB, "
+            f"avg={report['summary']['avg_growth_mb']:.2f}MB"
+        )
 
 
 if __name__ == "__main__":

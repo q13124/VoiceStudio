@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class SafetyFlag(BaseModel):
     """A safety flag detected in content."""
+
     category: str
     severity: str
     matches: int
@@ -28,6 +29,7 @@ class SafetyFlag(BaseModel):
 
 class SafetyScanResponse(BaseModel):
     """Response model for safety scanning."""
+
     flags: list[SafetyFlag]
     overall_safe: bool
     severity_scores: dict[str, float]
@@ -38,6 +40,7 @@ class SafetyScanResponse(BaseModel):
 
 class SafetyCategory(BaseModel):
     """Info about a safety category."""
+
     id: str
     name: str
     description: str
@@ -45,7 +48,9 @@ class SafetyCategory(BaseModel):
 
 class SafetyCategoriesResponse(BaseModel):
     """Response model for safety categories."""
+
     categories: list[SafetyCategory]
+
 
 router = APIRouter(prefix="/api/safety", tags=["safety"])
 
@@ -88,10 +93,7 @@ async def scan(req: SafetyScanRequest) -> SafetyScanResponse:
     try:
         text = req.text
         if not text:
-            raise HTTPException(
-                status_code=400,
-                detail="text is required"
-            )
+            raise HTTPException(status_code=400, detail="text is required")
 
         # Normalize text for scanning
         text_lower = text.lower()
@@ -122,12 +124,16 @@ async def scan(req: SafetyScanRequest) -> SafetyScanResponse:
 
                 severity_scores[category_name] = severity
 
-                flags.append({
-                    "category": category_name,
-                    "severity": "high" if severity > 0.7 else "medium" if severity > 0.3 else "low",
-                    "matches": len(matches),
-                    "message": f"Detected {category_name} content ({len(matches)} matches)",
-                })
+                flags.append(
+                    {
+                        "category": category_name,
+                        "severity": (
+                            "high" if severity > 0.7 else "medium" if severity > 0.3 else "low"
+                        ),
+                        "matches": len(matches),
+                        "message": f"Detected {category_name} content ({len(matches)} matches)",
+                    }
+                )
 
         # Calculate overall safety score (0.0 = safe, 1.0 = unsafe)
         max_severity = max(severity_scores.values()) if severity_scores.values() else 0.0
@@ -165,10 +171,7 @@ async def scan(req: SafetyScanRequest) -> SafetyScanResponse:
         raise
     except Exception as e:
         logger.error(f"Safety scan failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Safety scan failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Safety scan failed: {e!s}") from e
 
 
 @router.get("/categories", response_model=SafetyCategoriesResponse)

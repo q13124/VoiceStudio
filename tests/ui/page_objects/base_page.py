@@ -33,7 +33,9 @@ class BasePage(ABC):
     DEFAULT_RETRY_DELAY = 0.5
 
     # Screenshot directory
-    SCREENSHOT_DIR = Path(__file__).parent.parent.parent.parent / ".buildlogs" / "ui_tests" / "screenshots"
+    SCREENSHOT_DIR = (
+        Path(__file__).parent.parent.parent.parent / ".buildlogs" / "ui_tests" / "screenshots"
+    )
 
     def __init__(self, driver: WinAppDriverSession):
         """
@@ -117,7 +119,7 @@ class BasePage(ABC):
         self,
         automation_id: str,
         timeout: float = DEFAULT_WAIT_TIMEOUT,
-        by: str = "accessibility id"
+        by: str = "accessibility id",
     ) -> WinAppDriverElement:
         """
         Find an element by automation ID with retry logic.
@@ -143,14 +145,10 @@ class BasePage(ABC):
                 last_error = e
                 time.sleep(0.2)
 
-        raise RuntimeError(
-            f"Element '{automation_id}' not found within {timeout}s"
-        ) from last_error
+        raise RuntimeError(f"Element '{automation_id}' not found within {timeout}s") from last_error
 
     def find_elements(
-        self,
-        automation_id: str,
-        by: str = "accessibility id"
+        self, automation_id: str, by: str = "accessibility id"
     ) -> list[WinAppDriverElement]:
         """
         Find all elements matching the automation ID.
@@ -167,11 +165,7 @@ class BasePage(ABC):
         except RuntimeError:
             return []
 
-    def element_exists(
-        self,
-        automation_id: str,
-        by: str = "accessibility id"
-    ) -> bool:
+    def element_exists(self, automation_id: str, by: str = "accessibility id") -> bool:
         """
         Check if an element exists.
 
@@ -193,9 +187,7 @@ class BasePage(ABC):
     # =========================================================================
 
     def wait_for_element(
-        self,
-        automation_id: str,
-        timeout: float = DEFAULT_WAIT_TIMEOUT
+        self, automation_id: str, timeout: float = DEFAULT_WAIT_TIMEOUT
     ) -> Optional[WinAppDriverElement]:
         """
         Wait for an element to appear.
@@ -213,9 +205,7 @@ class BasePage(ABC):
             return None
 
     def wait_for_element_gone(
-        self,
-        automation_id: str,
-        timeout: float = DEFAULT_WAIT_TIMEOUT
+        self, automation_id: str, timeout: float = DEFAULT_WAIT_TIMEOUT
     ) -> bool:
         """
         Wait for an element to disappear.
@@ -234,11 +224,7 @@ class BasePage(ABC):
             time.sleep(0.2)
         return False
 
-    def wait_for_enabled(
-        self,
-        automation_id: str,
-        timeout: float = DEFAULT_WAIT_TIMEOUT
-    ) -> bool:
+    def wait_for_enabled(self, automation_id: str, timeout: float = DEFAULT_WAIT_TIMEOUT) -> bool:
         """
         Wait for an element to become enabled.
 
@@ -268,7 +254,7 @@ class BasePage(ABC):
         self,
         automation_id: str,
         retries: int = DEFAULT_RETRY_COUNT,
-        delay: float = DEFAULT_RETRY_DELAY
+        delay: float = DEFAULT_RETRY_DELAY,
     ) -> bool:
         """
         Click an element with retry logic.
@@ -291,12 +277,7 @@ class BasePage(ABC):
                     time.sleep(delay)
         return False
 
-    def type_text(
-        self,
-        automation_id: str,
-        text: str,
-        clear_first: bool = True
-    ) -> bool:
+    def type_text(self, automation_id: str, text: str, clear_first: bool = True) -> bool:
         """
         Type text into an element.
 
@@ -364,10 +345,7 @@ class BasePage(ABC):
     # =========================================================================
 
     def select_combobox_item(
-        self,
-        combobox_id: str,
-        item_text: str,
-        timeout: float = DEFAULT_WAIT_TIMEOUT
+        self, combobox_id: str, item_text: str, timeout: float = DEFAULT_WAIT_TIMEOUT
     ) -> bool:
         """
         Select an item from a ComboBox.

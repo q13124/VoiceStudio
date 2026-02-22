@@ -13,7 +13,9 @@ from pathlib import Path
 
 import pytest
 
-SCHEMA_PATH = Path(__file__).parent.parent.parent / "shared" / "schemas" / "plugin-manifest.schema.json"
+SCHEMA_PATH = (
+    Path(__file__).parent.parent.parent / "shared" / "schemas" / "plugin-manifest.schema.json"
+)
 CATALOG_PATH = Path(__file__).parent.parent.parent / "shared" / "catalog" / "plugins.json"
 REFERENCE_DIR = Path(__file__).parent.parent.parent / "plugins" / "reference"
 
@@ -90,10 +92,20 @@ class TestCatalogSchemaContract:
     def test_catalog_plugin_matches_gallery_summary_model(self):
         """Verify each plugin has fields matching PluginSummary Pydantic model."""
         from backend.api.routes.plugin_gallery import PluginSummary
+
         summary_fields = set(PluginSummary.model_fields.keys())
 
         for plugin in self.catalog["plugins"]:
-            core_fields = {"id", "name", "description", "category", "author", "tags", "featured", "verified"}
+            core_fields = {
+                "id",
+                "name",
+                "description",
+                "category",
+                "author",
+                "tags",
+                "featured",
+                "verified",
+            }
             missing = core_fields - set(plugin.keys())
             assert not missing, f"Plugin {plugin['id']} missing gallery fields: {missing}"
 
@@ -108,9 +120,7 @@ class TestCatalogSchemaContract:
         for plugin in self.catalog["plugins"]:
             for ver in plugin["versions"]:
                 missing = required - set(ver.keys())
-                assert not missing, (
-                    f"Plugin {plugin['id']} version entry missing: {missing}"
-                )
+                assert not missing, f"Plugin {plugin['id']} version entry missing: {missing}"
 
 
 class TestReferencePluginManifestContract:
@@ -125,9 +135,7 @@ class TestReferencePluginManifestContract:
         schema = json.loads(SCHEMA_PATH.read_text())
         required = set(schema.get("required", []))
         for param_name in ["noise_reduction", "format_converter", "silence_detector"]:
-            manifest = json.loads(
-                (REFERENCE_DIR / param_name / "manifest.json").read_text()
-            )
+            manifest = json.loads((REFERENCE_DIR / param_name / "manifest.json").read_text())
             missing = required - set(manifest.keys())
             assert not missing, f"{param_name} missing required fields: {missing}"
 
@@ -143,17 +151,19 @@ class TestReferencePluginManifestContract:
 
     def test_manifest_version_matches_semver(self, manifest):
         import re
+
         pattern = r"^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?(\+[a-zA-Z0-9.]+)?$"
-        assert re.match(pattern, manifest["version"]), (
-            f"Version '{manifest['version']}' does not match semver pattern"
-        )
+        assert re.match(
+            pattern, manifest["version"]
+        ), f"Version '{manifest['version']}' does not match semver pattern"
 
     def test_manifest_id_matches_pattern(self, manifest):
         import re
+
         pattern = r"^[a-z][a-z0-9._-]{0,127}$"
-        assert re.match(pattern, manifest["id"]), (
-            f"ID '{manifest['id']}' does not match required pattern"
-        )
+        assert re.match(
+            pattern, manifest["id"]
+        ), f"ID '{manifest['id']}' does not match required pattern"
 
 
 class TestGalleryAPIModelsContract:
@@ -161,6 +171,7 @@ class TestGalleryAPIModelsContract:
 
     def test_plugin_summary_fields(self):
         from backend.api.routes.plugin_gallery import PluginSummary
+
         fields = set(PluginSummary.model_fields.keys())
         assert "id" in fields
         assert "name" in fields
@@ -170,11 +181,13 @@ class TestGalleryAPIModelsContract:
 
     def test_install_request_fields(self):
         from backend.api.routes.plugin_gallery import InstallRequest
+
         fields = set(InstallRequest.model_fields.keys())
         assert "plugin_id" in fields
 
     def test_install_response_fields(self):
         from backend.api.routes.plugin_gallery import InstallResponse
+
         fields = set(InstallResponse.model_fields.keys())
         assert "success" in fields
         assert "plugin_id" in fields
@@ -182,6 +195,7 @@ class TestGalleryAPIModelsContract:
 
     def test_catalog_model_fields(self):
         from backend.plugins.gallery.models import CatalogPlugin
+
         plugin = CatalogPlugin(
             id="test",
             name="Test",

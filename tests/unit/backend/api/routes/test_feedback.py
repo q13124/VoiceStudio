@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def feedback_client():
     """Create test client for feedback routes."""
     from backend.api.routes.feedback import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)
@@ -24,8 +25,7 @@ class TestFeedbackEndpoints:
     def test_submit_feedback(self, feedback_client):
         """Test POST /submit submits user feedback."""
         response = feedback_client.post(
-            "/api/feedback/submit",
-            json={"rating": 5, "comment": "Great!"}
+            "/api/feedback/submit", json={"rating": 5, "comment": "Great!"}
         )
         assert response.status_code in [200, 201, 404, 422]
 

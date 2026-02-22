@@ -273,9 +273,7 @@ class TestTemplatesEndpoints:
             "project_name": "New Project from Template",
         }
 
-        response = client.post(
-            "/api/templates/template-audiobook/apply", json=request_data
-        )
+        response = client.post("/api/templates/template-audiobook/apply", json=request_data)
         assert response.status_code == 200
         data = response.json()
         assert "project_id" in data or "message" in data
@@ -303,9 +301,7 @@ class TestTemplatesEndpoints:
             "project_id": "existing_project_id",
         }
 
-        response = client.post(
-            "/api/templates/template-audiobook/apply", json=request_data
-        )
+        response = client.post("/api/templates/template-audiobook/apply", json=request_data)
         assert response.status_code == 200
 
     def test_get_template_categories_success(self):

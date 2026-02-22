@@ -78,9 +78,7 @@ class SDNextEngine(EngineProtocol):
                     self._initialized = True
                     return True
                 else:
-                    logger.error(
-                        f"SD.Next server returned status {response.status_code}"
-                    )
+                    logger.error(f"SD.Next server returned status {response.status_code}")
                     self._initialized = False
                     return False
             except requests.exceptions.RequestException as e:
@@ -119,9 +117,7 @@ class SDNextEngine(EngineProtocol):
                 "width": width,
                 "height": height,
                 "steps": steps if steps is not None else self.default_steps,
-                "cfg_scale": (
-                    cfg_scale if cfg_scale is not None else self.default_cfg_scale
-                ),
+                "cfg_scale": (cfg_scale if cfg_scale is not None else self.default_cfg_scale),
                 "sampler_name": sampler if sampler else self.default_sampler,
                 "seed": seed if seed is not None else -1,
                 "batch_size": 1,
@@ -169,9 +165,7 @@ class SDNextEngine(EngineProtocol):
                 payload["inpaint_full_res"] = kwargs.get("inpaint_full_res", False)
 
             if "controlnet" in kwargs:
-                payload["alwayson_scripts"] = {
-                    "controlnet": {"args": [kwargs["controlnet"]]}
-                }
+                payload["alwayson_scripts"] = {"controlnet": {"args": [kwargs["controlnet"]]}}
 
             response = self.session.post(endpoint, json=payload, timeout=300)
 

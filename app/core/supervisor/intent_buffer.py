@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BufferedUtterance:
     """A buffered user utterance during AI output."""
+
     text: str
     timestamp: float
     audio_energy: float = 0.0
@@ -56,10 +57,7 @@ class IntentBuffer:
         """Get all buffered text and clear the buffer."""
         now = time.time()
         # Filter out stale entries
-        valid = [
-            u for u in self._buffer
-            if (now - u.timestamp) < self.MAX_BUFFER_AGE_SECONDS
-        ]
+        valid = [u for u in self._buffer if (now - u.timestamp) < self.MAX_BUFFER_AGE_SECONDS]
         self._buffer.clear()
 
         if not valid:

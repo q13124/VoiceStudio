@@ -3,6 +3,7 @@ Unit Tests for Transcription API Route
 Tests transcription endpoints comprehensively, including VAD integration.
 Enhanced to test Worker 1's VAD integration (if implemented).
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -58,28 +59,20 @@ class TestTranscribeRouteHandlers:
 
     def test_transcribe_audio_handler_exists(self):
         """Test transcribe_audio handler exists."""
-        assert hasattr(
-            transcribe, "transcribe_audio"
-        ), "transcribe_audio handler should exist"
+        assert hasattr(transcribe, "transcribe_audio"), "transcribe_audio handler should exist"
         assert callable(transcribe.transcribe_audio), "transcribe_audio is not callable"
 
     def test_get_transcription_handler_exists(self):
         """Test get_transcription handler exists."""
-        assert hasattr(
-            transcribe, "get_transcription"
-        ), "get_transcription handler should exist"
-        assert callable(
-            transcribe.get_transcription
-        ), "get_transcription is not callable"
+        assert hasattr(transcribe, "get_transcription"), "get_transcription handler should exist"
+        assert callable(transcribe.get_transcription), "get_transcription is not callable"
 
     def test_list_transcriptions_handler_exists(self):
         """Test list_transcriptions handler exists."""
         assert hasattr(
             transcribe, "list_transcriptions"
         ), "list_transcriptions handler should exist"
-        assert callable(
-            transcribe.list_transcriptions
-        ), "list_transcriptions is not callable"
+        assert callable(transcribe.list_transcriptions), "list_transcriptions is not callable"
 
     def test_get_supported_languages_handler_exists(self):
         """Test get_supported_languages handler exists."""
@@ -146,9 +139,7 @@ class TestTranscribeEndpoints:
     @patch("backend.api.routes.transcribe.STT_ENGINE_AVAILABLE", True)
     @patch("backend.api.routes.transcribe.engine_router")
     @patch("backend.api.routes.transcribe.VoiceActivityDetector")
-    def test_transcribe_audio_with_vad(
-        self, mock_vad_class, mock_engine_router, mock_get_path
-    ):
+    def test_transcribe_audio_with_vad(self, mock_vad_class, mock_engine_router, mock_get_path):
         """Test transcription with VAD (Voice Activity Detection) enabled."""
         app = FastAPI()
         app.include_router(transcribe.router)
@@ -158,9 +149,7 @@ class TestTranscribeEndpoints:
 
         # Mock VAD
         mock_vad = MagicMock()
-        mock_vad.detect_voice.return_value = [
-            {"start": 0.0, "end": 1.0, "confidence": 0.9}
-        ]
+        mock_vad.detect_voice.return_value = [{"start": 0.0, "end": 1.0, "confidence": 0.9}]
         mock_vad_class.return_value = mock_vad
 
         # Mock engine router
@@ -384,9 +373,7 @@ class TestTranscribeEndpoints:
             mock_get_path.return_value = "/test/audio.wav"
 
             with patch("backend.api.routes.transcribe.STT_ENGINE_AVAILABLE", True):
-                with patch(
-                    "backend.api.routes.transcribe.engine_router"
-                ) as mock_router:
+                with patch("backend.api.routes.transcribe.engine_router") as mock_router:
                     mock_router.list_engines.return_value = ["whisper"]
                     mock_router.get_engine.return_value = None
 

@@ -26,12 +26,8 @@ class TestTextSpeechEditorRouteImports:
 
     def test_text_speech_editor_module_imports(self):
         """Test text_speech_editor module can be imported."""
-        assert (
-            text_speech_editor is not None
-        ), "Failed to import text_speech_editor module"
-        assert hasattr(
-            text_speech_editor, "router"
-        ), "text_speech_editor module missing router"
+        assert text_speech_editor is not None, "Failed to import text_speech_editor module"
+        assert hasattr(text_speech_editor, "router"), "text_speech_editor module missing router"
 
 
 class TestTextSpeechEditorRouteHandlers:
@@ -40,16 +36,12 @@ class TestTextSpeechEditorRouteHandlers:
     def test_edit_text_handler_exists(self):
         """Test edit_text handler exists."""
         if hasattr(text_speech_editor, "edit_text"):
-            assert callable(
-                text_speech_editor.edit_text
-            ), "edit_text is not callable"
+            assert callable(text_speech_editor.edit_text), "edit_text is not callable"
 
     def test_preview_speech_handler_exists(self):
         """Test preview_speech handler exists."""
         if hasattr(text_speech_editor, "preview_speech"):
-            assert callable(
-                text_speech_editor.preview_speech
-            ), "preview_speech is not callable"
+            assert callable(text_speech_editor.preview_speech), "preview_speech is not callable"
 
 
 class TestTextSpeechEditorRouter:
@@ -70,4 +62,3 @@ class TestTextSpeechEditorRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

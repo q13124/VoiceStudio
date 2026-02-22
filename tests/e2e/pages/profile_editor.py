@@ -42,9 +42,7 @@ class ProfileEditorPage:
     def is_displayed(self) -> bool:
         """Check if the Profiles panel is displayed."""
         try:
-            panel = self.driver.find_element(
-                AppiumBy.ACCESSIBILITY_ID, self.PANEL_ID
-            )
+            panel = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.PANEL_ID)
             return panel.is_displayed()
         except Exception:
             return False
@@ -52,17 +50,13 @@ class ProfileEditorPage:
     def wait_for_load(self, timeout: int = 10):
         """Wait for the Profiles panel to load."""
         WebDriverWait(self.driver, timeout).until(
-            EC.presence_of_element_located(
-                (AppiumBy.ACCESSIBILITY_ID, self.PANEL_ID)
-            )
+            EC.presence_of_element_located((AppiumBy.ACCESSIBILITY_ID, self.PANEL_ID))
         )
 
     def get_profile_names(self) -> list[str]:
         """Get list of profile names."""
         try:
-            list_view = self.driver.find_element(
-                AppiumBy.ACCESSIBILITY_ID, self.PROFILE_LIST_ID
-            )
+            list_view = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.PROFILE_LIST_ID)
             items = list_view.find_elements(AppiumBy.CLASS_NAME, "ListViewItem")
             return [item.get_attribute("Name") for item in items]
         except Exception:
@@ -70,9 +64,7 @@ class ProfileEditorPage:
 
     def select_profile(self, name: str):
         """Select a profile by name."""
-        list_view = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.PROFILE_LIST_ID
-        )
+        list_view = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.PROFILE_LIST_ID)
         items = list_view.find_elements(AppiumBy.CLASS_NAME, "ListViewItem")
         for item in items:
             if item.get_attribute("Name") == name:
@@ -82,36 +74,26 @@ class ProfileEditorPage:
 
     def search_profiles(self, query: str):
         """Search for profiles by name."""
-        search_input = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.SEARCH_INPUT_ID
-        )
+        search_input = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.SEARCH_INPUT_ID)
         search_input.clear()
         search_input.send_keys(query)
 
     def click_new_profile(self):
         """Click the New Profile button."""
-        new_btn = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.NEW_PROFILE_BUTTON_ID
-        )
+        new_btn = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.NEW_PROFILE_BUTTON_ID)
         new_btn.click()
         # Wait for editor dialog
         self.wait.until(
-            EC.presence_of_element_located(
-                (AppiumBy.ACCESSIBILITY_ID, self.EDITOR_DIALOG_ID)
-            )
+            EC.presence_of_element_located((AppiumBy.ACCESSIBILITY_ID, self.EDITOR_DIALOG_ID))
         )
 
     def click_edit_profile(self):
         """Click the Edit Profile button."""
-        edit_btn = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.EDIT_PROFILE_BUTTON_ID
-        )
+        edit_btn = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.EDIT_PROFILE_BUTTON_ID)
         edit_btn.click()
         # Wait for editor dialog
         self.wait.until(
-            EC.presence_of_element_located(
-                (AppiumBy.ACCESSIBILITY_ID, self.EDITOR_DIALOG_ID)
-            )
+            EC.presence_of_element_located((AppiumBy.ACCESSIBILITY_ID, self.EDITOR_DIALOG_ID))
         )
 
     def click_delete_profile(self):
@@ -131,66 +113,44 @@ class ProfileEditorPage:
     # Editor dialog methods
     def set_profile_name(self, name: str):
         """Set the profile name in the editor."""
-        name_input = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.NAME_INPUT_ID
-        )
+        name_input = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.NAME_INPUT_ID)
         name_input.clear()
         name_input.send_keys(name)
 
     def set_profile_description(self, description: str):
         """Set the profile description in the editor."""
-        desc_input = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.DESCRIPTION_INPUT_ID
-        )
+        desc_input = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.DESCRIPTION_INPUT_ID)
         desc_input.clear()
         desc_input.send_keys(description)
 
     def select_engine(self, engine_name: str):
         """Select an engine in the editor."""
-        combo = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.ENGINE_COMBO_ID
-        )
+        combo = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.ENGINE_COMBO_ID)
         combo.click()
 
-        engine_item = self.wait.until(
-            EC.element_to_be_clickable(
-                (AppiumBy.NAME, engine_name)
-            )
-        )
+        engine_item = self.wait.until(EC.element_to_be_clickable((AppiumBy.NAME, engine_name)))
         engine_item.click()
 
     def select_voice(self, voice_name: str):
         """Select a voice in the editor."""
-        combo = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.VOICE_COMBO_ID
-        )
+        combo = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.VOICE_COMBO_ID)
         combo.click()
 
-        voice_item = self.wait.until(
-            EC.element_to_be_clickable(
-                (AppiumBy.NAME, voice_name)
-            )
-        )
+        voice_item = self.wait.until(EC.element_to_be_clickable((AppiumBy.NAME, voice_name)))
         voice_item.click()
 
     def save_profile(self):
         """Click Save in the editor dialog."""
-        save_btn = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.SAVE_BUTTON_ID
-        )
+        save_btn = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.SAVE_BUTTON_ID)
         save_btn.click()
         # Wait for dialog to close
         self.wait.until(
-            EC.invisibility_of_element_located(
-                (AppiumBy.ACCESSIBILITY_ID, self.EDITOR_DIALOG_ID)
-            )
+            EC.invisibility_of_element_located((AppiumBy.ACCESSIBILITY_ID, self.EDITOR_DIALOG_ID))
         )
 
     def cancel_edit(self):
         """Click Cancel in the editor dialog."""
-        cancel_btn = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.CANCEL_BUTTON_ID
-        )
+        cancel_btn = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.CANCEL_BUTTON_ID)
         cancel_btn.click()
 
     def create_profile(self, name: str, engine: str, voice: str, description: str = ""):

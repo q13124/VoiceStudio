@@ -55,6 +55,7 @@ pytestmark = [
 # Fixtures
 # =============================================================================
 
+
 @pytest.fixture(scope="module")
 def tracer():
     """Create a workflow tracer for conversion tests."""
@@ -75,6 +76,7 @@ def api_monitor():
 # =============================================================================
 # Format Detection Tests
 # =============================================================================
+
 
 class TestFormatDetection:
     """Test audio format detection."""
@@ -131,6 +133,7 @@ class TestFormatDetection:
 # =============================================================================
 # Conversion Tests (Each Output Format)
 # =============================================================================
+
 
 class TestConversionToWav:
     """Test conversion to WAV format."""
@@ -284,6 +287,7 @@ class TestConversionToOgg:
 # Quality Preservation Tests
 # =============================================================================
 
+
 class TestQualityPreservation:
     """Test audio quality preservation during conversion."""
 
@@ -316,6 +320,7 @@ class TestQualityPreservation:
 # =============================================================================
 # UI Conversion Tests
 # =============================================================================
+
 
 class TestConversionUI:
     """Test conversion UI workflow."""
@@ -360,7 +365,10 @@ class TestConversionUI:
             time.sleep(0.5)
 
             # Look for format selector
-            driver.find_element("xpath", "//*[contains(@AutomationId, 'Format') and contains(@ClassName, 'ComboBox')]")
+            driver.find_element(
+                "xpath",
+                "//*[contains(@AutomationId, 'Format') and contains(@ClassName, 'ComboBox')]",
+            )
             tracer.step("Format selector found")
             tracer.success("Format selector exists")
         except RuntimeError:
@@ -372,6 +380,7 @@ class TestConversionUI:
 # Batch Conversion Tests
 # =============================================================================
 
+
 class TestBatchConversion:
     """Test batch conversion functionality."""
 
@@ -382,10 +391,13 @@ class TestBatchConversion:
 
         try:
             # Check if batch endpoint exists
-            response = api_monitor.post("/api/v3/audio/convert-batch", json={
-                "files": [],
-                "target_format": "wav",
-            })
+            response = api_monitor.post(
+                "/api/v3/audio/convert-batch",
+                json={
+                    "files": [],
+                    "target_format": "wav",
+                },
+            )
             tracer.api_call("POST", "/api/v3/audio/convert-batch", response)
 
             if response.status_code == 404:
@@ -405,6 +417,7 @@ class TestBatchConversion:
 # =============================================================================
 # Error Handling Tests
 # =============================================================================
+
 
 class TestConversionErrors:
     """Test conversion error handling."""
@@ -483,6 +496,7 @@ class TestConversionErrors:
 # Integration Tests
 # =============================================================================
 
+
 class TestConversionIntegration:
     """Test conversion integration with other panels."""
 
@@ -495,10 +509,7 @@ class TestConversionIntegration:
             "ConvertFromLibraryEvent",
             source_panel="Library",
             target_panel="AudioConversion",
-            payload={
-                "action": "convert_file",
-                "expected_data": ["file_path", "target_format"]
-            }
+            payload={"action": "convert_file", "expected_data": ["file_path", "target_format"]},
         )
 
         tracer.step("Library-to-conversion event documented")
@@ -515,8 +526,8 @@ class TestConversionIntegration:
             target_panel="Library",
             payload={
                 "action": "add_converted_file",
-                "expected_data": ["output_path", "original_path", "format"]
-            }
+                "expected_data": ["output_path", "original_path", "format"],
+            },
         )
 
         tracer.step("Conversion-completed event documented")
@@ -526,6 +537,7 @@ class TestConversionIntegration:
 # =============================================================================
 # Performance Tests
 # =============================================================================
+
 
 class TestConversionPerformance:
     """Test conversion performance."""
@@ -558,11 +570,14 @@ class TestConversionPerformance:
 # =============================================================================
 
 if __name__ == "__main__":
-    pytest.main([
-        __file__,
-        "-v",
-        "--tb=short",
-        "-m", "not slow",
-        "--html=.buildlogs/validation/reports/allan_watts_conversion_report.html",
-        "--self-contained-html",
-    ])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--tb=short",
+            "-m",
+            "not slow",
+            "--html=.buildlogs/validation/reports/allan_watts_conversion_report.html",
+            "--self-contained-html",
+        ]
+    )

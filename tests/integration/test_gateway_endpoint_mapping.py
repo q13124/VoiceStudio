@@ -16,6 +16,7 @@ from fastapi.testclient import TestClient
 # Try to import the FastAPI app
 try:
     from backend.api.main import app
+
     HAS_APP = True
 except ImportError:
     HAS_APP = False
@@ -43,14 +44,15 @@ class TestVoiceGatewayEndpoints:
 
         # Should not be 404 - endpoint must exist
         assert response.status_code != 404, (
-            "Endpoint /api/voice/voices not found. "
-            "VoiceGateway expects this endpoint to exist."
+            "Endpoint /api/voice/voices not found. " "VoiceGateway expects this endpoint to exist."
         )
 
         # Should be 200 or acceptable error (401 for auth, 503 for service unavailable)
-        assert response.status_code in (200, 401, 503), (
-            f"Unexpected status {response.status_code} from /api/voice/voices"
-        )
+        assert response.status_code in (
+            200,
+            401,
+            503,
+        ), f"Unexpected status {response.status_code} from /api/voice/voices"
 
     def test_get_voices_with_engine_filter(self, client):
         """
@@ -58,9 +60,9 @@ class TestVoiceGatewayEndpoints:
         """
         response = client.get("/api/voice/voices?engine_id=xtts")
 
-        assert response.status_code != 404, (
-            "Endpoint /api/voice/voices should accept engine_id parameter"
-        )
+        assert (
+            response.status_code != 404
+        ), "Endpoint /api/voice/voices should accept engine_id parameter"
 
     def test_voices_response_structure(self, client):
         """
@@ -100,9 +102,11 @@ class TestTimelineGatewayEndpoints:
             "TimelineGateway expects this endpoint to exist."
         )
 
-        assert response.status_code in (200, 401, 503), (
-            f"Unexpected status {response.status_code} from timeline endpoint"
-        )
+        assert response.status_code in (
+            200,
+            401,
+            503,
+        ), f"Unexpected status {response.status_code} from timeline endpoint"
 
     def test_timeline_response_structure(self, client, test_project_id):
         """
@@ -122,8 +126,7 @@ class TestTimelineGatewayEndpoints:
         TimelineGateway.AddTrackAsync expects POST /api/projects/{projectId}/timeline/tracks.
         """
         response = client.post(
-            f"/api/projects/{test_project_id}/timeline/tracks",
-            json={"name": "Test Track"}
+            f"/api/projects/{test_project_id}/timeline/tracks", json={"name": "Test Track"}
         )
 
         assert response.status_code != 404, (
@@ -132,26 +135,31 @@ class TestTimelineGatewayEndpoints:
         )
 
         # Accept success, validation error, or auth error
-        assert response.status_code in (200, 201, 400, 401, 422), (
-            f"Unexpected status {response.status_code} from add track endpoint"
-        )
+        assert response.status_code in (
+            200,
+            201,
+            400,
+            401,
+            422,
+        ), f"Unexpected status {response.status_code} from add track endpoint"
 
     def test_delete_track_endpoint_exists(self, client, test_project_id):
         """
         TimelineGateway.RemoveTrackAsync expects DELETE /api/projects/{id}/timeline/tracks/{trackId}.
         """
-        response = client.delete(
-            f"/api/projects/{test_project_id}/timeline/tracks/test-track-id"
-        )
+        response = client.delete(f"/api/projects/{test_project_id}/timeline/tracks/test-track-id")
 
-        assert response.status_code != 405, (
-            "DELETE method not allowed on /api/projects/{id}/timeline/tracks/{trackId}"
-        )
+        assert (
+            response.status_code != 405
+        ), "DELETE method not allowed on /api/projects/{id}/timeline/tracks/{trackId}"
 
         # 404 is acceptable (track not found), but not 405 (method not allowed)
-        assert response.status_code in (200, 204, 404, 401), (
-            f"Unexpected status {response.status_code} from delete track endpoint"
-        )
+        assert response.status_code in (
+            200,
+            204,
+            404,
+            401,
+        ), f"Unexpected status {response.status_code} from delete track endpoint"
 
     def test_add_clip_endpoint_exists(self, client, test_project_id):
         """
@@ -165,13 +173,13 @@ class TestTimelineGatewayEndpoints:
                 "audio_id": "test-audio",
                 "audio_url": "/audio/test.wav",
                 "duration_seconds": 1.0,
-                "start_time": 0.0
-            }
+                "start_time": 0.0,
+            },
         )
 
-        assert response.status_code != 404, (
-            "Endpoint POST /api/projects/{id}/timeline/tracks/{trackId}/clips not found"
-        )
+        assert (
+            response.status_code != 404
+        ), "Endpoint POST /api/projects/{id}/timeline/tracks/{trackId}/clips not found"
 
     def test_update_clip_endpoint_exists(self, client, test_project_id):
         """
@@ -179,12 +187,10 @@ class TestTimelineGatewayEndpoints:
         """
         response = client.put(
             f"/api/projects/{test_project_id}/timeline/tracks/test-track/clips/test-clip",
-            json={"name": "Updated Clip"}
+            json={"name": "Updated Clip"},
         )
 
-        assert response.status_code != 405, (
-            "PUT method not allowed on clips endpoint"
-        )
+        assert response.status_code != 405, "PUT method not allowed on clips endpoint"
 
     def test_delete_clip_endpoint_exists(self, client, test_project_id):
         """
@@ -194,9 +200,7 @@ class TestTimelineGatewayEndpoints:
             f"/api/projects/{test_project_id}/timeline/tracks/test-track/clips/test-clip"
         )
 
-        assert response.status_code != 405, (
-            "DELETE method not allowed on clips endpoint"
-        )
+        assert response.status_code != 405, "DELETE method not allowed on clips endpoint"
 
     def test_add_marker_endpoint_exists(self, client, test_project_id):
         """
@@ -204,24 +208,20 @@ class TestTimelineGatewayEndpoints:
         """
         response = client.post(
             f"/api/projects/{test_project_id}/timeline/markers",
-            json={"name": "Test Marker", "time_seconds": 5.0}
+            json={"name": "Test Marker", "time_seconds": 5.0},
         )
 
-        assert response.status_code != 404, (
-            "Endpoint POST /api/projects/{id}/timeline/markers not found"
-        )
+        assert (
+            response.status_code != 404
+        ), "Endpoint POST /api/projects/{id}/timeline/markers not found"
 
     def test_delete_marker_endpoint_exists(self, client, test_project_id):
         """
         TimelineGateway.RemoveMarkerAsync expects DELETE /api/projects/{id}/timeline/markers/{markerId}.
         """
-        response = client.delete(
-            f"/api/projects/{test_project_id}/timeline/markers/test-marker-id"
-        )
+        response = client.delete(f"/api/projects/{test_project_id}/timeline/markers/test-marker-id")
 
-        assert response.status_code != 405, (
-            "DELETE method not allowed on markers endpoint"
-        )
+        assert response.status_code != 405, "DELETE method not allowed on markers endpoint"
 
 
 class TestEndpointCompatibility:
@@ -234,9 +234,7 @@ class TestEndpointCompatibility:
         response = client.get("/api/voice-browser/voices")
 
         # Should not be 404
-        assert response.status_code != 404, (
-            "Original voice-browser endpoint should still exist"
-        )
+        assert response.status_code != 404, "Original voice-browser endpoint should still exist"
 
     def test_tracks_original_endpoint_still_works(self, client):
         """
@@ -245,6 +243,4 @@ class TestEndpointCompatibility:
         response = client.get("/api/projects/test-project/tracks")
 
         # Should not be 404
-        assert response.status_code != 404, (
-            "Original tracks endpoint should still exist"
-        )
+        assert response.status_code != 404, "Original tracks endpoint should still exist"

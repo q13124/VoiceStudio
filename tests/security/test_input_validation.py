@@ -24,6 +24,7 @@ def api_client():
     from fastapi.testclient import TestClient
 
     from backend.api.main import app
+
     return TestClient(app)
 
 
@@ -74,10 +75,7 @@ class TestSQLInjectionPrevention:
             pytest.skip("Backend not available")
 
         for payload in self.SQL_INJECTION_PAYLOADS[:2]:  # Test subset
-            response = api_client.post(
-                "/api/cache/invalidate",
-                json={"pattern": payload}
-            )
+            response = api_client.post("/api/cache/invalidate", json={"pattern": payload})
             # Should not cause server error that exposes SQL
             assert "SQL" not in response.text.upper() or response.status_code in SECURE_STATUS_CODES
 
@@ -87,10 +85,7 @@ class TestSQLInjectionPrevention:
             pytest.skip("Backend not available")
 
         payload = "'; DROP TABLE users; --"
-        response = api_client.get(
-            "/api/health",
-            headers={"X-Custom-Header": payload}
-        )
+        response = api_client.get("/api/health", headers={"X-Custom-Header": payload})
         # Header injection should not cause SQL errors
         assert response.status_code in (200, 400, 401, 403, 422, 429)
 
@@ -116,7 +111,9 @@ class TestPathTraversalPrevention:
             # 404 is acceptable - endpoint pattern doesn't match
             # 429 = rate limited (security)
             assert response.status_code in SECURE_STATUS_CODES or (
-                response.status_code == 200 and "passwd" not in response.text and "root:" not in response.text
+                response.status_code == 200
+                and "passwd" not in response.text
+                and "root:" not in response.text
             )
 
     def test_path_traversal_in_json_body(self, api_client, backend_available):
@@ -124,10 +121,7 @@ class TestPathTraversalPrevention:
         if not backend_available:
             pytest.skip("Backend not available")
 
-        response = api_client.post(
-            "/api/cache/invalidate",
-            json={"path": "../../../etc/passwd"}
-        )
+        response = api_client.post("/api/cache/invalidate", json={"path": "../../../etc/passwd"})
         # Should reject malicious paths or be rate limited
         assert response.status_code in SECURE_STATUS_CODES or (
             response.status_code == 200 and "passwd" not in response.text
@@ -192,7 +186,9 @@ class TestCommandInjectionPrevention:
             # Should not execute commands
             # 404 is fine - means the injection didn't work as a valid path
             assert response.status_code in SECURE_STATUS_CODES or (
-                response.status_code == 200 and "root:" not in response.text and "uid=" not in response.text
+                response.status_code == 200
+                and "root:" not in response.text
+                and "uid=" not in response.text
             )
 
     def test_command_injection_in_json(self, api_client, backend_available):
@@ -200,10 +196,7 @@ class TestCommandInjectionPrevention:
         if not backend_available:
             pytest.skip("Backend not available")
 
-        response = api_client.post(
-            "/api/cache/invalidate",
-            json={"command": "; rm -rf /"}
-        )
+        response = api_client.post("/api/cache/invalidate", json={"command": "; rm -rf /"})
         # Should not execute shell commands
         assert response.status_code in SECURE_STATUS_CODES or response.status_code == 200
 
@@ -218,10 +211,7 @@ class TestOversizedRequestHandling:
 
         # Create a large payload (1MB of data)
         large_data = {"data": "x" * (1024 * 1024)}
-        response = api_client.post(
-            "/api/cache/invalidate",
-            json=large_data
-        )
+        response = api_client.post("/api/cache/invalidate", json=large_data)
         # Should reject or handle gracefully
         assert response.status_code in (200, 400, 413, 422, 429, 500, 503)
 
@@ -232,10 +222,7 @@ class TestOversizedRequestHandling:
 
         # Create array with many elements
         large_array = {"items": list(range(10000))}
-        response = api_client.post(
-            "/api/cache/invalidate",
-            json=large_array
-        )
+        response = api_client.post("/api/cache/invalidate", json=large_array)
         # Should reject or handle gracefully
         assert response.status_code in (200, 400, 413, 422, 404, 429, 500, 503)
 
@@ -251,10 +238,7 @@ class TestOversizedRequestHandling:
             current["nested"] = {"level": i + 1}
             current = current["nested"]
 
-        response = api_client.post(
-            "/api/cache/invalidate",
-            json=nested
-        )
+        response = api_client.post("/api/cache/invalidate", json=nested)
         # Should reject or handle gracefully
         assert response.status_code in (200, 400, 422, 429, 500)
 
@@ -270,7 +254,7 @@ class TestMalformedInputHandling:
         response = api_client.post(
             "/api/cache/invalidate",
             content=b"not valid json {{{",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
         # Should reject with 400/422, or handle gracefully with 200
         # (some endpoints may ignore body if no params required)
@@ -281,10 +265,7 @@ class TestMalformedInputHandling:
         if not backend_available:
             pytest.skip("Backend not available")
 
-        response = api_client.post(
-            "/api/cache/invalidate",
-            content=b'{"key": "value"}'
-        )
+        response = api_client.post("/api/cache/invalidate", content=b'{"key": "value"}')
         # Should handle gracefully
         assert response.status_code in (200, 400, 415, 422, 429)
 
@@ -296,7 +277,7 @@ class TestMalformedInputHandling:
         response = api_client.post(
             "/api/cache/invalidate",
             content=b'{"key": "value"}',
-            headers={"Content-Type": "text/plain"}
+            headers={"Content-Type": "text/plain"},
         )
         # Should handle gracefully
         assert response.status_code in (200, 400, 415, 422, 429)
@@ -306,10 +287,7 @@ class TestMalformedInputHandling:
         if not backend_available:
             pytest.skip("Backend not available")
 
-        response = api_client.post(
-            "/api/cache/invalidate",
-            json={"key": "value\x00with\x00nulls"}
-        )
+        response = api_client.post("/api/cache/invalidate", json={"key": "value\x00with\x00nulls"})
         # Should handle gracefully - either accept or reject
         assert response.status_code in (200, 400, 422, 429)
 
@@ -320,14 +298,11 @@ class TestMalformedInputHandling:
 
         unicode_payloads = [
             "test\uffff",  # Max BMP character
-            "test\U0001F600",  # Emoji
+            "test\U0001f600",  # Emoji
             "test\u202e\u0041\u0042",  # RTL override
         ]
 
         for payload in unicode_payloads:
-            response = api_client.post(
-                "/api/cache/invalidate",
-                json={"text": payload}
-            )
+            response = api_client.post("/api/cache/invalidate", json={"text": payload})
             # Should handle Unicode gracefully
             assert response.status_code in (200, 400, 422, 429)

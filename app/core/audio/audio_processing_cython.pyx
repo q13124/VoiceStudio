@@ -8,9 +8,11 @@ audio processing functions for 50%+ performance improvement.
 """
 
 import numpy as np
+
 cimport numpy as np
-from libc.math cimport sqrt, fabs, log10, pow
-from libc.stdlib cimport malloc, free
+from libc.math cimport fabs, log10, pow, sqrt
+from libc.stdlib cimport free, malloc
+
 
 cdef double EPSILON = 1e-10
 

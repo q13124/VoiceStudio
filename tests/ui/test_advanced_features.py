@@ -97,27 +97,21 @@ class TestMultiVoiceSynthesis:
                 {
                     "text": "Hello, I am the first speaker.",
                     "voice_id": "default",
-                    "speaker": "Speaker 1"
+                    "speaker": "Speaker 1",
                 },
                 {
                     "text": "And I am the second speaker.",
                     "voice_id": "default",
-                    "speaker": "Speaker 2"
+                    "speaker": "Speaker 2",
                 },
-                {
-                    "text": "Now I am speaking again.",
-                    "voice_id": "default",
-                    "speaker": "Speaker 1"
-                },
+                {"text": "Now I am speaking again.", "voice_id": "default", "speaker": "Speaker 1"},
             ],
             "output_format": "wav",
         }
 
         try:
             response = requests.post(
-                f"{BACKEND_URL}/api/voice/multi-synthesize",
-                json=payload,
-                timeout=120
+                f"{BACKEND_URL}/api/voice/multi-synthesize", json=payload, timeout=120
             )
             tracer.api_call("POST", "/api/voice/multi-synthesize", response)
 
@@ -196,9 +190,7 @@ class TestEmotionControl:
 
         try:
             response = requests.post(
-                f"{BACKEND_URL}/api/voice/synthesize",
-                json=payload,
-                timeout=60
+                f"{BACKEND_URL}/api/voice/synthesize", json=payload, timeout=60
             )
             tracer.api_call("POST", f"/api/voice/synthesize (emotion={emotion})", response)
 
@@ -226,9 +218,7 @@ class TestEmotionControl:
 
         try:
             response = requests.post(
-                f"{BACKEND_URL}/api/voice/synthesize",
-                json=payload,
-                timeout=60
+                f"{BACKEND_URL}/api/voice/synthesize", json=payload, timeout=60
             )
             tracer.api_call("POST", "/api/voice/synthesize (intensity)", response)
 
@@ -372,9 +362,7 @@ class TestBatchProcessing:
 
         try:
             response = requests.post(
-                f"{BACKEND_URL}/api/batch/synthesize",
-                json=payload,
-                timeout=180
+                f"{BACKEND_URL}/api/batch/synthesize", json=payload, timeout=180
             )
             tracer.api_call("POST", "/api/batch/synthesize", response)
 
@@ -402,9 +390,7 @@ class TestBatchProcessing:
             with open(test_audio, "rb") as f:
                 files = {"files": (test_audio.name, f, "audio/wav")}
                 response = requests.post(
-                    f"{BACKEND_URL}/api/batch/transcribe",
-                    files=files,
-                    timeout=180
+                    f"{BACKEND_URL}/api/batch/transcribe", files=files, timeout=180
                 )
                 tracer.api_call("POST", "/api/batch/transcribe", response)
 
@@ -455,9 +441,7 @@ class TestPipelineConversation:
 
         try:
             response = requests.post(
-                f"{BACKEND_URL}/api/conversation/start",
-                json=payload,
-                timeout=30
+                f"{BACKEND_URL}/api/conversation/start", json=payload, timeout=30
             )
             tracer.api_call("POST", "/api/conversation/start", response)
 
@@ -509,11 +493,7 @@ class TestPronunciationLexicon:
         }
 
         try:
-            response = requests.post(
-                f"{BACKEND_URL}/api/lexicon",
-                json=payload,
-                timeout=30
-            )
+            response = requests.post(f"{BACKEND_URL}/api/lexicon", json=payload, timeout=30)
             tracer.api_call("POST", "/api/lexicon", response)
 
             if response.status_code in [200, 201]:
@@ -539,9 +519,7 @@ class TestPronunciationLexicon:
 
         try:
             response = requests.post(
-                f"{BACKEND_URL}/api/voice/synthesize",
-                json=payload,
-                timeout=60
+                f"{BACKEND_URL}/api/voice/synthesize", json=payload, timeout=60
             )
             tracer.api_call("POST", "/api/voice/synthesize (lexicon)", response)
 

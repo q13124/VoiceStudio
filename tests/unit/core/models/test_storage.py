@@ -37,18 +37,13 @@ class TestStorageFunctions:
     def test_save_model_function_exists(self):
         """Test save_model function exists."""
         if hasattr(storage, "save_model"):
-            assert callable(
-                storage.save_model
-            ), "save_model should be callable"
+            assert callable(storage.save_model), "save_model should be callable"
 
     def test_load_model_function_exists(self):
         """Test load_model function exists."""
         if hasattr(storage, "load_model"):
-            assert callable(
-                storage.load_model
-            ), "load_model should be callable"
+            assert callable(storage.load_model), "load_model should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

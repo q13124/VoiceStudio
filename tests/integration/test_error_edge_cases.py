@@ -19,6 +19,7 @@ import pytest
 # Try to import test dependencies
 try:
     from httpx import Client as HttpClient
+
     HAS_HTTPX = True
 except ImportError:
     HAS_HTTPX = False
@@ -64,12 +65,14 @@ class TestMalformedRequests:
             api_client.post,
             "/api/synthesis/generate",
             content=b"",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         # Should return 400 or 422, not 500
-        assert response.status_code in [400, 422], \
-            f"Empty body should return validation error, got {response.status_code}"
+        assert response.status_code in [
+            400,
+            422,
+        ], f"Empty body should return validation error, got {response.status_code}"
 
     def test_invalid_json(self, api_client):
         """Verify invalid JSON is rejected properly."""
@@ -87,12 +90,15 @@ class TestMalformedRequests:
                 api_client.post,
                 "/api/profiles",
                 content=payload.encode(),
-                headers={"Content-Type": "application/json"}
+                headers={"Content-Type": "application/json"},
             )
 
             # Should return 400/422, not 500
-            assert response.status_code in [400, 415, 422], \
-                f"Invalid JSON should be rejected: {payload}, got {response.status_code}"
+            assert response.status_code in [
+                400,
+                415,
+                422,
+            ], f"Invalid JSON should be rejected: {payload}, got {response.status_code}"
 
     def test_missing_required_fields(self, api_client):
         """Verify missing required fields return proper error."""
@@ -100,12 +106,15 @@ class TestMalformedRequests:
         response = retry_on_rate_limit(
             api_client.post,
             "/api/synthesis/generate",
-            json={"engine": "default"}  # Missing required 'text' field
+            json={"engine": "default"},  # Missing required 'text' field
         )
 
         # Should return validation error
-        assert response.status_code in [400, 422, 404], \
-            f"Missing field should return validation error, got {response.status_code}"
+        assert response.status_code in [
+            400,
+            422,
+            404,
+        ], f"Missing field should return validation error, got {response.status_code}"
 
     def test_wrong_field_types(self, api_client):
         """Verify wrong field types are rejected."""
@@ -116,15 +125,10 @@ class TestMalformedRequests:
         ]
 
         for payload in wrong_types:
-            response = retry_on_rate_limit(
-                api_client.post,
-                "/api/synthesis/generate",
-                json=payload
-            )
+            response = retry_on_rate_limit(api_client.post, "/api/synthesis/generate", json=payload)
 
             # Should return validation error, not 500
-            assert response.status_code != 500, \
-                f"Wrong type should not cause 500: {payload}"
+            assert response.status_code != 500, f"Wrong type should not cause 500: {payload}"
 
     def test_extra_fields_handling(self, api_client):
         """Verify extra fields are handled (ignored or rejected)."""
@@ -134,8 +138,8 @@ class TestMalformedRequests:
             json={
                 "name": "Test Profile",
                 "unknown_field": "should be ignored or rejected",
-                "another_unknown": 12345
-            }
+                "another_unknown": 12345,
+            },
         )
 
         # Should either succeed (ignoring extras) or return 422
@@ -150,11 +154,7 @@ class TestMalformedRequests:
             current["nested"] = {"level": i + 1}
             current = current["nested"]
 
-        response = retry_on_rate_limit(
-            api_client.post,
-            "/api/profiles",
-            json=nested
-        )
+        response = retry_on_rate_limit(api_client.post, "/api/profiles", json=nested)
 
         # Should handle gracefully
         assert response.status_code != 500
@@ -166,9 +166,7 @@ class TestBoundaryValues:
     def test_empty_text_synthesis(self, api_client):
         """Verify empty text is handled properly."""
         response = retry_on_rate_limit(
-            api_client.post,
-            "/api/synthesis/generate",
-            json={"text": "", "engine": "default"}
+            api_client.post, "/api/synthesis/generate", json={"text": "", "engine": "default"}
         )
 
         # Should return validation error or succeed with empty audio
@@ -179,7 +177,7 @@ class TestBoundaryValues:
         response = retry_on_rate_limit(
             api_client.post,
             "/api/synthesis/generate",
-            json={"text": "   \n\t\r   ", "engine": "default"}
+            json={"text": "   \n\t\r   ", "engine": "default"},
         )
 
         # Should be handled gracefully
@@ -193,7 +191,7 @@ class TestBoundaryValues:
         response = retry_on_rate_limit(
             api_client.post,
             "/api/synthesis/generate",
-            json={"text": long_text, "engine": "default"}
+            json={"text": long_text, "engine": "default"},
         )
 
         # Should either process or reject with appropriate error
@@ -213,21 +211,16 @@ class TestBoundaryValues:
 
         for text in unicode_texts:
             response = retry_on_rate_limit(
-                api_client.post,
-                "/api/synthesis/preview",
-                json={"text": text, "engine": "default"}
+                api_client.post, "/api/synthesis/preview", json={"text": text, "engine": "default"}
             )
 
             # Should handle without 500 error
-            assert response.status_code != 500, \
-                f"Unicode text caused error: {text[:20]}"
+            assert response.status_code != 500, f"Unicode text caused error: {text[:20]}"
 
     def test_zero_duration_audio(self, api_client):
         """Verify zero duration audio handling."""
         response = retry_on_rate_limit(
-            api_client.post,
-            "/api/audio/process",
-            json={"duration": 0, "operation": "trim"}
+            api_client.post, "/api/audio/process", json={"duration": 0, "operation": "trim"}
         )
 
         # Should handle gracefully
@@ -236,9 +229,7 @@ class TestBoundaryValues:
     def test_negative_values(self, api_client):
         """Verify negative values are rejected where appropriate."""
         response = retry_on_rate_limit(
-            api_client.post,
-            "/api/synthesis/generate",
-            json={"text": "test", "speed": -1.0}
+            api_client.post, "/api/synthesis/generate", json={"text": "test", "speed": -1.0}
         )
 
         # Negative speed should be rejected
@@ -254,9 +245,7 @@ class TestBoundaryValues:
 
         for params in extreme_values:
             response = retry_on_rate_limit(
-                api_client.post,
-                "/api/synthesis/generate",
-                json={"text": "test", **params}
+                api_client.post, "/api/synthesis/generate", json={"text": "test", **params}
             )
 
             # Should be handled, not 500
@@ -287,7 +276,7 @@ class TestTimeoutRecovery:
         retry_on_rate_limit(
             api_client.post,
             "/api/synthesis/generate",
-            json={"text": "Long synthesis test " * 100, "engine": "default"}
+            json={"text": "Long synthesis test " * 100, "engine": "default"},
         )
 
         # Whether it succeeds or fails, verify we can still make requests
@@ -327,9 +316,7 @@ class TestPartialFailures:
         ]
 
         response = retry_on_rate_limit(
-            api_client.post,
-            "/api/batch/synthesis",
-            json={"items": batch_items}
+            api_client.post, "/api/batch/synthesis", json={"items": batch_items}
         )
 
         # Should not completely fail due to one bad item
@@ -346,8 +333,8 @@ class TestPartialFailures:
             json={
                 "text": "Test fallback",
                 "engine": "nonexistent_engine",
-                "fallback_enabled": True
-            }
+                "fallback_enabled": True,
+            },
         )
 
         # Should either fall back or return appropriate error
@@ -357,9 +344,7 @@ class TestPartialFailures:
         """Verify transactions are rolled back on errors."""
         # Create a profile
         create_response = retry_on_rate_limit(
-            api_client.post,
-            "/api/profiles",
-            json={"name": "Transaction Test", "settings": {}}
+            api_client.post, "/api/profiles", json={"name": "Transaction Test", "settings": {}}
         )
 
         if create_response.status_code not in [200, 201]:
@@ -369,9 +354,7 @@ class TestPartialFailures:
 
         # Try to update with invalid data
         update_response = retry_on_rate_limit(
-            api_client.patch,
-            f"/api/profiles/{profile_id}",
-            json={"invalid_field": "should_fail"}
+            api_client.patch, f"/api/profiles/{profile_id}", json={"invalid_field": "should_fail"}
         )
 
         # Original profile should be unchanged if update failed
@@ -422,8 +405,8 @@ class TestCircuitBreaker:
             json={
                 "text": "Test with fallback",
                 "engine": "primary_engine",
-                "fallback_engines": ["fallback1", "fallback2"]
-            }
+                "fallback_engines": ["fallback1", "fallback2"],
+            },
         )
 
         # Should succeed with fallback or return appropriate error
@@ -436,11 +419,7 @@ class TestResourceExhaustion:
     def test_memory_pressure_handling(self, api_client):
         """Verify system handles memory pressure gracefully."""
         # Try to allocate large response
-        response = retry_on_rate_limit(
-            api_client.get,
-            "/api/library",
-            params={"limit": 10000}
-        )
+        response = retry_on_rate_limit(api_client.get, "/api/library", params={"limit": 10000})
 
         # Should either succeed or return appropriate error
         assert response.status_code in [200, 400, 413, 422, 503]
@@ -471,8 +450,7 @@ class TestResourceExhaustion:
         responses = []
         for i in range(20):
             response = api_client.post(
-                "/api/jobs/submit",
-                json={"type": "test", "data": {"index": i}}
+                "/api/jobs/submit", json={"type": "test", "data": {"index": i}}
             )
             responses.append(response.status_code)
 
@@ -502,12 +480,14 @@ class TestErrorResponseFormat:
                 try:
                     data = response.json()
                     # Should have error info
-                    has_error_info = any([
-                        "detail" in data,
-                        "message" in data,
-                        "error" in data,
-                        "errors" in data,
-                    ])
+                    has_error_info = any(
+                        [
+                            "detail" in data,
+                            "message" in data,
+                            "error" in data,
+                            "errors" in data,
+                        ]
+                    )
                     assert has_error_info, "Error response should contain error info"
                 except Exception:
                     # Non-JSON error response is also acceptable

@@ -395,9 +395,7 @@ def format_prometheus_text(metrics: list[MetricValue]) -> str:
 
         # Format labels
         if metric.labels:
-            label_str = ",".join(
-                f'{k}="{v}"' for k, v in sorted(metric.labels.items())
-            )
+            label_str = ",".join(f'{k}="{v}"' for k, v in sorted(metric.labels.items()))
             metric_line = f"{metric.name}{{{label_str}}} {metric.value}"
         else:
             metric_line = f"{metric.name} {metric.value}"
@@ -502,9 +500,7 @@ async def record_metric(
     name: str = Query(..., description="Metric name"),
     value: float = Query(..., description="Metric value"),
     metric_type: str = Query("gauge", description="Metric type"),
-    labels: str | None = Query(
-        None, description="Labels as key=value pairs"
-    ),
+    labels: str | None = Query(None, description="Labels as key=value pairs"),
 ) -> dict[str, str]:
     """
     Record a custom metric.

@@ -27,8 +27,14 @@ class TestKeyboardNavigation:
     def test_navigation_buttons_focusable(self, driver, app_launched):
         """Test that navigation buttons can receive focus."""
         nav_buttons = [
-            "NavStudio", "NavProfiles", "NavLibrary", "NavEffects",
-            "NavTrain", "NavAnalyze", "NavSettings", "NavLogs",
+            "NavStudio",
+            "NavProfiles",
+            "NavLibrary",
+            "NavEffects",
+            "NavTrain",
+            "NavAnalyze",
+            "NavSettings",
+            "NavLogs",
         ]
 
         for nav_id in nav_buttons:
@@ -40,8 +46,14 @@ class TestKeyboardNavigation:
     def test_panels_accessible_via_click(self, driver, app_launched):
         """Test that all panels are accessible via button clicks."""
         nav_buttons = [
-            "NavStudio", "NavProfiles", "NavLibrary", "NavEffects",
-            "NavTrain", "NavAnalyze", "NavSettings", "NavLogs",
+            "NavStudio",
+            "NavProfiles",
+            "NavLibrary",
+            "NavEffects",
+            "NavTrain",
+            "NavAnalyze",
+            "NavSettings",
+            "NavLogs",
         ]
 
         successful = 0
@@ -86,9 +98,7 @@ class TestCommandPalette:
 
         # Try to find search box in Library panel
         try:
-            search_box = driver.find_element(
-                "accessibility id", "LibraryView_SearchBox"
-            )
+            search_box = driver.find_element("accessibility id", "LibraryView_SearchBox")
             assert search_box is not None
         except RuntimeError:
             # Search may be accessed via different means
@@ -204,8 +214,14 @@ class TestFocusManagement:
     def test_all_nav_buttons_clickable(self, driver, app_launched):
         """Test that all navigation buttons are clickable."""
         nav_buttons = [
-            "NavStudio", "NavProfiles", "NavLibrary", "NavEffects",
-            "NavTrain", "NavAnalyze", "NavSettings", "NavLogs",
+            "NavStudio",
+            "NavProfiles",
+            "NavLibrary",
+            "NavEffects",
+            "NavTrain",
+            "NavAnalyze",
+            "NavSettings",
+            "NavLogs",
         ]
 
         for nav_id in nav_buttons:

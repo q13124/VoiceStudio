@@ -352,9 +352,7 @@ class QualityMetricsCache:
             Dictionary with cache statistics
         """
         total_requests = self._stats["total_requests"]
-        hit_rate = (
-            self._stats["hits"] / total_requests if total_requests > 0 else 0.0
-        )
+        hit_rate = self._stats["hits"] / total_requests if total_requests > 0 else 0.0
 
         return {
             "cache_size": len(self._cache),
@@ -374,11 +372,7 @@ class QualityMetricsCache:
         Returns:
             Number of entries removed
         """
-        expired_keys = [
-            key
-            for key, entry in self._cache.items()
-            if self._is_expired(entry)
-        ]
+        expired_keys = [key for key, entry in self._cache.items() if self._is_expired(entry)]
 
         for key in expired_keys:
             del self._cache[key]
@@ -433,4 +427,3 @@ __all__ = [
     "clear_global_cache",
     "get_quality_metrics_cache",
 ]
-

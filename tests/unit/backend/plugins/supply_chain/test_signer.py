@@ -27,10 +27,7 @@ from backend.plugins.supply_chain.signer import (
 )
 
 # Skip all tests if cryptography is not available
-pytestmark = pytest.mark.skipif(
-    not HAS_CRYPTOGRAPHY,
-    reason="cryptography library not available"
-)
+pytestmark = pytest.mark.skipif(not HAS_CRYPTOGRAPHY, reason="cryptography library not available")
 
 
 # =============================================================================
@@ -516,9 +513,7 @@ class TestKeyEncryption:
         with pytest.raises(ValueError, match="Invalid passphrase"):
             signer.sign(sample_package, "wrong-passphrase")
 
-    def test_passphrase_required_for_signing(
-        self, keystore_with_key, sample_package
-    ):
+    def test_passphrase_required_for_signing(self, keystore_with_key, sample_package):
         """Test that passphrase is required for signing."""
         signer = PackageSigner(keystore_with_key)
 

@@ -317,13 +317,14 @@ class ErrorAnalysisService:
 
         with self._error_lock:
             current_errors = [
-                e for e in self._errors
+                e
+                for e in self._errors
                 if e.error_type == error_type and e.timestamp >= current_start
             ]
             previous_errors = [
-                e for e in self._errors
-                if e.error_type == error_type
-                and previous_start <= e.timestamp < current_start
+                e
+                for e in self._errors
+                if e.error_type == error_type and previous_start <= e.timestamp < current_start
             ]
 
         hours = duration.total_seconds() / 3600

@@ -43,7 +43,7 @@ class EnhancedRuntimeEngine:
         lifecycle_manager: Any | None = None,
         port_manager: Any | None = None,
         resource_manager: Any | None = None,
-        hook_registry: Any | None = None
+        hook_registry: Any | None = None,
     ):
         """
         Initialize enhanced runtime engine.
@@ -106,7 +106,7 @@ class EnhancedRuntimeEngine:
             manifest=manifest,
             pool_size=self.pool_size,
             is_singleton=self.is_singleton,
-            idle_timeout_seconds=self.idle_timeout
+            idle_timeout_seconds=self.idle_timeout,
         )
 
     def _setup_logging(self):
@@ -159,7 +159,7 @@ class EnhancedRuntimeEngine:
         context = {
             "manifest": self.manifest,
             "workspace_root": str(self.workspace_root),
-            "engine_id": self.engine_id
+            "engine_id": self.engine_id,
         }
 
         if not self.hook_registry.execute_pre_hooks(pre_hooks, context):
@@ -168,9 +168,7 @@ class EnhancedRuntimeEngine:
 
         # Acquire engine from lifecycle manager
         lifecycle_engine = self.lifecycle_manager.acquire_engine(
-            engine_id=self.engine_id,
-            job_id=job_id,
-            auto_start=True
+            engine_id=self.engine_id, job_id=job_id, auto_start=True
         )
 
         if not lifecycle_engine:
@@ -187,9 +185,7 @@ class EnhancedRuntimeEngine:
         if not self.port:
             preferred_port = self.manifest.get("entry", {}).get("port")
             self.port = self.port_manager.allocate_port(
-                engine_id=self.engine_id,
-                preferred_port=preferred_port,
-                pid=self.pid
+                engine_id=self.engine_id, preferred_port=preferred_port, pid=self.pid
             )
 
             if not self.port:
@@ -237,10 +233,10 @@ class EnhancedRuntimeEngine:
             self._stderr_handle = None
 
             if self.log_file:
-                self._stdout_handle = open(self.log_file, 'a')
+                self._stdout_handle = open(self.log_file, "a")
 
             if self.stderr_file:
-                self._stderr_handle = open(self.stderr_file, 'a')
+                self._stderr_handle = open(self.stderr_file, "a")
 
             # Start process
             logger.info(f"Starting engine {self.engine_id} on port {self.port}: {cmd}")
@@ -249,7 +245,9 @@ class EnhancedRuntimeEngine:
                 cwd=str(self.workspace_root),
                 stdout=self._stdout_handle or subprocess.PIPE,
                 stderr=self._stderr_handle or subprocess.PIPE,
-                creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
+                creationflags=(
+                    subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0
+                ),
             )
 
             self.pid = self.process.pid
@@ -257,9 +255,7 @@ class EnhancedRuntimeEngine:
             # Update port manager with PID
             if self.port:
                 self.port_manager.allocate_port(
-                    engine_id=self.engine_id,
-                    preferred_port=self.port,
-                    pid=self.pid
+                    engine_id=self.engine_id, preferred_port=self.port, pid=self.pid
                 )
 
             # Wait for startup
@@ -337,7 +333,7 @@ class EnhancedRuntimeEngine:
             "manifest": self.manifest,
             "workspace_root": str(self.workspace_root),
             "engine_id": self.engine_id,
-            "output_path": None  # Could be set based on engine output
+            "output_path": None,  # Could be set based on engine output
         }
 
         self.hook_registry.execute_post_hooks(post_hooks, context)
@@ -383,6 +379,7 @@ class EnhancedRuntimeEngine:
             # Parse host and port from URL
             try:
                 from urllib.parse import urlparse
+
                 parsed = urlparse(url)
                 host = parsed.hostname or "127.0.0.1"
                 port = parsed.port or 80
@@ -410,7 +407,7 @@ class EnhancedRuntimeEngine:
             "port": self.port,
             "pid": self.pid,
             "running": self.is_running(),
-            "healthy": self.is_healthy()
+            "healthy": self.is_healthy(),
         }
 
 
@@ -433,7 +430,7 @@ class EnhancedRuntimeEngineManager:
     def load_engine(self, manifest_path: str) -> EnhancedRuntimeEngine | None:
         """Load an engine from a manifest (v1.1 format)."""
         try:
-            with open(manifest_path, encoding='utf-8') as f:
+            with open(manifest_path, encoding="utf-8") as f:
                 manifest = json.load(f)
 
             # Store manifest path for relative path resolution
@@ -445,7 +442,7 @@ class EnhancedRuntimeEngineManager:
                 lifecycle_manager=self.lifecycle_manager,
                 port_manager=self.port_manager,
                 resource_manager=self.resource_manager,
-                hook_registry=self.hook_registry
+                hook_registry=self.hook_registry,
             )
 
             self.engines[engine.engine_id] = engine
@@ -468,7 +465,7 @@ class EnhancedRuntimeEngineManager:
         # Search for engine.manifest.json files (v1.1)
         for manifest_file in engines_dir.rglob("engine.manifest.json"):
             try:
-                with open(manifest_file, encoding='utf-8') as f:
+                with open(manifest_file, encoding="utf-8") as f:
                     manifest = json.load(f)
                 engine_id = manifest.get("engine_id")
                 if engine_id:
@@ -479,7 +476,7 @@ class EnhancedRuntimeEngineManager:
         # Search for runtime.manifest.json files (v1.0 - legacy)
         for manifest_file in engines_dir.rglob("runtime.manifest.json"):
             try:
-                with open(manifest_file, encoding='utf-8') as f:
+                with open(manifest_file, encoding="utf-8") as f:
                     manifest = json.load(f)
                 engine_id = manifest.get("id")
                 if engine_id:
@@ -531,4 +528,3 @@ class EnhancedRuntimeEngineManager:
                 logger.error(f"Error stopping engine {engine.engine_id}: {e}")
 
         return results
-

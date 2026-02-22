@@ -157,6 +157,7 @@ class HookRegistry:
             if source.exists():
                 # Copy artifact
                 import shutil
+
                 shutil.copy2(source, target)
                 logger.debug(f"Collected artifact: {source} -> {target}")
 
@@ -190,15 +191,15 @@ class HookRegistry:
             file_ext = output_file.suffix.lower()
 
             # Audio files - generate waveform
-            if file_ext in ['.wav', '.mp3', '.flac', '.ogg', '.m4a', '.aac']:
+            if file_ext in [".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac"]:
                 return self._generate_audio_thumbnail(output_file, thumbnail_path)
 
             # Image files - generate resized thumbnail
-            elif file_ext in ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp']:
+            elif file_ext in [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"]:
                 return self._generate_image_thumbnail(output_file, thumbnail_path)
 
             # Video files - extract frame
-            elif file_ext in ['.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv']:
+            elif file_ext in [".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv"]:
                 return self._generate_video_thumbnail(output_file, thumbnail_path)
 
             else:
@@ -213,16 +214,19 @@ class HookRegistry:
         """Generate waveform thumbnail for audio file."""
         try:
             import matplotlib
-            matplotlib.use('Agg')  # Non-interactive backend
+
+            matplotlib.use("Agg")  # Non-interactive backend
             import matplotlib.pyplot as plt
 
             # Try loading audio
             try:
                 import librosa
+
                 audio, sr = librosa.load(str(audio_path), sr=None, duration=30)  # Limit to 30s
             except ImportError:
                 try:
                     import soundfile as sf
+
                     audio, sr = sf.read(str(audio_path))
                     # Limit to 30 seconds
                     max_samples = int(sr * 30)
@@ -234,13 +238,13 @@ class HookRegistry:
 
             # Generate waveform
             fig, ax = plt.subplots(figsize=(4, 2), dpi=100)
-            ax.plot(audio, linewidth=0.5, color='blue')
-            ax.axis('off')
+            ax.plot(audio, linewidth=0.5, color="blue")
+            ax.axis("off")
             ax.set_xlim(0, len(audio))
             fig.tight_layout(pad=0)
 
             # Save thumbnail
-            fig.savefig(str(thumbnail_path), bbox_inches='tight', pad_inches=0, dpi=100)
+            fig.savefig(str(thumbnail_path), bbox_inches="tight", pad_inches=0, dpi=100)
             plt.close(fig)
 
             logger.debug(f"Generated audio thumbnail: {thumbnail_path}")
@@ -262,7 +266,7 @@ class HookRegistry:
             img.thumbnail((200, 200), Image.Resampling.LANCZOS)
 
             # Save thumbnail
-            img.save(str(thumbnail_path), 'PNG')
+            img.save(str(thumbnail_path), "PNG")
 
             logger.debug(f"Generated image thumbnail: {thumbnail_path}")
             return True
@@ -280,6 +284,7 @@ class HookRegistry:
             # Try using imageio-ffmpeg or opencv
             try:
                 import imageio
+
                 reader = imageio.get_reader(str(video_path))
                 # Get frame at 1 second (or first frame if video is shorter)
                 frame = reader.get_data(0)
@@ -287,9 +292,10 @@ class HookRegistry:
 
                 # Save as image
                 from PIL import Image
+
                 img = Image.fromarray(frame)
                 img.thumbnail((200, 200), Image.Resampling.LANCZOS)
-                img.save(str(thumbnail_path), 'PNG')
+                img.save(str(thumbnail_path), "PNG")
 
                 logger.debug(f"Generated video thumbnail: {thumbnail_path}")
                 return True
@@ -297,6 +303,7 @@ class HookRegistry:
             except ImportError:
                 try:
                     import cv2
+
                     cap = cv2.VideoCapture(str(video_path))
                     ret, frame = cap.read()
                     cap.release()
@@ -319,8 +326,9 @@ class HookRegistry:
 
                         # Save
                         from PIL import Image
+
                         img = Image.fromarray(frame_resized)
-                        img.save(str(thumbnail_path), 'PNG')
+                        img.save(str(thumbnail_path), "PNG")
 
                         logger.debug(f"Generated video thumbnail: {thumbnail_path}")
                         return True
@@ -344,4 +352,3 @@ def get_hook_registry() -> HookRegistry:
     if _hook_registry is None:
         _hook_registry = HookRegistry()
     return _hook_registry
-

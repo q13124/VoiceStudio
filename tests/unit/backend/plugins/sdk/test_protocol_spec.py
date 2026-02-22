@@ -574,36 +574,28 @@ class TestSDKGenerator:
         """Test converting array schema to Python type."""
         gen = SDKGenerator(protocol_spec)
 
-        result = gen._schema_to_python_type(
-            {"type": "array", "items": {"type": "string"}}
-        )
+        result = gen._schema_to_python_type({"type": "array", "items": {"type": "string"}})
         assert result == "list[str]"
 
     def test_schema_to_python_type_object(self, protocol_spec: ProtocolSpec):
         """Test converting object schema to Python type."""
         gen = SDKGenerator(protocol_spec)
 
-        result = gen._schema_to_python_type(
-            {"type": "object", "additionalProperties": True}
-        )
+        result = gen._schema_to_python_type({"type": "object", "additionalProperties": True})
         assert result == "dict[str, Any]"
 
     def test_schema_to_python_type_ref(self, protocol_spec: ProtocolSpec):
         """Test converting $ref to Python type."""
         gen = SDKGenerator(protocol_spec)
 
-        result = gen._schema_to_python_type(
-            {"$ref": "#/components/schemas/InitializeParams"}
-        )
+        result = gen._schema_to_python_type({"$ref": "#/components/schemas/InitializeParams"})
         assert result == "InitializeParams"
 
     def test_schema_to_python_type_oneof(self, protocol_spec: ProtocolSpec):
         """Test converting oneOf to Python union type."""
         gen = SDKGenerator(protocol_spec)
 
-        result = gen._schema_to_python_type(
-            {"oneOf": [{"type": "string"}, {"type": "integer"}]}
-        )
+        result = gen._schema_to_python_type({"oneOf": [{"type": "string"}, {"type": "integer"}]})
         assert result == "str | int"
 
     def test_schema_to_python_type_const(self, protocol_spec: ProtocolSpec):
@@ -617,9 +609,7 @@ class TestSDKGenerator:
         """Test converting enum to Python Literal type."""
         gen = SDKGenerator(protocol_spec)
 
-        result = gen._schema_to_python_type(
-            {"type": "string", "enum": ["ready", "error"]}
-        )
+        result = gen._schema_to_python_type({"type": "string", "enum": ["ready", "error"]})
         assert result == 'Literal["ready", "error"]'
 
 

@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class ComputeDevice(Enum):
     """Available compute devices."""
+
     CPU = "cpu"
     GPU_0 = "gpu:0"
     GPU_1 = "gpu:1"
@@ -33,6 +34,7 @@ class ComputeDevice(Enum):
 @dataclass
 class DeviceMetrics:
     """Metrics for a compute device."""
+
     device: ComputeDevice
     utilization_percent: float = 0.0
     memory_used_bytes: int = 0
@@ -56,6 +58,7 @@ class DeviceMetrics:
 @dataclass
 class WorkloadTask:
     """A task to be balanced."""
+
     id: str
     engine_type: str
     estimated_memory_bytes: int
@@ -67,13 +70,14 @@ class WorkloadTask:
 @dataclass
 class BalancerConfig:
     """Configuration for workload balancer."""
+
     enable_gpu: bool = True
     gpu_memory_threshold: float = 0.85
     gpu_utilization_threshold: float = 0.90
     cpu_utilization_threshold: float = 0.85
-    prefer_gpu_for_engines: list[str] = field(default_factory=lambda: [
-        "xtts", "rvc", "whisper", "tortoise", "bark", "styletts2"
-    ])
+    prefer_gpu_for_engines: list[str] = field(
+        default_factory=lambda: ["xtts", "rvc", "whisper", "tortoise", "bark", "styletts2"]
+    )
     cpu_only_engines: list[str] = field(default_factory=list)
     metrics_update_interval: float = 5.0
 
@@ -127,6 +131,7 @@ class WorkloadBalancer:
         """Get total system memory."""
         try:
             import psutil
+
             return psutil.virtual_memory().total
         except ImportError:
             return 16 * 1024 * 1024 * 1024  # Default 16GB
@@ -135,6 +140,7 @@ class WorkloadBalancer:
         """Detect number of available GPUs."""
         try:
             import torch
+
             if torch.cuda.is_available():
                 return torch.cuda.device_count()
         except ImportError:
@@ -144,6 +150,7 @@ class WorkloadBalancer:
         # Try nvidia-smi
         try:
             import subprocess
+
             result = subprocess.run(
                 ["nvidia-smi", "--query-gpu=count", "--format=csv,noheader"],
                 capture_output=True,
@@ -161,11 +168,14 @@ class WorkloadBalancer:
         """Get GPU memory for a device."""
         try:
             import torch
+
             if torch.cuda.is_available():
                 return torch.cuda.get_device_properties(device_id).total_memory
         except ImportError:
             # Gap Analysis Fix: Log when torch is not available for GPU memory query
-            logger.debug(f"PyTorch not available for GPU {device_id} memory query, using default 8GB")
+            logger.debug(
+                f"PyTorch not available for GPU {device_id} memory query, using default 8GB"
+            )
 
         return 8 * 1024 * 1024 * 1024  # Default 8GB
 
@@ -201,6 +211,7 @@ class WorkloadBalancer:
         # Update CPU metrics
         try:
             import psutil
+
             cpu = psutil.cpu_percent()
             mem = psutil.virtual_memory()
 
@@ -214,12 +225,15 @@ class WorkloadBalancer:
         # Update GPU metrics
         try:
             import torch
+
             if torch.cuda.is_available():
                 for i in range(torch.cuda.device_count()):
                     device = ComputeDevice(f"gpu:{i}")
                     if device in self._devices:
                         mem_info = torch.cuda.memory_stats(i)
-                        self._devices[device].memory_used_bytes = mem_info.get("allocated_bytes.all.current", 0)
+                        self._devices[device].memory_used_bytes = mem_info.get(
+                            "allocated_bytes.all.current", 0
+                        )
                         self._devices[device].last_updated = datetime.now()
         except ImportError:
             # PyTorch not available for GPU metrics
@@ -307,6 +321,7 @@ class WorkloadBalancer:
                 device_id = int(device.value.split(":")[1])
                 try:
                     import torch
+
                     with torch.cuda.device(device_id):
                         result = await operation()
                 except ImportError:
@@ -368,10 +383,7 @@ class WorkloadBalancer:
     def get_stats(self) -> dict:
         """Get balancer statistics."""
         return {
-            "devices": {
-                d.value: self.get_device_metrics(d)
-                for d in self._devices
-            },
+            "devices": {d.value: self.get_device_metrics(d) for d in self._devices},
             "gpu_count": sum(1 for d in self._devices if d != ComputeDevice.CPU),
             "config": {
                 "enable_gpu": self.config.enable_gpu,

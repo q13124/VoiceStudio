@@ -218,18 +218,14 @@ class PluginSearchEngine:
         self._index_field(
             plugin, "description", plugin.description, self.FIELD_WEIGHTS["description"]
         )
-        self._index_field(
-            plugin, "category", plugin.category, self.FIELD_WEIGHTS["category"]
-        )
+        self._index_field(plugin, "category", plugin.category, self.FIELD_WEIGHTS["category"])
         self._index_field(plugin, "author", plugin.author, self.FIELD_WEIGHTS["author"])
 
         # Index tags
         for tag in plugin.tags:
             self._index_field(plugin, "tags", tag, self.FIELD_WEIGHTS["tags"])
 
-    def _index_field(
-        self, plugin: CatalogPlugin, field: str, text: str, weight: float
-    ) -> None:
+    def _index_field(self, plugin: CatalogPlugin, field: str, text: str, weight: float) -> None:
         """Index terms from a field."""
         if not text:
             return
@@ -380,9 +376,7 @@ class PluginSearchEngine:
 
         return sorted(results, key=key_func, reverse=reverse)
 
-    def _calculate_facets(
-        self, results: list[SearchResult]
-    ) -> dict[str, list[dict[str, Any]]]:
+    def _calculate_facets(self, results: list[SearchResult]) -> dict[str, list[dict[str, Any]]]:
         """Calculate facet counts for filtering UI."""
         category_counts: dict[str, int] = {}
         tag_counts: dict[str, int] = {}
@@ -394,9 +388,7 @@ class PluginSearchEngine:
 
             # Category facet
             if plugin.category:
-                category_counts[plugin.category] = (
-                    category_counts.get(plugin.category, 0) + 1
-                )
+                category_counts[plugin.category] = category_counts.get(plugin.category, 0) + 1
 
             # Tag facets
             for tag in plugin.tags:
@@ -408,32 +400,28 @@ class PluginSearchEngine:
 
             # License facet
             if plugin.license:
-                license_counts[plugin.license] = (
-                    license_counts.get(plugin.license, 0) + 1
-                )
+                license_counts[plugin.license] = license_counts.get(plugin.license, 0) + 1
 
         return {
             "categories": [
                 {"value": k, "count": v}
-                for k, v in sorted(
-                    category_counts.items(), key=lambda x: x[1], reverse=True
-                )
+                for k, v in sorted(category_counts.items(), key=lambda x: x[1], reverse=True)
             ],
             "tags": [
                 {"value": k, "count": v}
                 for k, v in sorted(tag_counts.items(), key=lambda x: x[1], reverse=True)
-            ][:20],  # Top 20 tags
+            ][
+                :20
+            ],  # Top 20 tags
             "authors": [
                 {"value": k, "count": v}
-                for k, v in sorted(
-                    author_counts.items(), key=lambda x: x[1], reverse=True
-                )
-            ][:10],  # Top 10 authors
+                for k, v in sorted(author_counts.items(), key=lambda x: x[1], reverse=True)
+            ][
+                :10
+            ],  # Top 10 authors
             "licenses": [
                 {"value": k, "count": v}
-                for k, v in sorted(
-                    license_counts.items(), key=lambda x: x[1], reverse=True
-                )
+                for k, v in sorted(license_counts.items(), key=lambda x: x[1], reverse=True)
             ],
         }
 

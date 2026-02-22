@@ -23,9 +23,7 @@ class TestSecurityAuditImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            security_audit is not None
-        ), "Failed to import security_audit module"
+        assert security_audit is not None, "Failed to import security_audit module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -53,4 +51,3 @@ class TestSecurityAuditFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

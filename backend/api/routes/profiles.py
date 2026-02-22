@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 def _get_profiles_wrapper():
     """Get the profile store for legacy imports."""
     from backend.services.profile_store import get_profile_store
+
     return get_profile_store()
 
 
@@ -39,26 +40,26 @@ class _DictToObject:
 
     def __init__(self, data: dict):
         # Use object.__setattr__ to avoid triggering __getattr__
-        object.__setattr__(self, '_data', data or {})
+        object.__setattr__(self, "_data", data or {})
 
     def __getattr__(self, name):
-        data = object.__getattribute__(self, '_data')
+        data = object.__getattribute__(self, "_data")
         return data.get(name)
 
     def get(self, key, default=None):
-        data = object.__getattribute__(self, '_data')
+        data = object.__getattribute__(self, "_data")
         return data.get(key, default)
 
     def __getitem__(self, key):
-        data = object.__getattribute__(self, '_data')
+        data = object.__getattribute__(self, "_data")
         return data[key]
 
     def __contains__(self, key):
-        data = object.__getattribute__(self, '_data')
+        data = object.__getattribute__(self, "_data")
         return key in data
 
     def __repr__(self):
-        data = object.__getattribute__(self, '_data')
+        data = object.__getattribute__(self, "_data")
         return f"_DictToObject({data})"
 
 
@@ -253,11 +254,12 @@ def list_profiles(
         from fastapi import status
 
         from ..exceptions import VoiceStudioException
+
         raise VoiceStudioException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to list profiles: {e!s}",
             error_code="INTERNAL_SERVER_ERROR",
-            recovery_suggestion="Please try again later. If the issue persists, contact support."
+            recovery_suggestion="Please try again later. If the issue persists, contact support.",
         ) from e
 
 
@@ -289,12 +291,13 @@ def get_profile(
         from fastapi import status
 
         from ..exceptions import VoiceStudioException
+
         raise VoiceStudioException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get profile: {e!s}",
             error_code="INTERNAL_SERVER_ERROR",
             recovery_suggestion="Please try again later. If the issue persists, contact support.",
-            context={"profile_id": profile_id}
+            context={"profile_id": profile_id},
         ) from e
 
 
@@ -308,11 +311,17 @@ def create_profile(
         # Validate input
         if not req.name or not req.name.strip():
             from ..exceptions import InvalidInputException
-            raise InvalidInputException("Profile name is required and cannot be empty", field="name", value=req.name)
+
+            raise InvalidInputException(
+                "Profile name is required and cannot be empty", field="name", value=req.name
+            )
 
         if not req.language or not req.language.strip():
             from ..exceptions import InvalidInputException
-            raise InvalidInputException("Language is required and cannot be empty", field="language", value=req.language)
+
+            raise InvalidInputException(
+                "Language is required and cannot be empty", field="language", value=req.language
+            )
 
         import uuid
 
@@ -351,11 +360,12 @@ def create_profile(
         from fastapi import status
 
         from ..exceptions import VoiceStudioException
+
         raise VoiceStudioException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create profile: {e!s}",
             error_code="INTERNAL_SERVER_ERROR",
-            recovery_suggestion="Please try again later. If the issue persists, contact support."
+            recovery_suggestion="Please try again later. If the issue persists, contact support.",
         ) from e
 
 
@@ -374,11 +384,17 @@ def update_profile(
         # Validate input
         if req.name is not None and (not req.name or not req.name.strip()):
             from ..exceptions import InvalidInputException
-            raise InvalidInputException("Profile name cannot be empty", field="name", value=req.name)
+
+            raise InvalidInputException(
+                "Profile name cannot be empty", field="name", value=req.name
+            )
 
         if req.language is not None and (not req.language or not req.language.strip()):
             from ..exceptions import InvalidInputException
-            raise InvalidInputException("Language cannot be empty", field="language", value=req.language)
+
+            raise InvalidInputException(
+                "Language cannot be empty", field="language", value=req.language
+            )
 
         # Update fields
         if req.name is not None:
@@ -412,9 +428,7 @@ def update_profile(
         raise
     except Exception as e:
         logger.error(f"Failed to update profile {profile_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to update profile: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to update profile: {e!s}") from e
 
 
 @router.delete("/{profile_id}", response_model=ApiOk)
@@ -437,12 +451,13 @@ def delete_profile(
         from fastapi import status
 
         from ..exceptions import VoiceStudioException
+
         raise VoiceStudioException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete profile: {e!s}",
             error_code="INTERNAL_SERVER_ERROR",
             recovery_suggestion="Please try again later. If the issue persists, contact support.",
-            context={"profile_id": profile_id}
+            context={"profile_id": profile_id},
         ) from e
 
 
@@ -489,10 +504,7 @@ async def preprocess_reference_audio(
         # Get reference audio path
         reference_audio_path = req.reference_audio_path
         if not reference_audio_path:
-            if (
-                profile.reference_audio_url
-                and not profile.reference_audio_url.startswith("http")
-            ):
+            if profile.reference_audio_url and not profile.reference_audio_url.startswith("http"):
                 reference_audio_path = profile.reference_audio_url
             else:
                 profile_dir = os.path.join(
@@ -508,6 +520,7 @@ async def preprocess_reference_audio(
 
         if not reference_audio_path or not os.path.exists(reference_audio_path):
             from ..exceptions import FileNotFoundException
+
             raise FileNotFoundException(f"Reference audio for profile {profile_id}")
 
         # Try to load audio analysis libraries
@@ -518,20 +531,19 @@ async def preprocess_reference_audio(
             HAS_AUDIO_LIBS = True
         except ImportError:
             HAS_AUDIO_LIBS = False
-            logger.warning(
-                "librosa/soundfile not available for reference audio pre-processing"
-            )
+            logger.warning("librosa/soundfile not available for reference audio pre-processing")
 
         if not HAS_AUDIO_LIBS:
             from fastapi import status
 
             from ..exceptions import VoiceStudioException
+
             raise VoiceStudioException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Audio analysis libraries not available. Install librosa and soundfile.",
                 error_code="SERVICE_UNAVAILABLE",
                 recovery_suggestion="Please install librosa and soundfile libraries to enable reference audio pre-processing.",
-                context={"profile_id": profile_id}
+                context={"profile_id": profile_id},
             )
 
         # Load and analyze original audio
@@ -584,18 +596,14 @@ async def preprocess_reference_audio(
             if zero_crossing_rate > 0.2:  # Unusually high ZCR suggests distortion
                 has_distortion = True
                 quality_score -= 1.0
-                recommendations.append(
-                    "Possible distortion detected - check audio source"
-                )
+                recommendations.append("Possible distortion detected - check audio source")
         except (ValueError, RuntimeError, TypeError) as zcr_err:
             logger.debug(f"Zero crossing rate analysis failed: {zcr_err}")
 
         # Check sample rate (should be >= 16kHz for good quality)
         if sample_rate < 16000:
             quality_score -= 1.0
-            recommendations.append(
-                f"Low sample rate ({sample_rate}Hz) - recommend >= 16kHz"
-            )
+            recommendations.append(f"Low sample rate ({sample_rate}Hz) - recommend >= 16kHz")
 
         # Check duration (should be >= 3 seconds for good cloning)
         if duration < 3.0:
@@ -631,9 +639,7 @@ async def preprocess_reference_audio(
                 # Import audio enhancement functions
                 import sys
 
-                app_path = os.path.join(
-                    os.path.dirname(__file__), "..", "..", "..", "app"
-                )
+                app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
                 if os.path.exists(app_path) and app_path not in sys.path:
                     sys.path.insert(0, app_path)
 
@@ -738,9 +744,7 @@ async def preprocess_reference_audio(
                 quality_score=processed_quality,
                 has_noise=False if "Denoising" in improvements_applied else has_noise,
                 has_clipping=(
-                    False
-                    if "Clipping reduced" in improvements_applied
-                    else has_clipping
+                    False if "Clipping reduced" in improvements_applied else has_clipping
                 ),
                 has_distortion=has_distortion,
                 sample_rate=sample_rate,
@@ -752,8 +756,7 @@ async def preprocess_reference_audio(
 
         return ReferenceAudioPreprocessResponse(
             processed_audio_id=processed_audio_id or f"original_{profile_id}",
-            processed_audio_url=processed_audio_url
-            or f"/api/profiles/{profile_id}/reference",
+            processed_audio_url=processed_audio_url or f"/api/profiles/{profile_id}/reference",
             original_analysis=original_analysis,
             processed_analysis=processed_analysis,
             improvements_applied=improvements_applied,
@@ -767,10 +770,11 @@ async def preprocess_reference_audio(
         from fastapi import status
 
         from ..exceptions import VoiceStudioException
+
         raise VoiceStudioException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Reference audio pre-processing failed: {e!s}",
             error_code="AUDIO_PROCESSING_ERROR",
             recovery_suggestion="Please check the audio file format and try again.",
-            context={"profile_id": profile_id}
+            context={"profile_id": profile_id},
         ) from e

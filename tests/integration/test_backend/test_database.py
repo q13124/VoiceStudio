@@ -57,16 +57,12 @@ class TestQualityMetricsDatabase(IntegrationTestBase):
         # Verify table and indexes exist
         conn = sqlite3.connect(temp_db_path)
         try:
-            cursor = conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            )
+            cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
             tables = [row[0] for row in cursor.fetchall()]
             assert "quality_history" in tables
 
             # Verify indexes
-            cursor = conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='index'"
-            )
+            cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='index'")
             indexes = [row[0] for row in cursor.fetchall()]
             assert any("profile_id" in idx for idx in indexes)
             assert any("engine" in idx for idx in indexes)
@@ -202,9 +198,7 @@ class TestQualityMetricsDatabase(IntegrationTestBase):
             quality_db.insert(entry)
 
         # Get aggregated metrics
-        metrics = quality_db.get_engine_metrics(
-            engine_id, timedelta(hours=1)
-        )
+        metrics = quality_db.get_engine_metrics(engine_id, timedelta(hours=1))
 
         assert metrics["engine_id"] == engine_id
         assert metrics["synthesis_count"] == 10
@@ -331,9 +325,7 @@ class TestDatabaseContextManager(IntegrationTestBase):
         from .fixtures import create_test_database
 
         with create_test_database(in_memory=True) as ctx:
-            ctx.execute(
-                "CREATE TABLE test_table (id TEXT PRIMARY KEY, value TEXT)"
-            )
+            ctx.execute("CREATE TABLE test_table (id TEXT PRIMARY KEY, value TEXT)")
             ctx.execute("INSERT INTO test_table VALUES ('id1', 'value1')")
 
             result = ctx.query("SELECT * FROM test_table")
@@ -346,13 +338,14 @@ class TestDatabaseContextManager(IntegrationTestBase):
         from .fixtures import create_test_database
 
         with create_test_database(in_memory=True) as ctx:
-            ctx.execute(
-                "CREATE TABLE test_profiles (id TEXT, name TEXT, active INTEGER)"
+            ctx.execute("CREATE TABLE test_profiles (id TEXT, name TEXT, active INTEGER)")
+            ctx.seed_data(
+                "test_profiles",
+                [
+                    {"id": "p1", "name": "Profile 1", "active": 1},
+                    {"id": "p2", "name": "Profile 2", "active": 0},
+                ],
             )
-            ctx.seed_data("test_profiles", [
-                {"id": "p1", "name": "Profile 1", "active": 1},
-                {"id": "p2", "name": "Profile 2", "active": 0},
-            ])
 
             result = ctx.query("SELECT * FROM test_profiles")
             assert len(result) == 2
@@ -526,6 +519,7 @@ class TestDatabaseServiceIntegration(IntegrationTestBase):
         # Reset singleton
         import backend.services.quality_metrics_db as qm_module
         from backend.services.quality_metrics_db import get_quality_metrics_db
+
         qm_module._quality_db = None
 
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
@@ -571,10 +565,7 @@ class TestDatabaseServiceIntegration(IntegrationTestBase):
                 errors.append(e)
 
         # Run concurrent inserts
-        threads = [
-            threading.Thread(target=insert_entries, args=(i,))
-            for i in range(5)
-        ]
+        threads = [threading.Thread(target=insert_entries, args=(i,)) for i in range(5)]
         for t in threads:
             t.start()
         for t in threads:

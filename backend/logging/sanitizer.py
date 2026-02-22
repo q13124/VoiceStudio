@@ -19,12 +19,23 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SanitizerConfig:
     """Configuration for log sanitizer."""
+
     # Fields to redact completely
-    redact_fields: set[str] = field(default_factory=lambda: {
-        "password", "secret", "token", "api_key", "apikey",
-        "authorization", "auth", "credential", "credit_card",
-        "ssn", "social_security",
-    })
+    redact_fields: set[str] = field(
+        default_factory=lambda: {
+            "password",
+            "secret",
+            "token",
+            "api_key",
+            "apikey",
+            "authorization",
+            "auth",
+            "credential",
+            "credit_card",
+            "ssn",
+            "social_security",
+        }
+    )
 
     # Maximum string length in logs
     max_string_length: int = 1000
@@ -36,12 +47,14 @@ class SanitizerConfig:
     escape_html: bool = True
 
     # Patterns to sanitize
-    sanitize_patterns: list[str] = field(default_factory=lambda: [
-        r"<script[^>]*>.*?</script>",  # Script tags
-        r"javascript:",  # JavaScript URLs
-        r"on\w+\s*=",  # Event handlers
-        r"<iframe[^>]*>",  # iframes
-    ])
+    sanitize_patterns: list[str] = field(
+        default_factory=lambda: [
+            r"<script[^>]*>.*?</script>",  # Script tags
+            r"javascript:",  # JavaScript URLs
+            r"on\w+\s*=",  # Event handlers
+            r"<iframe[^>]*>",  # iframes
+        ]
+    )
 
 
 class LogSanitizer:
@@ -59,8 +72,7 @@ class LogSanitizer:
         self.config = config or SanitizerConfig()
 
         self._patterns = [
-            re.compile(p, re.IGNORECASE | re.DOTALL)
-            for p in self.config.sanitize_patterns
+            re.compile(p, re.IGNORECASE | re.DOTALL) for p in self.config.sanitize_patterns
         ]
 
     def sanitize(self, value: Any) -> Any:
@@ -95,7 +107,7 @@ class LogSanitizer:
 
         # Truncate if too long
         if len(result) > self.config.max_string_length:
-            result = result[:self.config.max_string_length] + self.config.truncation_suffix
+            result = result[: self.config.max_string_length] + self.config.truncation_suffix
 
         return result
 
@@ -107,10 +119,7 @@ class LogSanitizer:
             # Check if key should be redacted
             key_lower = str(key).lower()
 
-            should_redact = any(
-                redact_key in key_lower
-                for redact_key in self.config.redact_fields
-            )
+            should_redact = any(redact_key in key_lower for redact_key in self.config.redact_fields)
 
             if should_redact:
                 result[key] = "[REDACTED]"
@@ -129,9 +138,12 @@ class LogSanitizer:
 
         # Common secret patterns
         patterns = [
-            (r'(?i)(api[_-]?key|token|secret|password|auth)["\'\s:=]+["\']?([^\s"\']+)', r'\1=[REDACTED]'),
-            (r'(?i)(bearer\s+)([A-Za-z0-9_\-\.]+)', r'\1[REDACTED]'),
-            (r'(?i)(basic\s+)([A-Za-z0-9+/=]+)', r'\1[REDACTED]'),
+            (
+                r'(?i)(api[_-]?key|token|secret|password|auth)["\'\s:=]+["\']?([^\s"\']+)',
+                r"\1=[REDACTED]",
+            ),
+            (r"(?i)(bearer\s+)([A-Za-z0-9_\-\.]+)", r"\1[REDACTED]"),
+            (r"(?i)(basic\s+)([A-Za-z0-9+/=]+)", r"\1[REDACTED]"),
         ]
 
         for pattern, replacement in patterns:
@@ -172,7 +184,7 @@ class SanitizingLogFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         # Sanitize the message
-        if hasattr(record, 'msg') and isinstance(record.msg, str):
+        if hasattr(record, "msg") and isinstance(record.msg, str):
             record.msg = self.sanitizer.redact_sensitive(record.msg)
 
         # Sanitize args

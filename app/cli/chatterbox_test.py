@@ -106,7 +106,7 @@ def test_synthesis(reference_audio: str | None = None):
             text=text,
             language="en",
             emotion="happy",
-            calculate_quality=True
+            calculate_quality=True,
         )
 
         if isinstance(result, tuple):
@@ -115,7 +115,7 @@ def test_synthesis(reference_audio: str | None = None):
             logger.info(f"  Audio shape: {audio.shape}")
             logger.info(f"  MOS Score: {metrics.get('mos_score', 'N/A'):.2f}/5.0")
             logger.info(f"  Naturalness: {metrics.get('naturalness', 'N/A'):.2f}/1.0")
-            if 'similarity' in metrics:
+            if "similarity" in metrics:
                 logger.info(f"  Similarity: {metrics['similarity']:.2f}/1.0")
             return True
         elif result is not None:
@@ -128,10 +128,11 @@ def test_synthesis(reference_audio: str | None = None):
     except Exception as e:
         logger.error(f"✗ Synthesis test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
     finally:
-        if 'engine' in locals():
+        if "engine" in locals():
             engine.cleanup()
 
 
@@ -182,4 +183,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

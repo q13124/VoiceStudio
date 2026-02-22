@@ -33,6 +33,7 @@ DEFAULT_EXPERIMENTS_DIR = Path("config/experiments")
 
 class ExperimentStatus(str, Enum):
     """Experiment lifecycle status."""
+
     DRAFT = "draft"
     RUNNING = "running"
     PAUSED = "paused"
@@ -42,6 +43,7 @@ class ExperimentStatus(str, Enum):
 
 class VariantType(str, Enum):
     """Type of variant."""
+
     CONTROL = "control"
     TREATMENT = "treatment"
 
@@ -49,6 +51,7 @@ class VariantType(str, Enum):
 @dataclass
 class Variant:
     """A single variant in an experiment."""
+
     id: str
     name: str
     description: str = ""
@@ -59,6 +62,7 @@ class Variant:
 @dataclass
 class Experiment:
     """An A/B test experiment."""
+
     id: str
     name: str
     description: str
@@ -110,9 +114,19 @@ class Experiment:
             description=data.get("description", ""),
             status=ExperimentStatus(data.get("status", "draft")),
             variants=variants,
-            created_at=datetime.fromisoformat(data["created_at"]) if data.get("created_at") else datetime.utcnow(),
-            updated_at=datetime.fromisoformat(data["updated_at"]) if data.get("updated_at") else datetime.utcnow(),
-            start_date=datetime.fromisoformat(data["start_date"]) if data.get("start_date") else None,
+            created_at=(
+                datetime.fromisoformat(data["created_at"])
+                if data.get("created_at")
+                else datetime.utcnow()
+            ),
+            updated_at=(
+                datetime.fromisoformat(data["updated_at"])
+                if data.get("updated_at")
+                else datetime.utcnow()
+            ),
+            start_date=(
+                datetime.fromisoformat(data["start_date"]) if data.get("start_date") else None
+            ),
             end_date=datetime.fromisoformat(data["end_date"]) if data.get("end_date") else None,
             target_sample_size=data.get("target_sample_size", 0),
             current_sample_size=data.get("current_sample_size", 0),
@@ -124,6 +138,7 @@ class Experiment:
 @dataclass
 class VariantAssignment:
     """Records a user's assignment to a variant."""
+
     user_id_hash: str
     experiment_id: str
     variant_id: str
@@ -134,6 +149,7 @@ class VariantAssignment:
 @dataclass
 class ExperimentEvent:
     """An event in an experiment (exposure, conversion, etc.)."""
+
     user_id_hash: str
     experiment_id: str
     variant_id: str
@@ -166,7 +182,9 @@ class ABTestingService:
         self.data_dir = data_dir or Path(".buildlogs/experiments")
 
         self._experiments: dict[str, Experiment] = {}
-        self._assignments: dict[str, dict[str, VariantAssignment]] = {}  # user_hash -> exp_id -> assignment
+        self._assignments: dict[str, dict[str, VariantAssignment]] = (
+            {}
+        )  # user_hash -> exp_id -> assignment
         self._events: list[ExperimentEvent] = []
 
         # Ensure directories exist
@@ -547,15 +565,17 @@ class ABTestingService:
 
             conversion_rate = (conversions / exposures * 100) if exposures > 0 else 0
 
-            variants.append({
-                "id": variant.id,
-                "name": variant.name,
-                "weight": variant.weight,
-                "users": users,
-                "exposures": exposures,
-                "conversions": conversions,
-                "conversion_rate": round(conversion_rate, 2),
-            })
+            variants.append(
+                {
+                    "id": variant.id,
+                    "name": variant.name,
+                    "weight": variant.weight,
+                    "users": users,
+                    "exposures": exposures,
+                    "conversions": conversions,
+                    "conversion_rate": round(conversion_rate, 2),
+                }
+            )
 
         return {
             "experiment_id": experiment_id,

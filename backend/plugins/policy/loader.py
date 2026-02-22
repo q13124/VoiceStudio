@@ -49,9 +49,7 @@ class PolicyLoader:
         self._system_path = self._resolve_path(system_path, self.DEFAULT_SYSTEM_POLICY)
         self._user_path = self._resolve_path(user_path, self.DEFAULT_USER_POLICY)
 
-    def _resolve_path(
-        self, path: Optional[Union[str, Path]], default: str
-    ) -> Path:
+    def _resolve_path(self, path: Optional[Union[str, Path]], default: str) -> Path:
         """Resolve a path relative to base directory."""
         if path is None:
             path = default
@@ -107,8 +105,7 @@ class PolicyLoader:
                 data = yaml.safe_load(content)
             except ImportError:
                 raise ImportError(
-                    f"PyYAML required to load {path}. "
-                    "Install with: pip install pyyaml"
+                    f"PyYAML required to load {path}. " "Install with: pip install pyyaml"
                 )
         else:
             # Default to JSON
@@ -116,9 +113,7 @@ class PolicyLoader:
 
         return PolicyConfig.from_dict(data)
 
-    def _merge_configs(
-        self, base: PolicyConfig, override: PolicyConfig
-    ) -> PolicyConfig:
+    def _merge_configs(self, base: PolicyConfig, override: PolicyConfig) -> PolicyConfig:
         """
         Merge two policy configs.
 

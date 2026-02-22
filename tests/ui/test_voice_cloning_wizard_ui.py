@@ -127,9 +127,7 @@ class TestStep1UploadReferenceAudio:
             with open(test_audio, "rb") as f:
                 files = {"file": (test_audio.name, f, "audio/wav")}
                 response = requests.post(
-                    f"{BACKEND_URL}/api/voice/analyze",
-                    files=files,
-                    timeout=60
+                    f"{BACKEND_URL}/api/voice/analyze", files=files, timeout=60
                 )
                 tracer.api_call("POST", "/api/voice/analyze", response)
 
@@ -163,9 +161,7 @@ class TestStep1UploadReferenceAudio:
             with open(test_audio, "rb") as f:
                 files = {"file": (test_audio.name, f, "audio/wav")}
                 response = requests.post(
-                    f"{BACKEND_URL}/api/audio/validate",
-                    files=files,
-                    timeout=30
+                    f"{BACKEND_URL}/api/audio/validate", files=files, timeout=30
                 )
                 tracer.api_call("POST", "/api/audio/validate", response)
 
@@ -193,7 +189,9 @@ class TestStep2ConfigureCloningSettings:
             response = api_monitor.get("/api/engine/list")
             tracer.api_call("GET", "/api/engine/list", response)
 
-            assert response.status_code == 200, f"Engine list should return 200, got {response.status_code}"
+            assert (
+                response.status_code == 200
+            ), f"Engine list should return 200, got {response.status_code}"
 
             data = response.json()
             tracer.step(f"Available engines: {data}")
@@ -268,7 +266,7 @@ class TestStep3Processing:
                     f"{BACKEND_URL}/api/voice/clone",
                     files=files,
                     data=data,
-                    timeout=120  # Cloning can take time
+                    timeout=120,  # Cloning can take time
                 )
                 tracer.api_call("POST", "/api/voice/clone", response)
 
@@ -323,9 +321,7 @@ class TestStep4ReviewAndFinalize:
                 "voice_id": "default",  # Use default voice for test
             }
             response = requests.post(
-                f"{BACKEND_URL}/api/voice/synthesize",
-                json=payload,
-                timeout=60
+                f"{BACKEND_URL}/api/voice/synthesize", json=payload, timeout=60
             )
             tracer.api_call("POST", "/api/voice/synthesize", response)
 
@@ -361,7 +357,9 @@ class TestStep4ReviewAndFinalize:
 
             if response.status_code == 200:
                 profiles = response.json()
-                tracer.step(f"Existing profiles: {len(profiles) if isinstance(profiles, list) else 'N/A'}")
+                tracer.step(
+                    f"Existing profiles: {len(profiles) if isinstance(profiles, list) else 'N/A'}"
+                )
                 tracer.success("Profiles API works")
             else:
                 tracer.step(f"Profiles returned {response.status_code}")
@@ -415,8 +413,14 @@ class TestVoiceCloningWizardE2E:
 
             # Look for wizard step indicators
             step_indicators = [
-                "Step 1", "Step 2", "Step 3", "Step 4",
-                "Upload", "Configure", "Process", "Review",
+                "Step 1",
+                "Step 2",
+                "Step 3",
+                "Step 4",
+                "Upload",
+                "Configure",
+                "Process",
+                "Review",
             ]
 
             for indicator in step_indicators:
@@ -444,11 +448,7 @@ class TestVoiceCloningWizardE2E:
         analysis_result = None
         with open(test_audio, "rb") as f:
             files = {"file": (test_audio.name, f, "audio/wav")}
-            response = requests.post(
-                f"{BACKEND_URL}/api/voice/analyze",
-                files=files,
-                timeout=60
-            )
+            response = requests.post(f"{BACKEND_URL}/api/voice/analyze", files=files, timeout=60)
             tracer.api_call("POST", "/api/voice/analyze", response)
 
             if response.status_code == 200:
@@ -463,7 +463,9 @@ class TestVoiceCloningWizardE2E:
         engines = []
         if response.status_code == 200:
             engines = response.json()
-            tracer.step(f"Available engines: {len(engines) if isinstance(engines, list) else 'N/A'}")
+            tracer.step(
+                f"Available engines: {len(engines) if isinstance(engines, list) else 'N/A'}"
+            )
 
         # Step 3: Start cloning
         tracer.step("Step 3: Start voice cloning")
@@ -471,10 +473,7 @@ class TestVoiceCloningWizardE2E:
             files = {"file": (test_audio.name, f, "audio/wav")}
             data = {"name": "api_test_clone", "engine": "auto"}
             response = requests.post(
-                f"{BACKEND_URL}/api/voice/clone",
-                files=files,
-                data=data,
-                timeout=120
+                f"{BACKEND_URL}/api/voice/clone", files=files, data=data, timeout=120
             )
             tracer.api_call("POST", "/api/voice/clone", response)
 

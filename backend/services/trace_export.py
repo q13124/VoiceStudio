@@ -36,9 +36,11 @@ DEFAULT_EXPORT_DIR = Path(".buildlogs/traces")
 # Trace Export Models
 # =============================================================================
 
+
 @dataclass
 class TraceExport:
     """Represents an exported trace."""
+
     trace_id: str
     service_name: str
     spans: list[dict[str, Any]]
@@ -54,6 +56,7 @@ class TraceExport:
 @dataclass
 class TraceSummary:
     """Summary statistics for a collection of traces."""
+
     total_traces: int = 0
     total_spans: int = 0
     avg_duration_ms: float = 0.0
@@ -70,6 +73,7 @@ class TraceSummary:
 # =============================================================================
 # Trace Exporter
 # =============================================================================
+
 
 class TraceExporter:
     """
@@ -272,6 +276,7 @@ class TraceExporter:
 # Trace Analyzer
 # =============================================================================
 
+
 class TraceAnalyzer:
     """
     Analyzes traces for performance insights and issues.
@@ -331,9 +336,7 @@ class TraceAnalyzer:
 
     def get_trace_tree(self, trace_id: str) -> dict[str, Any]:
         """Build a tree structure for a trace."""
-        spans = self.exporter.get_traces(
-            filter_fn=lambda s: s.trace_id == trace_id
-        )
+        spans = self.exporter.get_traces(filter_fn=lambda s: s.trace_id == trace_id)
 
         if not spans:
             return {}

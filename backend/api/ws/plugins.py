@@ -164,19 +164,31 @@ async def handle_plugin_command(
         if command == PluginCommand.ENABLE:
             success = await _enable_plugin(plugin_service, plugin_id)
             await _send_command_response(
-                websocket, success, plugin_id, "Plugin enabled" if success else "Failed to enable plugin", request_id
+                websocket,
+                success,
+                plugin_id,
+                "Plugin enabled" if success else "Failed to enable plugin",
+                request_id,
             )
 
         elif command == PluginCommand.DISABLE:
             success = await _disable_plugin(plugin_service, plugin_id)
             await _send_command_response(
-                websocket, success, plugin_id, "Plugin disabled" if success else "Failed to disable plugin", request_id
+                websocket,
+                success,
+                plugin_id,
+                "Plugin disabled" if success else "Failed to disable plugin",
+                request_id,
             )
 
         elif command == PluginCommand.RELOAD:
             success = await _reload_plugin(plugin_service, plugin_id)
             await _send_command_response(
-                websocket, success, plugin_id, "Plugin reloaded" if success else "Failed to reload plugin", request_id
+                websocket,
+                success,
+                plugin_id,
+                "Plugin reloaded" if success else "Failed to reload plugin",
+                request_id,
             )
 
         elif command == PluginCommand.HEALTH_CHECK:
@@ -194,14 +206,14 @@ async def handle_plugin_command(
 
         else:
             await websocket.send_json(
-                create_error(f"Unknown command: {command}", code="INVALID_COMMAND", request_id=request_id)
+                create_error(
+                    f"Unknown command: {command}", code="INVALID_COMMAND", request_id=request_id
+                )
             )
 
     except Exception as e:
         logger.exception(f"Error handling plugin command {command}: {e}")
-        await websocket.send_json(
-            create_error(str(e), code="COMMAND_ERROR", request_id=request_id)
-        )
+        await websocket.send_json(create_error(str(e), code="COMMAND_ERROR", request_id=request_id))
 
 
 async def _enable_plugin(plugin_service: Any, plugin_id: str) -> bool:
@@ -311,19 +323,13 @@ async def send_full_sync(websocket: WebSocket, request_id: str | None = None) ->
 
     except Exception as e:
         logger.error(f"Error sending full sync: {e}")
-        await websocket.send_json(
-            create_error(str(e), code="SYNC_ERROR", request_id=request_id)
-        )
+        await websocket.send_json(create_error(str(e), code="SYNC_ERROR", request_id=request_id))
 
 
-def _create_plugin_status(
-    plugin_id: str, manifest: Any, plugin_service: Any
-) -> dict[str, Any]:
+def _create_plugin_status(plugin_id: str, manifest: Any, plugin_service: Any) -> dict[str, Any]:
     """Create a plugin status dictionary for sync messages."""
     # Determine state
-    if hasattr(plugin_service, "is_plugin_loaded") and plugin_service.is_plugin_loaded(
-        plugin_id
-    ):
+    if hasattr(plugin_service, "is_plugin_loaded") and plugin_service.is_plugin_loaded(plugin_id):
         state = "active"
     elif hasattr(plugin_service, "is_plugin_enabled") and not plugin_service.is_plugin_enabled(
         plugin_id
@@ -436,9 +442,7 @@ async def notify_plugin_removed(plugin_id: str) -> None:
     )
 
 
-async def notify_permission_changed(
-    plugin_id: str, granted_permissions: list[str]
-) -> None:
+async def notify_permission_changed(plugin_id: str, granted_permissions: list[str]) -> None:
     """Notify all clients that plugin permissions changed."""
     await broadcast_plugin_state(
         action=PluginSyncAction.PERMISSION_CHANGED,

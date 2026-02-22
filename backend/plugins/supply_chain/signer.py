@@ -39,6 +39,7 @@ try:
         Ed25519PublicKey,
     )
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
     HAS_CRYPTOGRAPHY = True
 except ImportError:
     HAS_CRYPTOGRAPHY = False
@@ -50,31 +51,31 @@ logger = logging.getLogger(__name__)
 
 class KeyStatus(Enum):
     """Status of a signing key."""
-    
-    ACTIVE = "active"           # Currently used for signing
-    ROTATED = "rotated"         # Previously active, still valid for verification
-    REVOKED = "revoked"         # Revoked, should not be used
+
+    ACTIVE = "active"  # Currently used for signing
+    ROTATED = "rotated"  # Previously active, still valid for verification
+    REVOKED = "revoked"  # Revoked, should not be used
 
 
 class SignatureAlgorithm(Enum):
     """Supported signature algorithms."""
-    
+
     ED25519 = "ed25519"
 
 
 @dataclass
 class KeyMetadata:
     """Metadata for a signing key."""
-    
-    key_id: str                           # Unique key identifier
-    fingerprint: str                      # Key fingerprint (hash of public key)
-    created_at: str                       # ISO 8601 creation timestamp
+
+    key_id: str  # Unique key identifier
+    fingerprint: str  # Key fingerprint (hash of public key)
+    created_at: str  # ISO 8601 creation timestamp
     status: KeyStatus = KeyStatus.ACTIVE  # Key status
-    rotated_at: Optional[str] = None      # When key was rotated (if applicable)
-    revoked_at: Optional[str] = None      # When key was revoked (if applicable)
-    description: Optional[str] = None     # Optional key description
+    rotated_at: Optional[str] = None  # When key was rotated (if applicable)
+    revoked_at: Optional[str] = None  # When key was revoked (if applicable)
+    description: Optional[str] = None  # Optional key description
     algorithm: SignatureAlgorithm = SignatureAlgorithm.ED25519
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -87,7 +88,7 @@ class KeyMetadata:
             "description": self.description,
             "algorithm": self.algorithm.value,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> KeyMetadata:
         """Create from dictionary."""
@@ -106,12 +107,12 @@ class KeyMetadata:
 @dataclass
 class KeyEntry:
     """A key entry in the keystore."""
-    
+
     metadata: KeyMetadata
-    public_key: str                       # Base64-encoded public key
-    private_key_encrypted: str            # Base64-encoded encrypted private key
-    salt: str                             # Base64-encoded salt for key derivation
-    
+    public_key: str  # Base64-encoded public key
+    private_key_encrypted: str  # Base64-encoded encrypted private key
+    salt: str  # Base64-encoded salt for key derivation
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -120,7 +121,7 @@ class KeyEntry:
             "private_key_encrypted": self.private_key_encrypted,
             "salt": self.salt,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> KeyEntry:
         """Create from dictionary."""
@@ -135,21 +136,21 @@ class KeyEntry:
 @dataclass
 class Signature:
     """A cryptographic signature for a package."""
-    
-    key_id: str                           # Key used for signing
-    signature_id: str = ""                # Unique signature identifier (auto-generated)
+
+    key_id: str  # Key used for signing
+    signature_id: str = ""  # Unique signature identifier (auto-generated)
     algorithm: SignatureAlgorithm = SignatureAlgorithm.ED25519
-    signature: str = ""                   # Base64-encoded signature
-    signed_at: str = ""                   # ISO 8601 timestamp
+    signature: str = ""  # Base64-encoded signature
+    signed_at: str = ""  # ISO 8601 timestamp
     package_digest: Dict[str, str] = field(default_factory=dict)  # Package hashes
-    
+
     def __post_init__(self):
         """Initialize signature ID if not set."""
         if not self.signature_id:
             self.signature_id = str(uuid.uuid4())
         if not self.signed_at:
             self.signed_at = datetime.now(timezone.utc).isoformat()
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -160,15 +161,15 @@ class Signature:
             "signed_at": self.signed_at,
             "package_digest": self.package_digest,
         }
-    
+
     def to_json(self, indent: int = 2) -> str:
         """Convert to JSON string."""
         return json.dumps(self.to_dict(), indent=indent)
-    
+
     def save(self, path: Path) -> None:
         """Save signature to file."""
         path.write_text(self.to_json(), encoding="utf-8")
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> Signature:
         """Create from dictionary."""
@@ -180,7 +181,7 @@ class Signature:
             signed_at=data.get("signed_at", ""),
             package_digest=data.get("package_digest", {}),
         )
-    
+
     @classmethod
     def load(cls, path: Path) -> Signature:
         """Load signature from file."""
@@ -191,20 +192,20 @@ class Signature:
 class Keystore:
     """
     Local keystore for managing signing keys.
-    
+
     Provides secure storage for Ed25519 key pairs with:
     - Passphrase-based encryption for private keys
     - Support for multiple keys
     - Key rotation with history
     - Key revocation
     """
-    
+
     KEYSTORE_VERSION = "1.0"
-    
+
     def __init__(self, keystore_path: Path):
         """
         Initialize keystore.
-        
+
         Args:
             keystore_path: Path to the keystore file
         """
@@ -213,12 +214,12 @@ class Keystore:
                 "cryptography library required for signing. "
                 "Install with: pip install cryptography"
             )
-        
+
         self.keystore_path = Path(keystore_path)
         self._keys: Dict[str, KeyEntry] = {}
         self._active_key_id: Optional[str] = None
         self._loaded = False
-    
+
     def _derive_encryption_key(self, passphrase: str, salt: bytes) -> bytes:
         """Derive encryption key from passphrase using PBKDF2."""
         kdf = PBKDF2HMAC(
@@ -229,34 +230,32 @@ class Keystore:
         )
         key = kdf.derive(passphrase.encode("utf-8"))
         return base64.urlsafe_b64encode(key)
-    
+
     def _encrypt_private_key(
-        self,
-        private_key: Ed25519PrivateKey,
-        passphrase: str
+        self, private_key: Ed25519PrivateKey, passphrase: str
     ) -> Tuple[str, str]:
         """
         Encrypt private key with passphrase.
-        
+
         Returns:
             Tuple of (encrypted_key_b64, salt_b64)
         """
         salt = secrets.token_bytes(16)
         encryption_key = self._derive_encryption_key(passphrase, salt)
         fernet = Fernet(encryption_key)
-        
+
         private_bytes = private_key.private_bytes(
             encoding=serialization.Encoding.Raw,
             format=serialization.PrivateFormat.Raw,
             encryption_algorithm=serialization.NoEncryption(),
         )
-        
+
         encrypted = fernet.encrypt(private_bytes)
         return (
             base64.b64encode(encrypted).decode("ascii"),
             base64.b64encode(salt).decode("ascii"),
         )
-    
+
     def _decrypt_private_key(
         self,
         encrypted_key_b64: str,
@@ -267,15 +266,15 @@ class Keystore:
         salt = base64.b64decode(salt_b64)
         encryption_key = self._derive_encryption_key(passphrase, salt)
         fernet = Fernet(encryption_key)
-        
+
         encrypted = base64.b64decode(encrypted_key_b64)
         try:
             decrypted = fernet.decrypt(encrypted)
         except InvalidToken:
             raise ValueError("Invalid passphrase or corrupted key data")
-        
+
         return Ed25519PrivateKey.from_private_bytes(decrypted)
-    
+
     def _compute_fingerprint(self, public_key: Ed25519PublicKey) -> str:
         """Compute fingerprint for a public key."""
         public_bytes = public_key.public_bytes(
@@ -283,11 +282,11 @@ class Keystore:
             format=serialization.PublicFormat.Raw,
         )
         return hashlib.sha256(public_bytes).hexdigest()[:16]
-    
+
     def create(self, passphrase: str) -> None:
         """
         Create a new empty keystore.
-        
+
         Args:
             passphrase: Passphrase to encrypt keys (required but may be empty for dev)
         """
@@ -296,48 +295,44 @@ class Keystore:
         self._save(passphrase)
         self._loaded = True
         logger.info(f"Created new keystore at {self.keystore_path}")
-    
+
     def load(self, passphrase: str) -> None:
         """
         Load keystore from file.
-        
+
         Args:
             passphrase: Passphrase to decrypt keys
         """
         if not self.keystore_path.exists():
             raise FileNotFoundError(f"Keystore not found: {self.keystore_path}")
-        
+
         data = json.loads(self.keystore_path.read_text(encoding="utf-8"))
-        
+
         version = data.get("version", "1.0")
         if version != self.KEYSTORE_VERSION:
             logger.warning(f"Keystore version mismatch: {version} vs {self.KEYSTORE_VERSION}")
-        
+
         self._active_key_id = data.get("active_key_id")
         self._keys = {
-            key_id: KeyEntry.from_dict(entry)
-            for key_id, entry in data.get("keys", {}).items()
+            key_id: KeyEntry.from_dict(entry) for key_id, entry in data.get("keys", {}).items()
         }
         self._loaded = True
         logger.info(f"Loaded keystore with {len(self._keys)} keys")
-    
+
     def _save(self, passphrase: str) -> None:
         """Save keystore to file."""
         data = {
             "version": self.KEYSTORE_VERSION,
             "active_key_id": self._active_key_id,
-            "keys": {
-                key_id: entry.to_dict()
-                for key_id, entry in self._keys.items()
-            },
+            "keys": {key_id: entry.to_dict() for key_id, entry in self._keys.items()},
         }
-        
+
         self.keystore_path.parent.mkdir(parents=True, exist_ok=True)
         self.keystore_path.write_text(
             json.dumps(data, indent=2),
             encoding="utf-8",
         )
-    
+
     def generate_key(
         self,
         passphrase: str,
@@ -346,33 +341,33 @@ class Keystore:
     ) -> KeyMetadata:
         """
         Generate a new signing key pair.
-        
+
         Args:
             passphrase: Passphrase to encrypt the private key
             description: Optional key description
             set_active: Whether to set this key as the active signing key
-            
+
         Returns:
             Metadata for the new key
         """
         # Generate Ed25519 key pair
         private_key = Ed25519PrivateKey.generate()
         public_key = private_key.public_key()
-        
+
         # Compute key ID and fingerprint
         key_id = str(uuid.uuid4())
         fingerprint = self._compute_fingerprint(public_key)
-        
+
         # Encrypt private key
         encrypted_private, salt = self._encrypt_private_key(private_key, passphrase)
-        
+
         # Encode public key
         public_bytes = public_key.public_bytes(
             encoding=serialization.Encoding.Raw,
             format=serialization.PublicFormat.Raw,
         )
         public_b64 = base64.b64encode(public_bytes).decode("ascii")
-        
+
         # Create metadata
         metadata = KeyMetadata(
             key_id=key_id,
@@ -380,7 +375,7 @@ class Keystore:
             created_at=datetime.now(timezone.utc).isoformat(),
             description=description,
         )
-        
+
         # Create key entry
         entry = KeyEntry(
             metadata=metadata,
@@ -388,9 +383,9 @@ class Keystore:
             private_key_encrypted=encrypted_private,
             salt=salt,
         )
-        
+
         self._keys[key_id] = entry
-        
+
         if set_active:
             # Rotate any existing active key
             if self._active_key_id and self._active_key_id != key_id:
@@ -398,14 +393,14 @@ class Keystore:
                 if old_entry:
                     old_entry.metadata.status = KeyStatus.ROTATED
                     old_entry.metadata.rotated_at = datetime.now(timezone.utc).isoformat()
-            
+
             self._active_key_id = key_id
-        
+
         self._save(passphrase)
         logger.info(f"Generated new key: {key_id} (fingerprint: {fingerprint})")
-        
+
         return metadata
-    
+
     def rotate_key(
         self,
         passphrase: str,
@@ -413,13 +408,13 @@ class Keystore:
     ) -> KeyMetadata:
         """
         Rotate the active key by generating a new one.
-        
+
         The old key is marked as rotated but remains valid for verification.
-        
+
         Args:
             passphrase: Passphrase for key encryption
             description: Optional description for the new key
-            
+
         Returns:
             Metadata for the new active key
         """
@@ -428,74 +423,70 @@ class Keystore:
             description=description or "Rotated key",
             set_active=True,
         )
-    
+
     def revoke_key(self, key_id: str, passphrase: str) -> None:
         """
         Revoke a key.
-        
+
         Revoked keys cannot be used for signing or verification.
-        
+
         Args:
             key_id: ID of the key to revoke
             passphrase: Passphrase for keystore
         """
         if key_id not in self._keys:
             raise KeyError(f"Key not found: {key_id}")
-        
+
         entry = self._keys[key_id]
         entry.metadata.status = KeyStatus.REVOKED
         entry.metadata.revoked_at = datetime.now(timezone.utc).isoformat()
-        
+
         # If revoking the active key, clear it
         if self._active_key_id == key_id:
             self._active_key_id = None
-        
+
         self._save(passphrase)
         logger.info(f"Revoked key: {key_id}")
-    
+
     def get_active_key_id(self) -> Optional[str]:
         """Get the ID of the active signing key."""
         return self._active_key_id
-    
+
     def get_key_metadata(self, key_id: str) -> Optional[KeyMetadata]:
         """Get metadata for a key."""
         entry = self._keys.get(key_id)
         return entry.metadata if entry else None
-    
+
     def list_keys(self) -> List[KeyMetadata]:
         """List all keys in the keystore."""
         return [entry.metadata for entry in self._keys.values()]
-    
+
     def get_public_key(self, key_id: str) -> Optional[str]:
         """Get the base64-encoded public key."""
         entry = self._keys.get(key_id)
         return entry.public_key if entry else None
-    
-    def _get_private_key(
-        self,
-        key_id: str,
-        passphrase: str
-    ) -> Ed25519PrivateKey:
+
+    def _get_private_key(self, key_id: str, passphrase: str) -> Ed25519PrivateKey:
         """Get decrypted private key."""
         entry = self._keys.get(key_id)
         if not entry:
             raise KeyError(f"Key not found: {key_id}")
-        
+
         if entry.metadata.status == KeyStatus.REVOKED:
             raise ValueError(f"Key has been revoked: {key_id}")
-        
+
         return self._decrypt_private_key(
             entry.private_key_encrypted,
             entry.salt,
             passphrase,
         )
-    
+
     def export_public_key(self, key_id: str, path: Path) -> None:
         """Export a public key to a file."""
         entry = self._keys.get(key_id)
         if not entry:
             raise KeyError(f"Key not found: {key_id}")
-        
+
         data = {
             "key_id": key_id,
             "fingerprint": entry.metadata.fingerprint,
@@ -503,7 +494,7 @@ class Keystore:
             "public_key": entry.public_key,
             "created_at": entry.metadata.created_at,
         }
-        
+
         path.write_text(json.dumps(data, indent=2), encoding="utf-8")
         logger.info(f"Exported public key to {path}")
 
@@ -511,15 +502,15 @@ class Keystore:
 class PackageSigner:
     """
     Signs and verifies plugin packages.
-    
+
     Uses Ed25519 signatures for fast, secure signing with
     compact signature sizes suitable for embedding in packages.
     """
-    
+
     def __init__(self, keystore: Keystore):
         """
         Initialize package signer.
-        
+
         Args:
             keystore: Keystore containing signing keys
         """
@@ -528,9 +519,9 @@ class PackageSigner:
                 "cryptography library required for signing. "
                 "Install with: pip install cryptography"
             )
-        
+
         self.keystore = keystore
-    
+
     def _compute_package_digest(self, package_path: Path) -> Dict[str, str]:
         """Compute cryptographic digests for a package."""
         content = package_path.read_bytes()
@@ -538,7 +529,7 @@ class PackageSigner:
             "sha256": hashlib.sha256(content).hexdigest(),
             "sha512": hashlib.sha512(content).hexdigest(),
         }
-    
+
     def sign(
         self,
         package_path: Path,
@@ -547,49 +538,52 @@ class PackageSigner:
     ) -> Signature:
         """
         Sign a package.
-        
+
         Args:
             package_path: Path to the package file
             passphrase: Passphrase to decrypt the signing key
             key_id: Key ID to use (defaults to active key)
-            
+
         Returns:
             Signature object
         """
         if not package_path.exists():
             raise FileNotFoundError(f"Package not found: {package_path}")
-        
+
         # Use active key if not specified
         if key_id is None:
             key_id = self.keystore.get_active_key_id()
             if not key_id:
                 raise ValueError("No active signing key. Generate one first.")
-        
+
         # Get private key
         private_key = self.keystore._get_private_key(key_id, passphrase)
-        
+
         # Compute package digest
         package_digest = self._compute_package_digest(package_path)
-        
+
         # Create signature payload
-        payload = json.dumps({
-            "digest": package_digest,
-            "key_id": key_id,
-        }, sort_keys=True).encode("utf-8")
-        
+        payload = json.dumps(
+            {
+                "digest": package_digest,
+                "key_id": key_id,
+            },
+            sort_keys=True,
+        ).encode("utf-8")
+
         # Sign the payload
         signature_bytes = private_key.sign(payload)
         signature_b64 = base64.b64encode(signature_bytes).decode("ascii")
-        
+
         signature = Signature(
             key_id=key_id,
             signature=signature_b64,
             package_digest=package_digest,
         )
-        
+
         logger.info(f"Signed package {package_path.name} with key {key_id}")
         return signature
-    
+
     def verify(
         self,
         package_path: Path,
@@ -598,32 +592,32 @@ class PackageSigner:
     ) -> bool:
         """
         Verify a package signature.
-        
+
         Args:
             package_path: Path to the package file
             signature: Signature to verify
             public_key_b64: Base64-encoded public key (uses keystore if not provided)
-            
+
         Returns:
             True if signature is valid, False otherwise
         """
         if not package_path.exists():
             logger.error(f"Package not found: {package_path}")
             return False
-        
+
         # Get public key
         if public_key_b64 is None:
             public_key_b64 = self.keystore.get_public_key(signature.key_id)
             if not public_key_b64:
                 logger.error(f"Public key not found for key ID: {signature.key_id}")
                 return False
-            
+
             # Check if key is revoked
             metadata = self.keystore.get_key_metadata(signature.key_id)
             if metadata and metadata.status == KeyStatus.REVOKED:
                 logger.error(f"Key has been revoked: {signature.key_id}")
                 return False
-        
+
         # Decode public key
         try:
             public_bytes = base64.b64decode(public_key_b64)
@@ -631,21 +625,24 @@ class PackageSigner:
         except Exception as e:
             logger.error(f"Invalid public key: {e}")
             return False
-        
+
         # Compute current package digest
         current_digest = self._compute_package_digest(package_path)
-        
+
         # Verify digest matches
         if current_digest.get("sha256") != signature.package_digest.get("sha256"):
             logger.error("Package digest mismatch")
             return False
-        
+
         # Reconstruct payload
-        payload = json.dumps({
-            "digest": signature.package_digest,
-            "key_id": signature.key_id,
-        }, sort_keys=True).encode("utf-8")
-        
+        payload = json.dumps(
+            {
+                "digest": signature.package_digest,
+                "key_id": signature.key_id,
+            },
+            sort_keys=True,
+        ).encode("utf-8")
+
         # Verify signature
         try:
             signature_bytes = base64.b64decode(signature.signature)
@@ -665,11 +662,11 @@ class PackageSigner:
 def create_keystore(keystore_path: Path, passphrase: str) -> Keystore:
     """
     Create a new keystore.
-    
+
     Args:
         keystore_path: Path for the keystore file
         passphrase: Passphrase for key encryption
-        
+
     Returns:
         New Keystore instance
     """
@@ -681,11 +678,11 @@ def create_keystore(keystore_path: Path, passphrase: str) -> Keystore:
 def load_keystore(keystore_path: Path, passphrase: str) -> Keystore:
     """
     Load an existing keystore.
-    
+
     Args:
         keystore_path: Path to the keystore file
         passphrase: Passphrase to decrypt keys
-        
+
     Returns:
         Loaded Keystore instance
     """
@@ -702,13 +699,13 @@ def sign_package(
 ) -> Signature:
     """
     Sign a package using a keystore.
-    
+
     Args:
         package_path: Path to the package
         keystore_path: Path to the keystore
         passphrase: Passphrase for key access
         key_id: Specific key to use (default: active key)
-        
+
     Returns:
         Generated signature
     """
@@ -726,30 +723,30 @@ def verify_package(
 ) -> bool:
     """
     Verify a package signature.
-    
+
     Either keystore_path or public_key_path must be provided.
-    
+
     Args:
         package_path: Path to the package
         signature_path: Path to the signature file
         keystore_path: Path to keystore (requires passphrase)
         public_key_path: Path to exported public key
         passphrase: Passphrase for keystore (if used)
-        
+
     Returns:
         True if signature is valid
     """
     signature = Signature.load(signature_path)
-    
+
     if public_key_path:
         # Use standalone public key
         data = json.loads(public_key_path.read_text(encoding="utf-8"))
         public_key_b64 = data.get("public_key")
-        
+
         # Create a minimal keystore for verification
         if not HAS_CRYPTOGRAPHY:
             raise ImportError("cryptography library required")
-        
+
         # Decode and verify directly
         try:
             public_bytes = base64.b64decode(public_key_b64)
@@ -757,35 +754,38 @@ def verify_package(
         except Exception as e:
             logger.error(f"Invalid public key: {e}")
             return False
-        
+
         # Compute current digest
         content = package_path.read_bytes()
         current_digest = {
             "sha256": hashlib.sha256(content).hexdigest(),
             "sha512": hashlib.sha512(content).hexdigest(),
         }
-        
+
         if current_digest.get("sha256") != signature.package_digest.get("sha256"):
             logger.error("Package digest mismatch")
             return False
-        
-        payload = json.dumps({
-            "digest": signature.package_digest,
-            "key_id": signature.key_id,
-        }, sort_keys=True).encode("utf-8")
-        
+
+        payload = json.dumps(
+            {
+                "digest": signature.package_digest,
+                "key_id": signature.key_id,
+            },
+            sort_keys=True,
+        ).encode("utf-8")
+
         try:
             signature_bytes = base64.b64decode(signature.signature)
             public_key.verify(signature_bytes, payload)
             return True
         except Exception:
             return False
-    
+
     elif keystore_path and passphrase:
         keystore = load_keystore(keystore_path, passphrase)
         signer = PackageSigner(keystore)
         return signer.verify(package_path, signature)
-    
+
     else:
         raise ValueError("Either keystore_path or public_key_path must be provided")
 

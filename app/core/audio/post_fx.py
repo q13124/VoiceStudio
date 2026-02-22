@@ -47,9 +47,7 @@ try:
     HAS_PYLOUDNORM = True
 except ImportError:
     HAS_PYLOUDNORM = False
-    logger.warning(
-        "pyloudnorm not installed. Install with: pip install pyloudnorm"
-    )
+    logger.warning("pyloudnorm not installed. Install with: pip install pyloudnorm")
 
 try:
     import noisereduce as nr
@@ -57,9 +55,7 @@ try:
     HAS_NOISEREDUCE = True
 except ImportError:
     HAS_NOISEREDUCE = False
-    logger.warning(
-        "noisereduce not installed. Install with: pip install noisereduce"
-    )
+    logger.warning("noisereduce not installed. Install with: pip install noisereduce")
 
 # Try importing pedalboard for professional audio effects
 try:
@@ -198,13 +194,9 @@ class PostFXProcessor:
         use_pedalboard = params.get("use_pedalboard", False) and HAS_PEDALBOARD
         if use_pedalboard:
             try:
-                return self._apply_pedalboard_effect(
-                    audio, sample_rate, effect_type, params
-                )
+                return self._apply_pedalboard_effect(audio, sample_rate, effect_type, params)
             except Exception as e:
-                logger.warning(
-                    f"Pedalboard effect failed: {e}. Falling back to standard effect."
-                )
+                logger.warning(f"Pedalboard effect failed: {e}. Falling back to standard effect.")
 
         # Standard effects (fallback or when pedalboard not requested)
         if effect_type == "normalize":
@@ -225,9 +217,7 @@ class PostFXProcessor:
             logger.warning(f"Unknown effect type: {effect_type}")
             return audio
 
-    def _apply_normalize(
-        self, audio: np.ndarray, sample_rate: int, params: dict
-    ) -> np.ndarray:
+    def _apply_normalize(self, audio: np.ndarray, sample_rate: int, params: dict) -> np.ndarray:
         """Apply normalization effect."""
         method = params.get("method", "lufs").lower()
         target_lufs = params.get("target_lufs", -23.0)
@@ -248,9 +238,7 @@ class PostFXProcessor:
 
         return audio
 
-    def _apply_denoise(
-        self, audio: np.ndarray, sample_rate: int, params: dict
-    ) -> np.ndarray:
+    def _apply_denoise(self, audio: np.ndarray, sample_rate: int, params: dict) -> np.ndarray:
         """Apply denoising effect."""
         params.get("strength", 0.5)
 
@@ -262,17 +250,13 @@ class PostFXProcessor:
 
         if HAS_NOISEREDUCE:
             try:
-                return nr.reduce_noise(
-                    y=audio, sr=sample_rate, stationary=False
-                )
+                return nr.reduce_noise(y=audio, sr=sample_rate, stationary=False)
             except Exception as e:
                 logger.warning(f"Denoising failed: {e}")
 
         return audio
 
-    def _apply_eq(
-        self, audio: np.ndarray, sample_rate: int, params: dict
-    ) -> np.ndarray:
+    def _apply_eq(self, audio: np.ndarray, sample_rate: int, params: dict) -> np.ndarray:
         """Apply 3-band EQ effect."""
         if not HAS_SCIPY:
             logger.warning("scipy required for EQ")
@@ -303,9 +287,7 @@ class PostFXProcessor:
             if low_gain != 1.0:
                 nyquist = sample_rate / 2.0
                 low_cutoff = 500.0 / nyquist
-                b, a = signal.iirfilter(
-                    4, low_cutoff, btype="lowpass", ftype="butter"
-                )
+                b, a = signal.iirfilter(4, low_cutoff, btype="lowpass", ftype="butter")
                 low_signal = signal.filtfilt(b, a, processed)
                 processed = processed + (low_signal * (low_gain - 1.0))
 
@@ -327,9 +309,7 @@ class PostFXProcessor:
             if high_gain != 1.0:
                 nyquist = sample_rate / 2.0
                 high_cutoff = 5000.0 / nyquist
-                b, a = signal.iirfilter(
-                    4, high_cutoff, btype="highpass", ftype="butter"
-                )
+                b, a = signal.iirfilter(4, high_cutoff, btype="highpass", ftype="butter")
                 high_signal = signal.filtfilt(b, a, processed)
                 processed = processed + (high_signal * (high_gain - 1.0))
 
@@ -346,9 +326,7 @@ class PostFXProcessor:
 
         return result
 
-    def _apply_compressor(
-        self, audio: np.ndarray, sample_rate: int, params: dict
-    ) -> np.ndarray:
+    def _apply_compressor(self, audio: np.ndarray, sample_rate: int, params: dict) -> np.ndarray:
         """Apply compressor effect."""
         threshold_db = params.get("threshold", -12.0)
         ratio = params.get("ratio", 4.0)
@@ -370,11 +348,7 @@ class PostFXProcessor:
         for channel in audio:
             # Calculate RMS envelope
             window_size = int(sample_rate * 0.01)  # 10ms window
-            rms = np.sqrt(
-                np.convolve(
-                    channel**2, np.ones(window_size) / window_size, mode="same"
-                )
-            )
+            rms = np.sqrt(np.convolve(channel**2, np.ones(window_size) / window_size, mode="same"))
 
             # Calculate gain reduction
             gain_reduction = np.ones_like(rms)
@@ -415,9 +389,7 @@ class PostFXProcessor:
 
         return result
 
-    def _apply_reverb(
-        self, audio: np.ndarray, sample_rate: int, params: dict
-    ) -> np.ndarray:
+    def _apply_reverb(self, audio: np.ndarray, sample_rate: int, params: dict) -> np.ndarray:
         """Apply reverb effect."""
         room_size = params.get("room_size", 0.5)
         damping = params.get("damping", 0.5)
@@ -434,9 +406,7 @@ class PostFXProcessor:
 
         for delay_time in delay_times:
             if delay_time < len(audio):
-                delayed = np.pad(
-                    audio[:-delay_time], (delay_time, 0), mode="constant"
-                )
+                delayed = np.pad(audio[:-delay_time], (delay_time, 0), mode="constant")
                 reverb_signal += delayed * (1.0 - damping) * 0.3
 
         # Mix dry and wet
@@ -449,9 +419,7 @@ class PostFXProcessor:
 
         return result
 
-    def _apply_delay(
-        self, audio: np.ndarray, sample_rate: int, params: dict
-    ) -> np.ndarray:
+    def _apply_delay(self, audio: np.ndarray, sample_rate: int, params: dict) -> np.ndarray:
         """Apply delay effect."""
         delay_time_ms = params.get("delay_time", 200.0)
         feedback = params.get("feedback", 0.3)
@@ -462,9 +430,7 @@ class PostFXProcessor:
         if delay_samples >= len(audio):
             return audio
 
-        delayed = np.pad(
-            audio[:-delay_samples], (delay_samples, 0), mode="constant"
-        )
+        delayed = np.pad(audio[:-delay_samples], (delay_samples, 0), mode="constant")
 
         # Apply feedback
         if feedback > 0:
@@ -482,9 +448,7 @@ class PostFXProcessor:
 
         return result
 
-    def _apply_filter(
-        self, audio: np.ndarray, sample_rate: int, params: dict
-    ) -> np.ndarray:
+    def _apply_filter(self, audio: np.ndarray, sample_rate: int, params: dict) -> np.ndarray:
         """Apply filter effect."""
         if not HAS_SCIPY:
             logger.warning("scipy required for filter")
@@ -511,20 +475,14 @@ class PostFXProcessor:
 
         for channel in audio:
             if filter_type == 0:  # Lowpass
-                b, a = signal.iirfilter(
-                    4, normalized_cutoff, btype="lowpass", ftype="butter"
-                )
+                b, a = signal.iirfilter(4, normalized_cutoff, btype="lowpass", ftype="butter")
             elif filter_type == 1:  # Highpass
-                b, a = signal.iirfilter(
-                    4, normalized_cutoff, btype="highpass", ftype="butter"
-                )
+                b, a = signal.iirfilter(4, normalized_cutoff, btype="highpass", ftype="butter")
             else:  # Bandpass
                 bandwidth = normalized_cutoff * (1.0 - resonance)
                 low = max(0.01, normalized_cutoff - bandwidth / 2)
                 high = min(0.99, normalized_cutoff + bandwidth / 2)
-                b, a = signal.iirfilter(
-                    4, [low, high], btype="bandpass", ftype="butter"
-                )
+                b, a = signal.iirfilter(4, [low, high], btype="bandpass", ftype="butter")
 
             processed = signal.filtfilt(b, a, channel)
             processed_channels.append(processed)
@@ -588,9 +546,7 @@ class PostFXProcessor:
             delay_seconds = params.get("delay_time", 200.0) / 1000.0
             feedback = params.get("feedback", 0.3)
             mix = params.get("mix", 0.3)
-            board.append(
-                Delay(delay_seconds=delay_seconds, feedback=feedback, mix=mix)
-            )
+            board.append(Delay(delay_seconds=delay_seconds, feedback=feedback, mix=mix))
         elif effect_type == "compressor":
             threshold_db = params.get("threshold", -12.0)
             ratio = params.get("ratio", 4.0)
@@ -653,8 +609,7 @@ class PostFXProcessor:
             board.append(Limiter(threshold_db=threshold_db, release_ms=release_ms))
         else:
             logger.warning(
-                f"Pedalboard effect type '{effect_type}' not supported, "
-                "using standard effect"
+                f"Pedalboard effect type '{effect_type}' not supported, " "using standard effect"
             )
             return audio
 
@@ -709,4 +664,3 @@ def process_audio_with_post_fx(
     """
     processor = PostFXProcessor(sample_rate=sample_rate)
     return processor.process(audio, sample_rate, effects, **kwargs)
-

@@ -75,9 +75,7 @@ def _get_cached_model(model_id: str, language: str, device: str):
     """Get cached model if available."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
-        cached = _model_cache.get(
-            "silero", f"silero_{model_id}_{language}", device=device
-        )
+        cached = _model_cache.get("silero", f"silero_{model_id}_{language}", device=device)
         if cached is not None:
             return cached
 
@@ -95,9 +93,7 @@ def _cache_model(model_id: str, language: str, device: str, model):
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
         try:
-            _model_cache.set(
-                "silero", f"silero_{model_id}_{language}", model, device=device
-            )
+            _model_cache.set("silero", f"silero_{model_id}_{language}", model, device=device)
             return
         except Exception as e:
             logger.warning(f"Failed to cache in general cache: {e}, using fallback")
@@ -246,13 +242,9 @@ class SileroEngine(EngineProtocol):
         """Load model with caching support."""
         # Check cache first
         if self.enable_caching:
-            cached_model = _get_cached_model(
-                self.model_id, self.default_language, self.device
-            )
+            cached_model = _get_cached_model(self.model_id, self.default_language, self.device)
             if cached_model is not None:
-                logger.debug(
-                    f"Using cached model: {self.model_id} ({self.default_language})"
-                )
+                logger.debug(f"Using cached model: {self.model_id} ({self.default_language})")
                 self.model = cached_model
                 if hasattr(cached_model, "sample_rate"):
                     self.sample_rate = cached_model.sample_rate
@@ -270,9 +262,7 @@ class SileroEngine(EngineProtocol):
         try:
             import silero_tts
         except ImportError:
-            logger.error(
-                "silero_tts not installed. Install with: pip install silero-tts"
-            )
+            logger.error("silero_tts not installed. Install with: pip install silero-tts")
             logger.error("Or use torch.hub: pip install torch")
             self._initialized = False
             return False
@@ -297,13 +287,9 @@ class SileroEngine(EngineProtocol):
 
             # Cache model
             if self.enable_caching:
-                _cache_model(
-                    self.model_id, self.default_language, self.device, self.model
-                )
+                _cache_model(self.model_id, self.default_language, self.device, self.model)
 
-            logger.info(
-                f"Silero TTS model loaded successfully (sample_rate: {self.sample_rate})"
-            )
+            logger.info(f"Silero TTS model loaded successfully (sample_rate: {self.sample_rate})")
             self._initialized = True
             return True
 
@@ -404,9 +390,7 @@ class SileroEngine(EngineProtocol):
                     audio = torch.tensor(audio, dtype=torch.float32)
                 elif callable(self.model):
                     # Direct function call
-                    audio = self.model(
-                        text=text, speaker=speaker_id, sample_rate=self.sample_rate
-                    )
+                    audio = self.model(text=text, speaker=speaker_id, sample_rate=self.sample_rate)
                     if not isinstance(audio, torch.Tensor):
                         audio = torch.tensor(audio, dtype=torch.float32)
                 else:
@@ -531,9 +515,7 @@ class SileroEngine(EngineProtocol):
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(
-                            audio, sample_rate, ref_audio, ref_sr
-                        )
+                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -659,26 +641,19 @@ class SileroEngine(EngineProtocol):
 
                         # Save to file if output_dir provided
                         if output_dir:
-                            output_path = (
-                                Path(output_dir) / f"output_{batch_start + i:04d}.wav"
-                            )
+                            output_path = Path(output_dir) / f"output_{batch_start + i:04d}.wav"
                             sf.write(str(output_path), audio, self.sample_rate)
                             batch_results.append(None)
                         else:
                             batch_results.append(audio)
                     except Exception as e:
-                        logger.error(
-                            f"Batch synthesis failed for text {batch_start + i}: {e}"
-                        )
+                        logger.error(f"Batch synthesis failed for text {batch_start + i}: {e}")
                         batch_results.append(None)
 
             results.extend(batch_results)
 
             # Clear GPU cache periodically
-            if (
-                torch.cuda.is_available()
-                and (batch_start + batch_size) % (batch_size * 2) == 0
-            ):
+            if torch.cuda.is_available() and (batch_start + batch_size) % (batch_size * 2) == 0:
                 torch.cuda.empty_cache()
 
         return results

@@ -32,8 +32,8 @@ def _detect_portable_mode() -> bool:
     # Check multiple candidate locations (installed vs dev)
     candidates = [
         Path(__file__).resolve().parent.parent / "portable.flag",  # repo root
-        Path(__file__).resolve().parent / "portable.flag",          # backend/
-        Path(os.getcwd()) / "portable.flag",                       # cwd
+        Path(__file__).resolve().parent / "portable.flag",  # backend/
+        Path(os.getcwd()) / "portable.flag",  # cwd
     ]
     return any(c.exists() for c in candidates)
 
@@ -96,18 +96,18 @@ class DatabaseConfig:
     sqlite_path: str = field(
         default_factory=lambda: _get_env_str(
             "VOICESTUDIO_DB_PATH",
-            str(_portable_root() / "data" / "voicestudio.db") if _PORTABLE_MODE else "data/voicestudio.db",
+            (
+                str(_portable_root() / "data" / "voicestudio.db")
+                if _PORTABLE_MODE
+                else "data/voicestudio.db"
+            ),
         )
     )
     connection_timeout: float = field(
-        default_factory=lambda: _get_env_float(
-            "VOICESTUDIO_DB_TIMEOUT", 30.0
-        )
+        default_factory=lambda: _get_env_float("VOICESTUDIO_DB_TIMEOUT", 30.0)
     )
     max_connections: int = field(
-        default_factory=lambda: _get_env_int(
-            "VOICESTUDIO_DB_MAX_CONNECTIONS", 10
-        )
+        default_factory=lambda: _get_env_int("VOICESTUDIO_DB_MAX_CONNECTIONS", 10)
     )
 
 
@@ -115,32 +115,15 @@ class DatabaseConfig:
 class ServerConfig:
     """Server configuration."""
 
-    host: str = field(
-        default_factory=lambda: _get_env_str(
-            "VOICESTUDIO_HOST", "localhost"
-        )
-    )
-    port: int = field(
-        default_factory=lambda: _get_env_int(
-            "VOICESTUDIO_PORT", 8000
-        )
-    )
-    api_prefix: str = field(
-        default_factory=lambda: _get_env_str(
-            "VOICESTUDIO_API_PREFIX", "/api"
-        )
-    )
+    host: str = field(default_factory=lambda: _get_env_str("VOICESTUDIO_HOST", "localhost"))
+    port: int = field(default_factory=lambda: _get_env_int("VOICESTUDIO_PORT", 8000))
+    api_prefix: str = field(default_factory=lambda: _get_env_str("VOICESTUDIO_API_PREFIX", "/api"))
     cors_origins: list[str] = field(
         default_factory=lambda: _get_env_list(
-            "VOICESTUDIO_CORS_ORIGINS",
-            ["http://localhost:3000", "http://localhost:8000"]
+            "VOICESTUDIO_CORS_ORIGINS", ["http://localhost:3000", "http://localhost:8000"]
         )
     )
-    debug: bool = field(
-        default_factory=lambda: _get_env_bool(
-            "VOICESTUDIO_DEBUG", False
-        )
-    )
+    debug: bool = field(default_factory=lambda: _get_env_bool("VOICESTUDIO_DEBUG", False))
 
     @property
     def base_url(self) -> str:
@@ -158,59 +141,37 @@ class TimeoutConfig:
     """Timeout configuration values."""
 
     shutdown: float = field(
-        default_factory=lambda: _get_env_float(
-            "VOICESTUDIO_SHUTDOWN_TIMEOUT", 30.0
-        )
+        default_factory=lambda: _get_env_float("VOICESTUDIO_SHUTDOWN_TIMEOUT", 30.0)
     )
     engine_stop: float = field(
-        default_factory=lambda: _get_env_float(
-            "VOICESTUDIO_ENGINE_STOP_TIMEOUT", 10.0
-        )
+        default_factory=lambda: _get_env_float("VOICESTUDIO_ENGINE_STOP_TIMEOUT", 10.0)
     )
     engine_recovery: float = field(
-        default_factory=lambda: _get_env_float(
-            "VOICESTUDIO_ENGINE_RECOVERY_TIMEOUT", 60.0
-        )
+        default_factory=lambda: _get_env_float("VOICESTUDIO_ENGINE_RECOVERY_TIMEOUT", 60.0)
     )
     health_check: float = field(
-        default_factory=lambda: _get_env_float(
-            "VOICESTUDIO_HEALTH_CHECK_TIMEOUT", 5.0
-        )
+        default_factory=lambda: _get_env_float("VOICESTUDIO_HEALTH_CHECK_TIMEOUT", 5.0)
     )
     lifecycle_orchestrator: float = field(
-        default_factory=lambda: _get_env_float(
-            "VOICESTUDIO_LIFECYCLE_TIMEOUT", 5.0
-        )
+        default_factory=lambda: _get_env_float("VOICESTUDIO_LIFECYCLE_TIMEOUT", 5.0)
     )
     gpu_status: float = field(
-        default_factory=lambda: _get_env_float(
-            "VOICESTUDIO_GPU_STATUS_TIMEOUT", 5.0
-        )
+        default_factory=lambda: _get_env_float("VOICESTUDIO_GPU_STATUS_TIMEOUT", 5.0)
     )
     database_check: float = field(
-        default_factory=lambda: _get_env_float(
-            "VOICESTUDIO_DB_CHECK_TIMEOUT", 3.0
-        )
+        default_factory=lambda: _get_env_float("VOICESTUDIO_DB_CHECK_TIMEOUT", 3.0)
     )
     disk_check: float = field(
-        default_factory=lambda: _get_env_float(
-            "VOICESTUDIO_DISK_CHECK_TIMEOUT", 2.0
-        )
+        default_factory=lambda: _get_env_float("VOICESTUDIO_DISK_CHECK_TIMEOUT", 2.0)
     )
     memory_check: float = field(
-        default_factory=lambda: _get_env_float(
-            "VOICESTUDIO_MEMORY_CHECK_TIMEOUT", 2.0
-        )
+        default_factory=lambda: _get_env_float("VOICESTUDIO_MEMORY_CHECK_TIMEOUT", 2.0)
     )
     engine_check: float = field(
-        default_factory=lambda: _get_env_float(
-            "VOICESTUDIO_ENGINE_CHECK_TIMEOUT", 10.0
-        )
+        default_factory=lambda: _get_env_float("VOICESTUDIO_ENGINE_CHECK_TIMEOUT", 10.0)
     )
     dependency_scan: float = field(
-        default_factory=lambda: _get_env_float(
-            "VOICESTUDIO_DEPENDENCY_SCAN_TIMEOUT", 120.0
-        )
+        default_factory=lambda: _get_env_float("VOICESTUDIO_DEPENDENCY_SCAN_TIMEOUT", 120.0)
     )
 
 
@@ -219,29 +180,19 @@ class AudioConfig:
     """Audio processing configuration."""
 
     default_sample_rate: int = field(
-        default_factory=lambda: _get_env_int(
-            "VOICESTUDIO_SAMPLE_RATE", 22050
-        )
+        default_factory=lambda: _get_env_int("VOICESTUDIO_SAMPLE_RATE", 22050)
     )
     high_quality_sample_rate: int = field(
-        default_factory=lambda: _get_env_int(
-            "VOICESTUDIO_HQ_SAMPLE_RATE", 44100
-        )
+        default_factory=lambda: _get_env_int("VOICESTUDIO_HQ_SAMPLE_RATE", 44100)
     )
     internal_sample_rate: int = field(
-        default_factory=lambda: _get_env_int(
-            "VOICESTUDIO_INTERNAL_SAMPLE_RATE", 16000
-        )
+        default_factory=lambda: _get_env_int("VOICESTUDIO_INTERNAL_SAMPLE_RATE", 16000)
     )
     default_channels: int = field(
-        default_factory=lambda: _get_env_int(
-            "VOICESTUDIO_AUDIO_CHANNELS", 1
-        )
+        default_factory=lambda: _get_env_int("VOICESTUDIO_AUDIO_CHANNELS", 1)
     )
     default_bit_depth: int = field(
-        default_factory=lambda: _get_env_int(
-            "VOICESTUDIO_BIT_DEPTH", 16
-        )
+        default_factory=lambda: _get_env_int("VOICESTUDIO_BIT_DEPTH", 16)
     )
 
 
@@ -304,29 +255,17 @@ class EngineConfig:
     """Engine configuration."""
 
     default_batch_size: int = field(
-        default_factory=lambda: _get_env_int(
-            "VOICESTUDIO_ENGINE_BATCH_SIZE", 1
-        )
+        default_factory=lambda: _get_env_int("VOICESTUDIO_ENGINE_BATCH_SIZE", 1)
     )
     max_concurrent_engines: int = field(
-        default_factory=lambda: _get_env_int(
-            "VOICESTUDIO_MAX_ENGINES", 3
-        )
+        default_factory=lambda: _get_env_int("VOICESTUDIO_MAX_ENGINES", 3)
     )
     gpu_memory_fraction: float = field(
-        default_factory=lambda: _get_env_float(
-            "VOICESTUDIO_GPU_MEMORY_FRACTION", 0.9
-        )
+        default_factory=lambda: _get_env_float("VOICESTUDIO_GPU_MEMORY_FRACTION", 0.9)
     )
-    enable_gpu: bool = field(
-        default_factory=lambda: _get_env_bool(
-            "VOICESTUDIO_ENABLE_GPU", True
-        )
-    )
+    enable_gpu: bool = field(default_factory=lambda: _get_env_bool("VOICESTUDIO_ENABLE_GPU", True))
     lazy_load_models: bool = field(
-        default_factory=lambda: _get_env_bool(
-            "VOICESTUDIO_LAZY_LOAD_MODELS", True
-        )
+        default_factory=lambda: _get_env_bool("VOICESTUDIO_LAZY_LOAD_MODELS", True)
     )
 
 
@@ -335,22 +274,14 @@ class SecurityConfig:
     """Security configuration."""
 
     require_auth: bool = field(
-        default_factory=lambda: _get_env_bool(
-            "VOICESTUDIO_REQUIRE_AUTH", False
-        )
+        default_factory=lambda: _get_env_bool("VOICESTUDIO_REQUIRE_AUTH", False)
     )
-    api_key: str | None = field(
-        default_factory=lambda: os.getenv("VOICESTUDIO_API_KEY")
-    )
+    api_key: str | None = field(default_factory=lambda: os.getenv("VOICESTUDIO_API_KEY"))
     rate_limit_requests: int = field(
-        default_factory=lambda: _get_env_int(
-            "VOICESTUDIO_RATE_LIMIT", 100
-        )
+        default_factory=lambda: _get_env_int("VOICESTUDIO_RATE_LIMIT", 100)
     )
     rate_limit_window: int = field(
-        default_factory=lambda: _get_env_int(
-            "VOICESTUDIO_RATE_LIMIT_WINDOW", 60
-        )
+        default_factory=lambda: _get_env_int("VOICESTUDIO_RATE_LIMIT_WINDOW", 60)
     )
 
 
@@ -359,14 +290,10 @@ class HealthConfig:
     """Health check configuration (Phase 2A migration)."""
 
     enable_torch_check: bool = field(
-        default_factory=lambda: _get_env_bool(
-            "VOICESTUDIO_HEALTH_ENABLE_TORCH", False
-        )
+        default_factory=lambda: _get_env_bool("VOICESTUDIO_HEALTH_ENABLE_TORCH", False)
     )
     safe_mode: bool = field(
-        default_factory=lambda: _get_env_bool(
-            "VOICESTUDIO_HEALTH_SAFE_MODE", True
-        )
+        default_factory=lambda: _get_env_bool("VOICESTUDIO_HEALTH_SAFE_MODE", True)
     )
 
 
@@ -382,7 +309,7 @@ class HuggingFaceConfig:
     inference_api_base: str = field(
         default_factory=lambda: _get_env_str(
             "VOICESTUDIO_HF_INFERENCE_API_BASE",
-            _get_env_str("VOICESTUDIO_HF_ENDPOINT", "https://router.huggingface.co")
+            _get_env_str("VOICESTUDIO_HF_ENDPOINT", "https://router.huggingface.co"),
         )
     )
 
@@ -391,12 +318,8 @@ class HuggingFaceConfig:
 class CorsConfig:
     """CORS configuration (Phase 2A migration)."""
 
-    allowed_origins: str | None = field(
-        default_factory=lambda: os.getenv("CORS_ALLOWED_ORIGINS")
-    )
-    environment: str = field(
-        default_factory=lambda: _get_env_str("VOICESTUDIO_ENV", "development")
-    )
+    allowed_origins: str | None = field(default_factory=lambda: os.getenv("CORS_ALLOWED_ORIGINS"))
+    environment: str = field(default_factory=lambda: _get_env_str("VOICESTUDIO_ENV", "development"))
 
 
 @dataclass(frozen=True)

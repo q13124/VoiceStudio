@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class OpenVoiceV2Config:
     """Configuration for OpenVoice v2."""
+
     use_gpu: bool = True
     sample_rate: int = 24000
     # Voice conversion
@@ -43,7 +44,24 @@ class OpenVoiceV2Engine(EngineProtocol):
 
     ENGINE_ID = "openvoice_v2"
     ENGINE_NAME = "OpenVoice v2"
-    SUPPORTED_LANGUAGES = ["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "ko", "hu"]
+    SUPPORTED_LANGUAGES = [
+        "en",
+        "es",
+        "fr",
+        "de",
+        "it",
+        "pt",
+        "pl",
+        "tr",
+        "ru",
+        "nl",
+        "cs",
+        "ar",
+        "zh",
+        "ja",
+        "ko",
+        "hu",
+    ]
 
     def __init__(self, config: OpenVoiceV2Config | None = None):
         super().__init__()
@@ -116,6 +134,7 @@ class OpenVoiceV2Engine(EngineProtocol):
 
         try:
             import torch
+
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except ImportError:
@@ -153,7 +172,9 @@ class OpenVoiceV2Engine(EngineProtocol):
         # Graceful degradation: Generate silence when openvoice library is not installed.
         # To enable full functionality, install openvoice: pip install openvoice
         # See: https://github.com/myshell-ai/OpenVoice for installation instructions.
-        logger.warning("OpenVoice V2 model not loaded - returning silence. Install openvoice for actual synthesis.")
+        logger.warning(
+            "OpenVoice V2 model not loaded - returning silence. Install openvoice for actual synthesis."
+        )
         duration = len(text) * 0.06
         samples = int(duration * self.config.sample_rate)
         return np.zeros(samples, dtype=np.float32)

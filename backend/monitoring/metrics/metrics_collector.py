@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class MetricType(Enum):
     """Types of metrics."""
+
     COUNTER = "counter"
     GAUGE = "gauge"
     HISTOGRAM = "histogram"
@@ -27,6 +28,7 @@ class MetricType(Enum):
 @dataclass
 class MetricValue:
     """A metric value with timestamp."""
+
     value: float
     timestamp: datetime
     tags: dict[str, str] = field(default_factory=dict)
@@ -35,6 +37,7 @@ class MetricValue:
 @dataclass
 class MetricDefinition:
     """Definition of a metric."""
+
     name: str
     type: MetricType
     description: str = ""
@@ -105,7 +108,7 @@ class Histogram:
         name: str,
         description: str = "",
         buckets: list[float] | None = None,
-        tags: dict[str, str] | None = None
+        tags: dict[str, str] | None = None,
     ):
         self.name = name
         self.description = description
@@ -116,7 +119,7 @@ class Histogram:
         self._sum = 0.0
         self._count = 0
         self._bucket_counts: dict[float, int] = dict.fromkeys(self.buckets, 0)
-        self._bucket_counts[float('inf')] = 0
+        self._bucket_counts[float("inf")] = 0
         self._lock = threading.Lock()
 
     def observe(self, value: float, tags: dict[str, str] | None = None) -> None:
@@ -131,7 +134,7 @@ class Histogram:
                     self._bucket_counts[bucket] += 1
                     break
             else:
-                self._bucket_counts[float('inf')] += 1
+                self._bucket_counts[float("inf")] += 1
 
             # Limit stored values
             if len(self._values) > 10000:
@@ -189,10 +192,7 @@ class MetricsCollector:
         self._register_default_metrics()
 
     def counter(
-        self,
-        name: str,
-        description: str = "",
-        tags: dict[str, str] | None = None
+        self, name: str, description: str = "", tags: dict[str, str] | None = None
     ) -> Counter:
         """Get or create a counter."""
         with self._lock:
@@ -200,12 +200,7 @@ class MetricsCollector:
                 self._counters[name] = Counter(name, description, tags)
             return self._counters[name]
 
-    def gauge(
-        self,
-        name: str,
-        description: str = "",
-        tags: dict[str, str] | None = None
-    ) -> Gauge:
+    def gauge(self, name: str, description: str = "", tags: dict[str, str] | None = None) -> Gauge:
         """Get or create a gauge."""
         with self._lock:
             if name not in self._gauges:
@@ -217,7 +212,7 @@ class MetricsCollector:
         name: str,
         description: str = "",
         buckets: list[float] | None = None,
-        tags: dict[str, str] | None = None
+        tags: dict[str, str] | None = None,
     ) -> Histogram:
         """Get or create a histogram."""
         with self._lock:
@@ -225,12 +220,7 @@ class MetricsCollector:
                 self._histograms[name] = Histogram(name, description, buckets, tags)
             return self._histograms[name]
 
-    def timer(
-        self,
-        name: str,
-        description: str = "",
-        tags: dict[str, str] | None = None
-    ) -> Timer:
+    def timer(self, name: str, description: str = "", tags: dict[str, str] | None = None) -> Timer:
         """Get or create a timer."""
         with self._lock:
             if name not in self._timers:
@@ -287,7 +277,7 @@ class MetricsCollector:
             lines.append(f"{name}_count {histogram.get_count()}")
             lines.append(f"{name}_sum {histogram.get_sum()}")
             for bucket, count in histogram.get_bucket_counts().items():
-                le = "+Inf" if bucket == float('inf') else str(bucket)
+                le = "+Inf" if bucket == float("inf") else str(bucket)
                 lines.append(f'{name}_bucket{{le="{le}"}} {count}')
 
         return "\n".join(lines)

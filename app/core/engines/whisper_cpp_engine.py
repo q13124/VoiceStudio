@@ -31,9 +31,7 @@ logger = logging.getLogger(__name__)
 
 # Log cache availability
 if not HAS_MODEL_CACHE:
-    logger.debug(
-        "General model cache not available, " "using Whisper CPP-specific cache"
-    )
+    logger.debug("General model cache not available, " "using Whisper CPP-specific cache")
 
 # Fallback: Whisper CPP-specific cache (for backward compatibility)
 _WHISPER_CPP_MODEL_CACHE: OrderedDict = OrderedDict()
@@ -95,9 +93,7 @@ def _cache_whisper_cpp_model(model_path: str, language: str | None, ctx_data: di
             logger.warning(f"Error evicting Whisper CPP model from cache: {e}")
 
     cache_size = len(_WHISPER_CPP_MODEL_CACHE)
-    logger.debug(
-        f"Cached Whisper CPP model: {cache_key} " f"(cache size: {cache_size})"
-    )
+    logger.debug(f"Cached Whisper CPP model: {cache_key} " f"(cache size: {cache_size})")
 
 
 # Import base protocol
@@ -114,8 +110,7 @@ try:
 except ImportError:
     HAS_WHISPER_CPP = False
     logger.warning(
-        "whisper-cpp-python not installed. "
-        "Install with: pip install whisper-cpp-python"
+        "whisper-cpp-python not installed. " "Install with: pip install whisper-cpp-python"
     )
 
 try:
@@ -165,11 +160,10 @@ class WhisperCPPEngine(EngineProtocol):
         if not default_model_root:
             default_model_root = os.path.join(
                 os.getenv("PROGRAMDATA", "C:\\ProgramData"),
-                "VoiceStudio", "models",
+                "VoiceStudio",
+                "models",
             )
-        default_model_path = os.path.join(
-            default_model_root, "whisper", "whisper-medium.en.gguf"
-        )
+        default_model_path = os.path.join(default_model_root, "whisper", "whisper-medium.en.gguf")
         self.model_path = model_path or os.getenv("WHISPER_CPP_MODEL_PATH") or default_model_path
 
         # Validate model path early with clear error
@@ -196,13 +190,9 @@ class WhisperCPPEngine(EngineProtocol):
             if not HAS_WHISPER_CPP:
                 # Try alternative: check if whisper.cpp binary is available
                 if self._check_whisper_cpp_binary():
-                    logger.info(
-                        "Using whisper.cpp binary " "(Python bindings not available)"
-                    )
+                    logger.info("Using whisper.cpp binary " "(Python bindings not available)")
                 else:
-                    logger.error(
-                        "whisper-cpp-python not installed and binary not found"
-                    )
+                    logger.error("whisper-cpp-python not installed and binary not found")
                     return False
 
             if not HAS_NUMPY:
@@ -307,9 +297,7 @@ class WhisperCPPEngine(EngineProtocol):
             import hashlib
 
             cache_key = hashlib.md5(
-                f"{audio}_{language}_{output_format}".encode()
-                if isinstance(audio, str)
-                else audio
+                f"{audio}_{language}_{output_format}".encode() if isinstance(audio, str) else audio
             ).hexdigest()
             if cache_key in self._transcription_cache:
                 logger.debug("Using cached whisper.cpp transcription result")
@@ -361,9 +349,7 @@ class WhisperCPPEngine(EngineProtocol):
             elif output_format == "vtt":
                 return self._format_vtt(result)
             else:
-                logger.warning(
-                    f"Unknown output format: {output_format}, returning text"
-                )
+                logger.warning(f"Unknown output format: {output_format}, returning text")
                 return result.get("text", "")
 
         except Exception as e:
@@ -510,9 +496,7 @@ class WhisperCPPEngine(EngineProtocol):
                         # Save audio to temp file
                         import tempfile
 
-                        with tempfile.NamedTemporaryFile(
-                            suffix=".wav", delete=False
-                        ) as tmp_file:
+                        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_file:
                             sf.write(tmp_file.name, audio_data, sample_rate)
                             tmp_path = tmp_file.name
 
@@ -561,9 +545,7 @@ class WhisperCPPEngine(EngineProtocol):
                                     if os.path.exists(json_output_path):
                                         import json
 
-                                        with open(
-                                            json_output_path, encoding="utf-8"
-                                        ) as f:
+                                        with open(json_output_path, encoding="utf-8") as f:
                                             json_result = json.load(f)
                                             # Handle multiple whisper.cpp JSON formats:
                                             # - Legacy: {"text": "...", "segments": [...]}
@@ -573,14 +555,10 @@ class WhisperCPPEngine(EngineProtocol):
                                             ):
                                                 segs = []
                                                 texts = []
-                                                for seg in json_result.get(
-                                                    "transcription", []
-                                                ):
+                                                for seg in json_result.get("transcription", []):
                                                     if not isinstance(seg, dict):
                                                         continue
-                                                    seg_text = str(
-                                                        seg.get("text", "")
-                                                    ).strip()
+                                                    seg_text = str(seg.get("text", "")).strip()
                                                     if seg_text:
                                                         texts.append(seg_text)
                                                     offsets = seg.get("offsets") or {}
@@ -588,9 +566,7 @@ class WhisperCPPEngine(EngineProtocol):
                                                         start_ms = float(
                                                             offsets.get("from", 0) or 0
                                                         )
-                                                        end_ms = float(
-                                                            offsets.get("to", 0) or 0
-                                                        )
+                                                        end_ms = float(offsets.get("to", 0) or 0)
                                                         start_s = start_ms / 1000.0
                                                         end_s = end_ms / 1000.0
                                                     except Exception:
@@ -618,9 +594,7 @@ class WhisperCPPEngine(EngineProtocol):
                                     if not text_output:
                                         # Sometimes output goes to stderr
                                         text_output = result.stderr.strip()
-                                    segments = self._parse_segments_from_text(
-                                        text_output
-                                    )
+                                    segments = self._parse_segments_from_text(text_output)
 
                                 # Clean up temp file
                                 with contextlib.suppress(Exception):
@@ -661,9 +635,7 @@ class WhisperCPPEngine(EngineProtocol):
                     whisper_engine = WhisperEngine()
                     if whisper_engine.initialize():
                         # Convert audio to format whisper expects
-                        result = whisper_engine.transcribe(
-                            audio_data, language=language
-                        )
+                        result = whisper_engine.transcribe(audio_data, language=language)
                         if result:
                             return {
                                 "text": result.get("text", ""),
@@ -725,9 +697,7 @@ class WhisperCPPEngine(EngineProtocol):
 
         # On Windows, check for .exe versions
         if platform.system() == "Windows":
-            binary_names.extend(
-                ["whisper-cli.exe", "whisper-cpp.exe", "whisper.exe", "main.exe"]
-            )
+            binary_names.extend(["whisper-cli.exe", "whisper-cpp.exe", "whisper.exe", "main.exe"])
 
         # Check common installation locations
         common_paths = []

@@ -186,9 +186,7 @@ def scan_directory(directory: Path) -> dict[str, list[tuple[int, str, str]]]:
         if file_path.is_file() and should_check_file(file_path):
             violations = check_file_for_violations(file_path)
             if violations:
-                violations_by_file[str(file_path.relative_to(project_root))] = (
-                    violations
-                )
+                violations_by_file[str(file_path.relative_to(project_root))] = violations
 
     return violations_by_file
 

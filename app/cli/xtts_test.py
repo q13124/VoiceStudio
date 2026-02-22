@@ -79,11 +79,7 @@ def test_synthesis(reference_audio: str | None = None):
         engine = create_xtts_engine()
         text = "Hello, this is a test of voice cloning."
 
-        audio = engine.clone_voice(
-            reference_audio=reference_audio,
-            text=text,
-            language="en"
-        )
+        audio = engine.clone_voice(reference_audio=reference_audio, text=text, language="en")
 
         if audio is not None:
             logger.info(f"✓ Synthesis successful - audio shape: {audio.shape}")
@@ -96,7 +92,7 @@ def test_synthesis(reference_audio: str | None = None):
         logger.error(f"✗ Synthesis test failed: {e}")
         return False
     finally:
-        if 'engine' in locals():
+        if "engine" in locals():
             engine.cleanup()
 
 
@@ -144,4 +140,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

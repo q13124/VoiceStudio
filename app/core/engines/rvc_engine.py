@@ -33,9 +33,7 @@ try:
 except ImportError:
     HAS_SCIPY = False
     ndimage = None
-    logger.debug(
-        "scipy not available. " "Advanced spectral enhancement will be limited."
-    )
+    logger.debug("scipy not available. " "Advanced spectral enhancement will be limited.")
 
 # Try importing general model cache
 try:
@@ -160,9 +158,7 @@ try:
 except ImportError:
     HAS_LIBROSA = False
     librosa = None
-    logger.warning(
-        "librosa not available. " "Some audio processing features will be limited."
-    )
+    logger.warning("librosa not available. " "Some audio processing features will be limited.")
 
 # Optional quality metrics import
 try:
@@ -189,9 +185,7 @@ try:
 except ImportError:
     HAS_FAIRSEQ = False
     fairseq = None
-    logger.debug(
-        "fairseq not installed. Will use HuggingFace transformers for HuBERT instead."
-    )
+    logger.debug("fairseq not installed. Will use HuggingFace transformers for HuBERT instead.")
 
 # Try to import faiss for vector similarity search
 try:
@@ -325,12 +319,8 @@ class RVCEngine(EngineProtocol):
         self.hubert_model = None
         self.net_g = None  # RVC synthesizer model (net_g)
         self.feature_extractor = None
-        self._model_cache = (
-            {}
-        )  # Cache for multiple models (legacy, kept for compatibility)
-        self._feature_cache: OrderedDict = (
-            OrderedDict()
-        )  # LRU cache for extracted features
+        self._model_cache = {}  # Cache for multiple models (legacy, kept for compatibility)
+        self._feature_cache: OrderedDict = OrderedDict()  # LRU cache for extracted features
         # Faiss index for vector similarity search (lazy initialization)
         self._faiss_index = None
         self._faiss_embedding_ids = []
@@ -371,9 +361,7 @@ class RVCEngine(EngineProtocol):
             hubert_model = self._load_hubert_model()
             if hubert_model is not None:
                 self.hubert_model = hubert_model
-                logger.info(
-                    "HuBERT model loaded successfully for RVC feature extraction"
-                )
+                logger.info("HuBERT model loaded successfully for RVC feature extraction")
             else:
                 logger.warning(
                     "HuBERT model could not be loaded. "
@@ -507,13 +495,10 @@ class RVCEngine(EngineProtocol):
                     if sr != self.sample_rate:
                         # Resample if needed
                         if HAS_LIBROSA:
-                            audio = librosa.resample(
-                                audio, orig_sr=sr, target_sr=self.sample_rate
-                            )
+                            audio = librosa.resample(audio, orig_sr=sr, target_sr=self.sample_rate)
                         else:
                             logger.warning(
-                                "Cannot resample without librosa. "
-                                "Using original sample rate."
+                                "Cannot resample without librosa. " "Using original sample rate."
                             )
             else:
                 audio = source_audio
@@ -578,9 +563,7 @@ class RVCEngine(EngineProtocol):
             if converted_audio is None or len(converted_audio) == 0:
                 # Check cancellation before fallback conversion
                 self.check_cancellation()
-                logger.debug(
-                    "RVC model conversion failed, using enhanced feature-based conversion"
-                )
+                logger.debug("RVC model conversion failed, using enhanced feature-based conversion")
                 converted_audio = self._convert_with_enhanced_features(
                     audio_16k,
                     features,
@@ -711,7 +694,7 @@ class RVCEngine(EngineProtocol):
         if not self._initialized and not self.initialize():
             # If initialization fails, yield original audio in chunks
             for i in range(0, len(audio_input), chunk_size):
-                yield audio_input[i:i + chunk_size]
+                yield audio_input[i : i + chunk_size]
             return
 
         try:
@@ -725,13 +708,13 @@ class RVCEngine(EngineProtocol):
 
             # Yield in chunks
             for i in range(0, len(converted), chunk_size):
-                yield converted[i:i + chunk_size]
+                yield converted[i : i + chunk_size]
 
         except Exception as e:
             logger.error(f"Streaming RVC conversion failed: {e}")
             # Fallback: yield original in chunks
             for i in range(0, len(audio_input), chunk_size):
-                yield audio_input[i:i + chunk_size]
+                yield audio_input[i : i + chunk_size]
 
     def _extract_pyworld_features(
         self, audio: np.ndarray, sample_rate: int
@@ -760,9 +743,7 @@ class RVCEngine(EngineProtocol):
             logger.warning(f"pyworld feature extraction failed: {e}")
             return {}
 
-    def _get_f0_post(
-        self, f0: np.ndarray | torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def _get_f0_post(self, f0: np.ndarray | torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Post-process F0 values matching RVC implementation.
 
@@ -866,9 +847,7 @@ class RVCEngine(EngineProtocol):
         f0_float = torch.zeros(n_frames, dtype=torch.float32, device=device)
         return f0_coarse, f0_float
 
-    def _extract_praat_features(
-        self, audio: np.ndarray, sample_rate: int
-    ) -> dict[str, Any]:
+    def _extract_praat_features(self, audio: np.ndarray, sample_rate: int) -> dict[str, Any]:
         """
         Extract prosody features using praat-parselmouth.
 
@@ -985,9 +964,7 @@ class RVCEngine(EngineProtocol):
                 fft = np.fft.rfft(frame)
                 magnitude = np.abs(fft)
                 # Take first 256 coefficients
-                features[i, : min(256, len(magnitude))] = magnitude[
-                    : min(256, len(magnitude))
-                ]
+                features[i, : min(256, len(magnitude))] = magnitude[: min(256, len(magnitude))]
 
             return features
 
@@ -1013,9 +990,7 @@ class RVCEngine(EngineProtocol):
             # For mel spectrogram features, shift corresponds to shifting mel bins
             if features.shape[1] > 1:
                 # Shift features along frequency axis
-                shift_amount = int(
-                    np.round(np.log2(freq_ratio) * features.shape[1] / 12.0)
-                )
+                shift_amount = int(np.round(np.log2(freq_ratio) * features.shape[1] / 12.0))
 
                 if shift_amount != 0:
                     shifted_features = np.zeros_like(features)
@@ -1038,9 +1013,7 @@ class RVCEngine(EngineProtocol):
             logger.warning(f"Pitch shift failed: {e}, returning original features")
             return features
 
-    def _apply_voice_conversion_transform(
-        self, features: np.ndarray, **kwargs
-    ) -> np.ndarray:
+    def _apply_voice_conversion_transform(self, features: np.ndarray, **kwargs) -> np.ndarray:
         """Apply voice conversion transformation to features when model is not available."""
         try:
             protect = kwargs.get("protect", 0.33)
@@ -1069,16 +1042,12 @@ class RVCEngine(EngineProtocol):
                         )
 
                     # Blend original and converted features based on protect parameter
-                    converted_features = features * protect + converted_features * (
-                        1.0 - protect
-                    )
+                    converted_features = features * protect + converted_features * (1.0 - protect)
 
             return converted_features.astype(np.float32)
 
         except Exception as e:
-            logger.warning(
-                f"Voice conversion transform failed: {e}, returning original features"
-            )
+            logger.warning(f"Voice conversion transform failed: {e}, returning original features")
             return features
 
     def _find_similar_voice_embedding(
@@ -1117,9 +1086,7 @@ class RVCEngine(EngineProtocol):
                     return []
 
             # Search for similar embeddings
-            query_vector = query_features.flatten()[: self._faiss_index.d].astype(
-                np.float32
-            )
+            query_vector = query_features.flatten()[: self._faiss_index.d].astype(np.float32)
             query_vector = query_vector.reshape(1, -1)
 
             distances, indices = self._faiss_index.search(
@@ -1194,9 +1161,7 @@ class RVCEngine(EngineProtocol):
                             npy = npy.astype("float16")
 
                         npy_tensor = torch.from_numpy(npy).unsqueeze(0).to(self.device)
-                        features = npy_tensor * index_rate + feats_tensor * (
-                            1 - index_rate
-                        )
+                        features = npy_tensor * index_rate + feats_tensor * (1 - index_rate)
                         logger.debug("Applied index-based retrieval")
                 except Exception as e:
                     logger.debug(f"Index search failed: {e}")
@@ -1205,16 +1170,12 @@ class RVCEngine(EngineProtocol):
             model = self._load_rvc_model(target_speaker_model)
 
             if model is None or self.net_g is None:
-                logger.warning(
-                    "RVC model not available, using feature-based conversion"
-                )
+                logger.warning("RVC model not available, using feature-based conversion")
                 # Use feature-based conversion as fallback
                 return self._convert_features_fallback(features, **kwargs)
 
             # Run RVC synthesizer inference (matching old implementation)
-            converted_audio = self._run_rvc_inference(
-                features, f0_coarse, f0_float, **kwargs
-            )
+            converted_audio = self._run_rvc_inference(features, f0_coarse, f0_float, **kwargs)
 
             # Resample back to target sample rate if needed
             if converted_audio is not None and self.sample_rate != self.tgt_sr:
@@ -1226,9 +1187,7 @@ class RVCEngine(EngineProtocol):
                         res_type="soxr_hq",
                     )
                 else:
-                    logger.warning(
-                        "Cannot resample without librosa, " "using original sample rate"
-                    )
+                    logger.warning("Cannot resample without librosa, " "using original sample rate")
 
             return converted_audio
 
@@ -1320,13 +1279,8 @@ class RVCEngine(EngineProtocol):
                         if "config" in checkpoint:
                             config = checkpoint["config"].copy()
                             # Update speaker embedding dimension
-                            if (
-                                "weight" in checkpoint
-                                and "emb_g.weight" in checkpoint["weight"]
-                            ):
-                                config[-3] = checkpoint["weight"]["emb_g.weight"].shape[
-                                    0
-                                ]
+                            if "weight" in checkpoint and "emb_g.weight" in checkpoint["weight"]:
+                                config[-3] = checkpoint["weight"]["emb_g.weight"].shape[0]
 
                         # Extract version and F0 flag
                         self.if_f0 = checkpoint.get("f0", 1)
@@ -1359,18 +1313,14 @@ class RVCEngine(EngineProtocol):
                                                 *config, is_half=self.is_half
                                             )
                                         else:
-                                            net_g = SynthesizerTrnMs256NSFsid_nono(
-                                                *config
-                                            )
+                                            net_g = SynthesizerTrnMs256NSFsid_nono(*config)
                                     elif self.version == "v2":
                                         if self.if_f0 == 1:
                                             net_g = SynthesizerTrnMs768NSFsid(
                                                 *config, is_half=self.is_half
                                             )
                                         else:
-                                            net_g = SynthesizerTrnMs768NSFsid_nono(
-                                                *config
-                                            )
+                                            net_g = SynthesizerTrnMs768NSFsid_nono(*config)
                                     else:
                                         logger.warning(
                                             f"Unknown RVC model version: "
@@ -1388,16 +1338,10 @@ class RVCEngine(EngineProtocol):
                                         del net_g.enc_q
 
                                     # Load state dict
-                                    net_g.load_state_dict(
-                                        checkpoint["weight"], strict=False
-                                    )
+                                    net_g.load_state_dict(checkpoint["weight"], strict=False)
 
                                     # Set to eval mode and move to device
-                                    net_g = (
-                                        net_g.float()
-                                        if not self.is_half
-                                        else net_g.half()
-                                    )
+                                    net_g = net_g.float() if not self.is_half else net_g.half()
                                     net_g.eval().to(device)
 
                                     # Remove weight norm for inference
@@ -1554,9 +1498,7 @@ class RVCEngine(EngineProtocol):
                         )
                     except TypeError:
                         # Try alternative calling convention
-                        infered_audio = self.net_g.infer(
-                            feats_tensor, p_len_tensor, sid
-                        )
+                        infered_audio = self.net_g.infer(feats_tensor, p_len_tensor, sid)
                         if isinstance(infered_audio, tuple):
                             infered_audio = infered_audio[0]
 
@@ -1577,9 +1519,7 @@ class RVCEngine(EngineProtocol):
             logger.error(f"RVC inference failed: {e}", exc_info=True)
             return None
 
-    def _apply_rvc_model(
-        self, features: np.ndarray, model: dict, **kwargs
-    ) -> np.ndarray:
+    def _apply_rvc_model(self, features: np.ndarray, model: dict, **kwargs) -> np.ndarray:
         """Apply RVC model to convert features (legacy method)."""
         try:
             # Extract model parameters (used for retrieval-based conversion)
@@ -1604,14 +1544,10 @@ class RVCEngine(EngineProtocol):
                     if state_dict is not None:
                         # Check for encoder/decoder structure (common RVC architecture)
                         has_encoder = any(
-                            "encoder" in str(k)
-                            for k in state_dict
-                            if isinstance(k, str)
+                            "encoder" in str(k) for k in state_dict if isinstance(k, str)
                         )
                         has_decoder = any(
-                            "decoder" in str(k)
-                            for k in state_dict
-                            if isinstance(k, str)
+                            "decoder" in str(k) for k in state_dict if isinstance(k, str)
                         )
 
                         if has_encoder and has_decoder:
@@ -1623,9 +1559,7 @@ class RVCEngine(EngineProtocol):
                                 # Apply decoder transformation
                                 converted = encoded
                                 converted_features = converted.cpu().numpy()
-                                logger.debug(
-                                    "Applied RVC encoder-decoder transformation"
-                                )
+                                logger.debug("Applied RVC encoder-decoder transformation")
                                 return converted_features
 
                 # Format 3: Direct model inference
@@ -1677,9 +1611,7 @@ class RVCEngine(EngineProtocol):
                     return converted_features
                 else:
                     # No model available - use feature-based voice conversion
-                    logger.debug(
-                        "No RVC model structure found, using feature-based conversion"
-                    )
+                    logger.debug("No RVC model structure found, using feature-based conversion")
                     # Apply spectral modification for voice conversion
                     # This simulates voice conversion by modifying spectral characteristics
                     if HAS_LIBROSA and features.shape[1] > 1:
@@ -1698,9 +1630,7 @@ class RVCEngine(EngineProtocol):
                 return self._apply_voice_conversion_transform(features, **kwargs)
 
         except Exception as e:
-            logger.warning(
-                f"RVC model application failed: {e}, using feature-based conversion"
-            )
+            logger.warning(f"RVC model application failed: {e}, using feature-based conversion")
             return self._apply_voice_conversion_transform(features, **kwargs)
 
     def _convert_with_enhanced_features(
@@ -1740,9 +1670,7 @@ class RVCEngine(EngineProtocol):
             if HAS_LIBROSA and features.shape[1] > 1:
                 try:
                     # Convert to frequency domain
-                    stft = librosa.stft(
-                        converted_audio, hop_length=self.hop_length, n_fft=2048
-                    )
+                    stft = librosa.stft(converted_audio, hop_length=self.hop_length, n_fft=2048)
                     magnitude, phase = np.abs(stft), np.angle(stft)
 
                     # Apply spectral envelope modification (formant shifting)
@@ -1759,21 +1687,13 @@ class RVCEngine(EngineProtocol):
                         # Apply formant-like modifications
                         for f in range(n_freq_bins):
                             # Create formant peaks at different frequencies
-                            if (
-                                freqs[f] > 200 and freqs[f] < 8000
-                            ):  # Voice frequency range
+                            if freqs[f] > 200 and freqs[f] < 8000:  # Voice frequency range
                                 # Modify magnitude based on formant characteristics
-                                formant_effect = 1.0 + 0.3 * np.sin(
-                                    2 * np.pi * freqs[f] / 1000
-                                )
-                                modified_magnitude[f, t] = (
-                                    magnitude[f, t] * formant_effect
-                                )
+                                formant_effect = 1.0 + 0.3 * np.sin(2 * np.pi * freqs[f] / 1000)
+                                modified_magnitude[f, t] = magnitude[f, t] * formant_effect
 
                     # Ensure we don't exceed original magnitude too much
-                    modified_magnitude = np.clip(
-                        modified_magnitude, 0, magnitude.max() * 2.0
-                    )
+                    modified_magnitude = np.clip(modified_magnitude, 0, magnitude.max() * 2.0)
 
                     # Reconstruct audio
                     modified_stft = modified_magnitude * np.exp(1j * phase)
@@ -1790,21 +1710,15 @@ class RVCEngine(EngineProtocol):
             if HAS_LIBROSA:
                 try:
                     # Apply gentle compression to even out dynamics
-                    converted_audio = librosa.effects.preemphasis(
-                        converted_audio, coef=0.97
-                    )
+                    converted_audio = librosa.effects.preemphasis(converted_audio, coef=0.97)
                     # De-emphasis to compensate
-                    converted_audio = librosa.effects.deemphasis(
-                        converted_audio, coef=0.97
-                    )
+                    converted_audio = librosa.effects.deemphasis(converted_audio, coef=0.97)
                 except Exception as e:
                     logger.debug(f"Dynamic processing failed: {e}")
 
             # Normalize output
             if np.max(np.abs(converted_audio)) > 0:
-                converted_audio = (
-                    converted_audio / np.max(np.abs(converted_audio)) * 0.95
-                )
+                converted_audio = converted_audio / np.max(np.abs(converted_audio)) * 0.95
 
             return converted_audio.astype(np.float32)
 
@@ -1890,9 +1804,7 @@ class RVCEngine(EngineProtocol):
         """Load HuBERT model for feature extraction using HuggingFace transformers."""
         try:
             if not HAS_HUGGINGFACE:
-                logger.warning(
-                    "HuggingFace transformers not available for HuBERT loading"
-                )
+                logger.warning("HuggingFace transformers not available for HuBERT loading")
                 return None
 
             device = torch.device(self.device) if torch is not None else None
@@ -1984,10 +1896,7 @@ class RVCEngine(EngineProtocol):
                 audio_16k = audio_16k / np.max(np.abs(audio_16k))
 
             # Use feature extractor to prepare input
-            if (
-                hasattr(self, "feature_extractor")
-                and self.feature_extractor is not None
-            ):
+            if hasattr(self, "feature_extractor") and self.feature_extractor is not None:
                 inputs = self.feature_extractor(
                     audio_16k,
                     sampling_rate=16000,
@@ -1997,9 +1906,7 @@ class RVCEngine(EngineProtocol):
                 input_values = inputs.input_values.to(device)
             else:
                 # Fallback: prepare tensor manually
-                audio_tensor = (
-                    torch.from_numpy(audio_16k).float().unsqueeze(0).to(device)
-                )
+                audio_tensor = torch.from_numpy(audio_16k).float().unsqueeze(0).to(device)
                 input_values = audio_tensor
 
             # Extract features using HuggingFace HuBERT
@@ -2064,9 +1971,7 @@ class RVCEngine(EngineProtocol):
             try:
                 # Advanced quality enhancement pipeline
                 # Step 1: Voice quality enhancement
-                audio = enhance_voice_quality(
-                    audio, sample_rate, normalize=True, denoise=True
-                )
+                audio = enhance_voice_quality(audio, sample_rate, normalize=True, denoise=True)
 
                 # Step 2: LUFS normalization for broadcast standards
                 audio = normalize_lufs(audio, sample_rate, target_lufs=-23.0)
@@ -2083,9 +1988,7 @@ class RVCEngine(EngineProtocol):
                         phase = np.angle(stft)
 
                         # Apply gentle smoothing to magnitude spectrum
-                        smoothed_magnitude = ndimage.gaussian_filter(
-                            magnitude, sigma=0.5
-                        )
+                        smoothed_magnitude = ndimage.gaussian_filter(magnitude, sigma=0.5)
 
                         # Reconstruct audio with smoothed magnitude
                         enhanced_stft = smoothed_magnitude * np.exp(1j * phase)
@@ -2095,9 +1998,7 @@ class RVCEngine(EngineProtocol):
                         if np.max(np.abs(audio)) > 0:
                             audio = audio / np.max(np.abs(audio)) * 0.95
                     except Exception as e:
-                        logger.debug(
-                            f"Spectral enhancement failed: {e}, continuing without it"
-                        )
+                        logger.debug(f"Spectral enhancement failed: {e}, continuing without it")
 
                 logger.debug("Advanced quality enhancement applied to RVC output")
             except Exception as e:
@@ -2117,9 +2018,7 @@ class RVCEngine(EngineProtocol):
                     spectral_rolloff = np.mean(
                         librosa.feature.spectral_rolloff(y=audio, sr=sample_rate)
                     )
-                    zero_crossing_rate = np.mean(
-                        librosa.feature.zero_crossing_rate(audio)
-                    )
+                    zero_crossing_rate = np.mean(librosa.feature.zero_crossing_rate(audio))
 
                     quality_metrics["spectral_centroid"] = float(spectral_centroid)
                     quality_metrics["spectral_rolloff"] = float(spectral_rolloff)
@@ -2138,9 +2037,7 @@ class RVCEngine(EngineProtocol):
                             f0_stability = 1.0 / (
                                 1.0 + np.std(f0_voiced) / (np.mean(f0_voiced) + 1e-6)
                             )
-                            quality_metrics["harmonic_noise_ratio"] = float(
-                                f0_stability
-                            )
+                            quality_metrics["harmonic_noise_ratio"] = float(f0_stability)
                     except Exception:
                         ...
 
@@ -2195,9 +2092,7 @@ class RVCEngine(EngineProtocol):
                     )
 
                     if output_dir and result is not None:
-                        output_path = (
-                            Path(output_dir) / f"output_{batch_start + i:04d}.wav"
-                        )
+                        output_path = Path(output_dir) / f"output_{batch_start + i:04d}.wav"
                         import soundfile as sf
 
                         sf.write(str(output_path), result, self.sample_rate)
@@ -2205,18 +2100,13 @@ class RVCEngine(EngineProtocol):
                     else:
                         batch_results.append(result)
                 except Exception as e:
-                    logger.error(
-                        f"Batch conversion failed for audio {batch_start + i}: {e}"
-                    )
+                    logger.error(f"Batch conversion failed for audio {batch_start + i}: {e}")
                     batch_results.append(None)
 
             results.extend(batch_results)
 
             # Clear GPU cache periodically (RVC is memory-intensive)
-            if (
-                torch.cuda.is_available()
-                and (batch_start + batch_size) % (batch_size * 2) == 0
-            ):
+            if torch.cuda.is_available() and (batch_start + batch_size) % (batch_size * 2) == 0:
                 torch.cuda.empty_cache()
 
         return results

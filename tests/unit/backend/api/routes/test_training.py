@@ -2,6 +2,7 @@
 Unit Tests for Training API Route
 Tests training module endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -212,9 +213,7 @@ class TestTrainingDatasetEndpoints:
 
         optimize_request = {"analyze_quality": True}
 
-        response = client.post(
-            "/api/training/datasets/nonexistent/optimize", json=optimize_request
-        )
+        response = client.post("/api/training/datasets/nonexistent/optimize", json=optimize_request)
         assert response.status_code == 404
 
 
@@ -724,9 +723,11 @@ class TestTrainingExportImportEndpoints:
             "include_metadata": True,
         }
 
-        with patch("backend.api.routes.training.Path") as mock_path, \
-             patch("backend.api.routes.training.zipfile"), \
-             patch("backend.api.routes.training.shutil"):
+        with (
+            patch("backend.api.routes.training.Path") as mock_path,
+            patch("backend.api.routes.training.zipfile"),
+            patch("backend.api.routes.training.shutil"),
+        ):
 
             mock_export_dir = MagicMock()
             mock_export_dir.exists.return_value = True

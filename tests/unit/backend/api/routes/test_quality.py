@@ -2,6 +2,7 @@
 Unit Tests for Quality API Route
 Tests quality metrics and analysis endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -46,9 +47,7 @@ sys.modules["torchaudio"] = mock_torchaudio
 try:
     from backend.api.routes import quality
 except (ImportError, NameError, ValueError) as e:
-    pytest.skip(
-        f"Could not import quality route module: {e}", allow_module_level=True
-    )
+    pytest.skip(f"Could not import quality route module: {e}", allow_module_level=True)
 
 
 class TestQualityRouteImports:
@@ -146,9 +145,10 @@ class TestQualityAnalysis:
             "target_tier": "standard",
         }
 
-        with patch("backend.api.routes.quality.HAS_QUALITY_OPTIMIZATION", True), patch(
-            "backend.api.routes.quality.QualityOptimizer"
-        ) as mock_optimizer:
+        with (
+            patch("backend.api.routes.quality.HAS_QUALITY_OPTIMIZATION", True),
+            patch("backend.api.routes.quality.QualityOptimizer") as mock_optimizer,
+        ):
             mock_instance = MagicMock()
             mock_instance.analyze_quality.return_value = {
                 "meets_target": True,
@@ -187,9 +187,10 @@ class TestQualityAnalysis:
             "target_tier": "standard",
         }
 
-        with patch("backend.api.routes.quality.HAS_QUALITY_OPTIMIZATION", True), patch(
-            "backend.api.routes.quality.optimize_synthesis_for_quality"
-        ) as mock_optimize:
+        with (
+            patch("backend.api.routes.quality.HAS_QUALITY_OPTIMIZATION", True),
+            patch("backend.api.routes.quality.optimize_synthesis_for_quality") as mock_optimize,
+        ):
             mock_optimize.return_value = ({}, {})
 
             response = client.post("/api/quality/optimize", json=request_data)

@@ -39,9 +39,7 @@ class TestGlobalSearch:
 
         # Try to find search box in Library panel
         try:
-            search_box = driver.find_element(
-                "accessibility id", "LibraryView_SearchBox"
-            )
+            search_box = driver.find_element("accessibility id", "LibraryView_SearchBox")
             assert search_box is not None
         except RuntimeError:
             # Search may use different ID
@@ -55,9 +53,7 @@ class TestGlobalSearch:
 
         # Try to find search box in Profiles panel
         try:
-            search_box = driver.find_element(
-                "accessibility id", "ProfilesView_SearchBox"
-            )
+            search_box = driver.find_element("accessibility id", "ProfilesView_SearchBox")
             assert search_box is not None
         except RuntimeError:
             # Search may use different ID
@@ -170,8 +166,14 @@ class TestQuickNavigation:
     def test_all_navigation_buttons_work(self, driver, app_launched):
         """Test that all 8 navigation buttons work."""
         nav_buttons = [
-            "NavStudio", "NavProfiles", "NavLibrary", "NavEffects",
-            "NavTrain", "NavAnalyze", "NavSettings", "NavLogs",
+            "NavStudio",
+            "NavProfiles",
+            "NavLibrary",
+            "NavEffects",
+            "NavTrain",
+            "NavAnalyze",
+            "NavSettings",
+            "NavLogs",
         ]
 
         successful = 0
@@ -217,9 +219,7 @@ class TestPanelContentAccess:
                 pass
 
         # Navigation worked even if content IDs not found
-        profiles_button_after = driver.find_element(
-            "accessibility id", "NavProfiles"
-        )
+        profiles_button_after = driver.find_element("accessibility id", "NavProfiles")
         assert profiles_button_after is not None
 
     def test_effects_panel_has_content(self, driver, app_launched):

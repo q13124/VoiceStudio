@@ -220,7 +220,9 @@ class TestEngineList:
 class TestTTSEngines:
     """Tests for TTS (Text-to-Speech) engines."""
 
-    @pytest.mark.parametrize("engine", ENGINE_MATRIX["tts"], ids=[e["id"] for e in ENGINE_MATRIX["tts"]])
+    @pytest.mark.parametrize(
+        "engine", ENGINE_MATRIX["tts"], ids=[e["id"] for e in ENGINE_MATRIX["tts"]]
+    )
     def test_tts_engine_status(self, engine, api_monitor, tracer):
         """Test status of each TTS engine."""
         tracer.step(f"Testing TTS engine: {engine['name']}")
@@ -252,9 +254,7 @@ class TestTTSEngines:
 
         try:
             response = requests.post(
-                f"{BACKEND_URL}/api/voice/synthesize",
-                json=payload,
-                timeout=60
+                f"{BACKEND_URL}/api/voice/synthesize", json=payload, timeout=60
             )
             tracer.api_call("POST", "/api/voice/synthesize", response)
 
@@ -271,7 +271,9 @@ class TestTTSEngines:
 class TestSTTEngines:
     """Tests for STT (Speech-to-Text) engines."""
 
-    @pytest.mark.parametrize("engine", ENGINE_MATRIX["stt"], ids=[e["id"] for e in ENGINE_MATRIX["stt"]])
+    @pytest.mark.parametrize(
+        "engine", ENGINE_MATRIX["stt"], ids=[e["id"] for e in ENGINE_MATRIX["stt"]]
+    )
     def test_stt_engine_status(self, engine, api_monitor, tracer):
         """Test status of each STT engine."""
         tracer.step(f"Testing STT engine: {engine['name']}")
@@ -296,8 +298,11 @@ class TestSTTEngines:
 class TestVoiceConversionEngines:
     """Tests for voice conversion engines."""
 
-    @pytest.mark.parametrize("engine", ENGINE_MATRIX["voice_conversion"],
-                           ids=[e["id"] for e in ENGINE_MATRIX["voice_conversion"]])
+    @pytest.mark.parametrize(
+        "engine",
+        ENGINE_MATRIX["voice_conversion"],
+        ids=[e["id"] for e in ENGINE_MATRIX["voice_conversion"]],
+    )
     def test_vc_engine_status(self, engine, api_monitor, tracer):
         """Test status of each voice conversion engine."""
         tracer.step(f"Testing VC engine: {engine['name']}")
@@ -343,8 +348,9 @@ class TestVoiceConversionEngines:
 class TestImageGenEngines:
     """Tests for image generation engines."""
 
-    @pytest.mark.parametrize("engine", ENGINE_MATRIX["image_gen"],
-                           ids=[e["id"] for e in ENGINE_MATRIX["image_gen"]])
+    @pytest.mark.parametrize(
+        "engine", ENGINE_MATRIX["image_gen"], ids=[e["id"] for e in ENGINE_MATRIX["image_gen"]]
+    )
     def test_image_engine_status(self, engine, api_monitor, tracer):
         """Test status of each image generation engine."""
         tracer.step(f"Testing image engine: {engine['name']}")
@@ -369,8 +375,9 @@ class TestImageGenEngines:
 class TestVideoGenEngines:
     """Tests for video generation engines."""
 
-    @pytest.mark.parametrize("engine", ENGINE_MATRIX["video_gen"],
-                           ids=[e["id"] for e in ENGINE_MATRIX["video_gen"]])
+    @pytest.mark.parametrize(
+        "engine", ENGINE_MATRIX["video_gen"], ids=[e["id"] for e in ENGINE_MATRIX["video_gen"]]
+    )
     def test_video_engine_status(self, engine, api_monitor, tracer):
         """Test status of each video generation engine."""
         tracer.step(f"Testing video engine: {engine['name']}")
@@ -529,7 +536,11 @@ class TestEngineMatrixReport:
         tracer.step("\n=== Engine Matrix Summary ===")
         tracer.step(f"Total engines defined: {report['total_defined']}")
         tracer.step(f"Engines available: {report['total_available']}")
-        coverage = (report['total_available'] / report['total_defined'] * 100) if report['total_defined'] > 0 else 0
+        coverage = (
+            (report["total_available"] / report["total_defined"] * 100)
+            if report["total_defined"] > 0
+            else 0
+        )
         tracer.step(f"Coverage: {coverage:.1f}%")
 
         for category in ENGINE_MATRIX:

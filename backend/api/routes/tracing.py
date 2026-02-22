@@ -26,8 +26,10 @@ router = APIRouter(prefix="/api/tracing", tags=["tracing"])
 # Response Models
 # =============================================================================
 
+
 class SpanResponse(BaseModel):
     """Response model for a span."""
+
     trace_id: str
     span_id: str
     name: str
@@ -39,6 +41,7 @@ class SpanResponse(BaseModel):
 
 class TraceSummaryResponse(BaseModel):
     """Response model for trace summary."""
+
     total_traces: int
     total_spans: int
     avg_duration_ms: float
@@ -52,6 +55,7 @@ class TraceSummaryResponse(BaseModel):
 
 class OperationStats(BaseModel):
     """Statistics for an operation."""
+
     operation: str
     count: int
     avg_ms: float
@@ -62,6 +66,7 @@ class OperationStats(BaseModel):
 
 class ExportResponse(BaseModel):
     """Response for trace export."""
+
     success: bool
     filepath: str
     trace_count: int
@@ -71,6 +76,7 @@ class ExportResponse(BaseModel):
 
 class TraceTreeNode(BaseModel):
     """Tree node for trace visualization."""
+
     span_id: str
     name: str
     duration_ms: float
@@ -84,6 +90,7 @@ TraceTreeNode.model_rebuild()
 # =============================================================================
 # Endpoints
 # =============================================================================
+
 
 @router.get("/summary", response_model=TraceSummaryResponse)
 async def get_trace_summary(

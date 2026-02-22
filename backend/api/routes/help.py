@@ -30,7 +30,9 @@ def _get_help_data_path() -> str:
     """Get path to help data persistence file."""
     global _help_data_file
     if _help_data_file is None:
-        data_dir = os.getenv("VOICESTUDIO_DATA_DIR", os.path.join(os.path.expanduser("~"), ".voicestudio", "data"))
+        data_dir = os.getenv(
+            "VOICESTUDIO_DATA_DIR", os.path.join(os.path.expanduser("~"), ".voicestudio", "data")
+        )
         os.makedirs(data_dir, exist_ok=True)
         _help_data_file = os.path.join(data_dir, "help_data.json")
     return _help_data_file
@@ -47,7 +49,9 @@ def _load_help_data():
                 data = json.load(f)
                 _help_topics = data.get("topics", {})
                 _keyboard_shortcuts = data.get("shortcuts", {})
-            logger.info(f"Loaded {len(_help_topics)} help topics and {len(_keyboard_shortcuts)} shortcuts from {help_file}")
+            logger.info(
+                f"Loaded {len(_help_topics)} help topics and {len(_keyboard_shortcuts)} shortcuts from {help_file}"
+            )
         except Exception as e:
             logger.warning(f"Failed to load help data from {help_file}: {e}")
             _help_topics = {}
@@ -60,11 +64,7 @@ def _save_help_data():
     """Save help topics and shortcuts to JSON file."""
     help_file = _get_help_data_path()
     try:
-        data = {
-            "topics": _help_topics,
-            "shortcuts": _keyboard_shortcuts,
-            "version": "1.0"
-        }
+        data = {"topics": _help_topics, "shortcuts": _keyboard_shortcuts, "version": "1.0"}
         with open(help_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         logger.debug(f"Saved help data to {help_file}")
@@ -319,9 +319,7 @@ if not _help_topics:
 
 @router.get("/topics", response_model=list[HelpTopic])
 @cache_response(ttl=300)  # Cache for 5 minutes (help topics are relatively static)
-async def get_help_topics(
-    category: str | None = Query(None), panel_id: str | None = Query(None)
-):
+async def get_help_topics(category: str | None = Query(None), panel_id: str | None = Query(None)):
     """Get all help topics, optionally filtered."""
     topics = list(_help_topics.values())
 
@@ -329,11 +327,7 @@ async def get_help_topics(
         topics = [t for t in topics if t.get("category") == category]
 
     if panel_id:
-        topics = [
-            t
-            for t in topics
-            if t.get("panel_id") == panel_id or t.get("panel_id") is None
-        ]
+        topics = [t for t in topics if t.get("panel_id") == panel_id or t.get("panel_id") is None]
 
     return [HelpTopic(**topic) for topic in topics]
 
@@ -438,9 +432,7 @@ async def search_help(
         # Search in title, content, and keywords
         title_match = query_lower in topic.get("title", "").lower()
         content_match = query_lower in topic.get("content", "").lower()
-        keyword_match = any(
-            query_lower in keyword.lower() for keyword in topic.get("keywords", [])
-        )
+        keyword_match = any(query_lower in keyword.lower() for keyword in topic.get("keywords", []))
 
         if title_match or content_match or keyword_match:
             matching_topics.append(topic)
@@ -456,9 +448,7 @@ async def search_help(
     total = len(matching_topics)
     limited = matching_topics[:limit]
 
-    return HelpSearchResponse(
-        topics=[HelpTopic(**topic) for topic in limited], total=total
-    )
+    return HelpSearchResponse(topics=[HelpTopic(**topic) for topic in limited], total=total)
 
 
 @router.get("/shortcuts", response_model=list[KeyboardShortcut])
@@ -474,9 +464,7 @@ async def get_keyboard_shortcuts(
 
     if panel_id:
         shortcuts = [
-            s
-            for s in shortcuts
-            if s.get("panel_id") == panel_id or s.get("panel_id") is None
+            s for s in shortcuts if s.get("panel_id") == panel_id or s.get("panel_id") is None
         ]
 
     return [KeyboardShortcut(**shortcut) for shortcut in shortcuts]
@@ -500,9 +488,7 @@ async def get_help_categories():
 async def get_panel_help(panel_id: str):
     """Get help content for a specific panel."""
     topics = [
-        HelpTopic(**topic)
-        for topic in _help_topics.values()
-        if topic.get("panel_id") == panel_id
+        HelpTopic(**topic) for topic in _help_topics.values() if topic.get("panel_id") == panel_id
     ]
 
     shortcuts = [

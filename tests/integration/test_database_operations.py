@@ -22,6 +22,7 @@ import pytest
 # Try to import test dependencies
 try:
     from httpx import Client as HttpClient
+
     HAS_HTTPX = True
 except ImportError:
     HAS_HTTPX = False
@@ -81,7 +82,7 @@ class TestTransactionBehavior:
         create_response = retry_on_rate_limit(
             api_client.post,
             "/api/profiles",
-            json={"name": "Rollback Test", "settings": {"key": "original"}}
+            json={"name": "Rollback Test", "settings": {"key": "original"}},
         )
 
         if create_response.status_code not in [200, 201]:
@@ -95,9 +96,7 @@ class TestTransactionBehavior:
 
         # Try to update with invalid data that should fail
         update_response = retry_on_rate_limit(
-            api_client.put,
-            f"/api/profiles/{profile_id}",
-            json={"invalid_structure": True}
+            api_client.put, f"/api/profiles/{profile_id}", json={"invalid_structure": True}
         )
 
         # If update failed, verify original data is intact
@@ -106,8 +105,7 @@ class TestTransactionBehavior:
             if get_response.status_code == 200:
                 retrieved = get_response.json()
                 # Original value should be preserved
-                assert retrieved.get("name") == "Rollback Test" or \
-                       "settings" in retrieved
+                assert retrieved.get("name") == "Rollback Test" or "settings" in retrieved
 
     def test_concurrent_updates(self, api_client):
         """Verify concurrent updates are handled correctly."""
@@ -115,7 +113,7 @@ class TestTransactionBehavior:
         create_response = retry_on_rate_limit(
             api_client.post,
             "/api/profiles",
-            json={"name": "Concurrent Test", "settings": {"counter": 0}}
+            json={"name": "Concurrent Test", "settings": {"counter": 0}},
         )
 
         if create_response.status_code not in [200, 201]:
@@ -131,8 +129,7 @@ class TestTransactionBehavior:
         def update_profile(value: int) -> int:
             try:
                 response = api_client.patch(
-                    f"/api/profiles/{profile_id}",
-                    json={"settings": {"counter": value}}
+                    f"/api/profiles/{profile_id}", json={"settings": {"counter": value}}
                 )
                 return response.status_code
             except Exception:
@@ -154,7 +151,7 @@ class TestTransactionBehavior:
             response = retry_on_rate_limit(
                 api_client.post,
                 "/api/profiles",
-                json={"name": f"Deadlock Test {i}", "settings": {}}
+                json={"name": f"Deadlock Test {i}", "settings": {}},
             )
             if response.status_code in [200, 201]:
                 profiles.append(response.json())
@@ -169,8 +166,7 @@ class TestTransactionBehavior:
                 profile_id = profile.get("id", profile.get("profile_id"))
                 if profile_id:
                     api_client.patch(
-                        f"/api/profiles/{profile_id}",
-                        json={"settings": {"updated": True}}
+                        f"/api/profiles/{profile_id}", json={"settings": {"updated": True}}
                     )
 
         # Run in different orders simultaneously
@@ -193,9 +189,7 @@ class TestDataIntegrity:
         """Verify cascade deletes work correctly."""
         # Create a profile
         create_response = retry_on_rate_limit(
-            api_client.post,
-            "/api/profiles",
-            json={"name": "Cascade Test", "settings": {}}
+            api_client.post, "/api/profiles", json={"name": "Cascade Test", "settings": {}}
         )
 
         if create_response.status_code not in [200, 201]:
@@ -225,8 +219,8 @@ class TestDataIntegrity:
             json={
                 "type": "synthesis",
                 "profile_id": "nonexistent-profile-id-12345",
-                "data": {"text": "test"}
-            }
+                "data": {"text": "test"},
+            },
         )
 
         # Should either succeed (if FK not enforced) or fail gracefully
@@ -238,9 +232,7 @@ class TestDataIntegrity:
         unique_name = f"Unique Test {time.time()}"
 
         response1 = retry_on_rate_limit(
-            api_client.post,
-            "/api/profiles",
-            json={"name": unique_name, "settings": {}}
+            api_client.post, "/api/profiles", json={"name": unique_name, "settings": {}}
         )
 
         if response1.status_code not in [200, 201]:
@@ -248,9 +240,7 @@ class TestDataIntegrity:
 
         # Try to create another with same name (if uniqueness is enforced)
         response2 = retry_on_rate_limit(
-            api_client.post,
-            "/api/profiles",
-            json={"name": unique_name, "settings": {}}
+            api_client.post, "/api/profiles", json={"name": unique_name, "settings": {}}
         )
 
         # Either succeeds (no unique constraint) or fails with conflict
@@ -260,9 +250,7 @@ class TestDataIntegrity:
         """Verify NOT NULL constraints are enforced."""
         # Try to create with null required field
         response = retry_on_rate_limit(
-            api_client.post,
-            "/api/profiles",
-            json={"name": None, "settings": {}}
+            api_client.post, "/api/profiles", json={"name": None, "settings": {}}
         )
 
         # Should be rejected
@@ -272,9 +260,7 @@ class TestDataIntegrity:
         """Verify data type constraints are enforced."""
         # Try to insert wrong data types
         response = retry_on_rate_limit(
-            api_client.post,
-            "/api/profiles",
-            json={"name": 12345, "settings": "not-an-object"}
+            api_client.post, "/api/profiles", json={"name": 12345, "settings": "not-an-object"}
         )
 
         # Should be rejected or coerced
@@ -319,13 +305,15 @@ class TestMigrations:
 
         try:
             # Try to create expected table structure
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS test_table (
                     id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
             conn.commit()
 
             # Verify table exists
@@ -355,8 +343,7 @@ class TestConcurrentAccess:
         def do_writes():
             for i in range(5):
                 response = api_client.post(
-                    "/api/profiles",
-                    json={"name": f"Concurrent Read/Write {i}", "settings": {}}
+                    "/api/profiles", json={"name": f"Concurrent Read/Write {i}", "settings": {}}
                 )
                 results["writes"].append(response.status_code)
                 time.sleep(0.1)
@@ -376,11 +363,7 @@ class TestConcurrentAccess:
         def writer(writer_id: int):
             for i in range(5):
                 response = api_client.post(
-                    "/api/profiles",
-                    json={
-                        "name": f"Writer {writer_id} Item {i}",
-                        "settings": {}
-                    }
+                    "/api/profiles", json={"name": f"Writer {writer_id} Item {i}", "settings": {}}
                 )
                 results.append((writer_id, response.status_code))
 
@@ -427,7 +410,7 @@ class TestDataPersistence:
         create_response = retry_on_rate_limit(
             api_client.post,
             "/api/profiles",
-            json={"name": unique_name, "settings": {"persistent": True}}
+            json={"name": unique_name, "settings": {"persistent": True}},
         )
 
         if create_response.status_code not in [200, 201]:
@@ -454,7 +437,7 @@ class TestDataPersistence:
             response = retry_on_rate_limit(
                 api_client.post,
                 "/api/profiles",
-                json={"name": f"Durability Test {i}", "settings": {}}
+                json={"name": f"Durability Test {i}", "settings": {}},
             )
             if response.status_code in [200, 201]:
                 profile_id = response.json().get("id", response.json().get("profile_id"))

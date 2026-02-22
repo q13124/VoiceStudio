@@ -2,6 +2,7 @@
 
 Validates CLOSED -> OPEN -> HALF_OPEN -> CLOSED recovery cycle.
 """
+
 from __future__ import annotations
 
 import time

@@ -435,9 +435,7 @@ class TestFilterFunctions:
             pass
 
         # Filter for errors only
-        error_spans = exporter.get_traces(
-            filter_fn=lambda s: s.status == SpanStatus.ERROR
-        )
+        error_spans = exporter.get_traces(filter_fn=lambda s: s.status == SpanStatus.ERROR)
 
         assert len(error_spans) == 1
         assert error_spans[0].name == "failure"

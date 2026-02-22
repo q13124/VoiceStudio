@@ -40,7 +40,8 @@ class ProfileStore:
         max_profiles: int = 5000,
     ):
         self._base_dir = Path(
-            base_dir or os.getenv("VOICESTUDIO_PROFILES_PATH", "")
+            base_dir
+            or os.getenv("VOICESTUDIO_PROFILES_PATH", "")
             or Path.home() / ".voicestudio" / "profiles"
         )
         self._base_dir.mkdir(parents=True, exist_ok=True)
@@ -81,6 +82,7 @@ class ProfileStore:
         profile_id = profile.get("id", "")
         if not profile_id:
             import uuid
+
             profile_id = f"prof-{uuid.uuid4().hex[:8]}"
             profile["id"] = profile_id
 
@@ -123,6 +125,7 @@ class ProfileStore:
             profile_dir = self._base_dir / profile_id
             if profile_dir.exists():
                 import shutil
+
                 try:
                     shutil.rmtree(profile_dir)
                 except OSError as exc:
@@ -151,7 +154,8 @@ class ProfileStore:
         if search:
             search_lower = search.lower()
             profiles = [
-                p for p in profiles
+                p
+                for p in profiles
                 if search_lower in p.get("name", "").lower()
                 or search_lower in str(p.get("tags", "")).lower()
             ]
@@ -159,7 +163,7 @@ class ProfileStore:
         # Sort by name
         profiles.sort(key=lambda p: p.get("name", "").lower())
 
-        return profiles[offset:offset + limit]
+        return profiles[offset : offset + limit]
 
     def count(self) -> int:
         """Get total number of profiles."""

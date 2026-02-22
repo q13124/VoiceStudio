@@ -33,9 +33,7 @@ class TestAnalyzeRouteHandlers:
     def test_analyze_audio_handler_exists(self):
         """Test analyze_audio handler exists."""
         if hasattr(analyze, "analyze_audio"):
-            assert callable(
-                analyze.analyze_audio
-            ), "analyze_audio is not callable"
+            assert callable(analyze.analyze_audio), "analyze_audio is not callable"
 
 
 class TestAnalyzeRouter:
@@ -56,4 +54,3 @@ class TestAnalyzeRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

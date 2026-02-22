@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.infrastructure import content_hash_cache
 except ImportError:
-    pytest.skip(
-        "Could not import content_hash_cache", allow_module_level=True
-    )
+    pytest.skip("Could not import content_hash_cache", allow_module_level=True)
 
 
 class TestContentHashCacheImports:
@@ -25,9 +23,7 @@ class TestContentHashCacheImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            content_hash_cache is not None
-        ), "Failed to import content_hash_cache module"
+        assert content_hash_cache is not None, "Failed to import content_hash_cache module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
@@ -46,11 +42,8 @@ class TestContentHashCacheClasses:
         """Test ContentHashCache class exists."""
         if hasattr(content_hash_cache, "ContentHashCache"):
             cls = content_hash_cache.ContentHashCache
-            assert isinstance(
-                cls, type
-            ), "ContentHashCache should be a class"
+            assert isinstance(cls, type), "ContentHashCache should be a class"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

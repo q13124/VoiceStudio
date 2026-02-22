@@ -95,9 +95,7 @@ async def login(request: LoginRequest):
     if request.api_key:
         user = get_api_key_manager().authenticate_api_key(request.api_key)
         if not user:
-            logger.warning(
-                f"Failed login attempt with API key for username: {request.username}"
-            )
+            logger.warning(f"Failed login attempt with API key for username: {request.username}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid API key",
@@ -105,9 +103,7 @@ async def login(request: LoginRequest):
     else:
         # Authenticate using password if provided
         if request.password:
-            user = get_api_key_manager().authenticate_password(
-                request.username, request.password
-            )
+            user = get_api_key_manager().authenticate_password(request.username, request.password)
             if not user:
                 logger.warning(
                     f"Failed login attempt with password for username: {request.username}"
@@ -298,9 +294,7 @@ async def revoke_api_key(
 
     # Check if API key belongs to current user or user is admin
     user = api_key_manager.authenticate_api_key(api_key)
-    if not user or (
-        user.user_id != current_user.user_id and current_user.role != UserRole.ADMIN
-    ):
+    if not user or (user.user_id != current_user.user_id and current_user.role != UserRole.ADMIN):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only revoke your own API keys",

@@ -24,7 +24,7 @@ try:
     )
 except ImportError:
     pytestmark = pytest.mark.skip(reason="Phase 6D analytics not implemented")
-    
+
     # Create stubs for syntax validation
     @dataclass
     class UsageMetrics:
@@ -92,7 +92,9 @@ except ImportError:
             elif event_type == "activate":
                 self._metrics[plugin_id].activation_count += 1
 
-        def record_usage_session(self, plugin_id: str, duration_seconds: int, operations: List[str]):
+        def record_usage_session(
+            self, plugin_id: str, duration_seconds: int, operations: List[str]
+        ):
             if plugin_id not in self._metrics:
                 self._metrics[plugin_id] = UsageMetrics(plugin_id=plugin_id)
             self._metrics[plugin_id].total_usage_seconds += duration_seconds
@@ -102,9 +104,7 @@ except ImportError:
 
         def get_popular_plugins(self, limit: int = 10) -> List[UsageMetrics]:
             sorted_metrics = sorted(
-                self._metrics.values(),
-                key=lambda m: m.install_count,
-                reverse=True
+                self._metrics.values(), key=lambda m: m.install_count, reverse=True
             )
             return sorted_metrics[:limit]
 
@@ -132,45 +132,45 @@ class TestPluginAnalytics:
     def test_record_installation(self) -> None:
         """Test recording plugin installation."""
         analytics = PluginAnalytics()
-        
+
         analytics.record_event(
             plugin_id="test-plugin",
             event_type="install",
             metadata={"version": "1.0.0"},
         )
-        
+
         metrics = analytics.get_metrics("test-plugin")
         assert metrics.install_count >= 1
 
     def test_record_activation(self) -> None:
         """Test recording plugin activation."""
         analytics = PluginAnalytics()
-        
+
         analytics.record_event(
             plugin_id="test-plugin",
             event_type="activate",
         )
-        
+
         metrics = analytics.get_metrics("test-plugin")
         assert metrics.activation_count >= 1
 
     def test_record_usage_session(self) -> None:
         """Test recording usage session."""
         analytics = PluginAnalytics()
-        
+
         analytics.record_usage_session(
             plugin_id="test-plugin",
             duration_seconds=300,
             operations=["process_audio", "save_output"],
         )
-        
+
         metrics = analytics.get_metrics("test-plugin")
         assert metrics.total_usage_seconds >= 300
 
     def test_get_popular_plugins(self) -> None:
         """Test getting popular plugins list."""
         analytics = PluginAnalytics()
-        
+
         # Record different usage levels
         for i in range(10):
             analytics.record_event(
@@ -182,9 +182,9 @@ class TestPluginAnalytics:
                 plugin_id="unpopular-plugin",
                 event_type="install",
             )
-        
+
         popular = analytics.get_popular_plugins(limit=5)
-        
+
         assert len(popular) <= 5
         if len(popular) >= 2:
             # Most popular should be first
@@ -202,7 +202,7 @@ class TestUsageMetrics:
             activation_count=80,
             total_usage_seconds=36000,
         )
-        
+
         assert metrics.plugin_id == "test-plugin"
         assert metrics.install_count == 100
 
@@ -213,7 +213,7 @@ class TestUsageMetrics:
             install_count=100,
             activation_count=80,
         )
-        
+
         # 80 activations from 100 installs = 80% retention
         assert metrics.retention_rate == 0.8
 
@@ -224,7 +224,7 @@ class TestUsageMetrics:
             install_count=0,
             activation_count=0,
         )
-        
+
         # Should not raise error
         assert metrics.retention_rate == 0.0
 
@@ -236,7 +236,7 @@ class TestUsageMetrics:
             activation_count=40,
             total_usage_seconds=1800,
         )
-        
+
         data = metrics.to_dict()
         assert data["plugin_id"] == "test"
         assert data["install_count"] == 50
@@ -252,7 +252,7 @@ class TestTrendData:
             time_period="7d",
             data_points=[10, 12, 15, 14, 18, 20, 22],
         )
-        
+
         assert len(trend.data_points) == 7
 
     def test_calculate_growth_rate(self) -> None:
@@ -262,7 +262,7 @@ class TestTrendData:
             time_period="7d",
             data_points=[10, 12, 15, 14, 18, 20, 22],
         )
-        
+
         # Growth from 10 to 22 = 120% growth
         assert trend.growth_rate > 1.0
 
@@ -273,13 +273,13 @@ class TestTrendData:
             time_period="7d",
             data_points=[10, 15, 20, 25, 30],
         )
-        
+
         down_trend = TrendData(
             plugin_id="falling",
             time_period="7d",
             data_points=[30, 25, 20, 15, 10],
         )
-        
+
         assert up_trend.is_trending_up
         assert not down_trend.is_trending_up
 
@@ -294,7 +294,7 @@ class TestAnalyticsReport:
             period_start=datetime.now() - timedelta(days=7),
             period_end=datetime.now(),
         )
-        
+
         assert report.plugin_id == "test-plugin"
 
     def test_report_summary(self) -> None:
@@ -307,7 +307,7 @@ class TestAnalyticsReport:
             total_activations=120,
             avg_session_duration=300,
         )
-        
+
         summary = report.get_summary()
         assert "installs" in summary.lower() or summary != ""
 
@@ -318,16 +318,16 @@ class TestAnalyticsPrivacy:
     def test_anonymous_aggregation(self) -> None:
         """Test that analytics are anonymously aggregated."""
         analytics = PluginAnalytics()
-        
+
         # Record with user data
         analytics.record_event(
             plugin_id="test",
             event_type="install",
             metadata={"user_id": "user123"},  # This should not be stored
         )
-        
+
         metrics = analytics.get_metrics("test")
-        
+
         # User ID should not be exposed in metrics
         data = metrics.to_dict()
         assert "user123" not in str(data)
@@ -335,7 +335,7 @@ class TestAnalyticsPrivacy:
     def test_no_pii_in_export(self) -> None:
         """Test that PII is not included in exports."""
         analytics = PluginAnalytics()
-        
+
         analytics.record_event(
             plugin_id="test",
             event_type="error",
@@ -344,10 +344,10 @@ class TestAnalyticsPrivacy:
                 "error": "Something went wrong",
             },
         )
-        
+
         export = analytics.export_data("test")
         export_str = str(export)
-        
+
         # PII should be stripped
         assert "user@example.com" not in export_str
 
@@ -358,17 +358,17 @@ class TestAnalyticsPersistence:
     def test_save_and_load_metrics(self) -> None:
         """Test saving and loading metrics."""
         analytics = PluginAnalytics()
-        
+
         analytics.record_event(
             plugin_id="persistent-plugin",
             event_type="install",
         )
-        
+
         # Simulate save/load cycle
         analytics.save()
         analytics2 = PluginAnalytics()
         analytics2.load()
-        
+
         # Data should persist (implementation dependent)
         # This is a structural test
         assert analytics2 is not None
@@ -376,13 +376,13 @@ class TestAnalyticsPersistence:
     def test_metrics_aggregation(self) -> None:
         """Test metrics aggregation over time."""
         analytics = PluginAnalytics()
-        
+
         # Record multiple events
         for _ in range(10):
             analytics.record_event(
                 plugin_id="aggregate-test",
                 event_type="use",
             )
-        
+
         daily = analytics.get_daily_aggregates("aggregate-test")
         assert daily is not None

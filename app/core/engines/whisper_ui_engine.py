@@ -29,9 +29,7 @@ logger = logging.getLogger(__name__)
 
 # Log cache availability
 if not HAS_MODEL_CACHE:
-    logger.debug(
-        "General model cache not available, " "using Whisper UI-specific cache"
-    )
+    logger.debug("General model cache not available, " "using Whisper UI-specific cache")
 
 # Fallback: Whisper UI-specific cache (for backward compatibility)
 _WHISPER_UI_MODEL_CACHE: OrderedDict = OrderedDict()
@@ -43,9 +41,7 @@ def _get_cache_key(model_size: str, device: str, use_faster_whisper: bool) -> st
     return f"whisper_ui::{model_size}::{device}::{use_faster_whisper}"
 
 
-def _get_cached_whisper_ui_model(
-    model_size: str, device: str, use_faster_whisper: bool
-):
+def _get_cached_whisper_ui_model(model_size: str, device: str, use_faster_whisper: bool):
     """Get cached Whisper UI model if available."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
@@ -110,9 +106,7 @@ try:
     HAS_WHISPER = True
 except ImportError:
     HAS_WHISPER = False
-    logger.warning(
-        "openai-whisper not installed. Install with: pip install openai-whisper"
-    )
+    logger.warning("openai-whisper not installed. Install with: pip install openai-whisper")
 
 try:
     from faster_whisper import WhisperModel
@@ -167,9 +161,7 @@ class WhisperUIEngine(EngineProtocol):
         """
         self.model_size = model_size
         self.use_faster_whisper = use_faster_whisper and HAS_FASTER_WHISPER
-        self.device = device or (
-            "cuda" if (HAS_WHISPER or HAS_FASTER_WHISPER) else "cpu"
-        )
+        self.device = device or ("cuda" if (HAS_WHISPER or HAS_FASTER_WHISPER) else "cpu")
 
         self._initialized = False
         self._model = None
@@ -289,9 +281,7 @@ class WhisperUIEngine(EngineProtocol):
             import hashlib
 
             cache_key = hashlib.md5(
-                f"{audio}_{language}_{output_format}".encode()
-                if isinstance(audio, str)
-                else audio
+                f"{audio}_{language}_{output_format}".encode() if isinstance(audio, str) else audio
             ).hexdigest()
             if cache_key in self._transcription_cache:
                 logger.debug("Using cached Whisper UI transcription result")
@@ -346,9 +336,7 @@ class WhisperUIEngine(EngineProtocol):
             elif output_format == "vtt":
                 return self._format_vtt(result)
             else:
-                logger.warning(
-                    f"Unknown output format: {output_format}, returning text"
-                )
+                logger.warning(f"Unknown output format: {output_format}, returning text")
                 return result.get("text", "")
 
         except Exception as e:
@@ -416,9 +404,7 @@ class WhisperUIEngine(EngineProtocol):
                 # Save to temporary file
                 import tempfile
 
-                with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=".wav"
-                ) as tmp_file:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
                     tmp_file.write(audio)
                     return tmp_file.name
             else:
@@ -440,9 +426,7 @@ class WhisperUIEngine(EngineProtocol):
                 and isinstance(self._model, WhisperModel)
             ):
                 # Use faster-whisper
-                segments, info = self._model.transcribe(
-                    audio_path, language=language, **kwargs
-                )
+                segments, info = self._model.transcribe(audio_path, language=language, **kwargs)
 
                 text_parts = []
                 segment_list = []

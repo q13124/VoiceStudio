@@ -27,6 +27,7 @@ router = APIRouter(prefix="/api/feedback", tags=["feedback"])
 
 class FeedbackSubmission(BaseModel):
     """Feedback submission request."""
+
     type: str  # bug_report, feature_request, improvement, question, praise, other
     title: str
     description: str
@@ -38,6 +39,7 @@ class FeedbackSubmission(BaseModel):
 
 class FeedbackResponse(BaseModel):
     """Feedback response."""
+
     feedback_id: str
     type: str
     priority: str
@@ -50,6 +52,7 @@ class FeedbackResponse(BaseModel):
 
 class FeedbackStatsResponse(BaseModel):
     """Feedback statistics response."""
+
     total: int
     by_type: dict[str, int]
     by_status: dict[str, int]
@@ -98,7 +101,7 @@ async def list_feedback(
     status: str | None = None,
     priority: str | None = None,
     limit: int = 100,
-    offset: int = 0
+    offset: int = 0,
 ):
     """List feedback with optional filters."""
     try:
@@ -157,11 +160,7 @@ async def get_feedback(feedback_id: str):
 
 
 @router.patch("/{feedback_id}/status")
-async def update_feedback_status(
-    feedback_id: str,
-    status: str,
-    comment: str | None = None
-):
+async def update_feedback_status(feedback_id: str, status: str, comment: str | None = None):
     """Update feedback status."""
     try:
         service = FeedbackService()
@@ -180,9 +179,7 @@ async def update_feedback_status(
 
 @router.post("/{feedback_id}/respond")
 async def add_response(
-    feedback_id: str,
-    message: str = Form(...),
-    responder: str = Form(default="support")
+    feedback_id: str, message: str = Form(...), responder: str = Form(default="support")
 ):
     """Add a response to feedback."""
     service = FeedbackService()
@@ -195,10 +192,7 @@ async def add_response(
 
 
 @router.post("/{feedback_id}/attachments")
-async def add_attachment(
-    feedback_id: str,
-    file: UploadFile = File(...)
-):
+async def add_attachment(feedback_id: str, file: UploadFile = File(...)):
     """Add an attachment to feedback."""
     service = FeedbackService()
 

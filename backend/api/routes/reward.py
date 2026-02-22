@@ -60,9 +60,7 @@ async def train(req: RmTrainRequest) -> RmTrainResponse:
         # Validate ratings format
         for i, rating in enumerate(ratings):
             if not isinstance(rating, dict):
-                raise HTTPException(
-                    status_code=400, detail=f"Rating {i} must be a dictionary"
-                )
+                raise HTTPException(status_code=400, detail=f"Rating {i} must be a dictionary")
 
             # Expected fields: audio_id, score, features (optional)
             if "audio_id" not in rating or "score" not in rating:
@@ -124,9 +122,7 @@ async def train(req: RmTrainRequest) -> RmTrainResponse:
         raise
     except Exception as e:
         logger.error(f"Reward model training failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Reward model training failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Reward model training failed: {e!s}") from e
 
 
 @router.post("/predict", response_model=RmPredictResponse)
@@ -159,9 +155,7 @@ async def predict(req: RmPredictRequest) -> RmPredictResponse:
                 )
 
         if model_id not in _reward_models:
-            raise HTTPException(
-                status_code=404, detail=f"Reward model '{model_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Reward model '{model_id}' not found")
 
         model = _reward_models[model_id]
 
@@ -215,7 +209,9 @@ async def predict(req: RmPredictRequest) -> RmPredictResponse:
         prediction_confidence = max(0.5, 1.0 - (score_diff / model_std) if model_std > 0 else 1.0)
 
         # Weighted combination
-        confidence = (sample_confidence * 0.4) + (std_confidence * 0.3) + (prediction_confidence * 0.3)
+        confidence = (
+            (sample_confidence * 0.4) + (std_confidence * 0.3) + (prediction_confidence * 0.3)
+        )
         confidence = max(0.3, min(1.0, confidence))  # Clamp to [0.3, 1.0]
 
         logger.info(
@@ -234,9 +230,7 @@ async def predict(req: RmPredictRequest) -> RmPredictResponse:
         raise
     except Exception as e:
         logger.error(f"Reward prediction failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Reward prediction failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Reward prediction failed: {e!s}") from e
 
 
 @router.get("/models", response_model=RmModelsListResponse)
@@ -263,9 +257,7 @@ async def list_models() -> RmModelsListResponse:
 async def get_training_job(job_id: str) -> RmTrainingJobResponse:
     """Get training job status."""
     if job_id not in _reward_training_jobs:
-        raise HTTPException(
-            status_code=404, detail=f"Training job '{job_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Training job '{job_id}' not found")
 
     job = _reward_training_jobs[job_id]
     return RmTrainingJobResponse(

@@ -104,9 +104,7 @@ def list_projects(request: Request) -> dict:
         return result
     except Exception as e:
         logger.error(f"Failed to list projects: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to list projects: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to list projects: {e!s}") from e
 
 
 @router.get("/{project_id}", response_model=Project)
@@ -123,9 +121,7 @@ def get_project(project_id: str) -> Project:
         raise
     except Exception as e:
         logger.error(f"Failed to get project {project_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get project: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to get project: {e!s}") from e
 
 
 @router.post("", response_model=Project)
@@ -147,9 +143,7 @@ def create_project(req: ProjectCreateRequest) -> Project:
         raise
     except Exception as e:
         logger.error(f"Failed to create project: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to create project: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to create project: {e!s}") from e
 
 
 @router.put("/{project_id}", response_model=Project)
@@ -180,9 +174,7 @@ def update_project(project_id: str, req: ProjectUpdateRequest) -> Project:
         raise
     except Exception as e:
         logger.error(f"Failed to update project {project_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to update project: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to update project: {e!s}") from e
 
 
 @router.delete("/{project_id}", response_model=ApiOk)
@@ -199,9 +191,7 @@ def delete_project(project_id: str) -> ApiOk:
         raise
     except Exception as e:
         logger.error(f"Failed to delete project {project_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to delete project: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to delete project: {e!s}") from e
 
 
 class ProjectAudioFileResponse(BaseModel):
@@ -217,9 +207,7 @@ class SaveAudioRequest(BaseModel):
 
 
 @router.post("/{project_id}/audio/save", response_model=ProjectAudioFileResponse)
-def save_audio_to_project(
-    project_id: str, req: SaveAudioRequest
-) -> ProjectAudioFileResponse:
+def save_audio_to_project(project_id: str, req: SaveAudioRequest) -> ProjectAudioFileResponse:
     """
     Save an audio file to a project directory.
 
@@ -281,9 +269,7 @@ def save_audio_to_project(
                     status_code=507,
                     detail="Disk full. Please free up space and try again.",
                 )
-            raise HTTPException(
-                status_code=500, detail=f"Failed to save audio file: {e!s}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to save audio file: {e!s}")
 
         # Get file stats
         try:
@@ -307,9 +293,7 @@ def save_audio_to_project(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Unexpected error saving audio to project {project_id}: {e}", exc_info=True
-        )
+        logger.error(f"Unexpected error saving audio to project {project_id}: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"An unexpected error occurred while saving the audio file: {e!s}",
@@ -354,9 +338,7 @@ def list_project_audio(project_id: str) -> List[ProjectAudioFile]:
                                 filename=filename,
                                 url=f"/api/projects/{project_id}/audio/{filename}",
                                 size=file_stat.st_size,
-                                modified=datetime.fromtimestamp(
-                                    file_stat.st_mtime
-                                ).isoformat(),
+                                modified=datetime.fromtimestamp(file_stat.st_mtime).isoformat(),
                             )
                         )
                     except (OSError, PermissionError) as e:
@@ -370,9 +352,7 @@ def list_project_audio(project_id: str) -> List[ProjectAudioFile]:
             )
         except OSError as e:
             logger.error(f"Failed to list audio files in {audio_dir}: {e}")
-            raise HTTPException(
-                status_code=500, detail=f"Failed to list audio files: {e!s}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to list audio files: {e!s}")
 
         return audio_files
     except HTTPException:
@@ -417,17 +397,13 @@ def get_project_audio(project_id: str, filename: str):
             )
 
         if not os.path.isfile(file_path):
-            raise HTTPException(
-                status_code=400, detail=f"Path '{filename}' is not a file."
-            )
+            raise HTTPException(status_code=400, detail=f"Path '{filename}' is not a file.")
 
         try:
             return FileResponse(file_path, media_type="audio/wav")
         except Exception as e:
             logger.error(f"Failed to serve file {file_path}: {e}")
-            raise HTTPException(
-                status_code=500, detail=f"Failed to serve audio file: {e!s}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to serve audio file: {e!s}")
     except HTTPException:
         raise
     except Exception as e:

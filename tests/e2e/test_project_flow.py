@@ -64,9 +64,9 @@ class TestProjectFlowMock:
     def test_project_flow_structure(self):
         """Verify project flow test structure is correct."""
         assert TestProjectFlow is not None
-        assert hasattr(TestProjectFlow, 'test_create_new_project')
-        assert hasattr(TestProjectFlow, 'test_save_project')
-        assert hasattr(TestProjectFlow, 'test_load_project')
+        assert hasattr(TestProjectFlow, "test_create_new_project")
+        assert hasattr(TestProjectFlow, "test_save_project")
+        assert hasattr(TestProjectFlow, "test_load_project")
 
     def test_page_objects_importable(self):
         """Verify project page objects can be imported."""
@@ -85,11 +85,7 @@ class TestProjectFlowMock:
         assert os.path.exists(temp_project_dir)
         assert os.path.isdir(temp_project_dir)
 
-    def test_mock_create_project_flow(
-        self,
-        unique_project_name: str,
-        temp_project_dir: str
-    ):
+    def test_mock_create_project_flow(self, unique_project_name: str, temp_project_dir: str):
         """
         Test project creation flow with mocked page objects.
         """
@@ -132,10 +128,7 @@ class TestProjectFlowMock:
 
         logger.info("Mock create project flow completed")
 
-    def test_mock_save_load_project_flow(
-        self,
-        unique_project_name: str
-    ):
+    def test_mock_save_load_project_flow(self, unique_project_name: str):
         """
         Test project save and load flow with mocked page objects.
         """
@@ -221,12 +214,7 @@ class TestProjectFlow(E2ETestBase):
     # Test: Create New Project
     # =========================================================================
 
-    def test_create_new_project(
-        self,
-        unique_project_name: str,
-        temp_project_dir: str,
-        app_session
-    ):
+    def test_create_new_project(self, unique_project_name: str, temp_project_dir: str, app_session):
         """
         Test creating a new project.
 
@@ -250,30 +238,20 @@ class TestProjectFlow(E2ETestBase):
 
             # Create new project
             project_page.create_project(
-                name=unique_project_name,
-                description="E2E test project",
-                location=temp_project_dir
+                name=unique_project_name, description="E2E test project", location=temp_project_dir
             )
 
             # Verify project is open
             assert project_page.is_project_open()
             assert project_page.get_current_project_name() == unique_project_name
 
-            logger.info(
-                f"Created project '{unique_project_name}' "
-                f"in {timer.elapsed:.2f}s"
-            )
+            logger.info(f"Created project '{unique_project_name}' " f"in {timer.elapsed:.2f}s")
 
     # =========================================================================
     # Test: Save Project
     # =========================================================================
 
-    def test_save_project(
-        self,
-        unique_project_name: str,
-        temp_project_dir: str,
-        app_session
-    ):
+    def test_save_project(self, unique_project_name: str, temp_project_dir: str, app_session):
         """
         Test saving a project.
 
@@ -291,10 +269,7 @@ class TestProjectFlow(E2ETestBase):
         project_page = ProjectPage(app_session)
 
         # Create project first
-        project_page.create_project(
-            name=unique_project_name,
-            location=temp_project_dir
-        )
+        project_page.create_project(name=unique_project_name, location=temp_project_dir)
 
         # Make a modification (navigate to synthesis and back)
         main_window.navigate_to_studio()
@@ -316,12 +291,7 @@ class TestProjectFlow(E2ETestBase):
     # Test: Load Project
     # =========================================================================
 
-    def test_load_project(
-        self,
-        unique_project_name: str,
-        temp_project_dir: str,
-        app_session
-    ):
+    def test_load_project(self, unique_project_name: str, temp_project_dir: str, app_session):
         """
         Test loading an existing project.
 
@@ -339,10 +309,7 @@ class TestProjectFlow(E2ETestBase):
         project_page = ProjectPage(app_session)
 
         # Create and save project
-        project_page.create_project(
-            name=unique_project_name,
-            location=temp_project_dir
-        )
+        project_page.create_project(name=unique_project_name, location=temp_project_dir)
         project_page.click_save_project()
 
         # Close project
@@ -365,10 +332,7 @@ class TestProjectFlow(E2ETestBase):
     # =========================================================================
 
     def test_project_modification_tracking(
-        self,
-        unique_project_name: str,
-        temp_project_dir: str,
-        app_session
+        self, unique_project_name: str, temp_project_dir: str, app_session
     ):
         """
         Test that project modifications are properly tracked.
@@ -381,10 +345,7 @@ class TestProjectFlow(E2ETestBase):
         project_page = ProjectPage(app_session)
 
         # Create project
-        project_page.create_project(
-            name=unique_project_name,
-            location=temp_project_dir
-        )
+        project_page.create_project(name=unique_project_name, location=temp_project_dir)
 
         # Initially should not be modified
         project_page.click_save_project()
@@ -397,10 +358,7 @@ class TestProjectFlow(E2ETestBase):
     # Test: Recent Projects
     # =========================================================================
 
-    def test_recent_projects(
-        self,
-        app_session
-    ):
+    def test_recent_projects(self, app_session):
         """
         Test recent projects functionality.
         """
@@ -424,10 +382,7 @@ class TestProjectFlow(E2ETestBase):
     # =========================================================================
 
     def test_close_without_saving(
-        self,
-        unique_project_name: str,
-        temp_project_dir: str,
-        app_session
+        self, unique_project_name: str, temp_project_dir: str, app_session
     ):
         """
         Test closing a modified project without saving.
@@ -440,10 +395,7 @@ class TestProjectFlow(E2ETestBase):
         project_page = ProjectPage(app_session)
 
         # Create project
-        project_page.create_project(
-            name=unique_project_name,
-            location=temp_project_dir
-        )
+        project_page.create_project(name=unique_project_name, location=temp_project_dir)
 
         # Close without saving
         project_page.click_close_project(save=False)
@@ -457,12 +409,7 @@ class TestProjectFlow(E2ETestBase):
     # Test: Delete Project
     # =========================================================================
 
-    def test_delete_project(
-        self,
-        unique_project_name: str,
-        temp_project_dir: str,
-        app_session
-    ):
+    def test_delete_project(self, unique_project_name: str, temp_project_dir: str, app_session):
         """
         Test deleting a project.
         """
@@ -474,10 +421,7 @@ class TestProjectFlow(E2ETestBase):
         project_page = ProjectPage(app_session)
 
         # Create project
-        project_page.create_project(
-            name=unique_project_name,
-            location=temp_project_dir
-        )
+        project_page.create_project(name=unique_project_name, location=temp_project_dir)
         project_page.click_save_project()
         project_page.click_close_project(save=False)
 
@@ -504,10 +448,7 @@ class TestProjectBackendIntegration:
     Tests that verify project integration with backend.
     """
 
-    def test_project_api_list(
-        self,
-        api_client
-    ):
+    def test_project_api_list(self, api_client):
         """
         Test project listing API.
         """
@@ -522,20 +463,12 @@ class TestProjectBackendIntegration:
         else:
             logger.warning(f"Projects API returned: {response.status_code}")
 
-    def test_project_api_create(
-        self,
-        unique_project_name: str,
-        api_client
-    ):
+    def test_project_api_create(self, unique_project_name: str, api_client):
         """
         Test project creation API.
         """
         response = api_client.post(
-            "/api/projects",
-            json={
-                "name": unique_project_name,
-                "description": "E2E test project"
-            }
+            "/api/projects", json={"name": unique_project_name, "description": "E2E test project"}
         )
 
         if response.status_code in [200, 201]:
@@ -563,11 +496,7 @@ class TestProjectPerformance:
     """
 
     def test_project_creation_performance(
-        self,
-        unique_project_name: str,
-        temp_project_dir: str,
-        app_session,
-        performance_timer
+        self, unique_project_name: str, temp_project_dir: str, app_session, performance_timer
     ):
         """
         Test project creation performance.
@@ -582,19 +511,12 @@ class TestProjectPerformance:
         project_page = ProjectPage(app_session)
 
         with performance_timer("Create project") as timer:
-            project_page.create_project(
-                name=unique_project_name,
-                location=temp_project_dir
-            )
+            project_page.create_project(name=unique_project_name, location=temp_project_dir)
 
         assert timer.elapsed < 3.0, f"Creation too slow: {timer.elapsed:.2f}s"
 
     def test_project_save_performance(
-        self,
-        unique_project_name: str,
-        temp_project_dir: str,
-        app_session,
-        performance_timer
+        self, unique_project_name: str, temp_project_dir: str, app_session, performance_timer
     ):
         """
         Test project save performance.
@@ -607,10 +529,7 @@ class TestProjectPerformance:
         main_window.navigate_to_library()
 
         project_page = ProjectPage(app_session)
-        project_page.create_project(
-            name=unique_project_name,
-            location=temp_project_dir
-        )
+        project_page.create_project(name=unique_project_name, location=temp_project_dir)
 
         with performance_timer("Save project") as timer:
             project_page.click_save_project()
@@ -619,11 +538,7 @@ class TestProjectPerformance:
         assert timer.elapsed < 2.0, f"Save too slow: {timer.elapsed:.2f}s"
 
     def test_project_load_performance(
-        self,
-        unique_project_name: str,
-        temp_project_dir: str,
-        app_session,
-        performance_timer
+        self, unique_project_name: str, temp_project_dir: str, app_session, performance_timer
     ):
         """
         Test project load performance.
@@ -638,10 +553,7 @@ class TestProjectPerformance:
         project_page = ProjectPage(app_session)
 
         # Create and save first
-        project_page.create_project(
-            name=unique_project_name,
-            location=temp_project_dir
-        )
+        project_page.create_project(name=unique_project_name, location=temp_project_dir)
         project_page.click_save_project()
         project_page.click_close_project(save=False)
 

@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class AuthEventType(Enum):
     """Types of authentication events."""
+
     LOGIN_SUCCESS = "login_success"
     LOGIN_FAILURE = "login_failure"
     LOGOUT = "logout"
@@ -41,6 +42,7 @@ class AuthEventType(Enum):
 
 class RiskLevel(Enum):
     """Risk level of auth event."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -50,6 +52,7 @@ class RiskLevel(Enum):
 @dataclass
 class AuthEvent:
     """An authentication event."""
+
     id: str
     event_type: AuthEventType
     timestamp: datetime
@@ -66,6 +69,7 @@ class AuthEvent:
 @dataclass
 class AuthAuditConfig:
     """Configuration for auth audit."""
+
     storage_path: str = "data/auth_audit"
     retention_days: int = 365
     alert_on_risk_level: RiskLevel = RiskLevel.HIGH
@@ -197,9 +201,7 @@ class AuthAuditLogger:
 
         # Clean old failures
         cutoff = now - timedelta(minutes=self.config.lockout_duration_minutes)
-        self._login_failures[user_id] = [
-            t for t in self._login_failures[user_id] if t > cutoff
-        ]
+        self._login_failures[user_id] = [t for t in self._login_failures[user_id] if t > cutoff]
 
         # Check for lockout
         if len(self._login_failures[user_id]) >= self.config.max_login_failures:

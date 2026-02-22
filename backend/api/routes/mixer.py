@@ -54,12 +54,12 @@ def _validate_effect_chain_id(effect_chain_id: str | None, project_id: str) -> N
 
     try:
         from backend.services.effect_chain_store import get_effect_chain_store
+
         store = get_effect_chain_store()
         chain = store.get(effect_chain_id)
         if not chain:
             raise HTTPException(
-                status_code=400,
-                detail=f"Effect chain '{effect_chain_id}' not found"
+                status_code=400, detail=f"Effect chain '{effect_chain_id}' not found"
             )
     except ImportError:
         # Effects module not available - skip validation
@@ -227,9 +227,7 @@ async def create_send(project_id: str, send: MixerSend):
     """Create a new send bus."""
     try:
         if project_id not in _mixer_states:
-            _mixer_states[project_id] = _create_default_mixer_state(
-                project_id
-            ).model_dump()
+            _mixer_states[project_id] = _create_default_mixer_state(project_id).model_dump()
 
         state = _mixer_states[project_id]
         send_dict = send.model_dump()
@@ -305,9 +303,7 @@ async def create_return(project_id: str, return_bus: MixerReturn):
         _validate_effect_chain_id(return_bus.effect_chain_id, project_id)
 
         if project_id not in _mixer_states:
-            _mixer_states[project_id] = _create_default_mixer_state(
-                project_id
-            ).model_dump()
+            _mixer_states[project_id] = _create_default_mixer_state(project_id).model_dump()
 
         state = _mixer_states[project_id]
         return_dict = return_bus.model_dump()
@@ -391,9 +387,7 @@ async def create_subgroup(project_id: str, subgroup: MixerSubGroup):
         _validate_effect_chain_id(subgroup.effect_chain_id, project_id)
 
         if project_id not in _mixer_states:
-            _mixer_states[project_id] = _create_default_mixer_state(
-                project_id
-            ).model_dump()
+            _mixer_states[project_id] = _create_default_mixer_state(project_id).model_dump()
 
         state = _mixer_states[project_id]
         subgroup_dict = subgroup.model_dump()
@@ -477,9 +471,7 @@ async def update_master(project_id: str, master: MixerMaster):
         _validate_effect_chain_id(master.effect_chain_id, project_id)
 
         if project_id not in _mixer_states:
-            _mixer_states[project_id] = _create_default_mixer_state(
-                project_id
-            ).model_dump()
+            _mixer_states[project_id] = _create_default_mixer_state(project_id).model_dump()
 
         state = _mixer_states[project_id]
         master_dict = master.model_dump()
@@ -500,18 +492,12 @@ async def update_master(project_id: str, master: MixerMaster):
 # Channel Routing Endpoints
 
 
-@router.put(
-    "/state/{project_id}/channels/{channel_id}/routing", response_model=ChannelRouting
-)
-async def update_channel_routing(
-    project_id: str, channel_id: str, routing: ChannelRouting
-):
+@router.put("/state/{project_id}/channels/{channel_id}/routing", response_model=ChannelRouting)
+async def update_channel_routing(project_id: str, channel_id: str, routing: ChannelRouting):
     """Update routing for a specific channel."""
     try:
         if project_id not in _mixer_states:
-            _mixer_states[project_id] = _create_default_mixer_state(
-                project_id
-            ).model_dump()
+            _mixer_states[project_id] = _create_default_mixer_state(project_id).model_dump()
 
         state = _mixer_states[project_id]
         routing_list = state.get("channel_routing", [])
@@ -549,9 +535,7 @@ async def update_channel_routing(
 async def list_presets(project_id: str):
     """List all mixer presets for a project."""
     try:
-        presets = [
-            p for p in _mixer_presets.values() if p.get("project_id") == project_id
-        ]
+        presets = [p for p in _mixer_presets.values() if p.get("project_id") == project_id]
         return presets
     except Exception as e:
         logger.error(f"Failed to list presets: {e}")

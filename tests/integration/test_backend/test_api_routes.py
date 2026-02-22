@@ -603,12 +603,15 @@ class TestTracingAPI(IntegrationTestBase):
     @pytest.fixture
     def tracing_client(self, mock_trace_exporter, mock_trace_analyzer):
         """Create test client with mocked tracing services."""
-        with patch(
-            "backend.api.routes.tracing.get_trace_exporter",
-            return_value=mock_trace_exporter,
-        ), patch(
-            "backend.api.routes.tracing.get_trace_analyzer",
-            return_value=mock_trace_analyzer,
+        with (
+            patch(
+                "backend.api.routes.tracing.get_trace_exporter",
+                return_value=mock_trace_exporter,
+            ),
+            patch(
+                "backend.api.routes.tracing.get_trace_analyzer",
+                return_value=mock_trace_analyzer,
+            ),
         ):
             from fastapi import FastAPI
 

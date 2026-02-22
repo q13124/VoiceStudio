@@ -91,6 +91,7 @@ def _discover_engines_from_manifests():
             except Exception as e:
                 # Log but don't fail - some engines may have invalid manifests
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.debug(f"Failed to discover engine {engine_id} from manifest: {e}")
 
@@ -98,6 +99,7 @@ def _discover_engines_from_manifests():
     except Exception as e:
         # If manifest discovery fails, engines will still work via explicit registration
         import logging
+
         logger = logging.getLogger(__name__)
         logger.debug(f"Engine manifest discovery failed (non-critical): {e}")
 

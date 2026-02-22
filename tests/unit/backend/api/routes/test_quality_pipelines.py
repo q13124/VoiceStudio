@@ -2,6 +2,7 @@
 Unit Tests for Quality Pipelines API Route
 Tests quality pipeline endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -28,9 +29,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import quality_pipelines
 except ImportError:
-    pytest.skip(
-        "Could not import quality_pipelines route module", allow_module_level=True
-    )
+    pytest.skip("Could not import quality_pipelines route module", allow_module_level=True)
 
 
 class TestQualityPipelinesRouteImports:
@@ -38,12 +37,8 @@ class TestQualityPipelinesRouteImports:
 
     def test_quality_pipelines_module_imports(self):
         """Test quality_pipelines module can be imported."""
-        assert (
-            quality_pipelines is not None
-        ), "Failed to import quality_pipelines module"
-        assert hasattr(
-            quality_pipelines, "router"
-        ), "quality_pipelines module missing router"
+        assert quality_pipelines is not None, "Failed to import quality_pipelines module"
+        assert hasattr(quality_pipelines, "router"), "quality_pipelines module missing router"
         assert hasattr(
             quality_pipelines, "PipelineConfiguration"
         ), "quality_pipelines module missing PipelineConfiguration model"
@@ -78,46 +73,32 @@ class TestQualityPipelinesRouteHandlers:
 
     def test_list_presets_handler_exists(self):
         """Test list_presets handler exists."""
-        assert hasattr(
-            quality_pipelines, "list_presets"
-        ), "list_presets handler should exist"
-        assert callable(
-            quality_pipelines.list_presets
-        ), "list_presets should be callable"
+        assert hasattr(quality_pipelines, "list_presets"), "list_presets handler should exist"
+        assert callable(quality_pipelines.list_presets), "list_presets should be callable"
 
     def test_get_preset_handler_exists(self):
         """Test get_preset handler exists."""
-        assert hasattr(
-            quality_pipelines, "get_preset"
-        ), "get_preset handler should exist"
+        assert hasattr(quality_pipelines, "get_preset"), "get_preset handler should exist"
         assert callable(quality_pipelines.get_preset), "get_preset should be callable"
 
     def test_apply_pipeline_handler_exists(self):
         """Test apply_pipeline handler exists."""
-        assert hasattr(
-            quality_pipelines, "apply_pipeline"
-        ), "apply_pipeline handler should exist"
-        assert callable(
-            quality_pipelines.apply_pipeline
-        ), "apply_pipeline should be callable"
+        assert hasattr(quality_pipelines, "apply_pipeline"), "apply_pipeline handler should exist"
+        assert callable(quality_pipelines.apply_pipeline), "apply_pipeline should be callable"
 
     def test_preview_pipeline_handler_exists(self):
         """Test preview_pipeline handler exists."""
         assert hasattr(
             quality_pipelines, "preview_pipeline"
         ), "preview_pipeline handler should exist"
-        assert callable(
-            quality_pipelines.preview_pipeline
-        ), "preview_pipeline should be callable"
+        assert callable(quality_pipelines.preview_pipeline), "preview_pipeline should be callable"
 
     def test_compare_pipeline_handler_exists(self):
         """Test compare_pipeline handler exists."""
         assert hasattr(
             quality_pipelines, "compare_pipeline"
         ), "compare_pipeline handler should exist"
-        assert callable(
-            quality_pipelines.compare_pipeline
-        ), "compare_pipeline should be callable"
+        assert callable(quality_pipelines.compare_pipeline), "compare_pipeline should be callable"
 
 
 class TestQualityPipelinesRouteFunctionality:
@@ -299,9 +280,7 @@ class TestQualityPipelinesRouteFunctionality:
         mock_compare.return_value = {
             "before_metrics": {"mos_score": 4.0},
             "after_metrics": {"mos_score": 4.5},
-            "improvements": {
-                "mos_score": {"before": 4.0, "after": 4.5, "improvement": 0.5}
-            },
+            "improvements": {"mos_score": {"before": 4.0, "after": 4.5, "improvement": 0.5}},
         }
 
         # Test compare_pipeline

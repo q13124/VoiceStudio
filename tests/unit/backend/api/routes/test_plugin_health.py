@@ -221,12 +221,15 @@ class TestPluginDetailEndpoint:
         mock_aggregator = MagicMock()
         mock_aggregator.get_plugin_health.return_value = mock_ph
 
-        with patch(
-            "backend.api.routes.plugin_health._get_metrics_aggregator",
-            return_value=mock_aggregator,
-        ), patch(
-            "backend.api.routes.plugin_health._get_persistence",
-            return_value=None,
+        with (
+            patch(
+                "backend.api.routes.plugin_health._get_metrics_aggregator",
+                return_value=mock_aggregator,
+            ),
+            patch(
+                "backend.api.routes.plugin_health._get_persistence",
+                return_value=None,
+            ),
         ):
             response = client.get("/api/plugins/health/plugins/test-plugin")
             assert response.status_code == 200

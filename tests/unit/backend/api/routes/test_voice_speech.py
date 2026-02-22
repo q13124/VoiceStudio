@@ -2,6 +2,7 @@
 Unit Tests for Voice Speech API Route
 Tests voice speech processing endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -81,21 +82,13 @@ class TestVoiceSpeechRouteHandlers:
 
     def test_phonemize_text_handler_exists(self):
         """Test phonemize_text handler exists."""
-        assert hasattr(
-            voice_speech, "phonemize_text"
-        ), "phonemize_text handler should exist"
-        assert callable(
-            voice_speech.phonemize_text
-        ), "phonemize_text should be callable"
+        assert hasattr(voice_speech, "phonemize_text"), "phonemize_text handler should exist"
+        assert callable(voice_speech.phonemize_text), "phonemize_text should be callable"
 
     def test_recognize_speech_handler_exists(self):
         """Test recognize_speech handler exists."""
-        assert hasattr(
-            voice_speech, "recognize_speech"
-        ), "recognize_speech handler should exist"
-        assert callable(
-            voice_speech.recognize_speech
-        ), "recognize_speech should be callable"
+        assert hasattr(voice_speech, "recognize_speech"), "recognize_speech handler should exist"
+        assert callable(voice_speech.recognize_speech), "recognize_speech should be callable"
 
     def test_get_available_backends_handler_exists(self):
         """Test get_available_backends handler exists."""
@@ -113,9 +106,7 @@ class TestVoiceSpeechRouteFunctionality:
     @patch("backend.api.routes.voice_speech._get_audio_path")
     @patch("backend.api.routes.voice_speech.sf")
     @patch("backend.api.routes.voice_speech.VoiceActivityDetector")
-    def test_detect_voice_activity_success(
-        self, mock_vad_class, mock_sf, mock_get_audio_path
-    ):
+    def test_detect_voice_activity_success(self, mock_vad_class, mock_sf, mock_get_audio_path):
         """Test detect_voice_activity with successful result."""
         import os
         import tempfile
@@ -183,9 +174,7 @@ class TestVoiceSpeechRouteFunctionality:
         mock_phonemizer_class.return_value = mock_phonemizer
 
         # Create request
-        request = voice_speech.PhonemizationRequest(
-            text="hello", language="en-us", backend="gruut"
-        )
+        request = voice_speech.PhonemizationRequest(text="hello", language="en-us", backend="gruut")
 
         # Test phonemize_text
         result = voice_speech.phonemize_text(request)
@@ -198,9 +187,7 @@ class TestVoiceSpeechRouteFunctionality:
     @patch("backend.api.routes.voice_speech._get_audio_path")
     @patch("backend.api.routes.voice_speech.sf")
     @patch("backend.api.routes.voice_speech.SpeechRecognizer")
-    def test_recognize_speech_success(
-        self, mock_recognizer_class, mock_sf, mock_get_audio_path
-    ):
+    def test_recognize_speech_success(self, mock_recognizer_class, mock_sf, mock_get_audio_path):
         """Test recognize_speech with successful result."""
         import os
         import tempfile
@@ -295,9 +282,7 @@ class TestVoiceSpeechRouteErrorHandling:
         mock_phonemizer_class.return_value = mock_phonemizer
 
         # Create request with invalid backend
-        request = voice_speech.PhonemizationRequest(
-            text="hello", backend="invalid_backend"
-        )
+        request = voice_speech.PhonemizationRequest(text="hello", backend="invalid_backend")
 
         # Test phonemize_text - should raise HTTPException
         with pytest.raises(Exception):  # Should raise HTTPException

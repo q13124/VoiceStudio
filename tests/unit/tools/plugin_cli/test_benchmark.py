@@ -474,7 +474,9 @@ class TestComparisonFunctionality:
 
         curr = current_results["startup"]
         base = baseline_results["startup"]
-        change_pct = ((curr["latency"]["mean_ms"] - base["latency"]["mean_ms"]) / base["latency"]["mean_ms"]) * 100
+        change_pct = (
+            (curr["latency"]["mean_ms"] - base["latency"]["mean_ms"]) / base["latency"]["mean_ms"]
+        ) * 100
 
         assert change_pct == 50.0  # 50% regression
 

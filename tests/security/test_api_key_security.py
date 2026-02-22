@@ -31,6 +31,7 @@ def api_client():
     from fastapi.testclient import TestClient
 
     from backend.api.main import app
+
     return TestClient(app)
 
 
@@ -88,11 +89,14 @@ class TestAPIKeyNotExposed:
         if isinstance(data, dict):
             for key, value in data.items():
                 key_lower = key.lower()
-                if any(k in key_lower for k in ["key", "secret", "token", "password", "credential"]):
+                if any(
+                    k in key_lower for k in ["key", "secret", "token", "password", "credential"]
+                ):
                     if isinstance(value, str) and len(value) > 8:
                         # Value should be masked or placeholder
-                        assert value.startswith("***") or value == "REDACTED" or value.startswith("<"), \
-                            f"Possible exposed key at {path}.{key}"
+                        assert (
+                            value.startswith("***") or value == "REDACTED" or value.startswith("<")
+                        ), f"Possible exposed key at {path}.{key}"
                 self._check_no_exposed_keys(value, f"{path}.{key}")
         elif isinstance(data, list):
             for i, item in enumerate(data):
@@ -153,10 +157,7 @@ class TestAPIKeyValidation:
         ]
 
         for key in invalid_keys:
-            response = api_client.get(
-                "/api/health",
-                headers={"X-API-Key": key}
-            )
+            response = api_client.get("/api/health", headers={"X-API-Key": key})
             # Should handle gracefully
             assert response.status_code in (200, 400, 401, 403)
 
@@ -179,10 +180,7 @@ class TestAPIKeyValidation:
             iterations = 5
             start = time.perf_counter()
             for _ in range(iterations):
-                api_client.get(
-                    "/api/health",
-                    headers={"X-API-Key": key}
-                )
+                api_client.get("/api/health", headers={"X-API-Key": key})
             elapsed = (time.perf_counter() - start) / iterations
             times.append(elapsed)
 
@@ -192,7 +190,9 @@ class TestAPIKeyValidation:
             max_time = max(times)
             min_time = min(times)
             # Allow high variance since network/system noise dominates
-            assert max_time < min_time * 10, "Timing variance suggests possible timing attack vulnerability"
+            assert (
+                max_time < min_time * 10
+            ), "Timing variance suggests possible timing attack vulnerability"
 
 
 class TestAPIKeyStorage:
@@ -257,8 +257,9 @@ class TestAPIKeyStorage:
         if gitignore_path.exists():
             content = gitignore_path.read_text()
             # Should have some form of api-keys.json exclusion
-            assert "api-keys" in content.lower() or "config/" in content, \
-                "api-keys.json should be gitignored"
+            assert (
+                "api-keys" in content.lower() or "config/" in content
+            ), "api-keys.json should be gitignored"
 
 
 class TestAPIKeyRotation:
@@ -270,10 +271,7 @@ class TestAPIKeyRotation:
             pytest.skip("Backend not available")
 
         # This test verifies the behavior exists - actual rotation requires setup
-        response = api_client.post(
-            "/api/admin/rotate-api-key",
-            json={}
-        )
+        response = api_client.post("/api/admin/rotate-api-key", json={})
         # Endpoint may or may not exist
         assert response.status_code in (200, 401, 403, 404, 405, 422)
 
@@ -342,10 +340,7 @@ class TestAPIKeyScope:
         read_only_key = "test-readonly-key"
 
         # Use /api/cache/clear which is a POST endpoint that exists
-        response = api_client.post(
-            "/api/cache/clear",
-            headers={"X-API-Key": read_only_key}
-        )
+        response = api_client.post("/api/cache/clear", headers={"X-API-Key": read_only_key})
 
         # Should succeed (no RBAC) or fail with 401/403 (RBAC enabled)
         # Both behaviors are acceptable depending on configuration
@@ -369,5 +364,8 @@ class TestAPIKeyScope:
                 response = api_client.post(endpoint, json={})
 
             # Should require authentication
-            assert response.status_code in (401, 403, 404), \
-                f"Admin endpoint {endpoint} should require auth"
+            assert response.status_code in (
+                401,
+                403,
+                404,
+            ), f"Admin endpoint {endpoint} should require auth"

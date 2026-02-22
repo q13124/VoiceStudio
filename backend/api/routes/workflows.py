@@ -264,12 +264,10 @@ async def list_workflows(
         # Sort by modified date (newest first)
         workflows.sort(key=lambda w: w.modified, reverse=True)
 
-        return workflows[skip:skip + limit]
+        return workflows[skip : skip + limit]
     except Exception as e:
         logger.error(f"Failed to list workflows: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to list workflows: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to list workflows: {e!s}")
 
 
 @router.get("/{workflow_id}", response_model=Workflow)
@@ -278,9 +276,7 @@ async def get_workflow(workflow_id: str):
     """Get a specific workflow."""
     try:
         if workflow_id not in _workflows:
-            raise HTTPException(
-                status_code=404, detail=f"Workflow '{workflow_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Workflow '{workflow_id}' not found")
 
         return _workflows[workflow_id]
     except HTTPException:
@@ -318,7 +314,7 @@ async def create_workflow(request: WorkflowCreateRequest):
         if validation_errors:
             raise HTTPException(
                 status_code=400,
-                detail=f"Workflow validation failed: {'; '.join(validation_errors)}"
+                detail=f"Workflow validation failed: {'; '.join(validation_errors)}",
             )
 
         # Validate audio IDs if referenced in steps
@@ -328,7 +324,7 @@ async def create_workflow(request: WorkflowCreateRequest):
                 if not _validate_audio_id(audio_id):
                     raise HTTPException(
                         status_code=400,
-                        detail=f"Invalid audio_id '{audio_id}' in step '{step.id}': audio not found"
+                        detail=f"Invalid audio_id '{audio_id}' in step '{step.id}': audio not found",
                     )
 
         _workflows[workflow_id] = workflow
@@ -339,9 +335,7 @@ async def create_workflow(request: WorkflowCreateRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to create workflow: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to create workflow: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to create workflow: {e!s}")
 
 
 @router.put("/{workflow_id}", response_model=Workflow)
@@ -349,9 +343,7 @@ async def update_workflow(workflow_id: str, request: WorkflowUpdateRequest):
     """Update an existing workflow."""
     try:
         if workflow_id not in _workflows:
-            raise HTTPException(
-                status_code=404, detail=f"Workflow '{workflow_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Workflow '{workflow_id}' not found")
 
         workflow = _workflows[workflow_id]
 
@@ -375,7 +367,7 @@ async def update_workflow(workflow_id: str, request: WorkflowUpdateRequest):
         if validation_errors:
             raise HTTPException(
                 status_code=400,
-                detail=f"Workflow validation failed: {'; '.join(validation_errors)}"
+                detail=f"Workflow validation failed: {'; '.join(validation_errors)}",
             )
 
         # Validate audio IDs if referenced in steps
@@ -385,7 +377,7 @@ async def update_workflow(workflow_id: str, request: WorkflowUpdateRequest):
                 if not _validate_audio_id(audio_id):
                     raise HTTPException(
                         status_code=400,
-                        detail=f"Invalid audio_id '{audio_id}' in step '{step.id}': audio not found"
+                        detail=f"Invalid audio_id '{audio_id}' in step '{step.id}': audio not found",
                     )
 
         workflow.modified = datetime.utcnow().isoformat()
@@ -397,9 +389,7 @@ async def update_workflow(workflow_id: str, request: WorkflowUpdateRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to update workflow '{workflow_id}': {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to update workflow: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to update workflow: {e!s}")
 
 
 @router.delete("/{workflow_id}", status_code=204)
@@ -407,9 +397,7 @@ async def delete_workflow(workflow_id: str):
     """Delete a workflow."""
     try:
         if workflow_id not in _workflows:
-            raise HTTPException(
-                status_code=404, detail=f"Workflow '{workflow_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Workflow '{workflow_id}' not found")
 
         del _workflows[workflow_id]
         logger.info(f"Deleted workflow '{workflow_id}'")
@@ -419,33 +407,23 @@ async def delete_workflow(workflow_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete workflow '{workflow_id}': {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to delete workflow: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to delete workflow: {e!s}")
 
 
 @router.post("/{workflow_id}/execute", response_model=WorkflowExecutionResult)
-async def execute_workflow(
-    workflow_id: str, request: WorkflowExecutionRequest | None = None
-):
+async def execute_workflow(workflow_id: str, request: WorkflowExecutionRequest | None = None):
     """Execute a workflow."""
     try:
         if workflow_id not in _workflows:
-            raise HTTPException(
-                status_code=404, detail=f"Workflow '{workflow_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Workflow '{workflow_id}' not found")
 
         workflow = _workflows[workflow_id]
 
         if not workflow.is_enabled:
-            raise HTTPException(
-                status_code=400, detail=f"Workflow '{workflow_id}' is disabled"
-            )
+            raise HTTPException(status_code=400, detail=f"Workflow '{workflow_id}' is disabled")
 
         if not workflow.steps:
-            raise HTTPException(
-                status_code=400, detail=f"Workflow '{workflow_id}' has no steps"
-            )
+            raise HTTPException(status_code=400, detail=f"Workflow '{workflow_id}' has no steps")
 
         # Sort steps by order
         sorted_steps = sorted(workflow.steps, key=lambda s: s.order)
@@ -505,9 +483,7 @@ async def execute_workflow(
                 else None
             ),
             progress=(
-                1.0
-                if status == "completed"
-                else (current_step_index + 1) / len(sorted_steps)
+                1.0 if status == "completed" else (current_step_index + 1) / len(sorted_steps)
             ),
             error_message=error_message,
             outputs=outputs,
@@ -521,14 +497,10 @@ async def execute_workflow(
         raise
     except Exception as e:
         logger.error(f"Failed to execute workflow '{workflow_id}': {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to execute workflow: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to execute workflow: {e!s}")
 
 
-async def _execute_workflow_step(
-    step: WorkflowStep, context: dict[str, Any]
-) -> dict[str, Any]:
+async def _execute_workflow_step(step: WorkflowStep, context: dict[str, Any]) -> dict[str, Any]:
     """Execute a single workflow step."""
     step_type = step.type.lower()
 
@@ -544,9 +516,7 @@ async def _execute_workflow_step(
         raise ValueError(f"Unknown workflow step type: {step_type}")
 
 
-async def _execute_synthesize_step(
-    step: WorkflowStep, context: dict[str, Any]
-) -> dict[str, Any]:
+async def _execute_synthesize_step(step: WorkflowStep, context: dict[str, Any]) -> dict[str, Any]:
     """Execute a synthesize step."""
     # Get text from properties or context
     text = step.properties.get("text", "")
@@ -562,9 +532,7 @@ async def _execute_synthesize_step(
         profile_id = context["profile_id"]
 
     if not profile_id:
-        raise ValueError(
-            "Synthesize step requires 'profile_id' property or context variable"
-        )
+        raise ValueError("Synthesize step requires 'profile_id' property or context variable")
 
     # Get optional parameters
     engine = step.properties.get("engine", "xtts_v2")
@@ -603,9 +571,7 @@ async def _execute_synthesize_step(
             "audio_id": synth_response.audio_id,
             "audio_url": synth_response.audio_url,
             "quality_metrics": (
-                synth_response.quality_metrics.dict()
-                if synth_response.quality_metrics
-                else None
+                synth_response.quality_metrics.dict() if synth_response.quality_metrics else None
             ),
             "status": "completed",
         }
@@ -614,9 +580,7 @@ async def _execute_synthesize_step(
         raise ValueError(f"Synthesis failed: {e!s}")
 
 
-async def _execute_effect_step(
-    step: WorkflowStep, context: dict[str, Any]
-) -> dict[str, Any]:
+async def _execute_effect_step(step: WorkflowStep, context: dict[str, Any]) -> dict[str, Any]:
     """Execute an effect step."""
     # Get audio input from previous step or context
     audio_id = step.properties.get("audio_id", "")
@@ -630,9 +594,7 @@ async def _execute_effect_step(
                     break
 
     if not audio_id:
-        raise ValueError(
-            "Effect step requires 'audio_id' property or audio from previous step"
-        )
+        raise ValueError("Effect step requires 'audio_id' property or audio from previous step")
 
     # Get effect parameters
     effect_type = step.properties.get("effect_type", "")
@@ -741,9 +703,7 @@ async def _execute_effect_step(
         raise ValueError(f"Effect application failed: {e!s}")
 
 
-async def _execute_export_step(
-    step: WorkflowStep, context: dict[str, Any]
-) -> dict[str, Any]:
+async def _execute_export_step(step: WorkflowStep, context: dict[str, Any]) -> dict[str, Any]:
     """Execute an export step."""
     # Get audio input from previous step or context
     audio_id = step.properties.get("audio_id", "")
@@ -757,9 +717,7 @@ async def _execute_export_step(
                     break
 
     if not audio_id:
-        raise ValueError(
-            "Export step requires 'audio_id' property or audio from previous step"
-        )
+        raise ValueError("Export step requires 'audio_id' property or audio from previous step")
 
     # Get export path
     export_path = step.properties.get("export_path", "")
@@ -807,9 +765,7 @@ async def _execute_export_step(
         raise ValueError(f"Export failed: {e!s}")
 
 
-async def _execute_control_step(
-    step: WorkflowStep, context: dict[str, Any]
-) -> dict[str, Any]:
+async def _execute_control_step(step: WorkflowStep, context: dict[str, Any]) -> dict[str, Any]:
     """Execute a control step (delay, condition, etc.)."""
     control_type = step.properties.get("control_type", "delay")
 
@@ -838,9 +794,7 @@ async def _execute_control_step(
         result = False
         if condition:
             # Use safe expression evaluator (replaces dangerous eval)
-            safe_context = {
-                k: v for k, v in context.items() if not k.startswith("step_")
-            }
+            safe_context = {k: v for k, v in context.items() if not k.startswith("step_")}
             result = evaluate_condition(condition, safe_context, default=False)
         elif variable_name:
             # Compare variable value
@@ -871,8 +825,7 @@ async def _execute_control_step(
         return {
             "type": "control",
             "control_type": "condition",
-            "condition": condition
-            or f"{variable_name} {condition_type} {expected_value}",
+            "condition": condition or f"{variable_name} {condition_type} {expected_value}",
             "result": result,
             "status": "completed",
         }

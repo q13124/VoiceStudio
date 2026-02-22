@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.engines import quality_metrics_batch
 except ImportError:
-    pytest.skip(
-        "Could not import quality_metrics_batch", allow_module_level=True
-    )
+    pytest.skip("Could not import quality_metrics_batch", allow_module_level=True)
 
 
 class TestQualityMetricsBatchImports:
@@ -25,9 +23,7 @@ class TestQualityMetricsBatchImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            quality_metrics_batch is not None
-        ), "Failed to import quality_metrics_batch module"
+        assert quality_metrics_batch is not None, "Failed to import quality_metrics_batch module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -60,9 +56,7 @@ class TestQualityMetricsBatchClasses:
         """Test BatchQualityProcessor class exists."""
         if hasattr(quality_metrics_batch, "BatchQualityProcessor"):
             cls = quality_metrics_batch.BatchQualityProcessor
-            assert isinstance(
-                cls, type
-            ), "BatchQualityProcessor should be a class"
+            assert isinstance(cls, type), "BatchQualityProcessor should be a class"
 
 
 if __name__ == "__main__":

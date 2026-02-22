@@ -160,13 +160,9 @@ class UnifiedTrainer:
             raise RuntimeError(f"Trainer for engine '{self.engine}' not available")
 
         if hasattr(self.trainer, "prepare_dataset"):
-            return self.trainer.prepare_dataset(
-                audio_files, transcripts, output_metadata
-            )
+            return self.trainer.prepare_dataset(audio_files, transcripts, output_metadata)
         else:
-            raise RuntimeError(
-                f"Dataset preparation unavailable for engine '{self.engine}'"
-            )
+            raise RuntimeError(f"Dataset preparation unavailable for engine '{self.engine}'")
 
     def initialize_model(
         self, config_path: str | None = None, base_model: str | None = None
@@ -287,9 +283,7 @@ class UnifiedTrainer:
             )
             return True  # Cancellation requested successfully
 
-    def export_model(
-        self, output_path: str | None = None, model_name: str | None = None
-    ) -> str:
+    def export_model(self, output_path: str | None = None, model_name: str | None = None) -> str:
         """
         Export trained model.
 
@@ -374,9 +368,7 @@ class UnifiedTrainer:
         Returns:
             UnifiedTrainer instance
         """
-        return UnifiedTrainer(
-            engine=engine, device=device, gpu=gpu, output_dir=output_dir
-        )
+        return UnifiedTrainer(engine=engine, device=device, gpu=gpu, output_dir=output_dir)
 
 
 def create_unified_trainer(

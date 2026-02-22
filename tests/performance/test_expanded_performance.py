@@ -66,9 +66,7 @@ class TestBackendAPIPerformance:
 
         # Benchmark create
         create_metrics = benchmark.run(create_profile, iterations=5)
-        assert (
-            create_metrics.avg_time < 1.0
-        ), f"Create took {create_metrics.avg_time:.3f}s"
+        assert create_metrics.avg_time < 1.0, f"Create took {create_metrics.avg_time:.3f}s"
 
         # Benchmark list
         list_metrics = benchmark.run(list_profiles, iterations=10)
@@ -95,9 +93,7 @@ class TestBackendAPIPerformance:
 
         # Benchmark create
         create_metrics = benchmark.run(create_project, iterations=5)
-        assert (
-            create_metrics.avg_time < 1.0
-        ), f"Create took {create_metrics.avg_time:.3f}s"
+        assert create_metrics.avg_time < 1.0, f"Create took {create_metrics.avg_time:.3f}s"
 
         # Benchmark list
         list_metrics = benchmark.run(list_projects, iterations=10)
@@ -122,11 +118,7 @@ class TestBackendAPIPerformance:
         def batch_request():
             response = client.post(
                 "/api/batch",
-                json={
-                    "operations": [
-                        {"type": "synthesize", "text": "Test", "profile_id": "test"}
-                    ]
-                },
+                json={"operations": [{"type": "synthesize", "text": "Test", "profile_id": "test"}]},
             )
             return response.status_code in [200, 400]
 
@@ -262,13 +254,9 @@ class TestConcurrentLoadPerformance:
             response = client.get("/api/health")
             return response.status_code == 200
 
-        results = load_tester.run_concurrent(
-            health_check, num_threads=10, requests_per_thread=10
-        )
+        results = load_tester.run_concurrent(health_check, num_threads=10, requests_per_thread=10)
 
-        assert (
-            results["success_rate"] >= 95.0
-        ), f"Success rate {results['success_rate']:.1f}%"
+        assert results["success_rate"] >= 95.0, f"Success rate {results['success_rate']:.1f}%"
         assert (
             results["avg_response_time"] < 0.5
         ), f"Avg response time {results['avg_response_time']:.3f}s"
@@ -284,13 +272,9 @@ class TestConcurrentLoadPerformance:
             response = client.get("/api/profiles")
             return response.status_code == 200
 
-        results = load_tester.run_concurrent(
-            list_profiles, num_threads=5, requests_per_thread=5
-        )
+        results = load_tester.run_concurrent(list_profiles, num_threads=5, requests_per_thread=5)
 
-        assert (
-            results["success_rate"] >= 90.0
-        ), f"Success rate {results['success_rate']:.1f}%"
+        assert results["success_rate"] >= 90.0, f"Success rate {results['success_rate']:.1f}%"
         assert (
             results["avg_response_time"] < 1.0
         ), f"Avg response time {results['avg_response_time']:.3f}s"
@@ -478,9 +462,7 @@ class TestPerformanceBaselines:
                 200,
                 404,
             ], f"{endpoint} returned {response.status_code}"
-            assert (
-                elapsed < max_time
-            ), f"{endpoint} took {elapsed:.3f}s (baseline: < {max_time}s)"
+            assert elapsed < max_time, f"{endpoint} took {elapsed:.3f}s (baseline: < {max_time}s)"
 
     def test_throughput_baseline(self, client):
         """Test throughput baseline."""
@@ -490,9 +472,7 @@ class TestPerformanceBaselines:
             response = client.get("/api/health")
             return response.status_code == 200
 
-        results = load_tester.run_concurrent(
-            health_check, num_threads=10, requests_per_thread=10
-        )
+        results = load_tester.run_concurrent(health_check, num_threads=10, requests_per_thread=10)
 
         # Should handle at least 50 requests/second
         assert (
@@ -510,9 +490,5 @@ class TestPerformanceBaselines:
         metrics = benchmark.run(health_check, iterations=100)
 
         # P95 should be reasonable
-        assert (
-            metrics.p95_time < 0.5
-        ), f"P95 latency {metrics.p95_time:.3f}s (should be < 0.5s)"
-        assert (
-            metrics.p99_time < 1.0
-        ), f"P99 latency {metrics.p99_time:.3f}s (should be < 1.0s)"
+        assert metrics.p95_time < 0.5, f"P95 latency {metrics.p95_time:.3f}s (should be < 0.5s)"
+        assert metrics.p99_time < 1.0, f"P99 latency {metrics.p99_time:.3f}s (should be < 1.0s)"

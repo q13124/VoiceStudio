@@ -34,4 +34,3 @@ def test_audio_artifact_registry_persists_across_restart(tmp_path: Path, monkeyp
     registry2 = get_audio_registry()
 
     assert registry2.get(audio_id) == cached_path
-

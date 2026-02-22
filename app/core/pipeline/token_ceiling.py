@@ -20,15 +20,17 @@ logger = logging.getLogger(__name__)
 
 class CostTier(str, Enum):
     """Cost tier for different pipeline modes."""
-    FREE = "free"        # Local models (Ollama, etc.)
-    LOW = "low"          # Cascade with cloud STT/TTS
-    MEDIUM = "medium"    # S2S with short conversations
-    HIGH = "high"        # S2S with long context accumulation
+
+    FREE = "free"  # Local models (Ollama, etc.)
+    LOW = "low"  # Cascade with cloud STT/TTS
+    MEDIUM = "medium"  # S2S with short conversations
+    HIGH = "high"  # S2S with long context accumulation
 
 
 @dataclass
 class UsageRecord:
     """Record of token/audio usage for a session."""
+
     session_id: str
     provider: str
     input_tokens: int = 0
@@ -43,13 +45,14 @@ class UsageRecord:
 @dataclass
 class CeilingConfig:
     """Configuration for token ceiling strategy."""
+
     # Token limits
-    soft_ceiling_tokens: int = 50000   # Warn and suggest switching
+    soft_ceiling_tokens: int = 50000  # Warn and suggest switching
     hard_ceiling_tokens: int = 100000  # Auto-switch to cascade
     # Time limits
     max_session_minutes: float = 15.0  # Auto-switch after this duration
     # Cost thresholds (approximate, in USD)
-    max_estimated_cost: float = 1.0    # Max cost before auto-switch
+    max_estimated_cost: float = 1.0  # Max cost before auto-switch
     # Behavior
     auto_switch: bool = True
     notify_on_soft_ceiling: bool = True
@@ -64,9 +67,9 @@ class TokenCeilingManager:
     """
 
     # Approximate cost per token (varies by provider)
-    COST_PER_INPUT_TOKEN = 0.000001    # ~$1/1M tokens
-    COST_PER_OUTPUT_TOKEN = 0.000004   # ~$4/1M tokens
-    COST_PER_AUDIO_SECOND = 0.0001     # ~$0.06/min
+    COST_PER_INPUT_TOKEN = 0.000001  # ~$1/1M tokens
+    COST_PER_OUTPUT_TOKEN = 0.000004  # ~$4/1M tokens
+    COST_PER_AUDIO_SECOND = 0.0001  # ~$0.06/min
 
     def __init__(
         self,
@@ -138,19 +141,27 @@ class TokenCeilingManager:
         # Hard ceiling: auto-switch
         if total_tokens >= self._config.hard_ceiling_tokens:
             result["should_switch"] = True
-            result["reason"] = f"Hard token ceiling reached ({total_tokens}/{self._config.hard_ceiling_tokens})"
+            result["reason"] = (
+                f"Hard token ceiling reached ({total_tokens}/{self._config.hard_ceiling_tokens})"
+            )
 
         elif elapsed_minutes >= self._config.max_session_minutes:
             result["should_switch"] = True
-            result["reason"] = f"Session duration limit ({elapsed_minutes:.0f}/{self._config.max_session_minutes:.0f} min)"
+            result["reason"] = (
+                f"Session duration limit ({elapsed_minutes:.0f}/{self._config.max_session_minutes:.0f} min)"
+            )
 
         elif estimated_cost >= self._config.max_estimated_cost:
             result["should_switch"] = True
-            result["reason"] = f"Cost ceiling reached (${estimated_cost:.4f}/${self._config.max_estimated_cost:.2f})"
+            result["reason"] = (
+                f"Cost ceiling reached (${estimated_cost:.4f}/${self._config.max_estimated_cost:.2f})"
+            )
 
         # Soft ceiling: warn
         elif total_tokens >= self._config.soft_ceiling_tokens:
-            result["warning"] = f"Approaching token ceiling ({total_tokens}/{self._config.hard_ceiling_tokens})"
+            result["warning"] = (
+                f"Approaching token ceiling ({total_tokens}/{self._config.hard_ceiling_tokens})"
+            )
             if self._on_warning and self._config.notify_on_soft_ceiling:
                 self._on_warning(result)
 
@@ -171,9 +182,8 @@ class TokenCeilingManager:
             + record.output_tokens * self.COST_PER_OUTPUT_TOKEN
         )
         audio_cost = (
-            (record.audio_seconds_in + record.audio_seconds_out)
-            * self.COST_PER_AUDIO_SECOND
-        )
+            record.audio_seconds_in + record.audio_seconds_out
+        ) * self.COST_PER_AUDIO_SECOND
         return token_cost + audio_cost
 
     def get_session_status(self, session_id: str) -> dict[str, Any] | None:

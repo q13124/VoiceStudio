@@ -43,7 +43,8 @@ class LibraryTablesMigration(Migration):
 
         # 1. Library Folders Table
         # Replaces: backend/api/routes/library.py:35 (_asset_folders dict)
-        await connection.execute("""
+        await connection.execute(
+            """
             CREATE TABLE IF NOT EXISTS library_folders (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -54,7 +55,8 @@ class LibraryTablesMigration(Migration):
                 deleted_at TEXT,
                 FOREIGN KEY (parent_id) REFERENCES library_folders(id) ON DELETE SET NULL
             )
-        """)
+        """
+        )
         await connection.execute(
             "CREATE INDEX IF NOT EXISTS idx_library_folders_parent ON library_folders(parent_id)"
         )
@@ -64,7 +66,8 @@ class LibraryTablesMigration(Migration):
 
         # 2. Library Assets Table
         # Replaces: backend/api/routes/library.py:34 (_assets dict)
-        await connection.execute("""
+        await connection.execute(
+            """
             CREATE TABLE IF NOT EXISTS library_assets (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -81,7 +84,8 @@ class LibraryTablesMigration(Migration):
                 deleted_at TEXT,
                 FOREIGN KEY (folder_id) REFERENCES library_folders(id) ON DELETE SET NULL
             )
-        """)
+        """
+        )
         await connection.execute(
             "CREATE INDEX IF NOT EXISTS idx_library_assets_folder ON library_assets(folder_id)"
         )

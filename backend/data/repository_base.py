@@ -51,7 +51,7 @@ VALID_TABLE_NAMES: set[str] = {
 }
 
 # Regex pattern for valid SQL identifiers (column names, table names)
-SQL_IDENTIFIER_PATTERN = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+SQL_IDENTIFIER_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 
 def validate_sql_identifier(identifier: str, context: str = "identifier") -> None:
@@ -94,11 +94,13 @@ def validate_table_name(table_name: str) -> None:
             f"Consider adding it to VALID_TABLE_NAMES."
         )
 
+
 T = TypeVar("T")  # Entity type
 
 
 class DatabaseType(Enum):
     """Supported database types."""
+
     SQLITE = "sqlite"
     POSTGRESQL = "postgresql"
     MEMORY = "memory"
@@ -108,6 +110,7 @@ def _get_default_sqlite_path() -> str:
     """Get the default SQLite path from configuration."""
     try:
         from backend.settings import config
+
         return config.database.sqlite_path
     except ImportError:
         return "data/voicestudio.db"
@@ -116,6 +119,7 @@ def _get_default_sqlite_path() -> str:
 @dataclass
 class ConnectionConfig:
     """Database connection configuration."""
+
     database_type: DatabaseType = DatabaseType.SQLITE
     host: str = "localhost"
     port: int = 5432
@@ -141,6 +145,7 @@ class ConnectionConfig:
 @dataclass
 class QueryOptions:
     """Options for repository queries."""
+
     limit: int | None = None
     offset: int = 0
     order_by: str | None = None
@@ -208,6 +213,7 @@ class Repository(ABC, Generic[T]):
 @dataclass
 class BaseEntity:
     """Base entity with common fields."""
+
     id: str
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
@@ -256,6 +262,7 @@ class BaseRepository(Repository[T]):
     async def _connect_sqlite(self) -> None:
         """Connect to SQLite database."""
         import aiosqlite
+
         self._connection = await aiosqlite.connect(self.config.sqlite_path)
         self._connection.row_factory = aiosqlite.Row
         logger.info(f"Connected to SQLite: {self.config.sqlite_path}")
@@ -264,6 +271,7 @@ class BaseRepository(Repository[T]):
         """Connect to PostgreSQL database."""
         try:
             import asyncpg
+
             self._connection = await asyncpg.create_pool(
                 self.config.get_connection_string(),
                 min_size=1,
@@ -276,6 +284,7 @@ class BaseRepository(Repository[T]):
     async def _connect_memory(self) -> None:
         """Connect to in-memory database."""
         import aiosqlite
+
         self._connection = await aiosqlite.connect(":memory:")
         self._connection.row_factory = aiosqlite.Row
         logger.info("Connected to in-memory SQLite")
@@ -421,7 +430,9 @@ class BaseRepository(Repository[T]):
         await self.connect()
 
         if soft:
-            return await self.update(entity_id, {"deleted_at": datetime.now().isoformat()}) is not None
+            return (
+                await self.update(entity_id, {"deleted_at": datetime.now().isoformat()}) is not None
+            )
         else:
             query = f"DELETE FROM {self.table_name} WHERE id = ?"
 

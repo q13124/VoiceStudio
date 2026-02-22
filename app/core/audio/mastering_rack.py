@@ -40,9 +40,7 @@ try:
     HAS_PYLOUDNORM = True
 except ImportError:
     HAS_PYLOUDNORM = False
-    logger.warning(
-        "pyloudnorm not installed. Install with: pip install pyloudnorm"
-    )
+    logger.warning("pyloudnorm not installed. Install with: pip install pyloudnorm")
 
 # Import audio utilities
 try:
@@ -124,27 +122,19 @@ class MasteringRack:
         # Mastering chain (order matters)
         # 1. Multiband compression
         if kwargs.get("multiband_compressor", True):
-            processed_audio = self.apply_multiband_compressor(
-                processed_audio, sample_rate, kwargs
-            )
+            processed_audio = self.apply_multiband_compressor(processed_audio, sample_rate, kwargs)
 
         # 2. Final EQ
         if kwargs.get("final_eq", True):
-            processed_audio = self.apply_final_eq(
-                processed_audio, sample_rate, kwargs
-            )
+            processed_audio = self.apply_final_eq(processed_audio, sample_rate, kwargs)
 
         # 3. Stereo enhancement
         if kwargs.get("stereo_enhance", False):
-            processed_audio = self.apply_stereo_enhancement(
-                processed_audio, sample_rate, kwargs
-            )
+            processed_audio = self.apply_stereo_enhancement(processed_audio, sample_rate, kwargs)
 
         # 4. Limiter
         if kwargs.get("limiter", True):
-            processed_audio = self.apply_limiter(
-                processed_audio, sample_rate, kwargs
-            )
+            processed_audio = self.apply_limiter(processed_audio, sample_rate, kwargs)
 
         # 5. Loudness normalization
         if kwargs.get("normalize_lufs") is not None:
@@ -194,9 +184,7 @@ class MasteringRack:
             # Split into bands
             # Low band (below 200 Hz)
             low_cutoff = 200.0 / nyquist
-            b_low, a_low = signal.iirfilter(
-                4, low_cutoff, btype="lowpass", ftype="butter"
-            )
+            b_low, a_low = signal.iirfilter(4, low_cutoff, btype="lowpass", ftype="butter")
             low_band = signal.filtfilt(b_low, a_low, channel)
 
             # Mid band (200-5000 Hz)
@@ -209,18 +197,12 @@ class MasteringRack:
 
             # High band (above 5000 Hz)
             high_cutoff = 5000.0 / nyquist
-            b_high, a_high = signal.iirfilter(
-                4, high_cutoff, btype="highpass", ftype="butter"
-            )
+            b_high, a_high = signal.iirfilter(4, high_cutoff, btype="highpass", ftype="butter")
             high_band = signal.filtfilt(b_high, a_high, channel)
 
             # Compress each band
-            low_compressed = self._compress_band(
-                low_band, sample_rate, low_threshold, low_ratio
-            )
-            mid_compressed = self._compress_band(
-                mid_band, sample_rate, mid_threshold, mid_ratio
-            )
+            low_compressed = self._compress_band(low_band, sample_rate, low_threshold, low_ratio)
+            mid_compressed = self._compress_band(mid_band, sample_rate, mid_threshold, mid_ratio)
             high_compressed = self._compress_band(
                 high_band, sample_rate, high_threshold, high_ratio
             )
@@ -252,11 +234,7 @@ class MasteringRack:
 
         # Calculate RMS envelope
         window_size = int(sample_rate * 0.01)  # 10ms
-        rms = np.sqrt(
-            np.convolve(
-                audio**2, np.ones(window_size) / window_size, mode="same"
-            )
-        )
+        rms = np.sqrt(np.convolve(audio**2, np.ones(window_size) / window_size, mode="same"))
 
         # Calculate gain reduction
         gain_reduction = np.ones_like(rms)
@@ -270,9 +248,7 @@ class MasteringRack:
         # Apply compression
         return audio * gain_reduction
 
-    def apply_final_eq(
-        self, audio: np.ndarray, sample_rate: int, params: dict
-    ) -> np.ndarray:
+    def apply_final_eq(self, audio: np.ndarray, sample_rate: int, params: dict) -> np.ndarray:
         """Apply final EQ for mastering."""
         if not HAS_SCIPY:
             logger.warning("scipy required for final EQ")
@@ -304,9 +280,7 @@ class MasteringRack:
             # Low shelf (below 200 Hz)
             if low_gain != 1.0:
                 low_cutoff = 200.0 / nyquist
-                b, a = signal.iirfilter(
-                    4, low_cutoff, btype="lowpass", ftype="butter"
-                )
+                b, a = signal.iirfilter(4, low_cutoff, btype="lowpass", ftype="butter")
                 low_signal = signal.filtfilt(b, a, processed)
                 processed = processed + (low_signal * (low_gain - 1.0))
 
@@ -314,18 +288,14 @@ class MasteringRack:
             if mid_gain != 1.0:
                 mid_low = 200.0 / nyquist
                 mid_high = 8000.0 / nyquist
-                b, a = signal.iirfilter(
-                    4, [mid_low, mid_high], btype="bandpass", ftype="butter"
-                )
+                b, a = signal.iirfilter(4, [mid_low, mid_high], btype="bandpass", ftype="butter")
                 mid_signal = signal.filtfilt(b, a, processed)
                 processed = processed + (mid_signal * (mid_gain - 1.0))
 
             # High shelf (above 8000 Hz)
             if high_gain != 1.0:
                 high_cutoff = 8000.0 / nyquist
-                b, a = signal.iirfilter(
-                    4, high_cutoff, btype="highpass", ftype="butter"
-                )
+                b, a = signal.iirfilter(4, high_cutoff, btype="highpass", ftype="butter")
                 high_signal = signal.filtfilt(b, a, processed)
                 processed = processed + (high_signal * (high_gain - 1.0))
 
@@ -378,9 +348,7 @@ class MasteringRack:
 
         return result
 
-    def apply_limiter(
-        self, audio: np.ndarray, sample_rate: int, params: dict
-    ) -> np.ndarray:
+    def apply_limiter(self, audio: np.ndarray, sample_rate: int, params: dict) -> np.ndarray:
         """Apply limiter (brickwall)."""
         ceiling_db = params.get("ceiling", -0.3)
         release_ms = params.get("limiter_release", 10.0)
@@ -417,10 +385,7 @@ class MasteringRack:
                     else:
                         # Release
                         alpha = 1.0 / release_samples
-                        envelope[i] = (
-                            envelope[i - 1] * (1 - alpha)
-                            + gain_reduction[i] * alpha
-                        )
+                        envelope[i] = envelope[i - 1] * (1 - alpha) + gain_reduction[i] * alpha
 
                 processed = channel * envelope
             else:
@@ -455,9 +420,7 @@ class MasteringRack:
             return audio / max_val * 0.95
         return audio
 
-    def apply_dithering(
-        self, audio: np.ndarray, params: dict
-    ) -> np.ndarray:
+    def apply_dithering(self, audio: np.ndarray, params: dict) -> np.ndarray:
         """Apply dithering for bit depth reduction."""
         bit_depth = params.get("bit_depth", 16)
 
@@ -466,18 +429,14 @@ class MasteringRack:
         dither = (
             np.random.triangular(-dither_level, 0, dither_level, size=audio.shape)
             if len(audio.shape) > 1
-            else np.random.triangular(
-                -dither_level, 0, dither_level, size=len(audio)
-            )
+            else np.random.triangular(-dither_level, 0, dither_level, size=len(audio))
         )
 
         # Add dither
         dithered = audio + dither
 
         # Quantize
-        quantized = np.round(dithered * (2.0 ** (bit_depth - 1))) / (
-            2.0 ** (bit_depth - 1)
-        )
+        quantized = np.round(dithered * (2.0 ** (bit_depth - 1))) / (2.0 ** (bit_depth - 1))
 
         return quantized
 
@@ -571,4 +530,3 @@ def master_audio(
     """
     rack = MasteringRack(sample_rate=sample_rate)
     return rack.master(audio, sample_rate, preset, **kwargs)
-

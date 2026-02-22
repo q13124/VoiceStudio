@@ -98,9 +98,7 @@ class TestVRAMScheduler:
         rm = resource_manager.ResourceManager(vram_headroom_gb=0.5)
 
         # Create a mock job
-        req = resource_manager.ResourceRequirement(
-            vram_gb=2.0, ram_gb=1.0, requires_gpu=True
-        )
+        req = resource_manager.ResourceRequirement(vram_gb=2.0, ram_gb=1.0, requires_gpu=True)
         job = resource_manager.Job(
             job_id="test-001",
             engine_id="xtts",

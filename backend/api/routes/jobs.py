@@ -19,10 +19,10 @@ from pydantic import BaseModel, ConfigDict, Field
 from backend.data.repositories.job_repository import (
     JobEntity,
     JobRepository,
-    get_job_repository,
 )
+from backend.data.repositories.job_repository import JobStatus as RepoJobStatus
 from backend.data.repositories.job_repository import (
-    JobStatus as RepoJobStatus,
+    get_job_repository,
 )
 from backend.data.repository_base import QueryOptions
 
@@ -132,7 +132,11 @@ def _entity_to_progress(entity: JobEntity) -> JobProgress:
         current_step=entity.current_step,
         total_steps=entity.total_steps,
         current_step_index=entity.current_step_index,
-        created=entity.created_at.isoformat() if isinstance(entity.created_at, datetime) else str(entity.created_at),
+        created=(
+            entity.created_at.isoformat()
+            if isinstance(entity.created_at, datetime)
+            else str(entity.created_at)
+        ),
         started=entity.started_at,
         completed=entity.completed_at,
         estimated_time_remaining=entity.estimated_time_remaining,
@@ -221,16 +225,20 @@ async def get_job_queue_status(
     # Convert to JobInfo models
     active_jobs = []
     for entity in active_entities[:20]:  # Limit to 20 active jobs
-        active_jobs.append(JobInfo(
-            job_id=entity.id,
-            job_type=entity.job_type,
-            status=entity.status,
-            progress=entity.progress,
-            start_time=entity.started_at or (
-                entity.created_at.isoformat() if isinstance(entity.created_at, datetime)
-                else str(entity.created_at)
-            ),
-        ))
+        active_jobs.append(
+            JobInfo(
+                job_id=entity.id,
+                job_type=entity.job_type,
+                status=entity.status,
+                progress=entity.progress,
+                start_time=entity.started_at
+                or (
+                    entity.created_at.isoformat()
+                    if isinstance(entity.created_at, datetime)
+                    else str(entity.created_at)
+                ),
+            )
+        )
 
     return JobQueueResponse(
         queued=summary["pending"],
@@ -262,16 +270,19 @@ async def retry_job(
     if entity.status != RepoJobStatus.FAILED.value:
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot retry job with status: {entity.status}. Only failed jobs can be retried."
+            detail=f"Cannot retry job with status: {entity.status}. Only failed jobs can be retried.",
         )
 
-    await repo.update(job_id, {
-        "status": RepoJobStatus.PENDING.value,
-        "error": None,
-        "progress": 0.0,
-        "started_at": None,
-        "completed_at": None,
-    })
+    await repo.update(
+        job_id,
+        {
+            "status": RepoJobStatus.PENDING.value,
+            "error": None,
+            "progress": 0.0,
+            "started_at": None,
+            "completed_at": None,
+        },
+    )
     logger.info(f"Job {job_id} queued for retry")
     return {"success": True, "message": f"Job {job_id} queued for retry"}
 
@@ -296,7 +307,11 @@ async def cancel_job(
     if not entity:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    if entity.status in (RepoJobStatus.COMPLETED.value, RepoJobStatus.FAILED.value, RepoJobStatus.CANCELLED.value):
+    if entity.status in (
+        RepoJobStatus.COMPLETED.value,
+        RepoJobStatus.FAILED.value,
+        RepoJobStatus.CANCELLED.value,
+    ):
         raise HTTPException(
             status_code=400,
             detail=f"Cannot cancel job with status: {entity.status}",
@@ -350,7 +365,11 @@ async def delete_job(
     if not entity:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    if entity.status in (RepoJobStatus.PENDING.value, RepoJobStatus.RUNNING.value, RepoJobStatus.PAUSED.value):
+    if entity.status in (
+        RepoJobStatus.PENDING.value,
+        RepoJobStatus.RUNNING.value,
+        RepoJobStatus.PAUSED.value,
+    ):
         raise HTTPException(
             status_code=400,
             detail="Cannot delete active job. Cancel it first.",
@@ -370,6 +389,7 @@ async def clear_completed_jobs(
 
 
 # === Helper function to create jobs (used by other modules) ===
+
 
 async def create_job(
     job_id: str,

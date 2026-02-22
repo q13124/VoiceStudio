@@ -160,9 +160,7 @@ class EnhancedAudioEnhancer:
                     artifact_strength=config.get("artifact_strength", 0.7),
                 )
             except Exception as e:
-                logger.warning(
-                    f"Advanced enhancement failed: {e}, using basic enhancement"
-                )
+                logger.warning(f"Advanced enhancement failed: {e}, using basic enhancement")
 
         # Fallback to basic enhancement
         if HAS_AUDIO_UTILS:
@@ -235,16 +233,12 @@ class EnhancedAudioEnhancer:
 
             # High ZCR = noisy, apply more denoising
             if zcr > 0.1:
-                config["denoise_strength"] = min(
-                    1.0, config.get("denoise_strength", 0.5) + 0.2
-                )
+                config["denoise_strength"] = min(1.0, config.get("denoise_strength", 0.5) + 0.2)
 
             # Low spectral centroid = dull, apply spectral enhancement
             if spectral_centroid < 2000:
                 config["spectral_enhance"] = True
-                config["spectral_strength"] = min(
-                    1.0, config.get("spectral_strength", 0.5) + 0.2
-                )
+                config["spectral_strength"] = min(1.0, config.get("spectral_strength", 0.5) + 0.2)
 
             config["normalize"] = True
             config["remove_artifacts"] = True

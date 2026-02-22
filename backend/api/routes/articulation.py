@@ -17,6 +17,7 @@ from ..models_additional import ArticulationAnalyzeRequest
 
 class ArticulationIssue(BaseModel):
     """An articulation issue detected in audio."""
+
     t: float
     type: str
     severity: str
@@ -25,7 +26,9 @@ class ArticulationIssue(BaseModel):
 
 class ArticulationAnalyzeResponse(BaseModel):
     """Response model for articulation analysis."""
+
     issues: list[ArticulationIssue]
+
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +73,7 @@ async def analyze(req: ArticulationAnalyzeRequest) -> ArticulationAnalyzeRespons
 
         audio_path = _get_audio_path(audio_id)
         if not audio_path or not os.path.exists(audio_path):
-            raise HTTPException(
-                status_code=404, detail=f"Audio file not found: {audio_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file not found: {audio_id}")
 
         # Load audio
         audio, sample_rate = sf.read(audio_path)
@@ -95,9 +96,7 @@ async def analyze(req: ArticulationAnalyzeRequest) -> ArticulationAnalyzeRespons
                 {
                     "t": 0.0,  # Start time
                     "type": "clipping",
-                    "severity": (
-                        "high" if clipped_samples > len(audio) * 0.05 else "medium"
-                    ),
+                    "severity": ("high" if clipped_samples > len(audio) * 0.05 else "medium"),
                     "message": f"Audio clipping detected: {clipped_samples} samples",
                 }
             )
@@ -106,15 +105,11 @@ async def analyze(req: ArticulationAnalyzeRequest) -> ArticulationAnalyzeRespons
         # Use RMS energy to detect silence
         frame_length = 2048
         hop_length = 512
-        rms = librosa.feature.rms(
-            y=audio, frame_length=frame_length, hop_length=hop_length
-        )[0]
+        rms = librosa.feature.rms(y=audio, frame_length=frame_length, hop_length=hop_length)[0]
         silence_threshold = np.percentile(rms, 10)  # Bottom 10% is considered silence
 
         # Find long silence regions (>0.5 seconds)
-        times = librosa.frames_to_time(
-            np.arange(len(rms)), sr=sample_rate, hop_length=hop_length
-        )
+        times = librosa.frames_to_time(np.arange(len(rms)), sr=sample_rate, hop_length=hop_length)
         silence_frames = np.where(rms < silence_threshold)[0]
 
         if len(silence_frames) > 0:
@@ -162,9 +157,7 @@ async def analyze(req: ArticulationAnalyzeRequest) -> ArticulationAnalyzeRespons
             # Use crepe or pyin for pitch tracking
             if pitch_tracker.crepe_available:
                 # crepe returns (time, frequency) tuple
-                time_array, frequency_array = pitch_tracker.track_pitch_crepe(
-                    audio, sample_rate
-                )
+                time_array, frequency_array = pitch_tracker.track_pitch_crepe(audio, sample_rate)
                 f0 = frequency_array
             elif pitch_tracker.pyin_available:
                 # pyin returns (time, frequency, voiced) tuple
@@ -227,18 +220,13 @@ async def analyze(req: ArticulationAnalyzeRequest) -> ArticulationAnalyzeRespons
             logger.debug(f"Could not analyze spectral characteristics: {e}")
 
         logger.info(
-            f"Articulation analysis completed for {audio_id}: "
-            f"{len(issues)} issues found"
+            f"Articulation analysis completed for {audio_id}: " f"{len(issues)} issues found"
         )
 
-        return ArticulationAnalyzeResponse(
-            issues=[ArticulationIssue(**issue) for issue in issues]
-        )
+        return ArticulationAnalyzeResponse(issues=[ArticulationIssue(**issue) for issue in issues])
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Articulation analysis failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Articulation analysis failed: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Articulation analysis failed: {e!s}")

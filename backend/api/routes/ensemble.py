@@ -171,15 +171,11 @@ async def create_ensemble_synthesis(
         )
     except Exception as e:
         logger.error(f"Failed to create ensemble synthesis: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to create ensemble: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to create ensemble: {e!s}") from e
 
 
 @router.get("/{job_id}", response_model=EnsembleJobStatus)
-@cache_response(
-    ttl=5
-)  # Cache for 5 seconds (status changes frequently during synthesis)
+@cache_response(ttl=5)  # Cache for 5 seconds (status changes frequently during synthesis)
 async def get_ensemble_status(job_id: str):
     """Get the status of an ensemble synthesis job."""
     if job_id not in _ensemble_jobs:
@@ -315,12 +311,8 @@ async def _process_ensemble_job(job_id: str, request: EnsembleSynthesisRequest):
                             job["progress"] = completed / total_voices
                             job["updated"] = datetime.utcnow().isoformat()
                     except Exception as e:
-                        logger.error(
-                            f"Voice synthesis failed for {voice.profile_id}: {e}"
-                        )
-                        job["error"] = (
-                            f"Failed to synthesize voice {voice.profile_id}: {e!s}"
-                        )
+                        logger.error(f"Voice synthesis failed for {voice.profile_id}: {e}")
+                        job["error"] = f"Failed to synthesize voice {voice.profile_id}: {e!s}"
                         break
 
             # Mark as completed if all voices processed
@@ -334,8 +326,7 @@ async def _process_ensemble_job(job_id: str, request: EnsembleSynthesisRequest):
 
             job["updated"] = datetime.utcnow().isoformat()
             logger.info(
-                f"Ensemble synthesis job {job_id} completed: "
-                f"{completed}/{total_voices} voices"
+                f"Ensemble synthesis job {job_id} completed: " f"{completed}/{total_voices} voices"
             )
 
         except ImportError:
@@ -390,14 +381,10 @@ async def create_multi_engine_ensemble(
     import uuid
 
     if not request.text or not request.text.strip():
-        raise HTTPException(
-            status_code=400, detail="Text is required for ensemble synthesis"
-        )
+        raise HTTPException(status_code=400, detail="Text is required for ensemble synthesis")
 
     if not request.profile_id or not request.profile_id.strip():
-        raise HTTPException(
-            status_code=400, detail="Profile ID is required for ensemble synthesis"
-        )
+        raise HTTPException(status_code=400, detail="Profile ID is required for ensemble synthesis")
 
     if not request.engines or len(request.engines) == 0:
         raise HTTPException(status_code=400, detail="At least one engine is required")
@@ -454,15 +441,11 @@ async def create_multi_engine_ensemble(
         )
     except Exception as e:
         logger.error(f"Failed to create multi-engine ensemble: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to create ensemble: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to create ensemble: {e!s}") from e
 
 
 @router.get("/multi-engine/{job_id}", response_model=MultiEngineEnsembleStatus)
-@cache_response(
-    ttl=5
-)  # Cache for 5 seconds (status changes frequently during synthesis)
+@cache_response(ttl=5)  # Cache for 5 seconds (status changes frequently during synthesis)
 async def get_multi_engine_ensemble_status(job_id: str):
     """Get the status of a multi-engine ensemble synthesis job."""
     if job_id not in _multi_engine_ensemble_jobs:
@@ -484,9 +467,7 @@ async def get_multi_engine_ensemble_status(job_id: str):
     )
 
 
-async def _process_multi_engine_ensemble_job(
-    job_id: str, request: MultiEngineEnsembleRequest
-):
+async def _process_multi_engine_ensemble_job(job_id: str, request: MultiEngineEnsembleRequest):
     """
     Process multi-engine ensemble synthesis job asynchronously (IDEA 55).
 
@@ -563,9 +544,7 @@ async def _process_multi_engine_ensemble_job(
 
             for engine in successful_engines:
                 quality = job["engine_qualities"].get(engine, {})
-                quality_score = (
-                    quality.get("quality_score") or quality.get("mos_score") or 0.0
-                )
+                quality_score = quality.get("quality_score") or quality.get("mos_score") or 0.0
 
                 if quality_score > best_quality:
                     best_quality = quality_score
@@ -576,9 +555,7 @@ async def _process_multi_engine_ensemble_job(
                 job["ensemble_quality"] = job["engine_qualities"].get(best_engine, {})
                 job["progress"] = 1.0
                 job["status"] = "completed"
-                logger.info(
-                    f"Selected best engine: {best_engine} with quality {best_quality:.3f}"
-                )
+                logger.info(f"Selected best engine: {best_engine} with quality {best_quality:.3f}")
             else:
                 job["status"] = "failed"
                 job["error"] = "Failed to select best engine"
@@ -638,9 +615,7 @@ async def _process_multi_engine_ensemble_job(
                             # Get quality for this engine
                             quality = job["engine_qualities"].get(engine, {})
                             quality_score = (
-                                quality.get("quality_score")
-                                or quality.get("mos_score")
-                                or 0.0
+                                quality.get("quality_score") or quality.get("mos_score") or 0.0
                             )
 
                             if quality_score > best_quality_segment:
@@ -711,9 +686,7 @@ async def _process_multi_engine_ensemble_job(
                             # Calculate weight based on quality
                             quality = job["engine_qualities"].get(engine, {})
                             quality_score = (
-                                quality.get("quality_score")
-                                or quality.get("mos_score")
-                                or 0.5
+                                quality.get("quality_score") or quality.get("mos_score") or 0.5
                             )
                             engine_weights[engine] = quality_score
                         except Exception as e:
@@ -728,14 +701,10 @@ async def _process_multi_engine_ensemble_job(
                 # Normalize weights
                 total_weight = sum(engine_weights.values())
                 if total_weight > 0:
-                    engine_weights = {
-                        k: v / total_weight for k, v in engine_weights.items()
-                    }
+                    engine_weights = {k: v / total_weight for k, v in engine_weights.items()}
                 else:
                     # Equal weights if no quality scores
-                    engine_weights = {
-                        k: 1.0 / len(engine_audios) for k in engine_audios
-                    }
+                    engine_weights = {k: 1.0 / len(engine_audios) for k in engine_audios}
 
                 # Resample all to same rate and length
                 target_sr = sample_rates[next(iter(sample_rates.keys()))]
@@ -745,15 +714,11 @@ async def _process_multi_engine_ensemble_job(
                 for engine, audio in engine_audios.items():
                     # Resample if needed
                     if sample_rates[engine] != target_sr:
-                        audio = audio_utils.resample_audio(
-                            audio, sample_rates[engine], target_sr
-                        )
+                        audio = audio_utils.resample_audio(audio, sample_rates[engine], target_sr)
 
                     # Pad or truncate to max_length
                     if len(audio) < max_length:
-                        audio = np.pad(
-                            audio, (0, max_length - len(audio)), mode="constant"
-                        )
+                        audio = np.pad(audio, (0, max_length - len(audio)), mode="constant")
                     elif len(audio) > max_length:
                         audio = audio[:max_length]
 
@@ -777,10 +742,7 @@ async def _process_multi_engine_ensemble_job(
                 # Calculate average quality
                 avg_quality = sum(
                     engine_weights[engine]
-                    * (
-                        job["engine_qualities"].get(engine, {}).get("quality_score")
-                        or 0.5
-                    )
+                    * (job["engine_qualities"].get(engine, {}).get("quality_score") or 0.5)
                     for engine in engine_audios
                 )
 
@@ -797,9 +759,7 @@ async def _process_multi_engine_ensemble_job(
                 job["error"] = f"Fusion mode failed: {e!s}"
         else:
             # Fallback to voting for unknown modes
-            logger.warning(
-                f"Unknown selection mode '{request.selection_mode}', using voting"
-            )
+            logger.warning(f"Unknown selection mode '{request.selection_mode}', using voting")
             best_engine = successful_engines[0]
             job["ensemble_audio_id"] = job["engine_outputs"][best_engine]
             job["ensemble_quality"] = job["engine_qualities"].get(best_engine, {})
@@ -845,9 +805,7 @@ async def _synthesize_with_engine(
         if result and result.audio_id:
             return {
                 "audio_id": result.audio_id,
-                "quality": (
-                    result.quality_metrics.dict() if result.quality_metrics else {}
-                ),
+                "quality": (result.quality_metrics.dict() if result.quality_metrics else {}),
             }
         else:
             return {"error": "Synthesis returned no audio"}

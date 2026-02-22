@@ -23,9 +23,7 @@ class TestVoiceProfileManagerImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            voice_profile_manager is not None
-        ), "Failed to import voice_profile_manager module"
+        assert voice_profile_manager is not None, "Failed to import voice_profile_manager module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""

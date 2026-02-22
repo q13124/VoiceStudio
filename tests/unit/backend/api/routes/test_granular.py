@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import granular
 except ImportError:
-    pytest.skip(
-        "Could not import granular route module", allow_module_level=True
-    )
+    pytest.skip("Could not import granular route module", allow_module_level=True)
 
 
 class TestGranularRouteImports:
@@ -35,9 +33,7 @@ class TestGranularRouteHandlers:
     def test_synthesize_granular_handler_exists(self):
         """Test synthesize_granular handler exists."""
         if hasattr(granular, "synthesize_granular"):
-            assert callable(
-                granular.synthesize_granular
-            ), "synthesize_granular is not callable"
+            assert callable(granular.synthesize_granular), "synthesize_granular is not callable"
 
 
 class TestGranularRouter:
@@ -58,4 +54,3 @@ class TestGranularRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

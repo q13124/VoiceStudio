@@ -111,6 +111,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
         if "lz4" in accept_encoding:
             try:
                 import lz4.frame
+
                 compressed = lz4.frame.compress(body)
 
                 headers = dict(response.headers)

@@ -43,31 +43,21 @@ async def apply(req: NrApplyRequest) -> dict:
         noise_print_id = req.noise_print_id
 
         if not audio_id:
-            raise HTTPException(
-                status_code=400,
-                detail="audio_id is required"
-            )
+            raise HTTPException(status_code=400, detail="audio_id is required")
 
         if not noise_print_id:
-            raise HTTPException(
-                status_code=400,
-                detail="noise_print_id is required"
-            )
+            raise HTTPException(status_code=400, detail="noise_print_id is required")
 
         # Get audio file path
         from .voice import _audio_storage, _register_audio_file
 
         if audio_id not in _audio_storage:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Audio file '{audio_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file '{audio_id}' not found")
 
         audio_path = _audio_storage[audio_id]
         if not os.path.exists(audio_path):
             raise HTTPException(
-                status_code=404,
-                detail=f"Audio file at '{audio_path}' does not exist"
+                status_code=404, detail=f"Audio file at '{audio_path}' does not exist"
             )
 
         # Try to load audio processing libraries
@@ -80,7 +70,7 @@ async def apply(req: NrApplyRequest) -> dict:
                 detail=(
                     "Noise reduction requires librosa and soundfile. "
                     "Install with: pip install librosa soundfile"
-                )
+                ),
             )
 
         # Load audio
@@ -120,7 +110,7 @@ async def apply(req: NrApplyRequest) -> dict:
         # Spectral subtraction: subtract noise spectrum from signal
         # Use over-subtraction factor (alpha) to reduce musical noise
         alpha = 2.0  # Over-subtraction factor
-        beta = 0.1   # Spectral floor factor
+        beta = 0.1  # Spectral floor factor
 
         # Subtract noise spectrum
         cleaned_magnitude = magnitude - alpha * noise_spectrum
@@ -162,10 +152,7 @@ async def apply(req: NrApplyRequest) -> dict:
         raise
     except Exception as e:
         logger.error(f"Noise reduction failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Noise reduction failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Noise reduction failed: {e!s}") from e
 
 
 @router.post("/noise-print/create")
@@ -185,25 +172,18 @@ async def create_noise_print(audio_id: str, name: str | None = None) -> dict:
     """
     try:
         if not audio_id:
-            raise HTTPException(
-                status_code=400,
-                detail="audio_id is required"
-            )
+            raise HTTPException(status_code=400, detail="audio_id is required")
 
         # Get audio file path
         from .voice import _audio_storage
 
         if audio_id not in _audio_storage:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Audio file '{audio_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file '{audio_id}' not found")
 
         audio_path = _audio_storage[audio_id]
         if not os.path.exists(audio_path):
             raise HTTPException(
-                status_code=404,
-                detail=f"Audio file at '{audio_path}' does not exist"
+                status_code=404, detail=f"Audio file at '{audio_path}' does not exist"
             )
 
         # Try to load audio processing libraries
@@ -216,7 +196,7 @@ async def create_noise_print(audio_id: str, name: str | None = None) -> dict:
                 detail=(
                     "Noise print creation requires librosa and soundfile. "
                     "Install with: pip install librosa soundfile"
-                )
+                ),
             )
 
         # Load audio
@@ -260,10 +240,7 @@ async def create_noise_print(audio_id: str, name: str | None = None) -> dict:
         raise
     except Exception as e:
         logger.error(f"Failed to create noise print: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to create noise print: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to create noise print: {e!s}") from e
 
 
 @router.get("/noise-prints")

@@ -98,20 +98,12 @@ async def get_gpu_status():
                             memory_total = int(parts[2]) if parts[2].isdigit() else 0
                             memory_used = int(parts[3]) if parts[3].isdigit() else 0
                             utilization = (
-                                float(parts[4])
-                                if parts[4].replace(".", "").isdigit()
-                                else 0.0
+                                float(parts[4]) if parts[4].replace(".", "").isdigit() else 0.0
                             )
                             temperature = (
-                                float(parts[5])
-                                if parts[5].replace(".", "").isdigit()
-                                else None
+                                float(parts[5]) if parts[5].replace(".", "").isdigit() else None
                             )
-                            power = (
-                                float(parts[6])
-                                if parts[6].replace(".", "").isdigit()
-                                else None
-                            )
+                            power = float(parts[6]) if parts[6].replace(".", "").isdigit() else None
                             driver_version = parts[7] if len(parts) > 7 else None
 
                             device = GPUDevice(
@@ -143,14 +135,24 @@ async def get_gpu_status():
                     gpu = pyamdgpuinfo.get_gpu(i)
                     device = GPUDevice(
                         device_id=f"amd-{i}",
-                        name=gpu.name if hasattr(gpu, 'name') else f"AMD GPU {i}",
+                        name=gpu.name if hasattr(gpu, "name") else f"AMD GPU {i}",
                         vendor="AMD",
-                        memory_total_mb=int(gpu.memory_info['vram_size'] / (1024 * 1024)) if hasattr(gpu, 'memory_info') else 0,
-                        memory_used_mb=int(gpu.memory_info.get('vram_usage', 0) / (1024 * 1024)) if hasattr(gpu, 'memory_info') else 0,
+                        memory_total_mb=(
+                            int(gpu.memory_info["vram_size"] / (1024 * 1024))
+                            if hasattr(gpu, "memory_info")
+                            else 0
+                        ),
+                        memory_used_mb=(
+                            int(gpu.memory_info.get("vram_usage", 0) / (1024 * 1024))
+                            if hasattr(gpu, "memory_info")
+                            else 0
+                        ),
                         memory_free_mb=0,  # Will be calculated
-                        utilization_percent=gpu.gpu_load * 100 if hasattr(gpu, 'gpu_load') else 0.0,
-                        temperature_celsius=gpu.temperature if hasattr(gpu, 'temperature') else None,
-                        power_usage_watts=gpu.power if hasattr(gpu, 'power') else None,
+                        utilization_percent=gpu.gpu_load * 100 if hasattr(gpu, "gpu_load") else 0.0,
+                        temperature_celsius=(
+                            gpu.temperature if hasattr(gpu, "temperature") else None
+                        ),
+                        power_usage_watts=gpu.power if hasattr(gpu, "power") else None,
                         driver_version=None,
                         is_available=True,
                     )
@@ -182,7 +184,11 @@ async def get_gpu_status():
                                     if len(parts) >= 2:
                                         device = GPUDevice(
                                             device_id=f"amd-{gpu_idx}",
-                                            name=parts[1].strip() if len(parts) > 1 else f"AMD ROCm GPU {gpu_idx}",
+                                            name=(
+                                                parts[1].strip()
+                                                if len(parts) > 1
+                                                else f"AMD ROCm GPU {gpu_idx}"
+                                            ),
                                             vendor="AMD",
                                             memory_total_mb=0,
                                             memory_used_mb=0,
@@ -209,25 +215,40 @@ async def get_gpu_status():
 
                         # Use WMIC to query AMD GPUs
                         result = subprocess.run(
-                            ["wmic", "path", "win32_VideoController", "get", "Name,AdapterRAM,DriverVersion", "/format:csv"],
+                            [
+                                "wmic",
+                                "path",
+                                "win32_VideoController",
+                                "get",
+                                "Name,AdapterRAM,DriverVersion",
+                                "/format:csv",
+                            ],
                             capture_output=True,
                             text=True,
                             timeout=5,
                         )
                         if result.returncode == 0:
                             lines = result.stdout.strip().split("\n")
-                            gpu_idx = len([d for d in devices if d.vendor == "AMD"])  # Continue from existing AMD count
+                            gpu_idx = len(
+                                [d for d in devices if d.vendor == "AMD"]
+                            )  # Continue from existing AMD count
                             for line in lines:
                                 if line.strip() and "AMD" in line.upper() and "Node" not in line:
                                     parts = [p.strip() for p in line.split(",")]
                                     if len(parts) >= 3:
                                         # CSV format: Node,AdapterRAM,DriverVersion,Name
                                         name = parts[-1] if parts[-1] else f"AMD GPU {gpu_idx}"
-                                        adapter_ram = int(parts[1]) // (1024 * 1024) if parts[1].isdigit() else 0
+                                        adapter_ram = (
+                                            int(parts[1]) // (1024 * 1024)
+                                            if parts[1].isdigit()
+                                            else 0
+                                        )
                                         driver_version = parts[2] if len(parts) > 2 else None
 
                                         # Skip if already detected
-                                        if not any(d.name == name and d.vendor == "AMD" for d in devices):
+                                        if not any(
+                                            d.name == name and d.vendor == "AMD" for d in devices
+                                        ):
                                             device = GPUDevice(
                                                 device_id=f"amd-{gpu_idx}",
                                                 name=name,
@@ -259,7 +280,14 @@ async def get_gpu_status():
             if platform.system() == "Windows":
                 # Use WMIC to query Intel GPUs
                 result = subprocess.run(
-                    ["wmic", "path", "win32_VideoController", "get", "Name,AdapterRAM,DriverVersion", "/format:csv"],
+                    [
+                        "wmic",
+                        "path",
+                        "win32_VideoController",
+                        "get",
+                        "Name,AdapterRAM,DriverVersion",
+                        "/format:csv",
+                    ],
                     capture_output=True,
                     text=True,
                     timeout=5,
@@ -268,11 +296,21 @@ async def get_gpu_status():
                     lines = result.stdout.strip().split("\n")
                     gpu_idx = len([d for d in devices if d.vendor == "Intel"])
                     for line in lines:
-                        if line.strip() and ("INTEL" in line.upper() or "UHD" in line.upper() or "IRIS" in line.upper()) and "Node" not in line:
+                        if (
+                            line.strip()
+                            and (
+                                "INTEL" in line.upper()
+                                or "UHD" in line.upper()
+                                or "IRIS" in line.upper()
+                            )
+                            and "Node" not in line
+                        ):
                             parts = [p.strip() for p in line.split(",")]
                             if len(parts) >= 3:
                                 name = parts[-1] if parts[-1] else f"Intel GPU {gpu_idx}"
-                                adapter_ram = int(parts[1]) // (1024 * 1024) if parts[1].isdigit() else 0
+                                adapter_ram = (
+                                    int(parts[1]) // (1024 * 1024) if parts[1].isdigit() else 0
+                                )
                                 driver_version = parts[2] if len(parts) > 2 else None
 
                                 # Skip if already detected
@@ -300,6 +338,7 @@ async def get_gpu_status():
                 try:
                     # Check /sys/class/drm for Intel GPUs
                     import os
+
                     drm_path = "/sys/class/drm"
                     if os.path.exists(drm_path):
                         gpu_idx = len([d for d in devices if d.vendor == "Intel"])

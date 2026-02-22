@@ -78,6 +78,7 @@ class HalfCascadePipeline:
                 transcript = await self._transcribe(audio_data)
                 if transcript:
                     from app.core.engines.llm_interface import Message, MessageRole
+
                     messages = [Message(role=MessageRole.USER, content=transcript)]
                     llm_response = await self._llm.generate(messages)
                     response_text = llm_response.content
@@ -111,10 +112,9 @@ class HalfCascadePipeline:
         """Transcribe audio using STT engine."""
         try:
             from backend.services.engine_service import get_engine_service
+
             service = get_engine_service()
-            result = await service.transcribe(
-                audio_data=audio_data, language=self._language
-            )
+            result = await service.transcribe(audio_data=audio_data, language=self._language)
             return result.get("text", "")
         except Exception as exc:
             logger.error(f"STT failed: {exc}")
@@ -126,6 +126,7 @@ class HalfCascadePipeline:
             return None
         try:
             from backend.services.engine_service import get_engine_service
+
             service = get_engine_service()
             result = await service.synthesize(
                 text=text, engine=self._tts_engine, language=self._language

@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.runtime import runtime_engine_enhanced
 except ImportError:
-    pytest.skip(
-        "Could not import runtime_engine_enhanced", allow_module_level=True
-    )
+    pytest.skip("Could not import runtime_engine_enhanced", allow_module_level=True)
 
 
 class TestRuntimeEngineEnhancedImports:
@@ -46,11 +44,8 @@ class TestRuntimeEngineEnhancedClasses:
         """Test EnhancedRuntimeEngine class exists."""
         if hasattr(runtime_engine_enhanced, "EnhancedRuntimeEngine"):
             cls = runtime_engine_enhanced.EnhancedRuntimeEngine
-            assert isinstance(
-                cls, type
-            ), "EnhancedRuntimeEngine should be a class"
+            assert isinstance(cls, type), "EnhancedRuntimeEngine should be a class"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

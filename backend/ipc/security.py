@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class IPCToken:
     """An IPC authentication token."""
+
     token_id: str
     secret: str
     client_id: str
@@ -43,6 +44,7 @@ class IPCToken:
 @dataclass
 class SecurityConfig:
     """Configuration for IPC security."""
+
     secret_key: str = ""  # Master secret for HMAC
     token_lifetime_hours: int = 24
     max_tokens_per_client: int = 5
@@ -307,10 +309,7 @@ class IPCSecurity:
     async def cleanup_expired(self) -> int:
         """Remove expired tokens."""
         async with self._lock:
-            expired = [
-                token_id for token_id, token in self._tokens.items()
-                if token.is_expired
-            ]
+            expired = [token_id for token_id, token in self._tokens.items() if token.is_expired]
 
             for token_id in expired:
                 await self._revoke_token_internal(token_id)

@@ -27,7 +27,7 @@ try:
     )
 except ImportError:
     pytestmark = pytest.mark.skip(reason="Phase 6C privacy_checker not implemented")
-    
+
     # Create stubs for syntax validation
     class DataCategory(Enum):
         PII = "pii"
@@ -84,9 +84,9 @@ except ImportError:
                 report.stores_data = True
             if "requests." in code:
                 report.transmits_data = True
-                report.issues.append(PrivacyIssue(
-                    PrivacySeverity.MEDIUM, DataCategory.USAGE, "Data transmission", 1
-                ))
+                report.issues.append(
+                    PrivacyIssue(PrivacySeverity.MEDIUM, DataCategory.USAGE, "Data transmission", 1)
+                )
             return report
 
         async def check_gdpr_compliance(self, code: str) -> PrivacyReport:
@@ -116,16 +116,16 @@ class TestPrivacyChecker:
     async def test_check_data_collection(self) -> None:
         """Test detection of data collection."""
         checker = PrivacyChecker()
-        
-        code = '''
+
+        code = """
 def collect_user_data():
     name = input("Enter your name: ")
     email = input("Enter your email: ")
     save_to_database(name, email)
-'''
-        
+"""
+
         report = await checker.check_code(code)
-        
+
         assert report.collects_data
         assert DataCategory.PII in report.data_categories
 
@@ -133,33 +133,33 @@ def collect_user_data():
     async def test_check_data_storage(self) -> None:
         """Test detection of data storage."""
         checker = PrivacyChecker()
-        
-        code = '''
+
+        code = """
 import json
 
 def save_preferences(user_id, preferences):
     with open(f"users/{user_id}/prefs.json", "w") as f:
         json.dump(preferences, f)
-'''
-        
+"""
+
         report = await checker.check_code(code)
-        
+
         assert report.stores_data
 
     @pytest.mark.asyncio
     async def test_check_data_transmission(self) -> None:
         """Test detection of data transmission."""
         checker = PrivacyChecker()
-        
-        code = '''
+
+        code = """
 import requests
 
 def send_analytics(user_data):
     requests.post("https://analytics.example.com/track", json=user_data)
-'''
-        
+"""
+
         report = await checker.check_code(code)
-        
+
         assert report.transmits_data
         assert len(report.issues) > 0
 
@@ -167,15 +167,15 @@ def send_analytics(user_data):
     async def test_no_privacy_issues_in_clean_code(self) -> None:
         """Test that clean code has no privacy issues."""
         checker = PrivacyChecker()
-        
+
         code = '''
 def process_audio(samples):
     """Process audio samples - no user data involved."""
     return [s * 2 for s in samples]
 '''
-        
+
         report = await checker.check_code(code)
-        
+
         assert not report.collects_data
         assert len(report.issues) == 0
 
@@ -191,7 +191,7 @@ class TestPrivacyReport:
             stores_data=False,
             transmits_data=True,
         )
-        
+
         assert report.plugin_id == "test-plugin"
         assert report.collects_data
         assert not report.stores_data
@@ -206,12 +206,12 @@ class TestPrivacyReport:
                 line=15,
             ),
         ]
-        
+
         report = PrivacyReport(
             plugin_id="test",
             issues=issues,
         )
-        
+
         assert len(report.issues) == 1
         assert report.has_high_severity_issues
 
@@ -222,7 +222,7 @@ class TestPrivacyReport:
             gdpr_compliant=False,
             gdpr_issues=["No consent mechanism", "No data deletion option"],
         )
-        
+
         assert not report.gdpr_compliant
         assert len(report.gdpr_issues) == 2
 
@@ -238,7 +238,7 @@ class TestPrivacyIssue:
             description="Stores credit card numbers",
             line=42,
         )
-        
+
         assert issue.severity == PrivacySeverity.CRITICAL
         assert issue.category == DataCategory.FINANCIAL
 
@@ -250,7 +250,7 @@ class TestPrivacyIssue:
             description="Tracks user behavior",
             line=20,
         )
-        
+
         data = issue.to_dict()
         assert data["severity"] == "medium"
         assert data["line"] == 20
@@ -286,14 +286,14 @@ class TestGDPRCompliance:
     async def test_check_consent_mechanism(self) -> None:
         """Test detection of consent mechanism."""
         checker = PrivacyChecker()
-        
-        code_with_consent = '''
+
+        code_with_consent = """
 def collect_with_consent(user):
     consent = get_user_consent(user, "data_collection")
     if consent:
         collect_data(user)
-'''
-        
+"""
+
         report = await checker.check_gdpr_compliance(code_with_consent)
         # Code with consent checking should be more compliant
         assert True
@@ -302,14 +302,14 @@ def collect_with_consent(user):
     async def test_check_data_deletion(self) -> None:
         """Test detection of data deletion capability."""
         checker = PrivacyChecker()
-        
+
         code_with_deletion = '''
 def delete_user_data(user_id):
     """Delete all user data (GDPR right to erasure)."""
     db.delete_user(user_id)
     files.delete_user_files(user_id)
 '''
-        
+
         report = await checker.check_gdpr_compliance(code_with_deletion)
         assert True
 
@@ -321,12 +321,12 @@ class TestCCPACompliance:
     async def test_check_opt_out_mechanism(self) -> None:
         """Test detection of opt-out mechanism."""
         checker = PrivacyChecker()
-        
+
         code = '''
 def check_sale_opt_out(user_id):
     """Check if user has opted out of data sale (CCPA)."""
     return db.get_opt_out_status(user_id, "do_not_sell")
 '''
-        
+
         report = await checker.check_ccpa_compliance(code)
         assert True

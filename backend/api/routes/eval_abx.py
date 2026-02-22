@@ -35,12 +35,14 @@ def _is_test_mode() -> bool:
     # Check app state (set by test fixtures)
     try:
         from backend.api.main import app
+
         if getattr(app.state, "test_mode", False):
             return True
     except Exception:
         pass  # ALLOWED: bare except - checking test mode should not raise in production
 
     return False
+
 
 router = APIRouter(prefix="/api/eval/abx", tags=["eval", "abx"])
 
@@ -88,18 +90,20 @@ async def start(req: AbxStartRequest) -> ABXSession:
     """
     try:
         test_mode = _is_test_mode()
-        logger.info(f"ABX start called - test_mode={test_mode}, VOICESTUDIO_TEST_MODE={os.environ.get('VOICESTUDIO_TEST_MODE', 'NOT SET')}")
+        logger.info(
+            f"ABX start called - test_mode={test_mode}, VOICESTUDIO_TEST_MODE={os.environ.get('VOICESTUDIO_TEST_MODE', 'NOT SET')}"
+        )
 
         if not req.items or len(req.items) < 2:
             raise HTTPException(
-                status_code=400,
-                detail="At least 2 audio items are required for ABX testing"
+                status_code=400, detail="At least 2 audio items are required for ABX testing"
             )
 
         # Validate audio files exist (skip validation if no audio storage has been populated yet,
         # which indicates a test environment or fresh startup)
         try:
             from .voice import _audio_storage
+
             storage_len = len(_audio_storage) if _audio_storage else 0
             logger.info(f"Audio storage check: length={storage_len}, test_mode={test_mode}")
 
@@ -114,8 +118,7 @@ async def start(req: AbxStartRequest) -> ABXSession:
 
                 if missing_audio:
                     raise HTTPException(
-                        status_code=404,
-                        detail=f"Audio files not found: {', '.join(missing_audio)}"
+                        status_code=404, detail=f"Audio files not found: {', '.join(missing_audio)}"
                     )
             else:
                 logger.info("Skipping audio validation (test mode or empty storage)")
@@ -151,10 +154,7 @@ async def start(req: AbxStartRequest) -> ABXSession:
         raise
     except Exception as e:
         logger.error(f"Failed to start ABX test: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to start ABX test: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to start ABX test: {e!s}") from e
 
 
 @router.get("/results", response_model=list[AbxResult])
@@ -172,18 +172,11 @@ async def results(session_id: str | None = None) -> list[AbxResult]:
         if session_id:
             # Return results for specific session
             if session_id not in _abx_results:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"ABX session '{session_id}' not found"
-                )
+                raise HTTPException(status_code=404, detail=f"ABX session '{session_id}' not found")
 
             results_data = _abx_results[session_id]
             return [
-                AbxResult(
-                    item=r.get("item", ""),
-                    mos=r.get("mos", 0.0),
-                    pref=r.get("pref", "X")
-                )
+                AbxResult(item=r.get("item", ""), mos=r.get("mos", 0.0), pref=r.get("pref", "X"))
                 for r in results_data
             ]
         else:
@@ -193,29 +186,19 @@ async def results(session_id: str | None = None) -> list[AbxResult]:
                 all_results.extend(session_results)
 
             return [
-                AbxResult(
-                    item=r.get("item", ""),
-                    mos=r.get("mos", 0.0),
-                    pref=r.get("pref", "X")
-                )
+                AbxResult(item=r.get("item", ""), mos=r.get("mos", 0.0), pref=r.get("pref", "X"))
                 for r in all_results
             ]
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to get ABX results: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get ABX results: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to get ABX results: {e!s}") from e
 
 
 @router.post("/submit")
 async def submit_result(
-    session_id: str,
-    item: str,
-    pref: str,
-    confidence: float | None = None
+    session_id: str, item: str, pref: str, confidence: float | None = None
 ) -> ApiOk:
     """
     Submit an ABX test result.
@@ -231,16 +214,10 @@ async def submit_result(
     """
     try:
         if session_id not in _abx_sessions:
-            raise HTTPException(
-                status_code=404,
-                detail=f"ABX session '{session_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"ABX session '{session_id}' not found")
 
         if pref not in ["A", "B", "X"]:
-            raise HTTPException(
-                status_code=400,
-                detail="pref must be 'A', 'B', or 'X'"
-            )
+            raise HTTPException(status_code=400, detail="pref must be 'A', 'B', or 'X'")
 
         # Calculate MOS score based on preference
         # A = 5.0, B = 1.0, X = 3.0 (neutral)
@@ -283,20 +260,14 @@ async def submit_result(
         raise
     except Exception as e:
         logger.error(f"Failed to submit ABX result: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to submit ABX result: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to submit ABX result: {e!s}") from e
 
 
 @router.get("/sessions/{session_id}", response_model=ABXSession)
 async def get_session(session_id: str) -> ABXSession:
     """Get ABX session information."""
     if session_id not in _abx_sessions:
-        raise HTTPException(
-            status_code=404,
-            detail=f"ABX session '{session_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"ABX session '{session_id}' not found")
 
     session = _abx_sessions[session_id]
     return ABXSession(
@@ -312,10 +283,7 @@ async def get_session(session_id: str) -> ABXSession:
 async def complete_session(session_id: str) -> ApiOk:
     """Mark an ABX session as completed."""
     if session_id not in _abx_sessions:
-        raise HTTPException(
-            status_code=404,
-            detail=f"ABX session '{session_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"ABX session '{session_id}' not found")
 
     _abx_sessions[session_id]["status"] = "completed"
     _abx_sessions[session_id]["completed"] = datetime.utcnow().isoformat()

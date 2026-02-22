@@ -16,4 +16,3 @@ async def stream(ws: WebSocket):
     except Exception:
         with contextlib.suppress(Exception):
             await ws.close()
-

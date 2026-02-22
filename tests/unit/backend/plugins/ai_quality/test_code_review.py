@@ -27,7 +27,7 @@ try:
     )
 except ImportError:
     pytestmark = pytest.mark.skip(reason="Phase 6B code_review not implemented")
-    
+
     # Create stubs for syntax validation
     class ReviewSeverity(IntEnum):
         INFO = 1
@@ -85,18 +85,18 @@ class TestAICodeReviewer:
     async def test_review_python_code(self) -> None:
         """Test reviewing Python plugin code."""
         reviewer = AICodeReviewer()
-        
+
         code = '''
 def process_audio(samples):
     """Process audio samples."""
     return samples * 2
 '''
-        
+
         result = await reviewer.review_code(
             code=code,
             language="python",
         )
-        
+
         assert isinstance(result, CodeReviewResult)
         assert result.quality_score >= 0
         assert result.quality_score <= 100
@@ -105,21 +105,21 @@ def process_audio(samples):
     async def test_review_detects_security_issues(self) -> None:
         """Test that security issues are detected."""
         reviewer = AICodeReviewer()
-        
+
         # Code with obvious security issues
-        code = '''
+        code = """
 import os
 def run_command(user_input):
     os.system(user_input)  # Command injection vulnerability
-'''
-        
+"""
+
         result = await reviewer.review_code(code=code, language="python")
-        
+
         # Should detect security issue
         security_findings = [
-            f for f in result.findings
-            if f.severity == ReviewSeverity.CRITICAL
-            or "security" in f.category.lower()
+            f
+            for f in result.findings
+            if f.severity == ReviewSeverity.CRITICAL or "security" in f.category.lower()
         ]
         assert len(security_findings) > 0 or result.quality_score < 50
 
@@ -127,15 +127,15 @@ def run_command(user_input):
     async def test_review_detects_code_smells(self) -> None:
         """Test that code smells are detected."""
         reviewer = AICodeReviewer()
-        
+
         # Code with obvious code smell (too many parameters)
-        code = '''
+        code = """
 def bad_function(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p):
     return a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p
-'''
-        
+"""
+
         result = await reviewer.review_code(code=code, language="python")
-        
+
         # Should detect code smell
         assert len(result.findings) > 0 or result.quality_score < 80
 
@@ -143,13 +143,11 @@ def bad_function(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p):
     async def test_review_from_file(self) -> None:
         """Test reviewing code from file path."""
         reviewer = AICodeReviewer()
-        
-        with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.py', delete=False
-        ) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write("def hello(): return 'world'")
             temp_path = f.name
-        
+
         try:
             result = await reviewer.review_file(Path(temp_path))
             assert isinstance(result, CodeReviewResult)
@@ -167,7 +165,7 @@ class TestCodeReviewResult:
             findings=[],
             summary="Good code quality",
         )
-        
+
         assert result.quality_score == 85
         assert result.summary == "Good code quality"
 
@@ -187,13 +185,13 @@ class TestCodeReviewResult:
                 line=25,
             ),
         ]
-        
+
         result = CodeReviewResult(
             quality_score=60,
             findings=findings,
             summary="Issues found",
         )
-        
+
         assert len(result.findings) == 2
         assert result.has_errors
         assert result.has_warnings
@@ -211,7 +209,7 @@ class TestReviewFinding:
             line=42,
             column=8,
         )
-        
+
         assert finding.severity == ReviewSeverity.WARNING
         assert finding.line == 42
         assert finding.column == 8
@@ -224,7 +222,7 @@ class TestReviewFinding:
             message="SQL injection possible",
             line=15,
         )
-        
+
         data = finding.to_dict()
         assert data["severity"] == "error"
         assert data["category"] == "security"
@@ -244,14 +242,14 @@ class TestReviewPatterns:
     async def test_detect_eval_usage(self) -> None:
         """Test detection of eval() usage."""
         reviewer = AICodeReviewer()
-        
-        code = '''
+
+        code = """
 def dangerous(user_input):
     eval(user_input)  # Very dangerous
-'''
-        
+"""
+
         result = await reviewer.review_code(code=code, language="python")
-        
+
         # Should flag eval usage
         assert result.quality_score < 70 or any(
             "eval" in f.message.lower() for f in result.findings
@@ -261,25 +259,24 @@ def dangerous(user_input):
     async def test_detect_hardcoded_secrets(self) -> None:
         """Test detection of hardcoded secrets."""
         reviewer = AICodeReviewer()
-        
-        code = '''
+
+        code = """
 API_KEY = "sk_live_1234567890abcdef"
 PASSWORD = "supersecretpassword123"
-'''
-        
+"""
+
         result = await reviewer.review_code(code=code, language="python")
-        
+
         # Should detect hardcoded secrets
         assert result.quality_score < 70 or any(
-            "secret" in f.message.lower() or "key" in f.message.lower()
-            for f in result.findings
+            "secret" in f.message.lower() or "key" in f.message.lower() for f in result.findings
         )
 
     @pytest.mark.asyncio
     async def test_high_quality_code_scores_well(self) -> None:
         """Test that high quality code gets good scores."""
         reviewer = AICodeReviewer()
-        
+
         code = '''
 """Module for audio processing utilities."""
 
@@ -311,8 +308,8 @@ def normalize_samples(samples: List[float], target_level: float = 0.9) -> List[f
     scale = target_level / peak
     return [s * scale for s in samples]
 '''
-        
+
         result = await reviewer.review_code(code=code, language="python")
-        
+
         # Well-written code should score well
         assert result.quality_score >= 70

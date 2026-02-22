@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import httpx
+
     _HAS_HTTPX = True
 except ImportError:
     _HAS_HTTPX = False
@@ -72,10 +73,10 @@ class OpenAILLMProvider(BaseLLMProvider):
                 raise RuntimeError("httpx is required. Install with: pip install httpx")
             if not self._config.api_key:
                 raise RuntimeError(
-                    "OpenAI API key not configured. "
-                    "Set OPENAI_API_KEY environment variable."
+                    "OpenAI API key not configured. " "Set OPENAI_API_KEY environment variable."
                 )
             import httpx as hx
+
             self._client = hx.AsyncClient(
                 base_url=self._config.base_url,
                 headers={
@@ -162,9 +163,7 @@ class OpenAILLMProvider(BaseLLMProvider):
         client = self._get_client()
 
         try:
-            async with client.stream(
-                "POST", "/v1/chat/completions", json=payload
-            ) as response:
+            async with client.stream("POST", "/v1/chat/completions", json=payload) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():
                     if not line.startswith("data: "):

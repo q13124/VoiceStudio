@@ -90,17 +90,11 @@ class TestAuditLogger:
             lines = f.readlines()
 
             # Check warning entries
-            warning_entries = [
-                json.loads(line) for line in lines
-                if "build_warning" in line
-            ]
+            warning_entries = [json.loads(line) for line in lines if "build_warning" in line]
             assert len(warning_entries) == 2
 
             # Check success entry
-            success_entries = [
-                json.loads(line) for line in lines
-                if "build_success" in line
-            ]
+            success_entries = [json.loads(line) for line in lines if "build_success" in line]
             assert len(success_entries) == 1
 
     def test_log_build_event_errors(self, audit_logger, temp_audit_dir):
@@ -120,10 +114,7 @@ class TestAuditLogger:
         with open(log_file, encoding="utf-8") as f:
             lines = f.readlines()
 
-            error_entries = [
-                json.loads(line) for line in lines
-                if "build_error" in line
-            ]
+            error_entries = [json.loads(line) for line in lines if "build_error" in line]
             assert len(error_entries) == 2
 
     def test_log_runtime_exception(self, audit_logger, temp_audit_dir):

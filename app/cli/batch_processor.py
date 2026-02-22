@@ -307,9 +307,7 @@ class BatchProcessorCLI:
 
         return results
 
-    def process_json_config(
-        self, config_file: Path, output_dir: Path
-    ) -> dict[str, Any]:
+    def process_json_config(self, config_file: Path, output_dir: Path) -> dict[str, Any]:
         """
         Process a JSON configuration file.
 
@@ -533,4 +531,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

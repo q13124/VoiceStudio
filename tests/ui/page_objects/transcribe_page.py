@@ -129,7 +129,7 @@ class TranscribePage(BasePage):
         engine: str = "Whisper",
         language: str = "English",
         wait_complete: bool = True,
-        timeout: float = 120.0
+        timeout: float = 120.0,
     ) -> Optional[str]:
         """
         Full transcription workflow.

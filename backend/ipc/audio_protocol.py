@@ -21,25 +21,28 @@ logger = logging.getLogger(__name__)
 
 class AudioFormat(IntEnum):
     """Audio sample formats."""
-    PCM_S16LE = 0   # 16-bit signed little-endian
-    PCM_S24LE = 1   # 24-bit signed little-endian
-    PCM_S32LE = 2   # 32-bit signed little-endian
-    PCM_F32LE = 3   # 32-bit float little-endian
-    PCM_F64LE = 4   # 64-bit float little-endian
+
+    PCM_S16LE = 0  # 16-bit signed little-endian
+    PCM_S24LE = 1  # 24-bit signed little-endian
+    PCM_S32LE = 2  # 32-bit signed little-endian
+    PCM_F32LE = 3  # 32-bit float little-endian
+    PCM_F64LE = 4  # 64-bit float little-endian
 
 
 class FrameType(IntEnum):
     """Types of audio frames."""
-    DATA = 0        # Audio data
-    HEADER = 1      # Stream header
-    END = 2         # End of stream
-    ERROR = 3       # Error frame
-    METADATA = 4    # Metadata frame
+
+    DATA = 0  # Audio data
+    HEADER = 1  # Stream header
+    END = 2  # End of stream
+    ERROR = 3  # Error frame
+    METADATA = 4  # Metadata frame
 
 
 @dataclass
 class AudioStreamConfig:
     """Configuration for an audio stream."""
+
     sample_rate: int = 44100
     channels: int = 2
     format: AudioFormat = AudioFormat.PCM_S16LE
@@ -51,6 +54,7 @@ class AudioStreamConfig:
 @dataclass
 class AudioFrame:
     """An audio frame in the protocol."""
+
     frame_type: FrameType
     sequence: int
     timestamp_ms: int
@@ -84,10 +88,10 @@ class AudioFrame:
             raise ValueError("Frame too short")
 
         frame_type, sequence, timestamp_ms, data_len, checksum, flags = struct.unpack(
-            "<BIIIIB", data[:cls.HEADER_SIZE]
+            "<BIIIIB", data[: cls.HEADER_SIZE]
         )
 
-        frame_data = data[cls.HEADER_SIZE:cls.HEADER_SIZE + data_len]
+        frame_data = data[cls.HEADER_SIZE : cls.HEADER_SIZE + data_len]
 
         return cls(
             frame_type=FrameType(frame_type),

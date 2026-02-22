@@ -32,6 +32,7 @@ from backend.api.serialization import (
 
 class SampleEnum(str, Enum):
     """Sample enum for testing."""
+
     VALUE_A = "a"
     VALUE_B = "b"
 

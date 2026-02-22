@@ -2,6 +2,7 @@
 Unit Tests for Engines API Route
 Tests engine management endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -145,9 +146,10 @@ class TestEnginesEndpoints:
 
     def test_get_engine_status(self):
         """Test getting engine status."""
-        with patch("backend.api.routes.engines.ENGINE_AVAILABLE", True), patch(
-            "app.core.runtime.engine_lifecycle.get_lifecycle_manager"
-        ) as mock_get_manager:
+        with (
+            patch("backend.api.routes.engines.ENGINE_AVAILABLE", True),
+            patch("app.core.runtime.engine_lifecycle.get_lifecycle_manager") as mock_get_manager,
+        ):
             mock_manager = MagicMock()
             mock_get_manager.return_value = mock_manager
 

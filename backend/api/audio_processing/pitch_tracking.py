@@ -152,9 +152,7 @@ class PitchTracker:
             "min": float(np.min(valid_freqs)),
             "max": float(np.max(valid_freqs)),
             "median": float(np.median(valid_freqs)),
-            "stability": float(
-                1.0 / (1.0 + np.std(valid_freqs) / np.mean(valid_freqs))
-            ),
+            "stability": float(1.0 / (1.0 + np.std(valid_freqs) / np.mean(valid_freqs))),
         }
 
         # Add temporal statistics if times provided

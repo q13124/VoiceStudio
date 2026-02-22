@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class HealthStatus(Enum):
     """Health status levels."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -29,6 +30,7 @@ class HealthStatus(Enum):
 @dataclass
 class HealthCheckResult:
     """Result of a health check."""
+
     name: str
     status: HealthStatus
     message: str
@@ -101,16 +103,12 @@ class HealthChecker:
         try:
             # Run check with timeout
             if asyncio.iscoroutinefunction(check_func):
-                result = await asyncio.wait_for(
-                    check_func(),
-                    timeout=self.timeout
-                )
+                result = await asyncio.wait_for(check_func(), timeout=self.timeout)
             else:
                 # Run sync function in executor
                 loop = asyncio.get_event_loop()
                 result = await asyncio.wait_for(
-                    loop.run_in_executor(None, check_func),
-                    timeout=self.timeout
+                    loop.run_in_executor(None, check_func), timeout=self.timeout
                 )
 
             response_time = (time.time() - start_time) * 1000
@@ -185,9 +183,7 @@ class HealthChecker:
         results = {}
 
         # Run checks in parallel
-        tasks = [
-            self.run_check(name) for name in self.checks
-        ]
+        tasks = [self.run_check(name) for name in self.checks]
 
         check_results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -303,4 +299,3 @@ def create_simple_check(
             message=f"Check failed: {e!s}",
             error=str(e),
         )
-

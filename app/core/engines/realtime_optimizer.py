@@ -21,15 +21,17 @@ logger = logging.getLogger(__name__)
 
 class OptimizationLevel(Enum):
     """Optimization aggressiveness levels."""
+
     CONSERVATIVE = "conservative"  # Prioritize stability
-    BALANCED = "balanced"          # Balance speed and quality
-    AGGRESSIVE = "aggressive"      # Maximum speed, may reduce quality
-    ULTRA_LOW_LATENCY = "ultra"    # Sub-20ms target
+    BALANCED = "balanced"  # Balance speed and quality
+    AGGRESSIVE = "aggressive"  # Maximum speed, may reduce quality
+    ULTRA_LOW_LATENCY = "ultra"  # Sub-20ms target
 
 
 @dataclass
 class OptimizationConfig:
     """Configuration for optimizer."""
+
     level: OptimizationLevel = OptimizationLevel.BALANCED
     target_latency_ms: float = 50.0
     max_batch_size: int = 1
@@ -43,6 +45,7 @@ class OptimizationConfig:
 @dataclass
 class OptimizationResult:
     """Result of optimization pass."""
+
     original_latency_ms: float
     optimized_latency_ms: float
     improvement_percent: float
@@ -53,6 +56,7 @@ class OptimizationResult:
 @dataclass
 class DeviceInfo:
     """GPU device information."""
+
     name: str = "Unknown"
     compute_capability: tuple[int, int] = (0, 0)
     total_memory_gb: float = 0.0
@@ -80,6 +84,7 @@ class GPUProfiler:
         """Check CUDA availability and capabilities."""
         try:
             import torch
+
             self._cuda_available = torch.cuda.is_available()
 
             if self._cuda_available:
@@ -88,7 +93,8 @@ class GPUProfiler:
                     name=props.name,
                     compute_capability=(props.major, props.minor),
                     total_memory_gb=props.total_memory / (1024**3),
-                    available_memory_gb=(props.total_memory - torch.cuda.memory_allocated()) / (1024**3),
+                    available_memory_gb=(props.total_memory - torch.cuda.memory_allocated())
+                    / (1024**3),
                     cuda_version=torch.version.cuda,
                     supports_fp16=props.major >= 7,
                     supports_bf16=props.major >= 8,
@@ -146,11 +152,13 @@ class GPUProfiler:
         torch.cuda.synchronize()
         elapsed_ms = start_event.elapsed_time(end_event)
 
-        self._events.append({
-            "name": name,
-            "time_ms": elapsed_ms,
-            "timestamp": time.time(),
-        })
+        self._events.append(
+            {
+                "name": name,
+                "time_ms": elapsed_ms,
+                "timestamp": time.time(),
+            }
+        )
 
         return result, elapsed_ms
 
@@ -166,11 +174,13 @@ class GPUProfiler:
         result = operation(*args, **kwargs)
         elapsed_ms = (time.perf_counter() - start) * 1000
 
-        self._events.append({
-            "name": name,
-            "time_ms": elapsed_ms,
-            "timestamp": time.time(),
-        })
+        self._events.append(
+            {
+                "name": name,
+                "time_ms": elapsed_ms,
+                "timestamp": time.time(),
+            }
+        )
 
         return result, elapsed_ms
 
@@ -211,6 +221,7 @@ class CUDAGraphOptimizer:
         """Check CUDA graph support."""
         try:
             import torch
+
             if torch.cuda.is_available():
                 # CUDA graphs require compute capability >= 7.0
                 props = torch.cuda.get_device_properties(0)

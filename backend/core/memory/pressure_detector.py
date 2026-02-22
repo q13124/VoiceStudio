@@ -21,16 +21,18 @@ logger = logging.getLogger(__name__)
 
 class PressureLevel(IntEnum):
     """Memory pressure levels."""
-    NORMAL = 0      # < 60% memory used
-    MODERATE = 1    # 60-75% memory used
-    HIGH = 2        # 75-85% memory used
-    CRITICAL = 3    # 85-95% memory used
-    EMERGENCY = 4   # > 95% memory used
+
+    NORMAL = 0  # < 60% memory used
+    MODERATE = 1  # 60-75% memory used
+    HIGH = 2  # 75-85% memory used
+    CRITICAL = 3  # 85-95% memory used
+    EMERGENCY = 4  # > 95% memory used
 
 
 @dataclass
 class PressureEvent:
     """Memory pressure event."""
+
     level: PressureLevel
     previous_level: PressureLevel
     memory_used_bytes: int
@@ -44,6 +46,7 @@ class PressureEvent:
 @dataclass
 class PressureThresholds:
     """Thresholds for pressure levels."""
+
     moderate: float = 0.60
     high: float = 0.75
     critical: float = 0.85
@@ -53,6 +56,7 @@ class PressureThresholds:
 @dataclass
 class DetectorConfig:
     """Configuration for pressure detector."""
+
     check_interval_seconds: float = 5.0
     thresholds: PressureThresholds = field(default_factory=PressureThresholds)
     enable_gpu_monitoring: bool = True
@@ -111,11 +115,17 @@ class MemoryPressureDetector:
     def on_pressure(
         self,
         level: PressureLevel,
-    ) -> Callable[[Callable[[PressureEvent], Awaitable[None]]], Callable[[PressureEvent], Awaitable[None]]]:
+    ) -> Callable[
+        [Callable[[PressureEvent], Awaitable[None]]], Callable[[PressureEvent], Awaitable[None]]
+    ]:
         """Decorator to register pressure callbacks."""
-        def decorator(func: Callable[[PressureEvent], Awaitable[None]]) -> Callable[[PressureEvent], Awaitable[None]]:
+
+        def decorator(
+            func: Callable[[PressureEvent], Awaitable[None]],
+        ) -> Callable[[PressureEvent], Awaitable[None]]:
             self.register_callback(level, func)
             return func
+
         return decorator
 
     async def start(self) -> None:
@@ -166,6 +176,7 @@ class MemoryPressureDetector:
         """Get system memory statistics."""
         try:
             import psutil
+
             mem = psutil.virtual_memory()
             return {
                 "used": mem.used,
@@ -186,6 +197,7 @@ class MemoryPressureDetector:
         """Get GPU memory statistics."""
         try:
             import torch
+
             if torch.cuda.is_available():
                 used = 0
                 total = 0
@@ -226,18 +238,20 @@ class MemoryPressureDetector:
         level: PressureLevel,
     ) -> None:
         """Record memory stats to history."""
-        self._history.append({
-            "timestamp": datetime.now().isoformat(),
-            "level": level.name,
-            "memory_percent": round(mem_stats["percent"] * 100, 1),
-            "memory_used_gb": round(mem_stats["used"] / 1e9, 2),
-            "gpu_percent": round(gpu_stats.get("percent", 0) * 100, 1),
-            "gpu_used_gb": round(gpu_stats.get("used", 0) / 1e9, 2),
-        })
+        self._history.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "level": level.name,
+                "memory_percent": round(mem_stats["percent"] * 100, 1),
+                "memory_used_gb": round(mem_stats["used"] / 1e9, 2),
+                "gpu_percent": round(gpu_stats.get("percent", 0) * 100, 1),
+                "gpu_used_gb": round(gpu_stats.get("used", 0) / 1e9, 2),
+            }
+        )
 
         # Trim history
         if len(self._history) > self.config.history_size:
-            self._history = self._history[-self.config.history_size:]
+            self._history = self._history[-self.config.history_size :]
 
     async def _handle_transition(
         self,
@@ -267,6 +281,7 @@ class MemoryPressureDetector:
         # Run garbage collection on high pressure
         if new_level >= PressureLevel.HIGH and self.config.auto_gc_on_high:
             import gc
+
             gc.collect()
             logger.debug("Triggered garbage collection")
 
@@ -297,11 +312,15 @@ class MemoryPressureDetector:
                 "total_gb": round(mem_stats["total"] / 1e9, 2),
                 "percent": round(mem_stats["percent"] * 100, 1),
             },
-            "gpu": {
-                "used_gb": round(gpu_stats.get("used", 0) / 1e9, 2),
-                "total_gb": round(gpu_stats.get("total", 0) / 1e9, 2),
-                "percent": round(gpu_stats.get("percent", 0) * 100, 1),
-            } if gpu_stats else None,
+            "gpu": (
+                {
+                    "used_gb": round(gpu_stats.get("used", 0) / 1e9, 2),
+                    "total_gb": round(gpu_stats.get("total", 0) / 1e9, 2),
+                    "percent": round(gpu_stats.get("percent", 0) * 100, 1),
+                }
+                if gpu_stats
+                else None
+            ),
             "thresholds": {
                 "moderate": self.config.thresholds.moderate * 100,
                 "high": self.config.thresholds.high * 100,
@@ -320,8 +339,7 @@ class MemoryPressureDetector:
             "current": self.get_current_stats(),
             "history_size": len(self._history),
             "callbacks_registered": {
-                level.name: len(callbacks)
-                for level, callbacks in self._callbacks.items()
+                level.name: len(callbacks) for level, callbacks in self._callbacks.items()
             },
         }
 

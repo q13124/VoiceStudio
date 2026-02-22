@@ -27,11 +27,7 @@ class TestHooksImports:
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
-        classes = [
-            name
-            for name in dir(hooks)
-            if name[0].isupper() and not name.startswith("_")
-        ]
+        classes = [name for name in dir(hooks) if name[0].isupper() and not name.startswith("_")]
         assert len(classes) > 0, "module should have classes"
 
 
@@ -51,11 +47,8 @@ class TestHooksFunctions:
     def test_register_hook_function_exists(self):
         """Test register_hook function exists."""
         if hasattr(hooks, "register_hook"):
-            assert callable(
-                hooks.register_hook
-            ), "register_hook should be callable"
+            assert callable(hooks.register_hook), "register_hook should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

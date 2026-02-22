@@ -79,36 +79,20 @@ def convert_single_model(
 
 def main():
     """Main CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="Convert PyTorch models to ONNX format"
-    )
-    parser.add_argument(
-        "--model", type=str, help="Path to PyTorch model file"
-    )
-    parser.add_argument(
-        "--output", type=str, help="Path to output ONNX model"
-    )
+    parser = argparse.ArgumentParser(description="Convert PyTorch models to ONNX format")
+    parser.add_argument("--model", type=str, help="Path to PyTorch model file")
+    parser.add_argument("--output", type=str, help="Path to output ONNX model")
     parser.add_argument(
         "--input-shape",
         type=str,
         default="1,3,224,224",
         help="Input shape (comma-separated, e.g., '1,3,224,224')",
     )
-    parser.add_argument(
-        "--optimize", action="store_true", help="Optimize ONNX model"
-    )
-    parser.add_argument(
-        "--quantize", action="store_true", help="Quantize ONNX model"
-    )
-    parser.add_argument(
-        "--device", type=str, default="cpu", help="Device (cpu or cuda)"
-    )
-    parser.add_argument(
-        "--batch", action="store_true", help="Batch convert models"
-    )
-    parser.add_argument(
-        "--models-dir", type=str, help="Directory containing models"
-    )
+    parser.add_argument("--optimize", action="store_true", help="Optimize ONNX model")
+    parser.add_argument("--quantize", action="store_true", help="Quantize ONNX model")
+    parser.add_argument("--device", type=str, default="cpu", help="Device (cpu or cuda)")
+    parser.add_argument("--batch", action="store_true", help="Batch convert models")
+    parser.add_argument("--models-dir", type=str, help="Directory containing models")
 
     args = parser.parse_args()
 
@@ -160,4 +144,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

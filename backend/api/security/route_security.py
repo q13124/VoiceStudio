@@ -22,9 +22,10 @@ logger = logging.getLogger(__name__)
 
 class SecurityLevel(Enum):
     """Security levels for route protection."""
-    PUBLIC = "public"       # No auth required
-    OPTIONAL = "optional"   # Auth if enabled
-    REQUIRED = "required"   # Always requires auth
+
+    PUBLIC = "public"  # No auth required
+    OPTIONAL = "optional"  # Auth if enabled
+    REQUIRED = "required"  # Always requires auth
 
 
 # Route security matrix: defines security level per route prefix
@@ -35,7 +36,6 @@ ROUTE_SECURITY_MATRIX: dict[str, SecurityLevel] = {
     "/api/version": SecurityLevel.PUBLIC,
     "/metrics": SecurityLevel.PUBLIC,
     "/": SecurityLevel.PUBLIC,
-
     # Optional auth - protected if auth is enabled
     "/api/voice": SecurityLevel.OPTIONAL,
     "/api/voice-browser": SecurityLevel.OPTIONAL,
@@ -51,7 +51,6 @@ ROUTE_SECURITY_MATRIX: dict[str, SecurityLevel] = {
     "/api/integrations": SecurityLevel.OPTIONAL,
     "/api/feedback": SecurityLevel.OPTIONAL,
     "/api/realtime": SecurityLevel.OPTIONAL,
-
     # Required auth - always needs authentication
     "/api/training": SecurityLevel.REQUIRED,
     "/api/admin": SecurityLevel.REQUIRED,
@@ -86,11 +85,7 @@ def get_security_level(path: str) -> SecurityLevel:
         return ROUTE_SECURITY_MATRIX[path]
 
     # Check prefix matches (longest match first)
-    sorted_prefixes = sorted(
-        ROUTE_SECURITY_MATRIX.keys(),
-        key=len,
-        reverse=True
-    )
+    sorted_prefixes = sorted(ROUTE_SECURITY_MATRIX.keys(), key=len, reverse=True)
 
     for prefix in sorted_prefixes:
         if path.startswith(prefix):
@@ -129,12 +124,12 @@ def is_sensitive_operation(method: str, path: str) -> bool:
 def log_security_decision(path: str, level: SecurityLevel, authenticated: bool):
     """Log security decision for audit purposes."""
     logger.debug(
-        f"Security decision: path={path}, level={level.value}, "
-        f"authenticated={authenticated}"
+        f"Security decision: path={path}, level={level.value}, " f"authenticated={authenticated}"
     )
 
 
 # Security dependencies for use in routes
+
 
 async def require_auth_for_training():
     """

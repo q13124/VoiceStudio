@@ -57,9 +57,7 @@ class SupervisorRouter:
         self._ceiling = token_ceiling_manager
         self._filler = filler_generator or FillerPhraseGenerator()
         self._context_sync = context_sync or ContextSync()
-        self._barge_in = barge_in_handler or BargeInHandler(
-            on_stop=self._on_barge_in_stop
-        )
+        self._barge_in = barge_in_handler or BargeInHandler(on_stop=self._on_barge_in_stop)
         self._intent_buffer = intent_buffer or IntentBuffer()
         self._fsm = SupervisorStateMachine()
         self._session_id: str | None = None
@@ -139,9 +137,7 @@ class SupervisorRouter:
             filler = self._filler.get_filler_for_handoff(previous_route, route)
             result["transition_filler"] = filler
             # Inject context for the new mode
-            context_injection = self._context_sync.generate_system_prompt_injection(
-                route
-            )
+            context_injection = self._context_sync.generate_system_prompt_injection(route)
             result["context_injection"] = context_injection
             logger.info(f"Mode transition: {previous_route} → {route}")
 
@@ -157,9 +153,7 @@ class SupervisorRouter:
 
             # Record assistant response in context
             if response.get("response_text"):
-                self._context_sync.add_turn(
-                    "assistant", response["response_text"], route
-                )
+                self._context_sync.add_turn("assistant", response["response_text"], route)
 
         except Exception as exc:
             logger.error(f"Route processing failed: {exc}")
@@ -232,9 +226,7 @@ class SupervisorRouter:
 
         if self._half_cascade and audio_data:
             result = await self._half_cascade.process_audio(audio_data, context=text)
-            self._fsm.transition(
-                SupervisorState.RESPONDING, trigger="half_cascade_response"
-            )
+            self._fsm.transition(SupervisorState.RESPONDING, trigger="half_cascade_response")
             return {
                 "response_text": result.get("response_text", ""),
                 "audio_data": result.get("audio"),
@@ -304,9 +296,7 @@ class SupervisorRouter:
 
     def get_context(self) -> dict[str, Any]:
         """Get the current context including synopsis."""
-        return self._context_sync.get_context_for_mode(
-            self._previous_mode or "cascade"
-        )
+        return self._context_sync.get_context_for_mode(self._previous_mode or "cascade")
 
     def reset(self) -> None:
         """Reset supervisor state."""

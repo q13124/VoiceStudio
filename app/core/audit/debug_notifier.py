@@ -125,10 +125,7 @@ class DebugRoleNotifier:
 
         with self._lock:
             # Clean up old entries
-            self._notification_times = [
-                t for t in self._notification_times
-                if t > one_hour_ago
-            ]
+            self._notification_times = [t for t in self._notification_times if t > one_hour_ago]
 
             # Check limit
             return len(self._notification_times) < self._rate_limit
@@ -146,6 +143,7 @@ class DebugRoleNotifier:
             # Try to initialize handoff queue
             try:
                 from tools.overseer.issues.handoff import HandoffQueue
+
                 self._handoff_queue = HandoffQueue()
             except ImportError:
                 return False
@@ -220,6 +218,7 @@ def get_debug_notifier() -> DebugRoleNotifier:
         # Try to connect to handoff queue
         try:
             from tools.overseer.issues.handoff import HandoffQueue
+
             _debug_notifier.set_handoff_queue(HandoffQueue())
         # ALLOWED: bare except - Optional dependency, import failure is acceptable
         except ImportError:
@@ -251,6 +250,7 @@ def setup_debug_notifier(
     # Try to connect to handoff queue
     try:
         from tools.overseer.issues.handoff import HandoffQueue
+
         _debug_notifier.set_handoff_queue(HandoffQueue())
     # ALLOWED: bare except - Optional dependency, import failure is acceptable
     except ImportError:

@@ -98,9 +98,9 @@ def test_manifest_has_required_fields(plugin_name: str):
     assert manifest.get("name") == plugin_name
     assert "version" in manifest
     assert manifest.get("entry_points", {}).get("backend"), "Missing entry_points.backend"
-    assert manifest.get("security", {}).get("isolation_mode") == "in_process", (
-        f"{plugin_name} isolation_mode should be 'in_process' (ADR-037 Lane A)"
-    )
+    assert (
+        manifest.get("security", {}).get("isolation_mode") == "in_process"
+    ), f"{plugin_name} isolation_mode should be 'in_process' (ADR-037 Lane A)"
 
 
 # ------------------------------------------------------------------

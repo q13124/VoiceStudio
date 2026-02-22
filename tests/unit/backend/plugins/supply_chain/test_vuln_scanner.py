@@ -192,11 +192,46 @@ class TestScanResult:
     def test_severity_counts(self):
         """Test severity counting."""
         vulns = [
-            Vulnerability(id="1", package="a", installed_version="1.0", fixed_version=None, severity=Severity.CRITICAL, title=""),
-            Vulnerability(id="2", package="b", installed_version="1.0", fixed_version=None, severity=Severity.CRITICAL, title=""),
-            Vulnerability(id="3", package="c", installed_version="1.0", fixed_version=None, severity=Severity.HIGH, title=""),
-            Vulnerability(id="4", package="d", installed_version="1.0", fixed_version=None, severity=Severity.MEDIUM, title=""),
-            Vulnerability(id="5", package="e", installed_version="1.0", fixed_version=None, severity=Severity.LOW, title=""),
+            Vulnerability(
+                id="1",
+                package="a",
+                installed_version="1.0",
+                fixed_version=None,
+                severity=Severity.CRITICAL,
+                title="",
+            ),
+            Vulnerability(
+                id="2",
+                package="b",
+                installed_version="1.0",
+                fixed_version=None,
+                severity=Severity.CRITICAL,
+                title="",
+            ),
+            Vulnerability(
+                id="3",
+                package="c",
+                installed_version="1.0",
+                fixed_version=None,
+                severity=Severity.HIGH,
+                title="",
+            ),
+            Vulnerability(
+                id="4",
+                package="d",
+                installed_version="1.0",
+                fixed_version=None,
+                severity=Severity.MEDIUM,
+                title="",
+            ),
+            Vulnerability(
+                id="5",
+                package="e",
+                installed_version="1.0",
+                fixed_version=None,
+                severity=Severity.LOW,
+                title="",
+            ),
         ]
 
         result = ScanResult(
@@ -217,9 +252,30 @@ class TestScanResult:
     def test_filter_by_severity(self, sample_vulnerability):
         """Test filtering vulnerabilities by severity."""
         vulns = [
-            Vulnerability(id="1", package="a", installed_version="1.0", fixed_version=None, severity=Severity.CRITICAL, title=""),
-            Vulnerability(id="2", package="b", installed_version="1.0", fixed_version=None, severity=Severity.HIGH, title=""),
-            Vulnerability(id="3", package="c", installed_version="1.0", fixed_version=None, severity=Severity.LOW, title=""),
+            Vulnerability(
+                id="1",
+                package="a",
+                installed_version="1.0",
+                fixed_version=None,
+                severity=Severity.CRITICAL,
+                title="",
+            ),
+            Vulnerability(
+                id="2",
+                package="b",
+                installed_version="1.0",
+                fixed_version=None,
+                severity=Severity.HIGH,
+                title="",
+            ),
+            Vulnerability(
+                id="3",
+                package="c",
+                installed_version="1.0",
+                fixed_version=None,
+                severity=Severity.LOW,
+                title="",
+            ),
         ]
 
         result = ScanResult(
@@ -320,22 +376,24 @@ class TestVulnerabilityScanner:
         # Mock pip-audit output
         mock_run.return_value = MagicMock(
             returncode=0,
-            stdout=json.dumps({
-                "dependencies": [
-                    {
-                        "name": "requests",
-                        "version": "2.28.0",
-                        "vulns": [
-                            {
-                                "id": "CVE-2023-12345",
-                                "severity": "high",
-                                "description": "Test vuln",
-                                "fix_versions": ["2.28.1"],
-                            }
-                        ],
-                    }
-                ]
-            }),
+            stdout=json.dumps(
+                {
+                    "dependencies": [
+                        {
+                            "name": "requests",
+                            "version": "2.28.0",
+                            "vulns": [
+                                {
+                                    "id": "CVE-2023-12345",
+                                    "severity": "high",
+                                    "description": "Test vuln",
+                                    "fix_versions": ["2.28.1"],
+                                }
+                            ],
+                        }
+                    ]
+                }
+            ),
             stderr="",
         )
 
@@ -366,20 +424,22 @@ class TestVulnerabilityScanner:
         """Test scanning directory with grype."""
         mock_run.return_value = MagicMock(
             returncode=0,
-            stdout=json.dumps({
-                "matches": [
-                    {
-                        "artifact": {"name": "flask", "version": "2.0.0"},
-                        "vulnerability": {
-                            "id": "CVE-2023-54321",
-                            "severity": "critical",
-                            "description": "Critical bug",
-                            "fix": {"versions": ["2.0.1"]},
-                            "cvss": [{"metrics": {"baseScore": 9.5}}],
-                        },
-                    }
-                ]
-            }),
+            stdout=json.dumps(
+                {
+                    "matches": [
+                        {
+                            "artifact": {"name": "flask", "version": "2.0.0"},
+                            "vulnerability": {
+                                "id": "CVE-2023-54321",
+                                "severity": "critical",
+                                "description": "Critical bug",
+                                "fix": {"versions": ["2.0.1"]},
+                                "cvss": [{"metrics": {"baseScore": 9.5}}],
+                            },
+                        }
+                    ]
+                }
+            ),
             stderr="",
         )
 

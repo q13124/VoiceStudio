@@ -33,8 +33,10 @@ def backend_available():
 class TestBackendFrontendCommunication:
     """Test backend-frontend communication."""
 
-    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
-                         reason="Backend not available (set BACKEND_AVAILABLE=true)")
+    @pytest.mark.skipif(
+        os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
+        reason="Backend not available (set BACKEND_AVAILABLE=true)",
+    )
     def test_health_endpoint_accessible(self, backend_available):
         """Test health endpoint is accessible from frontend perspective."""
         if not backend_available:
@@ -42,8 +44,7 @@ class TestBackendFrontendCommunication:
 
         try:
             response = requests.get(f"{API_BASE_URL}/health", timeout=5)
-            assert response.status_code == 200, \
-                f"Health endpoint returned {response.status_code}"
+            assert response.status_code == 200, f"Health endpoint returned {response.status_code}"
 
             data = response.json()
             assert "status" in data, "Health response missing 'status' field"
@@ -52,8 +53,10 @@ class TestBackendFrontendCommunication:
         except Exception as e:
             pytest.fail(f"Health endpoint test failed: {e}")
 
-    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
-                         reason="Backend not available (set BACKEND_AVAILABLE=true)")
+    @pytest.mark.skipif(
+        os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
+        reason="Backend not available (set BACKEND_AVAILABLE=true)",
+    )
     def test_cors_headers(self, backend_available):
         """Test CORS headers are present for frontend access."""
         if not backend_available:
@@ -61,14 +64,12 @@ class TestBackendFrontendCommunication:
 
         try:
             response = requests.options(
-                f"{API_BASE_URL}/health",
-                headers={"Origin": "http://localhost"},
-                timeout=5
+                f"{API_BASE_URL}/health", headers={"Origin": "http://localhost"}, timeout=5
             )
 
-            assert "Access-Control-Allow-Origin" in response.headers or \
-                   response.status_code == 200, \
-                "CORS headers missing or incorrect"
+            assert (
+                "Access-Control-Allow-Origin" in response.headers or response.status_code == 200
+            ), "CORS headers missing or incorrect"
 
             logger.info("CORS headers present")
         except Exception as e:
@@ -78,8 +79,10 @@ class TestBackendFrontendCommunication:
 class TestDataFlow:
     """Test data flow between frontend and backend."""
 
-    @pytest.mark.skipif(os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
-                         reason="Backend not available (set BACKEND_AVAILABLE=true)")
+    @pytest.mark.skipif(
+        os.getenv("BACKEND_AVAILABLE", "false").lower() != "true",
+        reason="Backend not available (set BACKEND_AVAILABLE=true)",
+    )
     def test_profiles_data_flow(self, backend_available):
         """Test profiles data flows correctly between frontend and backend."""
         if not backend_available:
@@ -91,9 +94,9 @@ class TestDataFlow:
                 json={
                     "name": "Integration Test Profile",
                     "description": "Test profile for backend-frontend integration",
-                    "language": "en"
+                    "language": "en",
                 },
-                timeout=5
+                timeout=5,
             )
 
             if create_response.status_code == 200:
@@ -101,17 +104,14 @@ class TestDataFlow:
                 profile_id = profile.get("id")
 
                 if profile_id:
-                    get_response = requests.get(
-                        f"{API_BASE_URL}/profiles/{profile_id}",
-                        timeout=5
-                    )
+                    get_response = requests.get(f"{API_BASE_URL}/profiles/{profile_id}", timeout=5)
 
-                    assert get_response.status_code == 200, \
-                        "Failed to retrieve profile"
+                    assert get_response.status_code == 200, "Failed to retrieve profile"
 
                     retrieved_profile = get_response.json()
-                    assert retrieved_profile.get("name") == "Integration Test Profile", \
-                        "Profile data mismatch"
+                    assert (
+                        retrieved_profile.get("name") == "Integration Test Profile"
+                    ), "Profile data mismatch"
 
                     requests.delete(f"{API_BASE_URL}/profiles/{profile_id}", timeout=5)
 
@@ -126,10 +126,9 @@ def pytest_addoption(parser):
         "--backend-available",
         action="store_true",
         default=False,
-        help="Run tests that require backend to be available"
+        help="Run tests that require backend to be available",
     )
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--backend-available"])
-

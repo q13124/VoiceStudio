@@ -23,6 +23,7 @@ router = APIRouter(prefix="/api/voice-effects", tags=["voice-effects"])
 
 class ApplyEffectRequest(BaseModel):
     """Request to apply voice effect."""
+
     audio_id: str = Field(..., description="Audio ID to process")
     effect_id: str = Field(..., description="Effect preset ID or custom effect")
     parameters: dict[str, Any] | None = Field(None, description="Custom effect parameters")
@@ -30,6 +31,7 @@ class ApplyEffectRequest(BaseModel):
 
 class ApplyEffectResponse(BaseModel):
     """Response for applied effect."""
+
     output_audio_id: str
     effect_id: str
     processing_time_ms: float
@@ -37,6 +39,7 @@ class ApplyEffectResponse(BaseModel):
 
 class EffectPreset(BaseModel):
     """Voice effect preset."""
+
     id: str
     name: str
     category: str
@@ -46,6 +49,7 @@ class EffectPreset(BaseModel):
 
 class HotkeyConfig(BaseModel):
     """Hotkey configuration for voice switching."""
+
     hotkey: str = Field(..., description="Hotkey combination (e.g., 'ctrl+1')")
     effect_id: str = Field(..., description="Effect preset to activate")
     enabled: bool = Field(True)
@@ -53,6 +57,7 @@ class HotkeyConfig(BaseModel):
 
 class RealtimeSessionRequest(BaseModel):
     """Request to start realtime voice changer session."""
+
     input_device: str | None = Field(None, description="Input audio device name")
     output_device: str | None = Field(None, description="Output audio device name")
     effect_id: str | None = Field(None, description="Initial effect preset")
@@ -61,6 +66,7 @@ class RealtimeSessionRequest(BaseModel):
 
 class RealtimeSessionResponse(BaseModel):
     """Response for realtime session."""
+
     session_id: str
     status: str
     latency_ms: float
@@ -98,10 +104,7 @@ async def list_effect_presets():
 
     except Exception as e:
         logger.error(f"Failed to list presets: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to list presets: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to list presets: {e!s}") from e
 
 
 @router.get("/presets/{preset_id}", response_model=EffectPreset)
@@ -114,10 +117,7 @@ async def get_effect_preset(preset_id: str):
         preset = service.get_preset(preset_id)
 
         if not preset:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Preset '{preset_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Preset '{preset_id}' not found")
 
         return EffectPreset(
             id=preset["id"],
@@ -131,10 +131,7 @@ async def get_effect_preset(preset_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get preset: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get preset: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to get preset: {e!s}") from e
 
 
 @router.post("/apply", response_model=ApplyEffectResponse)
@@ -160,8 +157,7 @@ async def apply_voice_effect(request: ApplyEffectRequest):
 
         if not result.get("success", False):
             raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "Effect application failed")
+                status_code=500, detail=result.get("error", "Effect application failed")
             )
 
         return ApplyEffectResponse(
@@ -174,10 +170,7 @@ async def apply_voice_effect(request: ApplyEffectRequest):
         raise
     except Exception as e:
         logger.error(f"Effect application failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Effect application failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Effect application failed: {e!s}") from e
 
 
 @router.get("/categories")
@@ -221,10 +214,7 @@ async def list_hotkeys():
 
     except Exception as e:
         logger.error(f"Failed to list hotkeys: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to list hotkeys: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to list hotkeys: {e!s}") from e
 
 
 @router.post("/hotkeys")
@@ -241,10 +231,7 @@ async def set_hotkey(config: HotkeyConfig):
         )
 
         if not success:
-            raise HTTPException(
-                status_code=400,
-                detail="Failed to configure hotkey"
-            )
+            raise HTTPException(status_code=400, detail="Failed to configure hotkey")
 
         return {"success": True, "message": f"Hotkey '{config.hotkey}' configured"}
 
@@ -252,10 +239,7 @@ async def set_hotkey(config: HotkeyConfig):
         raise
     except Exception as e:
         logger.error(f"Failed to set hotkey: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to set hotkey: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to set hotkey: {e!s}") from e
 
 
 @router.delete("/hotkeys/{hotkey}")
@@ -268,10 +252,7 @@ async def remove_hotkey(hotkey: str):
         success = service.remove_hotkey(hotkey)
 
         if not success:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Hotkey '{hotkey}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Hotkey '{hotkey}' not found")
 
         return {"success": True, "message": f"Hotkey '{hotkey}' removed"}
 
@@ -279,10 +260,7 @@ async def remove_hotkey(hotkey: str):
         raise
     except Exception as e:
         logger.error(f"Failed to remove hotkey: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to remove hotkey: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to remove hotkey: {e!s}") from e
 
 
 # --- Realtime Session Management ---
@@ -308,8 +286,7 @@ async def start_realtime_session(request: RealtimeSessionRequest):
 
         if not result.get("success", False):
             raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "Failed to start realtime session")
+                status_code=500, detail=result.get("error", "Failed to start realtime session")
             )
 
         return RealtimeSessionResponse(
@@ -323,8 +300,7 @@ async def start_realtime_session(request: RealtimeSessionRequest):
     except Exception as e:
         logger.error(f"Failed to start realtime session: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to start realtime session: {e!s}"
+            status_code=500, detail=f"Failed to start realtime session: {e!s}"
         ) from e
 
 
@@ -338,10 +314,7 @@ async def stop_realtime_session(session_id: str):
         success = await service.stop_realtime_session(session_id)
 
         if not success:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Session '{session_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
 
         return {"success": True, "message": f"Session '{session_id}' stopped"}
 
@@ -350,8 +323,7 @@ async def stop_realtime_session(session_id: str):
     except Exception as e:
         logger.error(f"Failed to stop realtime session: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to stop realtime session: {e!s}"
+            status_code=500, detail=f"Failed to stop realtime session: {e!s}"
         ) from e
 
 
@@ -366,8 +338,7 @@ async def change_realtime_effect(session_id: str, effect_id: str):
 
         if not success:
             raise HTTPException(
-                status_code=404,
-                detail=f"Session '{session_id}' not found or effect change failed"
+                status_code=404, detail=f"Session '{session_id}' not found or effect change failed"
             )
 
         return {"success": True, "effect_id": effect_id}
@@ -376,10 +347,7 @@ async def change_realtime_effect(session_id: str, effect_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to change effect: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to change effect: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to change effect: {e!s}") from e
 
 
 @router.get("/audio-devices")
@@ -395,7 +363,4 @@ async def list_audio_devices():
 
     except Exception as e:
         logger.error(f"Failed to list audio devices: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to list audio devices: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to list audio devices: {e!s}") from e

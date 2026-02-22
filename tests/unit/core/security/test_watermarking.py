@@ -23,9 +23,7 @@ class TestWatermarkingImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            watermarking is not None
-        ), "Failed to import watermarking module"
+        assert watermarking is not None, "Failed to import watermarking module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -39,18 +37,13 @@ class TestWatermarkingFunctions:
     def test_add_watermark_function_exists(self):
         """Test add_watermark function exists."""
         if hasattr(watermarking, "add_watermark"):
-            assert callable(
-                watermarking.add_watermark
-            ), "add_watermark should be callable"
+            assert callable(watermarking.add_watermark), "add_watermark should be callable"
 
     def test_detect_watermark_function_exists(self):
         """Test detect_watermark function exists."""
         if hasattr(watermarking, "detect_watermark"):
-            assert callable(
-                watermarking.detect_watermark
-            ), "detect_watermark should be callable"
+            assert callable(watermarking.detect_watermark), "detect_watermark should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

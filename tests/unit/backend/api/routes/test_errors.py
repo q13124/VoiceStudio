@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def errors_client():
     """Create test client for errors routes."""
     from backend.api.routes.errors import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)
@@ -37,8 +38,7 @@ class TestErrorTracking:
     def test_list_recent_with_filters(self, errors_client):
         """Test GET /recent with filters."""
         response = errors_client.get(
-            "/api/errors/recent",
-            params={"severity": "error", "limit": 10}
+            "/api/errors/recent", params={"severity": "error", "limit": 10}
         )
         assert response.status_code == 200
 
@@ -64,8 +64,7 @@ class TestErrorManagement:
     def test_resolve_error(self, errors_client):
         """Test POST /{error_id}/resolve resolves an error."""
         response = errors_client.post(
-            "/api/errors/test-error/resolve",
-            json={"resolved_by": "test-user"}
+            "/api/errors/test-error/resolve", json={"resolved_by": "test-user"}
         )
         assert response.status_code in [200, 404, 422]
 

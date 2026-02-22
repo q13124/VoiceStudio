@@ -26,12 +26,8 @@ class TestEmbeddingExplorerRouteImports:
 
     def test_embedding_explorer_module_imports(self):
         """Test embedding_explorer module can be imported."""
-        assert (
-            embedding_explorer is not None
-        ), "Failed to import embedding_explorer module"
-        assert hasattr(
-            embedding_explorer, "router"
-        ), "embedding_explorer module missing router"
+        assert embedding_explorer is not None, "Failed to import embedding_explorer module"
+        assert hasattr(embedding_explorer, "router"), "embedding_explorer module missing router"
 
 
 class TestEmbeddingExplorerRouteHandlers:

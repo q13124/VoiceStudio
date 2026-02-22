@@ -184,7 +184,9 @@ class TestMessageBatching:
         # Add multiple messages at NORMAL priority
         for i in range(5):
             message = {"topic": "meters", "type": "update", "data": f"test{i}"}
-            realtime._message_batches["meters"][realtime.MessagePriority.NORMAL.value].append(message)
+            realtime._message_batches["meters"][realtime.MessagePriority.NORMAL.value].append(
+                message
+            )
 
         # Mock WebSocket
         ws = AsyncMock(spec=WebSocket)
@@ -215,7 +217,9 @@ class TestMessageBatching:
         # Add more messages than batch size at NORMAL priority
         for i in range(15):  # More than default batch_size of 10
             message = {"topic": "meters", "type": "update", "data": f"test{i}"}
-            realtime._message_batches["meters"][realtime.MessagePriority.NORMAL.value].append(message)
+            realtime._message_batches["meters"][realtime.MessagePriority.NORMAL.value].append(
+                message
+            )
 
         # Mock WebSocket
         ws = AsyncMock(spec=WebSocket)
@@ -326,7 +330,9 @@ class TestConnectionManagement:
 
         # Connections were subscribed during connect (before cleanup)
         assert subscriptions_verified.get("meters"), "Should be subscribed to meters during connect"
-        assert subscriptions_verified.get("training"), "Should be subscribed to training during connect"
+        assert subscriptions_verified.get(
+            "training"
+        ), "Should be subscribed to training during connect"
 
     @pytest.mark.asyncio
     async def test_connection_cleanup_on_disconnect(self):

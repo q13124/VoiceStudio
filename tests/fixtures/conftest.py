@@ -79,6 +79,7 @@ from workflows import (
 # TEXT FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def text_samples() -> list[TextSample]:
     """All text samples."""
@@ -125,6 +126,7 @@ def paragraph_text() -> str:
 # SSML FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def ssml_samples() -> list[SSMLSample]:
     """All SSML samples."""
@@ -159,6 +161,7 @@ def sample_ssml() -> str:
 # LANGUAGE FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def language_samples() -> list[LanguageSample]:
     """All language samples."""
@@ -191,6 +194,7 @@ def multi_language_texts() -> dict[str, str]:
 # VOICE PROFILE FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def voice_profiles() -> list[VoiceProfileConfig]:
     """All voice profile configurations."""
@@ -218,6 +222,7 @@ def default_profile() -> VoiceProfileConfig:
 # =============================================================================
 # AUDIO FILE FIXTURES
 # =============================================================================
+
 
 @pytest.fixture(scope="session")
 def audio_fixtures_dir() -> Path:
@@ -264,6 +269,7 @@ def silence_audio_file(audio_fixtures_dir) -> Path:
 # DATASET FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def sample_datasets() -> list[TrainingDataset]:
     """All sample datasets."""
@@ -303,6 +309,7 @@ def batch_synthesis_job() -> BatchJobConfig:
 # =============================================================================
 # PRESET FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def synthesis_presets() -> list[SynthesisPreset]:
@@ -349,6 +356,7 @@ def voice_enhancement_preset() -> EffectChainPreset:
 # =============================================================================
 # WORKFLOW FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def all_workflows() -> list[Workflow]:
@@ -402,6 +410,7 @@ def voice_cloning_workflow() -> Workflow:
 # COMBINED FIXTURES
 # =============================================================================
 
+
 @pytest.fixture
 def test_fixture_summary() -> dict[str, int]:
     """Summary of all available fixtures."""
@@ -436,6 +445,7 @@ def fixture_paths() -> dict[str, Path]:
 # PARAMETRIZE HELPERS
 # =============================================================================
 
+
 def pytest_generate_tests(metafunc):
     """Automatically parametrize tests based on fixture requirements."""
 
@@ -445,7 +455,9 @@ def pytest_generate_tests(metafunc):
 
     # Parametrize SSML categories
     if "ssml_category" in metafunc.fixturenames:
-        metafunc.parametrize("ssml_category", ["basic", "prosody", "timing", "emphasis", "interpretation"])
+        metafunc.parametrize(
+            "ssml_category", ["basic", "prosody", "timing", "emphasis", "interpretation"]
+        )
 
     # Parametrize languages
     if "language_code" in metafunc.fixturenames:
@@ -463,6 +475,7 @@ def pytest_generate_tests(metafunc):
 # =============================================================================
 # MARKERS
 # =============================================================================
+
 
 def pytest_configure(config):
     """Register custom markers."""

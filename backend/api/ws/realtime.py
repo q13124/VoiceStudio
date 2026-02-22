@@ -311,8 +311,7 @@ async def _health_checker():
                 # Check if health check is needed
                 health_check_needed = (
                     conn_info.last_health_check is None
-                    or (now - conn_info.last_health_check).total_seconds()
-                    >= _health_check_interval
+                    or (now - conn_info.last_health_check).total_seconds() >= _health_check_interval
                 )
                 if health_check_needed:
                     conn_info.last_health_check = now
@@ -523,9 +522,7 @@ async def broadcast_meter_updates(
             _connection_info.pop(ws, None)
 
 
-async def broadcast_training_progress(
-    training_id: str, progress_data: dict, batch: bool = True
-):
+async def broadcast_training_progress(training_id: str, progress_data: dict, batch: bool = True):
     """
     Broadcast training progress updates to subscribed clients.
 
@@ -590,9 +587,7 @@ async def broadcast_training_progress(
             _connection_info.pop(ws, None)
 
 
-async def broadcast_batch_progress(
-    batch_id: str, progress_data: dict, batch: bool = True
-):
+async def broadcast_batch_progress(batch_id: str, progress_data: dict, batch: bool = True):
     """
     Broadcast batch processing progress updates to subscribed clients.
 
@@ -708,19 +703,11 @@ def get_subscriber_count(topic: str | None = None) -> int:
 def get_connection_stats() -> dict:
     """Get WebSocket connection statistics (enhanced)."""
     total_connections = len(_connection_info)
-    healthy_connections = sum(
-        1 for conn_info in _connection_info.values() if conn_info.is_healthy
-    )
-    total_messages = sum(
-        conn_info.message_count for conn_info in _connection_info.values()
-    )
+    healthy_connections = sum(1 for conn_info in _connection_info.values() if conn_info.is_healthy)
+    total_messages = sum(conn_info.message_count for conn_info in _connection_info.values())
     total_errors = sum(conn_info.error_count for conn_info in _connection_info.values())
-    total_bytes_sent = sum(
-        conn_info.bytes_sent for conn_info in _connection_info.values()
-    )
-    total_bytes_received = sum(
-        conn_info.bytes_received for conn_info in _connection_info.values()
-    )
+    total_bytes_sent = sum(conn_info.bytes_sent for conn_info in _connection_info.values())
+    total_bytes_received = sum(conn_info.bytes_received for conn_info in _connection_info.values())
     total_queued_messages = sum(
         conn_info.get_queue_size() for conn_info in _connection_info.values()
     )
@@ -728,21 +715,16 @@ def get_connection_stats() -> dict:
     # Calculate average connection age
     now = datetime.now()
     connection_ages = [
-        (now - conn_info.connected_at).total_seconds()
-        for conn_info in _connection_info.values()
+        (now - conn_info.connected_at).total_seconds() for conn_info in _connection_info.values()
     ]
-    avg_connection_age = (
-        sum(connection_ages) / len(connection_ages) if connection_ages else 0.0
-    )
+    avg_connection_age = sum(connection_ages) / len(connection_ages) if connection_ages else 0.0
 
     # Calculate batch queue sizes by priority
     batch_queue_sizes = {}
     for topic, priority_batches in _message_batches.items():
         batch_queue_sizes[topic] = {
             priority.name: len(batch)
-            for priority, batch in [
-                (p, priority_batches[p.value]) for p in MessagePriority
-            ]
+            for priority, batch in [(p, priority_batches[p.value]) for p in MessagePriority]
         }
 
     return {
@@ -756,8 +738,6 @@ def get_connection_stats() -> dict:
         "total_bytes_received": total_bytes_received,
         "total_queued_messages": total_queued_messages,
         "avg_connection_age_seconds": avg_connection_age,
-        "subscribers_by_topic": {
-            topic: len(conns) for topic, conns in _active_connections.items()
-        },
+        "subscribers_by_topic": {topic: len(conns) for topic, conns in _active_connections.items()},
         "batch_queue_sizes": batch_queue_sizes,
     }

@@ -17,9 +17,7 @@ class TestCanonicalAudioFixture:
 
     def test_segment_exists(self, canonical_audio_segment_path):
         """15-second segment exists and is reasonable size."""
-        assert canonical_audio_segment_path.exists(), (
-            f"Missing: {canonical_audio_segment_path}"
-        )
+        assert canonical_audio_segment_path.exists(), f"Missing: {canonical_audio_segment_path}"
         assert canonical_audio_segment_path.suffix == ".wav"
         size = canonical_audio_segment_path.stat().st_size
         assert 500_000 < size < 1_000_000  # ~660KB expected

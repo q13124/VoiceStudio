@@ -17,11 +17,12 @@ from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class CircuitState(Enum):
     """Circuit breaker states."""
+
     CLOSED = "closed"  # Normal operation
     OPEN = "open"  # Failing, reject requests
     HALF_OPEN = "half_open"  # Testing if service recovered
@@ -133,12 +134,7 @@ class CircuitBreaker:
                 self.state = CircuitState.HALF_OPEN
                 self.success_count = 0
 
-    async def call(
-        self,
-        func: Callable[..., T],
-        *args,
-        **kwargs
-    ) -> T:
+    async def call(self, func: Callable[..., T], *args, **kwargs) -> T:
         """
         Execute function through circuit breaker.
 
@@ -210,6 +206,7 @@ class CircuitBreaker:
 
 class CircuitBreakerOpenError(Exception):
     """Exception raised when circuit breaker is open."""
+
     ...
 
 
@@ -291,4 +288,3 @@ def circuit_breaker(
             return sync_wrapper
 
     return decorator
-

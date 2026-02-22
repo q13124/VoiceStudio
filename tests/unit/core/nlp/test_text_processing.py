@@ -37,23 +37,17 @@ class TestTextProcessingFunctions:
     def test_preprocess_text_function_exists(self):
         """Test preprocess_text function exists."""
         if hasattr(text_processing, "preprocess_text"):
-            assert callable(
-                text_processing.preprocess_text
-            ), "preprocess_text should be callable"
+            assert callable(text_processing.preprocess_text), "preprocess_text should be callable"
 
     def test_tokenize_text_function_exists(self):
         """Test tokenize_text function exists."""
         if hasattr(text_processing, "tokenize_text"):
-            assert callable(
-                text_processing.tokenize_text
-            ), "tokenize_text should be callable"
+            assert callable(text_processing.tokenize_text), "tokenize_text should be callable"
 
     def test_normalize_text_function_exists(self):
         """Test normalize_text function exists."""
         if hasattr(text_processing, "normalize_text"):
-            assert callable(
-                text_processing.normalize_text
-            ), "normalize_text should be callable"
+            assert callable(text_processing.normalize_text), "normalize_text should be callable"
 
 
 class TestTextProcessingFunctionality:

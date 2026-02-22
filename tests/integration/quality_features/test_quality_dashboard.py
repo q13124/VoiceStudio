@@ -28,9 +28,7 @@ class TestQualityDashboard:
 
     def test_get_dashboard_with_project_id(self, client: TestClient):
         """Test getting dashboard filtered by project ID."""
-        response = client.get(
-            "/api/quality/dashboard", params={"project_id": "test-project-123"}
-        )
+        response = client.get("/api/quality/dashboard", params={"project_id": "test-project-123"})
 
         assert response.status_code in [200, 503]
         if response.status_code == 200:

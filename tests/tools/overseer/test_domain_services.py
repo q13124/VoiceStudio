@@ -1,6 +1,5 @@
 """Tests for Overseer domain services."""
 
-
 from tools.overseer.domain.entities import (
     BugInvestigationSession,
     IssueReport,
@@ -57,7 +56,11 @@ class TestDebugWorkflow:
 
         fix = Fix(
             issue_id="ISS-001",
-            file_changes=[FileChange(path="backend/api/test.py", content="fixed", change_type="modify", rationale="")],
+            file_changes=[
+                FileChange(
+                    path="backend/api/test.py", content="fixed", change_type="modify", rationale=""
+                )
+            ],
             rationale="Fix",
             estimated_risk="low",
         )
@@ -90,7 +93,14 @@ class TestDebugWorkflow:
         # Fix targets unrelated file
         fix = Fix(
             issue_id="ISS-001",
-            file_changes=[FileChange(path="frontend/ui/test.xaml", content="fixed", change_type="modify", rationale="")],
+            file_changes=[
+                FileChange(
+                    path="frontend/ui/test.xaml",
+                    content="fixed",
+                    change_type="modify",
+                    rationale="",
+                )
+            ],
             rationale="Fix",
             estimated_risk="low",
         )
@@ -124,7 +134,9 @@ class TestDebugWorkflow:
         fix = Fix(
             issue_id="ISS-001",
             file_changes=[
-                FileChange(path=f"backend/file{i}.py", content="fixed", change_type="modify", rationale="")
+                FileChange(
+                    path=f"backend/file{i}.py", content="fixed", change_type="modify", rationale=""
+                )
                 for i in range(6)
             ],
             rationale="Fix",
@@ -165,7 +177,11 @@ class TestRootCauseAnalyzer:
         session.add_hypothesis(hyp1)
 
         # Add evidence
-        session.record_evidence(Evidence(description="backend/services/JobStateStore.py:45", source="log", confidence=0.9))
+        session.record_evidence(
+            Evidence(
+                description="backend/services/JobStateStore.py:45", source="log", confidence=0.9
+            )
+        )
 
         result = analyzer.analyze(session)
 

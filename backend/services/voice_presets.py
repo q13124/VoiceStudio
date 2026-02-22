@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class PresetCategory(Enum):
     """Categories for voice presets."""
+
     USER_CREATED = "user_created"
     SYSTEM_DEFAULT = "system_default"
     COMMUNITY = "community"
@@ -30,6 +31,7 @@ class PresetCategory(Enum):
 @dataclass
 class VoicePresetSettings:
     """Settings for a voice preset."""
+
     # Voice conversion
     pitch_shift: int = 0
     formant_shift: float = 0.0
@@ -57,6 +59,7 @@ class VoicePresetSettings:
 @dataclass
 class VoicePreset:
     """A complete voice preset configuration."""
+
     id: str
     name: str
     description: str = ""
@@ -255,6 +258,7 @@ class VoicePresetManager:
             return None
 
         import uuid
+
         new_id = str(uuid.uuid4())[:8]
 
         new_preset = VoicePreset(
@@ -354,6 +358,7 @@ class VoicePresetManager:
 
             # Generate new ID to avoid conflicts
             import uuid
+
             data["id"] = str(uuid.uuid4())[:8]
             data["category"] = PresetCategory.IMPORTED.value
 

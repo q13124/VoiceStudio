@@ -16,13 +16,15 @@ from backend.domain.entities.base import AggregateRoot
 
 class VoiceType(Enum):
     """Type of voice profile."""
-    CLONED = "cloned"         # User-created voice clone
-    PRESET = "preset"         # Built-in preset voice
+
+    CLONED = "cloned"  # User-created voice clone
+    PRESET = "preset"  # Built-in preset voice
     SYNTHESIZED = "synthesized"  # AI-generated voice
 
 
 class VoiceGender(Enum):
     """Voice gender classification."""
+
     MALE = "male"
     FEMALE = "female"
     NEUTRAL = "neutral"
@@ -136,25 +138,31 @@ class VoiceProfile(AggregateRoot):
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for persistence."""
         base = super().to_dict()
-        base.update({
-            "name": self.name,
-            "description": self.description,
-            "voice_type": self.voice_type.value,
-            "gender": self.gender.value,
-            "language": self.language,
-            "accent": self.accent,
-            "model_path": self.model_path,
-            "engine_id": self.engine_id,
-            "sample_audio_paths": self.sample_audio_paths,
-            "reference_audio_path": self.reference_audio_path,
-            "quality_score": self.quality_score,
-            "similarity_score": self.similarity_score,
-            "tags": self.tags,
-            "metadata": self.metadata,
-            "is_trained": self.is_trained,
-            "training_started_at": self.training_started_at.isoformat() if self.training_started_at else None,
-            "training_completed_at": self.training_completed_at.isoformat() if self.training_completed_at else None,
-        })
+        base.update(
+            {
+                "name": self.name,
+                "description": self.description,
+                "voice_type": self.voice_type.value,
+                "gender": self.gender.value,
+                "language": self.language,
+                "accent": self.accent,
+                "model_path": self.model_path,
+                "engine_id": self.engine_id,
+                "sample_audio_paths": self.sample_audio_paths,
+                "reference_audio_path": self.reference_audio_path,
+                "quality_score": self.quality_score,
+                "similarity_score": self.similarity_score,
+                "tags": self.tags,
+                "metadata": self.metadata,
+                "is_trained": self.is_trained,
+                "training_started_at": (
+                    self.training_started_at.isoformat() if self.training_started_at else None
+                ),
+                "training_completed_at": (
+                    self.training_completed_at.isoformat() if self.training_completed_at else None
+                ),
+            }
+        )
         return base
 
     @classmethod

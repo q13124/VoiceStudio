@@ -185,20 +185,19 @@ class TestAudioUploadAPI:
             files = {"file": (test_audio.name, f, "audio/wav")}
 
             try:
-                response = requests.post(
-                    f"{BACKEND_URL}/api/audio/upload",
-                    files=files,
-                    timeout=30
-                )
+                response = requests.post(f"{BACKEND_URL}/api/audio/upload", files=files, timeout=30)
                 tracer.api_call("POST", "/api/audio/upload", response)
 
                 # Check response
-                assert response.status_code in [200, 201], \
-                    f"Upload should succeed, got {response.status_code}: {response.text}"
+                assert response.status_code in [
+                    200,
+                    201,
+                ], f"Upload should succeed, got {response.status_code}: {response.text}"
 
                 data = response.json()
-                assert "id" in data or "path" in data or "filename" in data, \
-                    "Response should contain file identifier"
+                assert (
+                    "id" in data or "path" in data or "filename" in data
+                ), "Response should contain file identifier"
 
                 tracer.step(f"Upload successful: {data}")
                 tracer.success("Audio upload API works correctly")
@@ -267,7 +266,9 @@ class TestImportWorkflowEnd2End:
 
         # Step 3: Cancel dialog (we can't actually select files in automated test)
         # In real test, we would use SendKeys to type file path
-        tracer.step("Step 3: Cancel dialog (automated file selection limited)", driver, SCREENSHOTS_ENABLED)
+        tracer.step(
+            "Step 3: Cancel dialog (automated file selection limited)", driver, SCREENSHOTS_ENABLED
+        )
         driver.press_escape()
         time.sleep(0.5)
 
@@ -299,6 +300,7 @@ class TestImportErrorHandling:
 
         # Create a fake text file
         import tempfile
+
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
             f.write(b"This is not an audio file")
             temp_path = f.name
@@ -306,16 +308,15 @@ class TestImportErrorHandling:
         try:
             with open(temp_path, "rb") as f:
                 files = {"file": ("test.txt", f, "text/plain")}
-                response = requests.post(
-                    f"{BACKEND_URL}/api/audio/upload",
-                    files=files,
-                    timeout=10
-                )
+                response = requests.post(f"{BACKEND_URL}/api/audio/upload", files=files, timeout=10)
                 tracer.api_call("POST", "/api/audio/upload", response)
 
                 # Should reject with 400 or 422
-                assert response.status_code in [400, 415, 422], \
-                    f"Invalid file type should be rejected, got {response.status_code}"
+                assert response.status_code in [
+                    400,
+                    415,
+                    422,
+                ], f"Invalid file type should be rejected, got {response.status_code}"
 
                 tracer.step(f"Invalid file correctly rejected: {response.status_code}")
                 tracer.success("Invalid file type handling works")
@@ -331,6 +332,7 @@ class TestImportErrorHandling:
         tracer.step("Testing empty file handling")
 
         import tempfile
+
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
             # Write minimal WAV header but essentially empty
             f.write(b"RIFF\x00\x00\x00\x00WAVE")
@@ -339,16 +341,15 @@ class TestImportErrorHandling:
         try:
             with open(temp_path, "rb") as f:
                 files = {"file": ("empty.wav", f, "audio/wav")}
-                response = requests.post(
-                    f"{BACKEND_URL}/api/audio/upload",
-                    files=files,
-                    timeout=10
-                )
+                response = requests.post(f"{BACKEND_URL}/api/audio/upload", files=files, timeout=10)
                 tracer.api_call("POST", "/api/audio/upload", response)
 
                 # Should either reject (400/422) or handle gracefully (200)
-                assert response.status_code in [200, 400, 422], \
-                    f"Empty file should be handled, got {response.status_code}"
+                assert response.status_code in [
+                    200,
+                    400,
+                    422,
+                ], f"Empty file should be handled, got {response.status_code}"
 
                 tracer.step(f"Empty file handled with status {response.status_code}")
                 tracer.success("Empty file handling works")

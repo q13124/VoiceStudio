@@ -19,8 +19,10 @@ router = APIRouter(prefix="/api/integrations", tags=["integrations"])
 
 # Request/Response Models
 
+
 class DAWExportRequest(BaseModel):
     """Request to export audio for DAW. Optional preset_id applies pre-configured settings (TD-038)."""
+
     audio_path: str
     daw_type: str
     project_path: str | None = None
@@ -31,6 +33,7 @@ class DAWExportRequest(BaseModel):
 
 class DAWExportResponse(BaseModel):
     """Response from DAW export."""
+
     success: bool
     output_path: str | None = None
     message: str | None = None
@@ -38,6 +41,7 @@ class DAWExportResponse(BaseModel):
 
 class VideoExportRequest(BaseModel):
     """Request to export for video editor."""
+
     audio_path: str
     editor_type: str
     include_subtitles: bool = True
@@ -47,6 +51,7 @@ class VideoExportRequest(BaseModel):
 
 class VideoExportResponse(BaseModel):
     """Response from video export."""
+
     success: bool
     audio_path: str | None = None
     subtitle_path: str | None = None
@@ -55,12 +60,14 @@ class VideoExportResponse(BaseModel):
 
 class SyncRequest(BaseModel):
     """Request to sync with cloud."""
+
     project_path: str | None = None
     direction: str = "bidirectional"
 
 
 class SyncResponse(BaseModel):
     """Response from sync operation."""
+
     success: bool
     items_uploaded: int = 0
     items_downloaded: int = 0
@@ -71,12 +78,14 @@ class SyncResponse(BaseModel):
 
 class WorkflowRequest(BaseModel):
     """Request to start a workflow."""
+
     workflow_id: str
     variables: dict[str, Any] = Field(default_factory=dict)
 
 
 class WorkflowResponse(BaseModel):
     """Response from workflow operation."""
+
     execution_id: str
     status: str
     implementation_status: str = "full"
@@ -86,6 +95,7 @@ class WorkflowResponse(BaseModel):
 
 class BatchRequest(BaseModel):
     """Request for batch processing."""
+
     items: list[dict[str, Any]]
     operation: str
     concurrency: int = 2
@@ -93,6 +103,7 @@ class BatchRequest(BaseModel):
 
 class BatchResponse(BaseModel):
     """Response from batch operation."""
+
     job_id: str
     total_items: int
     status: str
@@ -102,6 +113,7 @@ class BatchResponse(BaseModel):
 
 
 # DAW Integration Endpoints
+
 
 @router.get("/daw/available")
 async def get_available_daws() -> dict[str, Any]:
@@ -126,7 +138,9 @@ async def get_available_daws() -> dict[str, Any]:
                 os.path.expandvars(r"%PROGRAMFILES%\Audacity\audacity.exe"),
             ],
             "ableton": [
-                os.path.expandvars(r"%PROGRAMFILES%\Ableton\Live 11 Suite\Program\Ableton Live 11 Suite.exe"),
+                os.path.expandvars(
+                    r"%PROGRAMFILES%\Ableton\Live 11 Suite\Program\Ableton Live 11 Suite.exe"
+                ),
             ],
             "fl_studio": [
                 os.path.expandvars(r"%PROGRAMFILES%\Image-Line\FL Studio 21\FL64.exe"),
@@ -156,6 +170,7 @@ async def get_available_daws() -> dict[str, Any]:
 async def get_daw_export_presets(daw_type: str | None = None) -> dict[str, Any]:
     """List DAW export presets (TD-038). Optionally filter by daw_type (e.g. reaper, audacity)."""
     from backend.integrations.external.daw_integration import get_daw_export_presets
+
     presets = get_daw_export_presets(daw_type=daw_type)
     return {"presets": presets}
 
@@ -173,6 +188,7 @@ async def export_to_daw(request: DAWExportRequest) -> DAWExportResponse:
         bit_depth = request.bit_depth
         if request.preset_id:
             from backend.integrations.external.daw_integration import get_daw_export_preset_by_id
+
             preset = get_daw_export_preset_by_id(request.preset_id)
             if preset:
                 sample_rate = preset["settings"].get("sample_rate", sample_rate)
@@ -183,12 +199,13 @@ async def export_to_daw(request: DAWExportRequest) -> DAWExportResponse:
         output_path.parent.mkdir(exist_ok=True)
 
         import shutil
+
         shutil.copy2(audio_path, output_path)
 
         return DAWExportResponse(
             success=True,
             output_path=str(output_path),
-            message=f"Exported for {request.daw_type} ({sample_rate} Hz, {bit_depth}-bit)"
+            message=f"Exported for {request.daw_type} ({sample_rate} Hz, {bit_depth}-bit)",
         )
 
     except Exception as e:
@@ -197,6 +214,7 @@ async def export_to_daw(request: DAWExportRequest) -> DAWExportResponse:
 
 
 # Video Editor Integration Endpoints
+
 
 @router.get("/video/available")
 async def get_available_video_editors() -> dict[str, list[str]]:
@@ -227,6 +245,7 @@ async def export_for_video(request: VideoExportRequest) -> VideoExportResponse:
         # Copy audio
         audio_output = output_dir / audio_path.name
         import shutil
+
         shutil.copy2(audio_path, audio_output)
 
         # Generate subtitles if provided
@@ -245,13 +264,13 @@ async def export_for_video(request: VideoExportRequest) -> VideoExportResponse:
                 srt_content.append(text)
                 srt_content.append("")
 
-            subtitle_output.write_text("\n".join(srt_content), encoding='utf-8')
+            subtitle_output.write_text("\n".join(srt_content), encoding="utf-8")
 
         return VideoExportResponse(
             success=True,
             audio_path=str(audio_output),
             subtitle_path=str(subtitle_output) if subtitle_output else None,
-            message=f"Exported for {request.editor_type}"
+            message=f"Exported for {request.editor_type}",
         )
 
     except Exception as e:
@@ -261,11 +280,9 @@ async def export_for_video(request: VideoExportRequest) -> VideoExportResponse:
 
 # Cloud Sync Endpoints
 
+
 @router.post("/sync/start", response_model=SyncResponse)
-async def start_sync(
-    request: SyncRequest,
-    background_tasks: BackgroundTasks
-) -> SyncResponse:
+async def start_sync(request: SyncRequest, background_tasks: BackgroundTasks) -> SyncResponse:
     """
     Cloud sync is not available (local-first policy; ADR-010).
 
@@ -298,6 +315,7 @@ async def get_sync_status() -> dict[str, Any]:
 
 # Workflow Endpoints
 
+
 @router.get("/workflows")
 async def list_workflows() -> list[dict[str, Any]]:
     """List available workflows."""
@@ -329,7 +347,9 @@ async def start_workflow(request: WorkflowRequest) -> WorkflowResponse:
     execution_id = str(uuid.uuid4())
     logger.info(
         "Workflow started: id=%s, execution=%s, vars=%s",
-        request.workflow_id, execution_id, list(request.variables.keys()),
+        request.workflow_id,
+        execution_id,
+        list(request.variables.keys()),
     )
 
     # Dispatch to the appropriate backend handler
@@ -392,6 +412,7 @@ async def cancel_workflow(execution_id: str) -> dict[str, bool]:
 
 # Batch Processing Endpoints
 
+
 @router.post("/batch/start", response_model=BatchResponse)
 async def start_batch(request: BatchRequest) -> BatchResponse:
     """
@@ -405,7 +426,10 @@ async def start_batch(request: BatchRequest) -> BatchResponse:
     job_id = str(uuid.uuid4())
     logger.info(
         "Batch job created: id=%s, items=%d, op=%s, concurrency=%d",
-        job_id, len(request.items), request.operation, request.concurrency,
+        job_id,
+        len(request.items),
+        request.operation,
+        request.concurrency,
     )
 
     # Queue via job system (actual processing handled by batch routes /api/batch)
@@ -442,6 +466,7 @@ async def cancel_batch(job_id: str) -> dict[str, bool]:
 
 
 # Helper Functions
+
 
 def _format_srt_time(seconds: float) -> str:
     """Format time for SRT format."""

@@ -159,19 +159,15 @@ async def create_deepfake(
         if source_ext not in valid_image_exts:
             raise HTTPException(
                 status_code=400,
-                detail=f"Source face must be an image ({', '.join(valid_image_exts)})"
+                detail=f"Source face must be an image ({', '.join(valid_image_exts)})",
             )
 
         if request.media_type == "image" and target_ext not in valid_image_exts:
             raise HTTPException(
-                status_code=400,
-                detail="Target must be an image for image deepfake"
+                status_code=400, detail="Target must be an image for image deepfake"
             )
         elif request.media_type == "video" and target_ext not in valid_video_exts:
-            raise HTTPException(
-                status_code=400,
-                detail="Target must be a video for video deepfake"
-            )
+            raise HTTPException(status_code=400, detail="Target must be a video for video deepfake")
 
         # Create job
         job = DeepfakeJob(
@@ -207,7 +203,9 @@ async def create_deepfake(
             asyncio.create_task(_process_deepfake_job(job_id))
         else:
             # Job will be processed when a slot becomes available
-            logger.info(f"Deepfake job {job_id} queued (max concurrent jobs: {_max_concurrent_jobs})")
+            logger.info(
+                f"Deepfake job {job_id} queued (max concurrent jobs: {_max_concurrent_jobs})"
+            )
             asyncio.create_task(_process_job_queue())
 
         # Return initial job status
@@ -234,9 +232,7 @@ async def get_deepfake_job(job_id: str):
     """Get status of a deepfake job."""
     try:
         if job_id not in _deepfake_jobs:
-            raise HTTPException(
-                status_code=404, detail=f"Deepfake job '{job_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Deepfake job '{job_id}' not found")
 
         job = _deepfake_jobs[job_id]
 
@@ -290,9 +286,7 @@ async def delete_deepfake_job(job_id: str):
     """Delete a deepfake job."""
     try:
         if job_id not in _deepfake_jobs:
-            raise HTTPException(
-                status_code=404, detail=f"Deepfake job '{job_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Deepfake job '{job_id}' not found")
 
         del _deepfake_jobs[job_id]
         if job_id in _job_queue:
@@ -343,7 +337,9 @@ async def _process_deepfake_job(job_id: str):
             temp_dir = source_face_path.parent
 
             # Process deepfake
-            output_path = temp_dir / f"output_{job_id}.{('png' if job.media_type == 'image' else 'mp4')}"
+            output_path = (
+                temp_dir / f"output_{job_id}.{('png' if job.media_type == 'image' else 'mp4')}"
+            )
 
             if job.media_type == "image":
                 # Process image deepfake
@@ -353,7 +349,7 @@ async def _process_deepfake_job(job_id: str):
                 engine.swap_face(
                     source_face_path=str(source_face_path),
                     target_image_path=str(target_media_path),
-                    output_path=str(output_path)
+                    output_path=str(output_path),
                 )
 
                 job.progress = 70.0
@@ -366,7 +362,7 @@ async def _process_deepfake_job(job_id: str):
                 engine.swap_face_video(
                     source_face_path=str(source_face_path),
                     target_video_path=str(target_media_path),
-                    output_path=str(output_path)
+                    output_path=str(output_path),
                 )
 
                 job.progress = 60.0
@@ -379,6 +375,7 @@ async def _process_deepfake_job(job_id: str):
             if job.watermark_applied:
                 try:
                     from PIL import Image, ImageDraw, ImageFont
+
                     if job.media_type == "image":
                         img = Image.open(output_path)
                         draw = ImageDraw.Draw(img)

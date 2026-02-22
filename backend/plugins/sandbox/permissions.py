@@ -110,13 +110,12 @@ class PermissionAuditor:
 
         # Trim old entries if needed
         if len(self._entries) > self._max_entries:
-            self._entries = self._entries[-self._max_entries // 2:]
+            self._entries = self._entries[-self._max_entries // 2 :]
 
         # Log denied permissions
         if not entry.granted:
             logger.warning(
-                f"Permission denied: {entry.plugin_id} -> {entry.permission} "
-                f"({entry.reason})"
+                f"Permission denied: {entry.plugin_id} -> {entry.permission} " f"({entry.reason})"
             )
 
     def get_entries(
@@ -144,9 +143,7 @@ class PermissionAuditor:
         if plugin_id:
             prefix = f"{plugin_id}:"
             return {
-                k.split(":", 1)[1]: v
-                for k, v in self._denied_count.items()
-                if k.startswith(prefix)
+                k.split(":", 1)[1]: v for k, v in self._denied_count.items() if k.startswith(prefix)
             }
         return dict(self._denied_count)
 
@@ -195,9 +192,7 @@ class PermissionEnforcer:
         self._elevated = False
         self._temporary_grants: Set[str] = set()
 
-    def _parse_permissions(
-        self, permissions: Dict[str, Any]
-    ) -> Dict[str, PermissionLevel]:
+    def _parse_permissions(self, permissions: Dict[str, Any]) -> Dict[str, PermissionLevel]:
         """
         Parse permission config into normalized form.
 
@@ -230,11 +225,7 @@ class PermissionEnforcer:
                         continue
 
                     if isinstance(action_value, bool):
-                        level = (
-                            PermissionLevel.FULL
-                            if action_value
-                            else PermissionLevel.DENIED
-                        )
+                        level = PermissionLevel.FULL if action_value else PermissionLevel.DENIED
                     elif isinstance(action_value, str):
                         level = self._parse_level(action_value)
                     elif isinstance(action_value, dict):
@@ -370,9 +361,7 @@ class PermissionEnforcer:
         """
         check = self.check(permission, required_level)
         if not check.granted:
-            raise PermissionError(
-                f"Permission denied: {permission} - {check.reason}"
-            )
+            raise PermissionError(f"Permission denied: {permission} - {check.reason}")
 
     def has(self, permission: str) -> bool:
         """Simple boolean check for permission."""
@@ -384,11 +373,7 @@ class PermissionEnforcer:
 
     def list_granted(self) -> List[str]:
         """List all granted permissions."""
-        return [
-            perm
-            for perm, level in self._parsed.items()
-            if level != PermissionLevel.DENIED
-        ]
+        return [perm for perm, level in self._parsed.items() if level != PermissionLevel.DENIED]
 
     def list_categories(self) -> List[str]:
         """List all permission categories with any grants."""
@@ -421,9 +406,7 @@ class PermissionEnforcer:
         self._temporary_grants.clear()
         self._cache.clear()
 
-    def _log_check(
-        self, result: PermissionCheck, method: Optional[str]
-    ) -> None:
+    def _log_check(self, result: PermissionCheck, method: Optional[str]) -> None:
         """Log permission check to auditor."""
         entry = PermissionAuditEntry(
             plugin_id=self.plugin_id,
@@ -470,9 +453,7 @@ def permission_guard(
                 enforcer = kwargs.get("enforcer")
 
             if enforcer is None:
-                raise RuntimeError(
-                    f"No enforcer available for permission check: {permission}"
-                )
+                raise RuntimeError(f"No enforcer available for permission check: {permission}")
 
             # Check permission
             enforcer.require(permission, required_level)
@@ -525,9 +506,7 @@ class PermissionRegistry:
 
     def list_by_category(self, category: str) -> Dict[str, Dict[str, Any]]:
         """List permissions by category."""
-        return {
-            k: v for k, v in self._permissions.items() if v["category"] == category
-        }
+        return {k: v for k, v in self._permissions.items() if v["category"] == category}
 
     def validate(self, permissions: Dict[str, Any]) -> Tuple[bool, List[str]]:
         """

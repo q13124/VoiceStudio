@@ -37,11 +37,8 @@ class TestLUFSMeterFunctions:
     def test_measure_lufs_function_exists(self):
         """Test measure_lufs function exists."""
         if hasattr(lufs_meter, "measure_lufs"):
-            assert callable(
-                lufs_meter.measure_lufs
-            ), "measure_lufs should be callable"
+            assert callable(lufs_meter.measure_lufs), "measure_lufs should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

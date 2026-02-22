@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.engines import ChatterboxEngine, TortoiseEngine, XTTSEngine, calculate_all_metrics
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -30,7 +30,7 @@ def benchmark_engine(
     engine_instance: Any,
     reference_audio: str,
     test_text: str,
-    language: str = "en"
+    language: str = "en",
 ) -> dict[str, Any]:
     """
     Benchmark a single engine.
@@ -47,7 +47,7 @@ def benchmark_engine(
         "success": False,
         "error": None,
         "quality_metrics": {},
-        "performance": {}
+        "performance": {},
     }
 
     try:
@@ -70,7 +70,7 @@ def benchmark_engine(
                 speaker_wav=reference_audio,
                 language=language,
                 enhance_quality=True,
-                calculate_quality=True
+                calculate_quality=True,
             )
         elif engine_name.lower() == "chatterbox":
             audio, metrics = engine_instance.synthesize(
@@ -78,14 +78,14 @@ def benchmark_engine(
                 reference_audio=reference_audio,
                 language=language,
                 enhance_quality=True,
-                calculate_quality=True
+                calculate_quality=True,
             )
         elif engine_name.lower() == "tortoise":
             audio, metrics = engine_instance.synthesize(
                 text=test_text,
                 speaker_wav=reference_audio,
                 enhance_quality=True,
-                calculate_quality=True
+                calculate_quality=True,
             )
         else:
             raise ValueError(f"Unknown engine: {engine_name}")
@@ -109,9 +109,7 @@ def benchmark_engine(
 
             try:
                 all_metrics = calculate_all_metrics(
-                    audio=tmp_path,
-                    reference_audio=reference_audio,
-                    sample_rate=22050
+                    audio=tmp_path, reference_audio=reference_audio, sample_rate=22050
                 )
                 results["quality_metrics"] = all_metrics
             finally:
@@ -134,6 +132,7 @@ def benchmark_engine(
         logger.error(f"✗ Benchmark failed: {e}")
         results["error"] = str(e)
         import traceback
+
         logger.debug(traceback.format_exc())
 
     finally:
@@ -148,8 +147,7 @@ def benchmark_engine(
 
 
 def generate_benchmark_report(
-    results: dict[str, dict[str, Any]],
-    output_file: str | None = None
+    results: dict[str, dict[str, Any]], output_file: str | None = None
 ) -> str:
     """
     Generate a formatted benchmark report.
@@ -166,7 +164,9 @@ def generate_benchmark_report(
     # Summary table
     report_lines.append("Summary:")
     report_lines.append("-" * 80)
-    report_lines.append(f"{'Engine':<15} {'Status':<10} {'MOS':<8} {'Similarity':<12} {'Naturalness':<12} {'Time (s)':<10}")
+    report_lines.append(
+        f"{'Engine':<15} {'Status':<10} {'MOS':<8} {'Similarity':<12} {'Naturalness':<12} {'Time (s)':<10}"
+    )
     report_lines.append("-" * 80)
 
     for engine_name, result in results.items():
@@ -174,12 +174,14 @@ def generate_benchmark_report(
         qm = result.get("quality_metrics", {})
         perf = result.get("performance", {})
 
-        mos = f"{qm.get('mos_score', 0):.2f}" if qm.get('mos_score') else "N/A"
-        sim = f"{qm.get('similarity', 0):.3f}" if qm.get('similarity') else "N/A"
-        nat = f"{qm.get('naturalness', 0):.3f}" if qm.get('naturalness') else "N/A"
-        time_str = f"{perf.get('total_time', 0):.2f}" if perf.get('total_time') else "N/A"
+        mos = f"{qm.get('mos_score', 0):.2f}" if qm.get("mos_score") else "N/A"
+        sim = f"{qm.get('similarity', 0):.3f}" if qm.get("similarity") else "N/A"
+        nat = f"{qm.get('naturalness', 0):.3f}" if qm.get("naturalness") else "N/A"
+        time_str = f"{perf.get('total_time', 0):.2f}" if perf.get("total_time") else "N/A"
 
-        report_lines.append(f"{engine_name:<15} {status:<10} {mos:<8} {sim:<12} {nat:<12} {time_str:<10}")
+        report_lines.append(
+            f"{engine_name:<15} {status:<10} {mos:<8} {sim:<12} {nat:<12} {time_str:<10}"
+        )
 
     report_lines.append("")
 
@@ -213,10 +215,12 @@ def generate_benchmark_report(
             report_lines.append(f"    Naturalness: {qm.get('naturalness', 'N/A'):.3f}/1.0")
             report_lines.append(f"    SNR: {qm.get('snr_db', 'N/A'):.2f} dB")
 
-            artifacts = qm.get('artifacts', {})
+            artifacts = qm.get("artifacts", {})
             if artifacts:
                 report_lines.append("    Artifacts:")
-                report_lines.append(f"      Score: {artifacts.get('artifact_score', 'N/A'):.3f}/1.0")
+                report_lines.append(
+                    f"      Score: {artifacts.get('artifact_score', 'N/A'):.3f}/1.0"
+                )
                 report_lines.append(f"      Clicks: {artifacts.get('has_clicks', False)}")
                 report_lines.append(f"      Distortion: {artifacts.get('has_distortion', False)}")
 
@@ -229,13 +233,13 @@ def generate_benchmark_report(
     if output_file:
         output_path = Path(output_file)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(report)
         logger.info(f"\n✓ Report saved to: {output_path}")
 
         # Also save JSON version
-        json_path = output_path.with_suffix('.json')
-        with open(json_path, 'w', encoding='utf-8') as f:
+        json_path = output_path.with_suffix(".json")
+        with open(json_path, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, default=str)
         logger.info(f"✓ JSON data saved to: {json_path}")
 
@@ -251,32 +255,27 @@ def main():
         "--reference",
         type=str,
         required=True,
-        help="Path to reference audio file for voice cloning"
+        help="Path to reference audio file for voice cloning",
     )
     parser.add_argument(
         "--text",
         type=str,
         default="Hello, this is a test of the voice cloning system. How does it sound?",
-        help="Text to synthesize (default: test sentence)"
+        help="Text to synthesize (default: test sentence)",
     )
-    parser.add_argument(
-        "--language",
-        type=str,
-        default="en",
-        help="Language code (default: en)"
-    )
+    parser.add_argument("--language", type=str, default="en", help="Language code (default: en)")
     parser.add_argument(
         "--engines",
         type=str,
         nargs="+",
         choices=["xtts", "chatterbox", "tortoise", "all"],
         default=["all"],
-        help="Engines to benchmark (default: all)"
+        help="Engines to benchmark (default: all)",
     )
     parser.add_argument(
         "--output",
         type=str,
-        help="Output file path for benchmark report (default: benchmark_report.txt)"
+        help="Output file path for benchmark report (default: benchmark_report.txt)",
     )
 
     args = parser.parse_args()
@@ -316,7 +315,7 @@ def main():
             engine_instance=engine_instance,
             reference_audio=args.reference,
             test_text=args.text,
-            language=args.language
+            language=args.language,
         )
         all_results[engine_name] = result
 
@@ -339,4 +338,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

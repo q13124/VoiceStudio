@@ -37,11 +37,8 @@ class TestEventsFunctions:
     def test_emit_event_function_exists(self):
         """Test emit_event function exists."""
         if hasattr(events, "emit_event"):
-            assert callable(
-                events.emit_event
-            ), "emit_event should be callable"
+            assert callable(events.emit_event), "emit_event should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

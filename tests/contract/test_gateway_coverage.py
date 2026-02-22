@@ -3,6 +3,7 @@
 Validates that critical API groups expected by the C# gateway interfaces
 have corresponding registered routes in the FastAPI backend.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -40,9 +41,9 @@ async def test_endpoint_registered(client: AsyncClient, method: str, path: str, 
     else:
         resp = await client.request(method, path)
 
-    assert resp.status_code != 404, (
-        f"[{group}] {method} {path} returned 404 -- route not registered"
-    )
+    assert (
+        resp.status_code != 404
+    ), f"[{group}] {method} {path} returned 404 -- route not registered"
 
 
 @pytest.mark.asyncio

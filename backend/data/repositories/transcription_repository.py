@@ -31,11 +31,12 @@ class TranscriptionEntity(BaseEntity):
 
     Maps to the transcriptions table created by v001_core_persistence_tables migration.
     """
+
     audio_path: str = ""
     language: str | None = None
     text: str | None = None
-    segments: str = "[]"           # JSON-serialized list of segment dicts
-    word_timestamps: str = "[]"    # JSON-serialized list of word timestamp dicts
+    segments: str = "[]"  # JSON-serialized list of segment dicts
+    word_timestamps: str = "[]"  # JSON-serialized list of word timestamp dicts
     duration: float | None = None
     confidence: float | None = None
     engine_id: str | None = None
@@ -116,11 +117,7 @@ class TranscriptionRepository(BaseRepository[TranscriptionEntity]):
                 else entity.created_at
             ),
             "expires_at": entity.expires_at,
-            "deleted_at": (
-                entity.deleted_at.isoformat()
-                if entity.deleted_at
-                else None
-            ),
+            "deleted_at": (entity.deleted_at.isoformat() if entity.deleted_at else None),
         }
 
     def _row_to_entity(self, row: dict[str, Any]) -> TranscriptionEntity:
@@ -156,9 +153,7 @@ class TranscriptionRepository(BaseRepository[TranscriptionEntity]):
             ),
             updated_at=datetime.now(),  # Table has no updated_at column
             deleted_at=(
-                datetime.fromisoformat(row["deleted_at"])
-                if row.get("deleted_at")
-                else None
+                datetime.fromisoformat(row["deleted_at"]) if row.get("deleted_at") else None
             ),
             expires_at=row.get("expires_at"),
         )
@@ -179,13 +174,17 @@ class TranscriptionRepository(BaseRepository[TranscriptionEntity]):
             language=transcription_data.get("language"),
             text=transcription_data.get("text"),
             segments=json.dumps(
-                [s if isinstance(s, dict) else s.dict() if hasattr(s, "dict") else str(s)
-                 for s in transcription_data.get("segments", [])],
+                [
+                    s if isinstance(s, dict) else s.dict() if hasattr(s, "dict") else str(s)
+                    for s in transcription_data.get("segments", [])
+                ],
                 default=str,
             ),
             word_timestamps=json.dumps(
-                [w if isinstance(w, dict) else w.dict() if hasattr(w, "dict") else str(w)
-                 for w in transcription_data.get("word_timestamps", [])],
+                [
+                    w if isinstance(w, dict) else w.dict() if hasattr(w, "dict") else str(w)
+                    for w in transcription_data.get("word_timestamps", [])
+                ],
                 default=str,
             ),
             duration=transcription_data.get("duration"),
@@ -302,9 +301,7 @@ class TranscriptionRepository(BaseRepository[TranscriptionEntity]):
             AND datetime(created_at, '+' || ? || ' seconds') < datetime('now')
         """
 
-        await self._connection.execute(
-            query, (datetime.now().isoformat(), max_age_seconds)
-        )
+        await self._connection.execute(query, (datetime.now().isoformat(), max_age_seconds))
         await self._connection.commit()
 
         return self._connection.total_changes

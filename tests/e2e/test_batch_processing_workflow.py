@@ -34,6 +34,7 @@ def api_client():
     from fastapi.testclient import TestClient
 
     from backend.api.main import app
+
     return TestClient(app)
 
 
@@ -60,7 +61,9 @@ def test_audio_files(tmp_path):
             # Generate 1 second of audio per file
             num_samples = 16000
             freq = 440 + (i * 100)  # Different frequency per file
-            samples = [int(8000 * math.sin(2 * math.pi * freq * j / 16000)) for j in range(num_samples)]
+            samples = [
+                int(8000 * math.sin(2 * math.pi * freq * j / 16000)) for j in range(num_samples)
+            ]
             wav.writeframes(struct.pack(f"{len(samples)}h", *samples))
         files.append(audio_file)
 

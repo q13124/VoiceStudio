@@ -5,6 +5,7 @@ These tests verify that data serialized by the Python backend can be
 correctly deserialized by C# clients and vice versa. The tests use
 Pydantic models that mirror the API response structures.
 """
+
 from __future__ import annotations
 
 import json
@@ -33,9 +34,7 @@ class VoiceProfile(BaseModel):
     is_active: bool = True
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%S") + "Z" if v else None
-        }
+        json_encoders = {datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%S") + "Z" if v else None}
 
 
 class AudioClip(BaseModel):

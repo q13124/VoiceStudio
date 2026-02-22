@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class VideoEditorType(Enum):
     """Supported video editor types."""
+
     PREMIERE_PRO = "premiere_pro"
     DAVINCI_RESOLVE = "davinci_resolve"
     FINAL_CUT_PRO = "final_cut_pro"
@@ -30,6 +31,7 @@ class VideoEditorType(Enum):
 @dataclass
 class VideoProject:
     """Video project information."""
+
     path: Path
     name: str
     editor_type: VideoEditorType
@@ -43,6 +45,7 @@ class VideoProject:
 @dataclass
 class SubtitleEntry:
     """A single subtitle entry."""
+
     start_time: float
     end_time: float
     text: str
@@ -52,6 +55,7 @@ class SubtitleEntry:
 @dataclass
 class VideoExportSettings:
     """Settings for exporting to video editor."""
+
     audio_format: str = "wav"
     sample_rate: int = 48000
     bit_depth: int = 24
@@ -80,17 +84,14 @@ class VideoEditorIntegration(ABC):
         audio_path: Path,
         subtitles: list[SubtitleEntry],
         settings: VideoExportSettings,
-        output_dir: Path
+        output_dir: Path,
     ) -> dict[str, Path]:
         """Export audio and subtitles for video editor."""
         pass
 
     @abstractmethod
     async def generate_project_import(
-        self,
-        audio_path: Path,
-        subtitles: list[SubtitleEntry],
-        settings: VideoExportSettings
+        self, audio_path: Path, subtitles: list[SubtitleEntry], settings: VideoExportSettings
     ) -> str:
         """Generate import script/file for video editor."""
         pass
@@ -123,7 +124,7 @@ class DaVinciResolveIntegration(VideoEditorIntegration):
         audio_path: Path,
         subtitles: list[SubtitleEntry],
         settings: VideoExportSettings,
-        output_dir: Path
+        output_dir: Path,
     ) -> dict[str, Path]:
         """Export audio and subtitles for DaVinci Resolve."""
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -133,6 +134,7 @@ class DaVinciResolveIntegration(VideoEditorIntegration):
         # Copy audio file
         audio_output = output_dir / audio_path.name
         import shutil
+
         shutil.copy2(audio_path, audio_output)
         outputs["audio"] = audio_output
 
@@ -140,16 +142,13 @@ class DaVinciResolveIntegration(VideoEditorIntegration):
         if subtitles and settings.include_subtitles:
             srt_path = output_dir / f"{audio_path.stem}.srt"
             srt_content = self._generate_srt(subtitles)
-            srt_path.write_text(srt_content, encoding='utf-8')
+            srt_path.write_text(srt_content, encoding="utf-8")
             outputs["subtitles"] = srt_path
 
         return outputs
 
     async def generate_project_import(
-        self,
-        audio_path: Path,
-        subtitles: list[SubtitleEntry],
-        settings: VideoExportSettings
+        self, audio_path: Path, subtitles: list[SubtitleEntry], settings: VideoExportSettings
     ) -> str:
         """Generate DaVinci Resolve import instructions."""
         return f"""
@@ -215,7 +214,7 @@ class PremierProIntegration(VideoEditorIntegration):
         audio_path: Path,
         subtitles: list[SubtitleEntry],
         settings: VideoExportSettings,
-        output_dir: Path
+        output_dir: Path,
     ) -> dict[str, Path]:
         """Export audio and subtitles for Premiere Pro."""
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -225,6 +224,7 @@ class PremierProIntegration(VideoEditorIntegration):
         # Copy audio file
         audio_output = output_dir / audio_path.name
         import shutil
+
         shutil.copy2(audio_path, audio_output)
         outputs["audio"] = audio_output
 
@@ -232,16 +232,13 @@ class PremierProIntegration(VideoEditorIntegration):
         if subtitles and settings.include_subtitles:
             srt_path = output_dir / f"{audio_path.stem}.srt"
             srt_content = self._generate_srt(subtitles)
-            srt_path.write_text(srt_content, encoding='utf-8')
+            srt_path.write_text(srt_content, encoding="utf-8")
             outputs["subtitles"] = srt_path
 
         return outputs
 
     async def generate_project_import(
-        self,
-        audio_path: Path,
-        subtitles: list[SubtitleEntry],
-        settings: VideoExportSettings
+        self, audio_path: Path, subtitles: list[SubtitleEntry], settings: VideoExportSettings
     ) -> str:
         """Generate Premiere Pro import instructions."""
         return f"""
@@ -294,10 +291,7 @@ class VideoEditorManager:
         """Register a video editor integration."""
         self._integrations[integration.editor_type] = integration
 
-    def get_integration(
-        self,
-        editor_type: VideoEditorType
-    ) -> VideoEditorIntegration | None:
+    def get_integration(self, editor_type: VideoEditorType) -> VideoEditorIntegration | None:
         """Get a video editor integration by type."""
         return self._integrations.get(editor_type)
 
@@ -319,7 +313,7 @@ class VideoEditorManager:
         subtitles: list[SubtitleEntry],
         editor_type: VideoEditorType,
         output_dir: Path,
-        settings: VideoExportSettings | None = None
+        settings: VideoExportSettings | None = None,
     ) -> dict[str, Path]:
         """Export audio and subtitles for a video editor."""
         integration = self.get_integration(editor_type)
@@ -329,8 +323,5 @@ class VideoEditorManager:
         settings = settings or VideoExportSettings()
 
         return await integration.export_audio_with_subtitles(
-            audio_path,
-            subtitles,
-            settings,
-            output_dir
+            audio_path, subtitles, settings, output_dir
         )

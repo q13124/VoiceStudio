@@ -27,7 +27,7 @@ try:
     )
 except ImportError:
     pytestmark = pytest.mark.skip(reason="Phase 6E experimental_loader not implemented")
-    
+
     # Create stubs for syntax validation
     class ExperimentalChannel(Enum):
         DEV = "dev"
@@ -83,6 +83,7 @@ except ImportError:
             @dataclass
             class Summary:
                 total_ratings: int
+
             return Summary(total_ratings=len(self._feedback))
 
         def record_crash(self, error: str, stack_trace: str):
@@ -118,6 +119,7 @@ except ImportError:
             class Limits:
                 max_memory_mb: int = 256
                 max_cpu_percent: int = 50
+
             return Limits()
 
         async def safe_execute(self, plugin_id: str, func_name: str):
@@ -125,6 +127,7 @@ except ImportError:
             class Result:
                 crashed: bool = False
                 error: Optional[str] = None
+
             return Result()
 
 
@@ -140,14 +143,14 @@ class TestExperimentalLoader:
     async def test_load_experimental_plugin(self) -> None:
         """Test loading an experimental plugin."""
         loader = ExperimentalLoader()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create minimal plugin
             manifest_path = Path(tmpdir) / "manifest.json"
             manifest_path.write_text('{"id": "exp-plugin", "version": "0.1.0-alpha"}')
-            
+
             plugin = await loader.load(Path(tmpdir))
-            
+
             assert plugin is not None
             assert plugin.is_experimental
 
@@ -155,13 +158,13 @@ class TestExperimentalLoader:
     async def test_experimental_plugin_isolation(self) -> None:
         """Test that experimental plugins are isolated."""
         loader = ExperimentalLoader()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             manifest_path = Path(tmpdir) / "manifest.json"
             manifest_path.write_text('{"id": "isolated-exp", "version": "0.0.1"}')
-            
+
             plugin = await loader.load(Path(tmpdir))
-            
+
             # Should run in isolated environment
             assert plugin.isolation_level == "strict"
 
@@ -169,12 +172,12 @@ class TestExperimentalLoader:
     async def test_experimental_channel_filter(self) -> None:
         """Test filtering by experimental channel."""
         loader = ExperimentalLoader()
-        
+
         # Only load alpha channel plugins
         loader.set_channel_filter([ExperimentalChannel.ALPHA])
-        
+
         plugins = await loader.discover_plugins()
-        
+
         for plugin in plugins:
             assert plugin.channel == ExperimentalChannel.ALPHA
 
@@ -189,7 +192,7 @@ class TestExperimentalPlugin:
             version="0.1.0-alpha",
             channel=ExperimentalChannel.ALPHA,
         )
-        
+
         assert plugin.plugin_id == "exp-test"
         assert plugin.is_experimental
         assert plugin.channel == ExperimentalChannel.ALPHA
@@ -200,17 +203,17 @@ class TestExperimentalPlugin:
             plugin_id="test",
             version="1.0.0-alpha.1",
         )
-        
+
         beta = ExperimentalPlugin(
             plugin_id="test",
             version="1.0.0-beta.2",
         )
-        
+
         stable = ExperimentalPlugin(
             plugin_id="test",
             version="1.0.0",
         )
-        
+
         assert alpha.is_prerelease
         assert beta.is_prerelease
         assert not stable.is_prerelease
@@ -222,7 +225,7 @@ class TestExperimentalPlugin:
             version="0.0.1-dev",
             stability_warnings=["API may change", "Not for production"],
         )
-        
+
         assert len(plugin.stability_warnings) == 2
 
 
@@ -254,7 +257,7 @@ class TestFeatureFlag:
             enabled=False,
             description="New experimental audio engine",
         )
-        
+
         assert flag.name == "new-audio-engine"
         assert not flag.enabled
 
@@ -265,7 +268,7 @@ class TestFeatureFlag:
             enabled=True,
             rollout_percentage=50,
         )
-        
+
         # 50% rollout means ~half of users get the feature
         assert flag.rollout_percentage == 50
 
@@ -275,11 +278,11 @@ class TestFeatureFlag:
             name="test-flag",
             enabled=True,
         )
-        
+
         # Should evaluate consistently
         result1 = flag.evaluate(user_id="user123")
         result2 = flag.evaluate(user_id="user123")
-        
+
         assert result1 == result2  # Same user gets same result
 
     def test_disabled_flag_never_activates(self) -> None:
@@ -289,7 +292,7 @@ class TestFeatureFlag:
             enabled=False,
             rollout_percentage=100,
         )
-        
+
         # Even at 100% rollout, disabled flag should not activate
         assert not flag.evaluate(user_id="any-user")
 
@@ -301,11 +304,11 @@ class TestExperimentalSafety:
     async def test_crash_containment(self) -> None:
         """Test that experimental crashes are contained."""
         loader = ExperimentalLoader()
-        
+
         # Experimental plugins should not crash main app
-        with patch.object(loader, '_execute_plugin', side_effect=Exception("Crash!")):
+        with patch.object(loader, "_execute_plugin", side_effect=Exception("Crash!")):
             result = await loader.safe_execute("exp-plugin", "test_func")
-            
+
             assert result.crashed
             assert result.error is not None
 
@@ -313,9 +316,9 @@ class TestExperimentalSafety:
     async def test_resource_limits(self) -> None:
         """Test resource limits on experimental plugins."""
         loader = ExperimentalLoader()
-        
+
         limits = loader.get_resource_limits()
-        
+
         # Experimental should have stricter limits
         assert limits.max_memory_mb <= 256
         assert limits.max_cpu_percent <= 50
@@ -326,12 +329,12 @@ class TestExperimentalSafety:
             plugin_id="exp1",
             version="0.1.0",
         )
-        
+
         plugin2 = ExperimentalPlugin(
             plugin_id="exp2",
             version="0.1.0",
         )
-        
+
         # Each should have isolated storage path
         assert plugin1.data_path != plugin2.data_path
 
@@ -345,13 +348,13 @@ class TestExperimentalFeedback:
             plugin_id="feedback-test",
             version="0.1.0-alpha",
         )
-        
+
         plugin.record_feedback(
             user_id="tester1",
             rating=4,
             comments="Works well but crashes sometimes",
         )
-        
+
         feedback = plugin.get_feedback_summary()
         assert feedback.total_ratings >= 1
 
@@ -361,12 +364,12 @@ class TestExperimentalFeedback:
             plugin_id="crashy",
             version="0.0.1-dev",
         )
-        
+
         plugin.record_crash(
             error="NullReferenceException",
             stack_trace="at Plugin.main()",
         )
-        
+
         crashes = plugin.get_crash_reports()
         assert len(crashes) >= 1
 
@@ -376,11 +379,11 @@ class TestExperimentalFeedback:
             plugin_id="telemetry-test",
             version="0.2.0-beta",
         )
-        
+
         plugin.record_telemetry(
             event="feature_used",
             data={"feature": "new_filter"},
         )
-        
+
         telemetry = plugin.get_telemetry()
         assert len(telemetry) >= 1

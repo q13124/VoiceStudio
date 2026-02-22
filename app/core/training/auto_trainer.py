@@ -188,16 +188,16 @@ class AutoTrainer:
                             _val_audio, val_sr = sf.read(validation_audio)
 
                             # Create engine with trained model
-                            test_engine = XTTSEngine(model_name=model_path, device=self.device, gpu=self.gpu)
+                            test_engine = XTTSEngine(
+                                model_name=model_path, device=self.device, gpu=self.gpu
+                            )
                             if not test_engine.initialize():
                                 raise RuntimeError("Failed to initialize test engine")
 
                             # Synthesize test audio using a standard test sentence
                             test_text = "The quick brown fox jumps over the lazy dog."
                             synthesized_audio = test_engine.synthesize(
-                                text=test_text,
-                                speaker_wav=validation_audio,
-                                language="en"
+                                text=test_text, speaker_wav=validation_audio, language="en"
                             )
 
                             if synthesized_audio is not None:
@@ -205,31 +205,41 @@ class AutoTrainer:
                                 similarity = calculate_similarity(
                                     reference_audio=validation_audio,
                                     generated_audio=synthesized_audio,
-                                    method="embedding"
+                                    method="embedding",
                                 )
 
                                 # Calculate MOS score for synthesized audio
-                                mos_score = calculate_mos_score(synthesized_audio, sample_rate=val_sr)
+                                mos_score = calculate_mos_score(
+                                    synthesized_audio, sample_rate=val_sr
+                                )
 
                                 # Combine metrics into quality score (0.0 to 1.0)
                                 # Similarity weight: 0.6, MOS weight: 0.4 (normalized to 0-1)
                                 quality_score = (similarity * 0.6) + ((mos_score / 5.0) * 0.4)
                                 quality_score = max(0.0, min(1.0, quality_score))  # Clamp to [0, 1]
 
-                                logger.info(f"Quality evaluation: similarity={similarity:.3f}, MOS={mos_score:.2f}, combined={quality_score:.3f}")
+                                logger.info(
+                                    f"Quality evaluation: similarity={similarity:.3f}, MOS={mos_score:.2f}, combined={quality_score:.3f}"
+                                )
                             else:
                                 logger.warning("Synthesis failed, using loss-based quality score")
                                 raise RuntimeError("Synthesis failed")
 
                         except ImportError as e:
-                            logger.warning(f"Quality metrics not available: {e}, using loss-based score")
+                            logger.warning(
+                                f"Quality metrics not available: {e}, using loss-based score"
+                            )
                             raise
                         except Exception as e:
-                            logger.warning(f"Quality evaluation failed: {e}, using loss-based score")
+                            logger.warning(
+                                f"Quality evaluation failed: {e}, using loss-based score"
+                            )
                             raise
 
                     except Exception as e:
-                        logger.warning(f"Quality evaluation failed: {e}, falling back to loss-based score")
+                        logger.warning(
+                            f"Quality evaluation failed: {e}, falling back to loss-based score"
+                        )
 
                 # Use loss as quality indicator if no validation
                 if quality_score == 0.0 and result.get("final_loss"):
@@ -299,10 +309,16 @@ class AutoTrainer:
         learning_rate_options = [0.00001, 0.0001, 0.0005, 0.001]
 
         # Generate combinations
-        for i in range(min(num_sets, len(epochs_options) * len(batch_size_options) * len(learning_rate_options))):
+        for i in range(
+            min(
+                num_sets, len(epochs_options) * len(batch_size_options) * len(learning_rate_options)
+            )
+        ):
             epochs_idx = i % len(epochs_options)
             batch_idx = (i // len(epochs_options)) % len(batch_size_options)
-            lr_idx = (i // (len(epochs_options) * len(batch_size_options))) % len(learning_rate_options)
+            lr_idx = (i // (len(epochs_options) * len(batch_size_options))) % len(
+                learning_rate_options
+            )
 
             param_sets.append(
                 {
@@ -389,7 +405,4 @@ def create_auto_trainer(
     Returns:
         Initialized AutoTrainer instance
     """
-    return AutoTrainer(
-        engine=engine, device=device, gpu=gpu, output_dir=output_dir
-    )
-
+    return AutoTrainer(engine=engine, device=device, gpu=gpu, output_dir=output_dir)

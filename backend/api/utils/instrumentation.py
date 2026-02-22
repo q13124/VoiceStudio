@@ -15,9 +15,11 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 # Event types for key flows
 class EventType:
     """Event type constants."""
+
     IMPORT_START = "import.start"
     IMPORT_COMPLETE = "import.complete"
     IMPORT_ERROR = "import.error"
@@ -35,12 +37,7 @@ class EventType:
 class StructuredEvent:
     """Structured event for logging."""
 
-    def __init__(
-        self,
-        event_type: str,
-        request_id: str | None = None,
-        **kwargs
-    ):
+    def __init__(self, event_type: str, request_id: str | None = None, **kwargs):
         """
         Initialize structured event.
 
@@ -60,7 +57,7 @@ class StructuredEvent:
             "event_type": self.event_type,
             "request_id": self.request_id,
             "timestamp": self.timestamp,
-            **self.data
+            **self.data,
         }
 
     def log(self, level: int = logging.INFO):
@@ -69,12 +66,7 @@ class StructuredEvent:
         logger.log(level, f"Event: {self.event_type}", extra=event_dict)
 
 
-def log_event(
-    event_type: str,
-    request_id: str | None = None,
-    level: int = logging.INFO,
-    **kwargs
-):
+def log_event(event_type: str, request_id: str | None = None, level: int = logging.INFO, **kwargs):
     """
     Log a structured event.
 
@@ -94,7 +86,7 @@ def instrument_flow(
     event_type_complete: str,
     event_type_error: str,
     request_id: str | None = None,
-    **start_data
+    **start_data,
 ):
     """
     Context manager to instrument a flow with start/complete/error events.
@@ -113,12 +105,7 @@ def instrument_flow(
     start_time = time.time()
 
     # Log start event
-    log_event(
-        event_type_start,
-        request_id=flow_request_id,
-        level=logging.INFO,
-        **start_data
-    )
+    log_event(event_type_start, request_id=flow_request_id, level=logging.INFO, **start_data)
 
     try:
         yield flow_request_id
@@ -129,7 +116,7 @@ def instrument_flow(
             request_id=flow_request_id,
             level=logging.INFO,
             duration_seconds=duration,
-            **start_data
+            **start_data,
         )
     except Exception as e:
         # Log error event
@@ -141,16 +128,12 @@ def instrument_flow(
             duration_seconds=duration,
             error=str(e),
             error_type=type(e).__name__,
-            **start_data
+            **start_data,
         )
         raise
 
 
-def instrument_endpoint(
-    event_type_start: str,
-    event_type_complete: str,
-    event_type_error: str
-):
+def instrument_endpoint(event_type_start: str, event_type_complete: str, event_type_error: str):
     """
     Decorator to instrument an endpoint with structured events.
 
@@ -159,13 +142,14 @@ def instrument_endpoint(
         event_type_complete: Event type for completion
         event_type_error: Event type for error
     """
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             # Try to get request_id from request object
             request_id = None
             for arg in args:
-                if hasattr(arg, 'state') and hasattr(arg.state, 'request_id'):
+                if hasattr(arg, "state") and hasattr(arg.state, "request_id"):
                     request_id = arg.state.request_id
                     break
 
@@ -174,9 +158,10 @@ def instrument_endpoint(
                 event_type_complete,
                 event_type_error,
                 request_id=request_id,
-                endpoint=func.__name__
+                endpoint=func.__name__,
             ):
                 return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator

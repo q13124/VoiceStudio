@@ -12,12 +12,8 @@ import logging
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from backend.services.slo_monitor import (
-    SLOAlert as SLOAlertModel,
-)
-from backend.services.slo_monitor import (
-    SLOStatus as SLOStatusModel,
-)
+from backend.services.slo_monitor import SLOAlert as SLOAlertModel
+from backend.services.slo_monitor import SLOStatus as SLOStatusModel
 from backend.services.slo_monitor import (
     get_slo_monitor,
 )
@@ -142,7 +138,7 @@ def _convert_alert(alert: SLOAlertModel) -> SLOAlertResponse:
         alert_id=alert.alert_id,
         slo_id=alert.slo_id,
         slo_name=alert.slo_name,
-        severity=alert.severity.value if hasattr(alert.severity, 'value') else str(alert.severity),
+        severity=alert.severity.value if hasattr(alert.severity, "value") else str(alert.severity),
         message=alert.message,
         current_value=alert.current_value,
         target=alert.target,
@@ -206,8 +202,11 @@ async def get_slo_health():
         monitor = get_slo_monitor()
         return {
             "status": monitor.get_overall_health(),
-            "timestamp": monitor.get_all_slo_statuses()[0].last_updated
-                if monitor.get_all_slo_statuses() else None,
+            "timestamp": (
+                monitor.get_all_slo_statuses()[0].last_updated
+                if monitor.get_all_slo_statuses()
+                else None
+            ),
         }
     except Exception as e:
         logger.error(f"Error getting SLO health: {e}")
@@ -305,8 +304,7 @@ async def acknowledge_alert(
             )
         else:
             raise HTTPException(
-                status_code=404,
-                detail=f"Alert {alert_id} not found or already acknowledged"
+                status_code=404, detail=f"Alert {alert_id} not found or already acknowledged"
             )
     except HTTPException:
         raise

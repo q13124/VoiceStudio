@@ -23,16 +23,12 @@ class TestHealthCheckImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            health_check is not None
-        ), "Failed to import health_check module"
+        assert health_check is not None, "Failed to import health_check module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
         classes = [
-            name
-            for name in dir(health_check)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(health_check) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "module should have classes or functions"
 
@@ -60,4 +56,3 @@ class TestHealthCheckFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -44,9 +44,11 @@ logger = logging.getLogger(__name__)
 # SLO DEFINITIONS FOR ENGINE OPERATIONS
 # =============================================================================
 
+
 @dataclass
 class EngineSLO:
     """Service Level Objective for engine operations."""
+
     name: str
     p50_target: float  # Median latency target (seconds)
     p95_target: float  # 95th percentile target
@@ -58,6 +60,7 @@ class EngineSLO:
 @dataclass
 class EngineSLOConfig:
     """SLO configuration for different engine operation types."""
+
     # Fast engines (XTTS, Chatterbox)
     SYNTHESIS_FAST_P50: float = 1.0
     SYNTHESIS_FAST_P95: float = 3.0
@@ -98,13 +101,25 @@ ENGINE_SLOS: dict[str, EngineSLO] = {
         "Chatterbox", SLO.SYNTHESIS_FAST_P50, SLO.SYNTHESIS_FAST_P95, SLO.SYNTHESIS_FAST_P99, "fast"
     ),
     "tortoise_engine": EngineSLO(
-        "Tortoise", SLO.SYNTHESIS_STANDARD_P50, SLO.SYNTHESIS_STANDARD_P95, SLO.SYNTHESIS_STANDARD_P99, "standard"
+        "Tortoise",
+        SLO.SYNTHESIS_STANDARD_P50,
+        SLO.SYNTHESIS_STANDARD_P95,
+        SLO.SYNTHESIS_STANDARD_P99,
+        "standard",
     ),
     "rvc_engine": EngineSLO(
-        "RVC", SLO.SYNTHESIS_STANDARD_P50, SLO.SYNTHESIS_STANDARD_P95, SLO.SYNTHESIS_STANDARD_P99, "standard"
+        "RVC",
+        SLO.SYNTHESIS_STANDARD_P50,
+        SLO.SYNTHESIS_STANDARD_P95,
+        SLO.SYNTHESIS_STANDARD_P99,
+        "standard",
     ),
     "whisper_engine": EngineSLO(
-        "Whisper", SLO.TRANSCRIPTION_P50, SLO.TRANSCRIPTION_P95, SLO.TRANSCRIPTION_P99, "transcription"
+        "Whisper",
+        SLO.TRANSCRIPTION_P50,
+        SLO.TRANSCRIPTION_P95,
+        SLO.TRANSCRIPTION_P99,
+        "transcription",
     ),
     "quality_metrics": EngineSLO(
         "QualityMetrics", SLO.QUALITY_P50, SLO.QUALITY_P95, SLO.QUALITY_P99, "quality"
@@ -115,6 +130,7 @@ ENGINE_SLOS: dict[str, EngineSLO] = {
 @dataclass
 class EngineMetrics:
     """Collected metrics for engine operations."""
+
     engine_name: str
     operation: str
     samples: list[float] = field(default_factory=list)
@@ -153,9 +169,7 @@ class EngineMetrics:
             return False
         self.calculate()
         return (
-            self.p50 <= slo.p50_target and
-            self.p95 <= slo.p95_target and
-            self.p99 <= slo.p99_target
+            self.p50 <= slo.p50_target and self.p95 <= slo.p95_target and self.p99 <= slo.p99_target
         )
 
     def get_slo_violation(self, slo: EngineSLO) -> str | None:
@@ -175,14 +189,15 @@ class EngineMetrics:
 # TEST DATA GENERATORS
 # =============================================================================
 
+
 def generate_test_audio(duration_seconds: float = 1.0, sample_rate: int = 22050) -> np.ndarray:
     """Generate test audio signal with realistic characteristics."""
     t = np.linspace(0, duration_seconds, int(sample_rate * duration_seconds), False)
     # Mix of frequencies for more realistic audio
     audio = (
-        0.4 * np.sin(2 * np.pi * 440.0 * t) +  # A4 note
-        0.2 * np.sin(2 * np.pi * 880.0 * t) +  # A5 note (harmonic)
-        0.1 * np.sin(2 * np.pi * 220.0 * t)    # A3 note (bass)
+        0.4 * np.sin(2 * np.pi * 440.0 * t)  # A4 note
+        + 0.2 * np.sin(2 * np.pi * 880.0 * t)  # A5 note (harmonic)
+        + 0.1 * np.sin(2 * np.pi * 220.0 * t)  # A3 note (bass)
     )
     # Add slight noise for realism
     noise = np.random.normal(0, 0.02, len(audio))
@@ -205,7 +220,7 @@ def generate_test_text(length: str = "short") -> str:
         state-of-the-art neural network architectures including XTTS, Chatterbox, and Tortoise TTS engines.
         Each engine offers different trade-offs between synthesis speed, voice quality, and resource consumption.
         This comprehensive test suite validates that all engines meet their specified service level objectives
-        across a range of input conditions and concurrent load scenarios."""
+        across a range of input conditions and concurrent load scenarios.""",
     }
     return texts.get(length, texts["short"])
 
@@ -233,7 +248,7 @@ class MockEngine:
         return {
             "audio": generate_test_audio(duration_seconds=2.0),
             "sample_rate": 22050,
-            "latency": latency
+            "latency": latency,
         }
 
     def transcribe(self, audio: np.ndarray, **kwargs) -> dict[str, Any]:
@@ -245,10 +260,7 @@ class MockEngine:
         latency = np.random.uniform(0.1, 0.3) + duration * 0.1
         time.sleep(latency)
 
-        return {
-            "text": "Transcribed text from audio.",
-            "latency": latency
-        }
+        return {"text": "Transcribed text from audio.", "latency": latency}
 
     def calculate_metrics(self, audio: np.ndarray, **kwargs) -> dict[str, Any]:
         """Simulate quality metrics calculation."""
@@ -261,7 +273,7 @@ class MockEngine:
         return {
             "mos_score": np.random.uniform(3.5, 4.5),
             "snr": np.random.uniform(25, 40),
-            "latency": latency
+            "latency": latency,
         }
 
 
@@ -269,10 +281,9 @@ class MockEngine:
 # BENCHMARK UTILITIES
 # =============================================================================
 
+
 def benchmark_operation(
-    operation: Callable,
-    iterations: int = 10,
-    warmup: int = 2
+    operation: Callable, iterations: int = 10, warmup: int = 2
 ) -> EngineMetrics:
     """Run benchmark on an operation and collect metrics."""
     metrics = EngineMetrics(engine_name="benchmark", operation="operation")
@@ -301,9 +312,7 @@ def benchmark_operation(
 
 
 def benchmark_concurrent(
-    operation: Callable,
-    concurrency: int = 5,
-    total_operations: int = 20
+    operation: Callable, concurrency: int = 5, total_operations: int = 20
 ) -> EngineMetrics:
     """Run concurrent benchmark to test throughput under load."""
     metrics = EngineMetrics(engine_name="concurrent", operation="parallel")
@@ -336,6 +345,7 @@ def benchmark_concurrent(
 # MOCK-BASED ENGINE PERFORMANCE TESTS (Always run)
 # =============================================================================
 
+
 @pytest.mark.performance
 class TestMockEngineThroughput:
     """Test engine throughput using mock engines (no real dependencies)."""
@@ -346,13 +356,13 @@ class TestMockEngineThroughput:
         slo = ENGINE_SLOS.get("xtts_engine")
 
         metrics = benchmark_operation(
-            lambda: engine.synthesize(generate_test_text("short")),
-            iterations=20,
-            warmup=3
+            lambda: engine.synthesize(generate_test_text("short")), iterations=20, warmup=3
         )
 
         assert len(metrics.samples) >= 15, "Insufficient successful samples"
-        assert metrics.p50 < slo.p50_target, f"P50 {metrics.p50:.3f}s exceeds target {slo.p50_target}s"
+        assert (
+            metrics.p50 < slo.p50_target
+        ), f"P50 {metrics.p50:.3f}s exceeds target {slo.p50_target}s"
         logger.info(f"Fast engine P50: {metrics.p50:.3f}s, P95: {metrics.p95:.3f}s")
 
     def test_standard_engine_slo(self):
@@ -361,13 +371,13 @@ class TestMockEngineThroughput:
         slo = ENGINE_SLOS.get("tortoise_engine")
 
         metrics = benchmark_operation(
-            lambda: engine.synthesize(generate_test_text("medium")),
-            iterations=15,
-            warmup=2
+            lambda: engine.synthesize(generate_test_text("medium")), iterations=15, warmup=2
         )
 
         assert len(metrics.samples) >= 10, "Insufficient successful samples"
-        assert metrics.p50 < slo.p50_target, f"P50 {metrics.p50:.3f}s exceeds target {slo.p50_target}s"
+        assert (
+            metrics.p50 < slo.p50_target
+        ), f"P50 {metrics.p50:.3f}s exceeds target {slo.p50_target}s"
         logger.info(f"Standard engine P50: {metrics.p50:.3f}s, P95: {metrics.p95:.3f}s")
 
     def test_transcription_slo(self):
@@ -376,14 +386,12 @@ class TestMockEngineThroughput:
         slo = ENGINE_SLOS.get("whisper_engine")
         audio = generate_test_audio(duration_seconds=5.0)
 
-        metrics = benchmark_operation(
-            lambda: engine.transcribe(audio),
-            iterations=15,
-            warmup=2
-        )
+        metrics = benchmark_operation(lambda: engine.transcribe(audio), iterations=15, warmup=2)
 
         assert len(metrics.samples) >= 10, "Insufficient successful samples"
-        assert metrics.p50 < slo.p50_target, f"P50 {metrics.p50:.3f}s exceeds target {slo.p50_target}s"
+        assert (
+            metrics.p50 < slo.p50_target
+        ), f"P50 {metrics.p50:.3f}s exceeds target {slo.p50_target}s"
         logger.info(f"Transcription P50: {metrics.p50:.3f}s, P95: {metrics.p95:.3f}s")
 
     def test_quality_metrics_slo(self):
@@ -393,13 +401,13 @@ class TestMockEngineThroughput:
         audio = generate_test_audio(duration_seconds=2.0)
 
         metrics = benchmark_operation(
-            lambda: engine.calculate_metrics(audio),
-            iterations=20,
-            warmup=3
+            lambda: engine.calculate_metrics(audio), iterations=20, warmup=3
         )
 
         assert len(metrics.samples) >= 15, "Insufficient successful samples"
-        assert metrics.p50 < slo.p50_target, f"P50 {metrics.p50:.3f}s exceeds target {slo.p50_target}s"
+        assert (
+            metrics.p50 < slo.p50_target
+        ), f"P50 {metrics.p50:.3f}s exceeds target {slo.p50_target}s"
         logger.info(f"Quality metrics P50: {metrics.p50:.3f}s, P95: {metrics.p95:.3f}s")
 
     def test_throughput_under_load(self):
@@ -408,47 +416,49 @@ class TestMockEngineThroughput:
 
         # First measure baseline (single-threaded)
         baseline = benchmark_operation(
-            lambda: engine.synthesize(generate_test_text("short")),
-            iterations=10,
-            warmup=2
+            lambda: engine.synthesize(generate_test_text("short")), iterations=10, warmup=2
         )
 
         # Then measure under concurrent load
         concurrent = benchmark_concurrent(
             lambda: engine.synthesize(generate_test_text("short")),
             concurrency=5,
-            total_operations=25
+            total_operations=25,
         )
 
         # Degradation should not exceed 2x
-        degradation_factor = concurrent.p50 / baseline.p50 if baseline.p50 > 0 else float('inf')
-        assert degradation_factor < SLO.MAX_DEGRADATION_FACTOR, \
-            f"Concurrent degradation {degradation_factor:.2f}x exceeds max {SLO.MAX_DEGRADATION_FACTOR}x"
+        degradation_factor = concurrent.p50 / baseline.p50 if baseline.p50 > 0 else float("inf")
+        assert (
+            degradation_factor < SLO.MAX_DEGRADATION_FACTOR
+        ), f"Concurrent degradation {degradation_factor:.2f}x exceeds max {SLO.MAX_DEGRADATION_FACTOR}x"
 
-        logger.info(f"Baseline P50: {baseline.p50:.3f}s, Concurrent P50: {concurrent.p50:.3f}s, Degradation: {degradation_factor:.2f}x")
+        logger.info(
+            f"Baseline P50: {baseline.p50:.3f}s, Concurrent P50: {concurrent.p50:.3f}s, Degradation: {degradation_factor:.2f}x"
+        )
 
     def test_text_length_scaling(self):
         """Test that synthesis time scales reasonably with text length."""
         engine = MockEngine("scaling_test", latency_range=(0.1, 0.2))
 
         short_metrics = benchmark_operation(
-            lambda: engine.synthesize(generate_test_text("short")),
-            iterations=10,
-            warmup=2
+            lambda: engine.synthesize(generate_test_text("short")), iterations=10, warmup=2
         )
 
         long_metrics = benchmark_operation(
-            lambda: engine.synthesize(generate_test_text("paragraph")),
-            iterations=10,
-            warmup=2
+            lambda: engine.synthesize(generate_test_text("paragraph")), iterations=10, warmup=2
         )
 
         # Long text should not take more than 3x short text
-        scaling_factor = long_metrics.p50 / short_metrics.p50 if short_metrics.p50 > 0 else float('inf')
-        assert scaling_factor < 3.0, \
-            f"Text length scaling {scaling_factor:.2f}x is too high (max 3x)"
+        scaling_factor = (
+            long_metrics.p50 / short_metrics.p50 if short_metrics.p50 > 0 else float("inf")
+        )
+        assert (
+            scaling_factor < 3.0
+        ), f"Text length scaling {scaling_factor:.2f}x is too high (max 3x)"
 
-        logger.info(f"Short P50: {short_metrics.p50:.3f}s, Long P50: {long_metrics.p50:.3f}s, Scaling: {scaling_factor:.2f}x")
+        logger.info(
+            f"Short P50: {short_metrics.p50:.3f}s, Long P50: {long_metrics.p50:.3f}s, Scaling: {scaling_factor:.2f}x"
+        )
 
 
 @pytest.mark.performance
@@ -533,9 +543,7 @@ class TestEngineConcurrency:
         engine = MockEngine("stress", latency_range=(0.02, 0.05))
 
         metrics = benchmark_concurrent(
-            lambda: engine.synthesize("Short test."),
-            concurrency=10,
-            total_operations=50
+            lambda: engine.synthesize("Short test."), concurrency=10, total_operations=50
         )
 
         # Should complete at least 90% successfully
@@ -545,26 +553,33 @@ class TestEngineConcurrency:
         # Throughput should be at least 50 ops/sec with this fast mock
         assert metrics.throughput > 10, f"Throughput {metrics.throughput:.1f} ops/s too low"
 
-        logger.info(f"High concurrency - Success: {success_rate:.1%}, Throughput: {metrics.throughput:.1f} ops/s")
+        logger.info(
+            f"High concurrency - Success: {success_rate:.1%}, Throughput: {metrics.throughput:.1f} ops/s"
+        )
 
 
 # =============================================================================
 # REAL ENGINE TESTS (Skipped if engines not available)
 # =============================================================================
 
+
 @pytest.mark.requires_engine
 class TestEnginePerformance:
     """Test real engine performance benchmarks."""
 
-    @pytest.mark.parametrize("engine_name", [
-        "xtts_engine",
-        "chatterbox_engine",
-        "tortoise_engine",
-    ])
+    @pytest.mark.parametrize(
+        "engine_name",
+        [
+            "xtts_engine",
+            "chatterbox_engine",
+            "tortoise_engine",
+        ],
+    )
     def test_synthesis_performance(self, engine_name):
         """Test synthesis performance."""
         try:
             import importlib.util
+
             engine_path = project_root / "app" / "core" / "engines" / f"{engine_name}.py"
 
             if not engine_path.exists():
@@ -578,8 +593,12 @@ class TestEnginePerformance:
             spec.loader.exec_module(module)
 
             import inspect
-            engine_classes = [obj for name, obj in inspect.getmembers(module, inspect.isclass)
-                             if name.endswith('Engine')]
+
+            engine_classes = [
+                obj
+                for name, obj in inspect.getmembers(module, inspect.isclass)
+                if name.endswith("Engine")
+            ]
 
             if not engine_classes:
                 pytest.skip(f"No engine class in {engine_name}")
@@ -587,13 +606,13 @@ class TestEnginePerformance:
             engine_class = engine_classes[0]
             slo = ENGINE_SLOS.get(engine_name)
 
-            with patch('torch.cuda.is_available', return_value=False):
+            with patch("torch.cuda.is_available", return_value=False):
                 try:
                     engine = engine_class(model_path=None, device="cpu")
                 except Exception as e:
                     pytest.skip(f"Could not initialize {engine_name}: {e}")
 
-                if hasattr(engine, 'synthesize'):
+                if hasattr(engine, "synthesize"):
                     metrics = EngineMetrics(engine_name=engine_name, operation="synthesize")
 
                     for i in range(5):
@@ -602,7 +621,7 @@ class TestEnginePerformance:
                             engine.synthesize(
                                 text=generate_test_text("medium"),
                                 voice_profile_id="test",
-                                sample_rate=22050
+                                sample_rate=22050,
                             )
                             elapsed_time = time.perf_counter() - start_time
                             metrics.samples.append(elapsed_time)
@@ -620,10 +639,13 @@ class TestEnginePerformance:
                         if violation:
                             logger.warning(f"{engine_name} SLO violation: {violation}")
 
-                    assert metrics.p50 < 30.0, \
-                        f"{engine_name} synthesis P50 {metrics.p50:.2f}s exceeds 30s limit"
+                    assert (
+                        metrics.p50 < 30.0
+                    ), f"{engine_name} synthesis P50 {metrics.p50:.2f}s exceeds 30s limit"
 
-                    logger.info(f"{engine_name} synthesis: P50={metrics.p50:.2f}s, P95={metrics.p95:.2f}s")
+                    logger.info(
+                        f"{engine_name} synthesis: P50={metrics.p50:.2f}s, P95={metrics.p95:.2f}s"
+                    )
         except ImportError as e:
             pytest.skip(f"Missing dependency for {engine_name}: {e}")
         except Exception as e:
@@ -633,6 +655,7 @@ class TestEnginePerformance:
 # =============================================================================
 # ENGINE SERVICE INTEGRATION TESTS
 # =============================================================================
+
 
 @pytest.mark.performance
 class TestEngineServicePerformance:
@@ -649,18 +672,13 @@ class TestEngineServicePerformance:
         ]
         service.is_engine_available.return_value = True
         service.get_engine_status.return_value = {"status": "available", "ready": True}
-        service.synthesize.return_value = {
-            "audio_path": "/tmp/test.wav",
-            "latency": 0.5
-        }
+        service.synthesize.return_value = {"audio_path": "/tmp/test.wav", "latency": 0.5}
         return service
 
     def test_engine_listing_performance(self, mock_engine_service):
         """Test engine listing is fast."""
         metrics = benchmark_operation(
-            lambda: mock_engine_service.list_engines(),
-            iterations=100,
-            warmup=10
+            lambda: mock_engine_service.list_engines(), iterations=100, warmup=10
         )
 
         assert metrics.p50 < 0.001, "Engine listing should be sub-millisecond"
@@ -682,6 +700,7 @@ class TestEngineServicePerformance:
 
     def test_synthesis_routing_performance(self, mock_engine_service):
         """Test synthesis routing decision is fast."""
+
         def route_synthesis():
             # Simulate routing logic
             engines = mock_engine_service.list_engines()
@@ -812,6 +831,7 @@ class TestEngineMemoryPerformance:
 # PERFORMANCE REPORT GENERATION
 # =============================================================================
 
+
 @pytest.mark.performance
 class TestEnginePerformanceReport:
     """Generate comprehensive engine performance report."""
@@ -822,7 +842,7 @@ class TestEnginePerformanceReport:
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "engines": {},
             "slos": {},
-            "summary": {}
+            "summary": {},
         }
 
         # Test each engine type
@@ -837,9 +857,7 @@ class TestEnginePerformanceReport:
             slo = ENGINE_SLOS.get(slo_key)
 
             metrics = benchmark_operation(
-                lambda e=engine: e.synthesize(generate_test_text("short")),
-                iterations=15,
-                warmup=2
+                lambda e=engine: e.synthesize(generate_test_text("short")), iterations=15, warmup=2
             )
 
             report["engines"][name] = {
@@ -848,13 +866,13 @@ class TestEnginePerformanceReport:
                 "p99": metrics.p99,
                 "throughput": metrics.throughput,
                 "samples": len(metrics.samples),
-                "errors": metrics.errors
+                "errors": metrics.errors,
             }
 
             if slo:
                 report["slos"][name] = {
                     "slo_met": metrics.check_slo(slo),
-                    "violation": metrics.get_slo_violation(slo)
+                    "violation": metrics.get_slo_violation(slo),
                 }
 
         # Summary statistics
@@ -863,7 +881,7 @@ class TestEnginePerformanceReport:
             "total_engines_tested": len(report["engines"]),
             "average_p50": statistics.mean(all_p50s) if all_p50s else 0,
             "slos_met": sum(1 for s in report["slos"].values() if s["slo_met"]),
-            "slos_total": len(report["slos"])
+            "slos_total": len(report["slos"]),
         }
 
         # Verify report is complete
@@ -876,6 +894,7 @@ class TestEnginePerformanceReport:
 # =============================================================================
 # BACKEND PERFORMANCE TESTS
 # =============================================================================
+
 
 @pytest.mark.requires_backend
 class TestBackendPerformance:
@@ -894,8 +913,7 @@ class TestBackendPerformance:
             elapsed_time = time.time() - start_time
 
             assert response.status_code == 200, "Health endpoint failed"
-            assert elapsed_time < 1.0, \
-                f"API response time {elapsed_time:.2f}s (should be < 1s)"
+            assert elapsed_time < 1.0, f"API response time {elapsed_time:.2f}s (should be < 1s)"
 
             logger.info(f"API health check: {elapsed_time:.2f}s")
         except Exception as e:
@@ -904,4 +922,3 @@ class TestBackendPerformance:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-m", "performance"])
-

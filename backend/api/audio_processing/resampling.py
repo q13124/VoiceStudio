@@ -70,23 +70,17 @@ class HighQualityResampler:
                 )
                 return resampled
             except Exception as e:
-                logger.warning(
-                    f"soxr resampling failed, falling back to librosa: {e}"
-                )
+                logger.warning(f"soxr resampling failed, falling back to librosa: {e}")
                 # Fall through to librosa fallback
 
         # Fallback to librosa
         try:
             import librosa
 
-            resampled = librosa.resample(
-                audio, orig_sr=orig_sr, target_sr=target_sr
-            )
+            resampled = librosa.resample(audio, orig_sr=orig_sr, target_sr=target_sr)
             return resampled
         except ImportError:
-            raise ImportError(
-                "Neither soxr nor librosa available for resampling"
-            )
+            raise ImportError("Neither soxr nor librosa available for resampling")
         except Exception as e:
             logger.error(f"Error in librosa resampling: {e}", exc_info=True)
             raise
@@ -102,4 +96,3 @@ class HighQualityResampler:
             return ["VHQ", "HQ", "MQ", "LQ", "QQ"]
         else:
             return ["standard"]  # librosa default
-

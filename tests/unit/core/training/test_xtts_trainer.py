@@ -18,7 +18,24 @@ sys.path.insert(0, str(project_root))
 import sys
 
 # Create mock modules for dependencies that might not be available
-for module_name in ["torch", "torch.cuda", "TTS", "TTS.api", "TTS.trainer", "TTS.tts.configs.xtts_config", "TTS.tts.models.xtts", "TTS.utils.audio", "TTS.utils.manage", "TTS.datasets", "TTS.utils.generic_utils", "audiomentations", "optuna", "ray", "ray.tune", "hyperopt"]:
+for module_name in [
+    "torch",
+    "torch.cuda",
+    "TTS",
+    "TTS.api",
+    "TTS.trainer",
+    "TTS.tts.configs.xtts_config",
+    "TTS.tts.models.xtts",
+    "TTS.utils.audio",
+    "TTS.utils.manage",
+    "TTS.datasets",
+    "TTS.utils.generic_utils",
+    "audiomentations",
+    "optuna",
+    "ray",
+    "ray.tune",
+    "hyperopt",
+]:
     if module_name not in sys.modules:
         mock_module = MagicMock()
         if module_name == "torch":
@@ -69,7 +86,9 @@ for module_name in ["torch", "torch.cuda", "TTS", "TTS.api", "TTS.trainer", "TTS
 
 # Ensure torch has __version__ if already in sys.modules
 if "torch" in sys.modules:
-    if not hasattr(sys.modules["torch"], "__version__") or isinstance(getattr(sys.modules["torch"], "__version__", None), MagicMock):
+    if not hasattr(sys.modules["torch"], "__version__") or isinstance(
+        getattr(sys.modules["torch"], "__version__", None), MagicMock
+    ):
         sys.modules["torch"].__version__ = "2.0.0"
 
 # Import the XTTS trainer module
@@ -90,9 +109,7 @@ class TestXTTSTrainerImports:
     def test_module_has_classes(self):
         """Test module has expected classes."""
         classes = [
-            name
-            for name in dir(xtts_trainer)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(xtts_trainer) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "module should have classes"
 
@@ -148,13 +165,15 @@ class TestXTTSTrainerAugmentationPipeline:
         trainer = XTTSTrainer()
 
         # Mock all audiomentations components including Normalize and Gain
-        with patch("app.core.training.xtts_trainer.Compose") as mock_compose, \
-             patch("app.core.training.xtts_trainer.AddGaussianNoise") as mock_noise, \
-             patch("app.core.training.xtts_trainer.TimeStretch") as mock_stretch, \
-             patch("app.core.training.xtts_trainer.PitchShift") as mock_pitch, \
-             patch("app.core.training.xtts_trainer.Shift") as mock_shift, \
-             patch("app.core.training.xtts_trainer.Normalize") as mock_normalize, \
-             patch("app.core.training.xtts_trainer.Gain") as mock_gain:
+        with (
+            patch("app.core.training.xtts_trainer.Compose") as mock_compose,
+            patch("app.core.training.xtts_trainer.AddGaussianNoise") as mock_noise,
+            patch("app.core.training.xtts_trainer.TimeStretch") as mock_stretch,
+            patch("app.core.training.xtts_trainer.PitchShift") as mock_pitch,
+            patch("app.core.training.xtts_trainer.Shift") as mock_shift,
+            patch("app.core.training.xtts_trainer.Normalize") as mock_normalize,
+            patch("app.core.training.xtts_trainer.Gain") as mock_gain,
+        ):
             # Set up all mocks to return MagicMock instances
             mock_noise.return_value = MagicMock()
             mock_stretch.return_value = MagicMock()
@@ -163,7 +182,7 @@ class TestXTTSTrainerAugmentationPipeline:
             mock_normalize.return_value = MagicMock()
             mock_gain.return_value = MagicMock()
             mock_compose.return_value = MagicMock()
-            
+
             pipeline = trainer.create_augmentation_pipeline()
             assert pipeline is not None
             mock_compose.assert_called_once()
@@ -187,13 +206,15 @@ class TestXTTSTrainerAugmentationPipeline:
         trainer = XTTSTrainer()
 
         # Mock all audiomentations components including Normalize and Gain
-        with patch("app.core.training.xtts_trainer.Compose") as mock_compose, \
-             patch("app.core.training.xtts_trainer.AddGaussianNoise") as mock_noise, \
-             patch("app.core.training.xtts_trainer.TimeStretch") as mock_stretch, \
-             patch("app.core.training.xtts_trainer.PitchShift") as mock_pitch, \
-             patch("app.core.training.xtts_trainer.Shift") as mock_shift, \
-             patch("app.core.training.xtts_trainer.Normalize") as mock_normalize, \
-             patch("app.core.training.xtts_trainer.Gain") as mock_gain:
+        with (
+            patch("app.core.training.xtts_trainer.Compose") as mock_compose,
+            patch("app.core.training.xtts_trainer.AddGaussianNoise") as mock_noise,
+            patch("app.core.training.xtts_trainer.TimeStretch") as mock_stretch,
+            patch("app.core.training.xtts_trainer.PitchShift") as mock_pitch,
+            patch("app.core.training.xtts_trainer.Shift") as mock_shift,
+            patch("app.core.training.xtts_trainer.Normalize") as mock_normalize,
+            patch("app.core.training.xtts_trainer.Gain") as mock_gain,
+        ):
             mock_noise.return_value = MagicMock()
             mock_stretch.return_value = MagicMock()
             mock_pitch.return_value = MagicMock()
@@ -201,13 +222,13 @@ class TestXTTSTrainerAugmentationPipeline:
             mock_normalize.return_value = MagicMock()
             mock_gain.return_value = MagicMock()
             mock_compose.return_value = MagicMock()
-            
+
             pipeline = trainer.create_augmentation_pipeline(
                 sample_rate=44100,
                 enable_noise=False,
                 enable_time_stretch=False,
                 enable_pitch_shift=False,
-                enable_shift=False
+                enable_shift=False,
             )
             assert pipeline is not None
 
@@ -251,7 +272,7 @@ class TestXTTSTrainerDatasetPreparation:
 
             metadata_path = trainer.prepare_dataset(
                 [str(audio_file1), str(audio_file2)],
-                transcripts=["Test transcript 1", "Test transcript 2"]
+                transcripts=["Test transcript 1", "Test transcript 2"],
             )
 
             assert Path(metadata_path).exists()
@@ -292,10 +313,12 @@ class TestXTTSTrainerModelInitialization:
         mock_torch.cuda.is_available.return_value = False
         trainer = XTTSTrainer()
 
-        with patch("app.core.training.xtts_trainer.TTS") as mock_tts, \
-             patch("app.core.training.xtts_trainer.XttsConfig") as mock_config, \
-             patch("app.core.training.xtts_trainer.Xtts") as mock_xtts, \
-             patch("app.core.training.xtts_trainer.Path") as mock_path:
+        with (
+            patch("app.core.training.xtts_trainer.TTS") as mock_tts,
+            patch("app.core.training.xtts_trainer.XttsConfig") as mock_config,
+            patch("app.core.training.xtts_trainer.Xtts") as mock_xtts,
+            patch("app.core.training.xtts_trainer.Path") as mock_path,
+        ):
 
             mock_tts_instance = MagicMock()
             mock_tts_instance.model_path = "/path/to/model"

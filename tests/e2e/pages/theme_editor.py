@@ -36,9 +36,7 @@ class ThemeEditorPage:
     def is_displayed(self) -> bool:
         """Check if the Theme Editor panel is displayed."""
         try:
-            panel = self.driver.find_element(
-                AppiumBy.ACCESSIBILITY_ID, self.PANEL_ID
-            )
+            panel = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.PANEL_ID)
             return panel.is_displayed()
         except Exception:
             return False
@@ -46,41 +44,29 @@ class ThemeEditorPage:
     def wait_for_load(self, timeout: int = 10):
         """Wait for the Theme Editor panel to load."""
         WebDriverWait(self.driver, timeout).until(
-            EC.presence_of_element_located(
-                (AppiumBy.ACCESSIBILITY_ID, self.PANEL_ID)
-            )
+            EC.presence_of_element_located((AppiumBy.ACCESSIBILITY_ID, self.PANEL_ID))
         )
 
     def get_current_theme(self) -> str | None:
         """Get the currently selected theme."""
         try:
-            combo = self.driver.find_element(
-                AppiumBy.ACCESSIBILITY_ID, self.THEME_COMBO_ID
-            )
+            combo = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.THEME_COMBO_ID)
             return combo.get_attribute("Value.Value")
         except Exception:
             return None
 
     def select_theme(self, theme_name: str):
         """Select a theme by name."""
-        combo = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.THEME_COMBO_ID
-        )
+        combo = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.THEME_COMBO_ID)
         combo.click()
 
-        theme_item = self.wait.until(
-            EC.element_to_be_clickable(
-                (AppiumBy.NAME, theme_name)
-            )
-        )
+        theme_item = self.wait.until(EC.element_to_be_clickable((AppiumBy.NAME, theme_name)))
         theme_item.click()
 
     def get_accent_colors(self) -> list[str]:
         """Get available accent color names."""
         try:
-            grid = self.driver.find_element(
-                AppiumBy.ACCESSIBILITY_ID, self.ACCENT_GRID_ID
-            )
+            grid = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.ACCENT_GRID_ID)
             items = grid.find_elements(AppiumBy.CLASS_NAME, "GridViewItem")
             return [item.get_attribute("Name") for item in items]
         except Exception:
@@ -88,18 +74,14 @@ class ThemeEditorPage:
 
     def select_accent_by_index(self, index: int):
         """Select an accent color by index."""
-        grid = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.ACCENT_GRID_ID
-        )
+        grid = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.ACCENT_GRID_ID)
         items = grid.find_elements(AppiumBy.CLASS_NAME, "GridViewItem")
         if 0 <= index < len(items):
             items[index].click()
 
     def select_accent_by_name(self, name: str):
         """Select an accent color by name."""
-        grid = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.ACCENT_GRID_ID
-        )
+        grid = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.ACCENT_GRID_ID)
         items = grid.find_elements(AppiumBy.CLASS_NAME, "GridViewItem")
         for item in items:
             if item.get_attribute("Name") == name:
@@ -109,48 +91,30 @@ class ThemeEditorPage:
 
     def select_density(self, density_name: str):
         """Select a density option."""
-        combo = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.DENSITY_COMBO_ID
-        )
+        combo = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.DENSITY_COMBO_ID)
         combo.click()
 
-        density_item = self.wait.until(
-            EC.element_to_be_clickable(
-                (AppiumBy.NAME, density_name)
-            )
-        )
+        density_item = self.wait.until(EC.element_to_be_clickable((AppiumBy.NAME, density_name)))
         density_item.click()
 
     def save_custom_theme(self, name: str):
         """Save current settings as a custom theme."""
-        name_input = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.CUSTOM_NAME_INPUT_ID
-        )
+        name_input = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.CUSTOM_NAME_INPUT_ID)
         name_input.clear()
         name_input.send_keys(name)
 
-        save_btn = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.SAVE_THEME_BUTTON_ID
-        )
+        save_btn = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.SAVE_THEME_BUTTON_ID)
         save_btn.click()
 
     def load_saved_theme(self, name: str):
         """Load a saved custom theme."""
-        combo = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.SAVED_THEMES_COMBO_ID
-        )
+        combo = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.SAVED_THEMES_COMBO_ID)
         combo.click()
 
-        theme_item = self.wait.until(
-            EC.element_to_be_clickable(
-                (AppiumBy.NAME, name)
-            )
-        )
+        theme_item = self.wait.until(EC.element_to_be_clickable((AppiumBy.NAME, name)))
         theme_item.click()
 
-        load_btn = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.LOAD_THEME_BUTTON_ID
-        )
+        load_btn = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.LOAD_THEME_BUTTON_ID)
         load_btn.click()
 
     def delete_selected_theme(self):
@@ -162,14 +126,10 @@ class ThemeEditorPage:
 
     def reset_to_defaults(self):
         """Reset all theme settings to defaults."""
-        reset_btn = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.RESET_BUTTON_ID
-        )
+        reset_btn = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.RESET_BUTTON_ID)
         reset_btn.click()
 
     def apply_custom_color(self):
         """Apply the custom color from the color picker."""
-        apply_btn = self.driver.find_element(
-            AppiumBy.ACCESSIBILITY_ID, self.APPLY_COLOR_BUTTON_ID
-        )
+        apply_btn = self.driver.find_element(AppiumBy.ACCESSIBILITY_ID, self.APPLY_COLOR_BUTTON_ID)
         apply_btn.click()

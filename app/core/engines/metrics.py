@@ -20,24 +20,16 @@ from typing import Any, Optional
 logger = logging.getLogger(__name__)
 
 # Default histogram buckets for latency metrics (in milliseconds)
-DEFAULT_LATENCY_BUCKETS = [
-    10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, float("inf")
-]
+DEFAULT_LATENCY_BUCKETS = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, float("inf")]
 
 # Default histogram buckets for audio duration (in seconds)
-DEFAULT_DURATION_BUCKETS = [
-    0.5, 1, 2, 5, 10, 30, 60, 120, 300, float("inf")
-]
+DEFAULT_DURATION_BUCKETS = [0.5, 1, 2, 5, 10, 30, 60, 120, 300, float("inf")]
 
 # Default histogram buckets for throughput (characters per second)
-DEFAULT_THROUGHPUT_BUCKETS = [
-    5, 10, 25, 50, 100, 200, 500, 1000, 2000, float("inf")
-]
+DEFAULT_THROUGHPUT_BUCKETS = [5, 10, 25, 50, 100, 200, 500, 1000, 2000, float("inf")]
 
 # Default histogram buckets for audio throughput (samples per second for real-time factor)
-DEFAULT_RTF_BUCKETS = [
-    0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, float("inf")
-]
+DEFAULT_RTF_BUCKETS = [0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, float("inf")]
 
 # Metrics storage directory
 METRICS_DIR = Path(".voicestudio/metrics")
@@ -122,10 +114,7 @@ class Histogram:
             "mean": self.mean,
             "last_value": self.last_value,
             "last_updated": self.last_updated,
-            "buckets": [
-                {"le": b.le, "count": b.count}
-                for b in self.buckets
-            ],
+            "buckets": [{"le": b.le, "count": b.count} for b in self.buckets],
         }
 
 
@@ -214,9 +203,7 @@ class EngineMetricsCollector:
         labels: dict[str, str] | None = None,
     ) -> Histogram:
         """Create a new latency histogram with default buckets."""
-        buckets = [
-            HistogramBucket(le=le) for le in DEFAULT_LATENCY_BUCKETS
-        ]
+        buckets = [HistogramBucket(le=le) for le in DEFAULT_LATENCY_BUCKETS]
         return Histogram(
             name=name,
             help_text=help_text,
@@ -231,9 +218,7 @@ class EngineMetricsCollector:
         labels: dict[str, str] | None = None,
     ) -> Histogram:
         """Create a new audio duration histogram."""
-        buckets = [
-            HistogramBucket(le=le) for le in DEFAULT_DURATION_BUCKETS
-        ]
+        buckets = [HistogramBucket(le=le) for le in DEFAULT_DURATION_BUCKETS]
         return Histogram(
             name=name,
             help_text=help_text,
@@ -248,9 +233,7 @@ class EngineMetricsCollector:
         labels: dict[str, str] | None = None,
     ) -> Histogram:
         """Create a new throughput histogram (chars/sec)."""
-        buckets = [
-            HistogramBucket(le=le) for le in DEFAULT_THROUGHPUT_BUCKETS
-        ]
+        buckets = [HistogramBucket(le=le) for le in DEFAULT_THROUGHPUT_BUCKETS]
         return Histogram(
             name=name,
             help_text=help_text,
@@ -265,9 +248,7 @@ class EngineMetricsCollector:
         labels: dict[str, str] | None = None,
     ) -> Histogram:
         """Create a new real-time factor histogram."""
-        buckets = [
-            HistogramBucket(le=le) for le in DEFAULT_RTF_BUCKETS
-        ]
+        buckets = [HistogramBucket(le=le) for le in DEFAULT_RTF_BUCKETS]
         return Histogram(
             name=name,
             help_text=help_text,
@@ -311,10 +292,7 @@ class EngineMetricsCollector:
 
             self._synthesis_latency[key].observe(latency_ms)
 
-        logger.debug(
-            "Recorded synthesis latency: engine=%s latency=%.2fms",
-            engine, latency_ms
-        )
+        logger.debug("Recorded synthesis latency: engine=%s latency=%.2fms", engine, latency_ms)
 
     def record_synthesis_complete(
         self,
@@ -423,7 +401,10 @@ class EngineMetricsCollector:
 
         logger.debug(
             "Synthesis throughput: engine=%s chars=%d rate=%.1f chars/sec%s",
-            engine, chars_processed, chars_per_second, rtf_info
+            engine,
+            chars_processed,
+            chars_per_second,
+            rtf_info,
         )
 
     # =========================================================================
@@ -470,8 +451,7 @@ class EngineMetricsCollector:
                 self._transcription_rtf[key].observe(rtf)
 
                 logger.debug(
-                    "Transcription: engine=%s latency=%.2fms RTF=%.2f",
-                    engine, latency_ms, rtf
+                    "Transcription: engine=%s latency=%.2fms RTF=%.2f", engine, latency_ms, rtf
                 )
 
     def record_transcription_complete(
@@ -502,21 +482,14 @@ class EngineMetricsCollector:
     # Retrieval Methods
     # =========================================================================
 
-    def get_synthesis_stats(
-        self, engine: str | None = None
-    ) -> dict[str, Any]:
+    def get_synthesis_stats(self, engine: str | None = None) -> dict[str, Any]:
         """Get synthesis statistics for an engine or all engines."""
         with self._lock:
             if engine:
                 return self._get_engine_stats(engine, "synthesis")
-            return {
-                eng: self._get_engine_stats(eng, "synthesis")
-                for eng in self._synthesis_count
-            }
+            return {eng: self._get_engine_stats(eng, "synthesis") for eng in self._synthesis_count}
 
-    def get_transcription_stats(
-        self, engine: str | None = None
-    ) -> dict[str, Any]:
+    def get_transcription_stats(self, engine: str | None = None) -> dict[str, Any]:
         """Get transcription statistics."""
         with self._lock:
             if engine:
@@ -588,50 +561,17 @@ class EngineMetricsCollector:
     def get_all_metrics(self) -> dict[str, Any]:
         """Get all collected metrics."""
         with self._lock:
-            synth_lat = {
-                k: v.to_dict()
-                for k, v in self._synthesis_latency.items()
-            }
-            trans_lat = {
-                k: v.to_dict()
-                for k, v in self._transcription_latency.items()
-            }
-            audio_dur = {
-                k: v.to_dict()
-                for k, v in self._audio_duration.items()
-            }
-            synth_throughput = {
-                k: v.to_dict()
-                for k, v in self._synthesis_throughput.items()
-            }
-            trans_rtf = {
-                k: v.to_dict()
-                for k, v in self._transcription_rtf.items()
-            }
-            synth_cnt = {
-                k: v.to_dict()
-                for k, v in self._synthesis_count.items()
-            }
-            synth_err = {
-                k: v.to_dict()
-                for k, v in self._synthesis_errors.items()
-            }
-            trans_cnt = {
-                k: v.to_dict()
-                for k, v in self._transcription_count.items()
-            }
-            trans_err = {
-                k: v.to_dict()
-                for k, v in self._transcription_errors.items()
-            }
-            chars_synth = {
-                k: v.to_dict()
-                for k, v in self._total_chars_synthesized.items()
-            }
-            audio_gen = {
-                k: v.to_dict()
-                for k, v in self._total_audio_generated_seconds.items()
-            }
+            synth_lat = {k: v.to_dict() for k, v in self._synthesis_latency.items()}
+            trans_lat = {k: v.to_dict() for k, v in self._transcription_latency.items()}
+            audio_dur = {k: v.to_dict() for k, v in self._audio_duration.items()}
+            synth_throughput = {k: v.to_dict() for k, v in self._synthesis_throughput.items()}
+            trans_rtf = {k: v.to_dict() for k, v in self._transcription_rtf.items()}
+            synth_cnt = {k: v.to_dict() for k, v in self._synthesis_count.items()}
+            synth_err = {k: v.to_dict() for k, v in self._synthesis_errors.items()}
+            trans_cnt = {k: v.to_dict() for k, v in self._transcription_count.items()}
+            trans_err = {k: v.to_dict() for k, v in self._transcription_errors.items()}
+            chars_synth = {k: v.to_dict() for k, v in self._total_chars_synthesized.items()}
+            audio_gen = {k: v.to_dict() for k, v in self._total_audio_generated_seconds.items()}
             return {
                 "synthesis_latency": synth_lat,
                 "synthesis_throughput": synth_throughput,
@@ -701,12 +641,8 @@ def record_synthesis(
         chars_processed: Number of characters synthesized (for throughput metrics)
     """
     collector = get_engine_metrics()
-    collector.record_synthesis_latency(
-        engine, latency_ms, quality_preset
-    )
-    collector.record_synthesis_complete(
-        engine, audio_duration_seconds, success
-    )
+    collector.record_synthesis_latency(engine, latency_ms, quality_preset)
+    collector.record_synthesis_complete(engine, audio_duration_seconds, success)
     if chars_processed > 0:
         collector.record_synthesis_throughput(
             engine, chars_processed, latency_ms, audio_duration_seconds, quality_preset
@@ -729,7 +665,5 @@ def record_transcription(
         success: Whether operation succeeded
     """
     collector = get_engine_metrics()
-    collector.record_transcription_latency(
-        engine, latency_ms, audio_length_seconds
-    )
+    collector.record_transcription_latency(engine, latency_ms, audio_length_seconds)
     collector.record_transcription_complete(engine, success)

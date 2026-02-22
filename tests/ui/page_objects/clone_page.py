@@ -189,10 +189,7 @@ class ClonePage(BasePage):
             "create_button": self.CREATE_PROFILE_BUTTON,
         }
 
-        return {
-            name: self.element_exists(auto_id)
-            for name, auto_id in elements.items()
-        }
+        return {name: self.element_exists(auto_id) for name, auto_id in elements.items()}
 
     def is_quick_clone_mode(self) -> bool:
         """

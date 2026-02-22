@@ -24,9 +24,7 @@ class TestTortoiseEngineImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            tortoise_engine is not None
-        ), "Failed to import tortoise_engine module"
+        assert tortoise_engine is not None, "Failed to import tortoise_engine module"
 
     def test_module_has_tortoise_engine_class(self):
         """Test module has TortoiseEngine class."""
@@ -76,4 +74,3 @@ def test_process_audio_quality_enables_ml_prediction():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

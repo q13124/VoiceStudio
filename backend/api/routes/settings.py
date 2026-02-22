@@ -35,6 +35,7 @@ except ImportError:
 # Try importing UnifiedConfigService
 try:
     from backend.services.unified_config import UnifiedConfigService, get_config
+
     HAS_UNIFIED_CONFIG = True
 except ImportError:
     HAS_UNIFIED_CONFIG = False
@@ -222,49 +223,83 @@ def _load_from_unified_config(unified) -> SettingsData:
             theme=vs.general.get("theme", "Dark") if hasattr(vs, "general") else "Dark",
             language=vs.general.get("language", "en-US") if hasattr(vs, "general") else "en-US",
             auto_save=vs.general.get("auto_save", True) if hasattr(vs, "general") else True,
-            auto_save_interval=vs.general.get("auto_save_interval", 300) if hasattr(vs, "general") else 300,
+            auto_save_interval=(
+                vs.general.get("auto_save_interval", 300) if hasattr(vs, "general") else 300
+            ),
         ),
         engine=EngineSettings(
-            default_audio_engine=vs.engine.get("default_audio_engine", "xtts") if hasattr(vs, "engine") else "xtts",
-            default_image_engine=vs.engine.get("default_image_engine", "sdxl") if hasattr(vs, "engine") else "sdxl",
-            default_video_engine=vs.engine.get("default_video_engine", "svd") if hasattr(vs, "engine") else "svd",
+            default_audio_engine=(
+                vs.engine.get("default_audio_engine", "xtts") if hasattr(vs, "engine") else "xtts"
+            ),
+            default_image_engine=(
+                vs.engine.get("default_image_engine", "sdxl") if hasattr(vs, "engine") else "sdxl"
+            ),
+            default_video_engine=(
+                vs.engine.get("default_video_engine", "svd") if hasattr(vs, "engine") else "svd"
+            ),
             quality_level=vs.engine.get("quality_level", 5) if hasattr(vs, "engine") else 5,
         ),
         audio=AudioSettings(
-            output_device=vs.audio.get("output_device", "Default") if hasattr(vs, "audio") else "Default",
-            input_device=vs.audio.get("input_device", "Default") if hasattr(vs, "audio") else "Default",
+            output_device=(
+                vs.audio.get("output_device", "Default") if hasattr(vs, "audio") else "Default"
+            ),
+            input_device=(
+                vs.audio.get("input_device", "Default") if hasattr(vs, "audio") else "Default"
+            ),
             sample_rate=vs.audio.get("sample_rate", 44100) if hasattr(vs, "audio") else 44100,
             buffer_size=vs.audio.get("buffer_size", 1024) if hasattr(vs, "audio") else 1024,
         ),
         timeline=TimelineSettings(
-            time_format=vs.timeline.get("time_format", "Timecode") if hasattr(vs, "timeline") else "Timecode",
+            time_format=(
+                vs.timeline.get("time_format", "Timecode")
+                if hasattr(vs, "timeline")
+                else "Timecode"
+            ),
             snap_enabled=vs.timeline.get("snap_enabled", True) if hasattr(vs, "timeline") else True,
             snap_interval=vs.timeline.get("snap_interval", 0.1) if hasattr(vs, "timeline") else 0.1,
             grid_enabled=vs.timeline.get("grid_enabled", True) if hasattr(vs, "timeline") else True,
             grid_interval=vs.timeline.get("grid_interval", 1.0) if hasattr(vs, "timeline") else 1.0,
         ),
         backend=BackendSettings(
-            api_url=vs.backend.get("api_url", "http://localhost:8000") if hasattr(vs, "backend") else "http://localhost:8000",
+            api_url=(
+                vs.backend.get("api_url", "http://localhost:8000")
+                if hasattr(vs, "backend")
+                else "http://localhost:8000"
+            ),
             timeout=vs.backend.get("timeout", 30) if hasattr(vs, "backend") else 30,
             retry_count=vs.backend.get("retry_count", 3) if hasattr(vs, "backend") else 3,
         ),
         performance=PerformanceSettings(
-            caching_enabled=vs.performance.get("caching_enabled", True) if hasattr(vs, "performance") else True,
+            caching_enabled=(
+                vs.performance.get("caching_enabled", True) if hasattr(vs, "performance") else True
+            ),
             cache_size=vs.performance.get("cache_size", 512) if hasattr(vs, "performance") else 512,
             max_threads=vs.performance.get("max_threads", 4) if hasattr(vs, "performance") else 4,
-            memory_limit=vs.performance.get("memory_limit", 4096) if hasattr(vs, "performance") else 4096,
+            memory_limit=(
+                vs.performance.get("memory_limit", 4096) if hasattr(vs, "performance") else 4096
+            ),
         ),
         plugins=PluginSettings(
             enabled_plugins=vs.plugins.get("enabled_plugins", []) if hasattr(vs, "plugins") else [],
         ),
         mcp=McpSettings(
             enabled=vs.mcp.get("enabled", False) if hasattr(vs, "mcp") else False,
-            server_url=vs.mcp.get("server_url", "http://localhost:8080") if hasattr(vs, "mcp") else "http://localhost:8080",
+            server_url=(
+                vs.mcp.get("server_url", "http://localhost:8080")
+                if hasattr(vs, "mcp")
+                else "http://localhost:8080"
+            ),
         ),
         quality=QualitySettings(
-            default_preset=vs.quality.get("default_preset", "standard") if hasattr(vs, "quality") else "standard",
+            default_preset=(
+                vs.quality.get("default_preset", "standard")
+                if hasattr(vs, "quality")
+                else "standard"
+            ),
             auto_enhance=vs.quality.get("auto_enhance", True) if hasattr(vs, "quality") else True,
-            auto_optimize=vs.quality.get("auto_optimize", False) if hasattr(vs, "quality") else False,
+            auto_optimize=(
+                vs.quality.get("auto_optimize", False) if hasattr(vs, "quality") else False
+            ),
         ),
     )
 
@@ -408,9 +443,7 @@ def save_settings(settings: SettingsData) -> None:
         logger.info("Settings saved successfully")
     except Exception as e:
         logger.error(f"Failed to save settings: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to save settings: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to save settings: {e!s}")
 
 
 @router.get("", response_model=SettingsData)
@@ -478,9 +511,7 @@ async def get_settings_category(category: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Failed to get settings category '{category}': {e}", exc_info=True
-        )
+        logger.error(f"Failed to get settings category '{category}': {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Unable to load settings for category '{category}'. Please try again.",
@@ -500,9 +531,7 @@ async def save_settings_endpoint(
         raise
     except Exception as e:
         logger.error(f"Failed to save settings: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to save settings: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to save settings: {e!s}")
 
 
 @router.put("/{category}")
@@ -571,9 +600,7 @@ async def update_settings_category(
         raise
     except Exception as e:
         logger.error(f"Failed to update settings category: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to update settings: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to update settings: {e!s}")
 
 
 @router.post("/reset")
@@ -598,12 +625,11 @@ async def reset_settings(
         return default_settings
     except Exception as e:
         logger.error(f"Failed to reset settings: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to reset settings: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to reset settings: {e!s}")
 
 
 # --- System dependencies endpoint (called by SettingsViewModel) ---
+
 
 @router.get("/check/dependencies")
 async def get_system_dependencies():

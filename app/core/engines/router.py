@@ -51,6 +51,7 @@ except ImportError:
 # Try importing language detection
 try:
     import langdetect
+
     HAS_LANGDETECT = True
 except ImportError:
     HAS_LANGDETECT = False
@@ -59,6 +60,7 @@ except ImportError:
 # Try importing ABTestingService for exposure tracking
 try:
     from backend.services.ab_testing import ABTestingService
+
     HAS_AB_SERVICE = True
 except ImportError:
     HAS_AB_SERVICE = False
@@ -75,6 +77,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ABTestResult:
     """Result of an A/B test selection."""
+
     experiment_id: str
     selected_engine: str
     group: str  # "control" or "treatment"
@@ -84,6 +87,7 @@ class ABTestResult:
 @dataclass
 class EngineLoadStats:
     """Load statistics for an engine."""
+
     engine_id: str
     active_requests: int = 0
     total_requests: int = 0
@@ -445,9 +449,7 @@ class EngineRouter:
 
         while system_memory_usage > target_usage and self._engines:
             # Sort by last access (oldest first)
-            sorted_engines = sorted(
-                self._engine_last_access.items(), key=lambda x: x[1]
-            )
+            sorted_engines = sorted(self._engine_last_access.items(), key=lambda x: x[1])
 
             if not sorted_engines:
                 break
@@ -478,9 +480,7 @@ class EngineRouter:
 
         if system_memory_usage >= self._low_memory_threshold and self._engines:
             # Sort by last access (oldest first)
-            sorted_engines = sorted(
-                self._engine_last_access.items(), key=lambda x: x[1]
-            )
+            sorted_engines = sorted(self._engine_last_access.items(), key=lambda x: x[1])
 
             if sorted_engines:
                 name, _ = sorted_engines[0]
@@ -598,9 +598,7 @@ class EngineRouter:
 
             stats["engines"][name] = {
                 "initialized": (
-                    engine.is_initialized()
-                    if hasattr(engine, "is_initialized")
-                    else True
+                    engine.is_initialized() if hasattr(engine, "is_initialized") else True
                 ),
                 "idle_seconds": idle_time,
                 "is_idle": idle_time > self._idle_timeout_seconds,
@@ -859,7 +857,11 @@ class EngineRouter:
             # Quality tier matching
             tier_match = 1.0
             if quality_tier:
-                if (quality_tier == "fast" and engine_id in ["xtts_v2", "xtts"]) or (quality_tier == "standard" and engine_id == "chatterbox") or (quality_tier in ["high", "ultra"] and engine_id == "tortoise"):
+                if (
+                    (quality_tier == "fast" and engine_id in ["xtts_v2", "xtts"])
+                    or (quality_tier == "standard" and engine_id == "chatterbox")
+                    or (quality_tier in ["high", "ultra"] and engine_id == "tortoise")
+                ):
                     tier_match = 1.2
 
             # Final score
@@ -889,7 +891,6 @@ class EngineRouter:
         # Return best matching engine
         best_engine_id = available_engines[0]["engine_id"]
         return self.get_engine(best_engine_id)
-
 
     # ==========================================================================
     # Language Detection and Selection
@@ -921,10 +922,7 @@ class EngineRouter:
             return None
 
     def get_engine_for_language(
-        self,
-        language: str,
-        task_type: str = "tts",
-        fallback_to_default: bool = True
+        self, language: str, task_type: str = "tts", fallback_to_default: bool = True
     ) -> str | None:
         """
         Get the recommended engine ID for a specific language.
@@ -997,7 +995,9 @@ class EngineRouter:
                 detected_language = self.detect_language(text)
 
             if detected_language:
-                lang_engine = self.get_engine_for_language(detected_language, task_type, fallback_to_default=False)
+                lang_engine = self.get_engine_for_language(
+                    detected_language, task_type, fallback_to_default=False
+                )
                 if lang_engine:
                     selected_engine_id = lang_engine
                     selection_reason.append(f"language: {detected_language}")
@@ -1044,9 +1044,7 @@ class EngineRouter:
         return False
 
     def _select_ab_test_engine(
-        self,
-        task_type: str,
-        forced_group: str | None = None
+        self, task_type: str, forced_group: str | None = None
     ) -> ABTestResult | None:
         """
         Select an engine based on active A/B test experiments.
@@ -1092,7 +1090,7 @@ class EngineRouter:
                 if HAS_AB_SERVICE and ABTestingService:
                     try:
                         ab_service = ABTestingService()
-                        user_id = getattr(self, '_current_user_id', 'anonymous')
+                        user_id = getattr(self, "_current_user_id", "anonymous")
                         ab_service.track_exposure(
                             user_id=user_id,
                             experiment_id=exp.id,
@@ -1100,7 +1098,7 @@ class EngineRouter:
                                 "selected_engine": selected,
                                 "group": group,
                                 "task_type": task_type,
-                            }
+                            },
                         )
                     except Exception as track_err:
                         # Non-critical: don't fail engine selection if tracking fails
@@ -1183,11 +1181,7 @@ class EngineRouter:
 
         return None
 
-    def _get_lower_load_alternative(
-        self,
-        current_engine_id: str,
-        task_type: str
-    ) -> str | None:
+    def _get_lower_load_alternative(self, current_engine_id: str, task_type: str) -> str | None:
         """
         Find an alternative engine with lower load.
 
@@ -1298,9 +1292,7 @@ class EngineRouter:
         return None
 
     def select_engine_with_fallback(
-        self,
-        task_type: str = "tts",
-        **kwargs
+        self, task_type: str = "tts", **kwargs
     ) -> tuple[EngineProtocol | None, list[str]]:
         """
         Select engine with automatic fallback chain.

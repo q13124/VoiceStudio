@@ -160,11 +160,7 @@ class AIGovernor:
         results = {}
         for engine_name in engines:
             try:
-                engine = (
-                    self.engine_hook.get_engine(engine_name)
-                    if self.engine_hook
-                    else None
-                )
+                engine = self.engine_hook.get_engine(engine_name) if self.engine_hook else None
                 if not engine:
                     logger.warning(f"Engine '{engine_name}' not available for A/B test")
                     continue
@@ -242,9 +238,7 @@ class AIGovernor:
                     if isinstance(values[0], (int, float)):
                         avg_metrics[metric_name] = sum(values) / len(values)
                     else:
-                        avg_metrics[metric_name] = values[
-                            -1
-                        ]  # Use latest for non-numeric
+                        avg_metrics[metric_name] = values[-1]  # Use latest for non-numeric
 
             self._engine_performance[key]["average_metrics"] = avg_metrics
 
@@ -363,9 +357,7 @@ class AIGovernor:
         tmp_path = None
         try:
             self.reward_model_path.parent.mkdir(parents=True, exist_ok=True)
-            tmp_path = self.reward_model_path.with_suffix(
-                self.reward_model_path.suffix + ".tmp"
-            )
+            tmp_path = self.reward_model_path.with_suffix(self.reward_model_path.suffix + ".tmp")
             with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(self._reward_model, f, indent=2, ensure_ascii=False)
             os.replace(tmp_path, self.reward_model_path)
@@ -397,9 +389,7 @@ class AIGovernor:
         try:
             self.ab_test_data_path.parent.mkdir(parents=True, exist_ok=True)
             self._ab_test_data["results"] = self._ab_test_results
-            tmp_path = self.ab_test_data_path.with_suffix(
-                self.ab_test_data_path.suffix + ".tmp"
-            )
+            tmp_path = self.ab_test_data_path.with_suffix(self.ab_test_data_path.suffix + ".tmp")
             with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(self._ab_test_data, f, indent=2, ensure_ascii=False)
             os.replace(tmp_path, self.ab_test_data_path)

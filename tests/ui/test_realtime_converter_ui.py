@@ -80,8 +80,12 @@ class TestAudioDevices:
                 if isinstance(devices, dict):
                     inputs = devices.get("inputs", devices.get("input", []))
                     outputs = devices.get("outputs", devices.get("output", []))
-                    tracer.step(f"Input devices: {len(inputs) if isinstance(inputs, list) else 'N/A'}")
-                    tracer.step(f"Output devices: {len(outputs) if isinstance(outputs, list) else 'N/A'}")
+                    tracer.step(
+                        f"Input devices: {len(inputs) if isinstance(inputs, list) else 'N/A'}"
+                    )
+                    tracer.step(
+                        f"Output devices: {len(outputs) if isinstance(outputs, list) else 'N/A'}"
+                    )
                 elif isinstance(devices, list):
                     tracer.step(f"Total devices: {len(devices)}")
 
@@ -182,7 +186,11 @@ class TestVoiceModels:
                         if isinstance(engine, dict):
                             engine_type = engine.get("type", "")
                             engine_name = engine.get("name", "").lower()
-                            if "conversion" in engine_type or "rvc" in engine_name or "vc" in engine_type:
+                            if (
+                                "conversion" in engine_type
+                                or "rvc" in engine_name
+                                or "vc" in engine_type
+                            ):
                                 vc_engines.append(engine)
                         elif "rvc" in str(engine).lower():
                             vc_engines.append(engine)
@@ -242,9 +250,7 @@ class TestRealtimeProcessing:
             }
 
             response = requests.post(
-                f"{BACKEND_URL}/api/realtime/start",
-                json=start_payload,
-                timeout=10
+                f"{BACKEND_URL}/api/realtime/start", json=start_payload, timeout=10
             )
             tracer.api_call("POST", "/api/realtime/start", response)
 
@@ -255,10 +261,7 @@ class TestRealtimeProcessing:
                 time.sleep(1)
 
                 # Stop it
-                response = requests.post(
-                    f"{BACKEND_URL}/api/realtime/stop",
-                    timeout=10
-                )
+                response = requests.post(f"{BACKEND_URL}/api/realtime/stop", timeout=10)
                 tracer.api_call("POST", "/api/realtime/stop", response)
 
                 if response.status_code in [200, 201, 202]:
@@ -294,9 +297,7 @@ class TestRealtimeProcessing:
                 if "latency" in settings or "buffer_size" in settings:
                     new_settings = {"latency": 50}  # 50ms
                     response = requests.post(
-                        f"{BACKEND_URL}/api/realtime/settings",
-                        json=new_settings,
-                        timeout=10
+                        f"{BACKEND_URL}/api/realtime/settings", json=new_settings, timeout=10
                     )
                     tracer.api_call("POST", "/api/realtime/settings", response)
 
@@ -564,9 +565,7 @@ class TestRealtimeE2E:
             }
 
             response = requests.post(
-                f"{BACKEND_URL}/api/realtime/start",
-                json=start_payload,
-                timeout=10
+                f"{BACKEND_URL}/api/realtime/start", json=start_payload, timeout=10
             )
             tracer.api_call("POST", "/api/realtime/start", response)
 
@@ -583,10 +582,7 @@ class TestRealtimeE2E:
                     tracer.step(f"Running status: {status}")
 
                 # Stop session
-                response = requests.post(
-                    f"{BACKEND_URL}/api/realtime/stop",
-                    timeout=10
-                )
+                response = requests.post(f"{BACKEND_URL}/api/realtime/stop", timeout=10)
                 tracer.api_call("POST", "/api/realtime/stop", response)
 
                 if response.status_code in [200, 201, 202]:

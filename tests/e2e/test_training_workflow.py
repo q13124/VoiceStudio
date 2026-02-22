@@ -34,6 +34,7 @@ def api_client():
     from fastapi.testclient import TestClient
 
     from backend.api.main import app
+
     return TestClient(app)
 
 
@@ -62,7 +63,9 @@ def training_dataset(tmp_path):
             wav.setframerate(22050)
             num_samples = 22050 * 2  # 2 seconds
             freq = 300 + (i * 50)
-            samples = [int(8000 * math.sin(2 * math.pi * freq * j / 22050)) for j in range(num_samples)]
+            samples = [
+                int(8000 * math.sin(2 * math.pi * freq * j / 22050)) for j in range(num_samples)
+            ]
             wav.writeframes(struct.pack(f"{len(samples)}h", *samples))
 
     # Create metadata file

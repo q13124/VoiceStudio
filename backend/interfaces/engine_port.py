@@ -29,18 +29,20 @@ import numpy as np
 
 class EngineCapability(Enum):
     """Engine capability types."""
-    TTS = "tts"                    # Text-to-speech
-    STT = "stt"                    # Speech-to-text
-    VOICE_CONVERSION = "vc"        # Voice conversion (RVC, etc.)
-    EMOTION = "emotion"            # Emotion detection/synthesis
-    TRANSLATION = "translation"    # Voice/text translation
-    LIP_SYNC = "lip_sync"          # Lip sync generation
-    CLONING = "cloning"            # Voice cloning
-    ENHANCEMENT = "enhancement"    # Audio enhancement
+
+    TTS = "tts"  # Text-to-speech
+    STT = "stt"  # Speech-to-text
+    VOICE_CONVERSION = "vc"  # Voice conversion (RVC, etc.)
+    EMOTION = "emotion"  # Emotion detection/synthesis
+    TRANSLATION = "translation"  # Voice/text translation
+    LIP_SYNC = "lip_sync"  # Lip sync generation
+    CLONING = "cloning"  # Voice cloning
+    ENHANCEMENT = "enhancement"  # Audio enhancement
 
 
 class EngineStatus(Enum):
     """Engine status."""
+
     UNLOADED = "unloaded"
     LOADING = "loading"
     READY = "ready"
@@ -52,6 +54,7 @@ class EngineStatus(Enum):
 @dataclass
 class EngineInfo:
     """Engine information."""
+
     engine_id: str
     name: str
     version: str
@@ -65,6 +68,7 @@ class EngineInfo:
 @dataclass
 class SynthesisRequest:
     """Request for speech synthesis."""
+
     text: str
     voice_id: str | None = None
     speaker_embedding: np.ndarray | None = None
@@ -79,6 +83,7 @@ class SynthesisRequest:
 @dataclass
 class SynthesisResult:
     """Result from speech synthesis."""
+
     audio_data: np.ndarray
     sample_rate: int
     duration_seconds: float
@@ -90,6 +95,7 @@ class SynthesisResult:
 @dataclass
 class TranscriptionRequest:
     """Request for speech-to-text."""
+
     audio_data: np.ndarray
     sample_rate: int
     language: str | None = None  # None = auto-detect
@@ -100,6 +106,7 @@ class TranscriptionRequest:
 @dataclass
 class TranscriptionResult:
     """Result from speech-to-text."""
+
     text: str
     language: str
     confidence: float
@@ -111,6 +118,7 @@ class TranscriptionResult:
 @dataclass
 class VoiceConversionRequest:
     """Request for voice conversion."""
+
     audio_data: np.ndarray
     sample_rate: int
     target_voice_id: str | None = None
@@ -121,6 +129,7 @@ class VoiceConversionRequest:
 @dataclass
 class VoiceConversionResult:
     """Result from voice conversion."""
+
     audio_data: np.ndarray
     sample_rate: int
     engine_used: str

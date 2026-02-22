@@ -319,9 +319,7 @@ class QualityDashboard:
             "total_samples": len(values),
         }
 
-    def generate_dashboard_report(
-        self, output_path: str | Path | None = None
-    ) -> str:
+    def generate_dashboard_report(self, output_path: str | Path | None = None) -> str:
         """
         Generate comprehensive dashboard report.
 

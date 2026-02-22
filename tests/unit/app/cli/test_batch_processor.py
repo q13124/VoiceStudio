@@ -23,9 +23,7 @@ class TestBatchProcessorImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            batch_processor is not None
-        ), "Failed to import batch_processor module"
+        assert batch_processor is not None, "Failed to import batch_processor module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -35,4 +33,3 @@ class TestBatchProcessorImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

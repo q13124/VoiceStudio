@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import embedding
 except ImportError:
-    pytest.skip(
-        "Could not import embedding route module", allow_module_level=True
-    )
+    pytest.skip("Could not import embedding route module", allow_module_level=True)
 
 
 class TestEmbeddingRouteImports:
@@ -35,9 +33,7 @@ class TestEmbeddingRouteHandlers:
     def test_get_embedding_handler_exists(self):
         """Test get_embedding handler exists."""
         if hasattr(embedding, "get_embedding"):
-            assert callable(
-                embedding.get_embedding
-            ), "get_embedding is not callable"
+            assert callable(embedding.get_embedding), "get_embedding is not callable"
 
 
 class TestEmbeddingRouter:
@@ -58,4 +54,3 @@ class TestEmbeddingRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

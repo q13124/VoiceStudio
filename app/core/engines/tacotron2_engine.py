@@ -94,11 +94,15 @@ class Tacotron2Engine(EngineProtocol):
             )
 
             self._tts = TTS(model_name=self._model_name, gpu=use_gpu)
-            self._sample_rate = getattr(
-                self._tts.synthesizer.output_sample_rate,
-                "item",
-                lambda: self._tts.synthesizer.output_sample_rate
-            )() if hasattr(self._tts, "synthesizer") else 22050
+            self._sample_rate = (
+                getattr(
+                    self._tts.synthesizer.output_sample_rate,
+                    "item",
+                    lambda: self._tts.synthesizer.output_sample_rate,
+                )()
+                if hasattr(self._tts, "synthesizer")
+                else 22050
+            )
 
             self._initialized = True
             logger.info(
@@ -277,7 +281,7 @@ class Tacotron2Engine(EngineProtocol):
 
             # Yield audio in chunks
             for i in range(0, len(audio), chunk_size):
-                yield audio[i:i + chunk_size]
+                yield audio[i : i + chunk_size]
 
         except Exception as e:
             logger.error("Streaming synthesis failed: %s", e)
@@ -286,18 +290,20 @@ class Tacotron2Engine(EngineProtocol):
     def get_info(self) -> dict[str, Any]:
         """Get engine information."""
         base_info = super().get_info()
-        base_info.update({
-            "engine_id": self.ENGINE_ID,
-            "model_name": self._model_name,
-            "current_language": self._current_language,
-            "supported_languages": self.get_supported_languages(),
-            "sample_rate": self._sample_rate,
-            "capabilities": [
-                "tts",
-                "multi_language",
-                "fast_inference",
-            ],
-        })
+        base_info.update(
+            {
+                "engine_id": self.ENGINE_ID,
+                "model_name": self._model_name,
+                "current_language": self._current_language,
+                "supported_languages": self.get_supported_languages(),
+                "sample_rate": self._sample_rate,
+                "capabilities": [
+                    "tts",
+                    "multi_language",
+                    "fast_inference",
+                ],
+            }
+        )
         return base_info
 
     def health_check(self) -> bool:

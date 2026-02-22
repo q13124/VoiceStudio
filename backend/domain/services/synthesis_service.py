@@ -18,6 +18,7 @@ from backend.domain.value_objects.audio_settings import AudioSettings
 @dataclass
 class SynthesisRequest:
     """Request for speech synthesis."""
+
     text: str
     voice_profile_id: str
     project_id: str | None = None
@@ -28,6 +29,7 @@ class SynthesisRequest:
 @dataclass
 class SynthesisResult:
     """Result of speech synthesis."""
+
     audio_clip: AudioClip
     success: bool
     error_message: str | None = None
@@ -74,9 +76,7 @@ class SynthesisDomainService(DomainService):
 
         # Validate voice profile can synthesize
         if not voice_profile.can_synthesize():
-            raise ValueError(
-                f"Voice profile {voice_profile.name} is not ready for synthesis"
-            )
+            raise ValueError(f"Voice profile {voice_profile.name} is not ready for synthesis")
 
         # Create audio clip
         clip = AudioClip(

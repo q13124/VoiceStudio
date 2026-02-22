@@ -20,16 +20,18 @@ logger = logging.getLogger(__name__)
 
 class MemoryPriority(Enum):
     """Priority for memory allocation."""
+
     CRITICAL = 0  # Required for operation
-    HIGH = 1      # Active processing
-    NORMAL = 2    # Standard allocation
-    LOW = 3       # Can be evicted
-    CACHE = 4     # Purely cache, evict first
+    HIGH = 1  # Active processing
+    NORMAL = 2  # Standard allocation
+    LOW = 3  # Can be evicted
+    CACHE = 4  # Purely cache, evict first
 
 
 @dataclass
 class GPUMemoryBlock:
     """Represents a block of allocated GPU memory."""
+
     id: str
     size_bytes: int
     owner: str  # Engine or component name
@@ -46,6 +48,7 @@ class GPUMemoryBlock:
 @dataclass
 class MemoryAllocation:
     """Context for a memory allocation."""
+
     block: GPUMemoryBlock
     pool: GPUMemoryPool
 
@@ -57,6 +60,7 @@ class MemoryAllocation:
 @dataclass
 class GPUInfo:
     """Information about a GPU device."""
+
     device_id: int
     name: str
     total_memory_bytes: int
@@ -108,6 +112,7 @@ class GPUMemoryPool:
         """Detect available GPU memory."""
         try:
             import torch
+
             if torch.cuda.is_available():
                 props = torch.cuda.get_device_properties(self.device_id)
                 return props.total_memory
@@ -116,6 +121,7 @@ class GPUMemoryPool:
 
         try:
             import subprocess
+
             result = subprocess.run(
                 ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
                 capture_output=True,
@@ -165,10 +171,7 @@ class GPUMemoryPool:
 
     def get_engine_usage(self, engine: str) -> int:
         """Get current memory usage for an engine."""
-        return sum(
-            b.size_bytes for b in self._allocations.values()
-            if b.owner == engine
-        )
+        return sum(b.size_bytes for b in self._allocations.values() if b.owner == engine)
 
     async def allocate(
         self,
@@ -239,8 +242,7 @@ class GPUMemoryPool:
 
         # Get evictable blocks (lower priority than requester)
         evictable = [
-            b for b in self._allocations.values()
-            if b.priority.value > requester_priority.value
+            b for b in self._allocations.values() if b.priority.value > requester_priority.value
         ]
 
         if not evictable:
@@ -302,7 +304,8 @@ class GPUMemoryPool:
         stale_threshold = datetime.now() - timedelta(minutes=30)
 
         stale_blocks = [
-            b for b in self._allocations.values()
+            b
+            for b in self._allocations.values()
             if b.last_accessed < stale_threshold and b.priority == MemoryPriority.CACHE
         ]
 
@@ -334,7 +337,9 @@ class GPUMemoryPool:
 
         for block in self._allocations.values():
             by_owner[block.owner] = by_owner.get(block.owner, 0) + block.size_bytes
-            by_priority[block.priority.name] = by_priority.get(block.priority.name, 0) + block.size_bytes
+            by_priority[block.priority.name] = (
+                by_priority.get(block.priority.name, 0) + block.size_bytes
+            )
 
         return {
             "total_memory_gb": round(self._total_memory / 1e9, 2),

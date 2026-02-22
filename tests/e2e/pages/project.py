@@ -26,35 +26,23 @@ class ProjectPage(BasePage):
     # Locators - Project List
     # ==========================================================================
 
-    PROJECT_LIST = ElementLocator.by_automation_id(
-        "ProjectList", "Project list"
-    )
-    PROJECT_LIST_ITEM = ElementLocator.by_automation_id(
-        "ProjectListItem", "Project list item"
-    )
-    PROJECT_NAME = ElementLocator.by_automation_id(
-        "ProjectName", "Project name text"
-    )
-    EMPTY_STATE = ElementLocator.by_automation_id(
-        "EmptyState", "No projects message"
-    )
+    PROJECT_LIST = ElementLocator.by_automation_id("ProjectList", "Project list")
+    PROJECT_LIST_ITEM = ElementLocator.by_automation_id("ProjectListItem", "Project list item")
+    PROJECT_NAME = ElementLocator.by_automation_id("ProjectName", "Project name text")
+    EMPTY_STATE = ElementLocator.by_automation_id("EmptyState", "No projects message")
 
     # ==========================================================================
     # Locators - Project Actions
     # ==========================================================================
 
-    NEW_PROJECT_BUTTON = ElementLocator.by_automation_id(
-        "NewProjectButton", "New project button"
-    )
+    NEW_PROJECT_BUTTON = ElementLocator.by_automation_id("NewProjectButton", "New project button")
     OPEN_PROJECT_BUTTON = ElementLocator.by_automation_id(
         "OpenProjectButton", "Open project button"
     )
     SAVE_PROJECT_BUTTON = ElementLocator.by_automation_id(
         "SaveProjectButton", "Save project button"
     )
-    SAVE_AS_BUTTON = ElementLocator.by_automation_id(
-        "SaveAsButton", "Save as button"
-    )
+    SAVE_AS_BUTTON = ElementLocator.by_automation_id("SaveAsButton", "Save as button")
     DELETE_PROJECT_BUTTON = ElementLocator.by_automation_id(
         "DeleteProjectButton", "Delete project button"
     )
@@ -66,12 +54,8 @@ class ProjectPage(BasePage):
     # Locators - New Project Dialog
     # ==========================================================================
 
-    NEW_PROJECT_DIALOG = ElementLocator.by_automation_id(
-        "NewProjectDialog", "New project dialog"
-    )
-    PROJECT_NAME_INPUT = ElementLocator.by_automation_id(
-        "ProjectNameInput", "Project name input"
-    )
+    NEW_PROJECT_DIALOG = ElementLocator.by_automation_id("NewProjectDialog", "New project dialog")
+    PROJECT_NAME_INPUT = ElementLocator.by_automation_id("ProjectNameInput", "Project name input")
     PROJECT_DESCRIPTION_INPUT = ElementLocator.by_automation_id(
         "ProjectDescriptionInput", "Project description input"
     )
@@ -81,26 +65,18 @@ class ProjectPage(BasePage):
     BROWSE_LOCATION_BUTTON = ElementLocator.by_automation_id(
         "BrowseLocationButton", "Browse location button"
     )
-    CREATE_BUTTON = ElementLocator.by_automation_id(
-        "CreateButton", "Create project button"
-    )
-    CANCEL_BUTTON = ElementLocator.by_automation_id(
-        "CancelButton", "Cancel button"
-    )
+    CREATE_BUTTON = ElementLocator.by_automation_id("CreateButton", "Create project button")
+    CANCEL_BUTTON = ElementLocator.by_automation_id("CancelButton", "Cancel button")
 
     # ==========================================================================
     # Locators - Save Dialog
     # ==========================================================================
 
-    SAVE_DIALOG = ElementLocator.by_automation_id(
-        "SaveDialog", "Save project dialog"
-    )
+    SAVE_DIALOG = ElementLocator.by_automation_id("SaveDialog", "Save project dialog")
     SAVE_CONFIRM_BUTTON = ElementLocator.by_automation_id(
         "SaveConfirmButton", "Confirm save button"
     )
-    DONT_SAVE_BUTTON = ElementLocator.by_automation_id(
-        "DontSaveButton", "Don't save button"
-    )
+    DONT_SAVE_BUTTON = ElementLocator.by_automation_id("DontSaveButton", "Don't save button")
 
     # ==========================================================================
     # Locators - Current Project Info
@@ -134,15 +110,9 @@ class ProjectPage(BasePage):
     # Locators - Status
     # ==========================================================================
 
-    LOADING_INDICATOR = ElementLocator.by_automation_id(
-        "LoadingIndicator", "Loading indicator"
-    )
-    SUCCESS_MESSAGE = ElementLocator.by_automation_id(
-        "SuccessMessage", "Success message"
-    )
-    ERROR_MESSAGE = ElementLocator.by_automation_id(
-        "ErrorMessage", "Error message"
-    )
+    LOADING_INDICATOR = ElementLocator.by_automation_id("LoadingIndicator", "Loading indicator")
+    SUCCESS_MESSAGE = ElementLocator.by_automation_id("SuccessMessage", "Success message")
+    ERROR_MESSAGE = ElementLocator.by_automation_id("ErrorMessage", "Error message")
 
     # ==========================================================================
     # Project List Operations
@@ -241,10 +211,7 @@ class ProjectPage(BasePage):
         logger.info("Cancelled new project dialog")
 
     def create_project(
-        self,
-        name: str,
-        description: str | None = None,
-        location: str | None = None
+        self, name: str, description: str | None = None, location: str | None = None
     ):
         """
         Create a new project with the given settings.

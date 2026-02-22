@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 class JobStatus(Enum):
     """Batch job status."""
+
     PENDING = "pending"
     QUEUED = "queued"
     RUNNING = "running"
@@ -42,6 +43,7 @@ class JobStatus(Enum):
 
 class JobPriority(Enum):
     """Job priority levels."""
+
     LOW = 0
     NORMAL = 1
     HIGH = 2
@@ -51,6 +53,7 @@ class JobPriority(Enum):
 @dataclass
 class BatchItem:
     """Individual item in a batch job."""
+
     item_id: str
     text: str
     voice_id: str
@@ -75,6 +78,7 @@ class BatchItem:
 @dataclass
 class BatchJob:
     """Batch synthesis job."""
+
     job_id: str
     name: str
     items: list[BatchItem]
@@ -132,6 +136,7 @@ class BatchJob:
 @dataclass
 class BatchResult:
     """Result of batch processing."""
+
     job_id: str
     success: bool
     total_items: int
@@ -231,12 +236,14 @@ class BatchProcessor:
         # Create batch items
         batch_items = []
         for i, item in enumerate(items):
-            batch_items.append(BatchItem(
-                item_id=f"{job_id}_item_{i}",
-                text=item.get("text", ""),
-                voice_id=item.get("voice_id", ""),
-                options=item.get("options", {}),
-            ))
+            batch_items.append(
+                BatchItem(
+                    item_id=f"{job_id}_item_{i}",
+                    text=item.get("text", ""),
+                    voice_id=item.get("voice_id", ""),
+                    options=item.get("options", {}),
+                )
+            )
 
         job = BatchJob(
             job_id=job_id,
@@ -390,10 +397,7 @@ class BatchProcessor:
                     self._active_jobs[job_id] = task
 
                 # Clean up completed tasks
-                completed = [
-                    job_id for job_id, task in self._active_jobs.items()
-                    if task.done()
-                ]
+                completed = [job_id for job_id, task in self._active_jobs.items() if task.done()]
                 for job_id in completed:
                     del self._active_jobs[job_id]
 
@@ -418,10 +422,7 @@ class BatchProcessor:
 
         try:
             # Get pending items
-            pending_items = [
-                item for item in job.items
-                if item.status == JobStatus.PENDING
-            ]
+            pending_items = [item for item in job.items if item.status == JobStatus.PENDING]
 
             # Process items concurrently with semaphore
             semaphore = asyncio.Semaphore(job.max_concurrent)

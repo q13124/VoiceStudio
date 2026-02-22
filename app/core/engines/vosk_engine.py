@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 # Try importing general model cache
 try:
     from app.core.models.cache import get_model_cache
+
     _model_cache = get_model_cache(max_models=3, max_memory_mb=1536.0)  # 1.5GB max
     HAS_MODEL_CACHE = True
 except ImportError:
@@ -155,6 +156,7 @@ def _cache_transcription(
 
     logger.debug(f"Cached transcription: {cache_key[:8]} (cache size: {len(_TRANSCRIPTION_CACHE)})")
 
+
 # Try importing vosk
 try:
     from vosk import KaldiRecognizer, Model, SetLogLevel
@@ -213,9 +215,7 @@ class VoskEngine(EngineProtocol):
         self.enable_caching = True
 
         if not HAS_VOSK:
-            raise ImportError(
-                "vosk is required. Install with: pip install vosk>=0.3.45"
-            )
+            raise ImportError("vosk is required. Install with: pip install vosk>=0.3.45")
 
     def _load_model(self):
         """Load model with caching support."""
@@ -291,10 +291,7 @@ class VoskEngine(EngineProtocol):
         return None
 
     def batch_transcribe(
-        self,
-        audio_files: list[str | Path | np.ndarray],
-        word_timestamps: bool = True,
-        **kwargs
+        self, audio_files: list[str | Path | np.ndarray], word_timestamps: bool = True, **kwargs
     ) -> list[dict[str, any]]:
         """
         Transcribe multiple audio files in batch with optimized processing.
@@ -318,11 +315,7 @@ class VoskEngine(EngineProtocol):
 
         def transcribe_single(audio_file):
             try:
-                return self.transcribe(
-                    audio=audio_file,
-                    word_timestamps=word_timestamps,
-                    **kwargs
-                )
+                return self.transcribe(audio=audio_file, word_timestamps=word_timestamps, **kwargs)
             except Exception as e:
                 logger.error(f"Batch transcription failed for {audio_file}: {e}")
                 return {"text": "", "words": [], "confidence": 0.0}
@@ -477,6 +470,4 @@ def create_vosk_engine(
     sample_rate: int = 16000,
 ) -> VoskEngine:
     """Factory function to create Vosk engine."""
-    return VoskEngine(
-        model_path=model_path, model_name=model_name, sample_rate=sample_rate
-    )
+    return VoskEngine(model_path=model_path, model_name=model_name, sample_rate=sample_rate)

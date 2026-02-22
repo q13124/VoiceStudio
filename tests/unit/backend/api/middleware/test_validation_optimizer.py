@@ -23,9 +23,7 @@ try:
         get_validation_optimizer_middleware,
     )
 except ImportError:
-    pytest.skip(
-        "Could not import validation_optimizer middleware", allow_module_level=True
-    )
+    pytest.skip("Could not import validation_optimizer middleware", allow_module_level=True)
 
 
 class TestValidationOptimizerMiddlewareImports:
@@ -64,9 +62,7 @@ class TestValidationOptimizerMiddlewareClass:
     def test_middleware_initialization_with_custom_params(self):
         """Test middleware can be initialized with custom parameters."""
         app = MagicMock()
-        middleware = ValidationOptimizerMiddleware(
-            app, enable_cache=False, cache_max_size=500
-        )
+        middleware = ValidationOptimizerMiddleware(app, enable_cache=False, cache_max_size=500)
 
         assert middleware.app == app
         assert middleware.enable_cache is False
@@ -84,11 +80,14 @@ class TestValidationOptimizerMiddlewareClass:
         request.state = MagicMock()
         call_next = AsyncMock(return_value=Response(status_code=200))
 
-        with patch(
-            "backend.api.middleware.validation_optimizer.get_validation_stats"
-        ) as mock_get_validation_stats, patch(
-            "backend.api.middleware.validation_optimizer.get_cache_stats"
-        ) as mock_get_cache_stats:
+        with (
+            patch(
+                "backend.api.middleware.validation_optimizer.get_validation_stats"
+            ) as mock_get_validation_stats,
+            patch(
+                "backend.api.middleware.validation_optimizer.get_cache_stats"
+            ) as mock_get_cache_stats,
+        ):
             mock_get_validation_stats.return_value = {"total_validations": 10}
             mock_get_cache_stats.return_value = {"cache_hits": 5, "cache_misses": 5}
 
@@ -110,11 +109,14 @@ class TestValidationOptimizerMiddlewareClass:
         request.state = MagicMock()
         call_next = AsyncMock(return_value=Response(status_code=200))
 
-        with patch(
-            "backend.api.middleware.validation_optimizer.get_validation_stats"
-        ) as mock_get_validation_stats, patch(
-            "backend.api.middleware.validation_optimizer.get_cache_stats"
-        ) as mock_get_cache_stats:
+        with (
+            patch(
+                "backend.api.middleware.validation_optimizer.get_validation_stats"
+            ) as mock_get_validation_stats,
+            patch(
+                "backend.api.middleware.validation_optimizer.get_cache_stats"
+            ) as mock_get_cache_stats,
+        ):
             mock_get_validation_stats.return_value = {}
             mock_get_cache_stats.return_value = {}
 
@@ -133,11 +135,14 @@ class TestValidationOptimizerMiddlewareClass:
         request.state = MagicMock()
         call_next = AsyncMock(side_effect=Exception("Test error"))
 
-        with patch(
-            "backend.api.middleware.validation_optimizer.get_validation_stats"
-        ) as mock_get_validation_stats, patch(
-            "backend.api.middleware.validation_optimizer.get_cache_stats"
-        ) as mock_get_cache_stats:
+        with (
+            patch(
+                "backend.api.middleware.validation_optimizer.get_validation_stats"
+            ) as mock_get_validation_stats,
+            patch(
+                "backend.api.middleware.validation_optimizer.get_cache_stats"
+            ) as mock_get_cache_stats,
+        ):
             mock_get_validation_stats.return_value = {}
             mock_get_cache_stats.return_value = {}
 
@@ -194,11 +199,14 @@ class TestValidationOptimizerMiddlewareIntegration:
             cache_max_size=1000,
         )
 
-        with patch(
-            "backend.api.middleware.validation_optimizer.get_validation_stats"
-        ) as mock_get_validation_stats, patch(
-            "backend.api.middleware.validation_optimizer.get_cache_stats"
-        ) as mock_get_cache_stats:
+        with (
+            patch(
+                "backend.api.middleware.validation_optimizer.get_validation_stats"
+            ) as mock_get_validation_stats,
+            patch(
+                "backend.api.middleware.validation_optimizer.get_cache_stats"
+            ) as mock_get_cache_stats,
+        ):
             mock_get_validation_stats.return_value = {"total_validations": 5}
             mock_get_cache_stats.return_value = {"cache_hits": 3, "cache_misses": 2}
 
@@ -230,11 +238,14 @@ class TestValidationOptimizerMiddlewareIntegration:
 
         app.add_middleware(ValidationOptimizerMiddleware)
 
-        with patch(
-            "backend.api.middleware.validation_optimizer.get_validation_stats"
-        ) as mock_get_validation_stats, patch(
-            "backend.api.middleware.validation_optimizer.get_cache_stats"
-        ) as mock_get_cache_stats:
+        with (
+            patch(
+                "backend.api.middleware.validation_optimizer.get_validation_stats"
+            ) as mock_get_validation_stats,
+            patch(
+                "backend.api.middleware.validation_optimizer.get_cache_stats"
+            ) as mock_get_cache_stats,
+        ):
             mock_get_validation_stats.return_value = {"test": "stats"}
             mock_get_cache_stats.return_value = {"test": "cache"}
 
@@ -250,4 +261,3 @@ class TestValidationOptimizerMiddlewareIntegration:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

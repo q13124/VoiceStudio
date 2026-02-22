@@ -42,9 +42,7 @@ class TestSettingsPanel:
 
         # Try to find panel root
         try:
-            settings_panel = driver.find_element(
-                "accessibility id", "SettingsView_Root"
-            )
+            settings_panel = driver.find_element("accessibility id", "SettingsView_Root")
             assert settings_panel is not None
         except RuntimeError:
             pass
@@ -57,9 +55,7 @@ class TestSettingsPanel:
 
         # Try to find settings categories
         try:
-            categories_list = driver.find_element(
-                "accessibility id", "SettingsView_CategoriesList"
-            )
+            categories_list = driver.find_element("accessibility id", "SettingsView_CategoriesList")
             assert categories_list is not None
         except RuntimeError:
             # Categories may use different ID
@@ -97,9 +93,7 @@ class TestLibraryPanel:
 
         # Try to find search box
         try:
-            search_box = driver.find_element(
-                "accessibility id", "LibraryView_SearchBox"
-            )
+            search_box = driver.find_element("accessibility id", "LibraryView_SearchBox")
             assert search_box is not None
         except RuntimeError:
             pass
@@ -123,9 +117,7 @@ class TestTrainingPanel:
         assert train_button_after is not None
 
         try:
-            training_panel = driver.find_element(
-                "accessibility id", "TrainingView_Root"
-            )
+            training_panel = driver.find_element("accessibility id", "TrainingView_Root")
             assert training_panel is not None
         except RuntimeError:
             pass
@@ -171,9 +163,7 @@ class TestAudioAnalysisPanel:
         assert analyze_button_after is not None
 
         try:
-            analysis_panel = driver.find_element(
-                "accessibility id", "AnalyzerView_Root"
-            )
+            analysis_panel = driver.find_element("accessibility id", "AnalyzerView_Root")
             assert analysis_panel is not None
         except RuntimeError:
             pass
@@ -197,9 +187,7 @@ class TestDiagnosticsPanel:
         assert logs_button_after is not None
 
         try:
-            diagnostics_panel = driver.find_element(
-                "accessibility id", "DiagnosticsView_Root"
-            )
+            diagnostics_panel = driver.find_element("accessibility id", "DiagnosticsView_Root")
             assert diagnostics_panel is not None
         except RuntimeError:
             pass
@@ -237,8 +225,14 @@ class TestAdvancedPanelInteractions:
     def test_rapid_panel_switching(self, driver, app_launched):
         """Test rapid panel switching doesn't crash."""
         nav_buttons = [
-            "NavStudio", "NavProfiles", "NavLibrary", "NavEffects",
-            "NavTrain", "NavAnalyze", "NavSettings", "NavLogs",
+            "NavStudio",
+            "NavProfiles",
+            "NavLibrary",
+            "NavEffects",
+            "NavTrain",
+            "NavAnalyze",
+            "NavSettings",
+            "NavLogs",
         ]
 
         # Rapidly switch between all panels
@@ -273,9 +267,7 @@ class TestPanelErrorHandling:
 
         # Check for empty state message
         try:
-            empty_state = driver.find_element(
-                "accessibility id", "LibraryView_EmptyState"
-            )
+            empty_state = driver.find_element("accessibility id", "LibraryView_EmptyState")
             assert empty_state is not None
         except RuntimeError:
             # Empty state may not be visible if there's data
@@ -350,8 +342,14 @@ class TestPanelAccessibility:
     def test_navigation_buttons_have_tooltips(self, driver, app_launched):
         """Test that navigation buttons have tooltips for accessibility."""
         nav_buttons = [
-            "NavStudio", "NavProfiles", "NavLibrary", "NavEffects",
-            "NavTrain", "NavAnalyze", "NavSettings", "NavLogs",
+            "NavStudio",
+            "NavProfiles",
+            "NavLibrary",
+            "NavEffects",
+            "NavTrain",
+            "NavAnalyze",
+            "NavSettings",
+            "NavLogs",
         ]
 
         for nav_id in nav_buttons:

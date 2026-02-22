@@ -92,9 +92,7 @@ async def analyze_mix(request: MixAnalysisRequest):
                 project_id=request.project_id,
                 category="levels",
                 priority="high",
-                description=(
-                    "Lower Background Music by -5dB to clarify speech"
-                ),
+                description=("Lower Background Music by -5dB to clarify speech"),
                 parameter="volume",
                 current_value=-12.0,
                 suggested_value=-17.0,
@@ -156,22 +154,13 @@ async def list_suggestions(
     suggestions = list(_mix_suggestions.values())
 
     if project_id:
-        suggestions = [
-            s for s in suggestions
-            if s.get("project_id") == project_id
-        ]
+        suggestions = [s for s in suggestions if s.get("project_id") == project_id]
 
     if category:
-        suggestions = [
-            s for s in suggestions
-            if s.get("category") == category
-        ]
+        suggestions = [s for s in suggestions if s.get("category") == category]
 
     if priority:
-        suggestions = [
-            s for s in suggestions
-            if s.get("priority") == priority
-        ]
+        suggestions = [s for s in suggestions if s.get("priority") == priority]
 
     return [MixSuggestion(**s) for s in suggestions]
 
@@ -383,9 +372,7 @@ async def analyze_mastering(request: MasteringAnalysisRequest):
             "suggestions": [
                 {
                     "type": "loudness",
-                    "description": (
-                        f"Increase loudness to {request.target_loudness} LUFS"
-                    ),
+                    "description": (f"Increase loudness to {request.target_loudness} LUFS"),
                     "action": "apply_limiter",
                 },
                 {

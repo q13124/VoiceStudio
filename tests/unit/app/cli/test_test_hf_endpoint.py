@@ -23,9 +23,7 @@ class TestTestHFEndpointImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            test_hf_endpoint is not None
-        ), "Failed to import test_hf_endpoint module"
+        assert test_hf_endpoint is not None, "Failed to import test_hf_endpoint module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -35,4 +33,3 @@ class TestTestHFEndpointImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

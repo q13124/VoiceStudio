@@ -132,8 +132,7 @@ class PhoenixPipelineCore:
         quality_mode = quality_mode or self.quality_mode
 
         logger.info(
-            f"Phoenix Pipeline: Cloning voice with quality={quality_mode}, "
-            f"emotion={emotion}"
+            f"Phoenix Pipeline: Cloning voice with quality={quality_mode}, " f"emotion={emotion}"
         )
 
         # Extract voice embedding
@@ -147,23 +146,17 @@ class PhoenixPipelineCore:
 
         # Apply prosody control
         if prosody_params:
-            voice_embedding = self._apply_prosody_control(
-                voice_embedding, prosody_params
-            )
+            voice_embedding = self._apply_prosody_control(voice_embedding, prosody_params)
 
         # Synthesize with hyperreal quality
         audio = self._synthesize_hyperreal(voice_embedding, text, quality_mode)
 
         # Calculate quality metrics
-        quality_metrics = self._calculate_quality_metrics(
-            audio, reference_audio, sample_rate
-        )
+        quality_metrics = self._calculate_quality_metrics(audio, reference_audio, sample_rate)
 
         return audio, sample_rate, quality_metrics
 
-    def _extract_voice_embedding(
-        self, audio: np.ndarray, sample_rate: int
-    ) -> np.ndarray:
+    def _extract_voice_embedding(self, audio: np.ndarray, sample_rate: int) -> np.ndarray:
         """
         Extract high-dimensional voice embedding using advanced speaker encoder.
 
@@ -195,25 +188,19 @@ class PhoenixPipelineCore:
                     )
                     return embedding
         except (ImportError, Exception) as e:
-            logger.debug(
-                f"Speaker encoder not available: {e}, using feature extraction"
-            )
+            logger.debug(f"Speaker encoder not available: {e}, using feature extraction")
 
         # Fallback: Comprehensive feature extraction
         if HAS_LIBROSA:
             # Extract comprehensive acoustic features
             mfcc = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=13)
             chroma = librosa.feature.chroma(y=audio, sr=sample_rate)
-            spectral_centroid = librosa.feature.spectral_centroid(
-                y=audio, sr=sample_rate
-            )
+            spectral_centroid = librosa.feature.spectral_centroid(y=audio, sr=sample_rate)
             spectral_rolloff = librosa.feature.spectral_rolloff(y=audio, sr=sample_rate)
             zero_crossing_rate = librosa.feature.zero_crossing_rate(audio)
 
             # Extract mel spectrogram features
-            mel_spec = librosa.feature.melspectrogram(
-                y=audio, sr=sample_rate, n_mels=80
-            )
+            mel_spec = librosa.feature.melspectrogram(y=audio, sr=sample_rate, n_mels=80)
             mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
 
             # Extract tonnetz (harmonic network features)
@@ -300,9 +287,7 @@ class PhoenixPipelineCore:
             "surprised": np.array([0.25, 0.2, 0.2, 0.3, 0.15]),
         }
 
-        emotion_vector = emotion_vectors.get(
-            emotion.lower(), np.array([0.0, 0.0, 0.0, 0.0, 0.0])
-        )
+        emotion_vector = emotion_vectors.get(emotion.lower(), np.array([0.0, 0.0, 0.0, 0.0, 0.0]))
 
         # Apply emotion modification to multiple embedding dimensions
         # Distribute emotion vector across embedding dimensions for smoother effect

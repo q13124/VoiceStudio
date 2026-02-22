@@ -245,7 +245,7 @@ class TestHelpTopicCRUD:
             "content": "Test content",
             "keywords": ["test"],
             "related_topics": [],
-            "panel_id": None
+            "panel_id": None,
         }
 
         response = client.post("/api/help/topics", json=topic_data)
@@ -268,7 +268,7 @@ class TestHelpTopicCRUD:
             "content": "Original content",
             "keywords": [],
             "related_topics": [],
-            "panel_id": None
+            "panel_id": None,
         }
         client.post("/api/help/topics", json=topic_data)
 
@@ -280,7 +280,7 @@ class TestHelpTopicCRUD:
             "content": "Updated content",
             "keywords": [],
             "related_topics": [],
-            "panel_id": None
+            "panel_id": None,
         }
 
         response = client.put("/api/help/topics/update_test", json=updated_data)
@@ -301,7 +301,7 @@ class TestHelpTopicCRUD:
             "content": "Content",
             "keywords": [],
             "related_topics": [],
-            "panel_id": None
+            "panel_id": None,
         }
 
         response = client.put("/api/help/topics/wrong_id", json=topic_data)
@@ -320,7 +320,7 @@ class TestHelpTopicCRUD:
             "content": "Content",
             "keywords": [],
             "related_topics": [],
-            "panel_id": None
+            "panel_id": None,
         }
 
         response = client.put("/api/help/topics/nonexistent", json=topic_data)
@@ -340,7 +340,7 @@ class TestHelpTopicCRUD:
             "content": "Content",
             "keywords": [],
             "related_topics": [],
-            "panel_id": None
+            "panel_id": None,
         }
         client.post("/api/help/topics", json=topic_data)
 
@@ -372,7 +372,7 @@ class TestKeyboardShortcutCRUD:
             "key": "Ctrl+T",
             "description": "Test shortcut",
             "category": "test",
-            "panel_id": None
+            "panel_id": None,
         }
 
         response = client.post("/api/help/shortcuts", json=shortcut_data)
@@ -391,7 +391,7 @@ class TestKeyboardShortcutCRUD:
             "key": "Ctrl+U",
             "description": "Original",
             "category": "test",
-            "panel_id": None
+            "panel_id": None,
         }
         client.post("/api/help/shortcuts", json=shortcut_data)
 
@@ -400,7 +400,7 @@ class TestKeyboardShortcutCRUD:
             "key": "Ctrl+U",
             "description": "Updated",
             "category": "test",
-            "panel_id": None
+            "panel_id": None,
         }
 
         response = client.put("/api/help/shortcuts/Ctrl+U", json=updated_data)
@@ -418,7 +418,7 @@ class TestKeyboardShortcutCRUD:
             "key": "Ctrl+X",
             "description": "Test",
             "category": "test",
-            "panel_id": None
+            "panel_id": None,
         }
 
         response = client.put("/api/help/shortcuts/Ctrl+Y", json=shortcut_data)
@@ -434,7 +434,7 @@ class TestKeyboardShortcutCRUD:
             "key": "Ctrl+Z",
             "description": "Test",
             "category": "test",
-            "panel_id": None
+            "panel_id": None,
         }
 
         response = client.put("/api/help/shortcuts/Ctrl+Z", json=shortcut_data)
@@ -452,7 +452,7 @@ class TestKeyboardShortcutCRUD:
             "key": "Ctrl+D",
             "description": "To Delete",
             "category": "test",
-            "panel_id": None
+            "panel_id": None,
         }
         client.post("/api/help/shortcuts", json=shortcut_data)
 

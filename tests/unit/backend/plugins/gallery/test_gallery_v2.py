@@ -412,9 +412,7 @@ class TestGalleryRatings:
 
         response = await gallery_v2.search(query="coqui")
 
-        coqui_result = next(
-            (r for r in response.results if r.plugin.id == "coqui-tts"), None
-        )
+        coqui_result = next((r for r in response.results if r.plugin.id == "coqui-tts"), None)
         assert coqui_result is not None
         assert coqui_result.my_rating is not None
         assert coqui_result.my_rating.rating == 5
@@ -523,10 +521,7 @@ class TestGallerySearchResponse:
 
     def test_response_to_dict(self, sample_plugins):
         """Test response serialization."""
-        results = [
-            GalleryPlugin(plugin=p, sources=["public"])
-            for p in sample_plugins[:2]
-        ]
+        results = [GalleryPlugin(plugin=p, sources=["public"]) for p in sample_plugins[:2]]
 
         response = GallerySearchResponse(
             results=results,

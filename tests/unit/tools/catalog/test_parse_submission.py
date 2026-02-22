@@ -175,7 +175,7 @@ MIT
 - [x] My plugin does NOT collect any user data
 """
         result = parse_submission(body)
-        
+
         assert result["plugin_id"] == "com.example.test-plugin"
         assert result["plugin_name"] == "Test Plugin"
         assert result["version"] == "1.0.0"

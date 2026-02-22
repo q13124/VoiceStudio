@@ -16,21 +16,22 @@ from pydantic import BaseModel
 try:
     from ..optimization import cache_response
 except ImportError:
+
     def cache_response(ttl: int = 300):
         def decorator(func):
             return func
+
         return decorator
+
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/ultimate-dashboard", tags=["ultimate-dashboard"])
 
 # Circuit breaker state
-_circuit_breaker_state: dict[str, dict] = defaultdict(lambda: {
-    "failures": 0,
-    "last_failure": None,
-    "state": "closed"  # closed, open, half_open
-})
+_circuit_breaker_state: dict[str, dict] = defaultdict(
+    lambda: {"failures": 0, "last_failure": None, "state": "closed"}  # closed, open, half_open
+)
 
 # Cache for aggregated results
 _dashboard_cache: dict | None = None
@@ -145,7 +146,9 @@ async def get_dashboard_data():
             elif profiles_data and isinstance(profiles_data, dict):
                 # Handle paginated response
                 items = profiles_data.get("items", [])
-                total_profiles = len(items) if isinstance(items, list) else profiles_data.get("total", 0)
+                total_profiles = (
+                    len(items) if isinstance(items, list) else profiles_data.get("total", 0)
+                )
 
             # Get batch jobs status
             jobs_data = await _http_get_with_retry(
@@ -406,4 +409,3 @@ async def get_system_alerts():
             status_code=500,
             detail=f"Failed to get system alerts: {e!s}",
         ) from e
-

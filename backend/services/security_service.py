@@ -30,8 +30,10 @@ logger = logging.getLogger(__name__)
 
 # ===== Phase 16.1: Encryption =====
 
+
 class EncryptionAlgorithm(Enum):
     """Encryption algorithms."""
+
     AES_256_GCM = "aes-256-gcm"
     CHACHA20_POLY1305 = "chacha20-poly1305"
 
@@ -39,6 +41,7 @@ class EncryptionAlgorithm(Enum):
 @dataclass
 class EncryptedAudio:
     """Encrypted audio container."""
+
     encryption_id: str
     algorithm: EncryptionAlgorithm
     encrypted_data: bytes
@@ -79,9 +82,7 @@ class EncryptionService:
             aesgcm = AESGCM(self._key)
 
             # Encrypt with associated data (metadata hash)
-            aad = hashlib.sha256(
-                json.dumps(metadata or {}).encode()
-            ).digest()
+            aad = hashlib.sha256(json.dumps(metadata or {}).encode()).digest()
 
             ciphertext = aesgcm.encrypt(nonce, audio_data, aad)
 
@@ -111,9 +112,7 @@ class EncryptionService:
 
             aesgcm = AESGCM(self._key)
 
-            aad = hashlib.sha256(
-                json.dumps(encrypted.metadata).encode()
-            ).digest()
+            aad = hashlib.sha256(json.dumps(encrypted.metadata).encode()).digest()
 
             plaintext = aesgcm.decrypt(
                 encrypted.nonce,
@@ -156,7 +155,7 @@ class EncryptionService:
         stream = []
         counter = 0
         while len(stream) < length:
-            block = hashlib.sha256(self._key + nonce + counter.to_bytes(4, 'big')).digest()
+            block = hashlib.sha256(self._key + nonce + counter.to_bytes(4, "big")).digest()
             stream.extend(block)
             counter += 1
         return bytes(stream[:length])
@@ -177,15 +176,17 @@ class EncryptionService:
             key = kdf.derive(password.encode())
         except ImportError:
             # Fallback
-            key = hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 100000, dklen=32)
+            key = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100000, dklen=32)
 
         return key, salt
 
 
 # ===== Phase 16.2: Consent Management =====
 
+
 class ConsentType(Enum):
     """Types of consent."""
+
     VOICE_CLONING = "voice_cloning"
     VOICE_USAGE = "voice_usage"
     DATA_PROCESSING = "data_processing"
@@ -195,6 +196,7 @@ class ConsentType(Enum):
 
 class ConsentStatus(Enum):
     """Consent status."""
+
     PENDING = "pending"
     GRANTED = "granted"
     DENIED = "denied"
@@ -205,6 +207,7 @@ class ConsentStatus(Enum):
 @dataclass
 class ConsentRecord:
     """Consent record."""
+
     consent_id: str
     voice_id: str
     grantor_id: str
@@ -346,8 +349,10 @@ class ConsentManager:
 
 # ===== Phase 16.3: Audio Watermarking =====
 
+
 class WatermarkType(Enum):
     """Watermark types."""
+
     INVISIBLE = "invisible"  # Embedded in audio
     AUDIBLE = "audible"  # Perceptible watermark
     METADATA = "metadata"  # Metadata-based
@@ -356,6 +361,7 @@ class WatermarkType(Enum):
 @dataclass
 class Watermark:
     """Audio watermark."""
+
     watermark_id: str
     watermark_type: WatermarkType
     payload: str
@@ -463,14 +469,14 @@ class WatermarkingService:
         watermarked = samples.copy().astype(np.float64)
 
         # Convert payload to bits
-        payload_bytes = payload.encode('utf-8')
-        payload_bits = ''.join(format(byte, '08b') for byte in payload_bytes)
+        payload_bytes = payload.encode("utf-8")
+        payload_bits = "".join(format(byte, "08b") for byte in payload_bytes)
 
         # Pad to fixed length
-        payload_bits = payload_bits[:512].ljust(512, '0')
+        payload_bits = payload_bits[:512].ljust(512, "0")
 
         # Generate pseudo-random positions based on secret key
-        np.random.seed(int.from_bytes(self._secret_key[:4], 'big'))
+        np.random.seed(int.from_bytes(self._secret_key[:4], "big"))
         positions = np.random.choice(
             len(watermarked) - 1000,
             size=len(payload_bits),
@@ -498,7 +504,7 @@ class WatermarkingService:
             samples = samples.astype(np.float64)
 
             # Generate same positions
-            np.random.seed(int.from_bytes(self._secret_key[:4], 'big'))
+            np.random.seed(int.from_bytes(self._secret_key[:4], "big"))
             positions = np.random.choice(
                 len(samples) - 1000,
                 size=512,
@@ -511,21 +517,21 @@ class WatermarkingService:
             bits = []
             for pos in positions:
                 # Estimate bit based on local statistics
-                window = samples[max(0, pos-10):pos+10]
+                window = samples[max(0, pos - 10) : pos + 10]
                 mean = np.mean(window)
                 bit = 1 if samples[pos] > mean else 0
                 bits.append(str(bit))
 
             # Convert bits to bytes
-            bit_string = ''.join(bits)
+            bit_string = "".join(bits)
             payload_bytes = []
             for i in range(0, len(bit_string), 8):
-                byte = int(bit_string[i:i+8], 2)
+                byte = int(bit_string[i : i + 8], 2)
                 if byte == 0:
                     break
                 payload_bytes.append(byte)
 
-            return bytes(payload_bytes).decode('utf-8', errors='ignore')
+            return bytes(payload_bytes).decode("utf-8", errors="ignore")
 
         except Exception as e:
             logger.warning(f"Watermark extraction failed: {e}")
@@ -559,6 +565,7 @@ class WatermarkingService:
 
 
 # ===== Main Security Service =====
+
 
 class SecurityService:
     """

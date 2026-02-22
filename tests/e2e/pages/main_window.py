@@ -30,78 +30,44 @@ class MainWindowPage(BasePage):
     # Locators - Navigation Rail
     # ==========================================================================
 
-    NAV_STUDIO = ElementLocator.by_automation_id(
-        "NavStudio", "Studio navigation button"
-    )
-    NAV_PROFILES = ElementLocator.by_automation_id(
-        "NavProfiles", "Profiles navigation button"
-    )
-    NAV_LIBRARY = ElementLocator.by_automation_id(
-        "NavLibrary", "Library navigation button"
-    )
-    NAV_EFFECTS = ElementLocator.by_automation_id(
-        "NavEffects", "Effects navigation button"
-    )
-    NAV_TRAIN = ElementLocator.by_automation_id(
-        "NavTrain", "Train navigation button"
-    )
-    NAV_ANALYZE = ElementLocator.by_automation_id(
-        "NavAnalyze", "Analyze navigation button"
-    )
-    NAV_SETTINGS = ElementLocator.by_automation_id(
-        "NavSettings", "Settings navigation button"
-    )
-    NAV_LOGS = ElementLocator.by_automation_id(
-        "NavLogs", "Logs navigation button"
-    )
+    NAV_STUDIO = ElementLocator.by_automation_id("NavStudio", "Studio navigation button")
+    NAV_PROFILES = ElementLocator.by_automation_id("NavProfiles", "Profiles navigation button")
+    NAV_LIBRARY = ElementLocator.by_automation_id("NavLibrary", "Library navigation button")
+    NAV_EFFECTS = ElementLocator.by_automation_id("NavEffects", "Effects navigation button")
+    NAV_TRAIN = ElementLocator.by_automation_id("NavTrain", "Train navigation button")
+    NAV_ANALYZE = ElementLocator.by_automation_id("NavAnalyze", "Analyze navigation button")
+    NAV_SETTINGS = ElementLocator.by_automation_id("NavSettings", "Settings navigation button")
+    NAV_LOGS = ElementLocator.by_automation_id("NavLogs", "Logs navigation button")
 
     # ==========================================================================
     # Locators - Panel Hosts
     # ==========================================================================
 
-    LEFT_PANEL_HOST = ElementLocator.by_automation_id(
-        "LeftPanelHost", "Left panel container"
-    )
-    CENTER_PANEL_HOST = ElementLocator.by_automation_id(
-        "CenterPanelHost", "Center panel container"
-    )
-    RIGHT_PANEL_HOST = ElementLocator.by_automation_id(
-        "RightPanelHost", "Right panel container"
-    )
-    BOTTOM_PANEL_HOST = ElementLocator.by_automation_id(
-        "BottomPanelHost", "Bottom panel container"
-    )
+    LEFT_PANEL_HOST = ElementLocator.by_automation_id("LeftPanelHost", "Left panel container")
+    CENTER_PANEL_HOST = ElementLocator.by_automation_id("CenterPanelHost", "Center panel container")
+    RIGHT_PANEL_HOST = ElementLocator.by_automation_id("RightPanelHost", "Right panel container")
+    BOTTOM_PANEL_HOST = ElementLocator.by_automation_id("BottomPanelHost", "Bottom panel container")
 
     # ==========================================================================
     # Locators - Toolbar
     # ==========================================================================
 
-    COMMAND_TOOLBAR = ElementLocator.by_automation_id(
-        "CommandToolbar", "Main command toolbar"
-    )
+    COMMAND_TOOLBAR = ElementLocator.by_automation_id("CommandToolbar", "Main command toolbar")
 
     # ==========================================================================
     # Locators - Status Bar
     # ==========================================================================
 
-    STATUS_TEXT = ElementLocator.by_automation_id(
-        "StatusText", "Status bar text"
-    )
+    STATUS_TEXT = ElementLocator.by_automation_id("StatusText", "Status bar text")
     PROCESSING_INDICATOR = ElementLocator.by_automation_id(
         "ProcessingIndicator", "Processing status indicator"
     )
     NETWORK_INDICATOR = ElementLocator.by_automation_id(
         "NetworkIndicator", "Network status indicator"
     )
-    ENGINE_INDICATOR = ElementLocator.by_automation_id(
-        "EngineIndicator", "Engine status indicator"
-    )
-    JOB_STATUS_TEXT = ElementLocator.by_automation_id(
-        "JobStatusText", "Job status text"
-    )
-    JOB_PROGRESS_BAR = ElementLocator.by_automation_id(
-        "JobProgressBar", "Job progress bar"
-    )
+    ENGINE_INDICATOR = ElementLocator.by_automation_id("EngineIndicator", "Engine status indicator")
+    JOB_STATUS_TEXT = ElementLocator.by_automation_id("JobStatusText", "Job status text")
+    JOB_PROGRESS_BAR = ElementLocator.by_automation_id("JobProgressBar", "Job progress bar")
 
     # ==========================================================================
     # Locators - Panel Views
@@ -124,9 +90,7 @@ class MainWindowPage(BasePage):
     GLOBAL_SEARCH_OVERLAY = ElementLocator.by_automation_id(
         "GlobalSearchOverlay", "Global search overlay"
     )
-    GLOBAL_SEARCH_VIEW = ElementLocator.by_automation_id(
-        "GlobalSearchView", "Global search view"
-    )
+    GLOBAL_SEARCH_VIEW = ElementLocator.by_automation_id("GlobalSearchView", "Global search view")
 
     # ==========================================================================
     # Validation
@@ -201,18 +165,21 @@ class MainWindowPage(BasePage):
     def get_voice_quick_clone_page(self) -> "VoiceQuickClonePage":
         """Get Voice Quick Clone page object."""
         from tests.e2e.pages.voice_quick_clone import VoiceQuickClonePage
+
         self.wait_for_element(self.VOICE_QUICK_CLONE_VIEW)
         return VoiceQuickClonePage(self.driver, self.timeout)
 
     def get_voice_browser_page(self) -> "VoiceBrowserPage":
         """Get Voice Browser page object."""
         from tests.e2e.pages.voice_browser import VoiceBrowserPage
+
         self.wait_for_element(self.VOICE_BROWSER_VIEW)
         return VoiceBrowserPage(self.driver, self.timeout)
 
     def get_synthesis_page(self) -> "SynthesisPage":
         """Get Synthesis page object."""
         from tests.e2e.pages.synthesis import SynthesisPage
+
         return SynthesisPage(self.driver, self.timeout)
 
     # ==========================================================================
@@ -289,11 +256,13 @@ class MainWindowPage(BasePage):
     def open_global_search(self):
         """Open the global search overlay (Ctrl+K)."""
         from selenium.webdriver.common.keys import Keys
+
         self.driver.find_element("tag name", "Window").send_keys(Keys.CONTROL + "k")
         self.wait_for_element(self.GLOBAL_SEARCH_VIEW)
 
     def close_global_search(self):
         """Close the global search overlay."""
         from selenium.webdriver.common.keys import Keys
+
         if self.is_displayed(self.GLOBAL_SEARCH_OVERLAY):
             self.driver.find_element("tag name", "Window").send_keys(Keys.ESCAPE)

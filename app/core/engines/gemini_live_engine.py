@@ -70,21 +70,23 @@ class GeminiLiveProvider(BaseS2SProvider):
 
             if connected:
                 # Send setup message
-                await self._ws_connection.send_json({
-                    "setup": {
-                        "model": f"models/{self._config.model}",
-                        "generation_config": {
-                            "response_modalities": ["AUDIO"],
-                            "speech_config": {
-                                "voice_config": {
-                                    "prebuilt_voice_config": {
-                                        "voice_name": self._config.voice or "Puck",
+                await self._ws_connection.send_json(
+                    {
+                        "setup": {
+                            "model": f"models/{self._config.model}",
+                            "generation_config": {
+                                "response_modalities": ["AUDIO"],
+                                "speech_config": {
+                                    "voice_config": {
+                                        "prebuilt_voice_config": {
+                                            "voice_name": self._config.voice or "Puck",
+                                        }
                                     }
-                                }
+                                },
                             },
-                        },
+                        }
                     }
-                })
+                )
 
                 self._state = S2SConnectionState.CONNECTED
                 logger.info("Gemini Live connected and configured")
@@ -108,14 +110,18 @@ class GeminiLiveProvider(BaseS2SProvider):
             raise ConnectionError("Not connected to Gemini Live")
 
         encoded = base64.b64encode(audio_data).decode("utf-8")
-        await self._ws_connection.send_json({
-            "realtime_input": {
-                "media_chunks": [{
-                    "data": encoded,
-                    "mime_type": "audio/pcm",
-                }]
+        await self._ws_connection.send_json(
+            {
+                "realtime_input": {
+                    "media_chunks": [
+                        {
+                            "data": encoded,
+                            "mime_type": "audio/pcm",
+                        }
+                    ]
+                }
             }
-        })
+        )
         self._state = S2SConnectionState.ACTIVE
 
     async def receive_audio(self) -> AsyncIterator[S2SResponse]:
@@ -155,9 +161,7 @@ class GeminiLiveProvider(BaseS2SProvider):
             logger.error(f"Gemini Live receive error: {exc}")
             self._state = S2SConnectionState.ERROR
 
-    async def respond(
-        self, audio_data: bytes, context: str | None = None
-    ) -> S2SResponse:
+    async def respond(self, audio_data: bytes, context: str | None = None) -> S2SResponse:
         """Send audio and get a complete response."""
         start_time = time.perf_counter()
 
@@ -188,6 +192,4 @@ class GeminiLiveProvider(BaseS2SProvider):
         """Interrupt current response."""
         if self._ws_connection and self._ws_connection.is_connected:
             # Gemini uses end_of_turn signal
-            await self._ws_connection.send_json({
-                "client_content": {"turn_complete": True}
-            })
+            await self._ws_connection.send_json({"client_content": {"turn_complete": True}})

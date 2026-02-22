@@ -227,12 +227,8 @@ class TestSchedulerClass:
         def test_func():
             return "test_result"
 
-        scheduler.add_task(
-            name="Task 1", func=test_func, priority=TaskPriority.HIGH
-        )
-        scheduler.add_task(
-            name="Task 2", func=test_func, priority=TaskPriority.LOW
-        )
+        scheduler.add_task(name="Task 1", func=test_func, priority=TaskPriority.HIGH)
+        scheduler.add_task(name="Task 2", func=test_func, priority=TaskPriority.LOW)
 
         tasks = scheduler.list_tasks()
 
@@ -246,12 +242,8 @@ class TestSchedulerClass:
         def test_func():
             return "test_result"
 
-        task1_id = scheduler.add_task(
-            name="Task 1", func=test_func, priority=TaskPriority.HIGH
-        )
-        scheduler.add_task(
-            name="Task 2", func=test_func, priority=TaskPriority.LOW
-        )
+        task1_id = scheduler.add_task(name="Task 1", func=test_func, priority=TaskPriority.HIGH)
+        scheduler.add_task(name="Task 2", func=test_func, priority=TaskPriority.LOW)
 
         # Cancel one task
         scheduler.cancel_task(task1_id)
@@ -268,12 +260,8 @@ class TestSchedulerClass:
         def test_func():
             return "test_result"
 
-        scheduler.add_task(
-            name="Task 1", func=test_func, priority=TaskPriority.HIGH
-        )
-        scheduler.add_task(
-            name="Task 2", func=test_func, priority=TaskPriority.LOW
-        )
+        scheduler.add_task(name="Task 1", func=test_func, priority=TaskPriority.HIGH)
+        scheduler.add_task(name="Task 2", func=test_func, priority=TaskPriority.LOW)
 
         tasks = scheduler.list_tasks(priority=TaskPriority.HIGH)
 

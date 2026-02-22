@@ -30,13 +30,13 @@ if TYPE_CHECKING:
 def get_engine_config_service_dep():
     """Get the EngineConfigService singleton."""
     from backend.services.EngineConfigService import get_engine_config_service
+
     return get_engine_config_service()
 
 
 try:
-    from backend.services.EngineConfigService import (
-        EngineConfigService as _EngineConfigService,
-    )
+    from backend.services.EngineConfigService import EngineConfigService as _EngineConfigService
+
     EngineConfigServiceDep: type | None = Annotated[
         _EngineConfigService, Depends(get_engine_config_service_dep)
     ]
@@ -48,14 +48,14 @@ except ImportError:
 def get_engine_service_dep():
     """Get the EngineService singleton."""
     from backend.services.engine_service import get_engine_service
+
     return get_engine_service()
 
 
 try:
     from backend.services.engine_service import IEngineService as _IEngineService
-    EngineServiceDep: type | None = Annotated[
-        _IEngineService, Depends(get_engine_service_dep)
-    ]
+
+    EngineServiceDep: type | None = Annotated[_IEngineService, Depends(get_engine_service_dep)]
 except ImportError:
     EngineServiceDep = None
 
@@ -64,6 +64,7 @@ except ImportError:
 def get_audio_registry_dep():
     """Get the AudioArtifactRegistry singleton."""
     from backend.services.AudioArtifactRegistry import get_audio_registry
+
     return get_audio_registry()
 
 
@@ -71,6 +72,7 @@ try:
     from backend.services.AudioArtifactRegistry import (
         AudioArtifactRegistry as _AudioArtifactRegistry,
     )
+
     AudioRegistryDep: type | None = Annotated[
         _AudioArtifactRegistry, Depends(get_audio_registry_dep)
     ]
@@ -82,6 +84,7 @@ except ImportError:
 def get_audio_cache_dep():
     """Get the ContentAddressedAudioCache singleton."""
     from backend.services.ContentAddressedAudioCache import get_audio_cache
+
     return get_audio_cache()
 
 
@@ -89,6 +92,7 @@ try:
     from backend.services.ContentAddressedAudioCache import (
         ContentAddressedAudioCache as _ContentAddressedAudioCache,
     )
+
     AudioCacheDep: type | None = Annotated[
         _ContentAddressedAudioCache, Depends(get_audio_cache_dep)
     ]
@@ -100,14 +104,14 @@ except ImportError:
 def get_job_state_store_dep():
     """Get the JobStateStore singleton."""
     from backend.services.JobStateStore import get_job_state_store
+
     return get_job_state_store()
 
 
 try:
     from backend.services.JobStateStore import JobStateStore as _JobStateStore
-    JobStateStoreDep: type | None = Annotated[
-        _JobStateStore, Depends(get_job_state_store_dep)
-    ]
+
+    JobStateStoreDep: type | None = Annotated[_JobStateStore, Depends(get_job_state_store_dep)]
 except ImportError:
     JobStateStoreDep = None
 
@@ -116,6 +120,7 @@ except ImportError:
 def get_circuit_breaker_dep(engine_id: str):
     """Get circuit breaker for a specific engine."""
     from backend.services.circuit_breaker import get_engine_breaker
+
     return get_engine_breaker(engine_id)
 
 
@@ -123,13 +128,13 @@ def get_circuit_breaker_dep(engine_id: str):
 def get_project_store_service_dep():
     """Get the ProjectStoreService singleton."""
     from backend.services.ProjectStoreService import get_project_store_service
+
     return get_project_store_service()
 
 
 try:
-    from backend.services.ProjectStoreService import (
-        ProjectStoreService as _ProjectStoreService,
-    )
+    from backend.services.ProjectStoreService import ProjectStoreService as _ProjectStoreService
+
     ProjectStoreServiceDep: type | None = Annotated[
         _ProjectStoreService, Depends(get_project_store_service_dep)
     ]
@@ -141,14 +146,14 @@ except ImportError:
 def get_profile_store_dep():
     """Get the ProfileStore singleton."""
     from backend.services.profile_store import get_profile_store
+
     return get_profile_store()
 
 
 try:
     from backend.services.profile_store import ProfileStore as _ProfileStore
-    ProfileStoreDep: type | None = Annotated[
-        _ProfileStore, Depends(get_profile_store_dep)
-    ]
+
+    ProfileStoreDep: type | None = Annotated[_ProfileStore, Depends(get_profile_store_dep)]
 except ImportError:
     ProfileStoreDep = None
 
@@ -157,14 +162,14 @@ except ImportError:
 def get_track_store_dep():
     """Get the TrackStore singleton."""
     from backend.services.track_store import get_track_store
+
     return get_track_store()
 
 
 try:
     from backend.services.track_store import TrackStore as _TrackStore
-    TrackStoreDep: type | None = Annotated[
-        _TrackStore, Depends(get_track_store_dep)
-    ]
+
+    TrackStoreDep: type | None = Annotated[_TrackStore, Depends(get_track_store_dep)]
 except ImportError:
     TrackStoreDep = None
 
@@ -173,13 +178,13 @@ except ImportError:
 def get_ref_counter_dep():
     """Get the ArtifactRefCounter singleton."""
     from backend.services.artifact_ref_counter import get_ref_counter
+
     return get_ref_counter()
 
 
 try:
-    from backend.services.artifact_ref_counter import (
-        ArtifactRefCounter as _ArtifactRefCounter,
-    )
+    from backend.services.artifact_ref_counter import ArtifactRefCounter as _ArtifactRefCounter
+
     ArtifactRefCounterDep: type | None = Annotated[
         _ArtifactRefCounter, Depends(get_ref_counter_dep)
     ]
@@ -191,14 +196,14 @@ except ImportError:
 def get_edit_history_dep():
     """Get a project-scoped EditHistory instance."""
     from backend.services.edit_history import EditHistory
+
     return EditHistory()
 
 
 try:
     from backend.services.edit_history import EditHistory as _EditHistory
-    EditHistoryDep: type | None = Annotated[
-        _EditHistory, Depends(get_edit_history_dep)
-    ]
+
+    EditHistoryDep: type | None = Annotated[_EditHistory, Depends(get_edit_history_dep)]
 except ImportError:
     EditHistoryDep = None
 
@@ -207,11 +212,13 @@ except ImportError:
 def get_unified_config_dep():
     """Get the UnifiedConfigService singleton."""
     from backend.services.unified_config import get_config
+
     return get_config()
 
 
 try:
     from backend.services.unified_config import UnifiedConfigService as _UnifiedConfigService
+
     UnifiedConfigDep: type | None = Annotated[
         _UnifiedConfigService, Depends(get_unified_config_dep)
     ]

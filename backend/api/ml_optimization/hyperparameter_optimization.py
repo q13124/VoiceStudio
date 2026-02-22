@@ -86,9 +86,7 @@ class HyperparameterOptimizer:
             raise ImportError("optuna library not available")
 
         try:
-            study = optuna.create_study(
-                direction=direction, study_name=study_name
-            )
+            study = optuna.create_study(direction=direction, study_name=study_name)
 
             def wrapped_objective(trial):
                 # Convert search space to optuna suggest calls
@@ -175,8 +173,7 @@ class HyperparameterOptimizer:
                     elif param_type == "int":
                         hyperopt_space[param_name] = hp.randint(
                             param_name,
-                            param_config.get("high", 100)
-                            - param_config.get("low", 0),
+                            param_config.get("high", 100) - param_config.get("low", 0),
                         )
                     elif param_type == "categorical":
                         hyperopt_space[param_name] = hp.choice(
@@ -234,4 +231,3 @@ class HyperparameterOptimizer:
         if self.hyperopt_available:
             methods.append("hyperopt")
         return methods
-

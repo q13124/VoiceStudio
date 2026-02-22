@@ -25,6 +25,7 @@ def reset_timeline_state():
     """Reset timeline state before each test."""
     # Reset the module-level state before each test
     from backend.api.routes import timeline
+
     timeline._timeline_state = None
     timeline._undo_stack = []
     timeline._redo_stack = []

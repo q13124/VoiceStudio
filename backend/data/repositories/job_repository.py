@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class JobStatus(str, Enum):
     """Job status enumeration."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -36,6 +37,7 @@ class JobStatus(str, Enum):
 
 class JobType(str, Enum):
     """Job type enumeration."""
+
     BATCH = "batch"
     TRAINING = "training"
     SYNTHESIS = "synthesis"
@@ -53,6 +55,7 @@ class JobEntity(BaseEntity):
 
     Maps to job_history table.
     """
+
     job_type: str = JobType.OTHER.value
     name: str = ""
     status: str = JobStatus.PENDING.value
@@ -109,8 +112,16 @@ class JobRepository(BaseRepository[JobEntity]):
             "result_path": entity.result_path,
             "metadata": entity.metadata,
             "user_id": entity.user_id,
-            "created_at": entity.created_at.isoformat() if isinstance(entity.created_at, datetime) else entity.created_at,
-            "updated_at": entity.updated_at.isoformat() if isinstance(entity.updated_at, datetime) else entity.updated_at,
+            "created_at": (
+                entity.created_at.isoformat()
+                if isinstance(entity.created_at, datetime)
+                else entity.created_at
+            ),
+            "updated_at": (
+                entity.updated_at.isoformat()
+                if isinstance(entity.updated_at, datetime)
+                else entity.updated_at
+            ),
             "started_at": entity.started_at,
             "completed_at": entity.completed_at,
             "deleted_at": entity.deleted_at.isoformat() if entity.deleted_at else None,
@@ -133,8 +144,16 @@ class JobRepository(BaseRepository[JobEntity]):
             estimated_time_remaining=row.get("estimated_time_remaining"),
             metadata=row.get("metadata", "{}"),
             user_id=row.get("user_id"),
-            created_at=datetime.fromisoformat(row["created_at"]) if row.get("created_at") else datetime.now(),
-            updated_at=datetime.fromisoformat(row["updated_at"]) if row.get("updated_at") else datetime.now(),
+            created_at=(
+                datetime.fromisoformat(row["created_at"])
+                if row.get("created_at")
+                else datetime.now()
+            ),
+            updated_at=(
+                datetime.fromisoformat(row["updated_at"])
+                if row.get("updated_at")
+                else datetime.now()
+            ),
             started_at=row.get("started_at"),
             completed_at=row.get("completed_at"),
             deleted_at=datetime.fromisoformat(row["deleted_at"]) if row.get("deleted_at") else None,
@@ -198,10 +217,13 @@ class JobRepository(BaseRepository[JobEntity]):
 
     async def mark_started(self, job_id: str) -> JobEntity | None:
         """Mark job as started."""
-        return await self.update(job_id, {
-            "status": JobStatus.RUNNING.value,
-            "started_at": datetime.now().isoformat(),
-        })
+        return await self.update(
+            job_id,
+            {
+                "status": JobStatus.RUNNING.value,
+                "started_at": datetime.now().isoformat(),
+            },
+        )
 
     async def mark_completed(
         self,
@@ -227,18 +249,24 @@ class JobRepository(BaseRepository[JobEntity]):
         error: str,
     ) -> JobEntity | None:
         """Mark job as failed."""
-        return await self.update(job_id, {
-            "status": JobStatus.FAILED.value,
-            "error": error,
-            "completed_at": datetime.now().isoformat(),
-        })
+        return await self.update(
+            job_id,
+            {
+                "status": JobStatus.FAILED.value,
+                "error": error,
+                "completed_at": datetime.now().isoformat(),
+            },
+        )
 
     async def mark_cancelled(self, job_id: str) -> JobEntity | None:
         """Mark job as cancelled."""
-        return await self.update(job_id, {
-            "status": JobStatus.CANCELLED.value,
-            "completed_at": datetime.now().isoformat(),
-        })
+        return await self.update(
+            job_id,
+            {
+                "status": JobStatus.CANCELLED.value,
+                "completed_at": datetime.now().isoformat(),
+            },
+        )
 
     async def get_summary(self) -> dict[str, Any]:
         """Get job summary statistics."""
@@ -326,17 +354,20 @@ class InMemoryJobRepository:
                 reverse = options.order_desc if options.order_desc else False
                 jobs.sort(key=lambda j: getattr(j, options.order_by, ""), reverse=reverse)
             if options.limit:
-                jobs = jobs[:options.limit]
+                jobs = jobs[: options.limit]
         return jobs
 
-    async def find(self, filters: dict[str, Any], options: QueryOptions | None = None) -> list[JobEntity]:
+    async def find(
+        self, filters: dict[str, Any], options: QueryOptions | None = None
+    ) -> list[JobEntity]:
         """Find jobs matching filters."""
         jobs = [
-            job for job in self._jobs.values()
+            job
+            for job in self._jobs.values()
             if all(getattr(job, k, None) == v for k, v in filters.items())
         ]
         if options and options.limit:
-            jobs = jobs[:options.limit]
+            jobs = jobs[: options.limit]
         return jobs
 
     async def get_by_id(self, job_id: str) -> JobEntity | None:
@@ -366,33 +397,38 @@ class InMemoryJobRepository:
             return True
         return False
 
-    async def get_by_status(self, status: JobStatus, options: QueryOptions | None = None) -> list[JobEntity]:
+    async def get_by_status(
+        self, status: JobStatus, options: QueryOptions | None = None
+    ) -> list[JobEntity]:
         """Get jobs by status."""
         return await self.find({"status": status.value}, options)
 
-    async def get_by_type(self, job_type: JobType, options: QueryOptions | None = None) -> list[JobEntity]:
+    async def get_by_type(
+        self, job_type: JobType, options: QueryOptions | None = None
+    ) -> list[JobEntity]:
         """Get jobs by type."""
         return await self.find({"job_type": job_type.value}, options)
 
     async def get_active_jobs(self) -> list[JobEntity]:
         """Get all active jobs."""
         return [
-            job for job in self._jobs.values()
-            if job.status in (JobStatus.PENDING.value, JobStatus.RUNNING.value, JobStatus.PAUSED.value)
+            job
+            for job in self._jobs.values()
+            if job.status
+            in (JobStatus.PENDING.value, JobStatus.RUNNING.value, JobStatus.PAUSED.value)
             and job.deleted_at is None
         ]
 
     async def get_completed_jobs(self, limit: int = 100) -> list[JobEntity]:
         """Get completed jobs."""
-        jobs = [
-            job for job in self._jobs.values()
-            if job.status == JobStatus.COMPLETED.value
-        ]
+        jobs = [job for job in self._jobs.values() if job.status == JobStatus.COMPLETED.value]
         jobs.sort(key=lambda j: j.completed_at or "", reverse=True)
         return jobs[:limit]
 
     async def update_progress(
-        self, job_id: str, progress: float,
+        self,
+        job_id: str,
+        progress: float,
         current_step: str | None = None,
         current_step_index: int | None = None,
     ) -> JobEntity | None:
@@ -406,13 +442,17 @@ class InMemoryJobRepository:
 
     async def mark_started(self, job_id: str) -> JobEntity | None:
         """Mark job as started."""
-        return await self.update(job_id, {
-            "status": JobStatus.RUNNING.value,
-            "started_at": datetime.now().isoformat(),
-        })
+        return await self.update(
+            job_id,
+            {
+                "status": JobStatus.RUNNING.value,
+                "started_at": datetime.now().isoformat(),
+            },
+        )
 
     async def mark_completed(
-        self, job_id: str,
+        self,
+        job_id: str,
         result_path: str | None = None,
         result_id: str | None = None,
     ) -> JobEntity | None:
@@ -430,18 +470,24 @@ class InMemoryJobRepository:
 
     async def mark_failed(self, job_id: str, error: str) -> JobEntity | None:
         """Mark job as failed."""
-        return await self.update(job_id, {
-            "status": JobStatus.FAILED.value,
-            "error": error,
-            "completed_at": datetime.now().isoformat(),
-        })
+        return await self.update(
+            job_id,
+            {
+                "status": JobStatus.FAILED.value,
+                "error": error,
+                "completed_at": datetime.now().isoformat(),
+            },
+        )
 
     async def mark_cancelled(self, job_id: str) -> JobEntity | None:
         """Mark job as cancelled."""
-        return await self.update(job_id, {
-            "status": JobStatus.CANCELLED.value,
-            "completed_at": datetime.now().isoformat(),
-        })
+        return await self.update(
+            job_id,
+            {
+                "status": JobStatus.CANCELLED.value,
+                "completed_at": datetime.now().isoformat(),
+            },
+        )
 
     async def get_summary(self) -> dict[str, Any]:
         """Get job summary statistics."""
@@ -466,8 +512,10 @@ class InMemoryJobRepository:
     async def clear_completed(self) -> int:
         """Clear completed jobs."""
         to_delete = [
-            job_id for job_id, job in self._jobs.items()
-            if job.status in (JobStatus.COMPLETED.value, JobStatus.FAILED.value, JobStatus.CANCELLED.value)
+            job_id
+            for job_id, job in self._jobs.items()
+            if job.status
+            in (JobStatus.COMPLETED.value, JobStatus.FAILED.value, JobStatus.CANCELLED.value)
         ]
         for job_id in to_delete:
             del self._jobs[job_id]
@@ -510,6 +558,7 @@ def get_job_repository() -> Any:
         repo = JobRepository()
         # Test connection by trying to connect
         import asyncio
+
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():

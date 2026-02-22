@@ -28,7 +28,7 @@ try:
     )
 except ImportError:
     pytestmark = pytest.mark.skip(reason="Phase 6D developer_portal not implemented")
-    
+
     # Create stubs for syntax validation
     class SubmissionStatus(Enum):
         PENDING = "pending"
@@ -116,6 +116,7 @@ except ImportError:
             class SubmitResult:
                 submission_id: str
                 status: SubmissionStatus
+
             sid = str(uuid.uuid4())
             self._submissions[sid] = {"submission": submission, "status": SubmissionStatus.PENDING}
             return SubmitResult(submission_id=sid, status=SubmissionStatus.PENDING)
@@ -135,6 +136,7 @@ except ImportError:
             @dataclass
             class AuthResult:
                 is_authenticated: bool
+
             key = self._keys.get(key_value)
             return AuthResult(is_authenticated=bool(key and key.is_active))
 
@@ -151,7 +153,7 @@ class TestDeveloperPortalAPI:
     async def test_submit_plugin(self) -> None:
         """Test submitting a plugin for review."""
         api = DeveloperPortalAPI()
-        
+
         submission = PluginSubmission(
             plugin_id="new-plugin",
             version="1.0.0",
@@ -159,9 +161,9 @@ class TestDeveloperPortalAPI:
             manifest_url="https://example.com/manifest.json",
             package_url="https://example.com/plugin.zip",
         )
-        
+
         result = await api.submit_plugin(submission)
-        
+
         assert result.submission_id is not None
         assert result.status == SubmissionStatus.PENDING
 
@@ -169,7 +171,7 @@ class TestDeveloperPortalAPI:
     async def test_get_submission_status(self) -> None:
         """Test getting submission status."""
         api = DeveloperPortalAPI()
-        
+
         # First submit
         submission = PluginSubmission(
             plugin_id="status-test",
@@ -177,19 +179,19 @@ class TestDeveloperPortalAPI:
             developer_id="dev123",
         )
         result = await api.submit_plugin(submission)
-        
+
         # Then check status
         status = await api.get_submission_status(result.submission_id)
-        
+
         assert status is not None
 
     @pytest.mark.asyncio
     async def test_list_developer_plugins(self) -> None:
         """Test listing developer's plugins."""
         api = DeveloperPortalAPI()
-        
+
         plugins = await api.list_developer_plugins(developer_id="dev123")
-        
+
         assert isinstance(plugins, list)
 
 
@@ -204,7 +206,7 @@ class TestPluginSubmission:
             developer_id="dev123",
             description="A test plugin",
         )
-        
+
         assert submission.plugin_id == "test-plugin"
         assert submission.version == "1.0.0"
 
@@ -217,7 +219,7 @@ class TestPluginSubmission:
             developer_id="dev123",
         )
         assert valid.is_valid()
-        
+
         # Invalid submission (missing required fields)
         invalid = PluginSubmission(
             plugin_id="",
@@ -234,7 +236,7 @@ class TestPluginSubmission:
             developer_id="dev456",
             release_notes="Bug fixes",
         )
-        
+
         data = submission.to_dict()
         assert data["plugin_id"] == "test"
         assert data["version"] == "2.0.0"
@@ -255,11 +257,11 @@ class TestSubmissionStatus:
         """Test valid status transitions."""
         # PENDING -> REVIEWING is valid
         assert SubmissionStatus.PENDING.can_transition_to(SubmissionStatus.REVIEWING)
-        
+
         # REVIEWING -> APPROVED or REJECTED is valid
         assert SubmissionStatus.REVIEWING.can_transition_to(SubmissionStatus.APPROVED)
         assert SubmissionStatus.REVIEWING.can_transition_to(SubmissionStatus.REJECTED)
-        
+
         # APPROVED -> PUBLISHED is valid
         assert SubmissionStatus.APPROVED.can_transition_to(SubmissionStatus.PUBLISHED)
 
@@ -274,7 +276,7 @@ class TestDeveloperProfile:
             display_name="Test Developer",
             email="dev@example.com",
         )
-        
+
         assert profile.developer_id == "dev123"
         assert profile.display_name == "Test Developer"
 
@@ -284,13 +286,13 @@ class TestDeveloperProfile:
             developer_id="dev1",
             is_verified=False,
         )
-        
+
         verified = DeveloperProfile(
             developer_id="dev2",
             is_verified=True,
             verified_at=datetime.now(),
         )
-        
+
         assert not unverified.is_verified
         assert verified.is_verified
 
@@ -300,7 +302,7 @@ class TestDeveloperProfile:
             developer_id="prolific-dev",
             published_plugins=["plugin1", "plugin2", "plugin3"],
         )
-        
+
         assert profile.plugin_count == 3
 
 
@@ -313,31 +315,31 @@ class TestAPIKey:
             developer_id="dev123",
             key_name="Production Key",
         )
-        
+
         assert key.key_value is not None
         assert len(key.key_value) >= 32
 
     def test_api_key_expiry(self) -> None:
         """Test API key expiry."""
         import time
-        
+
         # Create key with short TTL
         key = APIKey(
             developer_id="dev123",
             ttl_seconds=0.001,
         )
-        
+
         time.sleep(0.01)
         assert key.is_expired
 
     def test_api_key_revocation(self) -> None:
         """Test API key revocation."""
         key = APIKey(developer_id="dev123")
-        
+
         assert key.is_active
-        
+
         key.revoke()
-        
+
         assert not key.is_active
         assert key.revoked_at is not None
 
@@ -347,7 +349,7 @@ class TestAPIKey:
             developer_id="dev123",
             scopes=["read", "submit"],
         )
-        
+
         assert key.has_scope("read")
         assert key.has_scope("submit")
         assert not key.has_scope("admin")
@@ -360,23 +362,23 @@ class TestPortalAuthentication:
     async def test_authenticate_with_api_key(self) -> None:
         """Test authentication with API key."""
         api = DeveloperPortalAPI()
-        
+
         # Create key
         key = await api.create_api_key(
             developer_id="dev123",
             key_name="Test Key",
         )
-        
+
         # Authenticate
         result = await api.authenticate(key.key_value)
-        
+
         assert result.is_authenticated
 
     @pytest.mark.asyncio
     async def test_invalid_key_rejected(self) -> None:
         """Test that invalid keys are rejected."""
         api = DeveloperPortalAPI()
-        
+
         result = await api.authenticate("invalid-key-value")
-        
+
         assert not result.is_authenticated

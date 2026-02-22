@@ -45,6 +45,7 @@ class MacroStore:
         macro_id = macro.get("id", "")
         if not macro_id:
             import uuid
+
             macro_id = f"macro-{uuid.uuid4().hex[:8]}"
             macro["id"] = macro_id
 
@@ -65,6 +66,7 @@ class MacroStore:
 
     def search(self, name: str | None = None, category: str | None = None) -> list[dict[str, Any]]:
         """Search macros by name or category."""
+
         def predicate(macro: dict[str, Any]) -> bool:
             if name:
                 macro_name = macro.get("name", "").lower()
@@ -135,6 +137,7 @@ class AutomationCurveStore:
         curve_id = curve.get("id", "")
         if not curve_id:
             import uuid
+
             curve_id = f"curve-{uuid.uuid4().hex[:8]}"
             curve["id"] = curve_id
 
@@ -252,6 +255,7 @@ class MacroExecutionStore:
 
     def list_scheduled(self) -> list[dict[str, Any]]:
         """List all macros with schedules."""
+
         def has_schedule(entry: dict[str, Any]) -> bool:
             return "schedule" in entry
 

@@ -23,9 +23,7 @@ class TestQualityOptimizerImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            quality_optimizer is not None
-        ), "Failed to import quality_optimizer module"
+        assert quality_optimizer is not None, "Failed to import quality_optimizer module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""

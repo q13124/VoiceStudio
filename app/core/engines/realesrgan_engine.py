@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 # Try importing general model cache
 try:
     from app.core.models.cache import get_model_cache
+
     _model_cache = get_model_cache(max_models=2, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
 except ImportError:
@@ -92,7 +93,10 @@ def _cache_realesrgan_model(model_name: str, scale: int, device: str, upsampler)
         except Exception as e:
             logger.warning(f"Error evicting RealESRGAN model from cache: {e}")
 
-    logger.debug(f"Cached RealESRGAN model: {cache_key} (cache size: {len(_REALESRGAN_MODEL_CACHE)})")
+    logger.debug(
+        f"Cached RealESRGAN model: {cache_key} (cache size: {len(_REALESRGAN_MODEL_CACHE)})"
+    )
+
 
 try:
     from basicsr.archs.rrdbnet_arch import RRDBNet
@@ -162,9 +166,13 @@ class RealESRGANEngine(EngineProtocol):
         """Load model with caching support."""
         # Check cache first
         if self.enable_caching:
-            cached_upsampler = _get_cached_realesrgan_model(self.model_name, self.scale, self.device)
+            cached_upsampler = _get_cached_realesrgan_model(
+                self.model_name, self.scale, self.device
+            )
             if cached_upsampler is not None:
-                logger.debug(f"Using cached RealESRGAN model: {self.model_name} (scale: {self.scale}x)")
+                logger.debug(
+                    f"Using cached RealESRGAN model: {self.model_name} (scale: {self.scale}x)"
+                )
                 self.upsampler = cached_upsampler
                 self._initialized = True
                 return True
@@ -187,9 +195,7 @@ class RealESRGANEngine(EngineProtocol):
             # Determine model architecture
             model_options = self.get_model_options()
             default_model = "RealESRGAN_x4plus"
-            model_info = model_options.get(
-                self.model_name, model_options.get(default_model)
-            )
+            model_info = model_options.get(self.model_name, model_options.get(default_model))
             if not model_info:
                 logger.error(
                     "Model options not available - realesrgan may not be properly installed"
@@ -325,7 +331,7 @@ class RealESRGANEngine(EngineProtocol):
         images: list[str | Path | Image.Image],
         output_dir: str | Path | None = None,
         batch_size: int = 2,
-        **kwargs
+        **kwargs,
     ) -> list[Image.Image | None]:
         """
         Upscale multiple images in batch with optimized processing.

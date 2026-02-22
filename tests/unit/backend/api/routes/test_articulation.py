@@ -3,6 +3,7 @@ Unit Tests for Articulation API Route
 Tests articulation control endpoints comprehensively, including PitchTracker integration.
 Enhanced to test Worker 1's PitchTracker integration (TASK-038).
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -297,9 +298,7 @@ class TestArticulationAnalyzeEndpoint:
         data = response.json()
         assert "issues" in data
         # Should detect pitch instability
-        pitch_issues = [
-            i for i in data["issues"] if i.get("type") == "pitch_instability"
-        ]
+        pitch_issues = [i for i in data["issues"] if i.get("type") == "pitch_instability"]
         assert len(pitch_issues) > 0, "Should detect pitch instability"
 
     @patch("backend.api.routes.articulation._get_audio_path")
@@ -429,9 +428,7 @@ class TestArticulationAnalyzeEndpoint:
         mock_get_path.return_value = "/test/audio.wav"
 
         # Mock ImportError for librosa
-        with patch(
-            "builtins.__import__", side_effect=ImportError("No module named 'librosa'")
-        ):
+        with patch("builtins.__import__", side_effect=ImportError("No module named 'librosa'")):
             request_data = {"audio_id": "test-audio-123"}
             response = client.post("/api/articulation/analyze", json=request_data)
             assert response.status_code == 503
@@ -570,9 +567,7 @@ class TestArticulationEdgeCases:
                 data = response.json()
                 assert "issues" in data
                 # Should have clipping issues
-                clipping_issues = [
-                    i for i in data["issues"] if i.get("type") == "clipping"
-                ]
+                clipping_issues = [i for i in data["issues"] if i.get("type") == "clipping"]
                 assert len(clipping_issues) > 0
 
     def test_analyze_missing_audio_id(self):

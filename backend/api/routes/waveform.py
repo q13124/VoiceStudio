@@ -101,9 +101,7 @@ async def update_waveform_config(audio_id: str, config: WaveformConfig):
 
 
 @router.get("/data/{audio_id}", response_model=WaveformData)
-@cache_response(
-    ttl=300
-)  # Cache for 5 minutes (waveform data is static for a given audio file)
+@cache_response(ttl=300)  # Cache for 5 minutes (waveform data is static for a given audio file)
 async def get_waveform_data(
     audio_id: str,
     zoom_level: float | None = None,
@@ -188,9 +186,7 @@ async def get_waveform_data(
         ]
 
         # Calculate RMS and peak values per channel
-        rms_values = [
-            float(np.sqrt(np.mean(audio[:, ch] ** 2))) for ch in range(channels)
-        ]
+        rms_values = [float(np.sqrt(np.mean(audio[:, ch] ** 2))) for ch in range(channels)]
         peak_values = [float(np.max(np.abs(audio[:, ch]))) for ch in range(channels)]
 
         # Calculate zero crossings per channel
@@ -223,9 +219,7 @@ async def get_waveform_data(
 
 
 @router.get("/analysis/{audio_id}", response_model=WaveformAnalysis)
-@cache_response(
-    ttl=300
-)  # Cache for 5 minutes (analysis results are static for a given audio file)
+@cache_response(ttl=300)  # Cache for 5 minutes (analysis results are static for a given audio file)
 async def analyze_waveform(audio_id: str):
     """Analyze waveform and return metrics."""
     import numpy as np
@@ -413,9 +407,7 @@ async def compare_waveforms(audio_id_1: str, audio_id_2: str):
         # Phase difference (simplified - difference in zero crossings)
         zc_1 = np.sum(np.diff(np.signbit(audio_1)))
         zc_2 = np.sum(np.diff(np.signbit(audio_2)))
-        phase_difference = (
-            abs(zc_1 - zc_2) / max(zc_1, zc_2, 1) if max(zc_1, zc_2) > 0 else 0.0
-        )
+        phase_difference = abs(zc_1 - zc_2) / max(zc_1, zc_2, 1) if max(zc_1, zc_2) > 0 else 0.0
 
         return {
             "similarity": float(similarity),

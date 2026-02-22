@@ -168,10 +168,7 @@ class ScanResult:
 
         min_index = severity_order.index(min_severity) if min_severity in severity_order else 0
 
-        return [
-            v for v in self.vulnerabilities
-            if v.severity in severity_order[min_index:]
-        ]
+        return [v for v in self.vulnerabilities if v.severity in severity_order[min_index:]]
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -212,10 +209,7 @@ class ScanResult:
             error=data.get("error"),
             packages_scanned=data.get("packages_scanned", 0),
             scan_duration_ms=data.get("scan_duration_ms", 0),
-            vulnerabilities=[
-                Vulnerability.from_dict(v)
-                for v in data.get("vulnerabilities", [])
-            ],
+            vulnerabilities=[Vulnerability.from_dict(v) for v in data.get("vulnerabilities", [])],
         )
 
 
@@ -406,16 +400,22 @@ class VulnerabilityScanner:
                         packages_scanned += 1
                         vulns = dep.get("vulns", [])
                         for vuln in vulns:
-                            vulnerabilities.append(Vulnerability(
-                                id=vuln.get("id", ""),
-                                package=dep.get("name", ""),
-                                installed_version=dep.get("version", ""),
-                                fixed_version=vuln.get("fix_versions", [None])[0] if vuln.get("fix_versions") else None,
-                                severity=Severity.from_string(vuln.get("severity", "unknown")),
-                                title=vuln.get("id", ""),  # pip-audit doesn't provide titles
-                                description=vuln.get("description", ""),
-                                aliases=vuln.get("aliases", []),
-                            ))
+                            vulnerabilities.append(
+                                Vulnerability(
+                                    id=vuln.get("id", ""),
+                                    package=dep.get("name", ""),
+                                    installed_version=dep.get("version", ""),
+                                    fixed_version=(
+                                        vuln.get("fix_versions", [None])[0]
+                                        if vuln.get("fix_versions")
+                                        else None
+                                    ),
+                                    severity=Severity.from_string(vuln.get("severity", "unknown")),
+                                    title=vuln.get("id", ""),  # pip-audit doesn't provide titles
+                                    description=vuln.get("description", ""),
+                                    aliases=vuln.get("aliases", []),
+                                )
+                            )
                 except json.JSONDecodeError as e:
                     logger.warning(f"Failed to parse pip-audit output: {e}")
 
@@ -491,17 +491,23 @@ class VulnerabilityScanner:
                         if cvss_score:
                             severity = Severity.from_cvss(cvss_score)
 
-                        vulnerabilities.append(Vulnerability(
-                            id=vulnerability_data.get("id", ""),
-                            package=pkg_name,
-                            installed_version=artifact.get("version", ""),
-                            fixed_version=vulnerability_data.get("fix", {}).get("versions", [None])[0] if vulnerability_data.get("fix", {}).get("versions") else None,
-                            severity=severity,
-                            title=vulnerability_data.get("id", ""),
-                            description=vulnerability_data.get("description", ""),
-                            cvss_score=cvss_score,
-                            references=vulnerability_data.get("urls", []),
-                        ))
+                        vulnerabilities.append(
+                            Vulnerability(
+                                id=vulnerability_data.get("id", ""),
+                                package=pkg_name,
+                                installed_version=artifact.get("version", ""),
+                                fixed_version=(
+                                    vulnerability_data.get("fix", {}).get("versions", [None])[0]
+                                    if vulnerability_data.get("fix", {}).get("versions")
+                                    else None
+                                ),
+                                severity=severity,
+                                title=vulnerability_data.get("id", ""),
+                                description=vulnerability_data.get("description", ""),
+                                cvss_score=cvss_score,
+                                references=vulnerability_data.get("urls", []),
+                            )
+                        )
                 except json.JSONDecodeError as e:
                     logger.warning(f"Failed to parse grype output: {e}")
 
@@ -578,15 +584,21 @@ class VulnerabilityScanner:
                             seen_packages.add(pkg_name)
                             packages_scanned += 1
 
-                        vulnerabilities.append(Vulnerability(
-                            id=vuln_data.get("id", ""),
-                            package=pkg_name,
-                            installed_version=artifact.get("version", ""),
-                            fixed_version=vuln_data.get("fix", {}).get("versions", [None])[0] if vuln_data.get("fix", {}).get("versions") else None,
-                            severity=Severity.from_string(vuln_data.get("severity", "unknown")),
-                            title=vuln_data.get("id", ""),
-                            description=vuln_data.get("description", ""),
-                        ))
+                        vulnerabilities.append(
+                            Vulnerability(
+                                id=vuln_data.get("id", ""),
+                                package=pkg_name,
+                                installed_version=artifact.get("version", ""),
+                                fixed_version=(
+                                    vuln_data.get("fix", {}).get("versions", [None])[0]
+                                    if vuln_data.get("fix", {}).get("versions")
+                                    else None
+                                ),
+                                severity=Severity.from_string(vuln_data.get("severity", "unknown")),
+                                title=vuln_data.get("id", ""),
+                                description=vuln_data.get("description", ""),
+                            )
+                        )
                 except json.JSONDecodeError as e:
                     logger.warning(f"Failed to parse grype SBOM output: {e}")
 
@@ -665,9 +677,13 @@ class VulnerabilityScanner:
             try:
                 # Run pip-audit on temp requirements
                 cmd = [
-                    sys.executable, "-m", "pip_audit",
-                    "-r", temp_requirements,
-                    "--format", "json",
+                    sys.executable,
+                    "-m",
+                    "pip_audit",
+                    "-r",
+                    temp_requirements,
+                    "--format",
+                    "json",
                 ]
 
                 result = subprocess.run(cmd, capture_output=True, text=True)
@@ -684,16 +700,22 @@ class VulnerabilityScanner:
 
                     for dep in dependencies:
                         for vuln in dep.get("vulns", []):
-                            vulnerabilities.append(Vulnerability(
-                                id=vuln.get("id", ""),
-                                package=dep.get("name", ""),
-                                installed_version=dep.get("version", ""),
-                                fixed_version=vuln.get("fix_versions", [None])[0] if vuln.get("fix_versions") else None,
-                                severity=Severity.from_string(vuln.get("severity", "unknown")),
-                                title=vuln.get("id", ""),
-                                description=vuln.get("description", ""),
-                                aliases=vuln.get("aliases", []),
-                            ))
+                            vulnerabilities.append(
+                                Vulnerability(
+                                    id=vuln.get("id", ""),
+                                    package=dep.get("name", ""),
+                                    installed_version=dep.get("version", ""),
+                                    fixed_version=(
+                                        vuln.get("fix_versions", [None])[0]
+                                        if vuln.get("fix_versions")
+                                        else None
+                                    ),
+                                    severity=Severity.from_string(vuln.get("severity", "unknown")),
+                                    title=vuln.get("id", ""),
+                                    description=vuln.get("description", ""),
+                                    aliases=vuln.get("aliases", []),
+                                )
+                            )
 
                 return ScanResult(
                     scanner=ScannerType.PIP_AUDIT,

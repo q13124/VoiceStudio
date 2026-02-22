@@ -271,9 +271,7 @@ class VenvFamilyManager:
             return True
 
         # Use specified Python or find appropriate version
-        python_exe = python_executable or self._find_python(
-            FAMILY_CONFIGS[family].python_version
-        )
+        python_exe = python_executable or self._find_python(FAMILY_CONFIGS[family].python_version)
 
         logger.info(f"Creating venv {family.value} at {venv_path} using {python_exe}")
 

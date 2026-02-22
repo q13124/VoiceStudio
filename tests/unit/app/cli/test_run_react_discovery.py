@@ -23,9 +23,7 @@ class TestRunReactDiscoveryImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            run_react_discovery is not None
-        ), "Failed to import run_react_discovery module"
+        assert run_react_discovery is not None, "Failed to import run_react_discovery module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""

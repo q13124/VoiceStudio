@@ -30,6 +30,7 @@ SHARED_SCHEMAS_DIR = PROJECT_ROOT / "shared"
 # Pytest Configuration
 # =============================================================================
 
+
 def pytest_configure(config):
     """Configure pytest with custom markers."""
     import logging
@@ -47,12 +48,14 @@ def pytest_configure(config):
 def pytest_unconfigure(config):
     """Re-enable logging after test session."""
     import logging
+
     logging.disable(logging.NOTSET)
 
 
 # =============================================================================
 # Schema Loading
 # =============================================================================
+
 
 @pytest.fixture(scope="session")
 def openapi_schema() -> dict | None:
@@ -118,6 +121,7 @@ def api_components(openapi_schema) -> dict:
 # =============================================================================
 # Validation Helpers
 # =============================================================================
+
 
 class SchemaValidator:
     """Validates data against OpenAPI schema components."""
@@ -192,8 +196,7 @@ class SchemaValidator:
             expected_type = field_schema.get("type")
             if expected_type and not self.validate_type(value, expected_type):
                 errors.append(
-                    f"Field '{field}': expected {expected_type}, "
-                    f"got {type(value).__name__}"
+                    f"Field '{field}': expected {expected_type}, " f"got {type(value).__name__}"
                 )
 
             # Validate array items
@@ -225,9 +228,11 @@ def schema_validator(api_components) -> SchemaValidator:
 # Response Validation Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def validate_response(schema_validator):
     """Fixture to validate API response against schema."""
+
     def _validate(
         response_data: dict,
         schema_name: str,
@@ -237,12 +242,14 @@ def validate_response(schema_validator):
         if not schema:
             return [f"Schema not found: {schema_name}"]
         return schema_validator.validate_object(response_data, schema, strict)
+
     return _validate
 
 
 @pytest.fixture
 def assert_valid_response(validate_response):
     """Fixture to assert response is valid."""
+
     def _assert(
         response_data: dict,
         schema_name: str,
@@ -250,6 +257,7 @@ def assert_valid_response(validate_response):
     ):
         errors = validate_response(response_data, schema_name, strict)
         assert not errors, "Response validation failed:\n" + "\n".join(errors)
+
     return _assert
 
 
@@ -257,9 +265,11 @@ def assert_valid_response(validate_response):
 # Contract Comparison
 # =============================================================================
 
+
 @pytest.fixture
 def compare_endpoints():
     """Compare expected endpoints with actual schema."""
+
     def _compare(
         expected: list[dict],
         api_paths: dict,
@@ -287,12 +297,14 @@ def compare_endpoints():
         result["extra"] = list(actual_set - expected_set)
 
         return result
+
     return _compare
 
 
 # =============================================================================
 # Test Client
 # =============================================================================
+
 
 @pytest.fixture(scope="session")
 def contract_client():

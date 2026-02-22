@@ -65,7 +65,7 @@ class TestBackupInfo:
             backup_path="/path/to/backup",
             created_at=datetime(2025, 1, 15, 10, 30, 0),
         )
-        
+
         assert backup.plugin_id == "test-plugin"
         assert backup.version == "1.0.0"
         assert backup.backup_path == "/path/to/backup"
@@ -81,7 +81,7 @@ class TestBackupInfo:
             created_at=datetime(2025, 1, 15, 10, 30, 0),
             registry_data={"enabled": True, "config": {"key": "value"}},
         )
-        
+
         assert backup.registry_data == {"enabled": True, "config": {"key": "value"}}
 
     def test_to_dict(self) -> None:
@@ -93,9 +93,9 @@ class TestBackupInfo:
             created_at=datetime(2025, 1, 15, 10, 30, 0),
             registry_data={"key": "value"},
         )
-        
+
         result = backup.to_dict()
-        
+
         assert result["plugin_id"] == "test-plugin"
         assert result["version"] == "1.0.0"
         assert result["backup_path"] == "/path/to/backup"
@@ -109,7 +109,7 @@ class TestInstallTransaction:
     def test_default_creation(self) -> None:
         """Test creation with defaults."""
         transaction = InstallTransaction(id="tx-001")
-        
+
         assert transaction.id == "tx-001"
         assert transaction.actions == []
         assert transaction.state == TransactionState.PENDING
@@ -126,7 +126,7 @@ class TestInstallTransaction:
             backup_path="/backup",
             created_at=datetime(2025, 1, 15, 10, 0, 0),
         )
-        
+
         transaction = InstallTransaction(
             id="tx-002",
             actions=[{"action": "install", "plugin_id": "test-plugin"}],
@@ -136,7 +136,7 @@ class TestInstallTransaction:
             completed_at=datetime(2025, 1, 15, 10, 35, 0),
             error=None,
         )
-        
+
         assert transaction.id == "tx-002"
         assert len(transaction.actions) == 1
         assert transaction.state == TransactionState.IN_PROGRESS
@@ -152,9 +152,9 @@ class TestInstallTransaction:
             started_at=datetime(2025, 1, 15, 10, 30, 0),
             completed_at=datetime(2025, 1, 15, 10, 35, 0),
         )
-        
+
         result = transaction.to_dict()
-        
+
         assert result["id"] == "tx-003"
         assert result["state"] == "committed"
         assert result["started_at"] == "2025-01-15T10:30:00"
@@ -174,7 +174,7 @@ class TestPackageVerificationResult:
             checksum_valid=True,
             manifest_valid=True,
         )
-        
+
         assert result.valid is True
         assert result.signature_valid is True
         assert result.sbom_present is True
@@ -193,7 +193,7 @@ class TestPackageVerificationResult:
             errors=["Invalid manifest", "Missing required field"],
             warnings=["Package not signed"],
         )
-        
+
         assert result.valid is False
         assert result.manifest_valid is False
         assert len(result.errors) == 2
@@ -211,9 +211,9 @@ class TestPackageVerificationResult:
             errors=[],
             warnings=["No provenance"],
         )
-        
+
         data = result.to_dict()
-        
+
         assert data["valid"] is True
         assert data["signature_valid"] is True
         assert data["sbom_present"] is True
@@ -229,8 +229,10 @@ class TestAtomicInstallResult:
 
     def test_successful_result(self) -> None:
         """Test a successful installation result."""
-        verification = PackageVerificationResult(valid=True, checksum_valid=True, manifest_valid=True)
-        
+        verification = PackageVerificationResult(
+            valid=True, checksum_valid=True, manifest_valid=True
+        )
+
         result = AtomicInstallResult(
             success=True,
             plugin_id="test-plugin",
@@ -240,7 +242,7 @@ class TestAtomicInstallResult:
             transaction_id="tx-001",
             rollback_available=True,
         )
-        
+
         assert result.success is True
         assert result.plugin_id == "test-plugin"
         assert result.version == "1.0.0"
@@ -258,7 +260,7 @@ class TestAtomicInstallResult:
             version="1.0.0",
             error="Installation failed: insufficient permissions",
         )
-        
+
         assert result.success is False
         assert result.error == "Installation failed: insufficient permissions"
         assert result.install_path is None
@@ -267,8 +269,10 @@ class TestAtomicInstallResult:
 
     def test_to_dict(self) -> None:
         """Test serialization to dictionary."""
-        verification = PackageVerificationResult(valid=True, checksum_valid=True, manifest_valid=True)
-        
+        verification = PackageVerificationResult(
+            valid=True, checksum_valid=True, manifest_valid=True
+        )
+
         result = AtomicInstallResult(
             success=True,
             plugin_id="test-plugin",
@@ -278,9 +282,9 @@ class TestAtomicInstallResult:
             transaction_id="tx-001",
             rollback_available=True,
         )
-        
+
         data = result.to_dict()
-        
+
         assert data["success"] is True
         assert data["plugin_id"] == "test-plugin"
         assert data["version"] == "1.0.0"
@@ -307,7 +311,9 @@ class TestPluginInstallerV2:
         """Create an installer instance."""
         return PluginInstallerV2(plugins_dir=plugins_dir)
 
-    def test_installer_initialization(self, installer: PluginInstallerV2, plugins_dir: Path) -> None:
+    def test_installer_initialization(
+        self, installer: PluginInstallerV2, plugins_dir: Path
+    ) -> None:
         """Test installer initialization."""
         assert installer._plugins_dir == plugins_dir
         assert installer._backups_dir == plugins_dir / ".backups"
@@ -325,7 +331,7 @@ class TestPluginInstallerV2:
     def sample_vspkg(self, tmp_path: Path) -> Path:
         """Create a sample .vspkg package for testing."""
         package_path = tmp_path / "test-plugin-1.0.0.vspkg"
-        
+
         manifest = {
             "id": "test-plugin",
             "name": "Test Plugin",
@@ -334,38 +340,38 @@ class TestPluginInstallerV2:
             "author": "Test Author",
             "permissions": [],
         }
-        
+
         # Create a zip file with manifest and dummy content
         with zipfile.ZipFile(package_path, "w") as zf:
             zf.writestr("manifest.json", json.dumps(manifest))
             zf.writestr("plugin.py", "# Plugin code\nprint('Hello')")
             zf.writestr("README.md", "# Test Plugin")
-        
+
         return package_path
 
     @pytest.fixture
     def signed_vspkg(self, tmp_path: Path) -> Path:
         """Create a signed .vspkg package for testing."""
         package_path = tmp_path / "signed-plugin-1.0.0.vspkg"
-        
+
         manifest = {
             "id": "signed-plugin",
             "name": "Signed Plugin",
             "version": "1.0.0",
             "description": "A signed test plugin",
         }
-        
+
         signature = {"algorithm": "ed25519", "signature": "dummy_signature"}
         sbom = {"bomFormat": "CycloneDX", "specVersion": "1.4"}
         provenance = {"builder": {"id": "local"}, "buildType": "local"}
-        
+
         with zipfile.ZipFile(package_path, "w") as zf:
             zf.writestr("manifest.json", json.dumps(manifest))
             zf.writestr("signature.json", json.dumps(signature))
             zf.writestr("sbom.json", json.dumps(sbom))
             zf.writestr("provenance.json", json.dumps(provenance))
             zf.writestr("plugin.py", "# Plugin code")
-        
+
         return package_path
 
     @pytest.mark.asyncio
@@ -374,7 +380,7 @@ class TestPluginInstallerV2:
     ) -> None:
         """Test extracting manifest from valid package."""
         manifest = await installer._extract_manifest(sample_vspkg)
-        
+
         assert manifest is not None
         assert manifest["id"] == "test-plugin"
         assert manifest["version"] == "1.0.0"
@@ -393,10 +399,10 @@ class TestPluginInstallerV2:
     ) -> None:
         """Test extracting manifest from package without manifest."""
         package_path = tmp_path / "no-manifest.vspkg"
-        
+
         with zipfile.ZipFile(package_path, "w") as zf:
             zf.writestr("plugin.py", "# Plugin code")
-        
+
         manifest = await installer._extract_manifest(package_path)
         assert manifest is None
 
@@ -406,7 +412,7 @@ class TestPluginInstallerV2:
     ) -> None:
         """Test basic package verification."""
         result = await installer._verify_package(sample_vspkg)
-        
+
         assert result.valid is True
         assert result.checksum_valid is True
         assert result.manifest_valid is True
@@ -423,25 +429,24 @@ class TestPluginInstallerV2:
     ) -> None:
         """Test verification of package with security metadata."""
         result = await installer._verify_package(signed_vspkg)
-        
+
         assert result.checksum_valid is True
         assert result.manifest_valid is True
         assert result.sbom_present is True
         assert result.provenance_present is True
 
     @pytest.mark.asyncio
-    async def test_create_backup(
-        self, installer: PluginInstallerV2, plugins_dir: Path
-    ) -> None:
+    async def test_create_backup(self, installer: PluginInstallerV2, plugins_dir: Path) -> None:
         """Test creating a plugin backup."""
         # Create a mock installed plugin
         plugin_dir = plugins_dir / "default" / "test-plugin"
         plugin_dir.mkdir(parents=True)
         (plugin_dir / "plugin.py").write_text("# Plugin code")
         (plugin_dir / "manifest.json").write_text('{"id": "test-plugin", "version": "1.0.0"}')
-        
+
         # Register the plugin
         from backend.plugins.gallery.models import InstalledPlugin
+
         installer._installed["test-plugin"] = InstalledPlugin(
             id="test-plugin",
             version="1.0.0",
@@ -450,10 +455,10 @@ class TestPluginInstallerV2:
             state="enabled",
             config={},
         )
-        
+
         # _create_backup takes only plugin_id (version is read from installed plugin)
         backup = await installer._create_backup("test-plugin")
-        
+
         assert backup is not None
         assert backup.plugin_id == "test-plugin"
         assert backup.version == "1.0.0"
@@ -465,13 +470,13 @@ class TestPluginInstallerV2:
     ) -> None:
         """Test that backup directory and files exist after backup creation."""
         from backend.plugins.gallery.models import InstalledPlugin
-        
+
         # Create a mock installed plugin
         plugin_dir = plugins_dir / "default" / "test-plugin"
         plugin_dir.mkdir(parents=True)
         (plugin_dir / "plugin.py").write_text("# Original code")
         (plugin_dir / "manifest.json").write_text('{"id": "test-plugin", "version": "1.0.0"}')
-        
+
         # Register the plugin
         installer._installed["test-plugin"] = InstalledPlugin(
             id="test-plugin",
@@ -481,11 +486,11 @@ class TestPluginInstallerV2:
             state="enabled",
             config={},
         )
-        
+
         # Create backup (takes only plugin_id)
         backup = await installer._create_backup("test-plugin")
         assert backup is not None
-        
+
         # Verify backup path exists and has content
         backup_path = Path(backup.backup_path)
         assert backup_path.exists()
@@ -498,13 +503,13 @@ class TestPluginInstallerV2:
     ) -> None:
         """Test successful installation from .vspkg."""
         result = await installer.install_from_vspkg(sample_vspkg)
-        
+
         assert result.success is True
         assert result.plugin_id == "test-plugin"
         assert result.version == "1.0.0"
         assert result.install_path is not None
         assert result.transaction_id is not None
-        
+
         # Verify plugin was installed
         assert installer.is_installed("test-plugin")
 
@@ -514,7 +519,7 @@ class TestPluginInstallerV2:
     ) -> None:
         """Test installation without verification."""
         result = await installer.install_from_vspkg(sample_vspkg, verify=False)
-        
+
         assert result.success is True
         assert result.verification is None
 
@@ -526,9 +531,9 @@ class TestPluginInstallerV2:
         # Create invalid package (not a zip)
         invalid_pkg = tmp_path / "invalid.vspkg"
         invalid_pkg.write_text("not a zip file")
-        
+
         result = await installer.install_from_vspkg(invalid_pkg)
-        
+
         assert result.success is False
         assert result.error is not None
 
@@ -540,21 +545,19 @@ class TestPluginInstallerV2:
         # First install
         install_result = await installer.install_from_vspkg(sample_vspkg)
         assert install_result.success is True
-        
+
         # Then uninstall
         result = await installer.uninstall_plugin("test-plugin")
-        
+
         assert result.success is True
         assert result.rollback_available is True
         assert not installer.is_installed("test-plugin")
 
     @pytest.mark.asyncio
-    async def test_uninstall_nonexistent_plugin(
-        self, installer: PluginInstallerV2
-    ) -> None:
+    async def test_uninstall_nonexistent_plugin(self, installer: PluginInstallerV2) -> None:
         """Test uninstalling a plugin that doesn't exist."""
         result = await installer.uninstall_plugin("nonexistent-plugin")
-        
+
         assert result.success is False
         assert "not installed" in result.error.lower()
 
@@ -566,14 +569,14 @@ class TestPluginInstallerV2:
         # Install and uninstall
         install_result = await installer.install_from_vspkg(sample_vspkg)
         assert install_result.success is True
-        
+
         uninstall_result = await installer.uninstall_plugin("test-plugin")
         assert uninstall_result.success is True
         assert not installer.is_installed("test-plugin")
-        
+
         # Rollback
         rollback_result = await installer.rollback_plugin("test-plugin")
-        
+
         assert rollback_result.success is True
         assert installer.is_installed("test-plugin")
 
@@ -586,23 +589,23 @@ class TestPluginInstallerV2:
         install_result = await installer.install_from_vspkg(sample_vspkg)
         assert install_result.success is True
         assert installer.get_installed_plugin("test-plugin").version == "1.0.0"
-        
+
         # Create v2.0.0 package
         new_pkg = tmp_path / "test-plugin-2.0.0.vspkg"
         manifest = {"id": "test-plugin", "version": "2.0.0", "name": "Test Plugin"}
-        
+
         with zipfile.ZipFile(new_pkg, "w") as zf:
             zf.writestr("manifest.json", json.dumps(manifest))
             zf.writestr("plugin.py", "# v2.0.0")
-        
+
         # Update by re-installing with new package
         # This is the atomic install flow - existing plugin gets backed up and replaced
         result = await installer.install_from_vspkg(new_pkg)
-        
+
         assert result.success is True
         assert result.version == "2.0.0"
         assert result.rollback_available is True
-        
+
         # Verify the update
         plugin = installer.get_installed_plugin("test-plugin")
         assert plugin is not None
@@ -614,9 +617,9 @@ class TestPluginInstallerV2:
     ) -> None:
         """Test transaction creation and tracking."""
         result = await installer.install_from_vspkg(sample_vspkg)
-        
+
         assert result.transaction_id is not None
-        
+
         # Verify transaction was recorded
         transaction = installer._active_transactions.get(result.transaction_id)
         assert transaction is not None
@@ -627,10 +630,10 @@ class TestPluginInstallerV2:
         """Test listing installed plugins."""
         # Initially empty
         assert len(installer.get_installed_plugins()) == 0
-        
+
         # Install a plugin
         await installer.install_from_vspkg(sample_vspkg)
-        
+
         # Should have one
         installed = installer.get_installed_plugins()
         assert len(installed) == 1
@@ -641,10 +644,10 @@ class TestPluginInstallerV2:
         """Test getting a specific installed plugin."""
         # Not installed yet
         assert installer.get_installed_plugin("test-plugin") is None
-        
+
         # Install
         await installer.install_from_vspkg(sample_vspkg)
-        
+
         # Should be available
         plugin = installer.get_installed_plugin("test-plugin")
         assert plugin is not None
@@ -659,15 +662,16 @@ class TestModuleLevelFunctions:
     def reset_singleton(self) -> None:
         """Reset the singleton before each test."""
         import backend.plugins.gallery.installer_v2 as module
+
         module._installer_v2 = None
 
     def test_get_installer_v2(self) -> None:
         """Test getting an installer instance."""
         installer = get_installer_v2()
-        
+
         assert installer is not None
         assert isinstance(installer, PluginInstallerV2)
-        
+
         # Should return same instance (singleton)
         installer2 = get_installer_v2()
         assert installer is installer2
@@ -688,32 +692,30 @@ class TestProgressReporting:
         """Create a sample .vspkg package."""
         package_path = tmp_path / "progress-test-1.0.0.vspkg"
         manifest = {"id": "progress-test", "version": "1.0.0", "name": "Progress Test"}
-        
+
         with zipfile.ZipFile(package_path, "w") as zf:
             zf.writestr("manifest.json", json.dumps(manifest))
             zf.writestr("plugin.py", "# Plugin")
-        
+
         return package_path
 
     @pytest.mark.asyncio
-    async def test_progress_callback_called(
-        self, plugins_dir: Path, sample_vspkg: Path
-    ) -> None:
+    async def test_progress_callback_called(self, plugins_dir: Path, sample_vspkg: Path) -> None:
         """Test that progress callback is called during installation."""
         from backend.plugins.gallery.models import InstallPhase, InstallProgress
-        
+
         progress_reports: list[InstallProgress] = []
-        
+
         def on_progress(progress: InstallProgress) -> None:
             progress_reports.append(progress)
-        
+
         installer = PluginInstallerV2(plugins_dir=plugins_dir)
-        
+
         result = await installer.install_from_vspkg(sample_vspkg, progress_callback=on_progress)
-        
+
         assert result.success is True
         assert len(progress_reports) > 0
-        
+
         # Verify we have progress for key phases
         phases = [p.phase for p in progress_reports]
         assert InstallPhase.VERIFYING in phases

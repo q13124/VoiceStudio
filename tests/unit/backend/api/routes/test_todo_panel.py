@@ -348,9 +348,10 @@ class TestTodoEndpoints:
             updated_at=now,
         )
 
-        with patch("backend.api.routes.todo_panel._load_todo_from_db") as mock_load, patch(
-            "backend.api.routes.todo_panel._delete_todo_from_db"
-        ) as mock_delete:
+        with (
+            patch("backend.api.routes.todo_panel._load_todo_from_db") as mock_load,
+            patch("backend.api.routes.todo_panel._delete_todo_from_db") as mock_delete,
+        ):
             mock_load.return_value = mock_todo
             mock_delete.return_value = True
 

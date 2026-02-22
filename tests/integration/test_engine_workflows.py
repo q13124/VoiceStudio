@@ -46,10 +46,7 @@ class TestEngineWorkflows:
             # Synthesize
             text = "Hello, this is a test of the XTTS engine."
             audio = engine.synthesize(
-                text=text,
-                speaker_wav=reference_audio,
-                sample_rate=24000,
-                language="en"
+                text=text, speaker_wav=reference_audio, sample_rate=24000, language="en"
             )
 
             assert audio is not None, "Synthesis returned None"
@@ -67,6 +64,7 @@ class TestEngineWorkflows:
         """Test engine lifecycle workflow."""
         try:
             from app.core.runtime.engine_lifecycle import get_lifecycle_manager
+
             # Prefer EnhancedRuntimeEngine, fallback to RuntimeEngine
             with contextlib.suppress(ImportError):
                 pass
@@ -116,21 +114,17 @@ class TestEngineWorkflows:
             reference_audio = generate_test_audio(duration_seconds=2.0, sample_rate=24000)
 
             # Batch synthesis
-            texts = [
-                "First sentence.",
-                "Second sentence.",
-                "Third sentence."
-            ]
+            texts = ["First sentence.", "Second sentence.", "Third sentence."]
 
             results = engine.batch_synthesize(
-                texts=texts,
-                speaker_wav=reference_audio,
-                sample_rate=24000
+                texts=texts, speaker_wav=reference_audio, sample_rate=24000
             )
 
             assert results is not None, "Batch synthesis returned None"
             assert len(results) == len(texts), "Batch synthesis returned wrong number of results"
-            assert all(isinstance(audio, np.ndarray) for audio in results), "Batch synthesis returned wrong types"
+            assert all(
+                isinstance(audio, np.ndarray) for audio in results
+            ), "Batch synthesis returned wrong types"
 
             engine.cleanup()
 
@@ -157,7 +151,7 @@ class TestEngineWorkflows:
                 initialize_with_retry,
                 max_attempts=3,
                 strategy=RetryStrategy.EXPONENTIAL,
-                initial_delay=0.1
+                initial_delay=0.1,
             )
 
             assert isinstance(result, bool), "Retry returned wrong type"
@@ -167,4 +161,3 @@ class TestEngineWorkflows:
 
         except ImportError:
             pytest.skip("Required modules not available")
-

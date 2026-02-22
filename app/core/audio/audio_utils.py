@@ -191,6 +191,7 @@ except ImportError:
 # Default paths - GAP-PY-002: Use centralized path_config when available
 try:
     from backend.config.path_config import get_path
+
     DEFAULT_TEMP_DIR = str(get_path("temp"))
     DEFAULT_OUTPUT_DIR = str(get_path("output"))
 except ImportError:
@@ -1317,9 +1318,7 @@ def analyze_audio_wavelets(
     mid_freq_energy = (
         sum(detail_energies[2:4])
         if len(detail_energies) >= 4
-        else sum(detail_energies[2:])
-        if len(detail_energies) > 2
-        else 0.0
+        else sum(detail_energies[2:]) if len(detail_energies) > 2 else 0.0
     )
     # Low-frequency content (approximation)
     low_freq_energy = approximation_energy
@@ -1540,9 +1539,7 @@ def match_voice_profile(
     ref_norm = np.linalg.norm(ref_mfcc)
     target_norm = np.linalg.norm(target_mfcc)
     if ref_norm > 0 and target_norm > 0:
-        mfcc_cosine_similarity = float(
-            np.dot(ref_mfcc, target_mfcc) / (ref_norm * target_norm)
-        )
+        mfcc_cosine_similarity = float(np.dot(ref_mfcc, target_mfcc) / (ref_norm * target_norm))
         # Clamp to [0, 1] range (cosine can be negative)
         mfcc_cosine_similarity = max(0.0, mfcc_cosine_similarity)
     else:
@@ -1552,7 +1549,9 @@ def match_voice_profile(
     ref_centroid = ref_chars.get("spectral_centroid", 0)
     target_centroid = target_chars.get("spectral_centroid", 0)
     if ref_centroid > 0 and target_centroid > 0:
-        spectral_similarity = min(ref_centroid, target_centroid) / max(ref_centroid, target_centroid)
+        spectral_similarity = min(ref_centroid, target_centroid) / max(
+            ref_centroid, target_centroid
+        )
     else:
         spectral_similarity = 0.0
 

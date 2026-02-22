@@ -201,10 +201,7 @@ async def get_tags(
                 t
                 for t in tags
                 if search_lower in t.get("name", "").lower()
-                or (
-                    t.get("description")
-                    and search_lower in t.get("description", "").lower()
-                )
+                or (t.get("description") and search_lower in t.get("description", "").lower())
             ]
 
         # Sort by usage count (descending), then by name
@@ -263,11 +260,7 @@ async def create_tag(request: TagCreateRequest):
 
     # Check if tag name already exists (case-insensitive)
     existing = next(
-        (
-            t
-            for t in _tags.values()
-            if t.get("name", "").lower() == request.name.lower()
-        ),
+        (t for t in _tags.values() if t.get("name", "").lower() == request.name.lower()),
         None,
     )
     if existing:
@@ -325,9 +318,7 @@ async def update_tag(tag_id: str, request: TagUpdateRequest):
     if tag_id not in _tags:
         raise HTTPException(
             status_code=404,
-            detail=(
-                f"Tag '{tag_id}' not found. " "Please check the tag ID and try again."
-            ),
+            detail=(f"Tag '{tag_id}' not found. " "Please check the tag ID and try again."),
         )
 
     tag = _tags[tag_id].copy()
@@ -339,18 +330,14 @@ async def update_tag(tag_id: str, request: TagUpdateRequest):
             (
                 t
                 for t in _tags.values()
-                if t.get("id") != tag_id
-                and t.get("name", "").lower() == request.name.lower()
+                if t.get("id") != tag_id and t.get("name", "").lower() == request.name.lower()
             ),
             None,
         )
         if existing:
             raise HTTPException(
                 status_code=409,
-                detail=(
-                    f"Tag '{request.name}' already exists. "
-                    "Please use a different name."
-                ),
+                detail=(f"Tag '{request.name}' already exists. " "Please use a different name."),
             )
 
     if request.name is not None:
@@ -383,9 +370,7 @@ async def delete_tag(tag_id: str):
     if tag_id not in _tags:
         raise HTTPException(
             status_code=404,
-            detail=(
-                f"Tag '{tag_id}' not found. " "Please check the tag ID and try again."
-            ),
+            detail=(f"Tag '{tag_id}' not found. " "Please check the tag ID and try again."),
         )
 
     try:

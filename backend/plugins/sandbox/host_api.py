@@ -189,8 +189,7 @@ class DefaultAudioService:
         params: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         logger.info(
-            f"DefaultAudioService.process_audio: op={operation}, "
-            f"data_len={len(audio_data)}"
+            f"DefaultAudioService.process_audio: op={operation}, " f"data_len={len(audio_data)}"
         )
         return {
             "status": "processed",
@@ -227,8 +226,7 @@ class DefaultUIService:
     ) -> Dict[str, Any]:
         dialog_id = str(uuid.uuid4())
         logger.info(
-            f"DefaultUIService.show_dialog: {title} (type={dialog_type}, "
-            f"from {source_plugin})"
+            f"DefaultUIService.show_dialog: {title} (type={dialog_type}, " f"from {source_plugin})"
         )
         return {
             "shown": True,
@@ -305,18 +303,12 @@ class ServiceLocator:
     storage_manager: Optional[StorageManager] = None
 
     # Default instances (lazy-initialized)
-    _default_audio: Optional[DefaultAudioService] = field(
-        default=None, repr=False, init=False
-    )
-    _default_ui: Optional[DefaultUIService] = field(
-        default=None, repr=False, init=False
-    )
+    _default_audio: Optional[DefaultAudioService] = field(default=None, repr=False, init=False)
+    _default_ui: Optional[DefaultUIService] = field(default=None, repr=False, init=False)
     _default_settings: Optional[DefaultSettingsService] = field(
         default=None, repr=False, init=False
     )
-    _default_engine: Optional[DefaultEngineService] = field(
-        default=None, repr=False, init=False
-    )
+    _default_engine: Optional[DefaultEngineService] = field(default=None, repr=False, init=False)
 
     def get_audio(self) -> IAudioService:
         """Get audio service (injected or default)."""
@@ -585,9 +577,7 @@ class AudioAPIHandler(HostAPIHandler):
             params=params,
         )
 
-        logger.info(
-            f"Audio process '{operation}' completed for plugin {self.context.plugin_id}"
-        )
+        logger.info(f"Audio process '{operation}' completed for plugin {self.context.plugin_id}")
         return result
 
 
@@ -627,9 +617,7 @@ class UIAPIHandler(HostAPIHandler):
             source_plugin=self.context.plugin_id,
         )
 
-        logger.debug(
-            f"UI notification from plugin {self.context.plugin_id}: [{level}] {title}"
-        )
+        logger.debug(f"UI notification from plugin {self.context.plugin_id}: [{level}] {title}")
         return result
 
     async def show_dialog(
@@ -665,9 +653,7 @@ class UIAPIHandler(HostAPIHandler):
             source_plugin=self.context.plugin_id,
         )
 
-        logger.debug(
-            f"UI panel update from plugin {self.context.plugin_id}: {panel_id}"
-        )
+        logger.debug(f"UI panel update from plugin {self.context.plugin_id}: {panel_id}")
         return result
 
 
@@ -752,9 +738,7 @@ class StorageAPIHandler(HostAPIHandler):
 
     async def delete(self, key: str) -> Dict[str, Any]:
         """Delete a value from plugin storage."""
-        self.context.require_permission(
-            "filesystem.write", audit_method="storage.delete"
-        )
+        self.context.require_permission("filesystem.write", audit_method="storage.delete")
 
         storage = self._get_storage()
 
@@ -781,6 +765,7 @@ class StorageAPIHandler(HostAPIHandler):
 
 class ResourceError(Exception):
     """Exception raised when a resource limit is exceeded."""
+
     pass
 
 
@@ -809,9 +794,7 @@ class SettingsAPIHandler(HostAPIHandler):
         # Plugins can read their own settings without permission
         # Reading host settings requires permission
         if not key.startswith(prefix):
-            self.context.require_permission(
-                "settings.read", audit_method="settings.get"
-            )
+            self.context.require_permission("settings.read", audit_method="settings.get")
 
         result = await settings_svc.get_setting(key)
         logger.debug(f"Settings get from plugin {self.context.plugin_id}: {key}")
@@ -857,9 +840,7 @@ class EngineAPIHandler(HostAPIHandler):
         params: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Invoke a method on another engine."""
-        self.context.require_permission(
-            "host_api.engine.invoke", audit_method="engine.invoke"
-        )
+        self.context.require_permission("host_api.engine.invoke", audit_method="engine.invoke")
 
         # Check API-specific permissions
         host_api_perms = self.context.permissions.get("host_api", {})
@@ -878,9 +859,7 @@ class EngineAPIHandler(HostAPIHandler):
 
         if allowed_apis and api_path not in allowed_apis:
             # If allowed_apis is specified, only those are permitted
-            if not any(
-                api_path.startswith(a.rstrip("*")) for a in allowed_apis if "*" in a
-            ):
+            if not any(api_path.startswith(a.rstrip("*")) for a in allowed_apis if "*" in a):
                 if api_path not in allowed_apis:
                     raise PermissionError(f"API not in allowed list: {api_path}")
 
@@ -896,10 +875,7 @@ class EngineAPIHandler(HostAPIHandler):
             params=params,
         )
 
-        logger.info(
-            f"Engine invoke from plugin {self.context.plugin_id}: "
-            f"{engine_id}.{method}"
-        )
+        logger.info(f"Engine invoke from plugin {self.context.plugin_id}: " f"{engine_id}.{method}")
         return {
             "invoked": True,
             "engine_id": engine_id,

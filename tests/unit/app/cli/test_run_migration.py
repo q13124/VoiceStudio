@@ -23,9 +23,7 @@ class TestRunMigrationImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            run_migration is not None
-        ), "Failed to import run_migration module"
+        assert run_migration is not None, "Failed to import run_migration module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -35,4 +33,3 @@ class TestRunMigrationImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

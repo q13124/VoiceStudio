@@ -15,6 +15,7 @@ import pytest
 try:
     import jsonschema
     from jsonschema import ValidationError, validate
+
     HAS_JSONSCHEMA = True
 except ImportError:
     HAS_JSONSCHEMA = False

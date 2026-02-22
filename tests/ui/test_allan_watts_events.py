@@ -49,6 +49,7 @@ pytestmark = [
 # Fixtures
 # =============================================================================
 
+
 @pytest.fixture(scope="module")
 def tracer():
     """Create a workflow tracer for event tests."""
@@ -87,6 +88,7 @@ def navigate_to_panel(driver, nav_id: str, root_id: str, tracer, timeout: float 
 # =============================================================================
 # Event Infrastructure Tests
 # =============================================================================
+
 
 class TestEventInfrastructure:
     """Test event system infrastructure."""
@@ -132,6 +134,7 @@ class TestEventInfrastructure:
 # Library to Panel Events
 # =============================================================================
 
+
 class TestLibraryEvents:
     """Test events originating from Library panel."""
 
@@ -151,15 +154,17 @@ class TestLibraryEvents:
                 "source": event_def.get("source"),
                 "targets": event_def.get("targets"),
                 "expected_payload": event_def.get("payload"),
-                "description": "User selects file in Library for synthesis"
-            }
+                "description": "User selects file in Library for synthesis",
+            },
         )
 
         # Simulate workflow: Navigate Library -> select file -> send to synthesis
         library_nav = PANEL_NAVIGATION.get("Library", {})
 
         try:
-            if navigate_to_panel(driver, library_nav.get("nav_id", ""), library_nav.get("root_id", ""), tracer):
+            if navigate_to_panel(
+                driver, library_nav.get("nav_id", ""), library_nav.get("root_id", ""), tracer
+            ):
                 tracer.step("Navigated to Library panel")
 
                 # Try to find and interact with file list
@@ -191,8 +196,8 @@ class TestLibraryEvents:
                 "source": event_def.get("source"),
                 "targets": event_def.get("targets"),
                 "expected_payload": event_def.get("payload"),
-                "description": "User selects file as cloning reference"
-            }
+                "description": "User selects file as cloning reference",
+            },
         )
 
         tracer.success("Library to Cloning event documented")
@@ -211,8 +216,8 @@ class TestLibraryEvents:
                 "source": event_def.get("source"),
                 "targets": event_def.get("targets"),
                 "expected_payload": event_def.get("payload"),
-                "description": "User selects file for transcription"
-            }
+                "description": "User selects file for transcription",
+            },
         )
 
         tracer.success("Library to Transcription event documented")
@@ -221,6 +226,7 @@ class TestLibraryEvents:
 # =============================================================================
 # Transcription Events
 # =============================================================================
+
 
 class TestTranscriptionEvents:
     """Test events from Transcription panel."""
@@ -240,8 +246,8 @@ class TestTranscriptionEvents:
                 "source": event_def.get("source"),
                 "targets": event_def.get("targets"),
                 "expected_payload": event_def.get("payload"),
-                "description": "Transcription completed, sent to Timeline"
-            }
+                "description": "Transcription completed, sent to Timeline",
+            },
         )
 
         tracer.end_phase(success=True)
@@ -251,6 +257,7 @@ class TestTranscriptionEvents:
 # =============================================================================
 # Cloning Events
 # =============================================================================
+
 
 class TestCloningEvents:
     """Test events from Voice Cloning panel."""
@@ -270,8 +277,8 @@ class TestCloningEvents:
                 "source": event_def.get("source"),
                 "targets": event_def.get("targets"),
                 "expected_payload": event_def.get("payload"),
-                "description": "Voice clone profile created"
-            }
+                "description": "Voice clone profile created",
+            },
         )
 
         tracer.end_phase(success=True)
@@ -281,6 +288,7 @@ class TestCloningEvents:
 # =============================================================================
 # Synthesis Events
 # =============================================================================
+
 
 class TestSynthesisEvents:
     """Test events from Voice Synthesis panel."""
@@ -300,8 +308,8 @@ class TestSynthesisEvents:
                 "source": event_def.get("source"),
                 "targets": event_def.get("targets"),
                 "expected_payload": event_def.get("payload"),
-                "description": "Synthesis completed, audio added to Library"
-            }
+                "description": "Synthesis completed, audio added to Library",
+            },
         )
 
         tracer.end_phase(success=True)
@@ -317,8 +325,8 @@ class TestSynthesisEvents:
             target_panel="Timeline",
             payload={
                 "expected_payload": ["audio_path", "start_time", "track"],
-                "description": "Synthesized audio added to Timeline"
-            }
+                "description": "Synthesized audio added to Timeline",
+            },
         )
 
         tracer.success("Synthesis to Timeline event documented")
@@ -327,6 +335,7 @@ class TestSynthesisEvents:
 # =============================================================================
 # Conversion Events
 # =============================================================================
+
 
 class TestConversionEvents:
     """Test events from Audio Conversion panel."""
@@ -346,8 +355,8 @@ class TestConversionEvents:
                 "source": event_def.get("source"),
                 "targets": event_def.get("targets"),
                 "expected_payload": event_def.get("payload"),
-                "description": "Audio conversion completed"
-            }
+                "description": "Audio conversion completed",
+            },
         )
 
         tracer.end_phase(success=True)
@@ -357,6 +366,7 @@ class TestConversionEvents:
 # =============================================================================
 # Event Chain Tests
 # =============================================================================
+
 
 class TestEventChains:
     """Test multi-panel event chains."""
@@ -378,7 +388,7 @@ class TestEventChains:
                 event,
                 source_panel=source,
                 target_panel=target,
-                payload={"chain_step": i + 1, "total_steps": len(chain_steps)}
+                payload={"chain_step": i + 1, "total_steps": len(chain_steps)},
             )
             tracer.step(f"Chain step {i + 1}: {source} -> {target} ({event})")
 
@@ -400,7 +410,7 @@ class TestEventChains:
                 event,
                 source_panel=source,
                 target_panel=target,
-                payload={"chain_step": i + 1, "total_steps": len(chain_steps)}
+                payload={"chain_step": i + 1, "total_steps": len(chain_steps)},
             )
             tracer.step(f"Chain step {i + 1}: {source} -> {target} ({event})")
 
@@ -412,9 +422,19 @@ class TestEventChains:
 
         chain_steps = [
             ("Import", "Library", "FileImported", "Audio file imported"),
-            ("Library", "Transcription", "FileSelectedForTranscription", "File sent to transcription"),
+            (
+                "Library",
+                "Transcription",
+                "FileSelectedForTranscription",
+                "File sent to transcription",
+            ),
             ("Transcription", "Timeline", "TranscriptionCompleted", "Text extracted"),
-            ("Library", "VoiceCloning", "FileSelectedForCloning", "File selected as voice reference"),
+            (
+                "Library",
+                "VoiceCloning",
+                "FileSelectedForCloning",
+                "File selected as voice reference",
+            ),
             ("VoiceCloning", "VoiceSynthesis", "VoiceProfileCreated", "Voice profile created"),
             ("VoiceSynthesis", "Library", "SynthesisCompleted", "New audio synthesized"),
         ]
@@ -424,11 +444,7 @@ class TestEventChains:
                 event,
                 source_panel=source,
                 target_panel=target,
-                payload={
-                    "chain_step": i + 1,
-                    "total_steps": len(chain_steps),
-                    "description": desc
-                }
+                payload={"chain_step": i + 1, "total_steps": len(chain_steps), "description": desc},
             )
 
         tracer.step(f"Full workflow: {len(chain_steps)} steps documented")
@@ -438,6 +454,7 @@ class TestEventChains:
 # =============================================================================
 # Event Timing Tests
 # =============================================================================
+
 
 class TestEventTiming:
     """Test event timing and ordering."""
@@ -481,6 +498,7 @@ class TestEventTiming:
 # Event Error Handling Tests
 # =============================================================================
 
+
 class TestEventErrors:
     """Test event error handling."""
 
@@ -495,8 +513,8 @@ class TestEventErrors:
             target_panel="Library",
             payload={
                 "scenario": "Source panel closed before event completion",
-                "expected_behavior": "Event should be queued or cancelled gracefully"
-            }
+                "expected_behavior": "Event should be queued or cancelled gracefully",
+            },
         )
 
         tracer.end_phase(success=True)
@@ -512,8 +530,8 @@ class TestEventErrors:
             target_panel=None,
             payload={
                 "scenario": "Target panel not open when event fires",
-                "expected_behavior": "Event should be queued until target opens"
-            }
+                "expected_behavior": "Event should be queued until target opens",
+            },
         )
 
         tracer.success("Missing target handling documented")
@@ -528,8 +546,8 @@ class TestEventErrors:
             target_panel="VoiceSynthesis",
             payload={
                 "scenario": "Event payload missing required data",
-                "expected_behavior": "Target should display error or request retry"
-            }
+                "expected_behavior": "Target should display error or request retry",
+            },
         )
 
         tracer.success("Invalid payload handling documented")
@@ -538,6 +556,7 @@ class TestEventErrors:
 # =============================================================================
 # Panel State Synchronization Tests
 # =============================================================================
+
 
 class TestPanelSynchronization:
     """Test panel state synchronization."""
@@ -582,11 +601,14 @@ class TestPanelSynchronization:
 # =============================================================================
 
 if __name__ == "__main__":
-    pytest.main([
-        __file__,
-        "-v",
-        "--tb=short",
-        "-m", "not slow",
-        "--html=.buildlogs/validation/reports/allan_watts_events_report.html",
-        "--self-contained-html",
-    ])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--tb=short",
+            "-m",
+            "not slow",
+            "--html=.buildlogs/validation/reports/allan_watts_events_report.html",
+            "--self-contained-html",
+        ]
+    )

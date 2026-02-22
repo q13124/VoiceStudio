@@ -155,9 +155,7 @@ class MultiCatalogService:
         self._config_path = config_path or (
             Path.home() / ".voicestudio" / "config" / "catalogs.json"
         )
-        self._cache_dir = cache_dir or (
-            Path.home() / ".voicestudio" / "cache" / "catalogs"
-        )
+        self._cache_dir = cache_dir or (Path.home() / ".voicestudio" / "cache" / "catalogs")
         self._cache_dir.mkdir(parents=True, exist_ok=True)
 
         self._config = self._load_config()
@@ -190,9 +188,7 @@ class MultiCatalogService:
         """Save configuration to file."""
         try:
             self._config_path.parent.mkdir(parents=True, exist_ok=True)
-            self._config_path.write_text(
-                json.dumps(self._config.to_dict(), indent=2)
-            )
+            self._config_path.write_text(json.dumps(self._config.to_dict(), indent=2))
         except Exception as e:
             logger.warning(f"Failed to save catalog config: {e}")
 
@@ -234,9 +230,7 @@ class MultiCatalogService:
             True if removed
         """
         original_count = len(self._config.sources)
-        self._config.sources = [
-            s for s in self._config.sources if s.id != source_id
-        ]
+        self._config.sources = [s for s in self._config.sources if s.id != source_id]
 
         if len(self._config.sources) < original_count:
             self._save_config()
@@ -293,9 +287,7 @@ class MultiCatalogService:
         Returns:
             Refreshed catalog or None
         """
-        source = next(
-            (s for s in self._config.sources if s.id == source_id), None
-        )
+        source = next((s for s in self._config.sources if s.id == source_id), None)
         if not source:
             logger.warning(f"Catalog source not found: {source_id}")
             return None
@@ -314,9 +306,7 @@ class MultiCatalogService:
             # Cache the catalog
             await self._cache_catalog(source_id, catalog)
 
-            logger.info(
-                f"Refreshed catalog {source.name}: {len(catalog.plugins)} plugins"
-            )
+            logger.info(f"Refreshed catalog {source.name}: {len(catalog.plugins)} plugins")
             return catalog
 
         except Exception as e:
@@ -342,9 +332,7 @@ class MultiCatalogService:
                 results[source.id] = len(catalog.plugins)
         return results
 
-    async def get_merged_catalog(
-        self, force_refresh: bool = False
-    ) -> PluginCatalog:
+    async def get_merged_catalog(self, force_refresh: bool = False) -> PluginCatalog:
         """
         Get merged catalog from all enabled sources.
 
@@ -400,7 +388,9 @@ class MultiCatalogService:
                         # Keep plugin with newer version
                         existing_ver = merged_plugins[plugin.id].plugin.latest_version
                         new_ver = plugin.latest_version
-                        if new_ver and (not existing_ver or new_ver.release_date > existing_ver.release_date):
+                        if new_ver and (
+                            not existing_ver or new_ver.release_date > existing_ver.release_date
+                        ):
                             merged_plugins[plugin.id].plugin = plugin
                             merged_plugins[plugin.id].source_id = source.id
                 else:
@@ -432,9 +422,7 @@ class MultiCatalogService:
         data = json.loads(catalog_path.read_text())
         return self._parse_catalog_data(data)
 
-    async def _fetch_remote_catalog(
-        self, source: CatalogSource
-    ) -> PluginCatalog:
+    async def _fetch_remote_catalog(self, source: CatalogSource) -> PluginCatalog:
         """Fetch catalog from remote URL."""
         headers = {}
         if source.auth_token:
@@ -460,9 +448,7 @@ class MultiCatalogService:
                         download_url=ver_data.get("download_url", ""),
                         checksum_sha256=ver_data.get("checksum_sha256", ""),
                         size_bytes=ver_data.get("size_bytes", 0),
-                        min_voicestudio_version=ver_data.get(
-                            "min_voicestudio_version", "1.0.0"
-                        ),
+                        min_voicestudio_version=ver_data.get("min_voicestudio_version", "1.0.0"),
                         dependencies=ver_data.get("dependencies", {}),
                         changelog=ver_data.get("changelog", ""),
                     )
@@ -511,9 +497,7 @@ class MultiCatalogService:
             categories=categories,
         )
 
-    async def _cache_catalog(
-        self, source_id: str, catalog: PluginCatalog
-    ) -> None:
+    async def _cache_catalog(self, source_id: str, catalog: PluginCatalog) -> None:
         """Cache catalog to filesystem."""
         try:
             cache_file = self._cache_dir / f"{source_id}.json"
@@ -523,17 +507,14 @@ class MultiCatalogService:
                 "last_updated": catalog.last_updated,
                 "plugins": [p.to_dict() for p in catalog.plugins],
                 "categories": [
-                    {"id": c.id, "name": c.name, "icon": c.icon}
-                    for c in catalog.categories
+                    {"id": c.id, "name": c.name, "icon": c.icon} for c in catalog.categories
                 ],
             }
             cache_file.write_text(json.dumps(cache_data, indent=2))
         except Exception as e:
             logger.warning(f"Failed to cache catalog {source_id}: {e}")
 
-    async def _load_cached_catalog(
-        self, source_id: str
-    ) -> Optional[PluginCatalog]:
+    async def _load_cached_catalog(self, source_id: str) -> Optional[PluginCatalog]:
         """Load catalog from cache."""
         try:
             cache_file = self._cache_dir / f"{source_id}.json"

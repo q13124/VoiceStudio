@@ -97,7 +97,9 @@ class TestAudioConversionService:
         service = AudioConversionService()
         result = await service.convert_to_wav(Path("/nonexistent/file.mp3"))
         assert result.success is False
-        assert result.error is not None and ("not found" in result.error.lower() or "not exist" in result.error.lower())
+        assert result.error is not None and (
+            "not found" in result.error.lower() or "not exist" in result.error.lower()
+        )
 
     @pytest.mark.asyncio
     async def test_convert_to_format_missing_input(self):
@@ -113,7 +115,9 @@ class TestAudioConversionService:
     @pytest.mark.asyncio
     async def test_convert_requires_ffmpeg(self):
         """Test conversion requires FFmpeg to be available."""
-        with patch.object(AudioConversionService, "_get_ffmpeg", side_effect=FileNotFoundError("FFmpeg not found")):
+        with patch.object(
+            AudioConversionService, "_get_ffmpeg", side_effect=FileNotFoundError("FFmpeg not found")
+        ):
             service = AudioConversionService()
             result = await service.convert_to_wav(Path("/some/file.mp3"))
             assert result.success is False
@@ -160,7 +164,9 @@ class TestConversionIntegration:
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             sample_rate = 44100
             duration = 0.5
-            samples = np.sin(2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration)))
+            samples = np.sin(
+                2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration))
+            )
             sf.write(tmp.name, samples, sample_rate)
             yield Path(tmp.name)
             # Cleanup
@@ -171,6 +177,7 @@ class TestConversionIntegration:
     def has_ffmpeg(self):
         """Check if FFmpeg is available."""
         import shutil
+
         if shutil.which("ffmpeg") is None:
             pytest.skip("FFmpeg not available")
         return True

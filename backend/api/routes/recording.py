@@ -155,9 +155,7 @@ async def get_recording_status(recording_id: str):
             raise HTTPException(status_code=404, detail="Recording not found")
 
         recording = _active_recordings[recording_id]
-        duration = (
-            time.time() - recording["start_time"] if recording["is_recording"] else 0.0
-        )
+        duration = time.time() - recording["start_time"] if recording["is_recording"] else 0.0
 
         return RecordingStatusResponse(
             recording_id=recording_id,
@@ -193,9 +191,7 @@ async def append_audio_chunk(
 
         wave_file = recording.get("wave_file")
         if wave_file is None:
-            raise HTTPException(
-                status_code=500, detail="Recording file not initialized"
-            )
+            raise HTTPException(status_code=500, detail="Recording file not initialized")
 
         try:
             # Read audio chunk data
@@ -208,8 +204,7 @@ async def append_audio_chunk(
             recording["chunks_received"] = recording.get("chunks_received", 0) + 1
 
             logger.debug(
-                f"Received chunk {recording['chunks_received']} "
-                f"for recording {recording_id}"
+                f"Received chunk {recording['chunks_received']} " f"for recording {recording_id}"
             )
 
             return {
@@ -258,9 +253,7 @@ async def stop_recording(recording_id: str):
         # Verify file exists and get size
         if not os.path.exists(file_path):
             logger.warning(f"Recording file not found: {file_path}")
-            raise HTTPException(
-                status_code=500, detail="Recording file was not created"
-            )
+            raise HTTPException(status_code=500, detail="Recording file was not created")
 
         file_size = os.path.getsize(file_path)
 

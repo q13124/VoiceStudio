@@ -26,12 +26,8 @@ class TestTextHighlightingRouteImports:
 
     def test_text_highlighting_module_imports(self):
         """Test text_highlighting module can be imported."""
-        assert (
-            text_highlighting is not None
-        ), "Failed to import text_highlighting module"
-        assert hasattr(
-            text_highlighting, "router"
-        ), "text_highlighting module missing router"
+        assert text_highlighting is not None, "Failed to import text_highlighting module"
+        assert hasattr(text_highlighting, "router"), "text_highlighting module missing router"
 
 
 class TestTextHighlightingRouteHandlers:
@@ -40,9 +36,7 @@ class TestTextHighlightingRouteHandlers:
     def test_highlight_text_handler_exists(self):
         """Test highlight_text handler exists."""
         if hasattr(text_highlighting, "highlight_text"):
-            assert callable(
-                text_highlighting.highlight_text
-            ), "highlight_text is not callable"
+            assert callable(text_highlighting.highlight_text), "highlight_text is not callable"
 
 
 class TestTextHighlightingRouter:
@@ -57,12 +51,9 @@ class TestTextHighlightingRouter:
     def test_router_has_routes(self):
         """Test router has registered routes."""
         if hasattr(text_highlighting.router, "routes"):
-            routes = [
-                route.path for route in text_highlighting.router.routes
-            ]
+            routes = [route.path for route in text_highlighting.router.routes]
             assert len(routes) > 0, "Router should have routes registered"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -290,8 +290,7 @@ class BackgroundTaskScheduler:
             cpu_percent = psutil.cpu_percent(interval=0.1)
             if cpu_percent > self._max_cpu_percent:
                 logger.debug(
-                    f"CPU usage too high: {cpu_percent:.1f}% "
-                    f"(max: {self._max_cpu_percent}%)"
+                    f"CPU usage too high: {cpu_percent:.1f}% " f"(max: {self._max_cpu_percent}%)"
                 )
                 return False
 
@@ -342,8 +341,7 @@ class BackgroundTaskScheduler:
             task.error = None
             self._completed_count += 1
             logger.info(
-                f"Task completed: {task.name} (ID: {task.id}, "
-                f"time: {execution_time:.2f}s)"
+                f"Task completed: {task.name} (ID: {task.id}, " f"time: {execution_time:.2f}s)"
             )
 
             # Update next run for recurring tasks
@@ -356,8 +354,7 @@ class BackgroundTaskScheduler:
             execution_time = time.perf_counter() - execution_start
             task.error = str(e)
             logger.error(
-                f"Task failed: {task.name} (ID: {task.id}, "
-                f"time: {execution_time:.2f}s): {e}",
+                f"Task failed: {task.name} (ID: {task.id}, " f"time: {execution_time:.2f}s): {e}",
                 exc_info=True,
             )
 
@@ -366,7 +363,7 @@ class BackgroundTaskScheduler:
                 task.retry_count += 1
                 task.status = TaskStatus.PENDING
                 # Exponential backoff
-                backoff = min(2 ** task.retry_count, 300)  # Max 5 minutes
+                backoff = min(2**task.retry_count, 300)  # Max 5 minutes
                 task.next_run = datetime.now() + timedelta(seconds=backoff)
                 logger.info(
                     f"Retrying task: {task.name} "
@@ -375,10 +372,7 @@ class BackgroundTaskScheduler:
             else:
                 task.status = TaskStatus.FAILED
                 self._failed_count += 1
-                logger.error(
-                    f"Task failed permanently: {task.name} "
-                    f"(ID: {task.id})"
-                )
+                logger.error(f"Task failed permanently: {task.name} " f"(ID: {task.id})")
 
     async def _scheduler_loop(self):
         """Main scheduler loop (enhanced with resource awareness)."""
@@ -397,9 +391,7 @@ class BackgroundTaskScheduler:
                 ]
 
                 # Sort by priority (higher priority first)
-                ready_tasks.sort(
-                    key=lambda t: t.priority.value, reverse=True
-                )
+                ready_tasks.sort(key=lambda t: t.priority.value, reverse=True)
 
                 # Execute ready tasks (respect resource limits)
                 for task in ready_tasks:
@@ -414,8 +406,7 @@ class BackgroundTaskScheduler:
                         # Re-check resources for critical tasks
                         if not self._check_resources():
                             logger.debug(
-                                f"Deferring task {task.name} due to "
-                                f"resource constraints"
+                                f"Deferring task {task.name} due to " f"resource constraints"
                             )
                             continue
 
@@ -425,17 +416,14 @@ class BackgroundTaskScheduler:
 
                     # Clean up completed tasks
                     async_task.add_done_callback(
-                        lambda t, task_id=task.id: self._running_tasks.pop(
-                            task_id, None
-                        )
+                        lambda t, task_id=task.id: self._running_tasks.pop(task_id, None)
                     )
 
                 # Clean up completed/failed one-time tasks
                 to_remove = [
                     task_id
                     for task_id, task in self._tasks.items()
-                    if task.status
-                    in (TaskStatus.COMPLETED, TaskStatus.FAILED)
+                    if task.status in (TaskStatus.COMPLETED, TaskStatus.FAILED)
                     and not task.interval
                 ]
                 for task_id in to_remove:
@@ -534,4 +522,3 @@ def get_scheduler() -> BackgroundTaskScheduler:
     if _scheduler is None:
         _scheduler = BackgroundTaskScheduler()
     return _scheduler
-

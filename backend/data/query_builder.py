@@ -15,6 +15,7 @@ from typing import Any
 
 class QueryType(Enum):
     """Types of SQL queries."""
+
     SELECT = "SELECT"
     INSERT = "INSERT"
     UPDATE = "UPDATE"
@@ -23,6 +24,7 @@ class QueryType(Enum):
 
 class JoinType(Enum):
     """Types of SQL joins."""
+
     INNER = "INNER JOIN"
     LEFT = "LEFT JOIN"
     RIGHT = "RIGHT JOIN"
@@ -34,6 +36,7 @@ class SafeQuery:
     """
     A parameterized query that's safe from SQL injection.
     """
+
     sql: str
     params: tuple[Any, ...]
 
@@ -53,7 +56,7 @@ class QueryBuilder:
     """
 
     # Allowed characters for identifiers (tables, columns)
-    IDENTIFIER_PATTERN = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+    IDENTIFIER_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
     def __init__(self, table: str):
         self._validate_identifier(table)
@@ -80,7 +83,9 @@ class QueryBuilder:
         """Start a SELECT query."""
         self._query_type = QueryType.SELECT
         for col in columns:
-            self._validate_identifier(col.split(".")[-1].split(" ")[0])  # Handle table.column and aliases
+            self._validate_identifier(
+                col.split(".")[-1].split(" ")[0]
+            )  # Handle table.column and aliases
         self._columns = list(columns) if columns else ["*"]
         return self
 
@@ -110,7 +115,20 @@ class QueryBuilder:
         self._validate_identifier(column.split(".")[-1])
 
         # Validate operator
-        allowed_operators = ["=", "!=", "<>", ">", "<", ">=", "<=", "LIKE", "IN", "NOT IN", "IS", "IS NOT"]
+        allowed_operators = [
+            "=",
+            "!=",
+            "<>",
+            ">",
+            "<",
+            ">=",
+            "<=",
+            "LIKE",
+            "IN",
+            "NOT IN",
+            "IS",
+            "IS NOT",
+        ]
         if operator.upper() not in allowed_operators:
             raise ValueError(f"Invalid operator: {operator}")
 
@@ -224,10 +242,7 @@ class QueryBuilder:
 
         # Order by
         if self._order_by:
-            order_parts = [
-                f"{col} {'DESC' if desc else 'ASC'}"
-                for col, desc in self._order_by
-            ]
+            order_parts = [f"{col} {'DESC' if desc else 'ASC'}" for col, desc in self._order_by]
             sql += f" ORDER BY {', '.join(order_parts)}"
 
         # Limit/offset

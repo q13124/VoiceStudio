@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.audio import enhanced_quality_metrics
 except ImportError:
-    pytest.skip(
-        "Could not import enhanced_quality_metrics", allow_module_level=True
-    )
+    pytest.skip("Could not import enhanced_quality_metrics", allow_module_level=True)
 
 
 class TestEnhancedQualityMetricsImports:
@@ -48,4 +46,3 @@ class TestEnhancedQualityMetricsFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

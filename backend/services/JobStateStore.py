@@ -115,4 +115,3 @@ def get_job_state_store(namespace: str, jobs_dir: str | None = None) -> JobState
             store = JobStateStore(namespace=namespace, jobs_dir=jobs_dir)
             _stores[key] = store
         return store
-

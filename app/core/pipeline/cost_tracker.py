@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SessionCostEntry:
     """Cost record for a completed session."""
+
     session_id: str
     provider: str
     total_tokens: int

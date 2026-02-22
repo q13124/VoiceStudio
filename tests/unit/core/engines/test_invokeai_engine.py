@@ -60,9 +60,7 @@ class TestInvokeAIEngineClass:
             )
             required_methods = ["initialize", "cleanup", "generate"]
             for method in required_methods:
-                assert hasattr(
-                    engine, method
-                ), f"InvokeAIEngine missing method: {method}"
+                assert hasattr(engine, method), f"InvokeAIEngine missing method: {method}"
 
     def test_invokeai_engine_has_optimization_features(self):
         """Test InvokeAIEngine has optimization features."""
@@ -78,15 +76,11 @@ class TestInvokeAIEngineClass:
                 pool_maxsize=40,
             )
             # Check for caching support
-            assert hasattr(
-                engine, "enable_cache"
-            ), "InvokeAIEngine should support caching"
+            assert hasattr(engine, "enable_cache"), "InvokeAIEngine should support caching"
             assert engine.enable_cache is True
             assert engine.cache_size == 200
             # Check for batch processing
-            assert hasattr(
-                engine, "batch_size"
-            ), "InvokeAIEngine should support batch processing"
+            assert hasattr(engine, "batch_size"), "InvokeAIEngine should support batch processing"
             assert engine.batch_size >= 8
             # Check for connection pooling
             assert engine.pool_connections >= 20
@@ -264,9 +258,7 @@ class TestInvokeAIEngineBatchProcessing:
         engine.initialize()
 
         prompts = ["prompt1", "prompt2", "prompt3"]
-        with patch(
-            "app.core.engines.invokeai_engine.ThreadPoolExecutor"
-        ) as mock_executor:
+        with patch("app.core.engines.invokeai_engine.ThreadPoolExecutor") as mock_executor:
             mock_executor.return_value.__enter__.return_value.map.return_value = [
                 MagicMock() for _ in prompts
             ]

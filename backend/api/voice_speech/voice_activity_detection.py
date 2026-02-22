@@ -76,9 +76,7 @@ class VoiceActivityDetector:
                     import librosa
 
                     target_sr = 16000
-                    audio = librosa.resample(
-                        audio, orig_sr=sample_rate, target_sr=target_sr
-                    )
+                    audio = librosa.resample(audio, orig_sr=sample_rate, target_sr=target_sr)
                     sample_rate = target_sr
                 except ImportError:
                     logger.warning(
@@ -99,8 +97,7 @@ class VoiceActivityDetector:
 
             # Convert to list of (start, end) tuples
             segments = [
-                (ts["start"] / sample_rate, ts["end"] / sample_rate)
-                for ts in speech_timestamps
+                (ts["start"] / sample_rate, ts["end"] / sample_rate) for ts in speech_timestamps
             ]
 
             return segments

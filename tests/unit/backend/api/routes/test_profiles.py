@@ -2,6 +2,7 @@
 Unit Tests for Profiles API Route
 Tests profile management endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -41,9 +42,7 @@ class TestProfilesRouteImports:
         """Test profiles module can be imported."""
         assert profiles is not None, "Failed to import profiles module"
         assert hasattr(profiles, "router"), "profiles module missing router"
-        assert hasattr(
-            profiles, "VoiceProfile"
-        ), "profiles module missing VoiceProfile model"
+        assert hasattr(profiles, "VoiceProfile"), "profiles module missing VoiceProfile model"
         assert hasattr(
             profiles, "ProfileCreateRequest"
         ), "profiles module missing ProfileCreateRequest model"
@@ -55,9 +54,7 @@ class TestProfilesRouteImports:
         """Test router exists and is configured."""
         assert profiles.router is not None, "Router should exist"
         assert hasattr(profiles.router, "prefix"), "Router should have prefix"
-        assert (
-            profiles.router.prefix == "/api/profiles"
-        ), "Router prefix should be /api/profiles"
+        assert profiles.router.prefix == "/api/profiles", "Router prefix should be /api/profiles"
 
     def test_router_has_routes(self):
         """Test router has registered routes."""
@@ -283,9 +280,7 @@ class TestProfilesHTTPEndpoints:
 
         with patch("os.path.exists", return_value=True):
             with patch("os.path.getsize", return_value=1024):
-                with patch(
-                    "backend.api.routes.profiles._analyze_reference_audio"
-                ) as mock_analyze:
+                with patch("backend.api.routes.profiles._analyze_reference_audio") as mock_analyze:
                     mock_analyze.return_value = {
                         "duration": 5.0,
                         "sample_rate": 22050,
@@ -314,9 +309,7 @@ class TestProfilesHTTPEndpoints:
 
         request_data = {"reference_audio_path": "/path/to/audio.wav"}
 
-        response = client.post(
-            "/api/profiles/nonexistent/preprocess-reference", json=request_data
-        )
+        response = client.post("/api/profiles/nonexistent/preprocess-reference", json=request_data)
         assert response.status_code == 404
 
 

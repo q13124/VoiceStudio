@@ -250,9 +250,7 @@ class TestCrashRecoveryManager:
         assert manager.can_restart
 
     @pytest.mark.asyncio
-    async def test_on_crash_records_event(
-        self, manager: CrashRecoveryManager
-    ) -> None:
+    async def test_on_crash_records_event(self, manager: CrashRecoveryManager) -> None:
         """Should record crash event."""
         # No restart callback, so it won't actually restart
         await manager.on_crash(exit_code=1, error_message="Test crash")
@@ -262,9 +260,7 @@ class TestCrashRecoveryManager:
         assert manager.crash_history[0].exit_code == 1
 
     @pytest.mark.asyncio
-    async def test_on_crash_preserves_state(
-        self, manager: CrashRecoveryManager
-    ) -> None:
+    async def test_on_crash_preserves_state(self, manager: CrashRecoveryManager) -> None:
         """Should preserve state snapshot."""
         state_snapshot = {"user_data": {"key": "value"}}
         await manager.on_crash(state_snapshot=state_snapshot)
@@ -273,9 +269,7 @@ class TestCrashRecoveryManager:
         assert manager.preserved_state.user_data == {"key": "value"}
 
     @pytest.mark.asyncio
-    async def test_on_crash_triggers_restart(
-        self, manager: CrashRecoveryManager
-    ) -> None:
+    async def test_on_crash_triggers_restart(self, manager: CrashRecoveryManager) -> None:
         """Should trigger restart callback."""
         restart_mock = AsyncMock(return_value=True)
         manager.set_restart_callback(restart_mock)
@@ -344,9 +338,7 @@ class TestCrashRecoveryManager:
         assert not manager.can_restart
 
     @pytest.mark.asyncio
-    async def test_preserve_state(
-        self, manager: CrashRecoveryManager
-    ) -> None:
+    async def test_preserve_state(self, manager: CrashRecoveryManager) -> None:
         """Should preserve state."""
         await manager.preserve_state(
             invocation_context={"context": "value"},
@@ -358,9 +350,7 @@ class TestCrashRecoveryManager:
         assert manager.preserved_state.user_data == {"user": "data"}
 
     @pytest.mark.asyncio
-    async def test_restore_state(
-        self, manager: CrashRecoveryManager
-    ) -> None:
+    async def test_restore_state(self, manager: CrashRecoveryManager) -> None:
         """Should restore preserved state."""
         await manager.preserve_state(user_data={"key": "value"})
 
@@ -369,9 +359,7 @@ class TestCrashRecoveryManager:
         assert state.user_data == {"key": "value"}
 
     @pytest.mark.asyncio
-    async def test_clear_state(
-        self, manager: CrashRecoveryManager, tmp_path: Path
-    ) -> None:
+    async def test_clear_state(self, manager: CrashRecoveryManager, tmp_path: Path) -> None:
         """Should clear preserved state."""
         await manager.preserve_state(user_data={"key": "value"})
         await manager.clear_state()
@@ -380,18 +368,14 @@ class TestCrashRecoveryManager:
 
     def test_reset(self, manager: CrashRecoveryManager) -> None:
         """Should reset recovery state."""
-        manager._crash_history = [
-            CrashEvent("test", datetime.now(), 1)
-        ]
+        manager._crash_history = [CrashEvent("test", datetime.now(), 1)]
         manager.reset()
 
         assert manager.crash_count == 0
         assert len(manager.crash_history) == 0
 
     @pytest.mark.asyncio
-    async def test_cancel_pending_restart(
-        self, manager: CrashRecoveryManager
-    ) -> None:
+    async def test_cancel_pending_restart(self, manager: CrashRecoveryManager) -> None:
         """Should cancel pending restart."""
         restart_mock = AsyncMock(return_value=True)
         manager.set_restart_callback(restart_mock)
@@ -414,9 +398,7 @@ class TestCrashRecoveryManager:
         assert "circuit_state" in stats
 
     @pytest.mark.asyncio
-    async def test_state_persistence(
-        self, manager: CrashRecoveryManager, tmp_path: Path
-    ) -> None:
+    async def test_state_persistence(self, manager: CrashRecoveryManager, tmp_path: Path) -> None:
         """Should persist state to disk."""
         await manager.preserve_state(user_data={"key": "value"})
 
@@ -441,9 +423,7 @@ class TestCrashRecoveryManager:
         assert data[0]["exit_code"] == 1
 
     @pytest.mark.asyncio
-    async def test_load_crash_history(
-        self, tmp_path: Path
-    ) -> None:
+    async def test_load_crash_history(self, tmp_path: Path) -> None:
         """Should load crash history from disk."""
         # Create history file
         history_file = tmp_path / "test-plugin_crashes.json"

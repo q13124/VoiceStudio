@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SecretEntry:
     """A secret entry."""
+
     key: str
     value: str
     created_at: datetime
@@ -83,6 +84,7 @@ class SecretsVault:
 
             if self._encryption:
                 from .encryption import EncryptedData
+
                 encrypted = EncryptedData.from_bytes(encrypted_data)
                 decrypted = self._encryption.decrypt(encrypted)
                 data = json.loads(decrypted.decode("utf-8"))
@@ -340,6 +342,7 @@ def get_secrets_vault() -> SecretsVault:
     if _vault is None:
         try:
             from .encryption import get_encryption_service
+
             encryption = get_encryption_service()
         except ImportError:
             encryption = None

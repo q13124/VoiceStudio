@@ -23,9 +23,7 @@ class TestTTSUtilitiesImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            tts_utilities is not None
-        ), "Failed to import tts_utilities module"
+        assert tts_utilities is not None, "Failed to import tts_utilities module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -39,11 +37,8 @@ class TestTTSUtilitiesFunctions:
     def test_preprocess_text_function_exists(self):
         """Test preprocess_text function exists."""
         if hasattr(tts_utilities, "preprocess_text"):
-            assert callable(
-                tts_utilities.preprocess_text
-            ), "preprocess_text should be callable"
+            assert callable(tts_utilities.preprocess_text), "preprocess_text should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

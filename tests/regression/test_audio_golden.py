@@ -67,12 +67,15 @@ def golden_config() -> dict[str, Any]:
 @pytest.fixture
 def tolerances(golden_config: dict[str, Any]) -> dict[str, float]:
     """Get tolerance configuration."""
-    return golden_config.get("tolerances", {
-        "mos": 0.3,
-        "similarity": 0.1,
-        "lufs": 2.0,
-        "snr_db": 3.0,
-    })
+    return golden_config.get(
+        "tolerances",
+        {
+            "mos": 0.3,
+            "similarity": 0.1,
+            "lufs": 2.0,
+            "snr_db": 3.0,
+        },
+    )
 
 
 def get_backend_client():
@@ -201,9 +204,7 @@ class TestGoldenAudio:
         with tempfile.TemporaryDirectory() as tmpdir:
             generated_path = Path(tmpdir) / f"{test_id}.wav"
 
-            if not synthesize_audio(
-                self.client, text, engine, voice_profile, generated_path
-            ):
+            if not synthesize_audio(self.client, text, engine, voice_profile, generated_path):
                 if update_mode:
                     pytest.fail(f"Failed to synthesize audio for golden update: {test_id}")
                 else:
@@ -215,6 +216,7 @@ class TestGoldenAudio:
 
                 # Copy generated audio to golden location
                 import shutil
+
                 shutil.copy2(generated_path, golden_audio_path)
 
                 # Update metadata
@@ -275,9 +277,7 @@ class TestGoldenAudio:
             pytest.fail(f"Golden test error: {report.error}")
 
         if not report.passed:
-            failure_messages = [
-                r.message for r in report.results if not r.passed
-            ]
+            failure_messages = [r.message for r in report.results if not r.passed]
             pytest.fail(
                 f"Golden test failed for {engine}/{hello_world_case['id']}:\n"
                 + "\n".join(failure_messages)

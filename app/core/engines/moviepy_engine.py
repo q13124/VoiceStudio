@@ -72,9 +72,7 @@ class MoviePyEngine(EngineProtocol):
             batch_size: Default batch size for parallel processing
         """
         if not HAS_MOVIEPY:
-            raise ImportError(
-                "moviepy not installed. " "Install with: pip install moviepy>=1.0.3"
-            )
+            raise ImportError("moviepy not installed. " "Install with: pip install moviepy>=1.0.3")
 
         super().__init__(device=device, gpu=gpu)
 
@@ -148,9 +146,7 @@ class MoviePyEngine(EngineProtocol):
 
                     temp_manager = get_temp_file_manager()
                     temp_manager.remove_temp_file(self._temp_dir, force=True)
-                    logger.debug(
-                        f"Removed temp directory via manager: {self._temp_dir}"
-                    )
+                    logger.debug(f"Removed temp directory via manager: {self._temp_dir}")
                 except Exception:
                     # Fallback to direct removal
                     if os.path.exists(self._temp_dir):
@@ -198,9 +194,7 @@ class MoviePyEngine(EngineProtocol):
 
             # Check cache (LRU) - optimized
             if self.enable_cache:
-                cache_key = self._get_cache_key(
-                    "edit", str(video_path), operations, **kwargs
-                )
+                cache_key = self._get_cache_key("edit", str(video_path), operations, **kwargs)
                 if cache_key in self._processing_cache:
                     cached_path = self._processing_cache[cache_key]
                     if os.path.exists(cached_path):
@@ -286,9 +280,7 @@ class MoviePyEngine(EngineProtocol):
         try:
             # Check cache (LRU) - optimized
             if self.enable_cache:
-                cache_key = self._get_cache_key(
-                    "concatenate", video_paths, method, **kwargs
-                )
+                cache_key = self._get_cache_key("concatenate", video_paths, method, **kwargs)
                 if cache_key in self._processing_cache:
                     cached_path = self._processing_cache[cache_key]
                     if os.path.exists(cached_path):
@@ -547,9 +539,7 @@ class MoviePyEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_synthesis_time("moviepy", duration, cached=False)
                 except Exception:
-                    logger.debug(
-                        "Performance metrics unavailable for moviepy batch edit."
-                    )
+                    logger.debug("Performance metrics unavailable for moviepy batch edit.")
                 return result
             except Exception as e:
                 logger.error(f"Batch editing failed for {video_path}: {e}")
@@ -601,11 +591,7 @@ class MoviePyEngine(EngineProtocol):
     def get_cache_stats(self) -> dict[str, int | float | str]:
         """Get cache statistics (enhanced)."""
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
-        hit_rate = (
-            (self._cache_stats["hits"] / total_requests * 100)
-            if total_requests > 0
-            else 0.0
-        )
+        hit_rate = (self._cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0.0
         return {
             "cache_size": len(self._processing_cache),
             "max_cache_size": self.cache_size,

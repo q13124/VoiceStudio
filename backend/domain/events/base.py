@@ -154,7 +154,7 @@ class EventBus:
         async with self._lock:
             self._history.append(event)
             if len(self._history) > self._max_history:
-                self._history = self._history[-self._max_history:]
+                self._history = self._history[-self._max_history :]
 
         logger.debug(f"Publishing event: {event.event_type}")
 

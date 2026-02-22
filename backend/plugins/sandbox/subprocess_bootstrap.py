@@ -61,9 +61,7 @@ class SubprocessBridge:
         write_transport, write_protocol = await loop.connect_write_pipe(
             asyncio.streams.FlowControlMixin, sys.stdout
         )
-        self._writer = asyncio.StreamWriter(
-            write_transport, write_protocol, None, loop
-        )
+        self._writer = asyncio.StreamWriter(write_transport, write_protocol, None, loop)
 
         self._running = True
         logger.debug("Subprocess bridge connected")
@@ -291,9 +289,7 @@ class PluginContext:
 
     async def storage_set(self, key: str, value: Any) -> Dict[str, Any]:
         """Set a value in plugin storage."""
-        return await self._bridge.call_host(
-            "host.storage.set", {"key": key, "value": value}
-        )
+        return await self._bridge.call_host("host.storage.set", {"key": key, "value": value})
 
     async def settings_get(self, key: str) -> Any:
         """Get a setting value."""

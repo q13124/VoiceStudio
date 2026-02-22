@@ -33,9 +33,7 @@ if not _build_date:
     try:
         backend_init = Path(__file__).parent / "__init__.py"
         if backend_init.exists():
-            _build_date = datetime.fromtimestamp(
-                backend_init.stat().st_mtime
-            ).isoformat()
+            _build_date = datetime.fromtimestamp(backend_init.stat().st_mtime).isoformat()
     except Exception:
         _build_date = datetime.utcnow().isoformat()
 

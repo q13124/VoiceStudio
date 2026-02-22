@@ -60,8 +60,8 @@ class TestSynthesisFlowMock:
     def test_synthesis_flow_structure(self):
         """Verify synthesis flow test structure is correct."""
         assert TestVoiceSynthesisFlow is not None
-        assert hasattr(TestVoiceSynthesisFlow, 'test_complete_synthesis_workflow')
-        assert hasattr(TestVoiceSynthesisFlow, 'test_synthesis_with_ssml')
+        assert hasattr(TestVoiceSynthesisFlow, "test_complete_synthesis_workflow")
+        assert hasattr(TestVoiceSynthesisFlow, "test_synthesis_with_ssml")
 
     def test_page_objects_importable(self):
         """Verify synthesis page objects can be imported."""
@@ -84,10 +84,7 @@ class TestSynthesisFlowMock:
         assert "</speak>" in sample_ssml
         assert "prosody" in sample_ssml
 
-    def test_mock_synthesis_flow(
-        self,
-        sample_text: str
-    ):
+    def test_mock_synthesis_flow(self, sample_text: str):
         """
         Test synthesis flow with mocked page objects.
 
@@ -110,7 +107,9 @@ class TestSynthesisFlowMock:
 
         mock_voice_browser.get_voice_count.return_value = 3
         mock_voice_browser.get_voice_names.return_value = [
-            "Test Voice", "Another Voice", "Third Voice"
+            "Test Voice",
+            "Another Voice",
+            "Third Voice",
         ]
 
         # Simulate synthesis flow
@@ -150,10 +149,7 @@ class TestSynthesisFlowMock:
 
         logger.info("Mock synthesis flow completed successfully")
 
-    def test_mock_synthesis_with_voice_browser(
-        self,
-        sample_text: str
-    ):
+    def test_mock_synthesis_with_voice_browser(self, sample_text: str):
         """
         Test synthesis flow starting from voice browser.
 
@@ -218,11 +214,7 @@ class TestVoiceSynthesisFlow(E2ETestBase):
     # Test: Complete Synthesis Workflow
     # =========================================================================
 
-    def test_complete_synthesis_workflow(
-        self,
-        sample_text: str,
-        app_session
-    ):
+    def test_complete_synthesis_workflow(self, sample_text: str, app_session):
         """
         Test the complete voice synthesis workflow.
 
@@ -284,19 +276,13 @@ class TestVoiceSynthesisFlow(E2ETestBase):
             time.sleep(2.0)  # Let it play briefly
             synthesis_page.pause_output()
 
-            logger.info(
-                f"Synthesis completed in {timer.elapsed:.2f}s"
-            )
+            logger.info(f"Synthesis completed in {timer.elapsed:.2f}s")
 
     # =========================================================================
     # Test: Synthesis with SSML
     # =========================================================================
 
-    def test_synthesis_with_ssml(
-        self,
-        sample_ssml: str,
-        app_session
-    ):
+    def test_synthesis_with_ssml(self, sample_ssml: str, app_session):
         """
         Test synthesis using SSML input.
 
@@ -325,11 +311,7 @@ class TestVoiceSynthesisFlow(E2ETestBase):
     # Test: Synthesis with Different Engines
     # =========================================================================
 
-    def test_synthesis_with_engine_selection(
-        self,
-        sample_text: str,
-        app_session
-    ):
+    def test_synthesis_with_engine_selection(self, sample_text: str, app_session):
         """
         Test synthesis with different engine configurations.
         """
@@ -359,12 +341,7 @@ class TestVoiceSynthesisFlow(E2ETestBase):
     # Test: Save Synthesized Audio
     # =========================================================================
 
-    def test_save_synthesized_audio(
-        self,
-        sample_text: str,
-        unique_output_name: str,
-        app_session
-    ):
+    def test_save_synthesized_audio(self, sample_text: str, unique_output_name: str, app_session):
         """
         Test saving synthesized audio to file.
         """
@@ -394,10 +371,7 @@ class TestVoiceSynthesisFlow(E2ETestBase):
     # Test: Multiple Syntheses
     # =========================================================================
 
-    def test_multiple_syntheses(
-        self,
-        app_session
-    ):
+    def test_multiple_syntheses(self, app_session):
         """
         Test performing multiple syntheses in sequence.
         """
@@ -413,7 +387,7 @@ class TestVoiceSynthesisFlow(E2ETestBase):
         texts = [
             "First synthesis test.",
             "Second synthesis test with longer content.",
-            "Third and final synthesis test."
+            "Third and final synthesis test.",
         ]
 
         for i, text in enumerate(texts):
@@ -429,10 +403,7 @@ class TestVoiceSynthesisFlow(E2ETestBase):
     # Test: Synthesis Cancellation
     # =========================================================================
 
-    def test_synthesis_cancellation(
-        self,
-        app_session
-    ):
+    def test_synthesis_cancellation(self, app_session):
         """
         Test cancelling a synthesis in progress.
         """
@@ -474,11 +445,7 @@ class TestSynthesisBackendIntegration:
     Tests that verify synthesis integration with backend.
     """
 
-    def test_synthesis_api_integration(
-        self,
-        sample_text: str,
-        api_client
-    ):
+    def test_synthesis_api_integration(self, sample_text: str, api_client):
         """
         Test synthesis API endpoint.
         """
@@ -502,8 +469,8 @@ class TestSynthesisBackendIntegration:
                 "text": sample_text,
                 "profile_id": profile_id,
                 "engine": "xtts",
-                "quality_mode": "standard"
-            }
+                "quality_mode": "standard",
+            },
         )
 
         if response.status_code == 200:
@@ -515,21 +482,13 @@ class TestSynthesisBackendIntegration:
         else:
             logger.error(f"Synthesis API failed: {response.status_code} - {response.text}")
 
-    def test_synthesis_status_polling(
-        self,
-        sample_text: str,
-        api_client
-    ):
+    def test_synthesis_status_polling(self, sample_text: str, api_client):
         """
         Test synthesis job status polling.
         """
         # Start a synthesis job
         response = api_client.post(
-            "/api/voice/synthesize",
-            json={
-                "text": sample_text,
-                "engine": "xtts"
-            }
+            "/api/voice/synthesize", json={"text": sample_text, "engine": "xtts"}
         )
 
         if response.status_code != 200:
@@ -576,12 +535,7 @@ class TestSynthesisPerformance:
     Performance tests for voice synthesis.
     """
 
-    def test_synthesis_latency(
-        self,
-        sample_text: str,
-        app_session,
-        performance_timer
-    ):
+    def test_synthesis_latency(self, sample_text: str, app_session, performance_timer):
         """
         Test synthesis latency for short text.
 
@@ -604,11 +558,7 @@ class TestSynthesisPerformance:
 
         assert timer.elapsed < 10.0, f"Synthesis too slow: {timer.elapsed:.2f}s"
 
-    def test_synthesis_throughput(
-        self,
-        app_session,
-        performance_timer
-    ):
+    def test_synthesis_throughput(self, app_session, performance_timer):
         """
         Test synthesis throughput for multiple requests.
 
@@ -623,11 +573,7 @@ class TestSynthesisPerformance:
         if not synthesis_page.is_voice_selected():
             pytest.skip("No voice selected")
 
-        texts = [
-            "First short test.",
-            "Second short test.",
-            "Third short test."
-        ]
+        texts = ["First short test.", "Second short test.", "Third short test."]
 
         with performance_timer("Synthesis throughput") as timer:
             for text in texts:

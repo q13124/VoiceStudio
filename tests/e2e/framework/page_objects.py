@@ -122,11 +122,7 @@ class BasePage:
         actual_by = by_mapping.get(locator.by, locator.by)
         return self.driver.find_elements(actual_by, locator.value)
 
-    def wait_for_element(
-        self,
-        locator: ElementLocator,
-        timeout: float | None = None
-    ) -> Any:
+    def wait_for_element(self, locator: ElementLocator, timeout: float | None = None) -> Any:
         """Wait for element to be present and visible."""
         timeout = timeout or self.timeout
         start = time.time()
@@ -141,15 +137,10 @@ class BasePage:
                 pass
             time.sleep(0.5)
 
-        raise TimeoutError(
-            f"Element not found: {locator} "
-            f"(description: {locator.description})"
-        )
+        raise TimeoutError(f"Element not found: {locator} " f"(description: {locator.description})")
 
     def wait_for_element_clickable(
-        self,
-        locator: ElementLocator,
-        timeout: float | None = None
+        self, locator: ElementLocator, timeout: float | None = None
     ) -> Any:
         """Wait for element to be clickable."""
         timeout = timeout or self.timeout
@@ -166,8 +157,7 @@ class BasePage:
             time.sleep(0.5)
 
         raise TimeoutError(
-            f"Element not clickable: {locator} "
-            f"(description: {locator.description})"
+            f"Element not clickable: {locator} " f"(description: {locator.description})"
         )
 
     def click(self, locator: ElementLocator, wait: bool = True):
@@ -181,6 +171,7 @@ class BasePage:
         element = self.wait_for_element_clickable(locator)
         # WinAppDriver ActionChains equivalent
         from selenium.webdriver import ActionChains
+
         actions = ActionChains(self.driver)
         actions.double_click(element).perform()
         logger.debug(f"Double-clicked: {locator.description or locator.value}")
@@ -230,9 +221,7 @@ class BasePage:
         time.sleep(0.5)
 
         # Find and click the item with matching text
-        items = self.find_elements(
-            ElementLocator.by_xpath(f"//*[contains(@Name, '{text}')]")
-        )
+        items = self.find_elements(ElementLocator.by_xpath(f"//*[contains(@Name, '{text}')]"))
         for item in items:
             if text in item.text:
                 item.click()
@@ -247,9 +236,7 @@ class BasePage:
         time.sleep(0.5)
 
         # Get all items and select by index
-        items = self.find_elements(
-            ElementLocator.by_class("ListViewItem")
-        )
+        items = self.find_elements(ElementLocator.by_class("ListViewItem"))
         if index < len(items):
             items[index].click()
         else:
@@ -263,7 +250,7 @@ class BasePage:
         self,
         condition: Callable[[], bool],
         timeout: float | None = None,
-        message: str = "Condition not met"
+        message: str = "Condition not met",
     ):
         """Wait for a custom condition to be true."""
         timeout = timeout or self.timeout

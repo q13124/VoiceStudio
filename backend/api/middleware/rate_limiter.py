@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RateLimitConfig:
     """Configuration for rate limiting."""
+
     # Default limits
     requests_per_minute: int = 60
     requests_per_hour: int = 1000
@@ -35,23 +36,28 @@ class RateLimitConfig:
     key_func: Callable[[Request], str] | None = None
 
     # Paths to exclude
-    excluded_paths: list[str] = field(default_factory=lambda: [
-        "/health",
-        "/metrics",
-        "/docs",
-        "/openapi.json",
-    ])
+    excluded_paths: list[str] = field(
+        default_factory=lambda: [
+            "/health",
+            "/metrics",
+            "/docs",
+            "/openapi.json",
+        ]
+    )
 
     # Paths with custom limits
-    path_limits: dict[str, int] = field(default_factory=lambda: {
-        "/api/v1/synthesize": 10,  # 10 per minute for heavy operations
-        "/api/v1/clone": 5,  # 5 per minute for cloning
-    })
+    path_limits: dict[str, int] = field(
+        default_factory=lambda: {
+            "/api/v1/synthesize": 10,  # 10 per minute for heavy operations
+            "/api/v1/clone": 5,  # 5 per minute for cloning
+        }
+    )
 
 
 @dataclass
 class RateLimitState:
     """State for a rate limit key."""
+
     requests: list[float] = field(default_factory=list)
     last_cleanup: float = field(default_factory=time.time)
 
@@ -240,10 +246,12 @@ def rate_limit(
         async def heavy_operation():
             ...
     """
-    _limiter = SlidingWindowRateLimiter(RateLimitConfig(
-        requests_per_minute=requests_per_minute,
-        key_func=key_func,
-    ))
+    _limiter = SlidingWindowRateLimiter(
+        RateLimitConfig(
+            requests_per_minute=requests_per_minute,
+            key_func=key_func,
+        )
+    )
 
     def decorator(func):
         async def wrapper(request: Request, *args, **kwargs):

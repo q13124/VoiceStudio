@@ -76,9 +76,7 @@ def validate_routes(app: "FastAPI") -> list[str]:
 
         for method, names in method_counts.items():
             if len(names) > 1:
-                conflicts.append(
-                    f"Duplicate route: {method} {path} defined by: {', '.join(names)}"
-                )
+                conflicts.append(f"Duplicate route: {method} {path} defined by: {', '.join(names)}")
 
     # Log summary of prefix distribution (informational)
     logger.debug(

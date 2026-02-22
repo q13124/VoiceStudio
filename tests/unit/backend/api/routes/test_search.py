@@ -38,9 +38,7 @@ class TestSearchRouteHandlers:
     def test_advanced_search_handler_exists(self):
         """Test advanced_search handler exists."""
         if hasattr(search, "advanced_search"):
-            assert callable(
-                search.advanced_search
-            ), "advanced_search is not callable"
+            assert callable(search.advanced_search), "advanced_search is not callable"
 
 
 class TestSearchRouter:
@@ -61,4 +59,3 @@ class TestSearchRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

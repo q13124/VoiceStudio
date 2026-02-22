@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.audio import enhanced_preprocessing
 except ImportError:
-    pytest.skip(
-        "Could not import enhanced_preprocessing", allow_module_level=True
-    )
+    pytest.skip("Could not import enhanced_preprocessing", allow_module_level=True)
 
 
 class TestEnhancedPreprocessingImports:
@@ -25,9 +23,7 @@ class TestEnhancedPreprocessingImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            enhanced_preprocessing is not None
-        ), "Failed to import enhanced_preprocessing module"
+        assert enhanced_preprocessing is not None, "Failed to import enhanced_preprocessing module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
@@ -46,9 +42,7 @@ class TestEnhancedPreprocessingClasses:
         """Test EnhancedPreprocessor class exists."""
         if hasattr(enhanced_preprocessing, "EnhancedPreprocessor"):
             cls = enhanced_preprocessing.EnhancedPreprocessor
-            assert isinstance(
-                cls, type
-            ), "EnhancedPreprocessor should be a class"
+            assert isinstance(cls, type), "EnhancedPreprocessor should be a class"
 
 
 class TestEnhancedPreprocessingFunctions:
@@ -64,4 +58,3 @@ class TestEnhancedPreprocessingFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

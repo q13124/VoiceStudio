@@ -71,12 +71,8 @@ def calculate_quality_heatmap(
         "x_values": sorted(x_values),
         "y_values": sorted(y_values),
         "matrix": heatmap_matrix,
-        "min_value": min(
-            (cell["value"] for cell in heatmap_matrix.values()), default=0.0
-        ),
-        "max_value": max(
-            (cell["value"] for cell in heatmap_matrix.values()), default=1.0
-        ),
+        "min_value": min((cell["value"] for cell in heatmap_matrix.values()), default=0.0),
+        "max_value": max((cell["value"] for cell in heatmap_matrix.values()), default=1.0),
     }
 
 
@@ -124,9 +120,7 @@ def calculate_quality_correlations(
                     vec2_aligned = vec2[:min_len]
 
                     # Calculate Pearson correlation
-                    correlation = _calculate_pearson_correlation(
-                        vec1_aligned, vec2_aligned
-                    )
+                    correlation = _calculate_pearson_correlation(vec1_aligned, vec2_aligned)
                     correlation_matrix[metric1][metric2] = correlation
 
     return {
@@ -335,8 +329,7 @@ def generate_quality_insights(
 
     if len(engine_stats) > 1:
         engine_averages = {
-            engine: sum(values) / len(values)
-            for engine, values in engine_stats.items()
+            engine: sum(values) / len(values) for engine, values in engine_stats.items()
         }
         best_engine = max(engine_averages, key=engine_averages.get)
         worst_engine = min(engine_averages, key=engine_averages.get)
@@ -410,10 +403,9 @@ def _calculate_pearson_correlation(x: list[float], y: list[float]) -> float:
     sum_y2 = sum(y[i] ** 2 for i in range(n))
 
     numerator = n * sum_xy - sum_x * sum_y
-    denominator = ((n * sum_x2 - sum_x ** 2) * (n * sum_y2 - sum_y ** 2)) ** 0.5
+    denominator = ((n * sum_x2 - sum_x**2) * (n * sum_y2 - sum_y**2)) ** 0.5
 
     if denominator == 0:
         return 0.0
 
     return numerator / denominator
-

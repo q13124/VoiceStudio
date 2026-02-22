@@ -92,17 +92,39 @@ SLO = APISLOConfig()
 
 # Endpoint SLO mapping
 ENDPOINT_SLOS: dict[str, EndpointSLO] = {
-    "/api/health": EndpointSLO("health", SLO.CRITICAL_P50, SLO.CRITICAL_P95, SLO.CRITICAL_P99, "critical"),
-    "/api/status": EndpointSLO("status", SLO.CRITICAL_P50, SLO.CRITICAL_P95, SLO.CRITICAL_P99, "critical"),
-    "/api/profiles": EndpointSLO("profiles_list", SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99, "standard"),
-    "/api/projects": EndpointSLO("projects_list", SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99, "standard"),
-    "/api/engines": EndpointSLO("engines_list", SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99, "standard"),
-    "/api/voice/profiles": EndpointSLO("voice_profiles", SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99, "standard"),
-    "/api/prosody/configs": EndpointSLO("prosody_configs", SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99, "standard"),
-    "/api/analytics/summary": EndpointSLO("analytics_summary", SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99, "standard"),
-    "/api/articulation/analyze": EndpointSLO("articulation", SLO.HEAVY_P50, SLO.HEAVY_P95, SLO.HEAVY_P99, "heavy"),
-    "/api/prosody/phonemes/analyze": EndpointSLO("phonemes", SLO.HEAVY_P50, SLO.HEAVY_P95, SLO.HEAVY_P99, "heavy"),
-    "/api/analytics/explain-quality": EndpointSLO("quality_explain", SLO.HEAVY_P50, SLO.HEAVY_P95, SLO.HEAVY_P99, "heavy"),
+    "/api/health": EndpointSLO(
+        "health", SLO.CRITICAL_P50, SLO.CRITICAL_P95, SLO.CRITICAL_P99, "critical"
+    ),
+    "/api/status": EndpointSLO(
+        "status", SLO.CRITICAL_P50, SLO.CRITICAL_P95, SLO.CRITICAL_P99, "critical"
+    ),
+    "/api/profiles": EndpointSLO(
+        "profiles_list", SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99, "standard"
+    ),
+    "/api/projects": EndpointSLO(
+        "projects_list", SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99, "standard"
+    ),
+    "/api/engines": EndpointSLO(
+        "engines_list", SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99, "standard"
+    ),
+    "/api/voice/profiles": EndpointSLO(
+        "voice_profiles", SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99, "standard"
+    ),
+    "/api/prosody/configs": EndpointSLO(
+        "prosody_configs", SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99, "standard"
+    ),
+    "/api/analytics/summary": EndpointSLO(
+        "analytics_summary", SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99, "standard"
+    ),
+    "/api/articulation/analyze": EndpointSLO(
+        "articulation", SLO.HEAVY_P50, SLO.HEAVY_P95, SLO.HEAVY_P99, "heavy"
+    ),
+    "/api/prosody/phonemes/analyze": EndpointSLO(
+        "phonemes", SLO.HEAVY_P50, SLO.HEAVY_P95, SLO.HEAVY_P99, "heavy"
+    ),
+    "/api/analytics/explain-quality": EndpointSLO(
+        "quality_explain", SLO.HEAVY_P50, SLO.HEAVY_P95, SLO.HEAVY_P99, "heavy"
+    ),
 }
 
 
@@ -187,7 +209,7 @@ def benchmark_endpoint(
             response = getattr(client, method)(endpoint, **kwargs)
             elapsed = time.perf_counter() - start
             # Only count successful requests
-            if hasattr(response, 'status_code') and response.status_code < 500:
+            if hasattr(response, "status_code") and response.status_code < 500:
                 metrics.samples.append(elapsed)
         except Exception as e:
             logger.debug(f"Benchmark request error: {e}")
@@ -217,8 +239,10 @@ def safe_request(client, method: str, endpoint: str, **kwargs):
 @pytest.fixture
 def api_benchmark():
     """Create API benchmark helper."""
+
     def _benchmark(client, method, endpoint, iterations=20, warmup=3, **kwargs):
         return benchmark_endpoint(client, method, endpoint, iterations, warmup, **kwargs)
+
     return _benchmark
 
 
@@ -235,36 +259,28 @@ class TestAPIPerformance:
         response, elapsed_time = safe_request(client, "get", "/api/health")
 
         assert response.status_code == 200
-        assert (
-            elapsed_time < 0.2
-        ), f"Health endpoint took {elapsed_time:.3f}s (should be < 0.2s)"
+        assert elapsed_time < 0.2, f"Health endpoint took {elapsed_time:.3f}s (should be < 0.2s)"
 
     def test_profiles_list_performance(self, client):
         """Test profiles list endpoint performance."""
         response, elapsed_time = safe_request(client, "get", "/api/profiles")
 
         assert response.status_code == 200
-        assert (
-            elapsed_time < 1.0
-        ), f"Profiles list took {elapsed_time:.3f}s (should be < 1.0s)"
+        assert elapsed_time < 1.0, f"Profiles list took {elapsed_time:.3f}s (should be < 1.0s)"
 
     def test_projects_list_performance(self, client):
         """Test projects list endpoint performance."""
         response, elapsed_time = safe_request(client, "get", "/api/projects")
 
         assert response.status_code == 200
-        assert (
-            elapsed_time < 1.0
-        ), f"Projects list took {elapsed_time:.3f}s (should be < 1.0s)"
+        assert elapsed_time < 1.0, f"Projects list took {elapsed_time:.3f}s (should be < 1.0s)"
 
     def test_engines_list_performance(self, client):
         """Test engines list endpoint performance."""
         response, elapsed_time = safe_request(client, "get", "/api/engines")
 
         assert response.status_code == 200
-        assert (
-            elapsed_time < 1.0
-        ), f"Engines list took {elapsed_time:.3f}s (should be < 1.0s)"
+        assert elapsed_time < 1.0, f"Engines list took {elapsed_time:.3f}s (should be < 1.0s)"
 
     @pytest.mark.parametrize(
         "endpoint",
@@ -309,14 +325,14 @@ class TestAPIPerformance:
         if len(valid_results) < 5:
             pytest.skip("Too many middleware errors during concurrent test")
 
-        status_codes, elapsed_times = zip(*valid_results, )
+        status_codes, elapsed_times = zip(
+            *valid_results,
+        )
 
         success_rate = sum(1 for c in status_codes if c == 200) / len(status_codes)
         assert success_rate >= 0.8, f"At least 80% should succeed, got {success_rate*100:.0f}%"
         avg_time = sum(elapsed_times) / len(elapsed_times)
-        assert (
-            avg_time < 0.5
-        ), f"Average response time {avg_time:.3f}s (should be < 0.5s)"
+        assert avg_time < 0.5, f"Average response time {avg_time:.3f}s (should be < 0.5s)"
 
 
 class TestAPICachePerformance:
@@ -369,9 +385,7 @@ class TestAPIMiddlewarePerformance:
         )
 
         # Validation should be fast (< 100ms)
-        assert (
-            elapsed_time < 0.5
-        ), f"Validation took {elapsed_time:.3f}s (should be < 0.5s)"
+        assert elapsed_time < 0.5, f"Validation took {elapsed_time:.3f}s (should be < 0.5s)"
 
 
 class TestEnhancedRoutesPerformance:
@@ -448,9 +462,7 @@ class TestEnhancedRoutesPerformance:
 
         assert response.status_code == 200
         # Config creation should be very fast (< 100ms) - allow up to 200ms for CI
-        assert (
-            elapsed_time < 0.2
-        ), f"Config creation took {elapsed_time:.3f}s (should be < 0.2s)"
+        assert elapsed_time < 0.2, f"Config creation took {elapsed_time:.3f}s (should be < 0.2s)"
 
     @patch("backend.api.routes.effects.HAS_POSTFX_PROCESSOR", True)
     @patch("backend.api.routes.effects.create_post_fx_processor")
@@ -487,9 +499,7 @@ class TestEnhancedRoutesPerformance:
                 mock_storage.__contains__ = lambda x: x == "test-audio"
                 mock_storage.__getitem__ = lambda x: "/path/to/audio.wav"
 
-                with patch(
-                    "backend.api.routes.effects._process_audio_with_chain"
-                ) as mock_process:
+                with patch("backend.api.routes.effects._process_audio_with_chain") as mock_process:
                     mock_process.return_value = {
                         "success": True,
                         "output_audio_id": "processed-audio",
@@ -498,7 +508,8 @@ class TestEnhancedRoutesPerformance:
                     request_data = {"audio_id": "test-audio"}
 
                     response, elapsed_time = safe_request(
-                        client, "post",
+                        client,
+                        "post",
                         f"/api/effects/chains/{chain_id}/process",
                         json=request_data,
                     )
@@ -511,9 +522,7 @@ class TestEnhancedRoutesPerformance:
                         ), f"Effects processing took {elapsed_time:.3f}s (should be < 3.0s)"
 
     @patch("backend.api.routes.analytics._get_model_explainer")
-    def test_analytics_quality_explanation_performance(
-        self, mock_get_explainer, client
-    ):
+    def test_analytics_quality_explanation_performance(self, mock_get_explainer, client):
         """Test analytics quality explanation performance with ModelExplainer."""
         from unittest.mock import MagicMock
 
@@ -531,8 +540,7 @@ class TestEnhancedRoutesPerformance:
         with patch("os.path.exists", return_value=True):
             with patch("backend.api.routes.analytics._quality_history", {}):
                 response, elapsed_time = safe_request(
-                    client, "get",
-                    f"/api/analytics/explain-quality?audio_id={audio_id}"
+                    client, "get", f"/api/analytics/explain-quality?audio_id={audio_id}"
                 )
 
                 # Quality explanation should complete in reasonable time (< 5s)
@@ -548,9 +556,7 @@ class TestEnhancedRoutesPerformance:
 
         assert response.status_code == 200
         # Analytics summary should be fast (< 1s)
-        assert (
-            elapsed_time < 1.0
-        ), f"Analytics summary took {elapsed_time:.3f}s (should be < 1.0s)"
+        assert elapsed_time < 1.0, f"Analytics summary took {elapsed_time:.3f}s (should be < 1.0s)"
 
     def test_enhanced_routes_concurrent_performance(self, client):
         """Test enhanced routes performance under concurrent load."""
@@ -596,7 +602,9 @@ class TestEnhancedRoutesPerformance:
         if len(valid_results) < 5:
             pytest.skip("Too many middleware errors during concurrent test")
 
-        status_codes, elapsed_times = zip(*valid_results, )
+        status_codes, elapsed_times = zip(
+            *valid_results,
+        )
 
         # All valid requests should succeed
         assert all(
@@ -660,9 +668,9 @@ class TestCriticalEndpointSLOs:
         stdev = statistics.stdev(times)
         cv = stdev / avg if avg > 0 else 0  # Coefficient of variation
 
-        assert cv < 0.5, (
-            f"Health endpoint inconsistent: CV={cv:.2f} (avg={avg*1000:.1f}ms, stdev={stdev*1000:.1f}ms)"
-        )
+        assert (
+            cv < 0.5
+        ), f"Health endpoint inconsistent: CV={cv:.2f} (avg={avg*1000:.1f}ms, stdev={stdev*1000:.1f}ms)"
 
 
 class TestStandardEndpointSLOs:
@@ -677,16 +685,19 @@ class TestStandardEndpointSLOs:
         """Create test client."""
         return TestClient(app)
 
-    @pytest.mark.parametrize("endpoint", [
-        "/api/profiles",
-        "/api/projects",
-        "/api/engines",
-    ])
+    @pytest.mark.parametrize(
+        "endpoint",
+        [
+            "/api/profiles",
+            "/api/projects",
+            "/api/engines",
+        ],
+    )
     def test_list_endpoints_slo(self, client, api_benchmark, endpoint):
         """Test list endpoints meet standard SLO targets."""
-        slo = ENDPOINT_SLOS.get(endpoint, EndpointSLO(
-            endpoint, SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99
-        ))
+        slo = ENDPOINT_SLOS.get(
+            endpoint, EndpointSLO(endpoint, SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99)
+        )
         metrics = api_benchmark(client, "get", endpoint, iterations=30)
 
         assert metrics.check_slo(slo), (
@@ -698,23 +709,20 @@ class TestStandardEndpointSLOs:
     def test_prosody_configs_slo(self, client, api_benchmark):
         """Test prosody configs endpoint meets SLO."""
         from backend.api.routes import prosody
+
         prosody._prosody_configs.clear()
 
         slo = ENDPOINT_SLOS["/api/prosody/configs"]
         metrics = api_benchmark(client, "get", "/api/prosody/configs", iterations=30)
 
-        assert metrics.check_slo(slo), (
-            f"Prosody configs SLO violation: {metrics.slo_violation}"
-        )
+        assert metrics.check_slo(slo), f"Prosody configs SLO violation: {metrics.slo_violation}"
 
     def test_analytics_summary_slo(self, client, api_benchmark):
         """Test analytics summary endpoint meets SLO."""
         slo = ENDPOINT_SLOS["/api/analytics/summary"]
         metrics = api_benchmark(client, "get", "/api/analytics/summary", iterations=30)
 
-        assert metrics.check_slo(slo), (
-            f"Analytics summary SLO violation: {metrics.slo_violation}"
-        )
+        assert metrics.check_slo(slo), f"Analytics summary SLO violation: {metrics.slo_violation}"
 
 
 class TestHeavyEndpointSLOs:
@@ -752,8 +760,7 @@ class TestHeavyEndpointSLOs:
             try:
                 start = time.perf_counter()
                 response = client.post(
-                    "/api/articulation/analyze",
-                    json={"audio_id": "test-audio-123"}
+                    "/api/articulation/analyze", json={"audio_id": "test-audio-123"}
                 )
                 elapsed = time.perf_counter() - start
                 if response.status_code == 200:
@@ -764,9 +771,9 @@ class TestHeavyEndpointSLOs:
         if not metrics.samples:
             pytest.skip("No successful requests for articulation SLO test")
 
-        assert metrics.check_slo(slo), (
-            f"Articulation analysis SLO violation: {metrics.slo_violation}"
-        )
+        assert metrics.check_slo(
+            slo
+        ), f"Articulation analysis SLO violation: {metrics.slo_violation}"
 
 
 class TestAPILatencyRegression:
@@ -842,7 +849,9 @@ class TestConcurrentLoadSLOs:
         if len(valid_results) < 20:
             pytest.skip("Too many middleware errors during concurrent test")
 
-        status_codes, times = zip(*valid_results, )
+        status_codes, times = zip(
+            *valid_results,
+        )
 
         # Most should succeed
         success_rate = sum(1 for c in status_codes if c == 200) / len(status_codes)
@@ -856,12 +865,12 @@ class TestConcurrentLoadSLOs:
 
         # Under load, allow 2x SLO
         load_factor = 2.0
-        assert p50 < slo.p50_target * load_factor, (
-            f"P50 under load {p50*1000:.1f}ms exceeds {slo.p50_target*load_factor*1000:.1f}ms"
-        )
-        assert p95 < slo.p95_target * load_factor, (
-            f"P95 under load {p95*1000:.1f}ms exceeds {slo.p95_target*load_factor*1000:.1f}ms"
-        )
+        assert (
+            p50 < slo.p50_target * load_factor
+        ), f"P50 under load {p50*1000:.1f}ms exceeds {slo.p50_target*load_factor*1000:.1f}ms"
+        assert (
+            p95 < slo.p95_target * load_factor
+        ), f"P95 under load {p95*1000:.1f}ms exceeds {slo.p95_target*load_factor*1000:.1f}ms"
 
     def test_mixed_endpoint_load(self, client):
         """Test mixed endpoint load performance."""
@@ -905,9 +914,9 @@ class TestConcurrentLoadSLOs:
             slo = ENDPOINT_SLOS.get(endpoint)
             if slo:
                 # Allow 3x P50 under mixed load
-                assert avg < slo.p50_target * 3, (
-                    f"{endpoint} average {avg*1000:.1f}ms under load exceeds target"
-                )
+                assert (
+                    avg < slo.p50_target * 3
+                ), f"{endpoint} average {avg*1000:.1f}ms under load exceeds target"
 
 
 class TestAPIThroughput:
@@ -950,9 +959,7 @@ class TestAPIThroughput:
         rps = count / elapsed
 
         target = self.RPS_TARGETS["/api/health"]
-        assert rps >= target, (
-            f"Health endpoint throughput {rps:.1f} RPS below target {target} RPS"
-        )
+        assert rps >= target, f"Health endpoint throughput {rps:.1f} RPS below target {target} RPS"
 
     def test_burst_capacity(self, client):
         """Test API burst handling capacity."""
@@ -981,18 +988,18 @@ class TestAPIThroughput:
         if len(valid_results) < 50:
             pytest.skip("Too many errors during burst test")
 
-        status_codes, _times = zip(*valid_results, )
+        status_codes, _times = zip(
+            *valid_results,
+        )
         success_rate = sum(1 for c in status_codes if c == 200) / len(valid_results)
 
         # At least 90% success rate under burst (lowered from 95% due to middleware)
-        assert success_rate >= 0.90, (
-            f"Burst success rate {success_rate*100:.1f}% below 90% target"
-        )
+        assert success_rate >= 0.90, f"Burst success rate {success_rate*100:.1f}% below 90% target"
 
         # Burst should complete within reasonable time (< 5s for 100 requests)
-        assert total_time < 5.0, (
-            f"Burst of {burst_size} requests took {total_time:.1f}s (should be < 5s)"
-        )
+        assert (
+            total_time < 5.0
+        ), f"Burst of {burst_size} requests took {total_time:.1f}s (should be < 5s)"
 
 
 class TestAPIPerformanceReport:
@@ -1025,40 +1032,43 @@ class TestAPIPerformanceReport:
         all_passed = True
         for endpoint, method, kwargs in endpoints_to_test:
             try:
-                metrics = api_benchmark(
-                    client, method, endpoint, iterations=20, **(kwargs or {})
+                metrics = api_benchmark(client, method, endpoint, iterations=20, **(kwargs or {}))
+                slo = ENDPOINT_SLOS.get(
+                    endpoint,
+                    EndpointSLO(endpoint, SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99),
                 )
-                slo = ENDPOINT_SLOS.get(endpoint, EndpointSLO(
-                    endpoint, SLO.STANDARD_P50, SLO.STANDARD_P95, SLO.STANDARD_P99
-                ))
                 slo_met = metrics.check_slo(slo)
                 if not slo_met:
                     all_passed = False
 
                 status = "PASS" if slo_met else "FAIL"
-                report_lines.extend([
-                    f"\n{endpoint} [{slo.category.upper()}]",
-                    "-" * 40,
-                    f"  Status: {status}",
-                    f"  P50:    {metrics.p50*1000:.1f}ms (target: {slo.p50_target*1000:.1f}ms)",
-                    f"  P95:    {metrics.p95*1000:.1f}ms (target: {slo.p95_target*1000:.1f}ms)",
-                    f"  P99:    {metrics.p99*1000:.1f}ms (target: {slo.p99_target*1000:.1f}ms)",
-                    f"  Min:    {metrics.min*1000:.1f}ms",
-                    f"  Max:    {metrics.max*1000:.1f}ms",
-                    f"  Avg:    {metrics.avg*1000:.1f}ms",
-                ])
+                report_lines.extend(
+                    [
+                        f"\n{endpoint} [{slo.category.upper()}]",
+                        "-" * 40,
+                        f"  Status: {status}",
+                        f"  P50:    {metrics.p50*1000:.1f}ms (target: {slo.p50_target*1000:.1f}ms)",
+                        f"  P95:    {metrics.p95*1000:.1f}ms (target: {slo.p95_target*1000:.1f}ms)",
+                        f"  P99:    {metrics.p99*1000:.1f}ms (target: {slo.p99_target*1000:.1f}ms)",
+                        f"  Min:    {metrics.min*1000:.1f}ms",
+                        f"  Max:    {metrics.max*1000:.1f}ms",
+                        f"  Avg:    {metrics.avg*1000:.1f}ms",
+                    ]
+                )
                 if not slo_met:
                     report_lines.append(f"  VIOLATION: {metrics.slo_violation}")
             except Exception as e:
                 report_lines.append(f"\n{endpoint}: ERROR - {e}")
                 all_passed = False
 
-        report_lines.extend([
-            "",
-            "=" * 80,
-            f"OVERALL: {'ALL SLOs MET' if all_passed else 'SLO VIOLATIONS DETECTED'}",
-            "=" * 80,
-        ])
+        report_lines.extend(
+            [
+                "",
+                "=" * 80,
+                f"OVERALL: {'ALL SLOs MET' if all_passed else 'SLO VIOLATIONS DETECTED'}",
+                "=" * 80,
+            ]
+        )
 
         # Print report
         print("\n".join(report_lines))

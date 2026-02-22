@@ -53,9 +53,9 @@ class TestAnomalyBaselinePersistence:
             q3=60.0,
             sample_count=100,
         )
-        
+
         assert rows == 1
-        
+
         baseline = persistence.get_baseline("test-plugin", "latency_ms")
         assert baseline is not None
         assert baseline.plugin_id == "test-plugin"
@@ -88,7 +88,7 @@ class TestAnomalyBaselinePersistence:
             q3=60.0,
             sample_count=100,
         )
-        
+
         persistence.save_baseline(
             plugin_id="test-plugin",
             metric_name="latency_ms",
@@ -101,7 +101,7 @@ class TestAnomalyBaselinePersistence:
             q3=65.0,
             sample_count=200,
         )
-        
+
         baseline = persistence.get_baseline("test-plugin", "latency_ms")
         assert baseline.mean == 60.0
         assert baseline.std == 15.0
@@ -144,7 +144,7 @@ class TestAnomalyBaselinePersistence:
             q3=35.0,
             sample_count=75,
         )
-        
+
         baselines = persistence.get_all_baselines("test-plugin")
         assert len(baselines) == 2
         metric_names = {b.metric_name for b in baselines}
@@ -176,10 +176,10 @@ class TestAnomalyBaselinePersistence:
             q3=320.0,
             sample_count=50,
         )
-        
+
         deleted = persistence.delete_baseline("test-plugin", "latency_ms")
         assert deleted == 1
-        
+
         remaining = persistence.get_all_baselines("test-plugin")
         assert len(remaining) == 1
         assert remaining[0].metric_name == "memory_mb"
@@ -210,10 +210,10 @@ class TestAnomalyBaselinePersistence:
             q3=320.0,
             sample_count=50,
         )
-        
+
         deleted = persistence.delete_baseline("test-plugin")
         assert deleted == 2
-        
+
         remaining = persistence.get_all_baselines("test-plugin")
         assert len(remaining) == 0
 
@@ -229,9 +229,9 @@ class TestAnalyticsPersistence:
             user_id="user-123",
             metadata={"source": "marketplace"},
         )
-        
+
         assert rows == 1
-        
+
         events = persistence.get_analytics_events(plugin_id="test-plugin")
         assert len(events) == 1
         assert events[0].plugin_id == "test-plugin"
@@ -253,7 +253,7 @@ class TestAnalyticsPersistence:
             plugin_id="test-plugin",
             event_type="error",
         )
-        
+
         events = persistence.get_analytics_events(
             plugin_id="test-plugin",
             event_type="use",
@@ -268,7 +268,7 @@ class TestAnalyticsPersistence:
                 plugin_id="test-plugin",
                 event_type="use",
             )
-        
+
         events = persistence.get_analytics_events(
             plugin_id="test-plugin",
             limit=5,
@@ -283,7 +283,7 @@ class TestAnalyticsPersistence:
             active_installs=90,
             avg_rating=4.5,
         )
-        
+
         metrics = persistence.get_plugin_metrics("test-plugin")
         assert metrics is not None
         assert metrics.plugin_id == "test-plugin"
@@ -308,9 +308,9 @@ class TestPrivacyPersistence:
             privacy_level="basic",
             categories=["analytics", "personalization"],
         )
-        
+
         assert rows == 1
-        
+
         consent = persistence.get_consent("user-123", "test-plugin")
         assert consent is not None
         assert consent.user_id == "user-123"
@@ -331,10 +331,10 @@ class TestPrivacyPersistence:
             privacy_level="basic",
             categories=["analytics"],
         )
-        
+
         rows = persistence.revoke_consent("user-123", "test-plugin")
         assert rows == 1  # revoke_consent returns rows affected
-        
+
         consent = persistence.get_consent("user-123", "test-plugin")
         assert consent is not None
         assert consent.revoked_at is not None  # Revoked consent has revocation date
@@ -359,7 +359,7 @@ class TestPrivacyPersistence:
             privacy_level="basic",
             categories=["analytics"],
         )
-        
+
         consents = persistence.get_user_consents("user-123")
         assert len(consents) == 2
         plugin_ids = {c.plugin_id for c in consents}
@@ -373,9 +373,9 @@ class TestPrivacyPersistence:
             retention_days=90,
             required_consent_level="basic",
         )
-        
+
         assert rows == 1
-        
+
         decl = persistence.get_data_declaration("test-plugin")
         assert decl is not None
         assert decl.plugin_id == "test-plugin"
@@ -395,7 +395,7 @@ class TestRetentionAndMaintenance:
     def test_apply_retention_policy(self, persistence):
         """Test applying retention policy."""
         result = persistence.apply_retention_policy()
-        
+
         assert "analytics_events" in result
 
     def test_get_storage_stats(self, persistence):
@@ -416,16 +416,16 @@ class TestRetentionAndMaintenance:
             plugin_id="test-plugin",
             event_type="install",
         )
-        
+
         stats = persistence.get_storage_stats()
-        
+
         assert "baselines_count" in stats
         assert "events_count" in stats
         assert "metrics_count" in stats
         assert "active_consents" in stats  # actual key name
         assert "declarations_count" in stats
         assert "file_size_bytes" in stats  # actual key name
-        
+
         assert stats["baselines_count"] == 1
         assert stats["events_count"] == 1
 
@@ -444,6 +444,6 @@ class TestRetentionAndMaintenance:
             sample_count=100,
         )
         persistence.delete_baseline("test-plugin")
-        
+
         # vacuum() returns None, just verify it doesn't raise
         persistence.vacuum()

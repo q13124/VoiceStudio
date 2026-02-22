@@ -129,17 +129,13 @@ async def search_presets(
 
     # Filter by category
     if category:
-        filtered_presets = [
-            p for p in filtered_presets if p.get("category") == category
-        ]
+        filtered_presets = [p for p in filtered_presets if p.get("category") == category]
 
     # Filter by tags
     if tags:
         tag_list = [t.strip() for t in tags.split(",")]
         filtered_presets = [
-            p
-            for p in filtered_presets
-            if any(tag in p.get("tags", []) for tag in tag_list)
+            p for p in filtered_presets if any(tag in p.get("tags", []) for tag in tag_list)
         ]
 
     # Filter by query (name/description search)

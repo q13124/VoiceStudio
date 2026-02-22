@@ -356,9 +356,7 @@ class PolicyEngine:
         if rule.warning_message:
             decision.warnings.append(rule.warning_message)
 
-    def _apply_plugin_policy(
-        self, decision: PolicyDecision, policy: PluginPolicy
-    ) -> None:
+    def _apply_plugin_policy(self, decision: PolicyDecision, policy: PluginPolicy) -> None:
         """Apply a plugin-specific policy to a decision."""
         decision.applied_rules.append(f"plugin_policy:{policy.plugin_id}")
 

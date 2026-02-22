@@ -46,9 +46,7 @@ class SecurityAuditor:
         self.vulnerabilities: list[dict[str, Any]] = []
         self.security_log: list[dict[str, Any]] = []
 
-    def audit_file_operations(
-        self, file_path: str, base_path: str
-    ) -> tuple[bool, str | None]:
+    def audit_file_operations(self, file_path: str, base_path: str) -> tuple[bool, str | None]:
         """
         Audit file operation for path traversal vulnerabilities.
 

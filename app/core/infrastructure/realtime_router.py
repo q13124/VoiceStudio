@@ -202,9 +202,7 @@ class RealtimeRouter:
 
         # Keep only recent history (last 100 requests)
         if len(self._latency_history[engine_name]) > 100:
-            self._latency_history[engine_name] = self._latency_history[engine_name][
-                -100:
-            ]
+            self._latency_history[engine_name] = self._latency_history[engine_name][-100:]
 
         # Update statistics
         avg_latency = sum(self._latency_history[engine_name]) / len(
@@ -224,9 +222,7 @@ class RealtimeRouter:
 
         # Keep only recent history (last 100 requests)
         if len(self._quality_history[engine_name]) > 100:
-            self._quality_history[engine_name] = self._quality_history[engine_name][
-                -100:
-            ]
+            self._quality_history[engine_name] = self._quality_history[engine_name][-100:]
 
         # Update statistics
         avg_quality = sum(self._quality_history[engine_name]) / len(
@@ -269,14 +265,9 @@ class RealtimeRouter:
         Returns:
             Average latency in milliseconds or None
         """
-        if (
-            engine_name not in self._latency_history
-            or not self._latency_history[engine_name]
-        ):
+        if engine_name not in self._latency_history or not self._latency_history[engine_name]:
             return None
-        return sum(self._latency_history[engine_name]) / len(
-            self._latency_history[engine_name]
-        )
+        return sum(self._latency_history[engine_name]) / len(self._latency_history[engine_name])
 
     def _get_average_quality(self, engine_name: str) -> float | None:
         """
@@ -288,14 +279,9 @@ class RealtimeRouter:
         Returns:
             Average quality score (0.0-1.0) or None
         """
-        if (
-            engine_name not in self._quality_history
-            or not self._quality_history[engine_name]
-        ):
+        if engine_name not in self._quality_history or not self._quality_history[engine_name]:
             return None
-        return sum(self._quality_history[engine_name]) / len(
-            self._quality_history[engine_name]
-        )
+        return sum(self._quality_history[engine_name]) / len(self._quality_history[engine_name])
 
     def get_routing_stats(self) -> dict[str, Any]:
         """

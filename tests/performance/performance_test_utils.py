@@ -143,9 +143,7 @@ class PerformanceBenchmark:
 
         # Calculate statistics
         sorted_times = sorted(self.times)
-        memory_used = (
-            statistics.mean(self.memory_samples) if self.memory_samples else None
-        )
+        memory_used = statistics.mean(self.memory_samples) if self.memory_samples else None
 
         return PerformanceMetrics(
             name=self.name,
@@ -153,12 +151,8 @@ class PerformanceBenchmark:
             max_time=max(self.times),
             avg_time=statistics.mean(self.times),
             median_time=statistics.median(self.times),
-            p95_time=sorted_times[int(len(sorted_times) * 0.95)]
-            if len(sorted_times) > 0
-            else 0,
-            p99_time=sorted_times[int(len(sorted_times) * 0.99)]
-            if len(sorted_times) > 0
-            else 0,
+            p95_time=sorted_times[int(len(sorted_times) * 0.95)] if len(sorted_times) > 0 else 0,
+            p99_time=sorted_times[int(len(sorted_times) * 0.99)] if len(sorted_times) > 0 else 0,
             iterations=len(self.times),
             total_time=sum(self.times),
             memory_used_mb=memory_used,
@@ -181,16 +175,19 @@ class PerformanceBenchmark:
             max_p99_time: Maximum P99 time in seconds
         """
         if max_avg_time is not None:
-            assert metrics.avg_time <= max_avg_time, \
-                f"{self.name} average time {metrics.avg_time:.3f}s exceeds {max_avg_time:.3f}s"
+            assert (
+                metrics.avg_time <= max_avg_time
+            ), f"{self.name} average time {metrics.avg_time:.3f}s exceeds {max_avg_time:.3f}s"
 
         if max_p95_time is not None:
-            assert metrics.p95_time <= max_p95_time, \
-                f"{self.name} P95 time {metrics.p95_time:.3f}s exceeds {max_p95_time:.3f}s"
+            assert (
+                metrics.p95_time <= max_p95_time
+            ), f"{self.name} P95 time {metrics.p95_time:.3f}s exceeds {max_p95_time:.3f}s"
 
         if max_p99_time is not None:
-            assert metrics.p99_time <= max_p99_time, \
-                f"{self.name} P99 time {metrics.p99_time:.3f}s exceeds {max_p99_time:.3f}s"
+            assert (
+                metrics.p99_time <= max_p99_time
+            ), f"{self.name} P99 time {metrics.p99_time:.3f}s exceeds {max_p99_time:.3f}s"
 
 
 class LoadTester:
@@ -248,8 +245,7 @@ class LoadTester:
         start_time = time.perf_counter()
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
             futures = [
-                executor.submit(run_request)
-                for _ in range(num_threads * requests_per_thread)
+                executor.submit(run_request) for _ in range(num_threads * requests_per_thread)
             ]
             results = [f.result() for f in concurrent.futures.as_completed(futures)]
         total_time = time.perf_counter() - start_time
@@ -269,9 +265,9 @@ class LoadTester:
             "avg_response_time": statistics.mean(elapsed_times) if elapsed_times else 0,
             "min_response_time": min(elapsed_times) if elapsed_times else 0,
             "max_response_time": max(elapsed_times) if elapsed_times else 0,
-            "p95_response_time": sorted(elapsed_times)[int(len(elapsed_times) * 0.95)]
-            if len(elapsed_times) > 0
-            else 0,
+            "p95_response_time": (
+                sorted(elapsed_times)[int(len(elapsed_times) * 0.95)]
+                if len(elapsed_times) > 0
+                else 0
+            ),
         }
-
-

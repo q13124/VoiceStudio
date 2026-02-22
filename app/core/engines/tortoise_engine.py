@@ -42,9 +42,7 @@ try:
     from tortoise.api import TextToSpeech
 except ImportError:
     TextToSpeech = None
-    logging.warning(
-        "Tortoise TTS not installed. " "Install with: pip install tortoise-tts"
-    )
+    logging.warning("Tortoise TTS not installed. " "Install with: pip install tortoise-tts")
 
 logger = logging.getLogger(__name__)
 
@@ -80,9 +78,7 @@ def _get_cached_model(quality_preset: str, device: str):
     """Get cached model if available."""
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
-        cached = _model_cache.get(
-            "tortoise", f"tortoise_{quality_preset}", device=device
-        )
+        cached = _model_cache.get("tortoise", f"tortoise_{quality_preset}", device=device)
         if cached is not None:
             return cached
 
@@ -100,9 +96,7 @@ def _cache_model(quality_preset: str, device: str, model):
     # Try general model cache first
     if HAS_MODEL_CACHE and _model_cache is not None:
         try:
-            _model_cache.set(
-                "tortoise", f"tortoise_{quality_preset}", model, device=device
-            )
+            _model_cache.set("tortoise", f"tortoise_{quality_preset}", model, device=device)
             return
         except Exception as e:
             logger.warning(f"Failed to cache in general cache: {e}, using fallback")
@@ -149,9 +143,7 @@ def _get_cached_voice_embedding(
     return _VOICE_EMBEDDING_CACHE.get(cache_key)
 
 
-def _cache_voice_embedding(
-    voice_samples: list[str | Path], embedding: np.ndarray
-):
+def _cache_voice_embedding(voice_samples: list[str | Path], embedding: np.ndarray):
     """Cache voice embedding with LRU eviction."""
     cache_key = _get_voice_embedding_cache_key(voice_samples)
 
@@ -233,9 +225,7 @@ class TortoiseEngine(EngineProtocol):
             enable_caching: If True, enable model and embedding caching
         """
         if TextToSpeech is None:
-            raise ImportError(
-                "Tortoise TTS not installed. Install with: pip install tortoise-tts"
-            )
+            raise ImportError("Tortoise TTS not installed. Install with: pip install tortoise-tts")
 
         # Initialize base protocol
         super().__init__(device=device, gpu=gpu)
@@ -246,9 +236,7 @@ class TortoiseEngine(EngineProtocol):
 
         self.quality_preset = quality_preset
         if quality_preset not in self.QUALITY_PRESETS:
-            logger.warning(
-                f"Unknown quality preset {quality_preset}, using 'high_quality'"
-            )
+            logger.warning(f"Unknown quality preset {quality_preset}, using 'high_quality'")
             self.quality_preset = "high_quality"
 
         self.tts = None
@@ -297,9 +285,7 @@ class TortoiseEngine(EngineProtocol):
             _cache_model(self.quality_preset, self.device, self.tts)
 
         self._initialized = True
-        logger.info(
-            f"Tortoise TTS model loaded successfully (cache: {model_cache_dir})"
-        )
+        logger.info(f"Tortoise TTS model loaded successfully (cache: {model_cache_dir})")
         return True
 
     def initialize(self) -> bool:
@@ -387,6 +373,7 @@ class TortoiseEngine(EngineProtocol):
             if voice_refs:
                 try:
                     import torchaudio
+
                     voice_tensors = []
                     for ref_path in voice_refs:
                         wav, sr = torchaudio.load(ref_path)
@@ -431,18 +418,22 @@ class TortoiseEngine(EngineProtocol):
 
             if output_path:
                 import torchaudio
+
                 torchaudio.save(str(output_path), audio.squeeze(0).cpu(), sample_rate)
                 logger.info(f"Audio saved to: {output_path}")
 
                 if enhance_quality or calculate_quality:
                     audio_np = self._process_audio_quality(
-                        audio_np, sample_rate,
+                        audio_np,
+                        sample_rate,
                         speaker_wav[0] if speaker_wav else None,
-                        enhance_quality, calculate_quality,
+                        enhance_quality,
+                        calculate_quality,
                     )
                     if isinstance(audio_np, tuple):
                         enhanced_audio, quality_metrics = audio_np
                         import soundfile as sf
+
                         sf.write(str(output_path), enhanced_audio, sample_rate)
                         return None, quality_metrics
 
@@ -450,9 +441,11 @@ class TortoiseEngine(EngineProtocol):
             else:
                 if enhance_quality or calculate_quality:
                     audio_np = self._process_audio_quality(
-                        audio_np, sample_rate,
+                        audio_np,
+                        sample_rate,
                         speaker_wav[0] if speaker_wav else None,
-                        enhance_quality, calculate_quality,
+                        enhance_quality,
+                        calculate_quality,
                     )
                     if isinstance(audio_np, tuple):
                         return audio_np
@@ -498,9 +491,7 @@ class TortoiseEngine(EngineProtocol):
                         preserve_prosody=True,
                         target_lufs=-23.0,
                     )
-                    logger.debug(
-                        "Applied advanced quality enhancement to Tortoise output"
-                    )
+                    logger.debug("Applied advanced quality enhancement to Tortoise output")
                 elif enhance_voice_quality is not None:
                     # Fallback to standard enhancement
                     processed_audio = enhance_voice_quality(
@@ -619,9 +610,7 @@ class TortoiseEngine(EngineProtocol):
         if self.enable_caching and preset in _QUALITY_PRESET_CACHE:
             quality_params = _QUALITY_PRESET_CACHE[preset]
         else:
-            quality_params = self.QUALITY_PRESETS.get(
-                preset, self.QUALITY_PRESETS["high_quality"]
-            )
+            quality_params = self.QUALITY_PRESETS.get(preset, self.QUALITY_PRESETS["high_quality"])
             if self.enable_caching:
                 _QUALITY_PRESET_CACHE[preset] = quality_params
 
@@ -652,9 +641,7 @@ class TortoiseEngine(EngineProtocol):
                 for i, text in enumerate(batch_texts):
                     output_path = None
                     if output_dir:
-                        output_path = (
-                            Path(output_dir) / f"output_{batch_start + i:04d}.wav"
-                        )
+                        output_path = Path(output_dir) / f"output_{batch_start + i:04d}.wav"
 
                     # Prepare synthesis parameters
                     synthesis_params = {
@@ -686,26 +673,17 @@ class TortoiseEngine(EngineProtocol):
                         else:
                             # Return audio array
                             audio = self.tts.tts(**synthesis_params)
-                            audio = (
-                                np.array(audio)
-                                if isinstance(audio, (list, tuple))
-                                else audio
-                            )
+                            audio = np.array(audio) if isinstance(audio, (list, tuple)) else audio
 
                         batch_results.append(audio)
                     except Exception as e:
-                        logger.error(
-                            f"Batch synthesis failed for text {batch_start + i}: {e}"
-                        )
+                        logger.error(f"Batch synthesis failed for text {batch_start + i}: {e}")
                         batch_results.append(None)
 
             results.extend(batch_results)
 
             # Clear GPU cache periodically (Tortoise is memory-intensive)
-            if (
-                torch.cuda.is_available()
-                and (batch_start + batch_size) % batch_size == 0
-            ):
+            if torch.cuda.is_available() and (batch_start + batch_size) % batch_size == 0:
                 torch.cuda.empty_cache()
 
         return results

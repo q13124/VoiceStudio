@@ -25,6 +25,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 class PipelineMode(str, Enum):
     """Pipeline execution mode."""
+
     STREAMING = "streaming"
     BATCH = "batch"
     HALF_CASCADE = "half_cascade"
@@ -32,6 +33,7 @@ class PipelineMode(str, Enum):
 
 class PipelineState(str, Enum):
     """Pipeline state machine states."""
+
     IDLE = "idle"
     LISTENING = "listening"
     TRANSCRIBING = "transcribing"
@@ -44,6 +46,7 @@ class PipelineState(str, Enum):
 @dataclass
 class PipelineMetrics:
     """Metrics for a single pipeline execution."""
+
     pipeline_id: str = ""
     mode: str = ""
     stt_latency_ms: float = 0.0
@@ -62,6 +65,7 @@ class PipelineMetrics:
 @dataclass
 class PipelineConfig:
     """Configuration for the pipeline."""
+
     mode: PipelineMode = PipelineMode.STREAMING
     stt_engine: str = "whisper"
     llm_provider: str = "ollama"
@@ -129,6 +133,7 @@ class PipelineOrchestrator:
             return
         try:
             from tools.context.sources.conversation_adapter import append_turn
+
             append_turn(_PROJECT_ROOT, role, content)
         except Exception as e:
             # Non-critical: log but don't fail pipeline
@@ -178,6 +183,7 @@ class PipelineOrchestrator:
             return False
         try:
             from app.core.engines import get_engine_class
+
             engine_cls = get_engine_class(engine_name.lower())
             return engine_cls is not None
         except Exception as exc:
@@ -191,6 +197,7 @@ class PipelineOrchestrator:
         if provider_name == "ollama":
             from app.core.engines.llm_interface import LLMConfig
             from app.core.engines.llm_local_adapter import OllamaLLMProvider
+
             config = LLMConfig(
                 model=self._config.llm_model or "llama3.2",
                 temperature=self._config.llm_temperature,
@@ -202,6 +209,7 @@ class PipelineOrchestrator:
         elif provider_name == "localai":
             from app.core.engines.llm_interface import LLMConfig
             from app.core.engines.llm_local_adapter import LocalAILLMProvider
+
             config = LLMConfig(
                 model=self._config.llm_model or "gpt-3.5-turbo",
                 temperature=self._config.llm_temperature,
@@ -213,6 +221,7 @@ class PipelineOrchestrator:
         elif provider_name == "openai":
             from app.core.engines.llm_interface import LLMConfig
             from app.core.engines.llm_openai_adapter import OpenAILLMProvider
+
             config = LLMConfig(
                 model=self._config.llm_model or "gpt-4o-mini",
                 temperature=self._config.llm_temperature,
@@ -359,7 +368,6 @@ class PipelineOrchestrator:
             if self._llm_provider is None:
                 raise RuntimeError("LLM provider not initialized")
 
-
             # Build messages
             messages = self._build_conversation_messages(text)
 
@@ -418,6 +426,7 @@ class PipelineOrchestrator:
         """Transcribe audio using the configured STT engine."""
         try:
             from backend.services.engine_service import get_engine_service
+
             service = get_engine_service()
             result = await service.transcribe(
                 audio_data=audio_data,
@@ -435,7 +444,6 @@ class PipelineOrchestrator:
         if self._llm_provider is None:
             raise RuntimeError("No LLM provider available")
 
-
         messages = self._build_conversation_messages(text)
 
         # Get function specs if enabled
@@ -443,6 +451,7 @@ class PipelineOrchestrator:
         if self._config.enable_function_calling:
             try:
                 from backend.services.llm_function_calling import get_function_registry
+
                 registry = get_function_registry()
                 functions = registry.get_specs()
             except Exception as e:
@@ -463,19 +472,23 @@ class PipelineOrchestrator:
                 tool_results = await registry.process_tool_calls(response.tool_calls)
 
                 # Add assistant message with tool calls to messages
-                messages.append(Message(
-                    role=MessageRole.ASSISTANT,
-                    content=response.content or "",
-                    tool_calls=response.tool_calls,
-                ))
+                messages.append(
+                    Message(
+                        role=MessageRole.ASSISTANT,
+                        content=response.content or "",
+                        tool_calls=response.tool_calls,
+                    )
+                )
 
                 # Add tool results as messages
                 for result in tool_results:
-                    messages.append(Message(
-                        role=MessageRole.TOOL,
-                        content=result.get("content", str(result.get("result", ""))),
-                        tool_call_id=result.get("tool_call_id", ""),
-                    ))
+                    messages.append(
+                        Message(
+                            role=MessageRole.TOOL,
+                            content=result.get("content", str(result.get("result", ""))),
+                            tool_call_id=result.get("tool_call_id", ""),
+                        )
+                    )
 
                 # Generate follow-up response with tool results
                 follow_up = await self._llm_provider.generate(messages=messages)
@@ -498,6 +511,7 @@ class PipelineOrchestrator:
 
         try:
             from backend.services.engine_service import get_engine_service
+
             service = get_engine_service()
             result = await service.synthesize(
                 text=text,

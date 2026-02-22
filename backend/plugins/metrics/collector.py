@@ -225,7 +225,7 @@ class PluginMetricsCollector:
             self._metrics.append(metric)
             # Trim if exceeding max
             if len(self._metrics) > self._max_metrics:
-                self._metrics = self._metrics[-self._max_metrics:]
+                self._metrics = self._metrics[-self._max_metrics :]
             self._touch()
 
     # === Execution Metrics ===
@@ -532,33 +532,23 @@ class PluginMetricsCollector:
         with self._lock:
             total_calls = sum(s.call_count for s in self._execution_stats.values())
             total_errors = sum(s.error_count for s in self._execution_stats.values())
-            total_duration = sum(
-                s.total_duration_ms for s in self._execution_stats.values()
-            )
+            total_duration = sum(s.total_duration_ms for s in self._execution_stats.values())
 
             return {
                 "plugin_id": self._plugin_id,
                 "created_at": self._created_at.isoformat(),
-                "last_activity": (
-                    self._last_activity.isoformat() if self._last_activity else None
-                ),
+                "last_activity": (self._last_activity.isoformat() if self._last_activity else None),
                 "summary": {
                     "total_calls": total_calls,
                     "total_errors": total_errors,
                     "total_duration_ms": total_duration,
-                    "error_rate": (
-                        (total_errors / total_calls * 100) if total_calls > 0 else 0
-                    ),
+                    "error_rate": ((total_errors / total_calls * 100) if total_calls > 0 else 0),
                     "methods_tracked": len(self._execution_stats),
                 },
-                "execution": {
-                    m: s.to_dict() for m, s in self._execution_stats.items()
-                },
+                "execution": {m: s.to_dict() for m, s in self._execution_stats.items()},
                 "counters": dict(self._counters),
                 "gauges": dict(self._gauges),
-                "error_count": len(
-                    [e for errors in self._errors.values() for e in errors]
-                ),
+                "error_count": len([e for errors in self._errors.values() for e in errors]),
             }
 
     def reset(self) -> None:

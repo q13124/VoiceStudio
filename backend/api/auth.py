@@ -24,9 +24,7 @@ try:
     HAS_BCRYPT = True
 except ImportError:
     HAS_BCRYPT = False
-    logger.warning(
-        "bcrypt not available. " "Password hashing will use SHA256 (less secure)."
-    )
+    logger.warning("bcrypt not available. " "Password hashing will use SHA256 (less secure).")
 
 try:
     import jwt
@@ -56,14 +54,12 @@ if _jwt_secret_env:
 elif os.getenv("VOICESTUDIO_ENV") == "production":
     raise ValueError(
         "JWT_SECRET_KEY environment variable must be set in production. "
-        "Generate with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+        'Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
     )
 else:
     # Development mode: use stable secret to preserve sessions across restarts
     JWT_SECRET_KEY = "voicestudio-dev-secret-do-not-use-in-production"
-    logger.warning(
-        "Using development JWT secret. Set JWT_SECRET_KEY env var for production."
-    )
+    logger.warning("Using development JWT secret. Set JWT_SECRET_KEY env var for production.")
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 JWT_REFRESH_TOKEN_EXPIRE_DAYS = 30  # 30 days
@@ -233,8 +229,7 @@ class APIKeyManager:
         else:
             # Fallback to SHA256 (less secure, but better than plain text)
             logger.warning(
-                "Using SHA256 for password hashing. "
-                "Install bcrypt for better security."
+                "Using SHA256 for password hashing. " "Install bcrypt for better security."
             )
             return hashlib.sha256(password.encode()).hexdigest()
 
@@ -246,9 +241,7 @@ class APIKeyManager:
         if HAS_BCRYPT:
             try:
                 # Try bcrypt verification first
-                return bcrypt.checkpw(
-                    password.encode("utf-8"), password_hash.encode("utf-8")
-                )
+                return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
             except (ValueError, TypeError):
                 # If bcrypt fails, try SHA256 fallback
                 return hashlib.sha256(password.encode()).hexdigest() == password_hash
@@ -345,9 +338,7 @@ class APIKeyManager:
 class JWTManager:
     """Manages JWT tokens for authentication."""
 
-    def __init__(
-        self, secret_key: str = JWT_SECRET_KEY, algorithm: str = JWT_ALGORITHM
-    ):
+    def __init__(self, secret_key: str = JWT_SECRET_KEY, algorithm: str = JWT_ALGORITHM):
         """Initialize JWT manager."""
         if not HAS_JWT:
             raise ImportError("PyJWT is required for JWT authentication")

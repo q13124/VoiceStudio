@@ -25,6 +25,7 @@ router = APIRouter(prefix="/api/plugin-gallery", tags=["plugin-gallery"])
 
 class PluginSummary(BaseModel):
     """Summary of a plugin for listing."""
+
     id: str
     name: str
     description: str
@@ -44,6 +45,7 @@ class PluginSummary(BaseModel):
 
 class PluginDetails(BaseModel):
     """Full plugin details."""
+
     id: str
     name: str
     description: str
@@ -64,12 +66,14 @@ class PluginDetails(BaseModel):
 
 class InstallRequest(BaseModel):
     """Plugin installation request."""
+
     plugin_id: str
     version: str | None = None
 
 
 class InstallResponse(BaseModel):
     """Plugin installation response."""
+
     success: bool
     plugin_id: str
     version: str
@@ -79,6 +83,7 @@ class InstallResponse(BaseModel):
 
 class InstalledPluginInfo(BaseModel):
     """Information about an installed plugin."""
+
     id: str
     version: str
     installed_at: str
@@ -89,6 +94,7 @@ class InstalledPluginInfo(BaseModel):
 
 class UpdateCheckResponse(BaseModel):
     """Update check response."""
+
     updates_available: int
     updates: list[dict[str, str]]
 
@@ -148,9 +154,9 @@ async def get_catalog(refresh: bool = False):
                 installed=installed is not None,
                 installed_version=installed.version if installed else None,
                 update_available=(
-                    installed is not None and
-                    plugin.latest_version is not None and
-                    installed.version != plugin.latest_version.version
+                    installed is not None
+                    and plugin.latest_version is not None
+                    and installed.version != plugin.latest_version.version
                 ),
             )
             plugins.append(summary.model_dump())
@@ -160,8 +166,7 @@ async def get_catalog(refresh: bool = False):
             "last_updated": catalog.last_updated,
             "plugins": plugins,
             "categories": [
-                {"id": c.id, "name": c.name, "icon": c.icon}
-                for c in catalog.categories
+                {"id": c.id, "name": c.name, "icon": c.icon} for c in catalog.categories
             ],
             "total_plugins": len(plugins),
         }
@@ -199,23 +204,25 @@ async def search_plugins(
         plugins = []
         for plugin in results:
             installed = install_service.get_installed_plugin(plugin.id)
-            plugins.append(PluginSummary(
-                id=plugin.id,
-                name=plugin.name,
-                description=plugin.description,
-                category=plugin.category,
-                author=plugin.author,
-                license=plugin.license,
-                latest_version=plugin.latest_version.version if plugin.latest_version else None,
-                tags=plugin.tags,
-                featured=plugin.featured,
-                verified=plugin.verified,
-                rating=plugin.stats.rating,
-                downloads=plugin.stats.downloads,
-                installed=installed is not None,
-                installed_version=installed.version if installed else None,
-                update_available=False,
-            ))
+            plugins.append(
+                PluginSummary(
+                    id=plugin.id,
+                    name=plugin.name,
+                    description=plugin.description,
+                    category=plugin.category,
+                    author=plugin.author,
+                    license=plugin.license,
+                    latest_version=plugin.latest_version.version if plugin.latest_version else None,
+                    tags=plugin.tags,
+                    featured=plugin.featured,
+                    verified=plugin.verified,
+                    rating=plugin.stats.rating,
+                    downloads=plugin.stats.downloads,
+                    installed=installed is not None,
+                    installed_version=installed.version if installed else None,
+                    update_available=False,
+                )
+            )
 
         return plugins
     except Exception as e:

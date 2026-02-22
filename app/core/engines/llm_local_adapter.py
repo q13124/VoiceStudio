@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import httpx
+
     _HAS_HTTPX = True
 except ImportError:
     _HAS_HTTPX = False
@@ -68,6 +69,7 @@ class OllamaLLMProvider(BaseLLMProvider):
             return False
         try:
             import httpx as hx
+
             with hx.Client(timeout=2.0) as client:
                 resp = client.get(f"{self._config.base_url}/api/tags")
                 return resp.status_code == 200
@@ -79,10 +81,10 @@ class OllamaLLMProvider(BaseLLMProvider):
         if self._client is None:
             if not _HAS_HTTPX:
                 raise RuntimeError(
-                    "httpx is required for Ollama integration. "
-                    "Install with: pip install httpx"
+                    "httpx is required for Ollama integration. " "Install with: pip install httpx"
                 )
             import httpx as hx
+
             self._client = hx.AsyncClient(
                 base_url=self._config.base_url,
                 timeout=hx.Timeout(self._config.timeout_seconds),
@@ -137,10 +139,7 @@ class OllamaLLMProvider(BaseLLMProvider):
                 usage={
                     "prompt_tokens": data.get("prompt_eval_count", 0),
                     "completion_tokens": data.get("eval_count", 0),
-                    "total_tokens": (
-                        data.get("prompt_eval_count", 0)
-                        + data.get("eval_count", 0)
-                    ),
+                    "total_tokens": (data.get("prompt_eval_count", 0) + data.get("eval_count", 0)),
                 },
             )
         except Exception as exc:
@@ -278,6 +277,7 @@ class LocalAILLMProvider(BaseLLMProvider):
             return False
         try:
             import httpx as hx
+
             with hx.Client(timeout=2.0) as client:
                 resp = client.get(f"{self._config.base_url}/v1/models")
                 return resp.status_code == 200
@@ -289,6 +289,7 @@ class LocalAILLMProvider(BaseLLMProvider):
             if not _HAS_HTTPX:
                 raise RuntimeError("httpx is required. Install with: pip install httpx")
             import httpx as hx
+
             self._client = hx.AsyncClient(
                 base_url=self._config.base_url,
                 timeout=hx.Timeout(self._config.timeout_seconds),
@@ -362,9 +363,7 @@ class LocalAILLMProvider(BaseLLMProvider):
         client = self._get_client()
 
         try:
-            async with client.stream(
-                "POST", "/v1/chat/completions", json=payload
-            ) as response:
+            async with client.stream("POST", "/v1/chat/completions", json=payload) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():
                     if not line.startswith("data: "):

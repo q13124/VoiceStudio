@@ -154,9 +154,7 @@ class TestConsoleLogHostAPI:
         api = WasmHostAPI()
 
         # Find console_log spec
-        console_log_spec = next(
-            (f for f in api._functions if f.name == "console_log"), None
-        )
+        console_log_spec = next((f for f in api._functions if f.name == "console_log"), None)
 
         assert console_log_spec is not None
         assert console_log_spec.required_capability == CapabilityToken.LOG_INFO
@@ -168,9 +166,7 @@ class TestConsoleLogHostAPI:
 
         api = WasmHostAPI()
 
-        console_error_spec = next(
-            (f for f in api._functions if f.name == "console_error"), None
-        )
+        console_error_spec = next((f for f in api._functions if f.name == "console_error"), None)
 
         assert console_error_spec is not None
         assert console_error_spec.required_capability == CapabilityToken.LOG_ERROR
@@ -219,9 +215,7 @@ class TestHTTPRequestHostAPI:
 
         api = WasmHostAPI()
 
-        http_spec = next(
-            (f for f in api._functions if f.name == "http_request"), None
-        )
+        http_spec = next((f for f in api._functions if f.name == "http_request"), None)
 
         assert http_spec is not None
         assert http_spec.required_capability == CapabilityToken.NET_INTERNET
@@ -232,9 +226,7 @@ class TestHTTPRequestHostAPI:
 
         api = WasmHostAPI()
 
-        http_spec = next(
-            (f for f in api._functions if f.name == "http_request"), None
-        )
+        http_spec = next((f for f in api._functions if f.name == "http_request"), None)
 
         # Should have params for method, url, headers, body, response
         assert len(http_spec.params) >= 10  # 10 i32 params
@@ -247,11 +239,16 @@ class TestHTTPRequestHostAPI:
 
         # Call with stub params
         result = api._http_request(
-            method_ptr=0, method_len=3,
-            url_ptr=0, url_len=20,
-            headers_ptr=0, headers_len=0,
-            body_ptr=0, body_len=0,
-            response_ptr=0, max_response_len=1024,
+            method_ptr=0,
+            method_len=3,
+            url_ptr=0,
+            url_len=20,
+            headers_ptr=0,
+            headers_len=0,
+            body_ptr=0,
+            body_len=0,
+            response_ptr=0,
+            max_response_len=1024,
         )
 
         # Stub returns 0 (empty response)
@@ -382,12 +379,12 @@ class TestHostAPISecurityBoundaries:
         for func_name, expected_cap in sensitive_functions.items():
             spec = next((f for f in api._functions if f.name == func_name), None)
             if spec is not None:
-                assert spec.required_capability is not None, (
-                    f"{func_name} should require a capability"
-                )
-                assert spec.required_capability == expected_cap, (
-                    f"{func_name} should require {expected_cap}"
-                )
+                assert (
+                    spec.required_capability is not None
+                ), f"{func_name} should require a capability"
+                assert (
+                    spec.required_capability == expected_cap
+                ), f"{func_name} should require {expected_cap}"
 
     def test_file_apis_have_sandbox_constraint(self, tmp_path) -> None:
         """Test that file APIs respect sandbox path."""
@@ -432,9 +429,9 @@ class TestWasmHostAPIConvenience:
         api = WasmHostAPI()
 
         for func_spec in api._functions:
-            assert func_spec.implementation is not None, (
-                f"Function {func_spec.name} has no implementation"
-            )
-            assert callable(func_spec.implementation), (
-                f"Function {func_spec.name} implementation is not callable"
-            )
+            assert (
+                func_spec.implementation is not None
+            ), f"Function {func_spec.name} has no implementation"
+            assert callable(
+                func_spec.implementation
+            ), f"Function {func_spec.name} implementation is not callable"

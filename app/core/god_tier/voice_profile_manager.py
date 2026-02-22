@@ -139,9 +139,7 @@ class VoiceProfileManager:
         embedding = self._extract_advanced_embedding(reference_audio, sample_rate)
 
         # Analyze voice characteristics
-        characteristics = self._analyze_voice_characteristics(
-            reference_audio, sample_rate
-        )
+        characteristics = self._analyze_voice_characteristics(reference_audio, sample_rate)
 
         # Calculate comprehensive quality score
         quality_score = self._calculate_comprehensive_quality(
@@ -153,9 +151,7 @@ class VoiceProfileManager:
             "id": profile_id,
             "name": name,
             "language": language,
-            "embedding": (
-                embedding.tolist() if isinstance(embedding, np.ndarray) else embedding
-            ),
+            "embedding": (embedding.tolist() if isinstance(embedding, np.ndarray) else embedding),
             "characteristics": characteristics,
             "quality_score": quality_score,
             "created_at": datetime.utcnow().isoformat(),
@@ -171,9 +167,7 @@ class VoiceProfileManager:
         logger.info(f"Created voice profile: {name} (ID: {profile_id})")
         return profile
 
-    def _extract_advanced_embedding(
-        self, audio: np.ndarray, sample_rate: int
-    ) -> np.ndarray:
+    def _extract_advanced_embedding(self, audio: np.ndarray, sample_rate: int) -> np.ndarray:
         """
         Extract advanced voice embedding.
 
@@ -188,9 +182,7 @@ class VoiceProfileManager:
             # Extract comprehensive features
             mfcc = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=13)
             chroma = librosa.feature.chroma(y=audio, sr=sample_rate)
-            spectral_centroid = librosa.feature.spectral_centroid(
-                y=audio, sr=sample_rate
-            )
+            spectral_centroid = librosa.feature.spectral_centroid(y=audio, sr=sample_rate)
             spectral_rolloff = librosa.feature.spectral_rolloff(y=audio, sr=sample_rate)
             zero_crossing_rate = librosa.feature.zero_crossing_rate(audio)
 
@@ -223,9 +215,7 @@ class VoiceProfileManager:
             # Fallback: random embedding
             return np.random.randn(self.embedding_dim).astype(np.float32)
 
-    def _analyze_voice_characteristics(
-        self, audio: np.ndarray, sample_rate: int
-    ) -> dict[str, Any]:
+    def _analyze_voice_characteristics(self, audio: np.ndarray, sample_rate: int) -> dict[str, Any]:
         """
         Analyze voice characteristics.
 
@@ -242,9 +232,7 @@ class VoiceProfileManager:
             pitch_mean = np.mean(pitches[pitches > 0]) if np.any(pitches > 0) else 0.0
 
             # Calculate spectral centroid (brightness)
-            spectral_centroid = librosa.feature.spectral_centroid(
-                y=audio, sr=sample_rate
-            )
+            spectral_centroid = librosa.feature.spectral_centroid(y=audio, sr=sample_rate)
             brightness = np.mean(spectral_centroid)
 
             # Calculate spectral rolloff (timbre)
@@ -353,9 +341,7 @@ class VoiceProfileManager:
 
         return profiles
 
-    def find_similar_profiles(
-        self, profile_id: str, top_k: int = 5
-    ) -> list[tuple[str, float]]:
+    def find_similar_profiles(self, profile_id: str, top_k: int = 5) -> list[tuple[str, float]]:
         """
         Find similar profiles based on embedding similarity.
 
@@ -390,9 +376,7 @@ class VoiceProfileManager:
 
         return similarities[:top_k]
 
-    def update_profile(
-        self, profile_id: str, updates: dict[str, Any]
-    ) -> dict[str, Any] | None:
+    def update_profile(self, profile_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
         """
         Update profile.
 

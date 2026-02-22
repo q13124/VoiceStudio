@@ -14,6 +14,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
+import numpy as np
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
@@ -229,117 +230,118 @@ def _update_timeline_duration() -> None:
         _timeline_state.duration = max_end
 
 
-async def _render_timeline_audio(
-    timeline: TimelineState,
-    sample_rate: int
-) -> np.ndarray | None:
+async def _render_timeline_audio(timeline: TimelineState, sample_rate: int) -> np.ndarray | None:
     """Render all timeline clips into a single audio array.
-    
+
     Args:
         timeline: The timeline state to render
         sample_rate: Target sample rate for output
-        
+
     Returns:
         Numpy array with mixed audio, or None if no clips
     """
     import os
-    
+
     import numpy as np
-    
+
     # Calculate total duration in samples
     if timeline.duration <= 0:
         return None
-        
+
     total_samples = int(timeline.duration * sample_rate)
     if total_samples <= 0:
         return None
-    
+
     # Initialize output buffer (mono for simplicity; stereo would need 2D array)
     output = np.zeros(total_samples, dtype=np.float32)
     has_audio = False
-    
+
     for track in timeline.tracks:
         # Skip muted tracks
         if track.muted:
             continue
-            
+
         track_volume = track.volume
-        
+
         for clip in track.clips:
             # Skip muted clips or clips without source
             if clip.muted or not clip.source_path:
                 continue
-                
+
             # Check if source file exists
             if not os.path.exists(clip.source_path):
                 logger.warning(f"Clip source not found: {clip.source_path}")
                 continue
-            
+
             # Load clip audio
             try:
                 clip_audio = await _load_audio_file(clip.source_path, sample_rate)
                 if clip_audio is None:
                     continue
-                    
+
                 # Calculate positions
                 clip_start_sample = int(clip.start_time * sample_rate)
                 clip_end_sample = int(clip.end_time * sample_rate)
                 source_start_sample = int(clip.source_start * sample_rate)
-                
+
                 # Get the portion of the source audio we need
                 source_end_sample = source_start_sample + (clip_end_sample - clip_start_sample)
                 source_audio = clip_audio[source_start_sample:source_end_sample]
-                
+
                 # Apply clip and track volume
                 source_audio = source_audio * clip.volume * track_volume
-                
+
                 # Mix into output buffer
                 actual_length = min(len(source_audio), total_samples - clip_start_sample)
                 if actual_length > 0:
-                    output[clip_start_sample:clip_start_sample + actual_length] += source_audio[:actual_length]
+                    output[clip_start_sample : clip_start_sample + actual_length] += source_audio[
+                        :actual_length
+                    ]
                     has_audio = True
-                    
+
             except Exception as e:
                 logger.warning(f"Failed to load clip {clip.id}: {e}")
                 continue
-    
+
     return output if has_audio else None
 
 
 async def _load_audio_file(path: str, target_sample_rate: int) -> np.ndarray | None:
     """Load an audio file and resample to target rate.
-    
+
     Args:
         path: Path to audio file
         target_sample_rate: Target sample rate
-        
+
     Returns:
         Mono audio array resampled to target rate, or None on error
     """
     import numpy as np
-    
+
     try:
         import soundfile as sf
-        
-        audio, sr = sf.read(path, dtype='float32')
-        
+
+        audio, sr = sf.read(path, dtype="float32")
+
         # Convert stereo to mono if needed
         if len(audio.shape) > 1:
             audio = np.mean(audio, axis=1)
-        
+
         # Resample if needed
         if sr != target_sample_rate:
             try:
                 import librosa
+
                 audio = librosa.resample(audio, orig_sr=sr, target_sr=target_sample_rate)
             except ImportError:
                 # Simple linear interpolation as fallback
                 import scipy.signal
+
                 num_samples = int(len(audio) * target_sample_rate / sr)
                 audio = scipy.signal.resample(audio, num_samples).astype(np.float32)
-        
+
         return audio
-        
+
     except ImportError:
         logger.warning("soundfile not available, audio loading disabled")
         return None
@@ -349,13 +351,10 @@ async def _load_audio_file(path: str, target_sample_rate: int) -> np.ndarray | N
 
 
 async def _write_audio_output(
-    audio: np.ndarray,
-    output_path: str,
-    sample_rate: int,
-    format: str
+    audio: np.ndarray, output_path: str, sample_rate: int, format: str
 ) -> None:
     """Write audio array to file.
-    
+
     Args:
         audio: Audio data as numpy array
         output_path: Path to write to
@@ -363,19 +362,20 @@ async def _write_audio_output(
         format: Output format (wav, mp3, flac, etc.)
     """
     import os
-    
+
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
-    
+
     # Normalize audio to prevent clipping
     import numpy as np
+
     max_val = np.max(np.abs(audio))
     if max_val > 0:
         audio = audio / max(max_val, 1.0)
-    
+
     try:
         import soundfile as sf
-        
+
         # soundfile supports wav, flac, ogg natively
         sf_format = format.upper()
         if sf_format == "MP3":
@@ -387,11 +387,12 @@ async def _write_audio_output(
                 os.remove(wav_path)
         else:
             sf.write(output_path, audio, sample_rate)
-            
+
     except ImportError:
         # Fallback to scipy for wav
         if format.lower() == "wav":
             from scipy.io import wavfile
+
             audio_int16 = (audio * 32767).astype(np.int16)
             wavfile.write(output_path, sample_rate, audio_int16)
         else:
@@ -409,24 +410,22 @@ async def _convert_to_format(input_path: str, output_path: str, format: str) -> 
     import asyncio
     import os
     import shutil
-    
+
     # Find ffmpeg
     ffmpeg_path = os.environ.get("VOICESTUDIO_FFMPEG_PATH", "ffmpeg")
     if not shutil.which(ffmpeg_path):
         ffmpeg_path = shutil.which("ffmpeg")
-        
+
     if not ffmpeg_path:
         raise RuntimeError("ffmpeg not found for format conversion")
-    
+
     cmd = [ffmpeg_path, "-y", "-i", input_path, output_path]
-    
+
     proc = await asyncio.create_subprocess_exec(
-        *cmd,
-        stdout=asyncio.subprocess.DEVNULL,
-        stderr=asyncio.subprocess.PIPE
+        *cmd, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.PIPE
     )
     _, stderr = await proc.communicate()
-    
+
     if proc.returncode != 0:
         raise RuntimeError(f"ffmpeg conversion failed: {stderr.decode()}")
         _timeline_state.updated_at = datetime.now().isoformat()
@@ -443,7 +442,9 @@ async def get_timeline_state():
     return _get_or_create_timeline()
 
 
-@router.post("/create", response_model=TimelineState, dependencies=[Depends(require_auth_if_enabled)])
+@router.post(
+    "/create", response_model=TimelineState, dependencies=[Depends(require_auth_if_enabled)]
+)
 async def create_timeline(options: CreateTimelineOptions):
     """Create a new timeline."""
     global _timeline_state, _undo_stack, _redo_stack
@@ -476,7 +477,9 @@ async def add_track(request: AddTrackRequest):
     return track
 
 
-@router.post("/tracks/delete", response_model=DeleteResponse, dependencies=[Depends(require_auth_if_enabled)])
+@router.post(
+    "/tracks/delete", response_model=DeleteResponse, dependencies=[Depends(require_auth_if_enabled)]
+)
 async def delete_track(request: DeleteRequest):
     """Delete a track from the timeline."""
     global _timeline_state
@@ -522,7 +525,9 @@ async def add_clip(request: AddClipRequest):
     return clip
 
 
-@router.post("/clips/delete", response_model=DeleteResponse, dependencies=[Depends(require_auth_if_enabled)])
+@router.post(
+    "/clips/delete", response_model=DeleteResponse, dependencies=[Depends(require_auth_if_enabled)]
+)
 async def delete_clip(request: DeleteRequest):
     """Delete a clip from the timeline."""
     global _timeline_state
@@ -540,7 +545,9 @@ async def delete_clip(request: DeleteRequest):
     raise HTTPException(status_code=404, detail=f"Clip {request.id} not found")
 
 
-@router.put("/clips/{clip_id}/move", response_model=Clip, dependencies=[Depends(require_auth_if_enabled)])
+@router.put(
+    "/clips/{clip_id}/move", response_model=Clip, dependencies=[Depends(require_auth_if_enabled)]
+)
 async def move_clip(clip_id: str, request: MoveClipRequest):
     """Move a clip to a new position or track."""
     global _timeline_state
@@ -571,7 +578,9 @@ async def move_clip(clip_id: str, request: MoveClipRequest):
     if request.new_track_id and request.new_track_id != source_track.id:
         target_track = next((t for t in timeline.tracks if t.id == request.new_track_id), None)
         if not target_track:
-            raise HTTPException(status_code=404, detail=f"Target track {request.new_track_id} not found")
+            raise HTTPException(
+                status_code=404, detail=f"Target track {request.new_track_id} not found"
+            )
         source_track.clips.remove(clip)
         clip.track_id = request.new_track_id
         target_track.clips.append(clip)
@@ -581,7 +590,9 @@ async def move_clip(clip_id: str, request: MoveClipRequest):
     return clip
 
 
-@router.put("/clips/{clip_id}/trim", response_model=Clip, dependencies=[Depends(require_auth_if_enabled)])
+@router.put(
+    "/clips/{clip_id}/trim", response_model=Clip, dependencies=[Depends(require_auth_if_enabled)]
+)
 async def trim_clip(clip_id: str, request: TrimClipRequest):
     """Trim a clip's start or end time."""
     global _timeline_state
@@ -611,7 +622,11 @@ async def trim_clip(clip_id: str, request: TrimClipRequest):
     return clip
 
 
-@router.post("/clips/{clip_id}/split", response_model=SplitClipResponse, dependencies=[Depends(require_auth_if_enabled)])
+@router.post(
+    "/clips/{clip_id}/split",
+    response_model=SplitClipResponse,
+    dependencies=[Depends(require_auth_if_enabled)],
+)
 async def split_clip(clip_id: str, request: SplitClipRequest):
     """Split a clip at a given position."""
     global _timeline_state
@@ -682,40 +697,38 @@ async def set_loop(request: LoopRequest):
     return {"success": True}
 
 
-@router.post("/export", response_model=ExportResponse, dependencies=[Depends(require_auth_if_enabled)])
+@router.post(
+    "/export", response_model=ExportResponse, dependencies=[Depends(require_auth_if_enabled)]
+)
 async def export_timeline(request: ExportRequest):
     """Export the timeline to a file.
-    
+
     Renders all audio clips from the timeline, mixing them according to their
     positions and volume settings, then exports to the specified format.
     """
     timeline = _get_or_create_timeline()
     sample_rate = request.sample_rate or timeline.sample_rate
-    
+
     logger.info(f"Export requested: {request.output_path} as {request.format}")
-    
+
     # Render the timeline audio
     rendered_audio = await _render_timeline_audio(timeline, sample_rate)
-    
+
     if rendered_audio is None:
         # Empty timeline - create silent audio of timeline duration
         import numpy as np
+
         duration_samples = int(max(timeline.duration, 1.0) * sample_rate)
         rendered_audio = np.zeros(duration_samples, dtype=np.float32)
-    
+
     # Write output file
     try:
-        await _write_audio_output(
-            rendered_audio,
-            request.output_path,
-            sample_rate,
-            request.format
-        )
+        await _write_audio_output(rendered_audio, request.output_path, sample_rate, request.format)
         logger.info(f"Exported timeline to {request.output_path}")
     except Exception as e:
         logger.error(f"Failed to export timeline: {e}")
         raise HTTPException(status_code=500, detail=f"Export failed: {e}")
-    
+
     return ExportResponse(
         success=True,
         output_path=request.output_path,
@@ -759,7 +772,11 @@ async def redo():
     return UndoResponse(success=True, operation="redo")
 
 
-@router.get("/undo-redo-state", response_model=UndoRedoState, dependencies=[Depends(require_auth_if_enabled)])
+@router.get(
+    "/undo-redo-state",
+    response_model=UndoRedoState,
+    dependencies=[Depends(require_auth_if_enabled)],
+)
 async def get_undo_redo_state():
     """Get the current undo/redo state."""
     return UndoRedoState(

@@ -23,6 +23,7 @@ from .workflow_tracer import WorkflowTracer
 
 class CorrelationState(Enum):
     """State of a UI-API correlation."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -33,6 +34,7 @@ class CorrelationState(Enum):
 @dataclass
 class UIAction:
     """Represents a UI action that may trigger API calls."""
+
     name: str
     element_id: str | None
     action_type: str  # click, type, navigate, etc.
@@ -43,6 +45,7 @@ class UIAction:
 @dataclass
 class CorrelatedCall:
     """Represents an API call correlated to a UI action."""
+
     ui_action: UIAction
     method: str
     endpoint: str
@@ -69,6 +72,7 @@ class CorrelatedCall:
 @dataclass
 class Correlation:
     """A complete UI action to API response correlation."""
+
     id: str
     ui_action: UIAction
     expected_endpoints: list[str]
@@ -163,8 +167,7 @@ class CorrelatedTracer:
 
         # Log to workflow tracer
         self.tracer.step(
-            f"[CORR] {correlation.ui_action.name} "
-            f"({correlation.ui_action.action_type})"
+            f"[CORR] {correlation.ui_action.name} " f"({correlation.ui_action.action_type})"
         )
 
     def _end_correlation(self, correlation: Correlation):
@@ -175,8 +178,7 @@ class CorrelatedTracer:
         if correlation.assertions:
             all_passed = all(a.get("passed", False) for a in correlation.assertions)
             correlation.state = (
-                CorrelationState.COMPLETED if all_passed
-                else CorrelationState.FAILED
+                CorrelationState.COMPLETED if all_passed else CorrelationState.FAILED
             )
         elif correlation.api_calls:
             correlation.state = CorrelationState.COMPLETED
@@ -262,17 +264,9 @@ class CorrelatedTracer:
         """Get summary of all correlations."""
         return {
             "total": len(self.correlations),
-            "completed": sum(
-                1 for c in self.correlations
-                if c.state == CorrelationState.COMPLETED
-            ),
-            "failed": sum(
-                1 for c in self.correlations
-                if c.state == CorrelationState.FAILED
-            ),
-            "total_api_calls": sum(
-                len(c.api_calls) for c in self.correlations
-            ),
+            "completed": sum(1 for c in self.correlations if c.state == CorrelationState.COMPLETED),
+            "failed": sum(1 for c in self.correlations if c.state == CorrelationState.FAILED),
+            "total_api_calls": sum(len(c.api_calls) for c in self.correlations),
             "correlations": [
                 {
                     "id": c.id,
@@ -335,11 +329,13 @@ class CorrelationContext:
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type:
             self._correlation.state = CorrelationState.FAILED
-            self._correlation.assertions.append({
-                "type": "exception",
-                "passed": False,
-                "error": str(exc_val),
-            })
+            self._correlation.assertions.append(
+                {
+                    "type": "exception",
+                    "passed": False,
+                    "error": str(exc_val),
+                }
+            )
         self._tracer._end_correlation(self._correlation)
         return False
 
@@ -361,15 +357,15 @@ class CorrelationContext:
         endpoint: str | None = None,
     ) -> CorrelationContext:
         """Assert expected status code from API call."""
-        passed = self._tracer.assert_status(
-            expected_status, endpoint, self._correlation
+        passed = self._tracer.assert_status(expected_status, endpoint, self._correlation)
+        self._correlation.assertions.append(
+            {
+                "type": "status",
+                "expected": expected_status,
+                "endpoint": endpoint,
+                "passed": passed,
+            }
         )
-        self._correlation.assertions.append({
-            "type": "status",
-            "expected": expected_status,
-            "endpoint": endpoint,
-            "passed": passed,
-        })
         return self
 
     def assert_endpoint_called(
@@ -378,15 +374,15 @@ class CorrelationContext:
         method: str | None = None,
     ) -> CorrelationContext:
         """Assert endpoint was called."""
-        passed = self._tracer.assert_endpoint_called(
-            endpoint, method, self._correlation
+        passed = self._tracer.assert_endpoint_called(endpoint, method, self._correlation)
+        self._correlation.assertions.append(
+            {
+                "type": "endpoint_called",
+                "endpoint": endpoint,
+                "method": method,
+                "passed": passed,
+            }
         )
-        self._correlation.assertions.append({
-            "type": "endpoint_called",
-            "endpoint": endpoint,
-            "method": method,
-            "passed": passed,
-        })
         return self
 
     def assert_response_contains(
@@ -406,13 +402,15 @@ class CorrelationContext:
                         passed = True
                         break
 
-        self._correlation.assertions.append({
-            "type": "response_contains",
-            "key": key,
-            "value": value,
-            "endpoint": endpoint,
-            "passed": passed,
-        })
+        self._correlation.assertions.append(
+            {
+                "type": "response_contains",
+                "key": key,
+                "value": value,
+                "endpoint": endpoint,
+                "passed": passed,
+            }
+        )
         return self
 
     @property

@@ -27,7 +27,8 @@ class ArtifactRefCounter:
 
     def __init__(self, data_dir: str | None = None):
         self._data_dir = Path(
-            data_dir or os.getenv("VOICESTUDIO_CACHE_PATH", "")
+            data_dir
+            or os.getenv("VOICESTUDIO_CACHE_PATH", "")
             or Path.home() / ".voicestudio" / "cache"
         )
         self._data_dir.mkdir(parents=True, exist_ok=True)

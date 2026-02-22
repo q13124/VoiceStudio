@@ -227,9 +227,7 @@ class PluginRatingsStore:
             True if rating was removed
         """
         with self._get_connection() as conn:
-            cursor = conn.execute(
-                "DELETE FROM ratings WHERE plugin_id = ?", (plugin_id,)
-            )
+            cursor = conn.execute("DELETE FROM ratings WHERE plugin_id = ?", (plugin_id,))
             conn.commit()
             removed = cursor.rowcount > 0
 
@@ -272,9 +270,7 @@ class PluginRatingsStore:
             List of all ratings
         """
         with self._get_connection() as conn:
-            rows = conn.execute(
-                "SELECT * FROM ratings ORDER BY updated_at DESC"
-            ).fetchall()
+            rows = conn.execute("SELECT * FROM ratings ORDER BY updated_at DESC").fetchall()
 
             return [
                 PluginRating(
@@ -454,9 +450,7 @@ def get_ratings_store(db_path: Optional[Path] = None) -> PluginRatingsStore:
     return _ratings_store
 
 
-def rate_plugin(
-    plugin_id: str, version: str, rating: int, review: str = ""
-) -> PluginRating:
+def rate_plugin(plugin_id: str, version: str, rating: int, review: str = "") -> PluginRating:
     """
     Rate a plugin.
 

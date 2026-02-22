@@ -102,7 +102,7 @@ class SafeExpressionEvaluator:
         variables = variables or {}
 
         try:
-            tree = ast.parse(expression, mode='eval')
+            tree = ast.parse(expression, mode="eval")
         except SyntaxError as e:
             raise ExpressionError(f"Syntax error: {e}", expression)
 
@@ -141,11 +141,11 @@ class SafeExpressionEvaluator:
             if name in variables:
                 return variables[name]
             # Allow True, False, None
-            if name == 'True':
+            if name == "True":
                 return True
-            if name == 'False':
+            if name == "False":
                 return False
-            if name == 'None':
+            if name == "None":
                 return None
             raise ExpressionError(f"Unknown variable: {name}", "")
 
@@ -218,7 +218,7 @@ class SafeExpressionEvaluator:
             value = self._eval_node(node.value, variables)
             attr = node.attr
             # Restrict to safe attributes (no dunder methods)
-            if attr.startswith('_'):
+            if attr.startswith("_"):
                 raise ExpressionError(f"Cannot access private attribute: {attr}", "")
             if not hasattr(value, attr):
                 raise ExpressionError(f"Attribute not found: {attr}", "")

@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class FeedbackType(Enum):
     """Types of feedback."""
+
     BUG_REPORT = "bug_report"
     FEATURE_REQUEST = "feature_request"
     IMPROVEMENT = "improvement"
@@ -29,6 +30,7 @@ class FeedbackType(Enum):
 
 class FeedbackPriority(Enum):
     """Feedback priority levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -37,6 +39,7 @@ class FeedbackPriority(Enum):
 
 class FeedbackStatus(Enum):
     """Feedback status."""
+
     NEW = "new"
     ACKNOWLEDGED = "acknowledged"
     IN_PROGRESS = "in_progress"
@@ -48,6 +51,7 @@ class FeedbackStatus(Enum):
 @dataclass
 class FeedbackAttachment:
     """An attachment to feedback."""
+
     attachment_id: str
     filename: str
     content_type: str
@@ -58,6 +62,7 @@ class FeedbackAttachment:
 @dataclass
 class Feedback:
     """A feedback submission."""
+
     feedback_id: str
     type: FeedbackType
     priority: FeedbackPriority
@@ -79,6 +84,7 @@ class Feedback:
 @dataclass
 class FeedbackStats:
     """Feedback statistics."""
+
     total: int = 0
     by_type: dict[str, int] = field(default_factory=dict)
     by_status: dict[str, int] = field(default_factory=dict)
@@ -89,10 +95,7 @@ class FeedbackStats:
 class FeedbackService:
     """Service for managing user feedback."""
 
-    def __init__(
-        self,
-        storage_path: Path | None = None
-    ):
+    def __init__(self, storage_path: Path | None = None):
         self._storage_path = storage_path or Path.home() / ".voicestudio" / "feedback"
         self._feedback: dict[str, Feedback] = {}
         self._load_feedback()
@@ -107,7 +110,7 @@ class FeedbackService:
         user_email: str | None = None,
         attachments: list[FeedbackAttachment] | None = None,
         tags: list[str] | None = None,
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
     ) -> Feedback:
         """Submit new feedback."""
         feedback = Feedback(
@@ -145,7 +148,7 @@ class FeedbackService:
         status: FeedbackStatus | None = None,
         priority: FeedbackPriority | None = None,
         limit: int = 100,
-        offset: int = 0
+        offset: int = 0,
     ) -> list[Feedback]:
         """List feedback with optional filters."""
         items = list(self._feedback.values())
@@ -162,13 +165,10 @@ class FeedbackService:
         # Sort by created_at, newest first
         items.sort(key=lambda f: f.created_at, reverse=True)
 
-        return items[offset:offset + limit]
+        return items[offset : offset + limit]
 
     def update_status(
-        self,
-        feedback_id: str,
-        status: FeedbackStatus,
-        comment: str | None = None
+        self, feedback_id: str, status: FeedbackStatus, comment: str | None = None
     ) -> Feedback | None:
         """Update feedback status."""
         feedback = self._feedback.get(feedback_id)
@@ -179,34 +179,33 @@ class FeedbackService:
         feedback.updated_at = datetime.now()
 
         if comment:
-            feedback.responses.append({
-                "type": "status_change",
-                "status": status.value,
-                "comment": comment,
-                "timestamp": datetime.now().isoformat(),
-            })
+            feedback.responses.append(
+                {
+                    "type": "status_change",
+                    "status": status.value,
+                    "comment": comment,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
         self._save_feedback()
 
         return feedback
 
-    def add_response(
-        self,
-        feedback_id: str,
-        message: str,
-        responder: str
-    ) -> Feedback | None:
+    def add_response(self, feedback_id: str, message: str, responder: str) -> Feedback | None:
         """Add a response to feedback."""
         feedback = self._feedback.get(feedback_id)
         if not feedback:
             return None
 
-        feedback.responses.append({
-            "type": "response",
-            "message": message,
-            "responder": responder,
-            "timestamp": datetime.now().isoformat(),
-        })
+        feedback.responses.append(
+            {
+                "type": "response",
+                "message": message,
+                "responder": responder,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
         feedback.updated_at = datetime.now()
 
         self._save_feedback()
@@ -214,11 +213,7 @@ class FeedbackService:
         return feedback
 
     def add_attachment(
-        self,
-        feedback_id: str,
-        filename: str,
-        content: bytes,
-        content_type: str
+        self, feedback_id: str, filename: str, content: bytes, content_type: str
     ) -> FeedbackAttachment | None:
         """Add an attachment to feedback."""
         feedback = self._feedback.get(feedback_id)
@@ -276,8 +271,7 @@ class FeedbackService:
         resolved = [f for f in items if f.status == FeedbackStatus.RESOLVED]
         if resolved:
             total_hours = sum(
-                (f.updated_at - f.created_at).total_seconds() / 3600
-                for f in resolved
+                (f.updated_at - f.created_at).total_seconds() / 3600 for f in resolved
             )
             stats.average_resolution_hours = total_hours / len(resolved)
 
@@ -298,6 +292,7 @@ class FeedbackService:
     def _get_os_version(self) -> str:
         """Get OS version."""
         import platform
+
         return platform.platform()
 
     def _load_feedback(self) -> None:

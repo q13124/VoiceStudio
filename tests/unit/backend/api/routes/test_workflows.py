@@ -33,23 +33,17 @@ class TestWorkflowsRouteHandlers:
     def test_list_workflows_handler_exists(self):
         """Test list_workflows handler exists."""
         if hasattr(workflows, "list_workflows"):
-            assert callable(
-                workflows.list_workflows
-            ), "list_workflows is not callable"
+            assert callable(workflows.list_workflows), "list_workflows is not callable"
 
     def test_create_workflow_handler_exists(self):
         """Test create_workflow handler exists."""
         if hasattr(workflows, "create_workflow"):
-            assert callable(
-                workflows.create_workflow
-            ), "create_workflow is not callable"
+            assert callable(workflows.create_workflow), "create_workflow is not callable"
 
     def test_execute_workflow_handler_exists(self):
         """Test execute_workflow handler exists."""
         if hasattr(workflows, "execute_workflow"):
-            assert callable(
-                workflows.execute_workflow
-            ), "execute_workflow is not callable"
+            assert callable(workflows.execute_workflow), "execute_workflow is not callable"
 
 
 class TestWorkflowsRouter:
@@ -70,4 +64,3 @@ class TestWorkflowsRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

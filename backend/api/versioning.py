@@ -252,6 +252,7 @@ def deprecated(
         async def old_endpoint():
             return {"data": "old"}
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -270,6 +271,7 @@ def deprecated(
         wrapper._deprecation_message = message or "This endpoint is deprecated"
 
         return wrapper
+
     return decorator
 
 

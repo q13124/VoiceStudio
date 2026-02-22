@@ -19,6 +19,7 @@ import pytest
 try:
     import websockets
     from websockets.exceptions import ConnectionClosed
+
     HAS_WEBSOCKETS = True
 except ImportError:
     HAS_WEBSOCKETS = False
@@ -67,8 +68,9 @@ class TestMeterWebSocket:
                             data = json.loads(message)
 
                             # Verify expected fields
-                            assert "level" in data or "rms" in data or "peak" in data, \
-                                "Meter data should contain level, rms, or peak field"
+                            assert (
+                                "level" in data or "rms" in data or "peak" in data
+                            ), "Meter data should contain level, rms, or peak field"
                     except asyncio.TimeoutError:
                         pytest.skip("No meter data received within timeout")
         except (ConnectionRefusedError, OSError, asyncio.TimeoutError):
@@ -124,10 +126,7 @@ class TestJobProgressWebSocket:
             async with asyncio.timeout(WS_CONNECT_TIMEOUT):
                 async with websockets.connect(f"{ws_url}/jobs/progress") as ws:
                     # Send subscription message
-                    subscribe_msg = json.dumps({
-                        "action": "subscribe",
-                        "job_id": "test-job-123"
-                    })
+                    subscribe_msg = json.dumps({"action": "subscribe", "job_id": "test-job-123"})
                     await ws.send(subscribe_msg)
 
                     # Expect acknowledgment or error
@@ -156,8 +155,9 @@ class TestJobProgressWebSocket:
                             # Progress updates should have certain fields
                             valid_fields = ["job_id", "progress", "status", "step", "message"]
                             has_valid_field = any(f in data for f in valid_fields)
-                            assert has_valid_field or "error" in data, \
-                                "Progress update should contain progress info or error"
+                            assert (
+                                has_valid_field or "error" in data
+                            ), "Progress update should contain progress info or error"
                     except asyncio.TimeoutError:
                         pytest.skip("No progress updates received within timeout")
         except (ConnectionRefusedError, OSError, asyncio.TimeoutError):
@@ -206,13 +206,12 @@ class TestRealTimeConverterWebSocket:
             async with asyncio.timeout(WS_CONNECT_TIMEOUT):
                 async with websockets.connect(f"{ws_url}/realtime/converter") as ws:
                     # Send configuration
-                    config_msg = json.dumps({
-                        "action": "configure",
-                        "settings": {
-                            "sample_rate": 22050,
-                            "buffer_size": 1024
+                    config_msg = json.dumps(
+                        {
+                            "action": "configure",
+                            "settings": {"sample_rate": 22050, "buffer_size": 1024},
                         }
-                    })
+                    )
                     await ws.send(config_msg)
 
                     try:

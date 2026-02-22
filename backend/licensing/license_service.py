@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class LicenseType(Enum):
     """License types."""
+
     FREE = "free"
     PERSONAL = "personal"
     PROFESSIONAL = "professional"
@@ -28,6 +29,7 @@ class LicenseType(Enum):
 
 class LicenseStatus(Enum):
     """License status."""
+
     VALID = "valid"
     EXPIRED = "expired"
     INVALID = "invalid"
@@ -38,6 +40,7 @@ class LicenseStatus(Enum):
 @dataclass
 class LicenseFeatures:
     """Features enabled by a license."""
+
     max_projects: int = -1  # -1 = unlimited
     max_voices: int = 3
     max_synthesis_minutes: int = 60
@@ -55,6 +58,7 @@ class LicenseFeatures:
 @dataclass
 class License:
     """License information."""
+
     license_key: str
     license_type: LicenseType
     status: LicenseStatus
@@ -71,6 +75,7 @@ class License:
 @dataclass
 class LicenseValidationResult:
     """Result of license validation."""
+
     valid: bool
     status: LicenseStatus
     message: str
@@ -127,11 +132,7 @@ class LicenseService:
         ),
     }
 
-    def __init__(
-        self,
-        license_path: Path | None = None,
-        validation_url: str | None = None
-    ):
+    def __init__(self, license_path: Path | None = None, validation_url: str | None = None):
         self._license_path = license_path or Path.home() / ".voicestudio/license.json"
         self._validation_url = validation_url
         self._current_license: License | None = None
@@ -164,7 +165,9 @@ class LicenseService:
                 status=LicenseStatus(data["status"]),
                 issued_to=data["issued_to"],
                 issued_at=datetime.fromisoformat(data["issued_at"]),
-                expires_at=datetime.fromisoformat(data["expires_at"]) if data.get("expires_at") else None,
+                expires_at=(
+                    datetime.fromisoformat(data["expires_at"]) if data.get("expires_at") else None
+                ),
                 features=LicenseFeatures(**data.get("features", {})),
                 machine_id=data.get("machine_id"),
                 seats=data.get("seats", 1),
@@ -184,18 +187,14 @@ class LicenseService:
             return None
 
     async def activate_license(
-        self,
-        license_key: str,
-        user_email: str | None = None
+        self, license_key: str, user_email: str | None = None
     ) -> LicenseValidationResult:
         """Activate a license key."""
         try:
             # Validate the license key format
             if not self._validate_key_format(license_key):
                 return LicenseValidationResult(
-                    valid=False,
-                    status=LicenseStatus.INVALID,
-                    message="Invalid license key format"
+                    valid=False, status=LicenseStatus.INVALID, message="Invalid license key format"
                 )
 
             # Parse license key
@@ -203,9 +202,7 @@ class LicenseService:
 
             if not license_info:
                 return LicenseValidationResult(
-                    valid=False,
-                    status=LicenseStatus.INVALID,
-                    message="Unable to parse license key"
+                    valid=False, status=LicenseStatus.INVALID, message="Unable to parse license key"
                 )
 
             # Check online validation if URL provided
@@ -243,41 +240,30 @@ class LicenseService:
         except Exception as e:
             logger.error(f"License activation failed: {e}")
             return LicenseValidationResult(
-                valid=False,
-                status=LicenseStatus.INVALID,
-                message=str(e)
+                valid=False, status=LicenseStatus.INVALID, message=str(e)
             )
 
-    async def validate_license(
-        self,
-        license_key: str | None = None
-    ) -> LicenseValidationResult:
+    async def validate_license(self, license_key: str | None = None) -> LicenseValidationResult:
         """Validate a license key."""
         key = license_key or (self._current_license.license_key if self._current_license else None)
 
         if not key:
             return LicenseValidationResult(
-                valid=False,
-                status=LicenseStatus.INVALID,
-                message="No license key provided"
+                valid=False, status=LicenseStatus.INVALID, message="No license key provided"
             )
 
         try:
             # Check format
             if not self._validate_key_format(key):
                 return LicenseValidationResult(
-                    valid=False,
-                    status=LicenseStatus.INVALID,
-                    message="Invalid license key format"
+                    valid=False, status=LicenseStatus.INVALID, message="Invalid license key format"
                 )
 
             # Check expiration
             if self._current_license and self._current_license.expires_at:
                 if datetime.now() > self._current_license.expires_at:
                     return LicenseValidationResult(
-                        valid=False,
-                        status=LicenseStatus.EXPIRED,
-                        message="License has expired"
+                        valid=False, status=LicenseStatus.EXPIRED, message="License has expired"
                     )
 
                 days_remaining = (self._current_license.expires_at - datetime.now()).days
@@ -299,9 +285,7 @@ class LicenseService:
         except Exception as e:
             logger.error(f"License validation failed: {e}")
             return LicenseValidationResult(
-                valid=False,
-                status=LicenseStatus.INVALID,
-                message=str(e)
+                valid=False, status=LicenseStatus.INVALID, message=str(e)
             )
 
     async def deactivate_license(self) -> bool:
@@ -325,7 +309,7 @@ class LicenseService:
     def _validate_key_format(self, key: str) -> bool:
         """Validate license key format."""
         # Expected format: XXXX-XXXX-XXXX-XXXX
-        parts = key.split('-')
+        parts = key.split("-")
         if len(parts) != 4:
             return False
 
@@ -335,18 +319,18 @@ class LicenseService:
         """Parse license key to extract information."""
         try:
             # Simple parsing - in production, use proper encryption
-            parts = key.replace('-', '')
+            parts = key.replace("-", "")
 
             # Extract type from first characters
             type_map = {
-                'F': 'free',
-                'P': 'personal',
-                'R': 'professional',
-                'E': 'enterprise',
-                'T': 'trial',
+                "F": "free",
+                "P": "personal",
+                "R": "professional",
+                "E": "enterprise",
+                "T": "trial",
             }
 
-            license_type = type_map.get(parts[0], 'personal')
+            license_type = type_map.get(parts[0], "personal")
 
             return {
                 "type": license_type,
@@ -367,7 +351,7 @@ class LicenseService:
             str(uuid.getnode()),
         ]
 
-        combined = '|'.join(components)
+        combined = "|".join(components)
         return hashlib.sha256(combined.encode()).hexdigest()[:32]
 
     async def _save_license(self, license: License) -> None:

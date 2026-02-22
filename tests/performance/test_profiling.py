@@ -188,9 +188,7 @@ class TestCPUProfiling:
         try:
             from app.core.audio.audio_utils import normalize_lufs
 
-            result = cpu_profiler.profile_function(
-                normalize_lufs, audio, sample_rate
-            )
+            result = cpu_profiler.profile_function(normalize_lufs, audio, sample_rate)
 
             logger.info(f"CPU profiling result: {result}")
             if result.get("profiling_available"):
@@ -205,9 +203,7 @@ class TestCPUProfiling:
         try:
             from app.core.engines.quality_metrics import calculate_all_metrics
 
-            result = cpu_profiler.profile_function(
-                calculate_all_metrics, audio, sample_rate
-            )
+            result = cpu_profiler.profile_function(calculate_all_metrics, audio, sample_rate)
 
             logger.info(f"CPU profiling result: {result}")
             if result.get("profiling_available"):
@@ -219,36 +215,28 @@ class TestCPUProfiling:
 class TestMemoryProfiling:
     """Memory profiling tests."""
 
-    def test_audio_processing_memory_profile(
-        self, memory_profiler, sample_audio
-    ):
+    def test_audio_processing_memory_profile(self, memory_profiler, sample_audio):
         """Profile memory usage of audio processing."""
         audio, sample_rate = sample_audio
 
         try:
             from app.core.audio.audio_utils import enhance_voice_quality
 
-            result = memory_profiler.profile_function(
-                enhance_voice_quality, audio, sample_rate
-            )
+            result = memory_profiler.profile_function(enhance_voice_quality, audio, sample_rate)
 
             logger.info(f"Memory profiling result: {result}")
             assert "memory_used_mb" in result
         except ImportError:
             pytest.skip("audio_utils not available")
 
-    def test_quality_metrics_memory_profile(
-        self, memory_profiler, sample_audio
-    ):
+    def test_quality_metrics_memory_profile(self, memory_profiler, sample_audio):
         """Profile memory usage of quality metrics."""
         audio, sample_rate = sample_audio
 
         try:
             from app.core.engines.quality_metrics import calculate_all_metrics
 
-            result = memory_profiler.profile_function(
-                calculate_all_metrics, audio, sample_rate
-            )
+            result = memory_profiler.profile_function(calculate_all_metrics, audio, sample_rate)
 
             logger.info(f"Memory profiling result: {result}")
             assert "memory_used_mb" in result
@@ -275,4 +263,3 @@ class TestSystemProfiling:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s"])
-

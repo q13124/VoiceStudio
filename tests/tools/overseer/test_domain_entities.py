@@ -70,7 +70,11 @@ class TestIssueReport:
         resolution = Resolution(
             fix=Fix(
                 issue_id="ISS-001",
-                file_changes=[FileChange(path="test.py", content="fixed", change_type="modify", rationale="Fix bug")],
+                file_changes=[
+                    FileChange(
+                        path="test.py", content="fixed", change_type="modify", rationale="Fix bug"
+                    )
+                ],
                 rationale="Fixed null check",
                 estimated_risk="low",
             ),
@@ -150,6 +154,7 @@ class TestBugInvestigationSession:
         assert session.current_state == InvestigationState.CREATED
 
         from tools.overseer.domain.value_objects import Hypothesis
+
         session.add_hypothesis(Hypothesis(description="Race condition suspected"))
 
         assert session.current_state == InvestigationState.INVESTIGATING

@@ -23,9 +23,7 @@ class TestEngineAuditImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            engine_audit is not None
-        ), "Failed to import engine_audit module"
+        assert engine_audit is not None, "Failed to import engine_audit module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -39,11 +37,8 @@ class TestEngineAuditFunctions:
     def test_audit_engine_function_exists(self):
         """Test audit_engine function exists."""
         if hasattr(engine_audit, "audit_engine"):
-            assert callable(
-                engine_audit.audit_engine
-            ), "audit_engine should be callable"
+            assert callable(engine_audit.audit_engine), "audit_engine should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

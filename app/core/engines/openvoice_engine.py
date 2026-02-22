@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 # Try importing general model cache
 try:
     from app.core.models.cache import get_model_cache
+
     _model_cache = get_model_cache(max_models=3, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
 except ImportError:
@@ -97,7 +98,9 @@ def _cache_openvoice_models(base_model: str, converter_model: str, device: str, 
         except Exception as e:
             logger.warning(f"Error evicting OpenVoice models from cache: {e}")
 
-    logger.debug(f"Cached OpenVoice models: {cache_key} (cache size: {len(_OPENVOICE_MODEL_CACHE)})")
+    logger.debug(
+        f"Cached OpenVoice models: {cache_key} (cache size: {len(_OPENVOICE_MODEL_CACHE)})"
+    )
 
 
 def _get_speaker_embedding_cache_key(speaker_wav: str | Path) -> str | None:
@@ -136,7 +139,10 @@ def _cache_speaker_embedding(speaker_wav: str | Path, embedding: np.ndarray):
         del _SPEAKER_EMBEDDING_CACHE[oldest_key]
         logger.debug(f"Evicted speaker embedding from cache: {oldest_key[:8]}")
 
-    logger.debug(f"Cached speaker embedding: {cache_key[:8]} (cache size: {len(_SPEAKER_EMBEDDING_CACHE)})")
+    logger.debug(
+        f"Cached speaker embedding: {cache_key[:8]} (cache size: {len(_SPEAKER_EMBEDDING_CACHE)})"
+    )
+
 
 # Try to import librosa for style control
 try:
@@ -146,9 +152,7 @@ try:
 except ImportError:
     HAS_LIBROSA = False
     librosa = None
-    logger.warning(
-        "librosa not available. Some style control features will be limited."
-    )
+    logger.warning("librosa not available. Some style control features will be limited.")
 
 # Optional quality metrics import
 try:
@@ -259,9 +263,7 @@ class OpenVoiceEngine(EngineProtocol):
         super().__init__(device=device, gpu=gpu)
 
         if not HAS_OPENVOICE:
-            raise ImportError(
-                "OpenVoice not installed. Install with: pip install openvoice"
-            )
+            raise ImportError("OpenVoice not installed. Install with: pip install openvoice")
 
         # Override device if GPU requested and available
         if gpu and torch.cuda.is_available() and self.device == "cpu":
@@ -284,9 +286,7 @@ class OpenVoiceEngine(EngineProtocol):
         # Check cache first
         if self.enable_caching:
             cached_models = _get_cached_openvoice_models(
-                self.base_speaker_model,
-                self.tone_color_converter_model,
-                self.device
+                self.base_speaker_model, self.tone_color_converter_model, self.device
             )
             if cached_models is not None:
                 logger.debug("Using cached OpenVoice models")
@@ -319,9 +319,7 @@ class OpenVoiceEngine(EngineProtocol):
             logger.info("Base speaker TTS loaded")
         except Exception as e:
             logger.error(f"Failed to load base speaker TTS: {e}")
-            logger.error(
-                "Download models from: https://github.com/myshell-ai/OpenVoice"
-            )
+            logger.error("Download models from: https://github.com/myshell-ai/OpenVoice")
             return False
 
         # Initialize tone color converter
@@ -339,9 +337,7 @@ class OpenVoiceEngine(EngineProtocol):
             logger.info("Tone color converter loaded")
         except Exception as e:
             logger.error(f"Failed to load tone color converter: {e}")
-            logger.error(
-                "Download models from: https://github.com/myshell-ai/OpenVoice"
-            )
+            logger.error("Download models from: https://github.com/myshell-ai/OpenVoice")
             return False
 
         # Cache models
@@ -352,8 +348,8 @@ class OpenVoiceEngine(EngineProtocol):
                 self.device,
                 {
                     "base_speaker_tts": self.base_speaker_tts,
-                    "tone_color_converter": self.tone_color_converter
-                }
+                    "tone_color_converter": self.tone_color_converter,
+                },
             )
 
         self._initialized = True
@@ -592,9 +588,7 @@ class OpenVoiceEngine(EngineProtocol):
                         import soundfile as sf
 
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(
-                            audio, sample_rate, ref_audio, ref_sr
-                        )
+                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -673,9 +667,7 @@ class OpenVoiceEngine(EngineProtocol):
                 base_audio = self._apply_rhythm(base_audio, rhythm)
 
             if pauses:
-                pause_positions = kwargs.get(
-                    "pause_positions", [0.3, 0.7]
-                )  # Default positions
+                pause_positions = kwargs.get("pause_positions", [0.3, 0.7])  # Default positions
                 base_audio = self._insert_pauses(base_audio, pause_positions, pauses)
 
             if intonation:
@@ -879,9 +871,7 @@ class OpenVoiceEngine(EngineProtocol):
                     overlap_region = chunk_audio[:overlap_samples]
                     if len(overlap_region) == len(overlap_buffer):
                         blended = overlap_buffer * 0.5 + overlap_region * 0.5
-                        chunk_audio = np.concatenate(
-                            [blended, chunk_audio[overlap_samples:]]
-                        )
+                        chunk_audio = np.concatenate([blended, chunk_audio[overlap_samples:]])
                     else:
                         # Size mismatch, skip overlap-add
                         logger.warning(
@@ -911,9 +901,7 @@ class OpenVoiceEngine(EngineProtocol):
                 logger.error(f"Stream synthesis chunk failed: {e}")
                 continue
 
-    def _split_text_with_overlap(
-        self, text: str, chunk_size: int, overlap: int
-    ) -> list[str]:
+    def _split_text_with_overlap(self, text: str, chunk_size: int, overlap: int) -> list[str]:
         """Split text into chunks with overlap."""
         chunks = []
         start = 0
@@ -926,9 +914,7 @@ class OpenVoiceEngine(EngineProtocol):
             if end < len(text) and text[end] != " ":
                 # Find last space in chunk
                 last_space = chunk.rfind(" ")
-                if (
-                    last_space > chunk_size // 2
-                ):  # Only break if space is in second half
+                if last_space > chunk_size // 2:  # Only break if space is in second half
                     chunk = chunk[: last_space + 1]
                     end = start + len(chunk)
 
@@ -940,9 +926,7 @@ class OpenVoiceEngine(EngineProtocol):
 
         return chunks
 
-    def _apply_emotion(
-        self, audio: np.ndarray, emotion: str, intensity: float = 0.5
-    ) -> np.ndarray:
+    def _apply_emotion(self, audio: np.ndarray, emotion: str, intensity: float = 0.5) -> np.ndarray:
         """Apply emotion to audio."""
         if librosa is None:
             logger.warning("librosa not available for emotion control")
@@ -1057,9 +1041,7 @@ class OpenVoiceEngine(EngineProtocol):
             try:
                 # Use phase vocoder for formant shifting
                 stft = librosa.stft(audio)
-                stft_shifted = librosa.phase_vocoder(
-                    stft, rate=1.0 + params["formant_shift"]
-                )
+                stft_shifted = librosa.phase_vocoder(stft, rate=1.0 + params["formant_shift"])
                 audio = librosa.istft(stft_shifted)
             except Exception as e:
                 logger.warning(f"Formant shift failed: {e}")
@@ -1103,9 +1085,7 @@ class OpenVoiceEngine(EngineProtocol):
             return audio
 
         # Sort by position
-        sorted_pauses = sorted(
-            zip(pause_positions, pause_durations), key=lambda x: x[0]
-        )
+        sorted_pauses = sorted(zip(pause_positions, pause_durations), key=lambda x: x[0])
 
         result = audio.copy()
         offset = 0
@@ -1144,9 +1124,7 @@ class OpenVoiceEngine(EngineProtocol):
                 result = np.concatenate([pause, result])
             else:
                 # Insert pause in the middle
-                result = np.concatenate(
-                    [result[:sample_index], pause, result[sample_index:]]
-                )
+                result = np.concatenate([result[:sample_index], pause, result[sample_index:]])
 
             offset += pause_samples
 
@@ -1198,16 +1176,12 @@ class OpenVoiceEngine(EngineProtocol):
             )
 
             if os.path.exists(lang_model_path):
-                lang_model = BaseSpeakerTTS(
-                    f"{lang_model_path}/config.json", device=self.device
-                )
+                lang_model = BaseSpeakerTTS(f"{lang_model_path}/config.json", device=self.device)
                 lang_model.load_ckpt(f"{lang_model_path}/checkpoint.pth")
                 self._base_models_cache[language] = lang_model
                 return lang_model
         except Exception as e:
-            logger.warning(
-                f"Failed to load language-specific model for {language}: {e}"
-            )
+            logger.warning(f"Failed to load language-specific model for {language}: {e}")
 
         # Fallback to default model
         return None
@@ -1225,7 +1199,7 @@ class OpenVoiceEngine(EngineProtocol):
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         batch_size: int = 2,
-        **kwargs
+        **kwargs,
     ) -> list[np.ndarray | None | tuple[np.ndarray | None, dict]]:
         """
         Synthesize multiple texts in batch with optimized processing.
@@ -1261,7 +1235,7 @@ class OpenVoiceEngine(EngineProtocol):
                     language=language,
                     enhance_quality=enhance_quality,
                     calculate_quality=calculate_quality,
-                    **kwargs
+                    **kwargs,
                 )
             except Exception as e:
                 logger.error(f"Batch synthesis failed for text: {e}")
@@ -1282,6 +1256,7 @@ class OpenVoiceEngine(EngineProtocol):
                         audio, metrics = result
                         if audio is not None:
                             import soundfile as sf
+
                             sf.write(str(output_path), audio, self.DEFAULT_SAMPLE_RATE)
                             results.append((None, metrics))
                         else:
@@ -1289,6 +1264,7 @@ class OpenVoiceEngine(EngineProtocol):
                     else:
                         if result is not None:
                             import soundfile as sf
+
                             sf.write(str(output_path), result, self.DEFAULT_SAMPLE_RATE)
                             results.append(None)
                         else:

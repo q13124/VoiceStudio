@@ -32,6 +32,7 @@ def api_client():
     from fastapi.testclient import TestClient
 
     from backend.api.main import app
+
     return TestClient(app)
 
 
@@ -49,6 +50,7 @@ def backend_available(api_client):
 def test_audio_file(tmp_path):
     """Create a test audio file suitable for voice cloning."""
     import math
+
     audio_file = tmp_path / "reference_voice.wav"
     with wave.open(str(audio_file), "w") as wav:
         wav.setnchannels(1)
@@ -66,6 +68,7 @@ def test_audio_file(tmp_path):
 def short_audio_file(tmp_path):
     """Create a too-short audio file for validation testing."""
     import math
+
     audio_file = tmp_path / "short_audio.wav"
     with wave.open(str(audio_file), "w") as wav:
         wav.setnchannels(1)
@@ -261,15 +264,11 @@ class TestVoiceCloningWorkflowIntegration:
 
             if job_id:
                 # Step 3: Check job status
-                status_response = api_client.get(
-                    f"/api/voice-cloning-wizard/{job_id}/status"
-                )
+                status_response = api_client.get(f"/api/voice-cloning-wizard/{job_id}/status")
                 assert status_response.status_code == 200
 
                 # Step 4: Clean up (cancel job)
-                delete_response = api_client.delete(
-                    f"/api/voice-cloning-wizard/{job_id}"
-                )
+                delete_response = api_client.delete(f"/api/voice-cloning-wizard/{job_id}")
                 assert delete_response.status_code in (200, 204, 404)
 
 

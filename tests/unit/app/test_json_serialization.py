@@ -4,6 +4,7 @@ Tests for JSON serialization conventions used between Python backend and C# clie
 These tests verify that the Python backend produces JSON in the expected format
 that the C# client can consume correctly.
 """
+
 from __future__ import annotations
 
 import json
@@ -156,8 +157,10 @@ class TestBooleanSerialization:
         json_str = model.model_dump_json()
 
         # Should contain literal true/false
-        assert '"is_active":true' in json_str.replace(' ', '') or '"is_active": true' in json_str
-        assert '"gpu_enabled":false' in json_str.replace(' ', '') or '"gpu_enabled": false' in json_str
+        assert '"is_active":true' in json_str.replace(" ", "") or '"is_active": true' in json_str
+        assert (
+            '"gpu_enabled":false' in json_str.replace(" ", "") or '"gpu_enabled": false' in json_str
+        )
 
 
 class TestNumberSerialization:

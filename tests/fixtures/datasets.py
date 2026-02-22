@@ -34,9 +34,11 @@ for dir_path in [DATA_DIR, AUDIO_DIR, DATASETS_DIR]:
 # AUDIO FILE CONFIGURATIONS
 # =============================================================================
 
+
 @dataclass
 class AudioFileConfig:
     """Configuration for generating test audio files."""
+
     filename: str
     duration_seconds: float
     sample_rate: int = 22050
@@ -53,27 +55,23 @@ AUDIO_FILE_CONFIGS: list[AudioFileConfig] = [
     AudioFileConfig("short_1s.wav", 1.0, 22050, 1, 16, "sine", 440.0, "1 second sine wave"),
     AudioFileConfig("short_2s.wav", 2.0, 22050, 1, 16, "sine", 440.0, "2 second sine wave"),
     AudioFileConfig("short_3s.wav", 3.0, 22050, 1, 16, "sine", 440.0, "3 second sine wave"),
-
     # Standard clips
     AudioFileConfig("standard_5s.wav", 5.0, 22050, 1, 16, "modulated", 440.0, "5 second modulated"),
-    AudioFileConfig("standard_10s.wav", 10.0, 22050, 1, 16, "modulated", 440.0, "10 second modulated"),
-
+    AudioFileConfig(
+        "standard_10s.wav", 10.0, 22050, 1, 16, "modulated", 440.0, "10 second modulated"
+    ),
     # Long clips
     AudioFileConfig("long_30s.wav", 30.0, 22050, 1, 16, "modulated", 440.0, "30 second modulated"),
     AudioFileConfig("long_60s.wav", 60.0, 22050, 1, 16, "modulated", 440.0, "60 second modulated"),
-
     # Different sample rates
     AudioFileConfig("sr_16000.wav", 3.0, 16000, 1, 16, "sine", 440.0, "16kHz sample rate"),
     AudioFileConfig("sr_44100.wav", 3.0, 44100, 1, 16, "sine", 440.0, "44.1kHz sample rate"),
     AudioFileConfig("sr_48000.wav", 3.0, 48000, 1, 16, "sine", 440.0, "48kHz sample rate"),
-
     # Stereo
     AudioFileConfig("stereo_5s.wav", 5.0, 22050, 2, 16, "sine", 440.0, "Stereo audio"),
-
     # Special types
     AudioFileConfig("silence_3s.wav", 3.0, 22050, 1, 16, "silence", 0.0, "Pure silence"),
     AudioFileConfig("noise_3s.wav", 3.0, 22050, 1, 16, "noise", 0.0, "White noise"),
-
     # Different frequencies
     AudioFileConfig("low_freq.wav", 3.0, 22050, 1, 16, "sine", 100.0, "Low frequency"),
     AudioFileConfig("mid_freq.wav", 3.0, 22050, 1, 16, "sine", 1000.0, "Mid frequency"),
@@ -81,7 +79,9 @@ AUDIO_FILE_CONFIGS: list[AudioFileConfig] = [
 ]
 
 
-def generate_audio_samples(sample_rate: int, duration: float, audio_type: str, frequency: float, channels: int = 1) -> bytes:
+def generate_audio_samples(
+    sample_rate: int, duration: float, audio_type: str, frequency: float, channels: int = 1
+) -> bytes:
     """Generate raw audio samples."""
     num_samples = int(sample_rate * duration)
     samples = []
@@ -105,9 +105,9 @@ def generate_audio_samples(sample_rate: int, duration: float, audio_type: str, f
 
         # Pack sample (repeat for stereo)
         for _ in range(channels):
-            samples.append(struct.pack('<h', value))
+            samples.append(struct.pack("<h", value))
 
-    return b''.join(samples)
+    return b"".join(samples)
 
 
 def generate_test_audio_file(config: AudioFileConfig, output_dir: Path = AUDIO_DIR) -> Path:
@@ -120,11 +120,11 @@ def generate_test_audio_file(config: AudioFileConfig, output_dir: Path = AUDIO_D
         config.duration_seconds,
         config.audio_type,
         config.frequency,
-        config.channels
+        config.channels,
     )
 
     # Write WAV file
-    with wave.open(str(output_path), 'wb') as wav:
+    with wave.open(str(output_path), "wb") as wav:
         wav.setnchannels(config.channels)
         wav.setsampwidth(config.bits_per_sample // 8)
         wav.setframerate(config.sample_rate)
@@ -146,9 +146,11 @@ def generate_all_test_audio() -> list[Path]:
 # DATASET CONFIGURATIONS
 # =============================================================================
 
+
 @dataclass
 class DatasetMetadata:
     """Metadata for a training dataset."""
+
     id: str
     name: str
     description: str
@@ -164,6 +166,7 @@ class DatasetMetadata:
 @dataclass
 class DatasetSample:
     """Single sample in a dataset."""
+
     audio_path: str
     text: str
     duration_seconds: float
@@ -173,6 +176,7 @@ class DatasetSample:
 @dataclass
 class TrainingDataset:
     """Complete training dataset configuration."""
+
     metadata: DatasetMetadata
     samples: list[DatasetSample]
     train_split: float = 0.9
@@ -200,7 +204,6 @@ SAMPLE_DATASETS: list[TrainingDataset] = [
             DatasetSample("audio/sample_005.wav", "Final sample in this dataset.", 3.0),
         ],
     ),
-
     # Small dataset (20 samples)
     TrainingDataset(
         metadata=DatasetMetadata(
@@ -217,7 +220,6 @@ SAMPLE_DATASETS: list[TrainingDataset] = [
             for i in range(1, 21)
         ],
     ),
-
     # Medium dataset (100 samples)
     TrainingDataset(
         metadata=DatasetMetadata(
@@ -230,11 +232,14 @@ SAMPLE_DATASETS: list[TrainingDataset] = [
             total_duration_seconds=400.0,
         ),
         samples=[
-            DatasetSample(f"audio/medium_{i:03d}.wav", f"This is training sample {i} with varied content.", 4.0)
+            DatasetSample(
+                f"audio/medium_{i:03d}.wav",
+                f"This is training sample {i} with varied content.",
+                4.0,
+            )
             for i in range(1, 101)
         ],
     ),
-
     # Multi-speaker dataset
     TrainingDataset(
         metadata=DatasetMetadata(
@@ -247,11 +252,15 @@ SAMPLE_DATASETS: list[TrainingDataset] = [
             total_duration_seconds=90.0,
         ),
         samples=[
-            DatasetSample(f"audio/speaker{(i % 3) + 1}_{i:03d}.wav", f"Speaker {(i % 3) + 1} sample {i}.", 3.0, f"speaker_{(i % 3) + 1}")
+            DatasetSample(
+                f"audio/speaker{(i % 3) + 1}_{i:03d}.wav",
+                f"Speaker {(i % 3) + 1} sample {i}.",
+                3.0,
+                f"speaker_{(i % 3) + 1}",
+            )
             for i in range(1, 31)
         ],
     ),
-
     # Multi-language dataset
     TrainingDataset(
         metadata=DatasetMetadata(
@@ -288,9 +297,11 @@ SAMPLE_DATASETS: list[TrainingDataset] = [
 # BATCH JOB CONFIGURATIONS
 # =============================================================================
 
+
 @dataclass
 class BatchJobConfig:
     """Configuration for a batch processing job."""
+
     id: str
     name: str
     job_type: str  # synthesis, transcription, conversion, effects
@@ -302,64 +313,73 @@ class BatchJobConfig:
 BATCH_JOB_CONFIGS: list[BatchJobConfig] = [
     # Batch synthesis jobs
     BatchJobConfig(
-        "batch_synthesis_small", "Small Synthesis Batch", "synthesis",
+        "batch_synthesis_small",
+        "Small Synthesis Batch",
+        "synthesis",
         [
             {"text": "First item to synthesize.", "engine": "piper"},
             {"text": "Second item to synthesize.", "engine": "piper"},
             {"text": "Third item to synthesize.", "engine": "piper"},
         ],
         {"output_format": "wav", "sample_rate": 22050},
-        "Small batch synthesis"
+        "Small batch synthesis",
     ),
     BatchJobConfig(
-        "batch_synthesis_medium", "Medium Synthesis Batch", "synthesis",
+        "batch_synthesis_medium",
+        "Medium Synthesis Batch",
+        "synthesis",
         [{"text": f"Batch item number {i}.", "engine": "piper"} for i in range(1, 21)],
         {"output_format": "wav", "sample_rate": 22050},
-        "Medium batch synthesis"
+        "Medium batch synthesis",
     ),
     BatchJobConfig(
-        "batch_synthesis_multi_engine", "Multi-Engine Batch", "synthesis",
+        "batch_synthesis_multi_engine",
+        "Multi-Engine Batch",
+        "synthesis",
         [
             {"text": "Piper synthesis.", "engine": "piper"},
             {"text": "XTTS synthesis.", "engine": "xtts"},
             {"text": "Bark synthesis.", "engine": "bark"},
         ],
         {"output_format": "wav"},
-        "Batch with multiple engines"
+        "Batch with multiple engines",
     ),
-
     # Batch transcription jobs
     BatchJobConfig(
-        "batch_transcription_small", "Small Transcription Batch", "transcription",
+        "batch_transcription_small",
+        "Small Transcription Batch",
+        "transcription",
         [
             {"audio_path": "audio/sample_001.wav"},
             {"audio_path": "audio/sample_002.wav"},
             {"audio_path": "audio/sample_003.wav"},
         ],
         {"engine": "whisper", "language": "en"},
-        "Small batch transcription"
+        "Small batch transcription",
     ),
-
     # Batch conversion jobs
     BatchJobConfig(
-        "batch_conversion_small", "Small Conversion Batch", "conversion",
+        "batch_conversion_small",
+        "Small Conversion Batch",
+        "conversion",
         [
             {"audio_path": "audio/sample_001.wav", "target_profile": "profile1"},
             {"audio_path": "audio/sample_002.wav", "target_profile": "profile1"},
         ],
         {"engine": "rvc"},
-        "Small batch voice conversion"
+        "Small batch voice conversion",
     ),
-
     # Batch effects jobs
     BatchJobConfig(
-        "batch_effects_small", "Small Effects Batch", "effects",
+        "batch_effects_small",
+        "Small Effects Batch",
+        "effects",
         [
             {"audio_path": "audio/sample_001.wav", "effects": ["normalize"]},
             {"audio_path": "audio/sample_002.wav", "effects": ["normalize", "compress"]},
         ],
         {"output_format": "wav"},
-        "Small batch effects processing"
+        "Small batch effects processing",
     ),
 ]
 
@@ -367,6 +387,7 @@ BATCH_JOB_CONFIGS: list[BatchJobConfig] = [
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
+
 
 def get_dataset_by_id(dataset_id: str) -> TrainingDataset | None:
     """Get dataset by ID."""
@@ -417,7 +438,7 @@ def generate_dataset_manifest(dataset: TrainingDataset, output_path: Path) -> Pa
     }
 
     manifest_path = output_path / f"{dataset.metadata.id}.json"
-    with open(manifest_path, 'w', encoding='utf-8') as f:
+    with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
 
     return manifest_path
@@ -441,16 +462,13 @@ def create_mock_dataset_files(dataset: TrainingDataset, output_dir: Path = DATAS
         config = AudioFileConfig(
             filename=audio_path.name,
             duration_seconds=sample.duration_seconds,
-            audio_type="modulated"
+            audio_type="modulated",
         )
         samples = generate_audio_samples(
-            config.sample_rate,
-            config.duration_seconds,
-            config.audio_type,
-            config.frequency
+            config.sample_rate, config.duration_seconds, config.audio_type, config.frequency
         )
 
-        with wave.open(str(audio_path), 'wb') as wav:
+        with wave.open(str(audio_path), "wb") as wav:
             wav.setnchannels(1)
             wav.setsampwidth(2)
             wav.setframerate(config.sample_rate)

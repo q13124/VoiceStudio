@@ -99,16 +99,23 @@ def create_session():
         sys.exit(1)
 
     import os
-    
+
     # Find app path
     project_root = Path(__file__).parent.parent.parent
     default_app_path = (
-        project_root / "src" / "VoiceStudio.App" / "bin" / "x64" / "Debug" /
-        "net8.0-windows10.0.19041.0" / "win-x64" / "VoiceStudio.App.exe"
+        project_root
+        / "src"
+        / "VoiceStudio.App"
+        / "bin"
+        / "x64"
+        / "Debug"
+        / "net8.0-windows10.0.19041.0"
+        / "win-x64"
+        / "VoiceStudio.App.exe"
     )
-    
+
     app_path = Path(os.environ.get("VOICESTUDIO_APP_PATH", str(default_app_path)))
-    
+
     if not app_path.exists():
         print(f"Error: Application not found at {app_path}")
         print("Build the application first or set VOICESTUDIO_APP_PATH")
@@ -153,7 +160,7 @@ def navigate_to_panel(session, nav_id: str, root_id: str, timeout: float = 5.0) 
 def capture_panel_baseline(session, panel_name: str, panel_info: dict) -> bool:
     """Navigate to a panel and capture its baseline."""
     print(f"\nCapturing: {panel_name} - {panel_info['description']}")
-    
+
     if not navigate_to_panel(session, panel_info["nav_id"], panel_info["root_id"]):
         print(f"  FAILED: Could not navigate to {panel_name}")
         return False
@@ -195,7 +202,7 @@ def main():
         print("\nAvailable panels:")
         for name, info in CORE_PANELS.items():
             print(f"  {name}: {info['description']}")
-        
+
         existing = list_baselines()
         if existing:
             print(f"\nExisting baselines ({len(existing)}):")
@@ -208,10 +215,7 @@ def main():
     # Determine which panels to capture
     if args.panels:
         panel_names = [p.strip().lower() for p in args.panels.split(",")]
-        panels = {
-            name: info for name, info in CORE_PANELS.items()
-            if name in panel_names
-        }
+        panels = {name: info for name, info in CORE_PANELS.items() if name in panel_names}
         invalid = set(panel_names) - set(panels.keys())
         if invalid:
             print(f"Warning: Unknown panels: {', '.join(invalid)}")

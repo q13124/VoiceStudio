@@ -63,9 +63,7 @@ class EnginePerformanceMetrics:
             except Exception as e:
                 logger.warning(f"Failed to get metrics collector: {e}")
 
-    def record_synthesis_time(
-        self, engine_name: str, duration: float, cached: bool = False
-    ):
+    def record_synthesis_time(self, engine_name: str, duration: float, cached: bool = False):
         """
         Record synthesis time for an engine.
 
@@ -166,9 +164,7 @@ class EnginePerformanceMetrics:
 
             total_cache_requests = cache_hits + cache_misses
             cache_hit_rate = (
-                (cache_hits / total_cache_requests * 100)
-                if total_cache_requests > 0
-                else 0.0
+                (cache_hits / total_cache_requests * 100) if total_cache_requests > 0 else 0.0
             )
 
             error_rate = (errors / total_requests * 100) if total_requests > 0 else 0.0
@@ -223,10 +219,7 @@ class EnginePerformanceMetrics:
             all_engines.update(self._errors.keys())
             all_engines.update(self._total_requests.keys())
 
-            return {
-                engine_name: self.get_engine_stats(engine_name)
-                for engine_name in all_engines
-            }
+            return {engine_name: self.get_engine_stats(engine_name) for engine_name in all_engines}
 
     def get_summary(self) -> dict[str, Any]:
         """
@@ -238,22 +231,14 @@ class EnginePerformanceMetrics:
         with self._lock:
             all_stats = self.get_all_stats()
 
-            total_requests = sum(
-                stats.get("total_requests", 0) for stats in all_stats.values()
-            )
-            total_cache_hits = sum(
-                stats.get("cache_hits", 0) for stats in all_stats.values()
-            )
-            total_cache_misses = sum(
-                stats.get("cache_misses", 0) for stats in all_stats.values()
-            )
+            total_requests = sum(stats.get("total_requests", 0) for stats in all_stats.values())
+            total_cache_hits = sum(stats.get("cache_hits", 0) for stats in all_stats.values())
+            total_cache_misses = sum(stats.get("cache_misses", 0) for stats in all_stats.values())
             total_errors = sum(stats.get("errors", 0) for stats in all_stats.values())
 
             total_cache_requests = total_cache_hits + total_cache_misses
             overall_cache_hit_rate = (
-                (total_cache_hits / total_cache_requests * 100)
-                if total_cache_requests > 0
-                else 0.0
+                (total_cache_hits / total_cache_requests * 100) if total_cache_requests > 0 else 0.0
             )
 
             overall_error_rate = (

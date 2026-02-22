@@ -108,9 +108,7 @@ class StreamingEngine(EngineProtocol):
         self._overlap_buffer: np.ndarray | None = None
 
         # LRU caching for performance (optimized)
-        self._chunk_cache: OrderedDict[str, list[str]] = (
-            OrderedDict()
-        )  # LRU cache for text chunks
+        self._chunk_cache: OrderedDict[str, list[str]] = OrderedDict()  # LRU cache for text chunks
         self._stream_cache: OrderedDict[str, list[np.ndarray]] = (
             OrderedDict()
         )  # LRU cache for stream results
@@ -211,9 +209,7 @@ class StreamingEngine(EngineProtocol):
                 )
             else:
                 # Fallback: chunk text and synthesize
-                yield from self._synthesize_chunked(
-                    text, speaker_wav, language, **kwargs
-                )
+                yield from self._synthesize_chunked(text, speaker_wav, language, **kwargs)
 
         except Exception as e:
             logger.error(f"Stream synthesis failed: {e}")
@@ -520,9 +516,7 @@ class StreamingEngine(EngineProtocol):
 
         def stream_worker():
             try:
-                for chunk in self.synthesize_stream(
-                    text, speaker_wav, language, **kwargs
-                ):
+                for chunk in self.synthesize_stream(text, speaker_wav, language, **kwargs):
                     if not self._is_streaming:
                         break
 
@@ -648,27 +642,17 @@ class StreamingEngine(EngineProtocol):
 
     def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics (enhanced)."""
-        chunk_total = (
-            self._cache_stats["chunk_hits"] + self._cache_stats["chunk_misses"]
-        )
-        stream_total = (
-            self._cache_stats["stream_hits"] + self._cache_stats["stream_misses"]
-        )
+        chunk_total = self._cache_stats["chunk_hits"] + self._cache_stats["chunk_misses"]
+        stream_total = self._cache_stats["stream_hits"] + self._cache_stats["stream_misses"]
 
         chunk_hit_rate = (
-            (self._cache_stats["chunk_hits"] / chunk_total * 100)
-            if chunk_total > 0
-            else 0.0
+            (self._cache_stats["chunk_hits"] / chunk_total * 100) if chunk_total > 0 else 0.0
         )
         stream_hit_rate = (
-            (self._cache_stats["stream_hits"] / stream_total * 100)
-            if stream_total > 0
-            else 0.0
+            (self._cache_stats["stream_hits"] / stream_total * 100) if stream_total > 0 else 0.0
         )
 
-        buffer_pool_total = (
-            self._buffer_pool_stats["hits"] + self._buffer_pool_stats["misses"]
-        )
+        buffer_pool_total = self._buffer_pool_stats["hits"] + self._buffer_pool_stats["misses"]
         buffer_hit_rate = (
             (self._buffer_pool_stats["hits"] / buffer_pool_total * 100)
             if buffer_pool_total > 0
@@ -701,8 +685,7 @@ class StreamingEngine(EngineProtocol):
         info.update(
             {
                 "engine_name": (
-                    self.engine_name
-                    or (self.engine.__class__.__name__ if self.engine else None)
+                    self.engine_name or (self.engine.__class__.__name__ if self.engine else None)
                 ),
                 "chunk_size": self.chunk_size,
                 "buffer_size": self.buffer_size,

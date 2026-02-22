@@ -59,9 +59,7 @@ class TestWhisperUIEngineClass:
                 engine = whisper_ui_engine.WhisperUIEngine(device="cpu", gpu=False)
                 required_methods = ["initialize", "cleanup", "transcribe"]
                 for method in required_methods:
-                    assert hasattr(
-                        engine, method
-                    ), f"WhisperUIEngine missing method: {method}"
+                    assert hasattr(engine, method), f"WhisperUIEngine missing method: {method}"
             except (ImportError, Exception):
                 pytest.skip("whisper_ui dependencies not installed")
 
@@ -71,9 +69,7 @@ class TestWhisperUIEngineClass:
             try:
                 engine = whisper_ui_engine.WhisperUIEngine(device="cpu", gpu=False)
                 # Check for caching support
-                assert hasattr(
-                    engine, "enable_caching"
-                ), "WhisperUIEngine should support caching"
+                assert hasattr(engine, "enable_caching"), "WhisperUIEngine should support caching"
                 # Check for transcription cache (LRU)
                 assert hasattr(
                     engine, "_transcription_cache"
@@ -97,9 +93,7 @@ class TestWhisperUIEngineCaching:
         if hasattr(whisper_ui_engine, "WhisperUIEngine"):
             try:
                 engine = whisper_ui_engine.WhisperUIEngine(device="cpu", gpu=False)
-                assert hasattr(
-                    engine, "_transcription_cache"
-                ), "Should have transcription cache"
+                assert hasattr(engine, "_transcription_cache"), "Should have transcription cache"
                 # Check it's an OrderedDict (LRU cache)
                 from collections import OrderedDict
 
@@ -116,8 +110,12 @@ class TestWhisperUIEngineCaching:
                 engine = whisper_ui_engine.WhisperUIEngine(device="cpu", gpu=False)
                 stats = engine.get_cache_stats()
                 assert isinstance(stats, dict), "Cache stats should be a dictionary"
-                assert "transcription_cache_size" in stats, "Should include transcription_cache_size"
-                assert "max_transcription_cache_size" in stats, "Should include max_transcription_cache_size"
+                assert (
+                    "transcription_cache_size" in stats
+                ), "Should include transcription_cache_size"
+                assert (
+                    "max_transcription_cache_size" in stats
+                ), "Should include max_transcription_cache_size"
                 assert "cache_enabled" in stats, "Should include cache_enabled"
             except (ImportError, Exception):
                 pytest.skip("whisper_ui dependencies not installed")
@@ -148,9 +146,7 @@ class TestWhisperUIEngineProtocol:
                 engine = whisper_ui_engine.WhisperUIEngine(device="cpu", gpu=False)
                 assert hasattr(engine, "initialize"), "Should implement initialize"
                 assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                assert hasattr(
-                    engine, "is_initialized"
-                ), "Should implement is_initialized"
+                assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                 assert hasattr(engine, "get_device"), "Should implement get_device"
             except (ImportError, Exception):
                 pytest.skip("whisper_ui dependencies not installed")
@@ -193,13 +189,9 @@ class TestWhisperUIEngineOptimization:
             try:
                 engine = whisper_ui_engine.WhisperUIEngine(device="cpu", gpu=False)
                 # Check for LRU cache (OrderedDict)
-                assert hasattr(
-                    engine, "_transcription_cache"
-                ), "Should have transcription cache"
+                assert hasattr(engine, "_transcription_cache"), "Should have transcription cache"
                 # Check for cache max size
-                assert hasattr(
-                    engine, "_cache_max_size"
-                ), "Should have cache max size attribute"
+                assert hasattr(engine, "_cache_max_size"), "Should have cache max size attribute"
                 assert isinstance(
                     engine._cache_max_size, int
                 ), "Cache max size should be an integer"
@@ -210,4 +202,3 @@ class TestWhisperUIEngineOptimization:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

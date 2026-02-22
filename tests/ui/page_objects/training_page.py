@@ -100,11 +100,7 @@ class TrainingPage(BasePage):
     # Workflow Convenience
     # =========================================================================
 
-    def configure_and_start_training(
-        self,
-        dataset_name: str,
-        wait_for_start: bool = True
-    ) -> bool:
+    def configure_and_start_training(self, dataset_name: str, wait_for_start: bool = True) -> bool:
         """
         Configure and start a training run.
 

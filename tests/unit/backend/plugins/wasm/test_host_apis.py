@@ -67,7 +67,7 @@ class TestAudioHostAPI:
         """Test reading audio samples."""
         api = AudioHostAPI(plugin_id="test")
         # Mock audio buffer
-        with patch.object(api, '_audio_buffer', new=b'\x00' * 1000):
+        with patch.object(api, "_audio_buffer", new=b"\x00" * 1000):
             samples = api.read_samples(offset=0, length=100)
             assert samples is not None
 
@@ -101,9 +101,9 @@ class TestFileHostAPI:
         """Test reading file within sandbox."""
         api = FileHostAPI(plugin_id="test", sandbox_root="/tmp/sandbox")
         # Should only allow reads within sandbox
-        with patch('builtins.open', MagicMock()):
-            with patch('os.path.exists', return_value=True):
-                with patch.object(api, '_is_path_safe', return_value=True):
+        with patch("builtins.open", MagicMock()):
+            with patch("os.path.exists", return_value=True):
+                with patch.object(api, "_is_path_safe", return_value=True):
                     result = api.read_file("allowed.txt")
                     # Depends on implementation
                     assert result is not None or result is None  # Valid response
@@ -111,7 +111,7 @@ class TestFileHostAPI:
     def test_read_file_outside_sandbox_blocked(self) -> None:
         """Test that reads outside sandbox are blocked."""
         api = FileHostAPI(plugin_id="test", sandbox_root="/tmp/sandbox")
-        
+
         # Path traversal should be blocked
         result = api.read_file("../../../etc/passwd")
         assert result is None or isinstance(result, Exception)
@@ -119,7 +119,7 @@ class TestFileHostAPI:
     def test_path_traversal_prevention(self) -> None:
         """Test path traversal prevention."""
         api = FileHostAPI(plugin_id="test", sandbox_root="/tmp/sandbox")
-        
+
         # Various traversal attempts
         dangerous_paths = [
             "../../../etc/passwd",
@@ -127,7 +127,7 @@ class TestFileHostAPI:
             "foo/../../bar",
             "/absolute/path",
         ]
-        
+
         for path in dangerous_paths:
             assert not api._is_path_safe(path)
 
@@ -143,7 +143,7 @@ class TestLogHostAPI:
     def test_log_info(self) -> None:
         """Test info logging."""
         api = LogHostAPI(plugin_id="test")
-        with patch('logging.Logger.info') as mock_log:
+        with patch("logging.Logger.info") as mock_log:
             api.info("Test message")
             # Should log with plugin context
             mock_log.assert_called()
@@ -151,25 +151,25 @@ class TestLogHostAPI:
     def test_log_warning(self) -> None:
         """Test warning logging."""
         api = LogHostAPI(plugin_id="test")
-        with patch('logging.Logger.warning') as mock_log:
+        with patch("logging.Logger.warning") as mock_log:
             api.warning("Warning message")
             mock_log.assert_called()
 
     def test_log_error(self) -> None:
         """Test error logging."""
         api = LogHostAPI(plugin_id="test")
-        with patch('logging.Logger.error') as mock_log:
+        with patch("logging.Logger.error") as mock_log:
             api.error("Error message")
             mock_log.assert_called()
 
     def test_log_rate_limiting(self) -> None:
         """Test that logging is rate-limited to prevent DoS."""
         api = LogHostAPI(plugin_id="test", max_logs_per_second=10)
-        
+
         # Rapid logging should be limited
         for i in range(100):
             api.info(f"Message {i}")
-        
+
         # Check rate limiting is applied
         assert api._log_count <= api.max_logs_per_second * 2  # Allow some slack
 
@@ -181,14 +181,14 @@ class TestHostAPISecurityBoundaries:
         """Test that plugins cannot access each other's APIs."""
         api1 = WasmHostAPIs(plugin_id="plugin-1")
         api2 = WasmHostAPIs(plugin_id="plugin-2")
-        
+
         # Each should have isolated state
         assert api1.plugin_id != api2.plugin_id
 
     def test_no_direct_filesystem_access(self) -> None:
         """Test that Wasm cannot directly access filesystem."""
         api = FileHostAPI(plugin_id="test", sandbox_root="/tmp/sandbox")
-        
+
         # Absolute paths should be blocked
         assert not api._is_path_safe("/etc/passwd")
         assert not api._is_path_safe("C:\\Windows\\System32")
@@ -196,7 +196,7 @@ class TestHostAPISecurityBoundaries:
     def test_api_permission_enforcement(self) -> None:
         """Test that API access requires permissions."""
         apis = WasmHostAPIs(plugin_id="test", capabilities=[])
-        
+
         # Without audio capability, audio API should be restricted
         audio_api = apis.get_audio_api()
         # Implementation should check capabilities

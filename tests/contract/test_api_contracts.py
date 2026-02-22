@@ -4,6 +4,7 @@ API Contract Tests
 Tests that validate API responses match the OpenAPI schema contracts.
 These tests ensure the backend API implementation matches the documented schema.
 """
+
 from __future__ import annotations
 
 import sys
@@ -50,8 +51,9 @@ class TestCoreEndpointContracts:
     def test_profiles_list_contract(self, contract_client, api_paths):
         """Test profiles list endpoint contract."""
         # Check endpoint exists in schema
-        assert "/api/profiles" in api_paths or "/api/v1/profiles" in api_paths, \
-            "Profiles endpoint must be in schema"
+        assert (
+            "/api/profiles" in api_paths or "/api/v1/profiles" in api_paths
+        ), "Profiles endpoint must be in schema"
 
         response = contract_client.get("/api/profiles")
 
@@ -110,11 +112,11 @@ class TestSchemaComponents:
             if schema.get("type") == "object":
                 # Object schemas should have properties or additionalProperties
                 has_props = (
-                    "properties" in schema or
-                    "additionalProperties" in schema or
-                    "allOf" in schema or
-                    "oneOf" in schema or
-                    "anyOf" in schema
+                    "properties" in schema
+                    or "additionalProperties" in schema
+                    or "allOf" in schema
+                    or "oneOf" in schema
+                    or "anyOf" in schema
                 )
                 assert has_props, f"Object schema '{name}' should have properties"
 
@@ -231,8 +233,7 @@ class TestResponseValidation:
         """Test error responses match VoiceStudio's custom error schema."""
         # Trigger a validation error
         response = contract_client.post(
-            "/api/voice/synthesize",
-            json={}  # Empty body should trigger validation error
+            "/api/voice/synthesize", json={}  # Empty body should trigger validation error
         )
 
         if response.status_code == 404:

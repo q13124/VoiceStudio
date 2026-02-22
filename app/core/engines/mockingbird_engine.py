@@ -163,9 +163,7 @@ class MockingBirdEngine(EngineProtocol):
     - Fast inference
     """
 
-    def __init__(
-        self, model_path: str | None = None, device: str | None = None, **kwargs
-    ):
+    def __init__(self, model_path: str | None = None, device: str | None = None, **kwargs):
         """
         Initialize MockingBird engine.
 
@@ -174,9 +172,7 @@ class MockingBirdEngine(EngineProtocol):
             device: Device to use ('cuda', 'cpu', or None for auto)
         """
         self.model_path = model_path or os.getenv("MOCKINGBIRD_MODEL_PATH")
-        self.device = device or (
-            "cuda" if (HAS_TORCH and torch.cuda.is_available()) else "cpu"
-        )
+        self.device = device or ("cuda" if (HAS_TORCH and torch.cuda.is_available()) else "cpu")
 
         self._initialized = False
         self._model = None
@@ -221,9 +217,7 @@ class MockingBirdEngine(EngineProtocol):
             else:
                 # Load model immediately if lazy loading disabled
                 if not self._load_model():
-                    logger.warning(
-                        "Model loading failed, but continuing with lazy loading"
-                    )
+                    logger.warning("Model loading failed, but continuing with lazy loading")
                     # Don't fail initialization - allow lazy loading later
 
             self._initialized = True
@@ -326,9 +320,7 @@ class MockingBirdEngine(EngineProtocol):
                     if os.path.exists(reference_audio):
                         ref_audio_data, sr = sf.read(reference_audio)
                     else:
-                        logger.error(
-                            f"Reference audio file not found: {reference_audio}"
-                        )
+                        logger.error(f"Reference audio file not found: {reference_audio}")
                         return None
                 elif isinstance(reference_audio, bytes):
                     import io
@@ -390,9 +382,7 @@ class MockingBirdEngine(EngineProtocol):
 
             # Check cache first
             if self.enable_caching:
-                cached_model = _get_cached_mockingbird_model(
-                    self.model_path, self.device
-                )
+                cached_model = _get_cached_mockingbird_model(self.model_path, self.device)
                 if cached_model is not None:
                     logger.debug(f"Using cached MockingBird model: {self.model_path}")
                     self._model = cached_model
@@ -454,9 +444,7 @@ class MockingBirdEngine(EngineProtocol):
                     logger.warning(f"Encoder path does not exist: {encoder_path}")
                     encoder_path = None
                 if synthesizer_path and not os.path.exists(synthesizer_path):
-                    logger.warning(
-                        f"Synthesizer path does not exist: {synthesizer_path}"
-                    )
+                    logger.warning(f"Synthesizer path does not exist: {synthesizer_path}")
                     synthesizer_path = None
                 if vocoder_path and not os.path.exists(vocoder_path):
                     logger.warning(f"Vocoder path does not exist: {vocoder_path}")
@@ -476,9 +464,7 @@ class MockingBirdEngine(EngineProtocol):
                 logger.info("MockingBird model loaded successfully")
                 return True
             except Exception as e:
-                logger.warning(
-                    f"Model loading encountered issues: {e}, using fallback mode"
-                )
+                logger.warning(f"Model loading encountered issues: {e}, using fallback mode")
                 self._model = {
                     "loaded": True,
                     "path": self.model_path,
@@ -502,9 +488,7 @@ class MockingBirdEngine(EngineProtocol):
 
             # Try to use actual MockingBird model if available
             if self._model and not self._model.get("fallback", False):
-                return self._synthesize_with_model(
-                    text, ref_audio, sample_rate, **kwargs
-                )
+                return self._synthesize_with_model(text, ref_audio, sample_rate, **kwargs)
 
             # Try to use MockingBird API if available
             api_url = kwargs.get("api_url") or os.getenv("MOCKINGBIRD_API_URL")
@@ -581,17 +565,13 @@ class MockingBirdEngine(EngineProtocol):
                                 ref_audio_16k = ref_audio
 
                             # Normalize
-                            ref_audio_16k = ref_audio_16k / np.max(
-                                np.abs(ref_audio_16k)
-                            )
+                            ref_audio_16k = ref_audio_16k / np.max(np.abs(ref_audio_16k))
 
                             # Extract embedding using encoder
                             encoder_path = self._model.get("encoder_path")
                             if encoder_path and os.path.exists(encoder_path):
                                 encoder_inference.load_model(encoder_path, device)
-                                speaker_embedding = encoder_inference.embed_utterance(
-                                    ref_audio_16k
-                                )
+                                speaker_embedding = encoder_inference.embed_utterance(ref_audio_16k)
                             else:
                                 logger.warning(
                                     "Encoder path not available, "
@@ -603,24 +583,17 @@ class MockingBirdEngine(EngineProtocol):
                             if sample_rate != 16000:
                                 # Simple resampling
                                 ratio = 16000 / sample_rate
-                                indices = np.round(
-                                    np.arange(len(ref_audio)) * ratio
-                                ).astype(int)
+                                indices = np.round(np.arange(len(ref_audio)) * ratio).astype(int)
                                 indices = np.clip(indices, 0, len(ref_audio) - 1)
                                 ref_audio_16k = ref_audio[indices]
 
                             # Extract features
-                            fft = np.fft.rfft(
-                                ref_audio_16k[: min(16000, len(ref_audio_16k))]
-                            )
+                            fft = np.fft.rfft(ref_audio_16k[: min(16000, len(ref_audio_16k))])
                             speaker_embedding = np.mean(np.abs(fft), axis=0)
 
                         # Cache embedding if successfully extracted (LRU)
                         if speaker_embedding is not None and audio_hash:
-                            if (
-                                len(self._embedding_cache)
-                                >= self._embedding_cache_max_size
-                            ):
+                            if len(self._embedding_cache) >= self._embedding_cache_max_size:
                                 oldest_key = next(iter(self._embedding_cache))
                                 del self._embedding_cache[oldest_key]
                             self._embedding_cache[audio_hash] = speaker_embedding
@@ -634,15 +607,11 @@ class MockingBirdEngine(EngineProtocol):
             vocoder_path = self._model.get("vocoder_path")
 
             if not synthesizer_path or not os.path.exists(synthesizer_path):
-                logger.warning(
-                    "Synthesizer path not available, " "cannot perform synthesis"
-                )
+                logger.warning("Synthesizer path not available, " "cannot perform synthesis")
                 return None
 
             if not vocoder_path or not os.path.exists(vocoder_path):
-                logger.warning(
-                    "Vocoder path not available, " "cannot perform synthesis"
-                )
+                logger.warning("Vocoder path not available, " "cannot perform synthesis")
                 return None
 
             try:
@@ -766,9 +735,7 @@ class MockingBirdEngine(EngineProtocol):
                         else:
                             ref_path = ref_audio
 
-                    result = xtts_engine.synthesize(
-                        text=text, reference_audio=ref_path, **kwargs
-                    )
+                    result = xtts_engine.synthesize(text=text, reference_audio=ref_path, **kwargs)
 
                     if ref_audio is not None and isinstance(ref_audio, np.ndarray):
                         with contextlib.suppress(BaseException):
@@ -794,9 +761,7 @@ class MockingBirdEngine(EngineProtocol):
             # Apply speaker characteristics if reference audio available
             if ref_audio is not None and len(ref_audio) > 0 and HAS_LIBROSA:
                 # Extract pitch characteristics
-                f0_ref, _voiced_flag, _voiced_probs = librosa.pyin(
-                    ref_audio, fmin=50, fmax=400
-                )
+                f0_ref, _voiced_flag, _voiced_probs = librosa.pyin(ref_audio, fmin=50, fmax=400)
                 f0_mean = np.nanmean(f0_ref) if np.any(~np.isnan(f0_ref)) else 150
                 # Adjust generated pitch
                 f0 = f0_mean + 20 * np.sin(2 * np.pi * 0.5 * t)
@@ -846,9 +811,7 @@ class MockingBirdEngine(EngineProtocol):
 
         def synthesize_single(text):
             try:
-                return self.synthesize(
-                    text=text, reference_audio=reference_audio, **kwargs
-                )
+                return self.synthesize(text=text, reference_audio=reference_audio, **kwargs)
             except Exception as e:
                 logger.error(f"Batch synthesis failed for text: {e}")
                 return None
@@ -872,11 +835,7 @@ class MockingBirdEngine(EngineProtocol):
             results = batch_results
 
         # Clear GPU cache periodically
-        if (
-            HAS_TORCH
-            and torch.cuda.is_available()
-            and (len(texts) % (actual_batch_size * 2) == 0)
-        ):
+        if HAS_TORCH and torch.cuda.is_available() and (len(texts) % (actual_batch_size * 2) == 0):
             torch.cuda.empty_cache()
 
         return results
@@ -912,9 +871,7 @@ class MockingBirdEngine(EngineProtocol):
                         preserve_prosody=True,
                         target_lufs=-23.0,
                     )
-                    logger.debug(
-                        "Applied advanced quality enhancement to MockingBird output"
-                    )
+                    logger.debug("Applied advanced quality enhancement to MockingBird output")
                 elif enhance_voice_quality is not None:
                     # Fallback to standard enhancement
                     audio = enhance_voice_quality(

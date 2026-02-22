@@ -91,9 +91,7 @@ async def get_language_configs(profile_id: str | None = None):
 async def get_language_config(config_id: str):
     """Get a specific language configuration."""
     if config_id not in _language_configs:
-        raise HTTPException(
-            status_code=404, detail="Language config not found"
-        )
+        raise HTTPException(status_code=404, detail="Language config not found")
 
     c = _language_configs[config_id]
     return LanguageConfig(
@@ -166,8 +164,7 @@ async def translate_text(request: TranslationRequest):
             translated = translator.translate(request.text)
 
             logger.info(
-                "Translated text using Google Translate: "
-                f"{source_lang} -> {target_lang}"
+                "Translated text using Google Translate: " f"{source_lang} -> {target_lang}"
             )
 
             return TranslationResponse(
@@ -177,9 +174,7 @@ async def translate_text(request: TranslationRequest):
                 confidence=0.9,  # Google Translate confidence estimate
             )
         except Exception as google_error:
-            logger.debug(
-                f"Google Translate failed: {google_error}, trying alternatives"
-            )
+            logger.debug(f"Google Translate failed: {google_error}, trying alternatives")
             raise
 
     except ImportError:
@@ -189,17 +184,13 @@ async def translate_text(request: TranslationRequest):
             import argostranslate.translate
 
             # Check if translation package is installed
-            installed_languages = (
-                argostranslate.translate.get_installed_languages()
-            )
+            installed_languages = argostranslate.translate.get_installed_languages()
             source_lang_obj = None
             target_lang_obj = None
 
             # Find matching language objects
             for lang in installed_languages:
-                if lang.code == source_lang or (
-                    source_lang == "auto" and "en" in lang.code
-                ):
+                if lang.code == source_lang or (source_lang == "auto" and "en" in lang.code):
                     source_lang_obj = lang
                 if lang.code == target_lang:
                     target_lang_obj = lang
@@ -214,8 +205,7 @@ async def translate_text(request: TranslationRequest):
             if not source_lang_obj or not target_lang_obj:
                 lang_codes = [lang.code for lang in installed_languages]
                 raise ValueError(
-                    f"Language pair not available. "
-                    f"Installed languages: {lang_codes}"
+                    f"Language pair not available. " f"Installed languages: {lang_codes}"
                 )
 
             translated = argostranslate.translate.translate(

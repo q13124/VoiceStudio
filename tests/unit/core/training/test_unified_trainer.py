@@ -28,7 +28,9 @@ for module_name in ["torch", "torch.cuda"]:
         sys.modules[module_name] = mock_module
     elif module_name == "torch":
         # Ensure existing mock has __version__
-        if not hasattr(sys.modules[module_name], "__version__") or isinstance(sys.modules[module_name].__version__, MagicMock):
+        if not hasattr(sys.modules[module_name], "__version__") or isinstance(
+            sys.modules[module_name].__version__, MagicMock
+        ):
             sys.modules[module_name].__version__ = "2.0.0"
 
 # Import the unified trainer module
@@ -52,20 +54,14 @@ class TestUnifiedTrainerImports:
     def test_unified_trainer_has_classes(self):
         """Test unified_trainer has expected classes."""
         classes = [
-            name
-            for name in dir(unified_trainer)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(unified_trainer) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "unified_trainer should have classes"
 
     def test_unified_trainer_class_exists(self):
         """Test UnifiedTrainer class exists."""
-        assert hasattr(
-            unified_trainer, "UnifiedTrainer"
-        ), "UnifiedTrainer class should exist"
-        assert isinstance(
-            unified_trainer.UnifiedTrainer, type
-        ), "UnifiedTrainer should be a class"
+        assert hasattr(unified_trainer, "UnifiedTrainer"), "UnifiedTrainer class should exist"
+        assert isinstance(unified_trainer.UnifiedTrainer, type), "UnifiedTrainer should be a class"
 
     def test_create_unified_trainer_function_exists(self):
         """Test create_unified_trainer function exists."""

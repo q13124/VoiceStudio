@@ -2,6 +2,7 @@
 Unit Tests for Engine API Route
 Tests engine telemetry endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -143,12 +144,12 @@ class TestEngineTelemetryEndpoint:
         app.include_router(engine.router)
         client = TestClient(app)
 
-        with patch("backend.api.routes.engine.get_engine_router", side_effect=ImportError), \
-             patch("backend.api.routes.engine.get_resource_manager") as mock_get_rm:
+        with (
+            patch("backend.api.routes.engine.get_engine_router", side_effect=ImportError),
+            patch("backend.api.routes.engine.get_resource_manager") as mock_get_rm,
+        ):
             mock_rm = MagicMock()
-            mock_rm.get_gpu_info.return_value = [
-                {"memory_used_percent": 75.0}
-            ]
+            mock_rm.get_gpu_info.return_value = [{"memory_used_percent": 75.0}]
             mock_get_rm.return_value = mock_rm
 
             response = client.get("/api/engine/telemetry")
@@ -163,8 +164,10 @@ class TestEngineTelemetryEndpoint:
         app.include_router(engine.router)
         client = TestClient(app)
 
-        with patch("backend.api.routes.engine.get_engine_router", side_effect=ImportError), \
-             patch("backend.api.routes.engine.get_resource_manager", side_effect=ImportError):
+        with (
+            patch("backend.api.routes.engine.get_engine_router", side_effect=ImportError),
+            patch("backend.api.routes.engine.get_resource_manager", side_effect=ImportError),
+        ):
 
             response = client.get("/api/engine/telemetry")
             assert response.status_code == 200
@@ -179,7 +182,9 @@ class TestEngineTelemetryEndpoint:
         app.include_router(engine.router)
         client = TestClient(app)
 
-        with patch("backend.api.routes.engine.get_engine_router", side_effect=Exception("Test error")):
+        with patch(
+            "backend.api.routes.engine.get_engine_router", side_effect=Exception("Test error")
+        ):
 
             response = client.get("/api/engine/telemetry")
             assert response.status_code == 200  # Returns defaults on error
@@ -383,9 +388,7 @@ class TestEngineTelemetryRecordEndpoint:
 
         with patch("backend.api.routes.engine.get_resource_manager") as mock_get_rm:
             mock_rm = MagicMock()
-            mock_rm.get_gpu_info.return_value = [
-                {"memory_used_percent": 70.0}
-            ]
+            mock_rm.get_gpu_info.return_value = [{"memory_used_percent": 70.0}]
             mock_get_rm.return_value = mock_rm
 
             response = client.post(

@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.utils import quality_degradation
 except ImportError:
-    pytest.skip(
-        "Could not import quality_degradation", allow_module_level=True
-    )
+    pytest.skip("Could not import quality_degradation", allow_module_level=True)
 
 
 class TestQualityDegradationImports:
@@ -25,9 +23,7 @@ class TestQualityDegradationImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            quality_degradation is not None
-        ), "Failed to import quality_degradation module"
+        assert quality_degradation is not None, "Failed to import quality_degradation module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -37,4 +33,3 @@ class TestQualityDegradationImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

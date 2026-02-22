@@ -64,6 +64,7 @@ class EffectChainStore:
         chain_id = chain.get("id", "")
         if not chain_id:
             import uuid
+
             chain_id = f"chain-{uuid.uuid4().hex[:8]}"
             chain["id"] = chain_id
 
@@ -179,6 +180,7 @@ class EffectPresetStore:
         preset_id = preset.get("id", "")
         if not preset_id:
             import uuid
+
             preset_id = f"preset-{uuid.uuid4().hex[:8]}"
             preset["id"] = preset_id
 

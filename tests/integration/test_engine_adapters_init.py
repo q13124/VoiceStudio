@@ -13,9 +13,7 @@ import os
 import pytest
 
 ENGINE_DIR = os.path.normpath(
-    os.path.join(
-        os.path.dirname(__file__), "..", "..", "app", "core", "engines"
-    )
+    os.path.join(os.path.dirname(__file__), "..", "..", "app", "core", "engines")
 )
 
 UTILITY_MODULES = frozenset(
@@ -66,6 +64,7 @@ def get_adapter_modules():
 # Test 1: Every module imports without errors
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize("module_name", get_engine_modules())
 def test_engine_module_imports(module_name):
     """Each engine module should import without errors."""
@@ -83,6 +82,7 @@ def test_engine_module_imports(module_name):
 # Test 2: Adapter modules expose at least one Engine class
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize("module_name", get_adapter_modules())
 def test_engine_class_discoverable(module_name):
     """Each adapter module should expose at least one class with 'Engine' in its name."""
@@ -94,9 +94,13 @@ def test_engine_class_discoverable(module_name):
         return
 
     adapter_keywords = (
-        "Engine", "Translator", "Converter",
-        "Synthesizer", "Extractor",
-        "Provider", "Client",
+        "Engine",
+        "Translator",
+        "Converter",
+        "Synthesizer",
+        "Extractor",
+        "Provider",
+        "Client",
     )
     found = [
         name
@@ -106,9 +110,7 @@ def test_engine_class_discoverable(module_name):
         and any(kw in name for kw in adapter_keywords)
     ]
 
-    assert found, (
-        f"{fqn} has no discoverable adapter class"
-    )
+    assert found, f"{fqn} has no discoverable adapter class"
 
 
 # ---------------------------------------------------------------------------
@@ -125,9 +127,7 @@ def test_engine_protocol_contract(module_name):
     try:
         mod = importlib.import_module(fqn)
     except ImportError as exc:
-        pytest.skip(
-            f"Optional dependency missing: {exc}"
-        )
+        pytest.skip(f"Optional dependency missing: {exc}")
         return
 
     try:
@@ -145,13 +145,9 @@ def test_engine_protocol_contract(module_name):
     ]
 
     if not subclasses:
-        pytest.skip(
-            f"{module_name}: no EngineProtocol subclass"
-        )
+        pytest.skip(f"{module_name}: no EngineProtocol subclass")
         return
 
     for cls_name, cls in subclasses:
         for method in REQUIRED_PROTOCOL_METHODS:
-            assert hasattr(cls, method), (
-                f"{cls_name} missing '{method}'"
-            )
+            assert hasattr(cls, method), f"{cls_name} missing '{method}'"

@@ -107,13 +107,15 @@ async def get_slos():
         synthesis_metrics = metrics.get("metrics", {}).get("voice_synthesis_latency", {})
         if synthesis_metrics:
             current_p95 = synthesis_metrics.get("max", 0)  # Simplified; real p95 needs histogram
-            slos.append(SLOStatus(
-                name="synthesis_latency_p95",
-                target=2.0,  # 2 seconds
-                current=current_p95,
-                met=current_p95 <= 2.0,
-                window_hours=24,
-            ))
+            slos.append(
+                SLOStatus(
+                    name="synthesis_latency_p95",
+                    target=2.0,  # 2 seconds
+                    current=current_p95,
+                    met=current_p95 <= 2.0,
+                    window_hours=24,
+                )
+            )
 
         # Request success rate SLO
         request_metrics = metrics.get("metrics", {}).get("http_requests", {})
@@ -121,13 +123,15 @@ async def get_slos():
             total = request_metrics.get("count", 0)
             # Assume 99.5% success (simplified; needs error count)
             success_rate = 0.995 if total > 0 else 1.0
-            slos.append(SLOStatus(
-                name="api_availability",
-                target=0.995,
-                current=success_rate,
-                met=success_rate >= 0.995,
-                window_hours=24,
-            ))
+            slos.append(
+                SLOStatus(
+                    name="api_availability",
+                    target=0.995,
+                    current=success_rate,
+                    met=success_rate >= 0.995,
+                    window_hours=24,
+                )
+            )
 
         # Determine overall health
         if not slos:

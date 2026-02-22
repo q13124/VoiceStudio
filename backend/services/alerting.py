@@ -191,7 +191,9 @@ class AlertingService:
             self._alerts.append(alert.to_dict())
             logger.warning(
                 "Alert fired: %s (value=%.2f, threshold=%.2f)",
-                rule.name, value, rule.threshold,
+                rule.name,
+                value,
+                rule.threshold,
             )
             if self._ws_callback:
                 try:

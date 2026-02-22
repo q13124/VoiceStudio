@@ -27,11 +27,7 @@ class TestMetricsImports:
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
-        classes = [
-            name
-            for name in dir(metrics)
-            if name[0].isupper() and not name.startswith("_")
-        ]
+        classes = [name for name in dir(metrics) if name[0].isupper() and not name.startswith("_")]
         assert len(classes) > 0, "module should have classes or functions"
 
 
@@ -48,4 +44,3 @@ class TestMetricsFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

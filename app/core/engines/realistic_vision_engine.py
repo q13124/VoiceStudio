@@ -28,9 +28,7 @@ try:
     HAS_DIFFUSERS = True
 except ImportError:
     HAS_DIFFUSERS = False
-    logger.warning(
-        "diffusers not installed. Install with: pip install diffusers>=0.21.0"
-    )
+    logger.warning("diffusers not installed. Install with: pip install diffusers>=0.21.0")
 
 # Import base protocol from canonical source
 from .base import EngineProtocol
@@ -67,9 +65,7 @@ class RealisticVisionEngine(EngineProtocol):
             if self._initialized:
                 return True
 
-            logger.info(
-                f"Loading Realistic Vision model: {self.model_id} (device: {self.device})"
-            )
+            logger.info(f"Loading Realistic Vision model: {self.model_id} (device: {self.device})")
 
             model_cache_dir = os.getenv("VOICESTUDIO_MODELS_PATH")
             if not model_cache_dir:
@@ -84,17 +80,13 @@ class RealisticVisionEngine(EngineProtocol):
             try:
                 self.pipe = StableDiffusionPipeline.from_pretrained(
                     self.model_id,
-                    torch_dtype=(
-                        torch.float16 if self.device == "cuda" else torch.float32
-                    ),
+                    torch_dtype=(torch.float16 if self.device == "cuda" else torch.float32),
                     cache_dir=model_cache_dir,
                 )
                 if self.vae:
                     from diffusers import AutoencoderKL
 
-                    vae_model = AutoencoderKL.from_pretrained(
-                        self.vae, cache_dir=model_cache_dir
-                    )
+                    vae_model = AutoencoderKL.from_pretrained(self.vae, cache_dir=model_cache_dir)
                     self.pipe.vae = vae_model
                 self.pipe = self.pipe.to(self.device)
                 self._initialized = True

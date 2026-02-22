@@ -20,6 +20,7 @@ from typing import Any
 
 class PluginState(Enum):
     """Plugin lifecycle state."""
+
     DISCOVERED = "discovered"
     LOADED = "loaded"
     INITIALIZED = "initialized"

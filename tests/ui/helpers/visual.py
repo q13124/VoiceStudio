@@ -73,7 +73,7 @@ def compare_screenshot(
     baseline_name: str,
     threshold: float = 0.01,
     generate_diff: bool = True,
-    auto_capture_missing: bool = True
+    auto_capture_missing: bool = True,
 ) -> tuple[bool, float]:
     """
     Compare a screenshot against a baseline image.
@@ -98,6 +98,7 @@ def compare_screenshot(
         if auto_capture_missing and actual_path.exists():
             # Auto-capture baseline on first run
             import shutil
+
             shutil.copy(actual_path, baseline_path)
             print(f"Auto-captured baseline (first run): {baseline_path}")
             return True, 0.0
@@ -124,10 +125,7 @@ def compare_screenshot(
 
         # Check dimensions match
         if baseline_img.size != actual_img.size:
-            print(
-                f"Size mismatch: baseline={baseline_img.size}, "
-                f"actual={actual_img.size}"
-            )
+            print(f"Size mismatch: baseline={baseline_img.size}, " f"actual={actual_img.size}")
             # Resize actual to match baseline for comparison
             actual_img = actual_img.resize(baseline_img.size, Image.Resampling.LANCZOS)
 
@@ -145,7 +143,7 @@ def compare_screenshot(
             height,
             diff_img.tobytes(),
             threshold=0.1,  # Per-pixel threshold
-            includeAA=False  # Ignore anti-aliasing differences
+            includeAA=False,  # Ignore anti-aliasing differences
         )
 
         diff_pct = diff_pixels / total_pixels
@@ -179,10 +177,7 @@ def compare_screenshot(
 
 
 def capture_and_compare(
-    driver,
-    name: str,
-    threshold: float = 0.01,
-    update_baseline: bool = False
+    driver, name: str, threshold: float = 0.01, update_baseline: bool = False
 ) -> tuple[bool, float]:
     """
     Capture a screenshot and compare against baseline.
@@ -206,6 +201,7 @@ def capture_and_compare(
 
     # Capture current screenshot
     from datetime import datetime
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     actual_path = SCREENSHOT_DIR / f"{name}_{timestamp}.png"
 
@@ -243,6 +239,7 @@ def delete_baseline(name: str) -> bool:
 # Visual Regression Test Helpers
 # =============================================================================
 
+
 class VisualRegressionChecker:
     """
     Helper class for running visual regression checks in tests.
@@ -271,12 +268,7 @@ class VisualRegressionChecker:
         ).lower() in ("1", "true", "yes")
         self.results: list[tuple[str, bool, float]] = []
 
-    def check_panel(
-        self,
-        name: str,
-        panel_id: str,
-        threshold: float = 0.01
-    ) -> tuple[bool, float]:
+    def check_panel(self, name: str, panel_id: str, threshold: float = 0.01) -> tuple[bool, float]:
         """
         Navigate to a panel and check its visual appearance.
 
@@ -307,21 +299,12 @@ class VisualRegressionChecker:
         time.sleep(0.3)
 
         # Capture and compare
-        passed, diff_pct = capture_and_compare(
-            self.driver,
-            name,
-            threshold,
-            self.update_baselines
-        )
+        passed, diff_pct = capture_and_compare(self.driver, name, threshold, self.update_baselines)
 
         self.results.append((name, passed, diff_pct))
         return passed, diff_pct
 
-    def check_current_state(
-        self,
-        name: str,
-        threshold: float = 0.01
-    ) -> tuple[bool, float]:
+    def check_current_state(self, name: str, threshold: float = 0.01) -> tuple[bool, float]:
         """
         Check the current visual state without navigation.
 
@@ -333,14 +316,10 @@ class VisualRegressionChecker:
             Tuple of (passed: bool, diff_percentage: float)
         """
         import time
+
         time.sleep(0.2)  # Brief wait for any animations
 
-        passed, diff_pct = capture_and_compare(
-            self.driver,
-            name,
-            threshold,
-            self.update_baselines
-        )
+        passed, diff_pct = capture_and_compare(self.driver, name, threshold, self.update_baselines)
 
         self.results.append((name, passed, diff_pct))
         return passed, diff_pct
@@ -354,10 +333,7 @@ class VisualRegressionChecker:
             "total": len(self.results),
             "passed": passed,
             "failed": failed,
-            "details": [
-                {"name": name, "passed": p, "diff_pct": d}
-                for name, p, d in self.results
-            ]
+            "details": [{"name": name, "passed": p, "diff_pct": d} for name, p, d in self.results],
         }
 
     def assert_all_passed(self):
@@ -365,9 +341,7 @@ class VisualRegressionChecker:
         summary = self.get_summary()
 
         if summary["failed"] > 0:
-            failed_names = [
-                d["name"] for d in summary["details"] if not d["passed"]
-            ]
+            failed_names = [d["name"] for d in summary["details"] if not d["passed"]]
             raise AssertionError(
                 f"Visual regression detected in: {', '.join(failed_names)}. "
                 f"See .buildlogs/ui_tests/diffs/ for details."

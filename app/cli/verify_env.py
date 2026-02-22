@@ -19,6 +19,7 @@ def check_python_version():
         print("  ✗ Python 3.10+ required")
         return False
 
+
 def check_paths():
     """Check critical paths."""
     workspace = Path(__file__).parent.parent.parent
@@ -41,6 +42,7 @@ def check_paths():
 
     return all_ok
 
+
 def check_governor_learners():
     """Check Governor + learners exist."""
     workspace = Path(__file__).parent.parent.parent
@@ -59,6 +61,7 @@ def check_governor_learners():
             print(f"  ⚠ {name}: {path} (not found - may be in different location)")
 
     return True  # Don't fail if files in different locations
+
 
 def check_engine_config():
     """Check engine configuration."""
@@ -83,6 +86,7 @@ def check_engine_config():
     else:
         print(f"  ⚠ Config not found: {config_path}")
         return True  # Don't fail, config may be created later
+
 
 def check_panel_count():
     """Check panel count."""
@@ -126,8 +130,9 @@ def check_panel_count():
         # Check registry
         registry_file = workspace / "app" / "core" / "PanelRegistry.Auto.cs"
         if registry_file.exists():
-            content = registry_file.read_text(encoding='utf-8')
+            content = registry_file.read_text(encoding="utf-8")
             import re
+
             registered = len(re.findall(r'"([^"]+\.xaml)"', content))
             print(f"  ✓ Registered in PanelRegistry.Auto.cs: {registered} panels")
             if registered < total_panels:
@@ -141,6 +146,7 @@ def check_panel_count():
         print("  💡 Run: .\tools\\Find-AllPanels.ps1 to discover panels")
         return True  # Don't fail, panels may be in different location
 
+
 def check_path_references():
     """Check for old C: path references."""
     workspace = Path(__file__).parent.parent.parent
@@ -153,7 +159,7 @@ def check_path_references():
         for file_path in workspace.rglob(pattern):
             if file_path.is_file():
                 try:
-                    with open(file_path, encoding='utf-8', errors='ignore') as f:
+                    with open(file_path, encoding="utf-8", errors="ignore") as f:
                         content = f.read()
                         if "C:\\VoiceStudio" in content or "C:/VoiceStudio" in content:
                             found_old_paths.append(str(file_path))
@@ -170,6 +176,7 @@ def check_path_references():
     else:
         print("  ✓ No C:\\VoiceStudio references found")
         return True
+
 
 def main():
     """Run all checks."""
@@ -212,6 +219,6 @@ def main():
         print("⚠ Some checks had warnings (see above)")
         return 1
 
+
 if __name__ == "__main__":
     sys.exit(main())
-

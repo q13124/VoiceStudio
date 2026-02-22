@@ -23,6 +23,7 @@ router = APIRouter(prefix="/api/multi-speaker-dubbing", tags=["multi-speaker-dub
 
 class DiarizationRequest(BaseModel):
     """Request for speaker diarization."""
+
     audio_id: str = Field(..., description="Audio file ID")
     max_speakers: int = Field(10, ge=2, le=50, description="Maximum number of speakers")
     min_segment_duration: float = Field(0.5, description="Minimum segment duration in seconds")
@@ -30,6 +31,7 @@ class DiarizationRequest(BaseModel):
 
 class SpeakerSegment(BaseModel):
     """A speaker segment from diarization."""
+
     speaker_id: str
     start_time: float
     end_time: float
@@ -38,6 +40,7 @@ class SpeakerSegment(BaseModel):
 
 class DiarizationResponse(BaseModel):
     """Response for speaker diarization."""
+
     project_id: str
     audio_id: str
     speaker_count: int
@@ -47,6 +50,7 @@ class DiarizationResponse(BaseModel):
 
 class VoiceAssignment(BaseModel):
     """Voice assignment for a speaker."""
+
     speaker_id: str
     target_voice_id: str
     pitch_shift: float = Field(0.0, ge=-12.0, le=12.0)
@@ -54,18 +58,21 @@ class VoiceAssignment(BaseModel):
 
 class VoiceAssignmentRequest(BaseModel):
     """Request for voice assignments."""
+
     project_id: str
     assignments: list[VoiceAssignment]
 
 
 class VoiceAssignmentResponse(BaseModel):
     """Response for voice assignments."""
+
     project_id: str
     assignments_applied: int
 
 
 class DubbingRequest(BaseModel):
     """Request for multi-speaker dubbing."""
+
     project_id: str
     preserve_background: bool = Field(True, description="Preserve background audio")
     normalize_loudness: bool = Field(True, description="Normalize speaker loudness")
@@ -74,6 +81,7 @@ class DubbingRequest(BaseModel):
 
 class DubbingResponse(BaseModel):
     """Response for dubbing generation."""
+
     output_audio_id: str
     segments_processed: int
     speakers_dubbed: int
@@ -82,6 +90,7 @@ class DubbingResponse(BaseModel):
 
 class ProjectInfo(BaseModel):
     """Dubbing project information."""
+
     project_id: str
     audio_id: str
     status: str
@@ -118,8 +127,7 @@ async def diarize_speakers(request: DiarizationRequest):
 
         if not result.get("success", False):
             raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "Speaker diarization failed")
+                status_code=500, detail=result.get("error", "Speaker diarization failed")
             )
 
         segments = [
@@ -144,10 +152,7 @@ async def diarize_speakers(request: DiarizationRequest):
         raise
     except Exception as e:
         logger.error(f"Speaker diarization failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Speaker diarization failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Speaker diarization failed: {e!s}") from e
 
 
 @router.post("/assign-voices", response_model=VoiceAssignmentResponse)
@@ -184,8 +189,7 @@ async def assign_voices(request: VoiceAssignmentRequest):
 
         if not result.get("success", False):
             raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "Voice assignment failed")
+                status_code=500, detail=result.get("error", "Voice assignment failed")
             )
 
         return VoiceAssignmentResponse(
@@ -197,10 +201,7 @@ async def assign_voices(request: VoiceAssignmentRequest):
         raise
     except Exception as e:
         logger.error(f"Voice assignment failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Voice assignment failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Voice assignment failed: {e!s}") from e
 
 
 @router.post("/generate", response_model=DubbingResponse)
@@ -229,8 +230,7 @@ async def generate_dubbing(request: DubbingRequest):
 
         if not result.get("success", False):
             raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "Dubbing generation failed")
+                status_code=500, detail=result.get("error", "Dubbing generation failed")
             )
 
         return DubbingResponse(
@@ -244,10 +244,7 @@ async def generate_dubbing(request: DubbingRequest):
         raise
     except Exception as e:
         logger.error(f"Dubbing generation failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Dubbing generation failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Dubbing generation failed: {e!s}") from e
 
 
 @router.get("/projects", response_model=list[ProjectInfo])
@@ -273,10 +270,7 @@ async def list_projects():
 
     except Exception as e:
         logger.error(f"Failed to list projects: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to list projects: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to list projects: {e!s}") from e
 
 
 @router.get("/projects/{project_id}", response_model=ProjectInfo)
@@ -289,10 +283,7 @@ async def get_project(project_id: str):
         project = service.get_project(project_id)
 
         if not project:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Project '{project_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Project '{project_id}' not found")
 
         return ProjectInfo(
             project_id=project["project_id"],
@@ -307,10 +298,7 @@ async def get_project(project_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get project: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get project: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to get project: {e!s}") from e
 
 
 @router.delete("/projects/{project_id}")
@@ -323,10 +311,7 @@ async def delete_project(project_id: str):
         success = service.delete_project(project_id)
 
         if not success:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Project '{project_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Project '{project_id}' not found")
 
         return {"success": True, "message": f"Project '{project_id}' deleted"}
 
@@ -334,10 +319,7 @@ async def delete_project(project_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete project: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to delete project: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to delete project: {e!s}") from e
 
 
 @router.get("/projects/{project_id}/speakers")
@@ -350,10 +332,7 @@ async def get_project_speakers(project_id: str):
         speakers = service.get_project_speakers(project_id)
 
         if speakers is None:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Project '{project_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Project '{project_id}' not found")
 
         return {"project_id": project_id, "speakers": speakers}
 
@@ -361,7 +340,4 @@ async def get_project_speakers(project_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get speakers: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get speakers: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to get speakers: {e!s}") from e

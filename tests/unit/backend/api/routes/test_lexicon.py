@@ -286,9 +286,7 @@ class TestLexiconEntries:
             "part_of_speech": "noun",
         }
 
-        response = client.post(
-            f"/api/lexicon/lexicons/{lexicon_id}/entries", json=entry_data
-        )
+        response = client.post(f"/api/lexicon/lexicons/{lexicon_id}/entries", json=entry_data)
         assert response.status_code == 200
         data = response.json()
         assert data["word"] == "test"
@@ -313,18 +311,14 @@ class TestLexiconEntries:
             "modified": now,
         }
 
-        lexicon._lexicon_entries[lexicon_id] = [
-            {"word": "test", "pronunciation": "/tɛst/"}
-        ]
+        lexicon._lexicon_entries[lexicon_id] = [{"word": "test", "pronunciation": "/tɛst/"}]
 
         entry_data = {
             "word": "test",
             "pronunciation": "/tɛst/",
         }
 
-        response = client.post(
-            f"/api/lexicon/lexicons/{lexicon_id}/entries", json=entry_data
-        )
+        response = client.post(f"/api/lexicon/lexicons/{lexicon_id}/entries", json=entry_data)
         assert response.status_code == 400
 
     def test_list_lexicon_entries_success(self):
@@ -391,9 +385,7 @@ class TestLexiconEntries:
             },
         ]
 
-        response = client.get(
-            f"/api/lexicon/lexicons/{lexicon_id}/entries?part_of_speech=noun"
-        )
+        response = client.get(f"/api/lexicon/lexicons/{lexicon_id}/entries?part_of_speech=noun")
         assert response.status_code == 200
         data = response.json()
         assert all(entry["part_of_speech"] == "noun" for entry in data)
@@ -627,9 +619,7 @@ class TestSimplifiedLexiconEndpoints:
         mock_phonemizer = MagicMock()
         mock_phonemizer.phonemizer_available = False
         mock_phonemizer.gruut_available = True
-        mock_phonemizer.phonemize_with_gruut.return_value = [
-            {"phonemes_str": "t ɛ s t"}
-        ]
+        mock_phonemizer.phonemize_with_gruut.return_value = [{"phonemes_str": "t ɛ s t"}]
         mock_phonemizer_class.return_value = mock_phonemizer
 
         request_data = {"word": "test", "language": "en"}

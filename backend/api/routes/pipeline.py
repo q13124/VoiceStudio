@@ -42,6 +42,7 @@ _sessions: dict[str, PipelineSession] = {}
 
 class PipelineRequest(BaseModel):
     """Request for pipeline processing."""
+
     text: str
     mode: str = "batch"  # "streaming" or "batch"
     stt_engine: str = "whisper"
@@ -55,6 +56,7 @@ class PipelineRequest(BaseModel):
 
 class PipelineResponse(BaseModel):
     """Response from pipeline processing."""
+
     session_id: str
     response_text: str
     audio_available: bool = False
@@ -110,6 +112,7 @@ async def process_pipeline(request: PipelineRequest):
         if result.get("audio"):
             try:
                 from backend.services.AudioArtifactRegistry import get_audio_registry
+
                 get_audio_registry()
                 audio_id = f"pipe-{uuid.uuid4().hex[:8]}"
                 # Audio storage handled by registry

@@ -37,18 +37,13 @@ class TestProgressFunctions:
     def test_update_progress_function_exists(self):
         """Test update_progress function exists."""
         if hasattr(progress, "update_progress"):
-            assert callable(
-                progress.update_progress
-            ), "update_progress should be callable"
+            assert callable(progress.update_progress), "update_progress should be callable"
 
     def test_get_progress_function_exists(self):
         """Test get_progress function exists."""
         if hasattr(progress, "get_progress"):
-            assert callable(
-                progress.get_progress
-            ), "get_progress should be callable"
+            assert callable(progress.get_progress), "get_progress should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

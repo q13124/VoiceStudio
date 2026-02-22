@@ -86,7 +86,7 @@ async def optimize_hyperparameters(request: OptimizationRequest):
         # In production, this would be passed as a callable or job reference
         def simple_objective(params: dict[str, Any]) -> float:
             # Example: minimize sum of squared parameters
-            score = sum(v ** 2 for v in params.values() if isinstance(v, (int, float)))
+            score = sum(v**2 for v in params.values() if isinstance(v, (int, float)))
             return score
 
         if request.method == "optuna":
@@ -105,10 +105,7 @@ async def optimize_hyperparameters(request: OptimizationRequest):
         elif request.method == "ray":
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    "Ray[tune] is not supported. "
-                    "Use 'optuna' or 'hyperopt' instead."
-                ),
+                detail=("Ray[tune] is not supported. " "Use 'optuna' or 'hyperopt' instead."),
             )
         else:
             raise HTTPException(
@@ -183,9 +180,9 @@ async def explain_model(request: ExplainabilityRequest):
                     model=demo_model,
                     X=X,
                     feature_names=request.feature_names,
-                    explainer_type="TreeExplainer"
-                    if request.model_type == "tree"
-                    else "KernelExplainer",
+                    explainer_type=(
+                        "TreeExplainer" if request.model_type == "tree" else "KernelExplainer"
+                    ),
                 )
             except Exception as e:
                 logger.error(f"SHAP explanation failed: {e}", exc_info=True)
@@ -209,8 +206,7 @@ async def explain_model(request: ExplainabilityRequest):
         else:
             raise HTTPException(
                 status_code=400,
-                detail=f"Method '{request.method}' not supported. "
-                f"Use 'shap' or 'lime'.",
+                detail=f"Method '{request.method}' not supported. " f"Use 'shap' or 'lime'.",
             )
 
         return ExplainabilityResponse(
@@ -240,4 +236,3 @@ async def get_available_methods():
         "optimization_methods": optimizer.get_available_methods(),
         "explainability_methods": explainer.get_available_methods(),
     }
-

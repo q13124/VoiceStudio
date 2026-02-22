@@ -34,9 +34,7 @@ class TestAuthRouteImports:
         """Test router exists and is configured."""
         assert auth.router is not None, "Router should exist"
         assert hasattr(auth.router, "prefix"), "Router should have prefix"
-        assert (
-            auth.router.prefix == "/api/auth"
-        ), "Router prefix should be /api/auth"
+        assert auth.router.prefix == "/api/auth", "Router prefix should be /api/auth"
 
     def test_router_has_routes(self):
         """Test router has expected routes."""
@@ -289,4 +287,3 @@ class TestAuthRouteErrorHandling:
 
         with pytest.raises(Exception):  # Should raise HTTPException
             auth.refresh_token(mock_credentials)
-

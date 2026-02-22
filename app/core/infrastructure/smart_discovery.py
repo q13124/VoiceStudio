@@ -81,11 +81,7 @@ class SmartDiscovery:
 
         # Check cache
         cache_key = f"{engine_type}_{capabilities}_{require_dependencies}_{check_health}"
-        if (
-            self.cache_enabled
-            and cache_key in self.discovery_cache
-            and self.discovery_timestamp
-        ):
+        if self.cache_enabled and cache_key in self.discovery_cache and self.discovery_timestamp:
             logger.debug("Using cached discovery results")
             return self.discovery_cache[cache_key]
 
@@ -109,9 +105,7 @@ class SmartDiscovery:
 
                 # Check dependencies
                 if require_dependencies and not self._check_dependencies(manifest):
-                    logger.debug(
-                        f"Engine {engine_id} filtered out due to missing dependencies"
-                    )
+                    logger.debug(f"Engine {engine_id} filtered out due to missing dependencies")
                     continue
 
                 # Health check
@@ -142,9 +136,7 @@ class SmartDiscovery:
         logger.info(f"Discovered {len(discovered_engines)} engines")
         return discovered_engines
 
-    def discover_by_capability(
-        self, capability: str, engine_type: str | None = None
-    ) -> list[str]:
+    def discover_by_capability(self, capability: str, engine_type: str | None = None) -> list[str]:
         """
         Discover engines by capability.
 
@@ -403,4 +395,3 @@ def create_smart_discovery(
         Initialized SmartDiscovery instance
     """
     return SmartDiscovery(engines_root=engines_root, cache_enabled=cache_enabled)
-

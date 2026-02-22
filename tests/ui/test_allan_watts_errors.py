@@ -45,6 +45,7 @@ pytestmark = [
 # Fixtures
 # =============================================================================
 
+
 @pytest.fixture(scope="module")
 def tracer():
     """Create a workflow tracer for error tests."""
@@ -65,6 +66,7 @@ def api_monitor():
 # =============================================================================
 # Invalid File Tests
 # =============================================================================
+
 
 class TestInvalidFileHandling:
     """Test handling of invalid files."""
@@ -169,6 +171,7 @@ class TestInvalidFileHandling:
 # API Error Tests
 # =============================================================================
 
+
 class TestAPIErrors:
     """Test API error handling."""
 
@@ -217,7 +220,7 @@ class TestAPIErrors:
                 f"{BACKEND_URL}/api/v3/synthesize",
                 data="{ invalid json }",
                 headers={"Content-Type": "application/json"},
-                timeout=10
+                timeout=10,
             )
             tracer.api_call("POST", "/api/v3/synthesize (malformed)", response)
 
@@ -254,6 +257,7 @@ class TestAPIErrors:
 # =============================================================================
 # Network Error Tests
 # =============================================================================
+
 
 class TestNetworkErrors:
     """Test network error handling."""
@@ -297,6 +301,7 @@ class TestNetworkErrors:
 # =============================================================================
 # User Error Tests
 # =============================================================================
+
 
 class TestUserErrors:
     """Test user error scenarios."""
@@ -361,6 +366,7 @@ class TestUserErrors:
 # Resource Exhaustion Tests
 # =============================================================================
 
+
 class TestResourceExhaustion:
     """Test resource exhaustion scenarios."""
 
@@ -419,6 +425,7 @@ class TestResourceExhaustion:
 # Recovery and Rollback Tests
 # =============================================================================
 
+
 class TestRecoveryRollback:
     """Test recovery and rollback capabilities."""
 
@@ -462,6 +469,7 @@ class TestRecoveryRollback:
 # Graceful Degradation Tests
 # =============================================================================
 
+
 class TestGracefulDegradation:
     """Test graceful degradation."""
 
@@ -471,10 +479,13 @@ class TestGracefulDegradation:
         tracer.step("Testing engine unavailable handling")
 
         try:
-            response = api_monitor.post("/api/v3/synthesize", json={
-                "text": "Test",
-                "engine": "nonexistent_engine_xyz",
-            })
+            response = api_monitor.post(
+                "/api/v3/synthesize",
+                json={
+                    "text": "Test",
+                    "engine": "nonexistent_engine_xyz",
+                },
+            )
             tracer.api_call("POST", "/api/v3/synthesize (bad engine)", response)
 
             if response.status_code in [400, 404, 422]:
@@ -524,6 +535,7 @@ class TestGracefulDegradation:
 # =============================================================================
 # Error Message Quality Tests
 # =============================================================================
+
 
 class TestErrorMessageQuality:
     """Test error message quality."""
@@ -582,11 +594,14 @@ class TestErrorMessageQuality:
 # =============================================================================
 
 if __name__ == "__main__":
-    pytest.main([
-        __file__,
-        "-v",
-        "--tb=short",
-        "-m", "not slow",
-        "--html=.buildlogs/validation/reports/allan_watts_errors_report.html",
-        "--self-contained-html",
-    ])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--tb=short",
+            "-m",
+            "not slow",
+            "--html=.buildlogs/validation/reports/allan_watts_errors_report.html",
+            "--self-contained-html",
+        ]
+    )

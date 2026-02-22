@@ -39,20 +39,20 @@ logger = logging.getLogger(__name__)
 
 class AuditEventType(Enum):
     """Types of auditable plugin events."""
-    
+
     # Lifecycle events
     PLUGIN_INSTALLED = "plugin_installed"
     PLUGIN_UNINSTALLED = "plugin_uninstalled"
     PLUGIN_UPDATED = "plugin_updated"
     PLUGIN_ENABLED = "plugin_enabled"
     PLUGIN_DISABLED = "plugin_disabled"
-    
+
     # Runtime events
     PLUGIN_STARTED = "plugin_started"
     PLUGIN_STOPPED = "plugin_stopped"
     PLUGIN_CRASHED = "plugin_crashed"
     PLUGIN_RESTARTED = "plugin_restarted"
-    
+
     # Security events
     SIGNATURE_VERIFIED = "signature_verified"
     SIGNATURE_FAILED = "signature_failed"
@@ -60,16 +60,16 @@ class AuditEventType(Enum):
     VULNERABILITY_SCAN = "vulnerability_scan"
     PERMISSION_GRANTED = "permission_granted"
     PERMISSION_DENIED = "permission_denied"
-    
+
     # Configuration events
     CONFIG_CHANGED = "config_changed"
     SETTINGS_UPDATED = "settings_updated"
-    
+
     # Resource events
     RESOURCE_LIMIT_EXCEEDED = "resource_limit_exceeded"
     NETWORK_ACCESS_BLOCKED = "network_access_blocked"
     STORAGE_QUOTA_EXCEEDED = "storage_quota_exceeded"
-    
+
     # General events
     ERROR = "error"
     WARNING = "warning"
@@ -78,17 +78,17 @@ class AuditEventType(Enum):
 
 class AuditSeverity(Enum):
     """Severity levels for audit events."""
-    
-    DEBUG = "debug"       # Debugging information
-    INFO = "info"         # Normal operations
-    WARNING = "warning"   # Potential issues
-    ERROR = "error"       # Errors occurred
-    CRITICAL = "critical" # Critical security events
+
+    DEBUG = "debug"  # Debugging information
+    INFO = "info"  # Normal operations
+    WARNING = "warning"  # Potential issues
+    ERROR = "error"  # Errors occurred
+    CRITICAL = "critical"  # Critical security events
 
 
 class AuditCategory(Enum):
     """Categories for grouping audit events."""
-    
+
     LIFECYCLE = "lifecycle"
     RUNTIME = "runtime"
     SECURITY = "security"
@@ -105,7 +105,7 @@ class AuditCategory(Enum):
 @dataclass
 class AuditEvent:
     """A single auditable event."""
-    
+
     event_type: AuditEventType
     plugin_id: str
     severity: AuditSeverity = AuditSeverity.INFO
@@ -116,14 +116,14 @@ class AuditEvent:
     actor: Optional[str] = None  # User or system that triggered the event
     details: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def __post_init__(self):
         """Initialize event ID and timestamp if not set."""
         if not self.event_id:
             self.event_id = str(uuid.uuid4())
         if not self.timestamp:
             self.timestamp = datetime.now(timezone.utc).isoformat()
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -138,11 +138,11 @@ class AuditEvent:
             "details": self.details,
             "metadata": self.metadata,
         }
-    
+
     def to_json(self, indent: int = 2) -> str:
         """Convert to JSON string."""
         return json.dumps(self.to_dict(), indent=indent)
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> AuditEvent:
         """Create from dictionary."""
@@ -163,7 +163,7 @@ class AuditEvent:
 @dataclass
 class AuditSummary:
     """Summary statistics for audit events."""
-    
+
     total_events: int = 0
     by_type: Dict[str, int] = field(default_factory=dict)
     by_severity: Dict[str, int] = field(default_factory=dict)
@@ -171,7 +171,7 @@ class AuditSummary:
     by_plugin: Dict[str, int] = field(default_factory=dict)
     first_event: Optional[str] = None
     last_event: Optional[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -188,7 +188,7 @@ class AuditSummary:
 @dataclass
 class AuditQuery:
     """Query parameters for filtering audit events."""
-    
+
     plugin_id: Optional[str] = None
     event_types: Optional[List[AuditEventType]] = None
     severities: Optional[List[AuditSeverity]] = None
@@ -256,13 +256,13 @@ INSERT OR IGNORE INTO schema_version (version) VALUES (1);
 class AuditLogger:
     """
     Audit logging service with SQLite persistence.
-    
+
     Provides thread-safe logging of plugin lifecycle events with:
     - SQLite persistence for audit trail
     - Flexible querying and filtering
     - Summary statistics
     - Export capabilities
-    
+
     Example:
         >>> logger = AuditLogger(Path("./audit.db"))
         >>> logger.log_event(
@@ -272,7 +272,7 @@ class AuditLogger:
         ...     details={"source": "gallery"}
         ... )
     """
-    
+
     def __init__(
         self,
         db_path: Path,
@@ -280,7 +280,7 @@ class AuditLogger:
     ):
         """
         Initialize the audit logger.
-        
+
         Args:
             db_path: Path to the SQLite database file
             auto_initialize: Whether to auto-create schema on init
@@ -288,20 +288,20 @@ class AuditLogger:
         self.db_path = Path(db_path)
         self._lock = threading.Lock()
         self._listeners: List[Callable[[AuditEvent], None]] = []
-        
+
         if auto_initialize:
             self._initialize_database()
-    
+
     def _initialize_database(self) -> None:
         """Initialize the database schema."""
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with self._get_connection() as conn:
             conn.executescript(AUDIT_SCHEMA)
             conn.commit()
-        
+
         logger.debug(f"Audit database initialized at {self.db_path}")
-    
+
     @contextmanager
     def _get_connection(self) -> Generator[sqlite3.Connection, None, None]:
         """Get a database connection with thread safety."""
@@ -311,29 +311,29 @@ class AuditLogger:
             yield conn
         finally:
             conn.close()
-    
+
     def add_listener(self, listener: Callable[[AuditEvent], None]) -> None:
         """Add an event listener for real-time notifications."""
         with self._lock:
             self._listeners.append(listener)
-    
+
     def remove_listener(self, listener: Callable[[AuditEvent], None]) -> None:
         """Remove an event listener."""
         with self._lock:
             if listener in self._listeners:
                 self._listeners.remove(listener)
-    
+
     def _notify_listeners(self, event: AuditEvent) -> None:
         """Notify all listeners of a new event."""
         with self._lock:
             listeners = list(self._listeners)
-        
+
         for listener in listeners:
             try:
                 listener(event)
             except Exception as e:
                 logger.warning(f"Audit listener error: {e}")
-    
+
     def log_event(
         self,
         event_type: AuditEventType,
@@ -347,7 +347,7 @@ class AuditLogger:
     ) -> AuditEvent:
         """
         Log an audit event.
-        
+
         Args:
             event_type: Type of event
             plugin_id: Plugin identifier
@@ -357,14 +357,14 @@ class AuditLogger:
             actor: User or system that triggered the event
             details: Event-specific details
             metadata: Additional metadata
-            
+
         Returns:
             The created AuditEvent
         """
         # Auto-detect category if not provided
         if category is None:
             category = self._infer_category(event_type)
-        
+
         event = AuditEvent(
             event_type=event_type,
             plugin_id=plugin_id,
@@ -375,12 +375,12 @@ class AuditLogger:
             details=details or {},
             metadata=metadata or {},
         )
-        
+
         self._store_event(event)
         self._notify_listeners(event)
-        
+
         return event
-    
+
     def _infer_category(self, event_type: AuditEventType) -> AuditCategory:
         """Infer category from event type."""
         lifecycle_types = {
@@ -390,14 +390,14 @@ class AuditLogger:
             AuditEventType.PLUGIN_ENABLED,
             AuditEventType.PLUGIN_DISABLED,
         }
-        
+
         runtime_types = {
             AuditEventType.PLUGIN_STARTED,
             AuditEventType.PLUGIN_STOPPED,
             AuditEventType.PLUGIN_CRASHED,
             AuditEventType.PLUGIN_RESTARTED,
         }
-        
+
         security_types = {
             AuditEventType.SIGNATURE_VERIFIED,
             AuditEventType.SIGNATURE_FAILED,
@@ -406,18 +406,18 @@ class AuditLogger:
             AuditEventType.PERMISSION_GRANTED,
             AuditEventType.PERMISSION_DENIED,
         }
-        
+
         config_types = {
             AuditEventType.CONFIG_CHANGED,
             AuditEventType.SETTINGS_UPDATED,
         }
-        
+
         resource_types = {
             AuditEventType.RESOURCE_LIMIT_EXCEEDED,
             AuditEventType.NETWORK_ACCESS_BLOCKED,
             AuditEventType.STORAGE_QUOTA_EXCEEDED,
         }
-        
+
         if event_type in lifecycle_types:
             return AuditCategory.LIFECYCLE
         elif event_type in runtime_types:
@@ -430,7 +430,7 @@ class AuditLogger:
             return AuditCategory.RESOURCE
         else:
             return AuditCategory.GENERAL
-    
+
     def _store_event(self, event: AuditEvent) -> None:
         """Store an event in the database."""
         with self._get_connection() as conn:
@@ -455,7 +455,7 @@ class AuditLogger:
                 ),
             )
             conn.commit()
-    
+
     def get_event(self, event_id: str) -> Optional[AuditEvent]:
         """Get a specific event by ID."""
         with self._get_connection() as conn:
@@ -463,50 +463,50 @@ class AuditLogger:
                 "SELECT * FROM audit_events WHERE event_id = ?",
                 (event_id,),
             ).fetchone()
-            
+
             if row:
                 return self._row_to_event(row)
             return None
-    
+
     def query_events(self, query: AuditQuery) -> List[AuditEvent]:
         """Query events with flexible filtering."""
         conditions = []
         params = []
-        
+
         if query.plugin_id:
             conditions.append("plugin_id = ?")
             params.append(query.plugin_id)
-        
+
         if query.event_types:
             placeholders = ",".join("?" * len(query.event_types))
             conditions.append(f"event_type IN ({placeholders})")
             params.extend(et.value for et in query.event_types)
-        
+
         if query.severities:
             placeholders = ",".join("?" * len(query.severities))
             conditions.append(f"severity IN ({placeholders})")
             params.extend(s.value for s in query.severities)
-        
+
         if query.categories:
             placeholders = ",".join("?" * len(query.categories))
             conditions.append(f"category IN ({placeholders})")
             params.extend(c.value for c in query.categories)
-        
+
         if query.start_time:
             conditions.append("timestamp >= ?")
             params.append(query.start_time)
-        
+
         if query.end_time:
             conditions.append("timestamp <= ?")
             params.append(query.end_time)
-        
+
         if query.actor:
             conditions.append("actor = ?")
             params.append(query.actor)
-        
+
         where_clause = " AND ".join(conditions) if conditions else "1=1"
         order_dir = "DESC" if query.order_desc else "ASC"
-        
+
         sql = f"""
             SELECT * FROM audit_events
             WHERE {where_clause}
@@ -514,11 +514,11 @@ class AuditLogger:
             LIMIT ? OFFSET ?
         """
         params.extend([query.limit, query.offset])
-        
+
         with self._get_connection() as conn:
             rows = conn.execute(sql, params).fetchall()
             return [self._row_to_event(row) for row in rows]
-    
+
     def get_plugin_events(
         self,
         plugin_id: str,
@@ -526,20 +526,16 @@ class AuditLogger:
         offset: int = 0,
     ) -> List[AuditEvent]:
         """Get all events for a specific plugin."""
-        return self.query_events(
-            AuditQuery(plugin_id=plugin_id, limit=limit, offset=offset)
-        )
-    
+        return self.query_events(AuditQuery(plugin_id=plugin_id, limit=limit, offset=offset))
+
     def get_recent_events(
         self,
         limit: int = 50,
         severities: Optional[List[AuditSeverity]] = None,
     ) -> List[AuditEvent]:
         """Get recent events, optionally filtered by severity."""
-        return self.query_events(
-            AuditQuery(limit=limit, severities=severities)
-        )
-    
+        return self.query_events(AuditQuery(limit=limit, severities=severities))
+
     def get_security_events(
         self,
         plugin_id: Optional[str] = None,
@@ -553,7 +549,7 @@ class AuditLogger:
                 limit=limit,
             )
         )
-    
+
     def _row_to_event(self, row: sqlite3.Row) -> AuditEvent:
         """Convert a database row to an AuditEvent."""
         return AuditEvent(
@@ -568,7 +564,7 @@ class AuditLogger:
             details=json.loads(row["details"] or "{}"),
             metadata=json.loads(row["metadata"] or "{}"),
         )
-    
+
     def get_summary(
         self,
         plugin_id: Optional[str] = None,
@@ -578,7 +574,7 @@ class AuditLogger:
         """Get summary statistics for audit events."""
         conditions = []
         params = []
-        
+
         if plugin_id:
             conditions.append("plugin_id = ?")
             params.append(plugin_id)
@@ -588,11 +584,11 @@ class AuditLogger:
         if end_time:
             conditions.append("timestamp <= ?")
             params.append(end_time)
-        
+
         where_clause = " AND ".join(conditions) if conditions else "1=1"
-        
+
         summary = AuditSummary()
-        
+
         with self._get_connection() as conn:
             # Total count
             row = conn.execute(
@@ -600,7 +596,7 @@ class AuditLogger:
                 params,
             ).fetchone()
             summary.total_events = row["cnt"]
-            
+
             # By type
             rows = conn.execute(
                 f"""SELECT event_type, COUNT(*) as cnt
@@ -609,7 +605,7 @@ class AuditLogger:
                 params,
             ).fetchall()
             summary.by_type = {row["event_type"]: row["cnt"] for row in rows}
-            
+
             # By severity
             rows = conn.execute(
                 f"""SELECT severity, COUNT(*) as cnt
@@ -618,7 +614,7 @@ class AuditLogger:
                 params,
             ).fetchall()
             summary.by_severity = {row["severity"]: row["cnt"] for row in rows}
-            
+
             # By category
             rows = conn.execute(
                 f"""SELECT category, COUNT(*) as cnt
@@ -627,7 +623,7 @@ class AuditLogger:
                 params,
             ).fetchall()
             summary.by_category = {row["category"]: row["cnt"] for row in rows}
-            
+
             # By plugin
             rows = conn.execute(
                 f"""SELECT plugin_id, COUNT(*) as cnt
@@ -638,7 +634,7 @@ class AuditLogger:
                 params,
             ).fetchall()
             summary.by_plugin = {row["plugin_id"]: row["cnt"] for row in rows}
-            
+
             # First and last events
             row = conn.execute(
                 f"""SELECT MIN(timestamp) as first_ts, MAX(timestamp) as last_ts
@@ -647,9 +643,9 @@ class AuditLogger:
             ).fetchone()
             summary.first_event = row["first_ts"]
             summary.last_event = row["last_ts"]
-        
+
         return summary
-    
+
     def count_events(
         self,
         plugin_id: Optional[str] = None,
@@ -658,23 +654,23 @@ class AuditLogger:
         """Count events matching criteria."""
         conditions = []
         params = []
-        
+
         if plugin_id:
             conditions.append("plugin_id = ?")
             params.append(plugin_id)
         if event_type:
             conditions.append("event_type = ?")
             params.append(event_type.value)
-        
+
         where_clause = " AND ".join(conditions) if conditions else "1=1"
-        
+
         with self._get_connection() as conn:
             row = conn.execute(
                 f"SELECT COUNT(*) as cnt FROM audit_events WHERE {where_clause}",
                 params,
             ).fetchone()
             return row["cnt"]
-    
+
     def delete_old_events(
         self,
         older_than: str,
@@ -683,13 +679,13 @@ class AuditLogger:
         """Delete events older than a given timestamp."""
         conditions = ["timestamp < ?"]
         params = [older_than]
-        
+
         if plugin_id:
             conditions.append("plugin_id = ?")
             params.append(plugin_id)
-        
+
         where_clause = " AND ".join(conditions)
-        
+
         with self._get_connection() as conn:
             cursor = conn.execute(
                 f"DELETE FROM audit_events WHERE {where_clause}",
@@ -697,7 +693,7 @@ class AuditLogger:
             )
             conn.commit()
             return cursor.rowcount
-    
+
     def export_events(
         self,
         output_path: Path,
@@ -706,20 +702,20 @@ class AuditLogger:
     ) -> int:
         """
         Export events to a file.
-        
+
         Args:
             output_path: Path to output file
             query: Optional query to filter events
             format: Output format ("json" or "csv")
-            
+
         Returns:
             Number of events exported
         """
         if query is None:
             query = AuditQuery(limit=100000)  # Large limit for export
-        
+
         events = self.query_events(query)
-        
+
         if format == "json":
             data = [e.to_dict() for e in events]
             output_path.write_text(
@@ -728,14 +724,22 @@ class AuditLogger:
             )
         elif format == "csv":
             import csv
+
             with open(output_path, "w", newline="", encoding="utf-8") as f:
                 if events:
                     writer = csv.DictWriter(
                         f,
                         fieldnames=[
-                            "event_id", "event_type", "category", "severity",
-                            "plugin_id", "plugin_version", "actor", "timestamp",
-                            "details", "metadata",
+                            "event_id",
+                            "event_type",
+                            "category",
+                            "severity",
+                            "plugin_id",
+                            "plugin_version",
+                            "actor",
+                            "timestamp",
+                            "details",
+                            "metadata",
                         ],
                     )
                     writer.writeheader()
@@ -746,10 +750,10 @@ class AuditLogger:
                         writer.writerow(row)
         else:
             raise ValueError(f"Unsupported export format: {format}")
-        
+
         logger.info(f"Exported {len(events)} audit events to {output_path}")
         return len(events)
-    
+
     def close(self) -> None:
         """Close the audit logger (clears listeners)."""
         with self._lock:
@@ -768,26 +772,23 @@ _default_logger: Optional[AuditLogger] = None
 def get_default_audit_logger(db_path: Optional[Path] = None) -> AuditLogger:
     """
     Get or create the default audit logger.
-    
+
     Args:
         db_path: Path to database (uses default if not provided)
-        
+
     Returns:
         The default AuditLogger instance
     """
     global _default_logger
-    
+
     if _default_logger is None:
         if db_path is None:
             # Default to user data directory
-            data_dir = Path(os.environ.get(
-                "VOICESTUDIO_DATA_PATH",
-                Path.home() / ".voicestudio"
-            ))
+            data_dir = Path(os.environ.get("VOICESTUDIO_DATA_PATH", Path.home() / ".voicestudio"))
             db_path = data_dir / "audit" / "plugin_audit.db"
-        
+
         _default_logger = AuditLogger(db_path)
-    
+
     return _default_logger
 
 
@@ -798,14 +799,14 @@ def log_plugin_event(
 ) -> AuditEvent:
     """
     Log a plugin event using the default logger.
-    
+
     Convenience function for quick logging without managing logger instance.
-    
+
     Args:
         event_type: Type of event
         plugin_id: Plugin identifier
         **kwargs: Additional arguments passed to log_event()
-        
+
     Returns:
         The created AuditEvent
     """
@@ -830,7 +831,7 @@ def log_installation(
     details = {"source": source}
     if signature_verified is not None:
         details["signature_verified"] = signature_verified
-    
+
     return audit_logger.log_event(
         AuditEventType.PLUGIN_INSTALLED,
         plugin_id,
@@ -851,7 +852,7 @@ def log_uninstallation(
     details = {}
     if reason:
         details["reason"] = reason
-    
+
     return audit_logger.log_event(
         AuditEventType.PLUGIN_UNINSTALLED,
         plugin_id,
@@ -876,7 +877,7 @@ def log_vulnerability_scan(
         severity = AuditSeverity.CRITICAL
     elif high_count > 0:
         severity = AuditSeverity.WARNING
-    
+
     return audit_logger.log_event(
         AuditEventType.VULNERABILITY_SCAN,
         plugin_id,
@@ -906,13 +907,13 @@ def log_signature_verification(
     else:
         event_type = AuditEventType.SIGNATURE_FAILED
         severity = AuditSeverity.WARNING
-    
+
     details = {}
     if key_id:
         details["key_id"] = key_id
     if reason:
         details["reason"] = reason
-    
+
     return audit_logger.log_event(
         event_type,
         plugin_id,
@@ -933,7 +934,7 @@ def log_crash(
     details = {"error_message": error_message}
     if stack_trace:
         details["stack_trace"] = stack_trace
-    
+
     return audit_logger.log_event(
         AuditEventType.PLUGIN_CRASHED,
         plugin_id,

@@ -48,6 +48,7 @@ logger = logging.getLogger(__name__)
 
 class TranslationProvider(Enum):
     """Available translation providers."""
+
     LOCAL_NLLB = "local_nllb"  # Meta's No Language Left Behind
     LOCAL_OPUS = "local_opus"  # Helsinki NLP OPUS models
     LIBRETRANSLATE = "libretranslate"  # Self-hosted LibreTranslate
@@ -56,6 +57,7 @@ class TranslationProvider(Enum):
 
 class TranscriptionModel(Enum):
     """Available transcription models."""
+
     WHISPER_TINY = "tiny"
     WHISPER_BASE = "base"
     WHISPER_SMALL = "small"
@@ -68,6 +70,7 @@ class TranscriptionModel(Enum):
 @dataclass
 class TranscriptionSegment:
     """Transcribed segment with timing."""
+
     segment_id: str
     start_time: float
     end_time: float
@@ -96,6 +99,7 @@ class TranscriptionSegment:
 @dataclass
 class TranslatedSegment:
     """Translated segment with timing preservation."""
+
     segment_id: str
     original_text: str
     translated_text: str
@@ -121,6 +125,7 @@ class TranslatedSegment:
 @dataclass
 class TranslationProject:
     """Translation project for audio/video."""
+
     project_id: str
     name: str
     source_audio_path: str
@@ -383,16 +388,18 @@ class TranslationService:
                         timing_adjusted = True
                         # Keep same duration but note adjustment needed
 
-                translated_segments.append(TranslatedSegment(
-                    segment_id=segment.segment_id,
-                    original_text=segment.text,
-                    translated_text=translated_text,
-                    source_language=project.source_language or "en",
-                    target_language=project.target_language,
-                    start_time=start_time,
-                    end_time=end_time,
-                    timing_adjusted=timing_adjusted,
-                ))
+                translated_segments.append(
+                    TranslatedSegment(
+                        segment_id=segment.segment_id,
+                        original_text=segment.text,
+                        translated_text=translated_text,
+                        source_language=project.source_language or "en",
+                        target_language=project.target_language,
+                        start_time=start_time,
+                        end_time=end_time,
+                        timing_adjusted=timing_adjusted,
+                    )
+                )
 
                 project.progress = 0.3 + (i / total) * 0.6
 
@@ -518,13 +525,15 @@ class TranslationService:
             if not models_root:
                 models_root = os.path.join(
                     os.getenv("PROGRAMDATA", "C:\\ProgramData"),
-                    "VoiceStudio", "models",
+                    "VoiceStudio",
+                    "models",
                 )
             whisper_cache = os.path.join(models_root, "whisper")
             os.makedirs(whisper_cache, exist_ok=True)
 
             try:
                 import torch as _torch
+
                 device = "cuda" if _torch.cuda.is_available() else "cpu"
             except ImportError:
                 device = "cpu"
@@ -552,6 +561,7 @@ class TranslationService:
         try:
             # Load audio for duration
             import soundfile as sf
+
             audio, sample_rate = sf.read(audio_path)
             if len(audio.shape) > 1:
                 audio = np.mean(audio, axis=1)
@@ -585,21 +595,25 @@ class TranslationService:
                     word_list = text.split()
                     word_duration = (end_time - current_time) / len(word_list)
                     for j, word in enumerate(word_list):
-                        words.append({
-                            "word": word,
-                            "start": current_time + j * word_duration,
-                            "end": current_time + (j + 1) * word_duration,
-                        })
+                        words.append(
+                            {
+                                "word": word,
+                                "start": current_time + j * word_duration,
+                                "end": current_time + (j + 1) * word_duration,
+                            }
+                        )
 
-                segments.append(TranscriptionSegment(
-                    segment_id=f"seg_{segment_id}",
-                    start_time=current_time,
-                    end_time=end_time,
-                    text=text,
-                    language=language or "en",
-                    confidence=0.92,
-                    words=words,
-                ))
+                segments.append(
+                    TranscriptionSegment(
+                        segment_id=f"seg_{segment_id}",
+                        start_time=current_time,
+                        end_time=end_time,
+                        text=text,
+                        language=language or "en",
+                        confidence=0.92,
+                        words=words,
+                    )
+                )
 
                 current_time = end_time
                 segment_id += 1
@@ -661,6 +675,7 @@ class TranslationService:
         # Try googletrans (free, no API key)
         try:
             from googletrans import Translator
+
             translator = Translator()
             result = translator.translate(text, dest=target_lang)
             if result and result.text:
@@ -673,6 +688,7 @@ class TranslationService:
         # Try deep-translator
         try:
             from deep_translator import GoogleTranslator
+
             result = GoogleTranslator(source="auto", target=target_lang).translate(text)
             if result:
                 return result
@@ -685,9 +701,15 @@ class TranslationService:
         # Phase 9 Gap Fix: Return original text instead of [PLACEHOLDER:] prefix
         # to avoid placeholder text appearing in user-facing outputs
         lang_names = {
-            "es": "Spanish", "fr": "French", "de": "German",
-            "it": "Italian", "pt": "Portuguese", "zh": "Chinese",
-            "ja": "Japanese", "ko": "Korean", "ru": "Russian",
+            "es": "Spanish",
+            "fr": "French",
+            "de": "German",
+            "it": "Italian",
+            "pt": "Portuguese",
+            "zh": "Chinese",
+            "ja": "Japanese",
+            "ko": "Korean",
+            "ru": "Russian",
         }
 
         lang_name = lang_names.get(target_lang, target_lang.upper())

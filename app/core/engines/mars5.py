@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MARS5Config:
     """Configuration for MARS5."""
+
     model_size: str = "english"  # english, multilingual
     use_gpu: bool = True
     sample_rate: int = 24000
@@ -107,6 +108,7 @@ class MARS5Engine(EngineProtocol):
 
         try:
             import torch
+
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except ImportError:
@@ -142,7 +144,9 @@ class MARS5Engine(EngineProtocol):
         # Graceful degradation: Generate silence when mars5-tts library is not installed.
         # To enable full functionality, install mars5-tts: pip install mars5-tts
         # See: https://github.com/Camb-ai/MARS5-TTS for installation instructions.
-        logger.warning("MARS5 model not loaded - returning silence. Install mars5-tts for actual synthesis.")
+        logger.warning(
+            "MARS5 model not loaded - returning silence. Install mars5-tts for actual synthesis."
+        )
         duration = len(text) * 0.06
         samples = int(duration * self.config.sample_rate)
         return np.zeros(samples, dtype=np.float32)
@@ -165,6 +169,7 @@ class MARS5Engine(EngineProtocol):
             ref_wav = torch.from_numpy(reference_audio).float().to(self._device)
             if reference_sample_rate != self.config.sample_rate:
                 import torchaudio
+
                 ref_wav = torchaudio.functional.resample(
                     ref_wav, reference_sample_rate, self.config.sample_rate
                 )

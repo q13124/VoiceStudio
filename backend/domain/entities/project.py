@@ -17,6 +17,7 @@ from backend.domain.value_objects.audio_settings import AudioSettings
 
 class ProjectStatus(Enum):
     """Project status enumeration."""
+
     DRAFT = "draft"
     ACTIVE = "active"
     PROCESSING = "processing"
@@ -141,18 +142,20 @@ class Project(AggregateRoot):
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for persistence."""
         base = super().to_dict()
-        base.update({
-            "name": self.name,
-            "description": self.description,
-            "status": self.status.value,
-            "project_path": self.project_path,
-            "output_path": self.output_path,
-            "audio_settings": self.audio_settings.to_dict() if self.audio_settings else None,
-            "voice_profile_ids": self.voice_profile_ids,
-            "audio_clip_ids": self.audio_clip_ids,
-            "tags": self.tags,
-            "metadata": self.metadata,
-        })
+        base.update(
+            {
+                "name": self.name,
+                "description": self.description,
+                "status": self.status.value,
+                "project_path": self.project_path,
+                "output_path": self.output_path,
+                "audio_settings": self.audio_settings.to_dict() if self.audio_settings else None,
+                "voice_profile_ids": self.voice_profile_ids,
+                "audio_clip_ids": self.audio_clip_ids,
+                "tags": self.tags,
+                "metadata": self.metadata,
+            }
+        )
         return base
 
     @classmethod

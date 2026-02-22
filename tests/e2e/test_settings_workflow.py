@@ -27,6 +27,7 @@ def api_client():
     from fastapi.testclient import TestClient
 
     from backend.api.main import app
+
     return TestClient(app)
 
 
@@ -273,9 +274,7 @@ class TestSettingsWorkflowIntegration:
         """State tracking for workflow tests."""
         return {"original_settings": None}
 
-    def test_complete_settings_workflow_api(
-        self, api_client, backend_available, workflow_state
-    ):
+    def test_complete_settings_workflow_api(self, api_client, backend_available, workflow_state):
         """Test the complete settings workflow via API.
 
         Steps:

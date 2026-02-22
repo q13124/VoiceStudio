@@ -28,9 +28,7 @@ class TestRuntimeEngineImports:
     def test_runtime_engine_has_classes(self):
         """Test runtime_engine has expected classes."""
         classes = [
-            name
-            for name in dir(runtime_engine)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(runtime_engine) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "runtime_engine should have classes"
 
@@ -51,16 +49,12 @@ class TestRuntimeEngineFunctions:
     def test_start_process_function_exists(self):
         """Test start_process function exists."""
         if hasattr(runtime_engine, "start_process"):
-            assert callable(
-                runtime_engine.start_process
-            ), "start_process should be callable"
+            assert callable(runtime_engine.start_process), "start_process should be callable"
 
     def test_stop_process_function_exists(self):
         """Test stop_process function exists."""
         if hasattr(runtime_engine, "stop_process"):
-            assert callable(
-                runtime_engine.stop_process
-            ), "stop_process should be callable"
+            assert callable(runtime_engine.stop_process), "stop_process should be callable"
 
     def test_get_process_status_function_exists(self):
         """Test get_process_status function exists."""

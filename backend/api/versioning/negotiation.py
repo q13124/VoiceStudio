@@ -18,6 +18,7 @@ from backend.api.versioning.router import ApiVersion
 @dataclass
 class VersionInfo:
     """Resolved version information."""
+
     version: ApiVersion
     source: str  # "header", "url", "default"
     is_deprecated: bool = False
@@ -34,9 +35,7 @@ class ApiVersionNegotiator:
     4. Default to latest
     """
 
-    ACCEPT_PATTERN = re.compile(
-        r"application/vnd\.voicestudio\.v(\d+)\+json"
-    )
+    ACCEPT_PATTERN = re.compile(r"application/vnd\.voicestudio\.v(\d+)\+json")
 
     def __init__(self, default_version: ApiVersion | None = None):
         """

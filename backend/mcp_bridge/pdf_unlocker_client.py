@@ -40,10 +40,7 @@ class PDFUnlockerClient:
         return main_py.exists()
 
     def read_pdf(
-        self,
-        file_path: str,
-        password: str | None = None,
-        pages: list[int] | None = None
+        self, file_path: str, password: str | None = None, pages: list[int] | None = None
     ) -> dict[str, Any]:
         """
         Read a PDF file and extract its text.
@@ -59,24 +56,21 @@ class PDFUnlockerClient:
         if not self.server_available:
             return {
                 "success": False,
-                "error": "PDF unlocker MCP server not available. Please ensure it's installed."
+                "error": "PDF unlocker MCP server not available. Please ensure it's installed.",
             }
 
         # Normalize file path
         file_path = os.path.abspath(os.path.expanduser(file_path))
 
         if not os.path.exists(file_path):
-            return {
-                "success": False,
-                "error": f"File not found: {file_path}"
-            }
+            return {"success": False, "error": f"File not found: {file_path}"}
 
         try:
             # Use PyPDF2 directly (same library the MCP server uses)
             # This avoids subprocess overhead for simple operations
             import PyPDF2
 
-            with open(file_path, 'rb') as file:
+            with open(file_path, "rb") as file:
                 pdf_reader = PyPDF2.PdfReader(file)
 
                 # Check if PDF is encrypted
@@ -89,7 +83,7 @@ class PDFUnlockerClient:
                             "success": False,
                             "error": "This PDF is password-protected. Please provide a password.",
                             "is_encrypted": True,
-                            "password_required": True
+                            "password_required": True,
                         }
                     decrypt_success = pdf_reader.decrypt(password)
                     if not decrypt_success:
@@ -97,14 +91,14 @@ class PDFUnlockerClient:
                             "success": False,
                             "error": "Incorrect password or PDF could not be decrypted",
                             "is_encrypted": True,
-                            "password_required": True
+                            "password_required": True,
                         }
 
                 # Extract metadata
                 metadata = {}
                 if pdf_reader.metadata:
                     for key, value in pdf_reader.metadata.items():
-                        if key.startswith('/'):
+                        if key.startswith("/"):
                             metadata[key[1:]] = value
                         else:
                             metadata[key] = value
@@ -128,7 +122,7 @@ class PDFUnlockerClient:
                     "total_pages": total_pages,
                     "extracted_pages": list(content.keys()),
                     "metadata": metadata,
-                    "content": content
+                    "content": content,
                 }
 
         except ImportError:
@@ -136,20 +130,14 @@ class PDFUnlockerClient:
             # Note: This would require async implementation
             return {
                 "success": False,
-                "error": "PyPDF2 library not available. Please install it: pip install PyPDF2"
+                "error": "PyPDF2 library not available. Please install it: pip install PyPDF2",
             }
         except Exception as e:
             logger.error(f"Error reading PDF: {e}")
-            return {
-                "success": False,
-                "error": f"Error processing PDF: {e!s}"
-            }
-
+            return {"success": False, "error": f"Error processing PDF: {e!s}"}
 
     def extract_text_for_tts(
-        self,
-        pdf_result: dict[str, Any],
-        page_range: tuple | None = None
+        self, pdf_result: dict[str, Any], page_range: tuple | None = None
     ) -> str:
         """
         Extract text from PDF result for text-to-speech synthesis.
@@ -168,10 +156,7 @@ class PDFUnlockerClient:
 
         if page_range:
             start_page, end_page = page_range
-            pages_to_extract = [
-                p for p in content
-                if start_page <= p <= end_page
-            ]
+            pages_to_extract = [p for p in content if start_page <= p <= end_page]
         else:
             pages_to_extract = sorted(content.keys())
 
@@ -197,4 +182,3 @@ class PDFUnlockerClient:
         if result.get("success"):
             return result.get("total_pages", 0)
         return 0
-

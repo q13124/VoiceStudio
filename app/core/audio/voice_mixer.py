@@ -116,9 +116,7 @@ class VoiceMixer:
         return_outputs = self._process_returns(send_outputs, mixer_state, sample_rate)
 
         # Process sub-groups
-        subgroup_outputs = self._process_subgroups(
-            channel_outputs, mixer_state, sample_rate
-        )
+        subgroup_outputs = self._process_subgroups(channel_outputs, mixer_state, sample_rate)
 
         # Mix to master
         master_output = self._process_master(
@@ -289,12 +287,8 @@ class VoiceMixer:
                     post_fx = PostFXProcessor(sample_rate=sample_rate)
                     # Apply effects to each channel
                     effects = []  # Would be loaded from effect chain
-                    return_audio[0] = post_fx.process(
-                        return_audio[0], sample_rate, effects
-                    )
-                    return_audio[1] = post_fx.process(
-                        return_audio[1], sample_rate, effects
-                    )
+                    return_audio[0] = post_fx.process(return_audio[0], sample_rate, effects)
+                    return_audio[1] = post_fx.process(return_audio[1], sample_rate, effects)
                 except Exception as e:
                     logger.warning(f"Effect chain processing failed: {e}")
 
@@ -365,12 +359,8 @@ class VoiceMixer:
                 try:
                     post_fx = PostFXProcessor(sample_rate=sample_rate)
                     effects = []  # Would be loaded from effect chain
-                    subgroup_audio[0] = post_fx.process(
-                        subgroup_audio[0], sample_rate, effects
-                    )
-                    subgroup_audio[1] = post_fx.process(
-                        subgroup_audio[1], sample_rate, effects
-                    )
+                    subgroup_audio[0] = post_fx.process(subgroup_audio[0], sample_rate, effects)
+                    subgroup_audio[1] = post_fx.process(subgroup_audio[1], sample_rate, effects)
                 except Exception as e:
                     logger.warning(f"Effect chain processing failed: {e}")
 
@@ -408,14 +398,10 @@ class VoiceMixer:
                     master_audio = np.zeros_like(channel_audio)
                 elif master_audio.shape[1] < channel_audio.shape[1]:
                     pad_size = channel_audio.shape[1] - master_audio.shape[1]
-                    master_audio = np.pad(
-                        master_audio, ((0, 0), (0, pad_size)), mode="constant"
-                    )
+                    master_audio = np.pad(master_audio, ((0, 0), (0, pad_size)), mode="constant")
                 elif master_audio.shape[1] > channel_audio.shape[1]:
                     pad_size = master_audio.shape[1] - channel_audio.shape[1]
-                    channel_audio = np.pad(
-                        channel_audio, ((0, 0), (0, pad_size)), mode="constant"
-                    )
+                    channel_audio = np.pad(channel_audio, ((0, 0), (0, pad_size)), mode="constant")
 
                 master_audio += channel_audio
 
@@ -425,14 +411,10 @@ class VoiceMixer:
                 master_audio = np.zeros_like(subgroup_audio)
             elif master_audio.shape[1] < subgroup_audio.shape[1]:
                 pad_size = subgroup_audio.shape[1] - master_audio.shape[1]
-                master_audio = np.pad(
-                    master_audio, ((0, 0), (0, pad_size)), mode="constant"
-                )
+                master_audio = np.pad(master_audio, ((0, 0), (0, pad_size)), mode="constant")
             elif master_audio.shape[1] > subgroup_audio.shape[1]:
                 pad_size = master_audio.shape[1] - subgroup_audio.shape[1]
-                subgroup_audio = np.pad(
-                    subgroup_audio, ((0, 0), (0, pad_size)), mode="constant"
-                )
+                subgroup_audio = np.pad(subgroup_audio, ((0, 0), (0, pad_size)), mode="constant")
 
             master_audio += subgroup_audio
 
@@ -442,14 +424,10 @@ class VoiceMixer:
                 master_audio = np.zeros_like(return_audio)
             elif master_audio.shape[1] < return_audio.shape[1]:
                 pad_size = return_audio.shape[1] - master_audio.shape[1]
-                master_audio = np.pad(
-                    master_audio, ((0, 0), (0, pad_size)), mode="constant"
-                )
+                master_audio = np.pad(master_audio, ((0, 0), (0, pad_size)), mode="constant")
             elif master_audio.shape[1] > return_audio.shape[1]:
                 pad_size = master_audio.shape[1] - return_audio.shape[1]
-                return_audio = np.pad(
-                    return_audio, ((0, 0), (0, pad_size)), mode="constant"
-                )
+                return_audio = np.pad(return_audio, ((0, 0), (0, pad_size)), mode="constant")
 
             master_audio += return_audio
 
@@ -487,9 +465,7 @@ class VoiceMixer:
 
         return master_audio
 
-    def calculate_levels(
-        self, audio: np.ndarray, window_size: int = 1024
-    ) -> dict[str, float]:
+    def calculate_levels(self, audio: np.ndarray, window_size: int = 1024) -> dict[str, float]:
         """
         Calculate peak and RMS levels for audio.
 

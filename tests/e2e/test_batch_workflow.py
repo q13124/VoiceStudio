@@ -10,7 +10,6 @@ Tests complete batch processing operations:
 - Progress monitoring
 """
 
-
 import pytest
 
 # Pytest markers
@@ -393,7 +392,7 @@ class TestFullBatchWorkflow:
         print(f"\nBatch workflow: {success_count}/{total_count} steps successful")
         for step in state["steps"]:
             status = "✓" if step["success"] else "✗"
-            data_str = f" - {step['data']}" if step.get('data') else ""
+            data_str = f" - {step['data']}" if step.get("data") else ""
             print(f"  {status} {step['name']}{data_str}")
 
 

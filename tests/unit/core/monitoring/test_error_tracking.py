@@ -23,16 +23,12 @@ class TestErrorTrackingImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            error_tracking is not None
-        ), "Failed to import error_tracking module"
+        assert error_tracking is not None, "Failed to import error_tracking module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
         classes = [
-            name
-            for name in dir(error_tracking)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(error_tracking) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "module should have classes or functions"
 
@@ -50,4 +46,3 @@ class TestErrorTrackingFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

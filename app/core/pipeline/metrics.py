@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class StageMetric:
     """Metric for a single pipeline stage execution."""
+
     stage: str  # "stt", "llm", "tts", "total"
     latency_ms: float
     timestamp: float = 0.0
@@ -28,6 +29,7 @@ class StageMetric:
 @dataclass
 class PipelineExecutionMetrics:
     """Complete metrics for a single pipeline execution."""
+
     execution_id: str
     mode: str  # "streaming", "batch"
     stages: list[StageMetric] = field(default_factory=list)
@@ -119,7 +121,11 @@ class PipelineMetricsCollector:
             "p90_ms": round(p90, 2),
             "target_ms": target_p90_ms,
             "samples": len(samples),
-            "message": "SLA met" if meets_sla else f"P90 ({p90:.0f}ms) exceeds target ({target_p90_ms:.0f}ms)",
+            "message": (
+                "SLA met"
+                if meets_sla
+                else f"P90 ({p90:.0f}ms) exceeds target ({target_p90_ms:.0f}ms)"
+            ),
         }
 
     @staticmethod

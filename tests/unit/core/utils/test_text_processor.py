@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.utils import text_processor
 except ImportError:
-    pytest.skip(
-        "Could not import text_processor", allow_module_level=True
-    )
+    pytest.skip("Could not import text_processor", allow_module_level=True)
 
 
 class TestTextProcessorImports:
@@ -25,9 +23,7 @@ class TestTextProcessorImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            text_processor is not None
-        ), "Failed to import text_processor module"
+        assert text_processor is not None, "Failed to import text_processor module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -41,11 +37,8 @@ class TestTextProcessorFunctions:
     def test_process_text_function_exists(self):
         """Test process_text function exists."""
         if hasattr(text_processor, "process_text"):
-            assert callable(
-                text_processor.process_text
-            ), "process_text should be callable"
+            assert callable(text_processor.process_text), "process_text should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

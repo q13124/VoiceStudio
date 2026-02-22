@@ -56,46 +56,42 @@ class AudioMetadataExtractor:
                         tags = audio_file.tags
                         # Title
                         if "TIT2" in tags or "TITLE" in tags:
-                            metadata["title"] = str(
-                                tags.get("TIT2", tags.get("TITLE", [""]))[0]
-                            )
+                            metadata["title"] = str(tags.get("TIT2", tags.get("TITLE", [""]))[0])
                         # Artist
                         if "TPE1" in tags or "ARTIST" in tags:
-                            metadata["artist"] = str(
-                                tags.get("TPE1", tags.get("ARTIST", [""]))[0]
-                            )
+                            metadata["artist"] = str(tags.get("TPE1", tags.get("ARTIST", [""]))[0])
                         # Album
                         if "TALB" in tags or "ALBUM" in tags:
-                            metadata["album"] = str(
-                                tags.get("TALB", tags.get("ALBUM", [""]))[0]
-                            )
+                            metadata["album"] = str(tags.get("TALB", tags.get("ALBUM", [""]))[0])
                         # Year
                         if "TDRC" in tags or "DATE" in tags:
-                            metadata["year"] = str(
-                                tags.get("TDRC", tags.get("DATE", [""]))[0]
-                            )
+                            metadata["year"] = str(tags.get("TDRC", tags.get("DATE", [""]))[0])
                         # Genre
                         if "TCON" in tags or "GENRE" in tags:
-                            metadata["genre"] = str(
-                                tags.get("TCON", tags.get("GENRE", [""]))[0]
-                            )
+                            metadata["genre"] = str(tags.get("TCON", tags.get("GENRE", [""]))[0])
 
                     # Extract audio properties
                     if hasattr(audio_file, "info"):
                         info = audio_file.info
                         metadata["duration"] = float(info.length)
-                        metadata["bitrate"] = int(info.bitrate) if hasattr(info, "bitrate") else None
-                        metadata["sample_rate"] = int(info.sample_rate) if hasattr(info, "sample_rate") else None
-                        metadata["channels"] = int(info.channels) if hasattr(info, "channels") else None
-                        metadata["bit_depth"] = int(info.bits_per_sample) if hasattr(info, "bits_per_sample") else None
+                        metadata["bitrate"] = (
+                            int(info.bitrate) if hasattr(info, "bitrate") else None
+                        )
+                        metadata["sample_rate"] = (
+                            int(info.sample_rate) if hasattr(info, "sample_rate") else None
+                        )
+                        metadata["channels"] = (
+                            int(info.channels) if hasattr(info, "channels") else None
+                        )
+                        metadata["bit_depth"] = (
+                            int(info.bits_per_sample) if hasattr(info, "bits_per_sample") else None
+                        )
 
             except ID3NoHeaderError:
                 # File exists but has no ID3 tags
                 logger.debug(f"No ID3 tags in file: {file_path}")
             except Exception as e:
-                logger.warning(
-                    f"Error extracting metadata with mutagen: {e}"
-                )
+                logger.warning(f"Error extracting metadata with mutagen: {e}")
 
         # Fallback: Try to get basic info from librosa
         if "duration" not in metadata or metadata["duration"] is None:
@@ -113,4 +109,3 @@ class AudioMetadataExtractor:
                 logger.debug(f"Error getting metadata from librosa: {e}")
 
         return metadata
-

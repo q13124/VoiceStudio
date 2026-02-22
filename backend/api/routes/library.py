@@ -108,6 +108,7 @@ class AssetSearchResponse(BaseModel):
 def _entity_to_asset(entity: LibraryAssetEntity) -> LibraryAsset:
     """Convert LibraryAssetEntity to LibraryAsset response model."""
     import json
+
     tags = []
     try:
         tags = json.loads(entity.tags) if entity.tags else []
@@ -155,9 +156,7 @@ def _entity_to_folder(entity: LibraryFolderEntity, asset_count: int = 0) -> Libr
 
 @router.get("/folders", response_model=list[LibraryFolder])
 @cache_response(ttl=60)  # Cache for 60 seconds (folders change moderately)
-async def get_folders(
-    parent_id: str | None = Query(None, description="Parent folder ID")
-):
+async def get_folders(parent_id: str | None = Query(None, description="Parent folder ID")):
     """Get all folders, optionally filtered by parent."""
     folder_repo = get_library_folder_repository()
     asset_repo = get_library_asset_repository()
@@ -177,9 +176,7 @@ async def get_folders(
 
 
 @router.post("/folders", response_model=LibraryFolder)
-async def create_folder(
-    name: str, parent_id: str | None = None, path: str | None = None
-):
+async def create_folder(name: str, parent_id: str | None = None, path: str | None = None):
     """Create a new folder."""
     folder_repo = get_library_folder_repository()
 
@@ -261,6 +258,7 @@ async def search_assets(
     # Apply tag filter if not already done
     if tags and not query:
         import json
+
         tag_list = [t.strip() for t in tags.split(",")]
         filtered = []
         for e in entities:
@@ -275,7 +273,7 @@ async def search_assets(
 
     # Sort by modified date (newest first) - already done by repository
     total = len(entities)
-    paginated = entities[offset:offset + limit]
+    paginated = entities[offset : offset + limit]
 
     return AssetSearchResponse(
         assets=[_entity_to_asset(entity) for entity in paginated],
@@ -286,9 +284,7 @@ async def search_assets(
 
 
 @router.get("/assets/{asset_id}", response_model=LibraryAsset)
-@cache_response(
-    ttl=300
-)  # Cache for 5 minutes (individual assets change less frequently)
+@cache_response(ttl=300)  # Cache for 5 minutes (individual assets change less frequently)
 async def get_asset(asset_id: str):
     """Get a specific asset."""
     asset_repo = get_library_asset_repository()
@@ -377,6 +373,7 @@ async def upload_asset(
             FileCategory,
             validate_media_for_audio_extraction,
         )
+
         file_info = validate_media_for_audio_extraction(content, filename=file.filename)
         detected_format = file_info.extension
         is_video_source = file_info.category == FileCategory.VIDEO
@@ -388,10 +385,7 @@ async def upload_asset(
     except ImportError:
         logger.warning("file_validation module not available; skipping validation")
     except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid audio file: {e!s}"
-        ) from e
+        raise HTTPException(status_code=400, detail=f"Invalid audio file: {e!s}") from e
 
     # Save file to audio uploads directory
     upload_dir = os.path.join(
@@ -412,10 +406,7 @@ async def upload_asset(
     except Exception as e:
         if os.path.exists(dest_path):
             os.remove(dest_path)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to save uploaded file: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to save uploaded file: {e!s}") from e
 
     # Convert to WAV if needed (video files or non-WAV audio)
     final_path = dest_path
@@ -435,6 +426,7 @@ async def upload_asset(
             conversion_service = get_conversion_service()
             # Run async conversion in sync context
             import asyncio
+
             loop = asyncio.get_event_loop()
             result = loop.run_until_complete(
                 conversion_service.convert_to_wav(

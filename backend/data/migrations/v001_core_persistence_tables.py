@@ -48,7 +48,8 @@ class CorePersistenceTablesMigration(Migration):
 
         # 1. Job History Table (HIGH PRIORITY)
         # Replaces: backend/api/routes/jobs.py:27 (_jobs dict)
-        await connection.execute("""
+        await connection.execute(
+            """
             CREATE TABLE IF NOT EXISTS job_history (
                 id TEXT PRIMARY KEY,
                 job_type TEXT NOT NULL,
@@ -66,7 +67,8 @@ class CorePersistenceTablesMigration(Migration):
                 completed_at TEXT,
                 deleted_at TEXT
             )
-        """)
+        """
+        )
         await connection.execute(
             "CREATE INDEX IF NOT EXISTS idx_job_history_status ON job_history(status)"
         )
@@ -82,7 +84,8 @@ class CorePersistenceTablesMigration(Migration):
 
         # 2. Training Jobs Table (HIGH PRIORITY)
         # Replaces: backend/api/routes/training.py:59-67 (4 in-memory dicts)
-        await connection.execute("""
+        await connection.execute(
+            """
             CREATE TABLE IF NOT EXISTS training_jobs (
                 id TEXT PRIMARY KEY,
                 dataset_id TEXT,
@@ -110,7 +113,8 @@ class CorePersistenceTablesMigration(Migration):
                 completed_at TEXT,
                 deleted_at TEXT
             )
-        """)
+        """
+        )
         await connection.execute(
             "CREATE INDEX IF NOT EXISTS idx_training_jobs_status ON training_jobs(status)"
         )
@@ -119,7 +123,8 @@ class CorePersistenceTablesMigration(Migration):
         )
 
         # 3. Training Logs Table (part of training migration)
-        await connection.execute("""
+        await connection.execute(
+            """
             CREATE TABLE IF NOT EXISTS training_logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 job_id TEXT NOT NULL,
@@ -129,13 +134,15 @@ class CorePersistenceTablesMigration(Migration):
                 timestamp TEXT NOT NULL,
                 FOREIGN KEY (job_id) REFERENCES training_jobs(id) ON DELETE CASCADE
             )
-        """)
+        """
+        )
         await connection.execute(
             "CREATE INDEX IF NOT EXISTS idx_training_logs_job ON training_logs(job_id)"
         )
 
         # 4. Training Quality History Table
-        await connection.execute("""
+        await connection.execute(
+            """
             CREATE TABLE IF NOT EXISTS training_quality_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 job_id TEXT NOT NULL,
@@ -149,14 +156,16 @@ class CorePersistenceTablesMigration(Migration):
                 timestamp TEXT NOT NULL,
                 FOREIGN KEY (job_id) REFERENCES training_jobs(id) ON DELETE CASCADE
             )
-        """)
+        """
+        )
         await connection.execute(
             "CREATE INDEX IF NOT EXISTS idx_training_quality_job ON training_quality_history(job_id)"
         )
 
         # 5. Deepfake Jobs Table (HIGH PRIORITY)
         # Replaces: backend/api/routes/deepfake_creator.py:25-27
-        await connection.execute("""
+        await connection.execute(
+            """
             CREATE TABLE IF NOT EXISTS deepfake_jobs (
                 id TEXT PRIMARY KEY,
                 engine_id TEXT,
@@ -177,14 +186,16 @@ class CorePersistenceTablesMigration(Migration):
                 completed_at TEXT,
                 deleted_at TEXT
             )
-        """)
+        """
+        )
         await connection.execute(
             "CREATE INDEX IF NOT EXISTS idx_deepfake_jobs_status ON deepfake_jobs(status)"
         )
 
         # 6. Sessions Table (HIGH PRIORITY)
         # Replaces: backend/security/session.py:77-78
-        await connection.execute("""
+        await connection.execute(
+            """
             CREATE TABLE IF NOT EXISTS sessions (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
@@ -198,7 +209,8 @@ class CorePersistenceTablesMigration(Migration):
                 created_at TEXT NOT NULL,
                 deleted_at TEXT
             )
-        """)
+        """
+        )
         await connection.execute(
             "CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)"
         )
@@ -211,7 +223,8 @@ class CorePersistenceTablesMigration(Migration):
 
         # 7. Transcriptions Table (MEDIUM PRIORITY)
         # Replaces: backend/api/routes/transcribe.py:33
-        await connection.execute("""
+        await connection.execute(
+            """
             CREATE TABLE IF NOT EXISTS transcriptions (
                 id TEXT PRIMARY KEY,
                 audio_path TEXT,
@@ -227,14 +240,16 @@ class CorePersistenceTablesMigration(Migration):
                 expires_at TEXT,
                 deleted_at TEXT
             )
-        """)
+        """
+        )
         await connection.execute(
             "CREATE INDEX IF NOT EXISTS idx_transcriptions_user ON transcriptions(user_id)"
         )
 
         # 8. Pipeline Sessions Table (MEDIUM PRIORITY)
         # Replaces: backend/api/routes/pipeline.py:40
-        await connection.execute("""
+        await connection.execute(
+            """
             CREATE TABLE IF NOT EXISTS pipeline_sessions (
                 id TEXT PRIMARY KEY,
                 session_type TEXT NOT NULL,
@@ -254,14 +269,16 @@ class CorePersistenceTablesMigration(Migration):
                 ended_at TEXT,
                 deleted_at TEXT
             )
-        """)
+        """
+        )
         await connection.execute(
             "CREATE INDEX IF NOT EXISTS idx_pipeline_sessions_status ON pipeline_sessions(status)"
         )
 
         # 9. ABX Sessions Table (MEDIUM PRIORITY)
         # Replaces: backend/api/routes/eval_abx.py:47-48
-        await connection.execute("""
+        await connection.execute(
+            """
             CREATE TABLE IF NOT EXISTS abx_sessions (
                 id TEXT PRIMARY KEY,
                 session_name TEXT,
@@ -278,13 +295,15 @@ class CorePersistenceTablesMigration(Migration):
                 completed_at TEXT,
                 deleted_at TEXT
             )
-        """)
+        """
+        )
         await connection.execute(
             "CREATE INDEX IF NOT EXISTS idx_abx_sessions_status ON abx_sessions(status)"
         )
 
         # 10. ABX Results Table
-        await connection.execute("""
+        await connection.execute(
+            """
             CREATE TABLE IF NOT EXISTS abx_results (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 session_id TEXT NOT NULL,
@@ -298,7 +317,8 @@ class CorePersistenceTablesMigration(Migration):
                 timestamp TEXT NOT NULL,
                 FOREIGN KEY (session_id) REFERENCES abx_sessions(id) ON DELETE CASCADE
             )
-        """)
+        """
+        )
         await connection.execute(
             "CREATE INDEX IF NOT EXISTS idx_abx_results_session ON abx_results(session_id)"
         )

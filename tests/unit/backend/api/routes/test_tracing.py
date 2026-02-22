@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def tracing_client():
     """Create test client for tracing routes."""
     from backend.api.routes.tracing import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)

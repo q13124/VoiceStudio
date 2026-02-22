@@ -299,9 +299,7 @@ class EndToEndWorkflowTester:
 
                 # Test 1: Invalid profile ID
                 try:
-                    response = await client.get(
-                        f"{API_BASE_URL}/profiles/invalid-profile-id"
-                    )
+                    response = await client.get(f"{API_BASE_URL}/profiles/invalid-profile-id")
                     if response.status_code == 404:
                         errors_passed += 1
                     errors_tested += 1
@@ -310,9 +308,7 @@ class EndToEndWorkflowTester:
 
                 # Test 2: Invalid project ID
                 try:
-                    response = await client.get(
-                        f"{API_BASE_URL}/projects/invalid-project-id"
-                    )
+                    response = await client.get(f"{API_BASE_URL}/projects/invalid-project-id")
                     if response.status_code == 404:
                         errors_passed += 1
                     errors_tested += 1
@@ -357,9 +353,7 @@ class EndToEndWorkflowTester:
 
         for result in results:
             if isinstance(result, Exception):
-                self.results.append(
-                    {"workflow": "Unknown", "status": "FAIL", "error": str(result)}
-                )
+                self.results.append({"workflow": "Unknown", "status": "FAIL", "error": str(result)})
             else:
                 self.results.append(result)
 
@@ -418,9 +412,7 @@ async def test_end_to_end_workflows():
     report = tester.generate_report()
 
     # Save report
-    report_path = (
-        project_root / "docs" / "governance" / "END_TO_END_INTEGRATION_TEST_REPORT.md"
-    )
+    report_path = project_root / "docs" / "governance" / "END_TO_END_INTEGRATION_TEST_REPORT.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(report, encoding="utf-8")
 
@@ -434,9 +426,7 @@ async def test_end_to_end_workflows():
     failed = sum(1 for r in results if r["status"] == "FAIL")
 
     logger.info(f"\n{'='*60}")
-    logger.info(
-        f"Test Summary: {passed}/{total} passed, {warnings} warnings, {failed} failed"
-    )
+    logger.info(f"Test Summary: {passed}/{total} passed, {warnings} warnings, {failed} failed")
     logger.info(f"{'='*60}")
 
     # Assert that at least some tests passed

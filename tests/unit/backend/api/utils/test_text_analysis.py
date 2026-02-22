@@ -23,9 +23,7 @@ class TestTextAnalysisImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            text_analysis is not None
-        ), "Failed to import text_analysis module"
+        assert text_analysis is not None, "Failed to import text_analysis module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -35,4 +33,3 @@ class TestTextAnalysisImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -2,6 +2,7 @@
 Unit Tests for Recording API Route
 Tests audio recording endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -172,9 +173,7 @@ class TestRecordingEndpoints:
             "chunk_index": 0,
         }
 
-        response = client.post(
-            f"/api/recording/{recording_id}/chunk", json=request_data
-        )
+        response = client.post(f"/api/recording/{recording_id}/chunk", json=request_data)
         assert response.status_code == 200
 
     def test_append_audio_chunk_not_found(self):

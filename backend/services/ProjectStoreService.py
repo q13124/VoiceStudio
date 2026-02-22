@@ -166,9 +166,7 @@ class ProjectStoreService:
                 return None
 
             if record.id != project_id:
-                logger.error(
-                    f"Project metadata id mismatch for {project_id}: file has {record.id}"
-                )
+                logger.error(f"Project metadata id mismatch for {project_id}: file has {record.id}")
                 return None
 
             if record.schema_version != CURRENT_PROJECT_SCHEMA_VERSION:
@@ -176,9 +174,7 @@ class ProjectStoreService:
                 try:
                     self._write_record(record)
                 except Exception as e:
-                    logger.error(
-                        f"Failed to persist migrated metadata for {project_id}: {e}"
-                    )
+                    logger.error(f"Failed to persist migrated metadata for {project_id}: {e}")
 
             return record
 
@@ -229,18 +225,14 @@ class ProjectStoreService:
         # Handle v0 (pre-schema) -> v1
         if current == 0:
             logger.info(f"Migrating project {record.id} from v0 to v1")
-            return record.model_copy(
-                update={"schema_version": CURRENT_PROJECT_SCHEMA_VERSION}
-            )
+            return record.model_copy(update={"schema_version": CURRENT_PROJECT_SCHEMA_VERSION})
 
         if current < 1:
             raise ValueError(f"Invalid project schema_version: {current}")
 
         # v1 is the baseline schema used by this backend.
         # Future migrations should transform fields and increment schema_version.
-        return record.model_copy(
-            update={"schema_version": CURRENT_PROJECT_SCHEMA_VERSION}
-        )
+        return record.model_copy(update={"schema_version": CURRENT_PROJECT_SCHEMA_VERSION})
 
     def list_projects(self) -> list[ProjectRecord]:
         with self._lock:
@@ -251,8 +243,7 @@ class ProjectStoreService:
             if project_id in self._projects:
                 return True
         return (
-            self._project_meta_path(project_id).exists()
-            or self._project_dir(project_id).exists()
+            self._project_meta_path(project_id).exists() or self._project_dir(project_id).exists()
         )
 
     def get_project(self, project_id: str) -> ProjectRecord:
@@ -270,9 +261,7 @@ class ProjectStoreService:
             self._projects[project_id] = record
             return record
 
-    def create_project(
-        self, name: str, description: str | None = None
-    ) -> ProjectRecord:
+    def create_project(self, name: str, description: str | None = None) -> ProjectRecord:
         project_id = str(uuid.uuid4())
         now = datetime.utcnow().isoformat()
 

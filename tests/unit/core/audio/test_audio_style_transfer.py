@@ -37,9 +37,7 @@ class TestStyleTransferFunctions:
     def test_transfer_style_function_exists(self):
         """Test transfer_style function exists."""
         if hasattr(style_transfer, "transfer_style"):
-            assert callable(
-                style_transfer.transfer_style
-            ), "transfer_style should be callable"
+            assert callable(style_transfer.transfer_style), "transfer_style should be callable"
 
 
 if __name__ == "__main__":

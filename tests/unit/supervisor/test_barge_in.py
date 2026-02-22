@@ -65,9 +65,7 @@ class TestBargeInHandler:
         """Test handler returns interruption action."""
         self.handler.set_ai_speaking(True)
 
-        result = await self.handler.handle_user_speech(
-            "stop that", audio_energy=0.9
-        )
+        result = await self.handler.handle_user_speech("stop that", audio_energy=0.9)
 
         # Should return an action from the FSM
         assert "action" in result
@@ -86,10 +84,7 @@ class TestBargeInHandler:
             "action": InterruptionAction.STOP_AND_LISTEN.value,
             "type": "directive",
         }
-        handler = BargeInHandler(
-            interruption_fsm=mock_fsm,
-            on_stop=self.on_stop_callback
-        )
+        handler = BargeInHandler(interruption_fsm=mock_fsm, on_stop=self.on_stop_callback)
         handler.set_ai_speaking(True)
 
         await handler.handle_user_speech("stop", audio_energy=0.95)

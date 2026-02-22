@@ -88,9 +88,7 @@ class TestProsodyVoiceSynthesisWorkflow:
                 mock_phonemizer_instance.phonemize.return_value = "həˈloʊ"
                 mock_phonemizer.return_value = mock_phonemizer_instance
 
-                response = client.post(
-                    "/api/prosody/phonemes/analyze?text=hello&language=en"
-                )
+                response = client.post("/api/prosody/phonemes/analyze?text=hello&language=en")
                 # May succeed or fail depending on dependencies
                 assert response.status_code in [200, 503]
 
@@ -114,7 +112,9 @@ class TestArticulationEffectsWorkflow:
     @patch("soundfile.read")
     @patch("librosa.feature.rms")
     @patch("librosa.frames_to_time")
-    def test_articulation_analysis_to_effects(self, mock_frames, mock_rms, mock_sf_read, mock_get_path, client):
+    def test_articulation_analysis_to_effects(
+        self, mock_frames, mock_rms, mock_sf_read, mock_get_path, client
+    ):
         """Test workflow: analyze articulation -> apply effects based on issues."""
         # Step 1: Analyze articulation
         mock_get_path.return_value = "/test/audio.wav"
@@ -147,9 +147,7 @@ class TestArticulationEffectsWorkflow:
                 mock_storage.__contains__ = lambda x: x == "test-audio-123"
                 mock_storage.__getitem__ = lambda x: "/path/to/audio.wav"
 
-                with patch(
-                    "backend.api.routes.effects._process_audio_with_chain"
-                ) as mock_process:
+                with patch("backend.api.routes.effects._process_audio_with_chain") as mock_process:
                     mock_process.return_value = {
                         "success": True,
                         "output_audio_id": "processed-audio",
@@ -176,18 +174,17 @@ class TestAnalyticsQualityWorkflow:
             voice._audio_storage[audio_id] = "/path/to/audio.wav"
 
         # Step 2: Get quality explanation
-        with patch("os.path.exists", return_value=True), patch(
-            "backend.api.routes.analytics._get_model_explainer"
-        ) as mock_get_explainer:
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("backend.api.routes.analytics._get_model_explainer") as mock_get_explainer,
+        ):
             mock_explainer = MagicMock()
             mock_explainer.get_available_methods.return_value = ["shap", "lime"]
             mock_explainer.shap_available = True
             mock_get_explainer.return_value = mock_explainer
 
             with patch("backend.api.routes.analytics._quality_history", {}):
-                response = client.get(
-                    f"/api/analytics/explain-quality?audio_id={audio_id}"
-                )
+                response = client.get(f"/api/analytics/explain-quality?audio_id={audio_id}")
                 # May succeed or fail depending on dependencies
                 assert response.status_code in [200, 404, 500]
 
@@ -204,18 +201,17 @@ class TestAnalyticsQualityWorkflow:
         with contextlib.suppress(AttributeError):
             voice._audio_storage[audio_id] = "/path/to/audio.wav"
 
-        with patch("os.path.exists", return_value=True), patch(
-            "backend.api.routes.analytics._get_model_explainer"
-        ) as mock_get_explainer:
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("backend.api.routes.analytics._get_model_explainer") as mock_get_explainer,
+        ):
             mock_explainer = MagicMock()
             mock_explainer.get_available_methods.return_value = ["shap"]
             mock_explainer.shap_available = True
             mock_get_explainer.return_value = mock_explainer
 
             with patch("backend.api.routes.analytics._quality_history", {}):
-                response = client.get(
-                    f"/api/analytics/explain-quality?audio_id={audio_id}"
-                )
+                response = client.get(f"/api/analytics/explain-quality?audio_id={audio_id}")
                 # May succeed or fail depending on dependencies
                 assert response.status_code in [200, 404, 500]
 
@@ -251,9 +247,7 @@ class TestEffectsPostFXProcessorWorkflow:
                 mock_storage.__contains__ = lambda x: x == "test-audio"
                 mock_storage.__getitem__ = lambda x: "/path/to/audio.wav"
 
-                with patch(
-                    "backend.api.routes.effects._process_audio_with_chain"
-                ) as mock_process:
+                with patch("backend.api.routes.effects._process_audio_with_chain") as mock_process:
                     mock_process.return_value = {
                         "success": True,
                         "output_audio_id": "processed-audio",

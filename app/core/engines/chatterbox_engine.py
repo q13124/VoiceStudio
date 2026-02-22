@@ -376,8 +376,12 @@ class ChatterboxEngine(EngineProtocol):
             exaggeration = 0.5
             if emotion and emotion != "neutral":
                 emotion_intensity = {
-                    "happy": 0.8, "excited": 1.0, "sad": 0.3,
-                    "angry": 1.2, "calm": 0.2, "surprised": 0.9,
+                    "happy": 0.8,
+                    "excited": 1.0,
+                    "sad": 0.3,
+                    "angry": 1.2,
+                    "calm": 0.2,
+                    "surprised": 0.9,
                 }
                 exaggeration = emotion_intensity.get(emotion, 0.5)
 
@@ -399,18 +403,22 @@ class ChatterboxEngine(EngineProtocol):
 
             if output_path:
                 import torchaudio
+
                 torchaudio.save(str(output_path), wav.cpu(), sample_rate)
                 logger.info(f"Audio saved to: {output_path}")
 
                 if enhance_quality or calculate_quality:
                     audio = self._process_audio_quality(
-                        audio, sample_rate,
+                        audio,
+                        sample_rate,
                         speaker_wav[0] if speaker_wav else None,
-                        enhance_quality, calculate_quality,
+                        enhance_quality,
+                        calculate_quality,
                     )
                     if isinstance(audio, tuple):
                         enhanced_audio, quality_metrics = audio
                         import soundfile as sf
+
                         sf.write(str(output_path), enhanced_audio, sample_rate)
                         return None, quality_metrics
 
@@ -418,9 +426,11 @@ class ChatterboxEngine(EngineProtocol):
             else:
                 if enhance_quality or calculate_quality:
                     audio = self._process_audio_quality(
-                        audio, sample_rate,
+                        audio,
+                        sample_rate,
                         speaker_wav[0] if speaker_wav else None,
-                        enhance_quality, calculate_quality,
+                        enhance_quality,
+                        calculate_quality,
                     )
                     if isinstance(audio, tuple):
                         return audio

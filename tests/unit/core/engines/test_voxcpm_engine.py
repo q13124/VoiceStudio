@@ -59,9 +59,7 @@ class TestVoxCPMEngineClass:
                 engine = voxcpm_engine.VoxCPMEngine(device="cpu", gpu=False)
                 required_methods = ["initialize", "cleanup", "synthesize"]
                 for method in required_methods:
-                    assert hasattr(
-                        engine, method
-                    ), f"VoxCPMEngine missing method: {method}"
+                    assert hasattr(engine, method), f"VoxCPMEngine missing method: {method}"
             except (ImportError, Exception):
                 pytest.skip("voxcpm dependencies not installed")
 
@@ -70,9 +68,7 @@ class TestVoxCPMEngineClass:
         if hasattr(voxcpm_engine, "VoxCPMEngine"):
             try:
                 engine = voxcpm_engine.VoxCPMEngine(device="cpu", gpu=False)
-                assert hasattr(
-                    engine, "enable_caching"
-                ), "VoxCPMEngine should support caching"
+                assert hasattr(engine, "enable_caching"), "VoxCPMEngine should support caching"
                 assert hasattr(
                     engine, "batch_synthesize"
                 ), "VoxCPMEngine should support batch processing"
@@ -119,9 +115,7 @@ class TestVoxCPMEngineProtocol:
                 engine = voxcpm_engine.VoxCPMEngine(device="cpu", gpu=False)
                 assert hasattr(engine, "initialize"), "Should implement initialize"
                 assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                assert hasattr(
-                    engine, "is_initialized"
-                ), "Should implement is_initialized"
+                assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                 assert hasattr(engine, "get_device"), "Should implement get_device"
             except (ImportError, Exception):
                 pytest.skip("voxcpm dependencies not installed")
@@ -148,4 +142,3 @@ class TestVoxCPMEngineOptimization:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

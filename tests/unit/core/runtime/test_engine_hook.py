@@ -23,16 +23,12 @@ class TestEngineHookImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            engine_hook is not None
-        ), "Failed to import engine_hook module"
+        assert engine_hook is not None, "Failed to import engine_hook module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
         classes = [
-            name
-            for name in dir(engine_hook)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(engine_hook) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "module should have classes"
 
@@ -49,4 +45,3 @@ class TestEngineHookClasses:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

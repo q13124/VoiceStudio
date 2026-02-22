@@ -39,6 +39,7 @@ def pytest_configure(config):
 # Event Loop Fixtures
 # ============================================================================
 
+
 @pytest.fixture(scope="session")
 def event_loop():
     """Create an event loop for the test session."""
@@ -50,6 +51,7 @@ def event_loop():
 # ============================================================================
 # Path Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def temp_dir() -> Generator[Path, None, None]:
@@ -96,11 +98,13 @@ def canonical_audio_segment_path(project_root: Path) -> Path:
 # Engine Mock Fixtures (CI-friendly)
 # ============================================================================
 
+
 @pytest.fixture
 def mock_tts_engine():
     """Create a mock TTS engine for CI testing."""
     try:
         from tests.fixtures.engines import MockEngineFactory
+
         return MockEngineFactory.create_xtts()
     except ImportError:
         pytest.skip("Engine fixtures not available")
@@ -111,6 +115,7 @@ def mock_stt_engine():
     """Create a mock STT engine for CI testing."""
     try:
         from tests.fixtures.engines import MockEngineFactory
+
         return MockEngineFactory.create_whisper()
     except ImportError:
         pytest.skip("Engine fixtures not available")
@@ -121,6 +126,7 @@ def mock_engine_service():
     """Create a mock engine service with all common engines for CI testing."""
     try:
         from tests.fixtures.engines import MockEngineService
+
         return MockEngineService.create_with_engines()
     except ImportError:
         pytest.skip("Engine fixtures not available")
@@ -131,6 +137,7 @@ def mock_all_engines():
     """Create all mock engines for comprehensive CI testing."""
     try:
         from tests.fixtures.engines import MockEngineFactory
+
         return {
             "tts": MockEngineFactory.create_all_tts(),
             "stt": {"whisper": MockEngineFactory.create_whisper()},
@@ -143,6 +150,7 @@ def mock_all_engines():
 # ============================================================================
 # Mock Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def mock_engine_config() -> dict[str, Any]:
@@ -186,6 +194,7 @@ def mock_project_data() -> dict[str, Any]:
 # Backend Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def backend_config() -> dict[str, Any]:
     """Get backend configuration for testing."""
@@ -205,10 +214,7 @@ async def test_client():
 
         from backend.api.main import app
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             yield client
     except ImportError:
         pytest.skip("httpx or backend not available")
@@ -217,6 +223,7 @@ async def test_client():
 # ============================================================================
 # Database Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def test_db_path(temp_dir: Path) -> Path:
@@ -240,6 +247,7 @@ async def test_database(test_db_path: Path):
 # Environment Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def clean_env():
     """Fixture that restores environment after test."""
@@ -261,23 +269,16 @@ def test_env(clean_env):
 # Markers
 # ============================================================================
 
+
 def pytest_configure(config):
     """Configure pytest markers."""
     config.addinivalue_line(
         "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
-    config.addinivalue_line(
-        "markers", "e2e: marks tests as end-to-end tests"
-    )
-    config.addinivalue_line(
-        "markers", "gpu: marks tests that require GPU"
-    )
-    config.addinivalue_line(
-        "markers", "engine: marks tests that require a voice engine"
-    )
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
+    config.addinivalue_line("markers", "e2e: marks tests as end-to-end tests")
+    config.addinivalue_line("markers", "gpu: marks tests that require GPU")
+    config.addinivalue_line("markers", "engine: marks tests that require a voice engine")
     config.addinivalue_line(
         "markers", "canonical_audio: Tests that use the canonical test audio (Allan Watts)"
     )
@@ -287,6 +288,7 @@ def pytest_configure(config):
 # Hooks
 # ============================================================================
 
+
 def pytest_collection_modifyitems(config, items):
     """Modify test collection."""
     # Skip GPU tests if no GPU available
@@ -294,6 +296,7 @@ def pytest_collection_modifyitems(config, items):
 
     try:
         import torch
+
         has_gpu = torch.cuda.is_available()
     except (ImportError, AttributeError):
         # AttributeError can occur with partial torch initialization (circular import)

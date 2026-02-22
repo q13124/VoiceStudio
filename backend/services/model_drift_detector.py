@@ -233,27 +233,31 @@ class ModelDriftDetector:
                 is_drifted = psi > PSI_THRESHOLD
                 if is_drifted:
                     any_drifted = True
-                metrics.append(DriftMetric(
-                    engine_id=eng,
-                    metric_name=metric_name,
-                    psi=round(psi, 4),
-                    baseline_sample_count=len(baseline_vals),
-                    current_sample_count=len(current_vals),
-                    last_updated=now,
-                    is_drifted=is_drifted,
-                ))
+                metrics.append(
+                    DriftMetric(
+                        engine_id=eng,
+                        metric_name=metric_name,
+                        psi=round(psi, 4),
+                        baseline_sample_count=len(baseline_vals),
+                        current_sample_count=len(current_vals),
+                        last_updated=now,
+                        is_drifted=is_drifted,
+                    )
+                )
             if not metrics:
                 # Engine with baseline but no computed metrics yet
                 has_baseline = any(k.startswith(eng + ":") for k in self._baselines)
                 if has_baseline:
                     metrics = []
-            result.append(DriftStatus(
-                engine_id=eng,
-                has_baseline=any(k.startswith(eng + ":") for k in self._baselines),
-                metrics=metrics,
-                any_drifted=any_drifted,
-                last_checked=now,
-            ))
+            result.append(
+                DriftStatus(
+                    engine_id=eng,
+                    has_baseline=any(k.startswith(eng + ":") for k in self._baselines),
+                    metrics=metrics,
+                    any_drifted=any_drifted,
+                    last_checked=now,
+                )
+            )
 
         return result
 
@@ -274,13 +278,15 @@ class ModelDriftDetector:
             for m in s.metrics:
                 if metric_name is not None and m.metric_name != metric_name:
                     continue
-                history.append({
-                    "engine_id": s.engine_id,
-                    "metric_name": m.metric_name,
-                    "psi": m.psi,
-                    "is_drifted": m.is_drifted,
-                    "timestamp": s.last_checked,
-                })
+                history.append(
+                    {
+                        "engine_id": s.engine_id,
+                        "metric_name": m.metric_name,
+                        "psi": m.psi,
+                        "is_drifted": m.is_drifted,
+                        "timestamp": s.last_checked,
+                    }
+                )
                 if len(history) >= limit:
                     return history
         return history

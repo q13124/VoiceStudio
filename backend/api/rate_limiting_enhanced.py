@@ -151,9 +151,27 @@ class SlidingWindowRateLimiter:
             window.append(current_time)
 
             # Calculate remaining requests
-            remaining_second = max(0, int(self.config.requests_per_second - sum(1 for t in window if t > current_time - 1.0)))
-            remaining_minute = max(0, int(self.config.requests_per_minute - sum(1 for t in window if t > current_time - 60.0)))
-            remaining_hour = max(0, int(self.config.requests_per_hour - sum(1 for t in window if t > current_time - 3600.0)))
+            remaining_second = max(
+                0,
+                int(
+                    self.config.requests_per_second
+                    - sum(1 for t in window if t > current_time - 1.0)
+                ),
+            )
+            remaining_minute = max(
+                0,
+                int(
+                    self.config.requests_per_minute
+                    - sum(1 for t in window if t > current_time - 60.0)
+                ),
+            )
+            remaining_hour = max(
+                0,
+                int(
+                    self.config.requests_per_hour
+                    - sum(1 for t in window if t > current_time - 3600.0)
+                ),
+            )
 
             return True, {
                 "allowed": True,
@@ -303,9 +321,7 @@ class EnhancedRateLimiter:
         # Endpoint-specific limiters
         for endpoint, config in self.endpoint_configs.items():
             self.limiters[endpoint] = SlidingWindowRateLimiter(config)
-            self.throttlers[endpoint] = Throttler(
-                min_delay_seconds=0.5, max_concurrent=5
-            )
+            self.throttlers[endpoint] = Throttler(min_delay_seconds=0.5, max_concurrent=5)
 
     def get_limiter(self, endpoint: str) -> SlidingWindowRateLimiter:
         """
@@ -341,9 +357,7 @@ class EnhancedRateLimiter:
         """
         return self.throttlers.get(endpoint)
 
-    def check_rate_limit(
-        self, request: Request
-    ) -> tuple[bool, dict[str, Any], float | None]:
+    def check_rate_limit(self, request: Request) -> tuple[bool, dict[str, Any], float | None]:
         """
         Check rate limit for request.
 
@@ -401,9 +415,7 @@ class EnhancedRateLimiter:
         client_ip = request.client.host if request.client else "unknown"
         return f"ip:{client_ip}"
 
-    def add_rate_limit_headers(
-        self, response: Response, rate_limit_info: dict[str, Any]
-    ):
+    def add_rate_limit_headers(self, response: Response, rate_limit_info: dict[str, Any]):
         """
         Add rate limit headers to response.
 
@@ -412,9 +424,7 @@ class EnhancedRateLimiter:
             rate_limit_info: Rate limit information
         """
         if rate_limit_info.get("allowed"):
-            response.headers["X-RateLimit-Limit-Second"] = str(
-                int(rate_limit_info.get("limit", 0))
-            )
+            response.headers["X-RateLimit-Limit-Second"] = str(int(rate_limit_info.get("limit", 0)))
             response.headers["X-RateLimit-Remaining-Second"] = str(
                 rate_limit_info.get("remaining_second", 0)
             )
@@ -430,9 +440,7 @@ class EnhancedRateLimiter:
         else:
             retry_after = rate_limit_info.get("retry_after", 60)
             response.headers["Retry-After"] = str(int(retry_after))
-            response.headers["X-RateLimit-Limit"] = str(
-                int(rate_limit_info.get("limit", 0))
-            )
+            response.headers["X-RateLimit-Limit"] = str(int(rate_limit_info.get("limit", 0)))
             response.headers["X-RateLimit-Remaining"] = "0"
 
     def get_stats(self) -> dict[str, Any]:
@@ -484,9 +492,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Check rate limit
-        is_allowed, rate_limit_info, throttle_delay = self.rate_limiter.check_rate_limit(
-            request
-        )
+        is_allowed, rate_limit_info, throttle_delay = self.rate_limiter.check_rate_limit(request)
 
         # Apply throttling delay if needed
         if throttle_delay and throttle_delay > 0:
@@ -519,4 +525,3 @@ __all__ = [
     "SlidingWindowRateLimiter",
     "Throttler",
 ]
-

@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.middleware import security_headers
 except ImportError:
-    pytest.skip(
-        "Could not import security_headers", allow_module_level=True
-    )
+    pytest.skip("Could not import security_headers", allow_module_level=True)
 
 
 class TestSecurityHeadersImports:
@@ -25,9 +23,7 @@ class TestSecurityHeadersImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            security_headers is not None
-        ), "Failed to import security_headers module"
+        assert security_headers is not None, "Failed to import security_headers module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -48,4 +44,3 @@ class TestSecurityHeadersFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -30,9 +30,7 @@ try:
         ResourceUsage,
     )
 except ImportError as e:
-    pytest.skip(
-        f"Could not import resource_manager modules: {e}", allow_module_level=True
-    )
+    pytest.skip(f"Could not import resource_manager modules: {e}", allow_module_level=True)
 
 
 class TestGPUMonitor:
@@ -123,23 +121,17 @@ class TestResourceManager:
         req = ResourceRequirement(vram_gb=1.0)
 
         # Submit realtime job
-        job1 = manager.submit_job(
-            "job1", "engine1", "synthesize", JobPriority.REALTIME, req, {}
-        )
+        job1 = manager.submit_job("job1", "engine1", "synthesize", JobPriority.REALTIME, req, {})
         assert job1 is True
         assert manager.realtime_queue.qsize() == 1
 
         # Submit interactive job
-        job2 = manager.submit_job(
-            "job2", "engine1", "synthesize", JobPriority.INTERACTIVE, req, {}
-        )
+        job2 = manager.submit_job("job2", "engine1", "synthesize", JobPriority.INTERACTIVE, req, {})
         assert job2 is True
         assert manager.interactive_queue.qsize() == 1
 
         # Submit batch job
-        job3 = manager.submit_job(
-            "job3", "engine1", "synthesize", JobPriority.BATCH, req, {}
-        )
+        job3 = manager.submit_job("job3", "engine1", "synthesize", JobPriority.BATCH, req, {})
         assert job3 is True
         assert manager.batch_queue.qsize() == 1
 
@@ -153,13 +145,9 @@ class TestResourceManager:
         # Submit jobs in reverse priority order
         manager.submit_job("batch1", "engine1", "task", JobPriority.BATCH, req, {})
         time.sleep(0.01)  # Small delay to ensure different timestamps
-        manager.submit_job(
-            "interactive1", "engine1", "task", JobPriority.INTERACTIVE, req, {}
-        )
+        manager.submit_job("interactive1", "engine1", "task", JobPriority.INTERACTIVE, req, {})
         time.sleep(0.01)
-        manager.submit_job(
-            "realtime1", "engine1", "task", JobPriority.REALTIME, req, {}
-        )
+        manager.submit_job("realtime1", "engine1", "task", JobPriority.REALTIME, req, {})
 
         # Should retrieve realtime first
         job = manager.get_next_job()
@@ -187,9 +175,7 @@ class TestResourceManager:
         manager.gpu_monitor.has_sufficient_vram = Mock(return_value=False)
 
         req = ResourceRequirement(vram_gb=10.0)
-        result = manager.submit_job(
-            "job1", "engine1", "task", JobPriority.BATCH, req, {}
-        )
+        result = manager.submit_job("job1", "engine1", "task", JobPriority.BATCH, req, {})
 
         # Job should still be queued (will wait for resources)
         assert result is True
@@ -209,9 +195,7 @@ class TestResourceManager:
         manager.engine_circuit_breaker["engine1"] = True
 
         req = ResourceRequirement(vram_gb=1.0)
-        result = manager.submit_job(
-            "job1", "engine1", "task", JobPriority.REALTIME, req, {}
-        )
+        result = manager.submit_job("job1", "engine1", "task", JobPriority.REALTIME, req, {})
 
         # Job should be rejected
         assert result is False
@@ -239,9 +223,7 @@ class TestResourceManager:
         assert backoff_until > time.time()
 
         # Job should be rejected during backoff
-        result = manager.submit_job(
-            "job2", "engine1", "task", JobPriority.REALTIME, req, {}
-        )
+        result = manager.submit_job("job2", "engine1", "task", JobPriority.REALTIME, req, {})
         assert result is False
 
     def test_circuit_breaker_activation(self):
@@ -335,9 +317,7 @@ class TestResourceManager:
             callback_called.append(job.job_id)
 
         req = ResourceRequirement(vram_gb=1.0)
-        job = Job(
-            "job1", "engine1", "task", JobPriority.REALTIME, req, {}, callback=callback
-        )
+        job = Job("job1", "engine1", "task", JobPriority.REALTIME, req, {}, callback=callback)
 
         manager.start_job(job)
         manager.complete_job("job1", success=True)
@@ -419,9 +399,7 @@ class TestEnhancedResourceManager:
         manager = EnhancedResourceManager(
             monitoring_interval=0.1,
         )
-        manager.alert_thresholds["vram_usage_percent"] = (
-            50.0  # Lower threshold for testing
-        )
+        manager.alert_thresholds["vram_usage_percent"] = 50.0  # Lower threshold for testing
 
         manager.gpu_monitor.get_vram_info = Mock(
             return_value={

@@ -56,7 +56,7 @@ class PortManager:
         """Load port registry from file."""
         if self.ports_file.exists():
             try:
-                with open(self.ports_file, encoding='utf-8') as f:
+                with open(self.ports_file, encoding="utf-8") as f:
                     data = json.load(f)
                     self.active_ports = data.get("active", {})
                     # Clean up stale ports (processes that may have died)
@@ -73,9 +73,9 @@ class PortManager:
             data = {
                 "active": self.active_ports,
                 "reserved": self.reserved_ports,
-                "last_updated": datetime.now().isoformat()
+                "last_updated": datetime.now().isoformat(),
             }
-            with open(self.ports_file, 'w', encoding='utf-8') as f:
+            with open(self.ports_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             logger.error(f"Failed to save port registry: {e}")
@@ -99,8 +99,9 @@ class PortManager:
     def _is_process_running(self, pid: int) -> bool:
         """Check if process is still running (cross-platform)."""
         try:
-            if os.name == 'nt':  # Windows
+            if os.name == "nt":  # Windows
                 import psutil
+
                 return psutil.pid_exists(pid)
             else:  # Unix-like
                 os.kill(pid, 0)
@@ -113,7 +114,7 @@ class PortManager:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(1)
-                result = s.connect_ex(('127.0.0.1', port))
+                result = s.connect_ex(("127.0.0.1", port))
                 return result != 0  # Port is available if connection fails
         except Exception as e:
             logger.debug(f"Error checking port {port}: {e}")
@@ -133,7 +134,9 @@ class PortManager:
 
         return None
 
-    def allocate_port(self, engine_id: str, preferred_port: int | None = None, pid: int | None = None) -> int | None:
+    def allocate_port(
+        self, engine_id: str, preferred_port: int | None = None, pid: int | None = None
+    ) -> int | None:
         """
         Allocate a port for an engine.
 
@@ -168,7 +171,9 @@ class PortManager:
 
         # Find available port if preferred not available
         if not port:
-            port = self._find_available_port(self.BASE_HTTP_PORT, self.BASE_HTTP_PORT + self.PORT_RANGE_SIZE - 1)
+            port = self._find_available_port(
+                self.BASE_HTTP_PORT, self.BASE_HTTP_PORT + self.PORT_RANGE_SIZE - 1
+            )
 
         if not port:
             logger.error(f"Failed to allocate port for engine {engine_id}")
@@ -178,7 +183,7 @@ class PortManager:
         self.active_ports[engine_id] = {
             "port": port,
             "pid": pid,
-            "allocated_at": datetime.now().isoformat()
+            "allocated_at": datetime.now().isoformat(),
         }
 
         self._save_registry()
@@ -218,4 +223,3 @@ def get_port_manager(ports_file: str = "runtime/ports.json") -> PortManager:
     if _port_manager is None:
         _port_manager = PortManager(ports_file)
     return _port_manager
-

@@ -56,9 +56,7 @@ class LUFSMeter:
             except Exception as e:
                 logger.warning(f"Failed to initialize pyloudnorm meter: {e}")
 
-    def measure_integrated_lufs(
-        self, audio: np.ndarray, sample_rate: int | None = None
-    ) -> float:
+    def measure_integrated_lufs(self, audio: np.ndarray, sample_rate: int | None = None) -> float:
         """
         Measure integrated LUFS (overall loudness).
 
@@ -95,9 +93,7 @@ class LUFSMeter:
             logger.warning(f"Integrated LUFS measurement failed: {e}")
             return self._estimate_lufs_from_rms(audio)
 
-    def measure_momentary_lufs(
-        self, audio: np.ndarray, sample_rate: int | None = None
-    ) -> float:
+    def measure_momentary_lufs(self, audio: np.ndarray, sample_rate: int | None = None) -> float:
         """
         Measure momentary LUFS (400ms blocks).
 
@@ -140,9 +136,7 @@ class LUFSMeter:
             logger.warning(f"Momentary LUFS measurement failed: {e}")
             return self._estimate_lufs_from_rms(audio)
 
-    def measure_short_term_lufs(
-        self, audio: np.ndarray, sample_rate: int | None = None
-    ) -> float:
+    def measure_short_term_lufs(self, audio: np.ndarray, sample_rate: int | None = None) -> float:
         """
         Measure short-term LUFS (3s blocks).
 
@@ -183,9 +177,7 @@ class LUFSMeter:
             logger.warning(f"Short-term LUFS measurement failed: {e}")
             return self._estimate_lufs_from_rms(audio)
 
-    def measure_peak_lufs(
-        self, audio: np.ndarray, sample_rate: int | None = None
-    ) -> float:
+    def measure_peak_lufs(self, audio: np.ndarray, sample_rate: int | None = None) -> float:
         """
         Measure peak LUFS (true peak).
 
@@ -307,9 +299,7 @@ class LUFSMeter:
 
         return times, lufs_values
 
-    def measure_all(
-        self, audio: np.ndarray, sample_rate: int | None = None
-    ) -> dict[str, float]:
+    def measure_all(self, audio: np.ndarray, sample_rate: int | None = None) -> dict[str, float]:
         """
         Measure all LUFS metrics at once.
 

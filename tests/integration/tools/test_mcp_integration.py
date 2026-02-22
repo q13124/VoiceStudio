@@ -34,6 +34,7 @@ try:
         _run_mcp_search,
         _try_all_mcp_providers,
     )
+
     TOOLS_AVAILABLE = True
 except ImportError:
     TOOLS_AVAILABLE = False
@@ -58,6 +59,7 @@ def is_mcp_package_available() -> bool:
     """Check if mcp Python package is installed."""
     try:
         import mcp
+
         return True
     except ImportError:
         return False
@@ -115,7 +117,7 @@ class TestMCPFallbackBehavior:
             openmemory_path = Path(tmpdir) / "openmemory.md"
             openmemory_path.write_text(
                 "# VoiceStudio Memory\n\n## Overview\n\nFallback content for testing.",
-                encoding="utf-8"
+                encoding="utf-8",
             )
 
             with patch.dict(os.environ, {"OPENMEMORY_PATH": str(openmemory_path)}):
@@ -139,7 +141,9 @@ class TestMCPFallbackBehavior:
 
         # Test with CONTEXT_MEMO as the final fallback
         with patch.dict(os.environ, {"CONTEXT_MEMO": "Final fallback context"}):
-            with patch("tools.context.sources.memory_adapter._resolve_openmemory_path", return_value=None):
+            with patch(
+                "tools.context.sources.memory_adapter._resolve_openmemory_path", return_value=None
+            ):
                 # Should use CONTEXT_MEMO fallback
                 items = adapter._fetch_env_hint()
 
@@ -149,7 +153,7 @@ class TestMCPFallbackBehavior:
 
 @pytest.mark.skipif(
     not TOOLS_AVAILABLE or not is_npx_available() or not is_mcp_package_available(),
-    reason="MCP infrastructure not available"
+    reason="MCP infrastructure not available",
 )
 class TestMCPLiveIntegration:
     """
@@ -195,8 +199,7 @@ class TestMCPLiveIntegration:
         with tempfile.TemporaryDirectory() as tmpdir:
             openmemory_path = Path(tmpdir) / "openmemory.md"
             openmemory_path.write_text(
-                "# VoiceStudio\n\n## Overview\n\nTest content.",
-                encoding="utf-8"
+                "# VoiceStudio\n\n## Overview\n\nTest content.", encoding="utf-8"
             )
 
             with patch.dict(os.environ, {"OPENMEMORY_PATH": str(openmemory_path)}):
@@ -253,6 +256,7 @@ class TestMCPErrorHandling:
         # Mock a timeout scenario
         with patch("tools.context.sources.memory_adapter.asyncio.run") as mock_run:
             import asyncio
+
             mock_run.side_effect = asyncio.TimeoutError("MCP timeout")
 
             result = _run_mcp_search(

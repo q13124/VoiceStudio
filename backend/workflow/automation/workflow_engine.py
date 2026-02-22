@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class WorkflowStatus(Enum):
     """Workflow execution status."""
+
     PENDING = "pending"
     RUNNING = "running"
     PAUSED = "paused"
@@ -33,6 +34,7 @@ class WorkflowStatus(Enum):
 
 class StepType(Enum):
     """Types of workflow steps."""
+
     SYNTHESIZE = "synthesize"
     CLONE_VOICE = "clone_voice"
     APPLY_EFFECTS = "apply_effects"
@@ -48,6 +50,7 @@ class StepType(Enum):
 @dataclass
 class StepResult:
     """Result of a workflow step."""
+
     success: bool
     output: Any = None
     error: str | None = None
@@ -58,6 +61,7 @@ class StepResult:
 @dataclass
 class WorkflowStep:
     """A single workflow step."""
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str = ""
     step_type: StepType = StepType.CUSTOM
@@ -72,6 +76,7 @@ class WorkflowStep:
 @dataclass
 class WorkflowDefinition:
     """Definition of a complete workflow."""
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str = ""
     description: str = ""
@@ -86,6 +91,7 @@ class WorkflowDefinition:
 @dataclass
 class WorkflowExecution:
     """State of a workflow execution."""
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     workflow_id: str = ""
     status: WorkflowStatus = WorkflowStatus.PENDING
@@ -107,11 +113,7 @@ class StepExecutor(ABC):
         pass
 
     @abstractmethod
-    async def execute(
-        self,
-        step: WorkflowStep,
-        context: dict[str, Any]
-    ) -> StepResult:
+    async def execute(self, step: WorkflowStep, context: dict[str, Any]) -> StepResult:
         """Execute the step."""
         pass
 
@@ -123,11 +125,7 @@ class SynthesizeStepExecutor(StepExecutor):
     def step_type(self) -> StepType:
         return StepType.SYNTHESIZE
 
-    async def execute(
-        self,
-        step: WorkflowStep,
-        context: dict[str, Any]
-    ) -> StepResult:
+    async def execute(self, step: WorkflowStep, context: dict[str, Any]) -> StepResult:
         """Execute synthesis step."""
         start_time = datetime.now()
 
@@ -148,14 +146,14 @@ class SynthesizeStepExecutor(StepExecutor):
             return StepResult(
                 success=True,
                 output={"audio_path": str(output_path)},
-                duration_seconds=(datetime.now() - start_time).total_seconds()
+                duration_seconds=(datetime.now() - start_time).total_seconds(),
             )
 
         except Exception as e:
             return StepResult(
                 success=False,
                 error=str(e),
-                duration_seconds=(datetime.now() - start_time).total_seconds()
+                duration_seconds=(datetime.now() - start_time).total_seconds(),
             )
 
 
@@ -166,11 +164,7 @@ class ApplyEffectsStepExecutor(StepExecutor):
     def step_type(self) -> StepType:
         return StepType.APPLY_EFFECTS
 
-    async def execute(
-        self,
-        step: WorkflowStep,
-        context: dict[str, Any]
-    ) -> StepResult:
+    async def execute(self, step: WorkflowStep, context: dict[str, Any]) -> StepResult:
         """Execute effects step."""
         start_time = datetime.now()
 
@@ -191,14 +185,14 @@ class ApplyEffectsStepExecutor(StepExecutor):
                 success=True,
                 output={"audio_path": str(output_path)},
                 metadata={"effects_applied": effects},
-                duration_seconds=(datetime.now() - start_time).total_seconds()
+                duration_seconds=(datetime.now() - start_time).total_seconds(),
             )
 
         except Exception as e:
             return StepResult(
                 success=False,
                 error=str(e),
-                duration_seconds=(datetime.now() - start_time).total_seconds()
+                duration_seconds=(datetime.now() - start_time).total_seconds(),
             )
 
 
@@ -209,11 +203,7 @@ class ExportStepExecutor(StepExecutor):
     def step_type(self) -> StepType:
         return StepType.EXPORT
 
-    async def execute(
-        self,
-        step: WorkflowStep,
-        context: dict[str, Any]
-    ) -> StepResult:
+    async def execute(self, step: WorkflowStep, context: dict[str, Any]) -> StepResult:
         """Execute export step."""
         start_time = datetime.now()
 
@@ -234,14 +224,14 @@ class ExportStepExecutor(StepExecutor):
             return StepResult(
                 success=True,
                 output={"output_path": str(output_path)},
-                duration_seconds=(datetime.now() - start_time).total_seconds()
+                duration_seconds=(datetime.now() - start_time).total_seconds(),
             )
 
         except Exception as e:
             return StepResult(
                 success=False,
                 error=str(e),
-                duration_seconds=(datetime.now() - start_time).total_seconds()
+                duration_seconds=(datetime.now() - start_time).total_seconds(),
             )
 
 
@@ -272,9 +262,7 @@ class WorkflowEngine:
         return self._workflows.get(workflow_id)
 
     async def start_workflow(
-        self,
-        workflow_id: str,
-        variables: dict[str, Any] | None = None
+        self, workflow_id: str, variables: dict[str, Any] | None = None
     ) -> str:
         """Start a workflow execution."""
         workflow = self._workflows.get(workflow_id)
@@ -333,9 +321,7 @@ class WorkflowEngine:
         return self._executions.get(execution_id)
 
     async def _execute_workflow(
-        self,
-        execution: WorkflowExecution,
-        workflow: WorkflowDefinition
+        self, execution: WorkflowExecution, workflow: WorkflowDefinition
     ) -> None:
         """Execute a workflow."""
         execution.status = WorkflowStatus.RUNNING
@@ -394,18 +380,11 @@ class WorkflowEngine:
             if execution.id in self._running:
                 del self._running[execution.id]
 
-    async def _execute_step(
-        self,
-        step: WorkflowStep,
-        context: dict[str, Any]
-    ) -> StepResult:
+    async def _execute_step(self, step: WorkflowStep, context: dict[str, Any]) -> StepResult:
         """Execute a single step."""
         executor = self._executors.get(step.step_type)
         if not executor:
-            return StepResult(
-                success=False,
-                error=f"No executor for step type: {step.step_type}"
-            )
+            return StepResult(success=False, error=f"No executor for step type: {step.step_type}")
 
         # Resolve input variables
         resolved_config = step.config.copy()

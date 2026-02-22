@@ -19,6 +19,7 @@ router = APIRouter(prefix="/api/mix/scene", tags=["mix", "scene"])
 
 class SceneAnalysisNode(BaseModel):
     """A node in the scene analysis graph."""
+
     id: str
     type: str  # "source", "processor", "output", "bus"
     name: str
@@ -28,6 +29,7 @@ class SceneAnalysisNode(BaseModel):
 
 class SceneAnalysisConnection(BaseModel):
     """A connection between nodes."""
+
     source_id: str
     target_id: str
     source_port: str = "output"
@@ -36,6 +38,7 @@ class SceneAnalysisConnection(BaseModel):
 
 class SceneAnalysisResponse(BaseModel):
     """Response from scene analysis."""
+
     success: bool
     graph: dict[str, Any]
     nodes: list[SceneAnalysisNode]
@@ -48,6 +51,7 @@ class SceneAnalysisResponse(BaseModel):
 # Try to import audio analysis tools
 try:
     from app.core.audio.audio_utils import load_audio
+
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
@@ -82,7 +86,7 @@ def analyze(req: Any) -> SceneAnalysisResponse:
                 type="source",
                 name=f"Audio Source {i + 1}",
                 position={"x": 100, "y": 100 + i * 100},
-                properties={"path": str(path), "channel_count": 2}
+                properties={"path": str(path), "channel_count": 2},
             )
             nodes.append(node)
 
@@ -93,16 +97,15 @@ def analyze(req: Any) -> SceneAnalysisResponse:
                 type="bus",
                 name="Master Bus",
                 position={"x": 400, "y": 200},
-                properties={"gain": 1.0, "pan": 0.0}
+                properties={"gain": 1.0, "pan": 0.0},
             )
             nodes.append(master_bus)
 
             # Connect all sources to master bus
             for source_node in nodes[:-1]:  # All except master
-                connections.append(SceneAnalysisConnection(
-                    source_id=source_node.id,
-                    target_id="master_bus"
-                ))
+                connections.append(
+                    SceneAnalysisConnection(source_id=source_node.id, target_id="master_bus")
+                )
 
             # Create output node
             output_node = SceneAnalysisNode(
@@ -110,20 +113,17 @@ def analyze(req: Any) -> SceneAnalysisResponse:
                 type="output",
                 name="Main Output",
                 position={"x": 600, "y": 200},
-                properties={"sample_rate": 44100, "bit_depth": 24}
+                properties={"sample_rate": 44100, "bit_depth": 24},
             )
             nodes.append(output_node)
-            connections.append(SceneAnalysisConnection(
-                source_id="master_bus",
-                target_id="output"
-            ))
+            connections.append(SceneAnalysisConnection(source_id="master_bus", target_id="output"))
 
         # Basic analysis results
         analysis = {
             "total_sources": len(audio_paths),
             "graph_type": "stereo_mix",
             "estimated_complexity": "simple" if len(audio_paths) <= 4 else "moderate",
-            "routing": "parallel_to_master"
+            "routing": "parallel_to_master",
         }
 
         return SceneAnalysisResponse(
@@ -132,13 +132,13 @@ def analyze(req: Any) -> SceneAnalysisResponse:
                 "version": "1.0",
                 "type": "mix_scene",
                 "node_count": len(nodes),
-                "connection_count": len(connections)
+                "connection_count": len(connections),
             },
             nodes=nodes,
             connections=connections,
             analysis=analysis,
             implementation_status="basic",
-            message="Scene analysis complete. Advanced analysis features require additional audio processing libraries."
+            message="Scene analysis complete. Advanced analysis features require additional audio processing libraries.",
         )
 
     except Exception as e:
@@ -150,6 +150,5 @@ def analyze(req: Any) -> SceneAnalysisResponse:
             connections=[],
             analysis={},
             implementation_status="basic",
-            message=f"Analysis failed: {e!s}"
+            message=f"Analysis failed: {e!s}",
         )
-

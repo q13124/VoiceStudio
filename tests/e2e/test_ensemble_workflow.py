@@ -319,7 +319,9 @@ class TestEnsembleJobPolling:
 
             status = status_response.json()["status"]
             progress = status_response.json().get("progress", 0)
-            print(f"[E2E] Attempt {attempt + 1}/{max_attempts}: status={status}, progress={progress}")
+            print(
+                f"[E2E] Attempt {attempt + 1}/{max_attempts}: status={status}, progress={progress}"
+            )
 
             if status in ["completed", "failed"]:
                 break

@@ -172,10 +172,7 @@ class StudioPage(BasePage):
     # =========================================================================
 
     def synthesize_text(
-        self,
-        text: str,
-        wait_for_completion: bool = True,
-        timeout: float = 30.0
+        self, text: str, wait_for_completion: bool = True, timeout: float = 30.0
     ) -> bool:
         """
         Complete workflow to synthesize text.
@@ -230,7 +227,4 @@ class StudioPage(BasePage):
             "synthesize_button": self.SYNTHESIZE_BUTTON,
         }
 
-        return {
-            name: self.element_exists(auto_id)
-            for name, auto_id in elements.items()
-        }
+        return {name: self.element_exists(auto_id) for name, auto_id in elements.items()}

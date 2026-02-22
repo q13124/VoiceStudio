@@ -121,17 +121,13 @@ async def analyze(req: dict) -> dict:
 
         audio_id = req.get("audio_id")
         if not audio_id or not isinstance(audio_id, str):
-            raise HTTPException(
-                status_code=400, detail="audio_id is required and must be a string"
-            )
+            raise HTTPException(status_code=400, detail="audio_id is required and must be a string")
 
         # Load the audio file using audio_id
         from .voice import _audio_storage
 
         if audio_id not in _audio_storage:
-            raise HTTPException(
-                status_code=404, detail=f"Audio file '{audio_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file '{audio_id}' not found")
 
         audio_path = _audio_storage[audio_id]
         if not os.path.exists(audio_path):
@@ -154,9 +150,7 @@ async def analyze(req: dict) -> dict:
 
             # Extract voice characteristics
             try:
-                voice_chars = audio_utils.analyze_voice_characteristics(
-                    audio, sample_rate
-                )
+                voice_chars = audio_utils.analyze_voice_characteristics(audio, sample_rate)
                 f0_mean = voice_chars.get("f0_mean", 0.0)
                 f0_std = voice_chars.get("f0_std", 0.0)
                 spectral_centroid = voice_chars.get("spectral_centroid", 0.0)
@@ -237,9 +231,7 @@ async def analyze(req: dict) -> dict:
                     score = (1 - valence) * (1 - abs(arousal - 0.5) * 2)
                 elif emotion == "neutral":
                     # Center of valence-arousal space
-                    dist_from_center = np.sqrt(
-                        (valence - 0.5) ** 2 + (arousal - 0.5) ** 2
-                    )
+                    dist_from_center = np.sqrt((valence - 0.5) ** 2 + (arousal - 0.5) ** 2)
                     score = max(0.0, 1.0 - dist_from_center * 2)
                 else:
                     score = 0.0
@@ -343,16 +335,12 @@ async def analyze(req: dict) -> dict:
             )
         except Exception as e:
             logger.error(f"Failed to analyze emotion: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=500, detail=f"Failed to analyze emotion: {e!s}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to analyze emotion: {e!s}")
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to analyze emotion: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to analyze emotion: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to analyze emotion: {e!s}") from e
 
 
 @router.post("/apply")
@@ -414,9 +402,7 @@ async def apply_extended(req: EmotionApplyExtendedRequest) -> ApiOk:
 
         # Get audio file path
         if req.audio_id not in _audio_storage:
-            raise HTTPException(
-                status_code=404, detail=f"Audio file '{req.audio_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file '{req.audio_id}' not found")
 
         audio_path = _audio_storage[req.audio_id]
         if not os.path.exists(audio_path):
@@ -450,16 +436,12 @@ async def apply_extended(req: EmotionApplyExtendedRequest) -> ApiOk:
         }
 
         # Get primary emotion parameters
-        primary_params = emotion_params.get(
-            req.primary_emotion, emotion_params["neutral"]
-        )
+        primary_params = emotion_params.get(req.primary_emotion, emotion_params["neutral"])
         primary_weight = req.primary_intensity / 100.0
 
         # Blend with secondary emotion if provided
         if req.secondary_emotion and req.secondary_intensity > 0:
-            secondary_params = emotion_params.get(
-                req.secondary_emotion, emotion_params["neutral"]
-            )
+            secondary_params = emotion_params.get(req.secondary_emotion, emotion_params["neutral"])
             secondary_weight = req.secondary_intensity / 100.0
             total_weight = primary_weight + secondary_weight
 
@@ -491,9 +473,7 @@ async def apply_extended(req: EmotionApplyExtendedRequest) -> ApiOk:
 
             # Apply pitch shift
             if pitch_shift != 0:
-                audio = librosa.effects.pitch_shift(
-                    audio, sr=sample_rate, n_steps=pitch_shift * 12
-                )
+                audio = librosa.effects.pitch_shift(audio, sr=sample_rate, n_steps=pitch_shift * 12)
 
             # Apply tempo change
             if tempo != 1.0:
@@ -509,18 +489,14 @@ async def apply_extended(req: EmotionApplyExtendedRequest) -> ApiOk:
             sf.write(audio_path, audio, sample_rate)
             logger.info(f"Applied emotion modifications to audio '{req.audio_id}'")
         except ImportError:
-            logger.warning(
-                "librosa not available, emotion prosody modifications skipped"
-            )
+            logger.warning("librosa not available, emotion prosody modifications skipped")
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to apply emotion to audio: {e}", exc_info=True)
         # Return error response instead of silently failing
-        raise HTTPException(
-            status_code=500, detail=f"Failed to apply emotion to audio: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to apply emotion to audio: {e!s}")
 
     return ApiOk()
 
@@ -536,10 +512,7 @@ async def save_preset(request: EmotionPresetCreateRequest):
                 detail=f"Invalid primary emotion: {request.primary_emotion}",
             )
 
-        if (
-            request.secondary_emotion
-            and request.secondary_emotion not in AVAILABLE_EMOTIONS
-        ):
+        if request.secondary_emotion and request.secondary_emotion not in AVAILABLE_EMOTIONS:
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid secondary emotion: {request.secondary_emotion}",
@@ -633,9 +606,7 @@ async def get_preset(preset_id: str):
     """Get a specific emotion preset."""
     try:
         if preset_id not in _emotion_presets:
-            raise HTTPException(
-                status_code=404, detail=f"Emotion preset '{preset_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Emotion preset '{preset_id}' not found")
 
         preset = _emotion_presets[preset_id]
 
@@ -665,9 +636,7 @@ async def update_preset(preset_id: str, request: EmotionPresetUpdateRequest):
     """Update an emotion preset."""
     try:
         if preset_id not in _emotion_presets:
-            raise HTTPException(
-                status_code=404, detail=f"Emotion preset '{preset_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Emotion preset '{preset_id}' not found")
 
         preset = _emotion_presets[preset_id]
 
@@ -736,9 +705,7 @@ async def delete_preset(preset_id: str):
     """Delete an emotion preset."""
     try:
         if preset_id not in _emotion_presets:
-            raise HTTPException(
-                status_code=404, detail=f"Emotion preset '{preset_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Emotion preset '{preset_id}' not found")
 
         del _emotion_presets[preset_id]
         logger.info(f"Deleted emotion preset: {preset_id}")
@@ -756,8 +723,10 @@ async def delete_preset(preset_id: str):
 
 # --- Emotion preview (called by EmotionControlViewModel) ---
 
+
 class EmotionPreviewRequest(BaseModel):
     """Request to preview emotion-adjusted audio."""
+
     text: str | None = None
     audio_id: str | None = None
     emotion: str = "neutral"

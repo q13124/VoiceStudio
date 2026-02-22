@@ -135,6 +135,7 @@ class InstantCloningService:
             # Import speaker encoder
             try:
                 from app.core.engines.speaker_encoder_engine import SpeakerEncoderEngine
+
                 self._speaker_encoder = SpeakerEncoderEngine(
                     backend="resemblyzer",
                     device="cuda",
@@ -180,6 +181,7 @@ class InstantCloningService:
             # Load audio if not provided
             if audio_array is None:
                 from app.core.audio import audio_utils
+
                 audio_array, sample_rate = audio_utils.load_audio(audio_path)
 
             # Calculate duration
@@ -189,9 +191,12 @@ class InstantCloningService:
             if duration >= OPTIMAL_AUDIO_DURATION_SECONDS:
                 duration_score = 1.0
             elif duration >= MIN_AUDIO_DURATION_SECONDS:
-                duration_score = 0.7 + (duration - MIN_AUDIO_DURATION_SECONDS) / (
-                    OPTIMAL_AUDIO_DURATION_SECONDS - MIN_AUDIO_DURATION_SECONDS
-                ) * 0.3
+                duration_score = (
+                    0.7
+                    + (duration - MIN_AUDIO_DURATION_SECONDS)
+                    / (OPTIMAL_AUDIO_DURATION_SECONDS - MIN_AUDIO_DURATION_SECONDS)
+                    * 0.3
+                )
             elif duration >= 3.0:
                 duration_score = 0.3 + (duration - 3.0) / (MIN_AUDIO_DURATION_SECONDS - 3.0) * 0.4
                 recommendations.append(
@@ -207,7 +212,7 @@ class InstantCloningService:
             audio_mono = np.mean(audio_array, axis=1) if len(audio_array.shape) > 1 else audio_array
 
             # Calculate audio quality metrics
-            np.sqrt(np.mean(audio_mono ** 2))
+            np.sqrt(np.mean(audio_mono**2))
             max_amplitude = np.max(np.abs(audio_mono))
 
             # Check for clipping
@@ -223,6 +228,7 @@ class InstantCloningService:
             # Estimate noise level (using high-frequency energy ratio)
             try:
                 from scipy import signal
+
                 freqs, psd = signal.welch(audio_mono, sample_rate, nperseg=1024)
                 high_freq_mask = freqs > 4000
                 low_freq_mask = (freqs >= 80) & (freqs <= 4000)
@@ -234,7 +240,9 @@ class InstantCloningService:
                 noise_level = min(1.0, noise_ratio * 2)
 
                 if noise_level > 0.5:
-                    recommendations.append("High background noise detected. Record in quieter environment.")
+                    recommendations.append(
+                        "High background noise detected. Record in quieter environment."
+                    )
             except Exception as e:
                 # GAP-PY-001: Noise analysis failed, using default
                 logger.debug(f"Noise level analysis failed: {e}")
@@ -247,7 +255,7 @@ class InstantCloningService:
 
                 zcr_values = []
                 for i in range(0, len(audio_mono) - frame_length, hop_length):
-                    frame = audio_mono[i:i + frame_length]
+                    frame = audio_mono[i : i + frame_length]
                     zcr = np.sum(np.abs(np.diff(np.sign(frame)))) / (2 * frame_length)
                     zcr_values.append(zcr)
 
@@ -281,11 +289,11 @@ class InstantCloningService:
             }
 
             overall_score = (
-                weights["duration"] * duration_score +
-                weights["audio_quality"] * audio_quality +
-                weights["voice_clarity"] * voice_clarity +
-                weights["embedding"] * embedding_confidence +
-                weights["noise"] * (1.0 - noise_level)
+                weights["duration"] * duration_score
+                + weights["audio_quality"] * audio_quality
+                + weights["voice_clarity"] * voice_clarity
+                + weights["embedding"] * embedding_confidence
+                + weights["noise"] * (1.0 - noise_level)
             )
 
             # Determine estimated fidelity
@@ -414,8 +422,7 @@ class InstantCloningService:
 
             # Generate preview using zero-shot cloning
             preview_audio = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: self._synthesize_preview(audio_path, preview_text, engine)
+                None, lambda: self._synthesize_preview(audio_path, preview_text, engine)
             )
 
             processing_time = (time.perf_counter() - start_time) * 1000
@@ -453,6 +460,7 @@ class InstantCloningService:
             # Use XTTS or Chatterbox for zero-shot synthesis
             if engine == "xtts":
                 from app.core.engines.xtts_engine import XTTSEngine
+
                 synth_engine = XTTSEngine()
                 synth_engine.initialize()
                 result = synth_engine.synthesize(
@@ -464,6 +472,7 @@ class InstantCloningService:
                     return str(output_path)
             elif engine == "chatterbox":
                 from app.core.engines.chatterbox_engine import ChatterboxEngine
+
                 synth_engine = ChatterboxEngine()
                 synth_engine.initialize()
                 result = synth_engine.synthesize(
@@ -539,6 +548,7 @@ class InstantCloningService:
 
             # Step 3: Create voice profile
             import uuid
+
             profile_id = str(uuid.uuid4())
 
             # Step 4: Generate preview if requested

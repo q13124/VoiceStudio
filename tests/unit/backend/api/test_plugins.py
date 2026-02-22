@@ -37,11 +37,8 @@ class TestPluginsFunctions:
     def test_load_all_plugins_function_exists(self):
         """Test load_all_plugins function exists."""
         if hasattr(plugins, "load_all_plugins"):
-            assert callable(
-                plugins.load_all_plugins
-            ), "load_all_plugins should be callable"
+            assert callable(plugins.load_all_plugins), "load_all_plugins should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

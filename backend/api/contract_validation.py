@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ContractValidationResult:
     """Result of contract validation."""
+
     valid: bool = True
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -58,7 +59,8 @@ def validate_openapi_schema(schema: dict[str, Any]) -> ContractValidationResult:
     # Validate paths
     paths = schema.get("paths", {})
     result.endpoint_count = sum(
-        1 for path in paths.values()
+        1
+        for path in paths.values()
         for method in path
         if method in ["get", "post", "put", "delete", "patch"]
     )
@@ -73,9 +75,7 @@ def validate_openapi_schema(schema: dict[str, Any]) -> ContractValidationResult:
                 if not isinstance(details, dict):
                     continue
                 if not details.get("operationId"):
-                    result.warnings.append(
-                        f"Missing operationId for {method.upper()} {path}"
-                    )
+                    result.warnings.append(f"Missing operationId for {method.upper()} {path}")
 
                 # Check response definitions
                 responses = details.get("responses", {})
@@ -97,9 +97,7 @@ def validate_openapi_schema(schema: dict[str, Any]) -> ContractValidationResult:
             continue
         if "type" not in schema_def and "$ref" not in schema_def and "allOf" not in schema_def:
             if "properties" not in schema_def and "anyOf" not in schema_def:
-                result.warnings.append(
-                    f"Schema '{schema_name}' has no type definition"
-                )
+                result.warnings.append(f"Schema '{schema_name}' has no type definition")
 
     return result
 
@@ -162,9 +160,7 @@ def validate_schema_at_startup(
                 logger.warning(f"Failed to export OpenAPI schema: {e}")
 
         if not result.valid and fail_on_error:
-            raise RuntimeError(
-                f"OpenAPI schema validation failed: {result.errors}"
-            )
+            raise RuntimeError(f"OpenAPI schema validation failed: {result.errors}")
 
         return result.valid
 
@@ -211,14 +207,10 @@ def compare_with_exported_schema(
         added = current_paths - exported_paths
 
         if removed:
-            logger.warning(
-                f"[Schema Drift] Endpoints removed since last export: {removed}"
-            )
+            logger.warning(f"[Schema Drift] Endpoints removed since last export: {removed}")
 
         if added:
-            logger.info(
-                f"[Schema Drift] New endpoints since last export: {added}"
-            )
+            logger.info(f"[Schema Drift] New endpoints since last export: {added}")
 
         # Compare schemas
         exported_schemas = set(exported.get("components", {}).get("schemas", {}).keys())
@@ -228,14 +220,10 @@ def compare_with_exported_schema(
         added_schemas = current_schemas - exported_schemas
 
         if removed_schemas:
-            logger.warning(
-                f"[Schema Drift] Schemas removed since last export: {removed_schemas}"
-            )
+            logger.warning(f"[Schema Drift] Schemas removed since last export: {removed_schemas}")
 
         if added_schemas:
-            logger.info(
-                f"[Schema Drift] New schemas since last export: {added_schemas}"
-            )
+            logger.info(f"[Schema Drift] New schemas since last export: {added_schemas}")
 
         has_drift = bool(removed or removed_schemas)
         if has_drift:

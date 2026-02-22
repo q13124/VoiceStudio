@@ -201,15 +201,9 @@ class ESpeakNGEngine(EngineProtocol):
             "misses": 0,
         }
 
-    def _find_executable(
-        self, name: str, custom_path: str | None = None
-    ) -> str | None:
+    def _find_executable(self, name: str, custom_path: str | None = None) -> str | None:
         """Find executable in PATH or custom path."""
-        if (
-            custom_path
-            and os.path.isfile(custom_path)
-            and os.access(custom_path, os.X_OK)
-        ):
+        if custom_path and os.path.isfile(custom_path) and os.access(custom_path, os.X_OK):
             return custom_path
 
         if custom_path and os.path.isdir(custom_path):
@@ -381,18 +375,14 @@ class ESpeakNGEngine(EngineProtocol):
                         )
                         return None
                     if calculate_quality:
-                        return cached_result["audio"], cached_result.get(
-                            "quality_metrics", {}
-                        )
+                        return cached_result["audio"], cached_result.get("quality_metrics", {})
                     return cached_result["audio"]
                 else:
                     self._cache_stats["misses"] += 1
 
             # Create temporary output file (use reusable temp dir if available)
             temp_dir = self._temp_dir if self._temp_dir else None
-            with tempfile.NamedTemporaryFile(
-                suffix=".wav", delete=False, dir=temp_dir
-            ) as tmp_file:
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False, dir=temp_dir) as tmp_file:
                 tmp_output = tmp_file.name
 
             try:
@@ -449,9 +439,7 @@ class ESpeakNGEngine(EngineProtocol):
                 if self.enable_cache:
                     # Process quality if needed for caching
                     if calculate_quality:
-                        quality_metrics_result = self._calculate_quality_metrics(
-                            audio, sample_rate
-                        )
+                        quality_metrics_result = self._calculate_quality_metrics(audio, sample_rate)
 
                     # Manage cache size - remove oldest entries if cache is full
                     if len(self._synthesis_cache) >= self._cache_max_size:
@@ -464,9 +452,7 @@ class ESpeakNGEngine(EngineProtocol):
                     self._synthesis_cache[cache_key] = {
                         "audio": audio.copy(),
                         "sample_rate": sample_rate,
-                        "quality_metrics": (
-                            quality_metrics_result if calculate_quality else {}
-                        ),
+                        "quality_metrics": (quality_metrics_result if calculate_quality else {}),
                     }
                     self._synthesis_cache.move_to_end(cache_key)  # LRU update
 
@@ -539,9 +525,7 @@ class ESpeakNGEngine(EngineProtocol):
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(
-                            audio, sample_rate, ref_audio, ref_sr
-                        )
+                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -571,9 +555,7 @@ class ESpeakNGEngine(EngineProtocol):
                 logger.warning(f"Quality enhancement failed: {e}")
 
         if calculate:
-            quality_metrics = self._calculate_quality_metrics(
-                audio, sample_rate, reference_audio
-            )
+            quality_metrics = self._calculate_quality_metrics(audio, sample_rate, reference_audio)
 
         if calculate:
             return audio, quality_metrics
@@ -591,11 +573,7 @@ class ESpeakNGEngine(EngineProtocol):
         """Get available languages."""
         if not self._initialized and not self.initialize():
             return []
-        return (
-            self.available_languages
-            if self.available_languages
-            else self.SUPPORTED_LANGUAGES
-        )
+        return self.available_languages if self.available_languages else self.SUPPORTED_LANGUAGES
 
     def batch_synthesize(
         self,
@@ -628,9 +606,7 @@ class ESpeakNGEngine(EngineProtocol):
         if output_paths is None:
             output_paths = [None] * len(text_list)
         elif len(output_paths) != len(text_list):
-            logger.warning(
-                "output_paths length doesn't match text_list, using None for extras"
-            )
+            logger.warning("output_paths length doesn't match text_list, using None for extras")
             output_paths = output_paths[: len(text_list)] + [None] * (
                 len(text_list) - len(output_paths)
             )
@@ -654,13 +630,9 @@ class ESpeakNGEngine(EngineProtocol):
 
                         metrics = get_engine_metrics()
                         duration = time.perf_counter() - start_time
-                        metrics.record_synthesis_time(
-                            "espeak_ng", duration, cached=False
-                        )
+                        metrics.record_synthesis_time("espeak_ng", duration, cached=False)
                     except Exception:
-                        logger.debug(
-                            "Performance metrics unavailable for espeak_ng batch."
-                        )
+                        logger.debug("Performance metrics unavailable for espeak_ng batch.")
                 return result
             except Exception as e:
                 logger.error(f"Batch synthesis failed for text: {e}")
@@ -702,9 +674,7 @@ class ESpeakNGEngine(EngineProtocol):
 
                     temp_manager = get_temp_file_manager()
                     temp_manager.remove_temp_file(self._temp_dir, force=True)
-                    logger.debug(
-                        f"Removed temp directory via manager: {self._temp_dir}"
-                    )
+                    logger.debug(f"Removed temp directory via manager: {self._temp_dir}")
                 except Exception:
                     # Fallback to direct removal
                     if os.path.exists(self._temp_dir):
@@ -732,11 +702,7 @@ class ESpeakNGEngine(EngineProtocol):
     def get_cache_stats(self) -> dict[str, int | float | str]:
         """Get cache statistics (enhanced)."""
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
-        hit_rate = (
-            (self._cache_stats["hits"] / total_requests * 100)
-            if total_requests > 0
-            else 0.0
-        )
+        hit_rate = (self._cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0.0
         return {
             "cache_size": len(self._synthesis_cache),
             "max_cache_size": self._cache_max_size,

@@ -81,7 +81,7 @@ class TestTranscriptionBasicAPI:
                 response = requests.post(
                     f"{BACKEND_URL}/api/transcribe",
                     files=files,
-                    timeout=120  # Transcription can take time
+                    timeout=120,  # Transcription can take time
                 )
                 tracer.api_call("POST", "/api/transcribe", response)
 
@@ -100,7 +100,9 @@ class TestTranscriptionBasicAPI:
                     else:
                         tracer.step("Transcription returned but no text/job")
                 else:
-                    tracer.step(f"Transcription returned {response.status_code}: {response.text[:200]}")
+                    tracer.step(
+                        f"Transcription returned {response.status_code}: {response.text[:200]}"
+                    )
 
         except Exception as e:
             tracer.error(e, "Transcription failed")
@@ -119,10 +121,7 @@ class TestTranscriptionBasicAPI:
                 files = {"file": (test_audio.name, f, "audio/wav")}
                 data = {"language": "en"}
                 response = requests.post(
-                    f"{BACKEND_URL}/api/transcribe",
-                    files=files,
-                    data=data,
-                    timeout=120
+                    f"{BACKEND_URL}/api/transcribe", files=files, data=data, timeout=120
                 )
                 tracer.api_call("POST", "/api/transcribe (lang=en)", response)
 
@@ -191,10 +190,7 @@ class TestSTTEngineSelection:
                     files = {"file": (test_audio.name, f, "audio/wav")}
                     data = {"engine": engine_id}
                     response = requests.post(
-                        f"{BACKEND_URL}/api/transcribe",
-                        files=files,
-                        data=data,
-                        timeout=120
+                        f"{BACKEND_URL}/api/transcribe", files=files, data=data, timeout=120
                     )
                     tracer.api_call("POST", f"/api/transcribe (engine={engine_id})", response)
 
@@ -228,9 +224,7 @@ class TestLanguageDetection:
 
                 # Try dedicated language detection endpoint
                 response = requests.post(
-                    f"{BACKEND_URL}/api/audio/detect-language",
-                    files=files,
-                    timeout=60
+                    f"{BACKEND_URL}/api/audio/detect-language", files=files, timeout=60
                 )
                 tracer.api_call("POST", "/api/audio/detect-language", response)
 
@@ -246,10 +240,7 @@ class TestLanguageDetection:
                         files2 = {"file": (test_audio.name, f2, "audio/wav")}
                         data = {"detect_language": True}
                         response2 = requests.post(
-                            f"{BACKEND_URL}/api/transcribe",
-                            files=files2,
-                            data=data,
-                            timeout=120
+                            f"{BACKEND_URL}/api/transcribe", files=files2, data=data, timeout=120
                         )
                         tracer.api_call("POST", "/api/transcribe (detect_language)", response2)
 
@@ -457,10 +448,7 @@ class TestTranscriptionE2E:
             files = {"file": (test_audio.name, f, "audio/wav")}
             data = {"engine": selected_engine, "language": "en"}
             response = requests.post(
-                f"{BACKEND_URL}/api/transcribe",
-                files=files,
-                data=data,
-                timeout=120
+                f"{BACKEND_URL}/api/transcribe", files=files, data=data, timeout=120
             )
             tracer.api_call("POST", "/api/transcribe", response)
 
@@ -497,9 +485,7 @@ class TestTranscriptionE2E:
                 with open(audio_file, "rb") as f:
                     files = {"file": (audio_file.name, f, "audio/wav")}
                     response = requests.post(
-                        f"{BACKEND_URL}/api/transcribe",
-                        files=files,
-                        timeout=120
+                        f"{BACKEND_URL}/api/transcribe", files=files, timeout=120
                     )
                     tracer.api_call("POST", f"/api/transcribe ({audio_file.name})", response)
 
@@ -511,7 +497,9 @@ class TestTranscriptionE2E:
             except Exception as e:
                 tracer.step(f"Failed to transcribe {audio_file.name}: {e}")
 
-        tracer.step(f"Batch transcription complete: {len(results)}/{len(existing_files)} successful")
+        tracer.step(
+            f"Batch transcription complete: {len(results)}/{len(existing_files)} successful"
+        )
         if len(results) == len(existing_files):
             tracer.success("Batch transcription works")
 

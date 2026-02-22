@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.audio import pipeline_optimized
 except ImportError:
-    pytest.skip(
-        "Could not import pipeline_optimized", allow_module_level=True
-    )
+    pytest.skip("Could not import pipeline_optimized", allow_module_level=True)
 
 
 class TestPipelineOptimizedImports:
@@ -25,9 +23,7 @@ class TestPipelineOptimizedImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            pipeline_optimized is not None
-        ), "Failed to import pipeline_optimized module"
+        assert pipeline_optimized is not None, "Failed to import pipeline_optimized module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
@@ -46,9 +42,7 @@ class TestPipelineOptimizedClasses:
         """Test OptimizedPipeline class exists."""
         if hasattr(pipeline_optimized, "OptimizedPipeline"):
             cls = pipeline_optimized.OptimizedPipeline
-            assert isinstance(
-                cls, type
-            ), "OptimizedPipeline should be a class"
+            assert isinstance(cls, type), "OptimizedPipeline should be a class"
 
 
 if __name__ == "__main__":

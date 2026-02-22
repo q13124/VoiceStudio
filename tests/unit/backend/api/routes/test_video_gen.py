@@ -33,9 +33,7 @@ class TestVideoGenRouteHandlers:
     def test_generate_video_handler_exists(self):
         """Test generate_video handler exists."""
         if hasattr(video_gen, "generate_video"):
-            assert callable(
-                video_gen.generate_video
-            ), "generate_video is not callable"
+            assert callable(video_gen.generate_video), "generate_video is not callable"
 
 
 class TestVideoGenRouter:
@@ -56,4 +54,3 @@ class TestVideoGenRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

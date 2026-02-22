@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 r"""
@@ -67,9 +66,7 @@ except ImportError:
     enhance_voice_quality = None
     normalize_lufs = None
     remove_artifacts = None
-    logger.warning(
-        "Audio utilities not available. Quality enhancement will be limited."
-    )
+    logger.warning("Audio utilities not available. Quality enhancement will be limited.")
 
 # Try importing quality metrics
 try:
@@ -79,9 +76,7 @@ try:
 except ImportError:
     HAS_QUALITY_METRICS = False
     calculate_all_metrics = None
-    logger.warning(
-        "Quality metrics not available. Quality calculation will be limited."
-    )
+    logger.warning("Quality metrics not available. Quality calculation will be limited.")
 
 # Import base protocol
 try:
@@ -142,14 +137,10 @@ class SoVITSSVCEngine(EngineProtocol):
         if checkpoint_path:
             self.checkpoint_path = Path(checkpoint_path)
         elif project_name:
-            self.checkpoint_path = (
-                Path(models_root) / "checkpoints" / project_name / "model.pth"
-            )
+            self.checkpoint_path = Path(models_root) / "checkpoints" / project_name / "model.pth"
         else:
             # Default to MyVoiceProj
-            self.checkpoint_path = (
-                Path(models_root) / "checkpoints" / "MyVoiceProj" / "model.pth"
-            )
+            self.checkpoint_path = Path(models_root) / "checkpoints" / "MyVoiceProj" / "model.pth"
 
         if config_path:
             self.config_path = Path(config_path)
@@ -212,8 +203,7 @@ class SoVITSSVCEngine(EngineProtocol):
             if self.infer_command:
                 self._initialized = True
                 logger.info(
-                    "So-VITS-SVC inference command configured; "
-                    "skipping torch checkpoint load."
+                    "So-VITS-SVC inference command configured; " "skipping torch checkpoint load."
                 )
                 return True
 
@@ -298,9 +288,7 @@ class SoVITSSVCEngine(EngineProtocol):
                 raise RuntimeError(
                     f"So-VITS-SVC inference failed (exit {result.returncode}): {details}"
                 )
-            raise RuntimeError(
-                f"So-VITS-SVC inference failed (exit {result.returncode})."
-            )
+            raise RuntimeError(f"So-VITS-SVC inference failed (exit {result.returncode}).")
 
     def convert_voice(
         self,
@@ -378,9 +366,7 @@ class SoVITSSVCEngine(EngineProtocol):
             elif isinstance(source_audio, (str, Path)):
                 input_path = str(source_audio)
             else:
-                logger.error(
-                    "So-VITS-SVC inference requires soundfile to write temp input."
-                )
+                logger.error("So-VITS-SVC inference requires soundfile to write temp input.")
                 return None
 
             infer_output_path = output_path or tempfile.mktemp(suffix=".wav")
@@ -580,9 +566,7 @@ class SoVITSSVCEngine(EngineProtocol):
             try:
                 # Advanced quality enhancement pipeline (matching RVC pattern)
                 # Step 1: Voice quality enhancement
-                audio = enhance_voice_quality(
-                    audio, sample_rate, normalize=True, denoise=True
-                )
+                audio = enhance_voice_quality(audio, sample_rate, normalize=True, denoise=True)
 
                 # Step 2: LUFS normalization for broadcast standards
                 audio = normalize_lufs(audio, sample_rate, target_lufs=-23.0)
@@ -606,22 +590,16 @@ class SoVITSSVCEngine(EngineProtocol):
                     try:
                         # Calculate spectral quality indicators
                         spectral_centroid = np.mean(
-                            librosa.feature.spectral_centroid(y=audio, sr=sample_rate)[
-                                0
-                            ]
+                            librosa.feature.spectral_centroid(y=audio, sr=sample_rate)[0]
                         )
                         spectral_rolloff = np.mean(
                             librosa.feature.spectral_rolloff(y=audio, sr=sample_rate)[0]
                         )
-                        zero_crossing_rate = np.mean(
-                            librosa.feature.zero_crossing_rate(audio)[0]
-                        )
+                        zero_crossing_rate = np.mean(librosa.feature.zero_crossing_rate(audio)[0])
 
                         quality_metrics["spectral_centroid"] = float(spectral_centroid)
                         quality_metrics["spectral_rolloff"] = float(spectral_rolloff)
-                        quality_metrics["zero_crossing_rate"] = float(
-                            zero_crossing_rate
-                        )
+                        quality_metrics["zero_crossing_rate"] = float(zero_crossing_rate)
                     except Exception as e:
                         logger.debug(f"Spectral quality indicators failed: {e}")
 
@@ -639,9 +617,7 @@ class SoVITSSVCEngine(EngineProtocol):
         info.update(
             {
                 "engine_type": "So-VITS-SVC 4.0",
-                "checkpoint_path": (
-                    str(self.checkpoint_path) if self.checkpoint_path else None
-                ),
+                "checkpoint_path": (str(self.checkpoint_path) if self.checkpoint_path else None),
                 "config_path": str(self.config_path) if self.config_path else None,
                 "sample_rate": self.sample_rate,
                 "inference_configured": bool(self.infer_command),

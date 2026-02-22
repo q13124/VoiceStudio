@@ -36,4 +36,3 @@ def test_find_ffmpeg_uses_path_config_first(tmp_path: Path, monkeypatch):
         result = find_ffmpeg()
         # path_config takes precedence over env var
         assert result == str(fake_config)
-

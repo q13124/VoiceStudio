@@ -63,9 +63,7 @@ def _get_todo_database():
 
             # Initialize schema
             _init_todo_database(_todo_db)
-            logger.info(
-                f"Todo database initialized with query optimizer: {_todo_db_path}"
-            )
+            logger.info(f"Todo database initialized with query optimizer: {_todo_db_path}")
             return _todo_db
         except ImportError:
             # Fallback to direct SQLite
@@ -79,9 +77,7 @@ def _get_todo_database():
 
             # Initialize schema
             _init_todo_database_simple(_todo_db)
-            logger.info(
-                f"Todo database initialized with direct SQLite: {_todo_db_path}"
-            )
+            logger.info(f"Todo database initialized with direct SQLite: {_todo_db_path}")
             return _todo_db
     except Exception as e:
         logger.error(f"Failed to initialize todo database: {e}")
@@ -152,15 +148,9 @@ def _init_todo_database_simple(conn):
 
         # Create indexes
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_todos_status ON todos(status)")
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_todos_priority ON todos(priority)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_todos_category ON todos(category)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_todos_created_at ON todos(created_at)"
-        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_todos_priority ON todos(priority)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_todos_category ON todos(category)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_todos_created_at ON todos(created_at)")
 
         conn.commit()
         logger.info("Todo database schema initialized (simple)")
@@ -184,8 +174,7 @@ def _load_todo_from_db(todo_id: str) -> Optional[Todo]:
     db = _get_todo_database()
     if not db or not _use_database:
         raise HTTPException(
-            status_code=503,
-            detail="Todo service unavailable. Database not initialized."
+            status_code=503, detail="Todo service unavailable. Database not initialized."
         )
 
     try:
@@ -211,10 +200,7 @@ def _load_todo_from_db(todo_id: str) -> Optional[Todo]:
         raise  # Re-raise HTTP exceptions
     except Exception as e:
         logger.error(f"Failed to load todo from database: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Database query failed: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Database query failed: {e!s}")
 
 
 def _save_todo_to_db(todo: Todo):
@@ -226,8 +212,7 @@ def _save_todo_to_db(todo: Todo):
     db = _get_todo_database()
     if not db or not _use_database:
         raise HTTPException(
-            status_code=503,
-            detail="Todo service unavailable. Database not initialized."
+            status_code=503, detail="Todo service unavailable. Database not initialized."
         )
 
     try:
@@ -293,10 +278,7 @@ def _save_todo_to_db(todo: Todo):
         raise
     except Exception as e:
         logger.error(f"Failed to save todo to database: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to save todo: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to save todo: {e!s}")
 
 
 def _delete_todo_from_db(todo_id: str) -> bool:
@@ -308,8 +290,7 @@ def _delete_todo_from_db(todo_id: str) -> bool:
     db = _get_todo_database()
     if not db or not _use_database:
         raise HTTPException(
-            status_code=503,
-            detail="Todo service unavailable. Database not initialized."
+            status_code=503, detail="Todo service unavailable. Database not initialized."
         )
 
     try:
@@ -333,10 +314,7 @@ def _delete_todo_from_db(todo_id: str) -> bool:
         raise
     except Exception as e:
         logger.error(f"Failed to delete todo from database: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to delete todo: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to delete todo: {e!s}")
 
 
 def _list_todos_from_db(
@@ -486,9 +464,7 @@ async def list_todos(
 ):
     """List all todos with optional filtering."""
     try:
-        todos = _list_todos_from_db(
-            status=status, priority=priority, category=category, tag=tag
-        )
+        todos = _list_todos_from_db(status=status, priority=priority, category=category, tag=tag)
 
         return [
             TodoResponse(
@@ -516,9 +492,7 @@ async def list_todos(
 
 
 @router.get("/{todo_id}", response_model=TodoResponse)
-@cache_response(
-    ttl=60
-)  # Cache for 60 seconds (individual todos change less frequently)
+@cache_response(ttl=60)  # Cache for 60 seconds (individual todos change less frequently)
 async def get_todo(todo_id: str):
     """Get a specific todo."""
     try:
@@ -843,9 +817,7 @@ async def export_todos(format: str = "json"):
             return Response(
                 content=output.getvalue(),
                 media_type="text/csv",
-                headers={
-                    "Content-Disposition": ('attachment; filename="todos_export.csv"')
-                },
+                headers={"Content-Disposition": ('attachment; filename="todos_export.csv"')},
             )
         else:
             # JSON format
@@ -858,9 +830,7 @@ async def export_todos(format: str = "json"):
             return Response(
                 content=json.dumps(todos_data, indent=2),
                 media_type="application/json",
-                headers={
-                    "Content-Disposition": ('attachment; filename="todos_export.json"')
-                },
+                headers={"Content-Disposition": ('attachment; filename="todos_export.json"')},
             )
 
     except Exception as e:

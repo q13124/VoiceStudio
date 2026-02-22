@@ -163,9 +163,7 @@ class TestMixerSendsEndpoints:
             "volume": 0.7,
         }
 
-        response = client.put(
-            f"/api/mixer/state/test_project/sends/{send_id}", json=update_data
-        )
+        response = client.put(f"/api/mixer/state/test_project/sends/{send_id}", json=update_data)
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Updated Send"
@@ -212,9 +210,7 @@ class TestMixerReturnsEndpoints:
             "is_enabled": True,
         }
 
-        response = client.post(
-            "/api/mixer/state/test_project/returns", json=return_data
-        )
+        response = client.post("/api/mixer/state/test_project/returns", json=return_data)
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Reverb Return"
@@ -295,9 +291,7 @@ class TestMixerSubGroupsEndpoints:
             "channel_ids": [],
         }
 
-        response = client.post(
-            "/api/mixer/state/test_project/subgroups", json=subgroup_data
-        )
+        response = client.post("/api/mixer/state/test_project/subgroups", json=subgroup_data)
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Drums Subgroup"
@@ -353,9 +347,7 @@ class TestMixerSubGroupsEndpoints:
         }
         client.post("/api/mixer/state/test_project/subgroups", json=create_data)
 
-        response = client.delete(
-            f"/api/mixer/state/test_project/subgroups/{subgroup_id}"
-        )
+        response = client.delete(f"/api/mixer/state/test_project/subgroups/{subgroup_id}")
         assert response.status_code == 200
 
 
@@ -552,9 +544,7 @@ class TestMixerPresetsEndpoints:
             "modified": now,
         }
 
-        response = client.put(
-            f"/api/mixer/presets/test_project/{preset_id}", json=update_data
-        )
+        response = client.put(f"/api/mixer/presets/test_project/{preset_id}", json=update_data)
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "Updated Preset"
@@ -659,7 +649,14 @@ class TestMixerMetersEndpoints:
         # Create project state first (simulate endpoint requires existing project)
         mixer._mixer_states["test_project"] = {
             "channels": [
-                {"id": "ch1", "name": "Channel 1", "gain": 0, "pan": 0, "mute": False, "solo": False}
+                {
+                    "id": "ch1",
+                    "name": "Channel 1",
+                    "gain": 0,
+                    "pan": 0,
+                    "mute": False,
+                    "solo": False,
+                }
             ],
             "master": {"gain": 0, "mute": False},
             "sends": [],

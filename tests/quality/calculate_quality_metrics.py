@@ -26,7 +26,7 @@ def count_lines_of_code(directory: Path, extensions: list[str]) -> dict[str, int
         for file_path in directory.rglob(f"*.{ext}"):
             if should_include_file(file_path):
                 try:
-                    with open(file_path, encoding='utf-8', errors='ignore') as f:
+                    with open(file_path, encoding="utf-8", errors="ignore") as f:
                         lines = f.readlines()
                         counts[ext] += len([l for l in lines if l.strip()])
                 except:
@@ -38,8 +38,18 @@ def count_lines_of_code(directory: Path, extensions: list[str]) -> dict[str, int
 def should_include_file(file_path: Path) -> bool:
     """Determine if file should be included in metrics."""
     exclude_dirs = [
-        "__pycache__", ".git", "node_modules", ".venv", "venv", "env",
-        "build", "dist", ".pytest_cache", ".mypy_cache", "bin", "obj"
+        "__pycache__",
+        ".git",
+        "node_modules",
+        ".venv",
+        "venv",
+        "env",
+        "build",
+        "dist",
+        ".pytest_cache",
+        ".mypy_cache",
+        "bin",
+        "obj",
     ]
 
     return all(exclude_dir not in str(file_path) for exclude_dir in exclude_dirs)
@@ -54,10 +64,24 @@ def count_test_files() -> dict[str, int]:
 
     counts = {
         "total": len(list(tests_dir.rglob("test_*.py"))),
-        "unit": len(list((tests_dir / "unit").rglob("test_*.py"))) if (tests_dir / "unit").exists() else 0,
-        "integration": len(list((tests_dir / "integration").rglob("test_*.py"))) if (tests_dir / "integration").exists() else 0,
-        "e2e": len(list((tests_dir / "e2e").rglob("test_*.py"))) if (tests_dir / "e2e").exists() else 0,
-        "performance": len(list((tests_dir / "performance").rglob("test_*.py"))) if (tests_dir / "performance").exists() else 0,
+        "unit": (
+            len(list((tests_dir / "unit").rglob("test_*.py")))
+            if (tests_dir / "unit").exists()
+            else 0
+        ),
+        "integration": (
+            len(list((tests_dir / "integration").rglob("test_*.py")))
+            if (tests_dir / "integration").exists()
+            else 0
+        ),
+        "e2e": (
+            len(list((tests_dir / "e2e").rglob("test_*.py"))) if (tests_dir / "e2e").exists() else 0
+        ),
+        "performance": (
+            len(list((tests_dir / "performance").rglob("test_*.py")))
+            if (tests_dir / "performance").exists()
+            else 0
+        ),
     }
 
     return counts
@@ -86,20 +110,9 @@ def count_backend_routes() -> int:
 def calculate_test_coverage() -> dict[str, Any]:
     """Calculate test coverage metrics."""
     coverage = {
-        "engines": {
-            "total": count_engines(),
-            "tested": 0,
-            "coverage_percent": 0.0
-        },
-        "backend_routes": {
-            "total": count_backend_routes(),
-            "tested": 0,
-            "coverage_percent": 0.0
-        },
-        "overall": {
-            "test_files": count_test_files()["total"],
-            "coverage_percent": 0.0
-        }
+        "engines": {"total": count_engines(), "tested": 0, "coverage_percent": 0.0},
+        "backend_routes": {"total": count_backend_routes(), "tested": 0, "coverage_percent": 0.0},
+        "overall": {"test_files": count_test_files()["total"], "coverage_percent": 0.0},
     }
 
     test_files = count_test_files()
@@ -107,12 +120,20 @@ def calculate_test_coverage() -> dict[str, Any]:
     routes_total = count_backend_routes()
 
     if engines_total > 0:
-        coverage["engines"]["tested"] = min(engines_total, test_files["integration"] + test_files["unit"])
-        coverage["engines"]["coverage_percent"] = (coverage["engines"]["tested"] / engines_total) * 100
+        coverage["engines"]["tested"] = min(
+            engines_total, test_files["integration"] + test_files["unit"]
+        )
+        coverage["engines"]["coverage_percent"] = (
+            coverage["engines"]["tested"] / engines_total
+        ) * 100
 
     if routes_total > 0:
-        coverage["backend_routes"]["tested"] = min(routes_total, test_files["integration"] + test_files["unit"])
-        coverage["backend_routes"]["coverage_percent"] = (coverage["backend_routes"]["tested"] / routes_total) * 100
+        coverage["backend_routes"]["tested"] = min(
+            routes_total, test_files["integration"] + test_files["unit"]
+        )
+        coverage["backend_routes"]["coverage_percent"] = (
+            coverage["backend_routes"]["tested"] / routes_total
+        ) * 100
 
     if engines_total + routes_total > 0:
         total_tested = coverage["engines"]["tested"] + coverage["backend_routes"]["tested"]
@@ -147,9 +168,15 @@ def generate_quality_report(metrics: dict[str, Any]) -> str:
     report_lines.append("")
 
     report_lines.append("Test Coverage:")
-    report_lines.append(f"  Engines: {metrics['coverage']['engines']['tested']}/{metrics['coverage']['engines']['total']} ({metrics['coverage']['engines']['coverage_percent']:.1f}%)")
-    report_lines.append(f"  Backend Routes: {metrics['coverage']['backend_routes']['tested']}/{metrics['coverage']['backend_routes']['total']} ({metrics['coverage']['backend_routes']['coverage_percent']:.1f}%)")
-    report_lines.append(f"  Overall Coverage: {metrics['coverage']['overall']['coverage_percent']:.1f}%")
+    report_lines.append(
+        f"  Engines: {metrics['coverage']['engines']['tested']}/{metrics['coverage']['engines']['total']} ({metrics['coverage']['engines']['coverage_percent']:.1f}%)"
+    )
+    report_lines.append(
+        f"  Backend Routes: {metrics['coverage']['backend_routes']['tested']}/{metrics['coverage']['backend_routes']['total']} ({metrics['coverage']['backend_routes']['coverage_percent']:.1f}%)"
+    )
+    report_lines.append(
+        f"  Overall Coverage: {metrics['coverage']['overall']['coverage_percent']:.1f}%"
+    )
     report_lines.append("")
 
     report_lines.append("Component Counts:")
@@ -174,21 +201,18 @@ def main():
         "code": code_metrics,
         "tests": test_metrics,
         "coverage": coverage_metrics,
-        "components": {
-            "engines": count_engines(),
-            "backend_routes": count_backend_routes()
-        }
+        "components": {"engines": count_engines(), "backend_routes": count_backend_routes()},
     }
 
     report = generate_quality_report(metrics)
     print(report)
 
     report_file = project_root / "quality_metrics_report.txt"
-    with open(report_file, 'w', encoding='utf-8') as f:
+    with open(report_file, "w", encoding="utf-8") as f:
         f.write(report)
 
     json_file = project_root / "quality_metrics.json"
-    with open(json_file, 'w', encoding='utf-8') as f:
+    with open(json_file, "w", encoding="utf-8") as f:
         json.dump(metrics, f, indent=2)
 
     logger.info(f"Quality metrics report saved to: {report_file}")
@@ -199,4 +223,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

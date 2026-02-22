@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ConversationTurn:
     """A single turn in the conversation."""
+
     role: str  # "user" or "assistant"
     content: str
     mode: str  # "s2s" or "cascade"
@@ -51,6 +52,7 @@ class ContextSync:
     ) -> None:
         """Record a conversation turn."""
         import time
+
         turn = ConversationTurn(
             role=role,
             content=content,
@@ -62,7 +64,7 @@ class ContextSync:
 
         # Trim history
         if len(self._turns) > self.MAX_HISTORY_TURNS:
-            self._turns = self._turns[-self.MAX_HISTORY_TURNS:]
+            self._turns = self._turns[-self.MAX_HISTORY_TURNS :]
 
         # Update synopsis
         self._update_synopsis()
@@ -89,9 +91,7 @@ class ContextSync:
         recent = self._turns[-6:]  # Last 3 exchanges
         return {
             "synopsis": self._synopsis,
-            "recent_turns": [
-                {"role": t.role, "content": t.content[:200]} for t in recent
-            ],
+            "recent_turns": [{"role": t.role, "content": t.content[:200]} for t in recent],
             "user_state": self._user_state,
             "turn_count": len(self._turns),
             "previous_mode": self._turns[-1].mode if self._turns else None,
@@ -141,7 +141,7 @@ class ContextSync:
 
         synopsis = " | ".join(parts)
         if len(synopsis) > self.SYNOPSIS_MAX_LENGTH:
-            synopsis = synopsis[:self.SYNOPSIS_MAX_LENGTH] + "..."
+            synopsis = synopsis[: self.SYNOPSIS_MAX_LENGTH] + "..."
 
         self._synopsis = synopsis
 

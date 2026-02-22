@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.tools import quality_dashboard
 except ImportError:
-    pytest.skip(
-        "Could not import quality_dashboard", allow_module_level=True
-    )
+    pytest.skip("Could not import quality_dashboard", allow_module_level=True)
 
 
 class TestQualityDashboardImports:
@@ -25,9 +23,7 @@ class TestQualityDashboardImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            quality_dashboard is not None
-        ), "Failed to import quality_dashboard module"
+        assert quality_dashboard is not None, "Failed to import quality_dashboard module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -48,4 +44,3 @@ class TestQualityDashboardFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

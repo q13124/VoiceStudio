@@ -26,6 +26,7 @@ from backend.config.path_config import get_models_path
 # Try importing UnifiedConfigService
 try:
     from backend.services.unified_config import UnifiedConfigService, get_config
+
     HAS_UNIFIED_CONFIG = True
 except ImportError:
     HAS_UNIFIED_CONFIG = False
@@ -82,9 +83,7 @@ class EngineConfigService:
                 self.config = self._get_default_config()
                 self.save()
         else:
-            logger.info(
-                f"Configuration file not found, creating default: {self.config_path}"
-            )
+            logger.info(f"Configuration file not found, creating default: {self.config_path}")
             self.config = self._get_default_config()
             self.save()
 
@@ -93,20 +92,46 @@ class EngineConfigService:
         engines_config = unified.engines
 
         return {
-            "defaults": engines_config.defaults if hasattr(engines_config, 'defaults') else {},
+            "defaults": engines_config.defaults if hasattr(engines_config, "defaults") else {},
             "overrides": {},
-            "installed": engines_config.installed if hasattr(engines_config, 'installed') else [],
+            "installed": engines_config.installed if hasattr(engines_config, "installed") else [],
             "model_paths": {
-                "base": engines_config.model_paths.base if hasattr(engines_config, 'model_paths') else "models",
-                "engines": engines_config.model_paths.engines if hasattr(engines_config, 'model_paths') else {},
+                "base": (
+                    engines_config.model_paths.base
+                    if hasattr(engines_config, "model_paths")
+                    else "models"
+                ),
+                "engines": (
+                    engines_config.model_paths.engines
+                    if hasattr(engines_config, "model_paths")
+                    else {}
+                ),
             },
             "gpu_settings": {
-                "enabled": engines_config.gpu_settings.enabled if hasattr(engines_config, 'gpu_settings') else True,
-                "device": engines_config.gpu_settings.device if hasattr(engines_config, 'gpu_settings') else "cuda",
-                "fallback_to_cpu": engines_config.gpu_settings.fallback_to_cpu if hasattr(engines_config, 'gpu_settings') else True,
-                "memory_fraction": engines_config.gpu_settings.memory_fraction if hasattr(engines_config, 'gpu_settings') else 0.9,
+                "enabled": (
+                    engines_config.gpu_settings.enabled
+                    if hasattr(engines_config, "gpu_settings")
+                    else True
+                ),
+                "device": (
+                    engines_config.gpu_settings.device
+                    if hasattr(engines_config, "gpu_settings")
+                    else "cuda"
+                ),
+                "fallback_to_cpu": (
+                    engines_config.gpu_settings.fallback_to_cpu
+                    if hasattr(engines_config, "gpu_settings")
+                    else True
+                ),
+                "memory_fraction": (
+                    engines_config.gpu_settings.memory_fraction
+                    if hasattr(engines_config, "gpu_settings")
+                    else 0.9
+                ),
             },
-            "engine_configs": engines_config.engine_configs if hasattr(engines_config, 'engine_configs') else {},
+            "engine_configs": (
+                engines_config.engine_configs if hasattr(engines_config, "engine_configs") else {}
+            ),
             "global_settings": {
                 "auto_download_models": True,
                 "model_cache_enabled": True,
@@ -217,9 +242,7 @@ class EngineConfigService:
             return os.path.expandvars(path)
 
         # Use default model path structure
-        base_path = self.config.get("model_paths", {}).get(
-            "base", "E:\\VoiceStudio\\models"
-        )
+        base_path = self.config.get("model_paths", {}).get("base", "E:\\VoiceStudio\\models")
         base_path = os.path.expandvars(base_path)
         return str(Path(base_path) / engine_id)
 
@@ -326,9 +349,7 @@ class EngineConfigService:
         gpu_settings = self.get_gpu_settings()
         if (schema_keys is None or "device" in schema_keys) and "device" not in params:
             params["device"] = (
-                gpu_settings.get("device", "cuda")
-                if gpu_settings.get("enabled", True)
-                else "cpu"
+                gpu_settings.get("device", "cuda") if gpu_settings.get("enabled", True) else "cpu"
             )
         if (schema_keys is None or "gpu" in schema_keys) and "gpu" not in params:
             params["gpu"] = bool(gpu_settings.get("enabled", True))
@@ -353,9 +374,7 @@ class EngineConfigService:
         self.save()
         logger.info(f"Updated configuration for engine {engine_id}")
 
-    def get_engine_parameter(
-        self, engine_id: str, parameter: str, default: Any = None
-    ) -> Any:
+    def get_engine_parameter(self, engine_id: str, parameter: str, default: Any = None) -> Any:
         """
         Get a specific parameter for an engine.
 
@@ -452,16 +471,10 @@ class EngineConfigService:
 
             if "memory_fraction" in gpu_settings:
                 fraction = gpu_settings["memory_fraction"]
-                if not isinstance(fraction, (int, float)) or not (
-                    0.0 < fraction <= 1.0
-                ):
-                    errors.append(
-                        f"GPU memory fraction must be between 0 and 1: {fraction}"
-                    )
+                if not isinstance(fraction, (int, float)) or not (0.0 < fraction <= 1.0):
+                    errors.append(f"GPU memory fraction must be between 0 and 1: {fraction}")
 
-            if "enabled" in gpu_settings and not isinstance(
-                gpu_settings["enabled"], bool
-            ):
+            if "enabled" in gpu_settings and not isinstance(gpu_settings["enabled"], bool):
                 errors.append("GPU enabled must be a boolean")
 
         # Validate engine configs
@@ -476,16 +489,12 @@ class EngineConfigService:
                     # Validate model_paths in engine config
                     if "model_paths" in engine_config:
                         if not isinstance(engine_config["model_paths"], dict):
-                            errors.append(
-                                f"Engine {engine_id} model_paths must be a dictionary"
-                            )
+                            errors.append(f"Engine {engine_id} model_paths must be a dictionary")
 
                     # Validate parameters in engine config
                     if "parameters" in engine_config:
                         if not isinstance(engine_config["parameters"], dict):
-                            errors.append(
-                                f"Engine {engine_id} parameters must be a dictionary"
-                            )
+                            errors.append(f"Engine {engine_id} parameters must be a dictionary")
 
         # Validate global settings
         global_settings = self.config.get("global_settings", {})
@@ -495,9 +504,7 @@ class EngineConfigService:
             if "parallel_engine_limit" in global_settings:
                 limit = global_settings["parallel_engine_limit"]
                 if not isinstance(limit, int) or limit < 1:
-                    errors.append(
-                        f"parallel_engine_limit must be a positive integer: {limit}"
-                    )
+                    errors.append(f"parallel_engine_limit must be a positive integer: {limit}")
 
         return len(errors) == 0, errors
 

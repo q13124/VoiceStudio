@@ -33,16 +33,12 @@ class TestDatasetRouteHandlers:
     def test_list_datasets_handler_exists(self):
         """Test list_datasets handler exists."""
         if hasattr(dataset, "list_datasets"):
-            assert callable(
-                dataset.list_datasets
-            ), "list_datasets is not callable"
+            assert callable(dataset.list_datasets), "list_datasets is not callable"
 
     def test_create_dataset_handler_exists(self):
         """Test create_dataset handler exists."""
         if hasattr(dataset, "create_dataset"):
-            assert callable(
-                dataset.create_dataset
-            ), "create_dataset is not callable"
+            assert callable(dataset.create_dataset), "create_dataset is not callable"
 
     def test_get_dataset_handler_exists(self):
         """Test get_dataset handler exists."""
@@ -68,4 +64,3 @@ class TestDatasetRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

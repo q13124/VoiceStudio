@@ -434,9 +434,7 @@ class TestSearchModuleFunctions:
         # Patch the global engine
         engine = PluginSearchEngine()
         engine.index_plugins(sample_plugins)
-        monkeypatch.setattr(
-            "backend.plugins.gallery.search._search_engine", engine
-        )
+        monkeypatch.setattr("backend.plugins.gallery.search._search_engine", engine)
 
         response = search_plugins("whisper")
         assert isinstance(response, SearchResponse)

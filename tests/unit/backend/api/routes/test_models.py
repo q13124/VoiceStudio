@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def models_client():
     """Create test client for models routes."""
     from backend.api.routes.models import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)
@@ -33,10 +34,7 @@ class TestModelsEndpoints:
 
     def test_download_model(self, models_client):
         """Test POST /download initiates model download."""
-        response = models_client.post(
-            "/api/models/download",
-            json={"model_id": "test-model"}
-        )
+        response = models_client.post("/api/models/download", json={"model_id": "test-model"})
         assert response.status_code in [200, 202, 404, 422]
 
     def test_delete_model(self, models_client):

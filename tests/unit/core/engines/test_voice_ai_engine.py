@@ -63,9 +63,7 @@ class TestVoiceAIEngineClass:
                     engine = voice_ai_engine.VoiceAIEngine(device="cpu", gpu=False)
                     required_methods = ["initialize", "cleanup", "convert_voice"]
                     for method in required_methods:
-                        assert hasattr(
-                            engine, method
-                        ), f"VoiceAIEngine missing method: {method}"
+                        assert hasattr(engine, method), f"VoiceAIEngine missing method: {method}"
             except (ImportError, Exception):
                 pytest.skip("voice_ai dependencies not installed")
 
@@ -104,9 +102,7 @@ class TestVoiceAIEngineCaching:
                 with patch("voice_ai_engine.requests"):
                     engine = voice_ai_engine.VoiceAIEngine(device="cpu", gpu=False)
                     # Check for LRU cache (OrderedDict)
-                    assert hasattr(
-                        engine, "_conversion_cache"
-                    ), "Should have conversion cache"
+                    assert hasattr(engine, "_conversion_cache"), "Should have conversion cache"
                     from collections import OrderedDict
 
                     assert isinstance(
@@ -191,9 +187,7 @@ class TestVoiceAIEngineProtocol:
                     engine = voice_ai_engine.VoiceAIEngine(device="cpu", gpu=False)
                     assert hasattr(engine, "initialize"), "Should implement initialize"
                     assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                    assert hasattr(
-                        engine, "is_initialized"
-                    ), "Should implement is_initialized"
+                    assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                     assert hasattr(engine, "get_device"), "Should implement get_device"
             except (ImportError, Exception):
                 pytest.skip("voice_ai dependencies not installed")
@@ -254,4 +248,3 @@ class TestVoiceAIEngineOptimization:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

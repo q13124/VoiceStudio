@@ -17,9 +17,9 @@ Usage:
         max_execution_time_s=30,
         allow_network=False,
     )
-    
+
     sandbox = SandboxEnvironment(config)
-    
+
     async with sandbox.create_session("plugin-id") as session:
         result = await session.execute(plugin_func, args)
         print(result.success)
@@ -44,16 +44,16 @@ logger = logging.getLogger(__name__)
 
 class IsolationLevel(Enum):
     """Levels of sandbox isolation."""
-    
-    NONE = "none"           # No isolation (for trusted plugins)
-    FILESYSTEM = "fs"       # Filesystem only
-    PROCESS = "process"     # Separate process
-    CONTAINER = "container" # Full container (future)
+
+    NONE = "none"  # No isolation (for trusted plugins)
+    FILESYSTEM = "fs"  # Filesystem only
+    PROCESS = "process"  # Separate process
+    CONTAINER = "container"  # Full container (future)
 
 
 class SandboxState(Enum):
     """State of a sandbox session."""
-    
+
     CREATED = "created"
     RUNNING = "running"
     SUSPENDED = "suspended"
@@ -65,7 +65,7 @@ class SandboxState(Enum):
 @dataclass
 class SandboxConfig:
     """Configuration for sandbox environment."""
-    
+
     max_memory_mb: int = 512
     max_execution_time_s: float = 30.0
     max_disk_mb: int = 100
@@ -74,7 +74,7 @@ class SandboxConfig:
     isolation_level: IsolationLevel = IsolationLevel.FILESYSTEM
     record_execution: bool = True
     auto_cleanup: bool = True
-    
+
     def validate(self) -> List[str]:
         """Validate config and return any errors."""
         errors = []
@@ -90,7 +90,7 @@ class SandboxConfig:
 @dataclass
 class ExecutionRecord:
     """Record of a single execution."""
-    
+
     function_name: str
     args: Dict[str, Any]
     result: Any = None
@@ -99,7 +99,7 @@ class ExecutionRecord:
     ended_at: Optional[datetime] = None
     memory_used_mb: float = 0.0
     execution_time_s: float = 0.0
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "function_name": self.function_name,
@@ -116,7 +116,7 @@ class ExecutionRecord:
 @dataclass
 class SandboxResult:
     """Result of sandbox execution."""
-    
+
     success: bool
     result: Any = None
     error: Optional[str] = None
@@ -125,7 +125,7 @@ class SandboxResult:
     records: List[ExecutionRecord] = field(default_factory=list)
     files_created: List[str] = field(default_factory=list)
     files_modified: List[str] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "success": self.success,
@@ -141,7 +141,7 @@ class SandboxResult:
 
 class SandboxSession:
     """An active sandbox session."""
-    
+
     def __init__(
         self,
         session_id: str,
@@ -157,7 +157,7 @@ class SandboxSession:
         self.records: List[ExecutionRecord] = []
         self.files_snapshot: Dict[str, bytes] = {}
         self._start_time: Optional[datetime] = None
-    
+
     async def execute(
         self,
         func: Callable,
@@ -167,18 +167,18 @@ class SandboxSession:
         self.state = SandboxState.RUNNING
         self._start_time = datetime.utcnow()
         args = args or {}
-        
+
         record = ExecutionRecord(
             function_name=func.__name__ if hasattr(func, "__name__") else str(func),
             args=args,
         )
-        
+
         result = SandboxResult(success=False)
-        
+
         try:
             # Set timeout
             timeout = self.config.max_execution_time_s
-            
+
             # Execute with timeout
             if asyncio.iscoroutinefunction(func):
                 output = await asyncio.wait_for(
@@ -193,47 +193,45 @@ class SandboxSession:
                     ),
                     timeout=timeout,
                 )
-            
+
             record.result = output
             record.ended_at = datetime.utcnow()
-            record.execution_time_s = (
-                record.ended_at - record.started_at
-            ).total_seconds()
-            
+            record.execution_time_s = (record.ended_at - record.started_at).total_seconds()
+
             result.success = True
             result.result = output
             result.execution_time_s = record.execution_time_s
             self.state = SandboxState.COMPLETED
-            
+
         except asyncio.TimeoutError:
             record.error = f"Execution timed out after {timeout}s"
             record.ended_at = datetime.utcnow()
             result.error = record.error
             self.state = SandboxState.FAILED
-            
+
         except Exception as e:
             record.error = str(e)
             record.ended_at = datetime.utcnow()
             result.error = str(e)
             self.state = SandboxState.FAILED
             logger.exception(f"Sandbox execution failed: {e}")
-        
+
         self.records.append(record)
         result.records = self.records.copy()
-        
+
         # Collect file changes
         result.files_created, result.files_modified = self._detect_file_changes()
-        
+
         return result
-    
+
     def _detect_file_changes(self) -> tuple[List[str], List[str]]:
         """Detect files created or modified during session."""
         created = []
         modified = []
-        
+
         if not self.workspace.exists():
             return created, modified
-        
+
         for path in self.workspace.rglob("*"):
             if path.is_file():
                 rel_path = str(path.relative_to(self.workspace))
@@ -247,16 +245,16 @@ class SandboxSession:
                     except Exception as e:
                         # GAP-PY-001: Best effort file comparison
                         logger.debug(f"Failed to compare file {rel_path}: {e}")
-        
+
         return created, modified
-    
+
     def snapshot_files(self):
         """Take snapshot of current files."""
         self.files_snapshot.clear()
-        
+
         if not self.workspace.exists():
             return
-        
+
         for path in self.workspace.rglob("*"):
             if path.is_file():
                 try:
@@ -265,12 +263,12 @@ class SandboxSession:
                 except Exception as e:
                     # GAP-PY-001: Best effort file snapshot
                     logger.debug(f"Failed to snapshot file {path}: {e}")
-    
+
     def rollback_files(self):
         """Rollback files to snapshot state."""
         if not self.workspace.exists():
             return
-        
+
         # Remove files not in snapshot
         for path in self.workspace.rglob("*"):
             if path.is_file():
@@ -281,7 +279,7 @@ class SandboxSession:
                     except Exception as e:
                         # GAP-PY-001: Best effort file cleanup
                         logger.debug(f"Failed to remove file {path}: {e}")
-        
+
         # Restore snapshot content
         for rel_path, content in self.files_snapshot.items():
             full_path = self.workspace / rel_path
@@ -291,33 +289,33 @@ class SandboxSession:
             except Exception as e:
                 # GAP-PY-001: Best effort file restore
                 logger.debug(f"Failed to restore file {full_path}: {e}")
-        
+
         self.state = SandboxState.ROLLED_BACK
 
 
 class SandboxEnvironment:
     """
     Manages sandbox environments for plugin testing.
-    
+
     Provides isolated execution contexts with:
     - Temporary filesystem
     - Resource limits
     - Execution recording
     - State snapshots
-    
+
     Example:
         config = SandboxConfig(max_memory_mb=256, max_execution_time_s=10)
         sandbox = SandboxEnvironment(config)
-        
+
         async with sandbox.create_session("my-plugin") as session:
             result = await session.execute(my_func, {"arg1": "value"})
-            
+
             if result.success:
                 print(f"Result: {result.result}")
             else:
                 print(f"Error: {result.error}")
     """
-    
+
     def __init__(
         self,
         default_config: Optional[SandboxConfig] = None,
@@ -325,7 +323,7 @@ class SandboxEnvironment:
     ):
         """
         Initialize sandbox environment.
-        
+
         Args:
             default_config: Default configuration for sessions
             base_path: Base path for sandbox workspaces
@@ -334,7 +332,7 @@ class SandboxEnvironment:
         self.base_path = base_path or Path(tempfile.gettempdir()) / "voicestudio_sandbox"
         self._sessions: Dict[str, SandboxSession] = {}
         self._session_counter = 0
-    
+
     @asynccontextmanager
     async def create_session(
         self,
@@ -343,47 +341,49 @@ class SandboxEnvironment:
     ):
         """
         Create a sandbox session.
-        
+
         Args:
             plugin_id: Plugin identifier
             config: Optional config override
-            
+
         Yields:
             SandboxSession for execution
         """
         config = config or self.default_config
-        
+
         # Validate config
         errors = config.validate()
         if errors:
             raise ValueError(f"Invalid config: {', '.join(errors)}")
-        
+
         # Create session
         self._session_counter += 1
-        session_id = f"{plugin_id}_{self._session_counter}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-        
+        session_id = (
+            f"{plugin_id}_{self._session_counter}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+        )
+
         workspace = self.base_path / session_id
         workspace.mkdir(parents=True, exist_ok=True)
-        
+
         session = SandboxSession(
             session_id=session_id,
             plugin_id=plugin_id,
             config=config,
             workspace=workspace,
         )
-        
+
         # Take initial snapshot
         session.snapshot_files()
-        
+
         self._sessions[session_id] = session
-        
+
         try:
             yield session
         finally:
             # Cleanup
             if config.auto_cleanup:
                 await self._cleanup_session(session)
-    
+
     async def _cleanup_session(self, session: SandboxSession):
         """Clean up a sandbox session."""
         try:
@@ -391,13 +391,13 @@ class SandboxEnvironment:
                 shutil.rmtree(session.workspace)
         except Exception as e:
             logger.warning(f"Failed to cleanup sandbox workspace: {e}")
-        
+
         self._sessions.pop(session.session_id, None)
-    
+
     def get_session(self, session_id: str) -> Optional[SandboxSession]:
         """Get an active session by ID."""
         return self._sessions.get(session_id)
-    
+
     def list_sessions(self) -> List[Dict[str, Any]]:
         """List all active sessions."""
         return [
@@ -409,12 +409,12 @@ class SandboxEnvironment:
             }
             for s in self._sessions.values()
         ]
-    
+
     async def cleanup_all(self):
         """Clean up all sessions."""
         for session in list(self._sessions.values()):
             await self._cleanup_session(session)
-        
+
         # Clean base path if empty
         try:
             if self.base_path.exists() and not any(self.base_path.iterdir()):

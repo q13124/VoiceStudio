@@ -23,16 +23,13 @@ class TestCircuitBreakerImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            circuit_breaker is not None
-        ), "Failed to import circuit_breaker module"
+        assert circuit_breaker is not None, "Failed to import circuit_breaker module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
         # Check for CircuitBreaker class (may be imported or defined)
-        has_circuit_breaker = (
-            hasattr(circuit_breaker, "CircuitBreaker")
-            or "CircuitBreaker" in dir(circuit_breaker)
+        has_circuit_breaker = hasattr(circuit_breaker, "CircuitBreaker") or "CircuitBreaker" in dir(
+            circuit_breaker
         )
         # Module should have CircuitBreaker or functions
         assert (
@@ -52,4 +49,3 @@ class TestCircuitBreakerClasses:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

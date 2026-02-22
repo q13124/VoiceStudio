@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 # Try importing TTS utility libraries
 try:
     from gtts import gTTS
+
     HAS_GTTS = True
 except ImportError:
     HAS_GTTS = False
@@ -26,6 +27,7 @@ except ImportError:
 
 try:
     import pyttsx3
+
     HAS_PYTTSX3 = True
 except ImportError:
     HAS_PYTTSX3 = False
@@ -47,10 +49,10 @@ class GTTSWrapper:
     def synthesize(
         self,
         text: str,
-        language: str = 'en',
+        language: str = "en",
         slow: bool = False,
         output_path: str | Path | None = None,
-        **kwargs
+        **kwargs,
     ) -> np.ndarray | str | None:
         """
         Synthesize speech using Google TTS.
@@ -74,7 +76,7 @@ class GTTSWrapper:
 
             # Save to file
             if output_path is None:
-                output_path = tempfile.mktemp(suffix='.mp3')
+                output_path = tempfile.mktemp(suffix=".mp3")
 
             output_path = Path(output_path)
             tts.save(str(output_path))
@@ -82,9 +84,10 @@ class GTTSWrapper:
             logger.info(f"gTTS synthesized text to {output_path}")
 
             # If output_path provided, return path; otherwise load and return audio
-            if kwargs.get('return_audio'):
+            if kwargs.get("return_audio"):
                 try:
                     import soundfile as sf
+
                     audio, sr = sf.read(str(output_path))
                     return audio, sr
                 except ImportError:
@@ -104,10 +107,11 @@ class GTTSWrapper:
 
         try:
             from gtts.lang import tts_langs
+
             return list(tts_langs().keys())
         except Exception as e:
             logger.warning(f"Failed to get gTTS languages: {e}")
-            return ['en']  # Default to English
+            return ["en"]  # Default to English
 
     def is_language_supported(self, language: str) -> bool:
         """Check if language is supported."""
@@ -141,7 +145,7 @@ class Pyttsx3Wrapper:
         rate: int | None = None,
         volume: float | None = None,
         voice_id: str | None = None,
-        **kwargs
+        **kwargs,
     ) -> np.ndarray | str | None:
         """
         Synthesize speech using system TTS.
@@ -163,16 +167,16 @@ class Pyttsx3Wrapper:
         try:
             # Set properties
             if rate is not None:
-                self.engine.setProperty('rate', rate)
+                self.engine.setProperty("rate", rate)
 
             if volume is not None:
-                self.engine.setProperty('volume', min(max(volume, 0.0), 1.0))
+                self.engine.setProperty("volume", min(max(volume, 0.0), 1.0))
 
             if voice_id is not None:
-                voices = self.engine.getProperty('voices')
+                voices = self.engine.getProperty("voices")
                 for voice in voices:
                     if voice.id == voice_id:
-                        self.engine.setProperty('voice', voice.id)
+                        self.engine.setProperty("voice", voice.id)
                         break
 
             # Save to file if output_path provided
@@ -183,9 +187,10 @@ class Pyttsx3Wrapper:
                 logger.info(f"pyttsx3 synthesized text to {output_path}")
 
                 # If return_audio requested, load and return
-                if kwargs.get('return_audio'):
+                if kwargs.get("return_audio"):
                     try:
                         import soundfile as sf
+
                         audio, sr = sf.read(str(output_path))
                         return audio, sr
                     except ImportError:
@@ -209,13 +214,9 @@ class Pyttsx3Wrapper:
             return []
 
         try:
-            voices = self.engine.getProperty('voices')
+            voices = self.engine.getProperty("voices")
             return [
-                {
-                    'id': voice.id,
-                    'name': voice.name,
-                    'languages': getattr(voice, 'languages', [])
-                }
+                {"id": voice.id, "name": voice.name, "languages": getattr(voice, "languages", [])}
                 for voice in voices
             ]
         except Exception as e:
@@ -229,9 +230,9 @@ class Pyttsx3Wrapper:
 
         try:
             return {
-                'rate': self.engine.getProperty('rate'),
-                'volume': self.engine.getProperty('volume'),
-                'voice': self.engine.getProperty('voice')
+                "rate": self.engine.getProperty("rate"),
+                "volume": self.engine.getProperty("volume"),
+                "voice": self.engine.getProperty("voice"),
             }
         except Exception as e:
             logger.warning(f"Failed to get pyttsx3 properties: {e}")
@@ -277,10 +278,10 @@ def get_pyttsx3() -> Pyttsx3Wrapper | None:
 
 def synthesize_with_utility(
     text: str,
-    utility: str = 'gtts',
-    language: str = 'en',
+    utility: str = "gtts",
+    language: str = "en",
     output_path: str | Path | None = None,
-    **kwargs
+    **kwargs,
 ) -> np.ndarray | str | None:
     """
     Synthesize text using a TTS utility library.
@@ -295,16 +296,15 @@ def synthesize_with_utility(
     Returns:
         Audio array or output path
     """
-    if utility == 'gtts':
+    if utility == "gtts":
         wrapper = get_gtts()
         if wrapper is None:
             raise RuntimeError("gTTS not available")
         return wrapper.synthesize(text, language=language, output_path=output_path, **kwargs)
-    elif utility == 'pyttsx3':
+    elif utility == "pyttsx3":
         wrapper = get_pyttsx3()
         if wrapper is None:
             raise RuntimeError("pyttsx3 not available")
         return wrapper.synthesize(text, output_path=output_path, **kwargs)
     else:
         raise ValueError(f"Unknown utility: {utility}. Use 'gtts' or 'pyttsx3'")
-

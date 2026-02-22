@@ -26,12 +26,8 @@ class TestAdvancedSettingsRouteImports:
 
     def test_advanced_settings_module_imports(self):
         """Test advanced_settings module can be imported."""
-        assert (
-            advanced_settings is not None
-        ), "Failed to import advanced_settings module"
-        assert hasattr(
-            advanced_settings, "router"
-        ), "advanced_settings module missing router"
+        assert advanced_settings is not None, "Failed to import advanced_settings module"
+        assert hasattr(advanced_settings, "router"), "advanced_settings module missing router"
 
 
 class TestAdvancedSettingsRouteHandlers:
@@ -57,21 +53,16 @@ class TestAdvancedSettingsRouter:
 
     def test_router_exists(self):
         """Test router exists and is configured."""
-        assert (
-            advanced_settings.router is not None
-        ), "Router should exist"
+        assert advanced_settings.router is not None, "Router should exist"
         if hasattr(advanced_settings.router, "prefix"):
             pass  # Router configuration is valid
 
     def test_router_has_routes(self):
         """Test router has registered routes."""
         if hasattr(advanced_settings.router, "routes"):
-            routes = [
-                route.path for route in advanced_settings.router.routes
-            ]
+            routes = [route.path for route in advanced_settings.router.routes]
             assert len(routes) > 0, "Router should have routes registered"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -37,9 +37,7 @@ class TestONNXConverterFunctions:
     def test_convert_to_onnx_function_exists(self):
         """Test convert_to_onnx function exists."""
         if hasattr(onnx_converter, "convert_to_onnx"):
-            assert callable(
-                onnx_converter.convert_to_onnx
-            ), "convert_to_onnx should be callable"
+            assert callable(onnx_converter.convert_to_onnx), "convert_to_onnx should be callable"
 
 
 if __name__ == "__main__":

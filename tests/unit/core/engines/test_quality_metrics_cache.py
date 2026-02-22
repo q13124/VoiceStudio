@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.engines import quality_metrics_cache
 except ImportError:
-    pytest.skip(
-        "Could not import quality_metrics_cache", allow_module_level=True
-    )
+    pytest.skip("Could not import quality_metrics_cache", allow_module_level=True)
 
 
 class TestQualityMetricsCacheImports:
@@ -25,9 +23,7 @@ class TestQualityMetricsCacheImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            quality_metrics_cache is not None
-        ), "Failed to import quality_metrics_cache module"
+        assert quality_metrics_cache is not None, "Failed to import quality_metrics_cache module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -48,9 +44,7 @@ class TestQualityMetricsCacheFunctions:
     def test_cache_metrics_function_exists(self):
         """Test cache_metrics function exists."""
         if hasattr(quality_metrics_cache, "cache_metrics"):
-            assert callable(
-                quality_metrics_cache.cache_metrics
-            ), "cache_metrics should be callable"
+            assert callable(quality_metrics_cache.cache_metrics), "cache_metrics should be callable"
 
 
 if __name__ == "__main__":

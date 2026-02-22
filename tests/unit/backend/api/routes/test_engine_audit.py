@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import engine_audit
 except ImportError:
-    pytest.skip(
-        "Could not import engine_audit route module", allow_module_level=True
-    )
+    pytest.skip("Could not import engine_audit route module", allow_module_level=True)
 
 
 class TestEngineAuditRouteImports:
@@ -25,12 +23,8 @@ class TestEngineAuditRouteImports:
 
     def test_engine_audit_module_imports(self):
         """Test engine_audit module can be imported."""
-        assert (
-            engine_audit is not None
-        ), "Failed to import engine_audit module"
-        assert hasattr(
-            engine_audit, "router"
-        ), "engine_audit module missing router"
+        assert engine_audit is not None, "Failed to import engine_audit module"
+        assert hasattr(engine_audit, "router"), "engine_audit module missing router"
 
 
 class TestEngineAuditRouteHandlers:
@@ -60,4 +54,3 @@ class TestEngineAuditRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

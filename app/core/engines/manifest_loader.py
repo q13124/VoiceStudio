@@ -33,14 +33,11 @@ def load_engine_manifest(manifest_path: str) -> dict[str, Any]:
     if not manifest_file.exists():
         raise FileNotFoundError(f"Manifest not found: {manifest_path}")
 
-    with open(manifest_file, encoding='utf-8') as f:
+    with open(manifest_file, encoding="utf-8") as f:
         manifest = json.load(f)
 
     # Validate required fields
-    required_fields = [
-        "engine_id", "name", "type", "version",
-        "entry_point", "dependencies"
-    ]
+    required_fields = ["engine_id", "name", "type", "version", "entry_point", "dependencies"]
 
     for field in required_fields:
         if field not in manifest:
@@ -142,11 +139,7 @@ def validate_engine_requirements(manifest: dict[str, Any]) -> dict[str, bool]:
     import importlib.util
     import sys
 
-    results = {
-        "python_version": True,
-        "dependencies": True,
-        "device": True
-    }
+    results = {"python_version": True, "dependencies": True, "device": True}
 
     # Check Python version requirement
     if "python_version" in manifest:
@@ -182,12 +175,14 @@ def validate_engine_requirements(manifest: dict[str, Any]) -> dict[str, bool]:
         if reqs.get("gpu") == "required":
             try:
                 import torch
+
                 results["device"] = torch.cuda.is_available()
             except ImportError:
                 results["device"] = False
         elif reqs.get("gpu") == "optional":
             try:
                 import torch
+
                 results["device"] = torch.cuda.is_available() if torch.cuda.is_available() else True
             except ImportError:
                 results["device"] = True
@@ -196,6 +191,7 @@ def validate_engine_requirements(manifest: dict[str, Any]) -> dict[str, bool]:
         if "vram_gb" in reqs:
             try:
                 import torch
+
                 if torch.cuda.is_available():
                     vram_gb = torch.cuda.get_device_properties(0).total_memory / (1024**3)
                     required_vram = reqs["vram_gb"]
@@ -206,4 +202,3 @@ def validate_engine_requirements(manifest: dict[str, Any]) -> dict[str, bool]:
                 results["device"] = False
 
     return results
-

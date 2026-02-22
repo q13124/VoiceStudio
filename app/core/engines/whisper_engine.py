@@ -39,9 +39,7 @@ try:
     HAS_WHISPER = True
 except ImportError:
     WhisperModel = None
-    logging.warning(
-        "faster-whisper not installed. Install with: pip install faster-whisper==1.0.3"
-    )
+    logging.warning("faster-whisper not installed. Install with: pip install faster-whisper==1.0.3")
 
 # Try importing vosk as alternative STT engine
 try:
@@ -60,6 +58,7 @@ logger = logging.getLogger(__name__)
 # Try importing general model cache
 try:
     from app.core.models.cache import get_model_cache
+
     _model_cache = get_model_cache(max_models=3, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
 except ImportError:
@@ -203,6 +202,7 @@ def _cache_transcription(
 # Try importing VAD (Voice Activity Detection)
 try:
     from silero_vad import get_speech_timestamps, load_vad_model
+
     HAS_VAD = True
 except ImportError:
     HAS_VAD = False
@@ -379,7 +379,9 @@ class WhisperEngine(EngineProtocol):
         """Load model with caching support."""
         # Check cache first
         if self.enable_caching:
-            cached_model = _get_cached_model(self.model_name, self.whisper_device, self.compute_type)
+            cached_model = _get_cached_model(
+                self.model_name, self.whisper_device, self.compute_type
+            )
             if cached_model is not None:
                 logger.debug(f"Using cached model: {self.model_name}")
                 self.model = cached_model
@@ -387,15 +389,14 @@ class WhisperEngine(EngineProtocol):
                 return True
 
         # Load model
-        logger.info(
-            f"Loading Whisper model: {self.model_name} on {self.whisper_device}"
-        )
+        logger.info(f"Loading Whisper model: {self.model_name} on {self.whisper_device}")
 
         models_root = os.getenv("VOICESTUDIO_MODELS_PATH", "")
         if not models_root:
             models_root = os.path.join(
                 os.getenv("PROGRAMDATA", "C:\\ProgramData"),
-                "VoiceStudio", "models",
+                "VoiceStudio",
+                "models",
             )
         whisper_cache = os.path.join(models_root, "whisper")
         os.makedirs(whisper_cache, exist_ok=True)
@@ -519,11 +520,10 @@ class WhisperEngine(EngineProtocol):
                     try:
                         # Load audio for VAD
                         import soundfile as sf
+
                         audio_data, sample_rate = sf.read(str(audio_input))
                         vad_segments = get_speech_timestamps(
-                            audio_data,
-                            vad_model,
-                            sampling_rate=sample_rate
+                            audio_data, vad_model, sampling_rate=sample_rate
                         )
                         logger.debug(f"VAD detected {len(vad_segments)} speech segments")
                     except Exception as e:
@@ -608,7 +608,7 @@ class WhisperEngine(EngineProtocol):
         language: str | None = None,
         task: str = "transcribe",
         word_timestamps: bool = False,
-        **kwargs
+        **kwargs,
     ) -> list[dict[str, any]]:
         """
         Transcribe multiple audio files in batch.
@@ -632,7 +632,7 @@ class WhisperEngine(EngineProtocol):
         # Process in batches for better GPU utilization
         batch_size = self.batch_size
         for batch_start in range(0, len(audio_files), batch_size):
-            batch_files = audio_files[batch_start:batch_start + batch_size]
+            batch_files = audio_files[batch_start : batch_start + batch_size]
             batch_results = []
 
             for audio_file in batch_files:
@@ -642,7 +642,7 @@ class WhisperEngine(EngineProtocol):
                         language=language,
                         task=task,
                         word_timestamps=word_timestamps,
-                        **kwargs
+                        **kwargs,
                     )
                     batch_results.append(result)
                 except Exception as e:

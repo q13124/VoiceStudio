@@ -64,6 +64,7 @@ def _get_env_bool(key: str, default: bool) -> bool:
 # API Configuration
 # =============================================================================
 
+
 def get_api_host() -> str:
     """
     Get the API host address.
@@ -117,6 +118,7 @@ def get_websocket_url() -> str:
 # =============================================================================
 # Timing Configuration
 # =============================================================================
+
 
 def get_health_check_interval_ms() -> int:
     """
@@ -172,6 +174,7 @@ def get_timeout(timeout_type: str) -> float:
 # Retry Configuration
 # =============================================================================
 
+
 def get_max_retries() -> int:
     """
     Get maximum retry count for operations.
@@ -195,6 +198,7 @@ def get_retry_delay_ms() -> int:
 # =============================================================================
 # Buffer and Size Configuration
 # =============================================================================
+
 
 def get_buffer_size() -> int:
     """
@@ -240,6 +244,7 @@ def get_max_backup_size_mb() -> int:
 # Debug and Feature Flags
 # =============================================================================
 
+
 def is_debug_mode() -> bool:
     """
     Check if debug mode is enabled.
@@ -263,6 +268,7 @@ def is_telemetry_enabled() -> bool:
 # =============================================================================
 # All Configuration (for export/debugging)
 # =============================================================================
+
 
 def get_all_config() -> dict[str, Any]:
     """

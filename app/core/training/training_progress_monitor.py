@@ -30,9 +30,7 @@ except ImportError:
     except ImportError:
         HAS_TENSORBOARD = False
         SummaryWriter = None
-        logger.debug(
-            "tensorboard not installed. Training visualization will be limited."
-        )
+        logger.debug("tensorboard not installed. Training visualization will be limited.")
 
 # Try importing wandb for experiment tracking
 try:
@@ -226,9 +224,7 @@ class TrainingProgressMonitor:
         # Notify callbacks
         self._notify_callbacks(self.current_status.copy())
 
-        logger.debug(
-            f"Progress updated: epoch {epoch}/{total_epochs}, progress {progress:.2%}"
-        )
+        logger.debug(f"Progress updated: epoch {epoch}/{total_epochs}, progress {progress:.2%}")
 
     def complete_training(
         self,
@@ -287,9 +283,7 @@ class TrainingProgressMonitor:
         # Notify callbacks
         self._notify_callbacks(self.current_status.copy())
 
-        logger.info(
-            f"Training {self.current_status.get('training_id')} cancelled: {reason}"
-        )
+        logger.info(f"Training {self.current_status.get('training_id')} cancelled: {reason}")
 
     def get_current_status(self) -> dict[str, Any]:
         """
@@ -318,9 +312,7 @@ class TrainingProgressMonitor:
         """
         return self.current_status.get("metrics", {}).copy()
 
-    def get_metrics_history(
-        self, metric_name: str | None = None
-    ) -> dict[str, list[float]]:
+    def get_metrics_history(self, metric_name: str | None = None) -> dict[str, list[float]]:
         """
         Get metrics history.
 

@@ -19,6 +19,7 @@ from fastapi.testclient import TestClient
 def reset_image_state():
     """Reset image storage before each test."""
     from backend.api.routes import image_gen
+
     image_gen._image_storage = {}
     yield
     image_gen._image_storage = {}
@@ -67,10 +68,10 @@ class TestImageRetrieval:
     def test_get_image_with_stored_path(self, image_client):
         """Test GET /{image_id} attempts to return stored image."""
         from backend.api.routes import image_gen
-        
+
         # Manually add an image to storage (path doesn't need to exist for 404 test)
         image_gen._image_storage["test-image-123"] = "/fake/path/image.png"
-        
+
         # Should fail since file doesn't exist, but tests the lookup logic
         response = image_client.get("/api/image/test-image-123")
         # Will be 404 since the file doesn't exist
@@ -101,7 +102,7 @@ class TestImageGeneration:
         mock_service = MagicMock()
         mock_service.get_image_generator.return_value = None  # No engine available
         mock_get_service.return_value = mock_service
-        
+
         response = image_client.post(
             "/api/image/generate",
             json={

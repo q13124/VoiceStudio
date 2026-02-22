@@ -173,9 +173,7 @@ async def create_ssml_document(request: SSMLCreateRequest):
         )
     except Exception as e:
         logger.error(f"Failed to create SSML document: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to create document: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to create document: {e!s}") from e
 
 
 @router.put("/{document_id}", response_model=SSMLDocument)
@@ -212,9 +210,7 @@ async def update_ssml_document(document_id: str, request: SSMLUpdateRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to update SSML document {document_id}: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to update document: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to update document: {e!s}") from e
 
 
 @router.delete("/{document_id}")
@@ -229,9 +225,7 @@ async def delete_ssml_document(document_id: str):
         return {"success": True}
     except Exception as e:
         logger.error(f"Failed to delete SSML document {document_id}: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to delete document: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to delete document: {e!s}") from e
 
 
 @router.post("/validate", response_model=SSMLValidateResponse)
@@ -296,21 +290,17 @@ async def validate_ssml(request: SSMLCreateRequest):
                 valid_attrs = {"rate", "pitch", "volume"}
                 for attr in elem.attrib:
                     if attr not in valid_attrs:
-                        warnings.append(
-                            f"Unknown prosody attribute: {attr} " f"at {current_path}"
-                        )
+                        warnings.append(f"Unknown prosody attribute: {attr} " f"at {current_path}")
 
             if elem.tag == "break":
                 if "time" not in elem.attrib and "strength" not in elem.attrib:
                     warnings.append(
-                        f"<break> should have 'time' or 'strength' "
-                        f"attribute at {current_path}"
+                        f"<break> should have 'time' or 'strength' " f"attribute at {current_path}"
                     )
 
             if elem.tag == "say-as" and "interpret-as" not in elem.attrib:
                 warnings.append(
-                    f"<say-as> should have 'interpret-as' "
-                    f"attribute at {current_path}"
+                    f"<say-as> should have 'interpret-as' " f"attribute at {current_path}"
                 )
 
             # Recursively validate children
@@ -341,9 +331,7 @@ async def validate_ssml(request: SSMLCreateRequest):
         elif count < 0:
             errors.append(f"Extra closing tag: </{tag}>")
 
-    return SSMLValidateResponse(
-        valid=len(errors) == 0, errors=errors, warnings=warnings
-    )
+    return SSMLValidateResponse(valid=len(errors) == 0, errors=errors, warnings=warnings)
 
 
 @router.post("/preview", response_model=SSMLPreviewResponse)

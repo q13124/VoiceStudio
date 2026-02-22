@@ -134,8 +134,10 @@ class TestSettingsEndpoints:
             "engine": {"default_audio_engine": "xtts"},
         }
 
-        with patch("backend.api.routes.settings.save_settings") as mock_save, \
-             patch("backend.api.routes.settings.require_auth_if_enabled", return_value=None):
+        with (
+            patch("backend.api.routes.settings.save_settings") as mock_save,
+            patch("backend.api.routes.settings.require_auth_if_enabled", return_value=None),
+        ):
             mock_save.return_value = None
 
             response = client.post("/api/settings", json=settings_data)
@@ -168,9 +170,7 @@ class TestSettingsEndpoints:
         app = _make_test_app()
         client = TestClient(app)
 
-        mock_settings = settings.SettingsData(
-            performance=settings.PerformanceSettings()
-        )
+        mock_settings = settings.SettingsData(performance=settings.PerformanceSettings())
 
         # Invalid cache_size (too small)
         update_data = {"cache_size": 32}
@@ -211,7 +211,9 @@ class TestSettingsEndpoints:
             assert "engine" in data
             mock_save.assert_called_once()
 
-    @pytest.mark.skip(reason="Mock path doesn't match actual import - load_settings called differently")
+    @pytest.mark.skip(
+        reason="Mock path doesn't match actual import - load_settings called differently"
+    )
     def test_get_settings_error_handling(self):
         """Test settings retrieval error handling."""
         app = FastAPI()

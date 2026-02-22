@@ -37,9 +37,7 @@ class TestSmartDiscoveryFunctions:
     def test_discover_engines_function_exists(self):
         """Test discover_engines function exists."""
         if hasattr(smart_discovery, "discover_engines"):
-            assert callable(
-                smart_discovery.discover_engines
-            ), "discover_engines should be callable"
+            assert callable(smart_discovery.discover_engines), "discover_engines should be callable"
 
 
 if __name__ == "__main__":

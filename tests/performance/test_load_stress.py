@@ -33,9 +33,7 @@ class LoadTester:
         """Initialize load tester."""
         self.results: dict[str, list] = {}
 
-    def run_concurrent_requests(
-        self, func, args_list: list, max_workers: int = 10
-    ) -> dict:
+    def run_concurrent_requests(self, func, args_list: list, max_workers: int = 10) -> dict:
         """
         Run concurrent requests.
 
@@ -52,9 +50,7 @@ class LoadTester:
         errors = []
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = {
-                executor.submit(func, *args): args for args in args_list
-            }
+            futures = {executor.submit(func, *args): args for args in args_list}
 
             for future in as_completed(futures):
                 try:
@@ -76,9 +72,7 @@ class LoadTester:
             "errors": errors[:10],  # First 10 errors
         }
 
-    def stress_test(
-        self, func, args, duration_seconds: int = 60, max_workers: int = 20
-    ) -> dict:
+    def stress_test(self, func, args, duration_seconds: int = 60, max_workers: int = 20) -> dict:
         """
         Run stress test for specified duration.
 
@@ -109,9 +103,7 @@ class LoadTester:
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             while time.time() - start_time < duration_seconds:
-                futures = [
-                    executor.submit(run_request) for _ in range(max_workers)
-                ]
+                futures = [executor.submit(run_request) for _ in range(max_workers)]
                 for future in as_completed(futures):
                     result = future.result()
                     if result:
@@ -126,9 +118,7 @@ class LoadTester:
             "failed_requests": error_count,
             "requests_per_second": request_count / total_time if total_time > 0 else 0,
             "success_rate": (
-                (request_count - error_count) / request_count
-                if request_count > 0
-                else 0.0
+                (request_count - error_count) / request_count if request_count > 0 else 0.0
             ),
         }
 
@@ -162,9 +152,7 @@ class TestLoadTesting:
             # Create multiple requests
             args_list = [(audio, sample_rate) for _ in range(50)]
 
-            result = load_tester.run_concurrent_requests(
-                normalize_lufs, args_list, max_workers=10
-            )
+            result = load_tester.run_concurrent_requests(normalize_lufs, args_list, max_workers=10)
 
             logger.info(f"Concurrent processing result: {result}")
             assert result["successful_requests"] > 0
@@ -259,9 +247,7 @@ class TestResourceExhaustion:
             # Create many concurrent requests
             args_list = [(audio, sample_rate) for _ in range(100)]
 
-            result = load_tester.run_concurrent_requests(
-                normalize_lufs, args_list, max_workers=50
-            )
+            result = load_tester.run_concurrent_requests(normalize_lufs, args_list, max_workers=50)
 
             logger.info(f"CPU exhaustion test: {result}")
             # System should still handle requests (maybe slower)
@@ -279,9 +265,7 @@ class TestResourceExhaustion:
 
             args_list = [(large_audio, 24000) for _ in range(20)]
 
-            result = load_tester.run_concurrent_requests(
-                normalize_lufs, args_list, max_workers=5
-            )
+            result = load_tester.run_concurrent_requests(normalize_lufs, args_list, max_workers=5)
 
             logger.info(f"Memory pressure test: {result}")
             assert result["successful_requests"] > 0
@@ -291,4 +275,3 @@ class TestResourceExhaustion:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s"])
-

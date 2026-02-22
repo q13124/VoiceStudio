@@ -23,9 +23,7 @@ class TestGPTSovitsEngineImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            gpt_sovits_engine is not None
-        ), "Failed to import gpt_sovits_engine module"
+        assert gpt_sovits_engine is not None, "Failed to import gpt_sovits_engine module"
 
     def test_module_has_gpt_sovits_engine_class(self):
         """Test module has GPTSoVITSEngine class."""
@@ -61,9 +59,7 @@ class TestGPTSovitsEngineClass:
                 engine = gpt_sovits_engine.GPTSoVITSEngine(device="cpu", gpu=False)
                 required_methods = ["initialize", "cleanup", "synthesize"]
                 for method in required_methods:
-                    assert hasattr(
-                        engine, method
-                    ), f"GPTSoVITSEngine missing method: {method}"
+                    assert hasattr(engine, method), f"GPTSoVITSEngine missing method: {method}"
             except (ImportError, Exception):
                 pytest.skip("gpt-sovits dependencies not installed")
 
@@ -72,9 +68,7 @@ class TestGPTSovitsEngineClass:
         if hasattr(gpt_sovits_engine, "GPTSoVITSEngine"):
             try:
                 engine = gpt_sovits_engine.GPTSoVITSEngine(device="cpu", gpu=False)
-                assert hasattr(
-                    engine, "enable_caching"
-                ), "GPTSoVITSEngine should support caching"
+                assert hasattr(engine, "enable_caching"), "GPTSoVITSEngine should support caching"
                 assert hasattr(
                     engine, "batch_synthesize"
                 ), "GPTSoVITSEngine should support batch processing"
@@ -104,12 +98,8 @@ class TestGPTSovitsEngineBatchProcessing:
         if hasattr(gpt_sovits_engine, "GPTSoVITSEngine"):
             try:
                 engine = gpt_sovits_engine.GPTSoVITSEngine(device="cpu", gpu=False)
-                assert hasattr(
-                    engine, "batch_size"
-                ), "GPTSoVITSEngine should have batch_size"
-                assert isinstance(
-                    engine.batch_size, int
-                ), "batch_size should be an integer"
+                assert hasattr(engine, "batch_size"), "GPTSoVITSEngine should have batch_size"
+                assert isinstance(engine.batch_size, int), "batch_size should be an integer"
                 assert engine.batch_size > 0, "batch_size should be positive"
             except (ImportError, Exception):
                 pytest.skip("gpt-sovits dependencies not installed")
@@ -125,9 +115,7 @@ class TestGPTSovitsEngineProtocol:
                 engine = gpt_sovits_engine.GPTSoVITSEngine(device="cpu", gpu=False)
                 assert hasattr(engine, "initialize"), "Should implement initialize"
                 assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                assert hasattr(
-                    engine, "is_initialized"
-                ), "Should implement is_initialized"
+                assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                 assert hasattr(engine, "get_device"), "Should implement get_device"
             except (ImportError, Exception):
                 pytest.skip("gpt-sovits dependencies not installed")

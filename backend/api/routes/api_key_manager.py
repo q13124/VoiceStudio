@@ -118,7 +118,9 @@ def _generate_key_id() -> str:
     return f"key-{uuid.uuid4().hex[:8]}"
 
 
-@router.get("", response_model=list[APIKeyResponse], dependencies=[Depends(require_auth_if_enabled)])
+@router.get(
+    "", response_model=list[APIKeyResponse], dependencies=[Depends(require_auth_if_enabled)]
+)
 @cache_response(ttl=60)  # Cache for 60 seconds (API key list may change)
 async def list_api_keys():
     """List all API keys."""
@@ -155,7 +157,9 @@ async def list_api_keys():
         ) from e
 
 
-@router.get("/{key_id}", response_model=APIKeyResponse, dependencies=[Depends(require_auth_if_enabled)])
+@router.get(
+    "/{key_id}", response_model=APIKeyResponse, dependencies=[Depends(require_auth_if_enabled)]
+)
 @cache_response(ttl=60)  # Cache for 60 seconds (API key info may change)
 async def get_api_key(key_id: str):
     """Get a specific API key."""
@@ -217,9 +221,7 @@ def _encrypt_key(key_value: str) -> str:
                 os.makedirs(os.path.dirname(key_file), exist_ok=True)
                 with open(key_file, "wb") as f:
                     f.write(encryption_key)
-                logger.warning(
-                    "Generated new encryption key. Store securely in production!"
-                )
+                logger.warning("Generated new encryption key. Store securely in production!")
 
         if isinstance(encryption_key, str):
             encryption_key = encryption_key.encode()
@@ -231,9 +233,7 @@ def _encrypt_key(key_value: str) -> str:
         # Fallback: simple base64 encoding (not secure, but better than plain text)
         import base64
 
-        logger.warning(
-            "cryptography not available. Using base64 encoding (not secure)."
-        )
+        logger.warning("cryptography not available. Using base64 encoding (not secure).")
         return base64.b64encode(key_value.encode()).decode()
     except Exception as e:
         logger.error(f"Failed to encrypt key: {e}")
@@ -286,9 +286,7 @@ def _decrypt_key(encrypted_value: str) -> str:
         raise ValueError(f"Failed to decrypt key: {e!s}")
 
 
-def _validate_key_format(
-    service_name: str, key_value: str
-) -> tuple[bool, str | None]:
+def _validate_key_format(service_name: str, key_value: str) -> tuple[bool, str | None]:
     """Validate API key format for a service."""
     service_name_lower = service_name.lower()
 
@@ -345,14 +343,10 @@ async def create_api_key(request: APIKeyCreateRequest):
     """Create a new API key."""
     try:
         if not request.service_name or not request.key_value:
-            raise HTTPException(
-                status_code=400, detail="Service name and key value are required"
-            )
+            raise HTTPException(status_code=400, detail="Service name and key value are required")
 
         # Validate key format
-        is_valid, error_message = _validate_key_format(
-            request.service_name, request.key_value
-        )
+        is_valid, error_message = _validate_key_format(request.service_name, request.key_value)
         if not is_valid:
             raise HTTPException(
                 status_code=400,
@@ -383,9 +377,7 @@ async def create_api_key(request: APIKeyCreateRequest):
         return APIKeyResponse(
             key_id=key.key_id,
             service_name=key.service_name,
-            key_value_masked=_mask_key(
-                request.key_value
-            ),  # Mask original, not encrypted
+            key_value_masked=_mask_key(request.key_value),  # Mask original, not encrypted
             description=key.description,
             created_at=key.created_at,
             last_used=key.last_used,
@@ -403,7 +395,9 @@ async def create_api_key(request: APIKeyCreateRequest):
         ) from e
 
 
-@router.put("/{key_id}", response_model=APIKeyResponse, dependencies=[Depends(require_auth_if_enabled)])
+@router.put(
+    "/{key_id}", response_model=APIKeyResponse, dependencies=[Depends(require_auth_if_enabled)]
+)
 async def update_api_key(key_id: str, request: APIKeyUpdateRequest):
     """Update an API key."""
     try:
@@ -414,9 +408,7 @@ async def update_api_key(key_id: str, request: APIKeyUpdateRequest):
 
         if request.key_value is not None:
             # Validate key format
-            is_valid, error_message = _validate_key_format(
-                key.service_name, request.key_value
-            )
+            is_valid, error_message = _validate_key_format(key.service_name, request.key_value)
             if not is_valid:
                 raise HTTPException(
                     status_code=400,
@@ -533,9 +525,7 @@ async def validate_api_key(key_id: str):
                     )
                     is_valid = response.status_code == 200
                     if not is_valid:
-                        error_message = (
-                            f"ElevenLabs API returned {response.status_code}"
-                        )
+                        error_message = f"ElevenLabs API returned {response.status_code}"
 
             elif "azure" in service_name_lower:
                 # Azure Speech - validate format (region and key)
@@ -564,9 +554,7 @@ async def validate_api_key(key_id: str):
 
             elif "deepgram" in service_name_lower:
                 # Deepgram - validate format (starts with token)
-                is_valid = len(decrypted_key) > 20 and decrypted_key.startswith(
-                    ("token_", "dg_")
-                )
+                is_valid = len(decrypted_key) > 20 and decrypted_key.startswith(("token_", "dg_"))
                 if not is_valid:
                     error_message = "Deepgram key format invalid"
 
@@ -595,9 +583,7 @@ async def validate_api_key(key_id: str):
             _persist_keys()
             logger.info(f"Validated API key: {key_id} for {key.service_name}")
         else:
-            logger.warning(
-                f"API key validation failed: {key_id} for {key.service_name}"
-            )
+            logger.warning(f"API key validation failed: {key_id} for {key.service_name}")
 
         return {
             "valid": is_valid,
@@ -618,7 +604,9 @@ async def validate_api_key(key_id: str):
         ) from e
 
 
-@router.get("/services/list", response_model=list[str], dependencies=[Depends(require_auth_if_enabled)])
+@router.get(
+    "/services/list", response_model=list[str], dependencies=[Depends(require_auth_if_enabled)]
+)
 @cache_response(ttl=600)  # Cache for 10 minutes (supported services are static)
 async def list_supported_services():
     """List all supported service names."""

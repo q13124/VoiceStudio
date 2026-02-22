@@ -33,6 +33,7 @@ def api_client():
     from fastapi.testclient import TestClient
 
     from backend.api.main import app
+
     return TestClient(app)
 
 
@@ -56,7 +57,9 @@ def test_audio_file(tmp_path):
         wav.setframerate(44100)
         # Generate 2 seconds of stereo audio
         num_samples = 44100 * 2 * 2  # 2 channels
-        samples = [int(8000 * math.sin(2 * math.pi * 440 * (i // 2) / 44100)) for i in range(num_samples)]
+        samples = [
+            int(8000 * math.sin(2 * math.pi * 440 * (i // 2) / 44100)) for i in range(num_samples)
+        ]
         wav.writeframes(struct.pack(f"{len(samples)}h", *samples))
 
     return audio_file
@@ -271,7 +274,7 @@ class TestEffectsExport:
                     files={"file": ("test.wav", f, "audio/wav")},
                     data={
                         "effect_type": "reverb",
-                        "parameters": '{}',
+                        "parameters": "{}",
                         "output_format": output_format,
                     },
                 )
@@ -371,7 +374,7 @@ class TestAudioEffectsWorkflowIntegration:
                     files={"file": ("test.wav", f, "audio/wav")},
                     data={
                         "effect_type": "reverb",
-                        "parameters": '{}',
+                        "parameters": "{}",
                     },
                 )
             # Preview may or may not exist
@@ -384,7 +387,7 @@ class TestAudioEffectsWorkflowIntegration:
                     files={"file": ("test.wav", f, "audio/wav")},
                     data={
                         "effect_type": "reverb",
-                        "parameters": '{}',
+                        "parameters": "{}",
                         "output_format": "wav",
                     },
                 )

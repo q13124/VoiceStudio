@@ -17,20 +17,22 @@ logger = logging.getLogger(__name__)
 
 class InterruptionType(str, Enum):
     """Types of user interruption."""
+
     NONE = "none"
-    COOPERATIVE = "cooperative"    # User supplies a missing word
+    COOPERATIVE = "cooperative"  # User supplies a missing word
     TOPIC_CHANGE = "topic_change"  # User asks a new question
-    DISFLUENCY = "disfluency"      # Um, uh, cough, etc.
-    BACKCHANNEL = "backchannel"    # "Yeah", "uh-huh", "right"
-    URGENT = "urgent"              # Clear intent to take over
+    DISFLUENCY = "disfluency"  # Um, uh, cough, etc.
+    BACKCHANNEL = "backchannel"  # "Yeah", "uh-huh", "right"
+    URGENT = "urgent"  # Clear intent to take over
 
 
 class InterruptionAction(str, Enum):
     """Action to take for an interruption."""
-    IGNORE = "ignore"          # Continue AI output
-    BUFFER = "buffer"          # Buffer user speech, continue AI
-    STOP_AND_LISTEN = "stop"   # Stop AI output, process user input
-    PAUSE = "pause"            # Pause AI output briefly
+
+    IGNORE = "ignore"  # Continue AI output
+    BUFFER = "buffer"  # Buffer user speech, continue AI
+    STOP_AND_LISTEN = "stop"  # Stop AI output, process user input
+    PAUSE = "pause"  # Pause AI output briefly
 
 
 class InterruptionFSM:
@@ -42,24 +44,56 @@ class InterruptionFSM:
     """
 
     # Disfluency patterns (should be ignored)
-    DISFLUENCY_PATTERNS = frozenset({
-        "um", "uh", "hmm", "ah", "er", "like",
-        "you know", "i mean", "so", "well",
-    })
+    DISFLUENCY_PATTERNS = frozenset(
+        {
+            "um",
+            "uh",
+            "hmm",
+            "ah",
+            "er",
+            "like",
+            "you know",
+            "i mean",
+            "so",
+            "well",
+        }
+    )
 
     # Backchannel patterns (buffer, don't stop)
-    BACKCHANNEL_PATTERNS = frozenset({
-        "yeah", "yes", "yep", "uh-huh", "right",
-        "okay", "ok", "sure", "got it", "i see",
-        "mm-hmm", "mhm",
-    })
+    BACKCHANNEL_PATTERNS = frozenset(
+        {
+            "yeah",
+            "yes",
+            "yep",
+            "uh-huh",
+            "right",
+            "okay",
+            "ok",
+            "sure",
+            "got it",
+            "i see",
+            "mm-hmm",
+            "mhm",
+        }
+    )
 
     # Topic change indicators
-    TOPIC_CHANGE_INDICATORS = frozenset({
-        "but", "actually", "wait", "hold on", "no",
-        "stop", "instead", "what about", "let me",
-        "can you", "i want", "change",
-    })
+    TOPIC_CHANGE_INDICATORS = frozenset(
+        {
+            "but",
+            "actually",
+            "wait",
+            "hold on",
+            "no",
+            "stop",
+            "instead",
+            "what about",
+            "let me",
+            "can you",
+            "i want",
+            "change",
+        }
+    )
 
     def __init__(self):
         self._ai_is_speaking = False

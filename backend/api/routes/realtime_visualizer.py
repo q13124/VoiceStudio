@@ -79,9 +79,7 @@ class VisualizerStartResponse(BaseModel):
 
 
 @router.post("/start", response_model=VisualizerStartResponse)
-async def start_visualizer_session(
-    request: VisualizerStartRequest
-):
+async def start_visualizer_session(request: VisualizerStartRequest):
     """Start a new real-time visualizer session."""
     import uuid
     from datetime import datetime
@@ -121,9 +119,7 @@ async def start_visualizer_session(
 async def get_visualizer_session(session_id: str):
     """Get visualizer session configuration."""
     if session_id not in _visualizer_sessions:
-        raise HTTPException(
-            status_code=404, detail="Session not found"
-        )
+        raise HTTPException(status_code=404, detail="Session not found")
 
     session = _visualizer_sessions[session_id]
     return VisualizerConfig(
@@ -141,9 +137,7 @@ async def get_visualizer_session(session_id: str):
 async def stop_visualizer_session(session_id: str):
     """Stop a visualizer session."""
     if session_id not in _visualizer_sessions:
-        raise HTTPException(
-            status_code=404, detail="Session not found"
-        )
+        raise HTTPException(status_code=404, detail="Session not found")
 
     _visualizer_sessions[session_id]["status"] = "stopped"
     logger.info(f"Stopped visualizer session: {session_id}")
@@ -154,9 +148,7 @@ async def stop_visualizer_session(session_id: str):
 async def delete_visualizer_session(session_id: str):
     """Delete a visualizer session."""
     if session_id not in _visualizer_sessions:
-        raise HTTPException(
-            status_code=404, detail="Session not found"
-        )
+        raise HTTPException(status_code=404, detail="Session not found")
 
     del _visualizer_sessions[session_id]
     logger.info(f"Deleted visualizer session: {session_id}")
@@ -171,9 +163,7 @@ async def visualizer_stream(websocket: WebSocket, session_id: str):
         return
 
     await websocket.accept()
-    logger.info(
-        f"WebSocket connection opened for visualizer: {session_id}"
-    )
+    logger.info(f"WebSocket connection opened for visualizer: {session_id}")
 
     try:
         session = _visualizer_sessions[session_id]
@@ -183,9 +173,7 @@ async def visualizer_stream(websocket: WebSocket, session_id: str):
         try:
             import sys
 
-            app_path = os.path.join(
-                os.path.dirname(__file__), "..", "..", "..", "app"
-            )
+            app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
             if os.path.exists(app_path) and app_path not in sys.path:
                 sys.path.insert(0, app_path)
 
@@ -199,12 +187,10 @@ async def visualizer_stream(websocket: WebSocket, session_id: str):
                     details={
                         "message": "Install librosa and numpy for real-time visualization. "
                         "Install with: pip install librosa==0.11.0 numpy"
-                    }
+                    },
                 )
             )
-            await websocket.close(
-                code=1011, reason="Missing audio processing libraries"
-            )
+            await websocket.close(code=1011, reason="Missing audio processing libraries")
             return
 
         while True:
@@ -243,9 +229,7 @@ async def visualizer_stream(websocket: WebSocket, session_id: str):
                         # Compute FFT
                         fft = np.fft.rfft(audio_samples, n=session_config.fft_size)
                         magnitude = np.abs(fft)
-                        freqs = np.fft.rfftfreq(
-                            session_config.fft_size, 1.0 / sample_rate
-                        )
+                        freqs = np.fft.rfftfreq(session_config.fft_size, 1.0 / sample_rate)
 
                         frame["frequencies"] = freqs.tolist()
                         frame["magnitudes"] = magnitude.tolist()
@@ -257,23 +241,25 @@ async def visualizer_stream(websocket: WebSocket, session_id: str):
                 else:
                     # Echo back acknowledgment for non-audio messages
                     await websocket.send_json(
-                        create_message(MessageType.ACK, {
-                            "status": "received",
-                            "message": "Send audio data as {'audio': [...], 'sample_rate': 44100}",
-                        })
+                        create_message(
+                            MessageType.ACK,
+                            {
+                                "status": "received",
+                                "message": "Send audio data as {'audio': [...], 'sample_rate': 44100}",
+                            },
+                        )
                     )
             except Exception as msg_error:
-                logger.error(
-                    f"Error processing audio data in session {session_id}: {msg_error}"
-                )
+                logger.error(f"Error processing audio data in session {session_id}: {msg_error}")
                 await websocket.send_json(
-                    create_error("Failed to process audio data", code=ErrorCode.INTERNAL_ERROR, details={"detail": str(msg_error)})
+                    create_error(
+                        "Failed to process audio data",
+                        code=ErrorCode.INTERNAL_ERROR,
+                        details={"detail": str(msg_error)},
+                    )
                 )
     except WebSocketDisconnect:
-        logger.info(
-            f"WebSocket disconnected for visualizer: {session_id}"
-        )
+        logger.info(f"WebSocket disconnected for visualizer: {session_id}")
     except Exception as e:
         logger.error(f"WebSocket error for visualizer {session_id}: {e}")
         await websocket.close(code=1011, reason=str(e))
-

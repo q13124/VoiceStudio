@@ -177,10 +177,7 @@ class AnalyzerPage(BasePage):
     # =========================================================================
 
     def analyze_file(
-        self,
-        file_path: str,
-        wait_for_completion: bool = True,
-        timeout: float = 30.0
+        self, file_path: str, wait_for_completion: bool = True, timeout: float = 30.0
     ) -> bool:
         """
         Complete workflow to analyze a file.
@@ -241,10 +238,7 @@ class AnalyzerPage(BasePage):
             "analyze_button": self.ANALYZE_BUTTON,
         }
 
-        return {
-            name: self.element_exists(auto_id)
-            for name, auto_id in elements.items()
-        }
+        return {name: self.element_exists(auto_id) for name, auto_id in elements.items()}
 
     def get_active_tab(self) -> str | None:
         """

@@ -28,34 +28,34 @@ logger = logging.getLogger(__name__)
 try:
     import librosa
     import soundfile as sf
+
     HAS_LIBROSA = True
 except ImportError:
     HAS_LIBROSA = False
     librosa = None
     sf = None
-    logger.warning(
-        "librosa/soundfile not installed. Install with: pip install librosa soundfile"
-    )
+    logger.warning("librosa/soundfile not installed. Install with: pip install librosa soundfile")
 
 # Try to import RVC library
 try:
     from rvc import RVC
+
     HAS_RVC = True
 except ImportError:
     try:
         # Alternative import path
         from rvc_python import RVC
+
         HAS_RVC = True
     except ImportError:
         HAS_RVC = False
         RVC = None
-        logger.warning(
-            "RVC library not installed. Install with: pip install rvc-python"
-        )
+        logger.warning("RVC library not installed. Install with: pip install rvc-python")
 
 # Try to import fairseq for HuBERT
 try:
     import fairseq
+
     HAS_FAIRSEQ = True
 except ImportError:
     HAS_FAIRSEQ = False
@@ -74,6 +74,7 @@ try:
         Shift,
         TimeStretch,
     )
+
     HAS_AUDIOMENTATIONS = True
 except ImportError:
     HAS_AUDIOMENTATIONS = False
@@ -116,9 +117,7 @@ class RVCTrainer:
             sample_rate: Target sample rate for training (40000 for RVC v2)
             f0_method: F0 extraction method ('rmvpe', 'pm', 'harvest', 'crepe')
         """
-        self.device = device or (
-            "cuda" if (gpu and torch.cuda.is_available()) else "cpu"
-        )
+        self.device = device or ("cuda" if (gpu and torch.cuda.is_available()) else "cpu")
         self.output_dir = Path(output_dir) if output_dir else Path("models/rvc_trained")
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.sample_rate = sample_rate
@@ -319,9 +318,7 @@ class RVCTrainer:
                 self._current_epoch = epoch + 1
 
                 # Simulate training epoch (replace with actual RVC training)
-                epoch_loss = await self._train_epoch(
-                    audio_files, batch_size, learning_rate
-                )
+                epoch_loss = await self._train_epoch(audio_files, batch_size, learning_rate)
                 losses.append(epoch_loss)
 
                 if epoch_loss < best_loss:

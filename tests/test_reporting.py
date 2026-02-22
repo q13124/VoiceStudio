@@ -212,9 +212,7 @@ class CoverageReporter:
             "files": self.coverage_data.get("files", {}),
         }
 
-    def save_coverage_report(
-        self, output_dir: Path, filename: str = "coverage_report.json"
-    ):
+    def save_coverage_report(self, output_dir: Path, filename: str = "coverage_report.json"):
         """
         Save coverage report.
 

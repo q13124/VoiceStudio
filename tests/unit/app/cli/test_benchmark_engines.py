@@ -23,9 +23,7 @@ class TestBenchmarkEnginesImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            benchmark_engines is not None
-        ), "Failed to import benchmark_engines module"
+        assert benchmark_engines is not None, "Failed to import benchmark_engines module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -35,4 +33,3 @@ class TestBenchmarkEnginesImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

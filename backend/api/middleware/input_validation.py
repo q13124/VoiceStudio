@@ -138,9 +138,7 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
         # Check path traversal
         if self._check_path_traversal(value):
             logger.warning(f"Path traversal attempt in {field_name}")
-            detail = (
-                f"Invalid input in field '{field_name}': " "Path traversal detected"
-            )
+            detail = f"Invalid input in field '{field_name}': " "Path traversal detected"
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=detail,
@@ -150,8 +148,7 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
         if self._check_injection(value):
             logger.warning(f"Injection attempt in {field_name}")
             detail = (
-                f"Invalid input in field '{field_name}': "
-                "Potentially malicious content detected"
+                f"Invalid input in field '{field_name}': " "Potentially malicious content detected"
             )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -162,10 +159,7 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
         if self.strict_mode or field_name.lower() in ["query", "sql", "filter"]:
             if self._check_sql_injection(value):
                 logger.warning(f"SQL injection attempt in {field_name}")
-                detail = (
-                    f"Invalid input in field '{field_name}': "
-                    "SQL injection attempt detected"
-                )
+                detail = f"Invalid input in field '{field_name}': " "SQL injection attempt detected"
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=detail,

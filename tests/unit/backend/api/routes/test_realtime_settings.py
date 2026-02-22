@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def realtime_settings_client():
     """Create test client for realtime settings routes."""
     from backend.api.routes.realtime_settings import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)
@@ -29,8 +30,7 @@ class TestRealtimeSettingsEndpoints:
     def test_update_settings(self, realtime_settings_client):
         """Test PUT /settings updates settings."""
         response = realtime_settings_client.put(
-            "/api/realtime-settings/settings",
-            json={"latency_mode": "low"}
+            "/api/realtime-settings/settings", json={"latency_mode": "low"}
         )
         assert response.status_code in [200, 404, 422]
 

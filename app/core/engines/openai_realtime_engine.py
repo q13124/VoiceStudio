@@ -81,22 +81,24 @@ class OpenAIRealtimeProvider(BaseS2SProvider):
                 self._state = S2SConnectionState.CONNECTED
 
                 # Configure session
-                await self._ws_connection.send_json({
-                    "type": "session.update",
-                    "session": {
-                        "modalities": self._config.modalities,
-                        "voice": self._config.voice,
-                        "input_audio_format": self._config.input_format,
-                        "output_audio_format": self._config.output_format,
-                        "turn_detection": {
-                            "type": self._config.turn_detection,
-                            "threshold": 0.5,
-                            "silence_duration_ms": self._config.silence_threshold_ms,
+                await self._ws_connection.send_json(
+                    {
+                        "type": "session.update",
+                        "session": {
+                            "modalities": self._config.modalities,
+                            "voice": self._config.voice,
+                            "input_audio_format": self._config.input_format,
+                            "output_audio_format": self._config.output_format,
+                            "turn_detection": {
+                                "type": self._config.turn_detection,
+                                "threshold": 0.5,
+                                "silence_duration_ms": self._config.silence_threshold_ms,
+                            },
+                            "temperature": self._config.temperature,
+                            "max_response_output_tokens": self._config.max_response_tokens,
                         },
-                        "temperature": self._config.temperature,
-                        "max_response_output_tokens": self._config.max_response_tokens,
-                    },
-                })
+                    }
+                )
 
                 logger.info("OpenAI Realtime connected and configured")
                 return True
@@ -120,10 +122,12 @@ class OpenAIRealtimeProvider(BaseS2SProvider):
 
         # Encode as base64 for the API
         encoded = base64.b64encode(audio_data).decode("utf-8")
-        await self._ws_connection.send_json({
-            "type": "input_audio_buffer.append",
-            "audio": encoded,
-        })
+        await self._ws_connection.send_json(
+            {
+                "type": "input_audio_buffer.append",
+                "audio": encoded,
+            }
+        )
         self._state = S2SConnectionState.ACTIVE
 
     async def receive_audio(self) -> AsyncIterator[S2SResponse]:
@@ -177,9 +181,7 @@ class OpenAIRealtimeProvider(BaseS2SProvider):
             logger.error(f"Receive error: {exc}")
             self._state = S2SConnectionState.ERROR
 
-    async def respond(
-        self, audio_data: bytes, context: str | None = None
-    ) -> S2SResponse:
+    async def respond(self, audio_data: bytes, context: str | None = None) -> S2SResponse:
         """
         Send audio and get a complete response.
 
@@ -194,14 +196,18 @@ class OpenAIRealtimeProvider(BaseS2SProvider):
         await self.send_audio(audio_data)
 
         # Commit the audio buffer
-        await self._ws_connection.send_json({
-            "type": "input_audio_buffer.commit",
-        })
+        await self._ws_connection.send_json(
+            {
+                "type": "input_audio_buffer.commit",
+            }
+        )
 
         # Request response
-        await self._ws_connection.send_json({
-            "type": "response.create",
-        })
+        await self._ws_connection.send_json(
+            {
+                "type": "response.create",
+            }
+        )
 
         # Collect response
         audio_chunks = []
@@ -231,7 +237,9 @@ class OpenAIRealtimeProvider(BaseS2SProvider):
     async def interrupt(self) -> None:
         """Cancel the current response."""
         if self._ws_connection and self._ws_connection.is_connected:
-            await self._ws_connection.send_json({
-                "type": "response.cancel",
-            })
+            await self._ws_connection.send_json(
+                {
+                    "type": "response.cancel",
+                }
+            )
             logger.info("OpenAI Realtime: response cancelled")

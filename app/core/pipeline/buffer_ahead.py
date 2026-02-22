@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AudioSegment:
     """A synthesized audio segment ready for playback."""
+
     text: str
     audio_data: bytes
     segment_index: int

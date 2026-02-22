@@ -70,20 +70,14 @@ class TestVersioning:
 
     def test_version_negotiation_with_header(self, test_client):
         """Test version negotiation with X-API-Version header."""
-        response = test_client.get(
-            "/api/version",
-            headers={"X-API-Version": "1.0"}
-        )
+        response = test_client.get("/api/version", headers={"X-API-Version": "1.0"})
         test_client.assert_success(response)
 
         assert response.body.get("negotiated_version") == "1.0"
 
     def test_version_negotiation_unsupported(self, test_client):
         """Test version negotiation with unsupported version."""
-        response = test_client.get(
-            "/api/version",
-            headers={"X-API-Version": "99.0"}
-        )
+        response = test_client.get("/api/version", headers={"X-API-Version": "99.0"})
         test_client.assert_success(response)
 
         # Should fall back to current version (1.0)
@@ -129,10 +123,7 @@ class TestErrorHandling:
     def test_validation_error_format(self, test_client):
         """Test validation error has standard format."""
         # Post to an endpoint with invalid data
-        response = test_client.post(
-            "/api/voice/synthesize",
-            json={}  # Missing required fields
-        )
+        response = test_client.post("/api/voice/synthesize", json={})  # Missing required fields
 
         # Should return 422 for validation error
         if response.status_code == 422:
@@ -152,9 +143,7 @@ class TestResponsePerformance:
         test_client.assert_success(response)
 
         # Health should respond in under 100ms
-        assert response.elapsed_ms < 100, (
-            f"Health endpoint too slow: {response.elapsed_ms:.2f}ms"
-        )
+        assert response.elapsed_ms < 100, f"Health endpoint too slow: {response.elapsed_ms:.2f}ms"
 
     def test_version_response_time(self, test_client):
         """Test version endpoint responds quickly."""
@@ -162,9 +151,7 @@ class TestResponsePerformance:
         test_client.assert_success(response)
 
         # Version should respond in under 200ms
-        assert response.elapsed_ms < 200, (
-            f"Version endpoint too slow: {response.elapsed_ms:.2f}ms"
-        )
+        assert response.elapsed_ms < 200, f"Version endpoint too slow: {response.elapsed_ms:.2f}ms"
 
 
 @pytest.mark.integration

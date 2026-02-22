@@ -25,6 +25,7 @@ MODELS_BASE_DIR = Path(PROGRAMDATA) / "VoiceStudio" / "models"
 @dataclass
 class ModelInfo:
     """Information about a stored model."""
+
     engine: str
     model_name: str
     model_path: str
@@ -68,8 +69,7 @@ class ModelStorage:
                 with open(self._registry_file, encoding="utf-8") as f:
                     data = json.load(f)
                     self._registry = {
-                        key: ModelInfo.from_dict(value)
-                        for key, value in data.items()
+                        key: ModelInfo.from_dict(value) for key, value in data.items()
                     }
                 logger.info(f"Loaded {len(self._registry)} models from registry")
             except Exception as e:
@@ -82,10 +82,7 @@ class ModelStorage:
         """Save model registry to disk atomically (tmp + replace)."""
         tmp_path = None
         try:
-            data = {
-                key: info.to_dict()
-                for key, info in self._registry.items()
-            }
+            data = {key: info.to_dict() for key, info in self._registry.items()}
             tmp_path = Path(str(self._registry_file) + ".tmp")
             with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
@@ -128,7 +125,7 @@ class ModelStorage:
         model_name: str,
         model_path: str,
         version: str | None = None,
-        metadata: dict | None = None
+        metadata: dict | None = None,
     ) -> ModelInfo:
         """
         Register a model in the storage system.
@@ -169,7 +166,7 @@ class ModelStorage:
             version=version,
             downloaded_at=now,
             updated_at=now,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         # Register
@@ -223,7 +220,10 @@ class ModelStorage:
                 current_checksum = self._calculate_directory_checksum(path)
 
             if current_checksum != model_info.checksum:
-                return False, f"Checksum mismatch: expected {model_info.checksum[:16]}..., got {current_checksum[:16]}..."
+                return (
+                    False,
+                    f"Checksum mismatch: expected {model_info.checksum[:16]}..., got {current_checksum[:16]}...",
+                )
 
             return True, None
         except Exception as e:
@@ -281,6 +281,5 @@ class ModelStorage:
             "total_size_mb": total_size / (1024 * 1024),
             "total_size_gb": total_size / (1024 * 1024 * 1024),
             "engines": engine_counts,
-            "base_dir": str(self.base_dir)
+            "base_dir": str(self.base_dir),
         }
-

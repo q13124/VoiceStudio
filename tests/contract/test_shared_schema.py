@@ -25,6 +25,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # FIXTURES
 # =============================================================================
 
+
 @pytest.fixture(scope="module")
 def shared_dir() -> Path:
     """Get shared directory path."""
@@ -77,6 +78,7 @@ def contract_schemas(all_schemas) -> dict[str, dict[str, Any]]:
 # BASIC VALIDATION TESTS
 # =============================================================================
 
+
 @pytest.mark.contract
 class TestSchemaDiscovery:
     """Tests for schema discovery."""
@@ -117,9 +119,7 @@ class TestSchemaRegistryConsistency:
 
     def test_all_schemas_registered(self, schema_registry, all_schemas, shared_dir):
         """Verify all schema files are in registry."""
-        registered_paths = {
-            entry["path"] for entry in schema_registry.get("schemas", [])
-        }
+        registered_paths = {entry["path"] for entry in schema_registry.get("schemas", [])}
 
         unregistered = []
         for schema_path in all_schemas:
@@ -133,6 +133,7 @@ class TestSchemaRegistryConsistency:
         # Advisory - some schemas may intentionally be unregistered
         if unregistered:
             import warnings
+
             warnings.warn(f"Unregistered schemas: {unregistered}", stacklevel=2)
 
     def test_registry_ids_unique(self, schema_registry):
@@ -190,6 +191,7 @@ class TestSchemaStructure:
         # Advisory only
         if errors:
             import warnings
+
             warnings.warn(f"Object schemas without properties: {errors}", stacklevel=2)
 
     def test_array_schemas_have_items(self, all_schemas):
@@ -274,6 +276,7 @@ class TestSchemaReferences:
 # CONTRACT TESTS
 # =============================================================================
 
+
 @pytest.mark.contract
 class TestContractSchemas:
     """Tests for contract schema validity."""
@@ -289,6 +292,7 @@ class TestContractSchemas:
         # Advisory only
         if missing:
             import warnings
+
             warnings.warn(f"Contracts without title: {missing}", stacklevel=2)
 
     def test_contracts_are_objects(self, contract_schemas):
@@ -306,6 +310,7 @@ class TestContractSchemas:
         # Allow some non-object contracts (enums, etc.)
         if len(non_objects) > len(contract_schemas) * 0.3:
             import warnings
+
             warnings.warn(f"Non-object contracts: {non_objects}", stacklevel=2)
 
     def test_request_contracts_have_required(self, contract_schemas):
@@ -320,7 +325,10 @@ class TestContractSchemas:
         # Advisory - some requests may have all optional fields
         if requests_without_required:
             import warnings
-            warnings.warn(f"Request contracts without required: {requests_without_required}", stacklevel=2)
+
+            warnings.warn(
+                f"Request contracts without required: {requests_without_required}", stacklevel=2
+            )
 
 
 @pytest.mark.contract
@@ -352,6 +360,7 @@ class TestErrorCodes:
                     has_desc = "message" in details or "description" in details
                     if not has_desc:
                         import warnings
+
                         warnings.warn(f"Error code {code} missing description", stacklevel=2)
 
     def test_error_codes_unique(self, error_codes):
@@ -368,6 +377,7 @@ class TestErrorCodes:
 # =============================================================================
 # CROSS-PLATFORM SYNC TESTS
 # =============================================================================
+
 
 @pytest.mark.contract
 class TestFrontendBackendSync:
@@ -397,6 +407,7 @@ class TestFrontendBackendSync:
         # All should have descriptions for documentation
         if undocumented:
             import warnings
+
             warnings.warn(f"Undocumented schemas: {undocumented}", stacklevel=2)
 
     def test_analyze_voice_request_sync(self, contract_schemas):
@@ -465,6 +476,7 @@ class TestSchemaVersioning:
 # SCHEMA COMPATIBILITY TESTS
 # =============================================================================
 
+
 @pytest.mark.contract
 class TestSchemaCompatibility:
     """Tests for schema compatibility."""
@@ -518,6 +530,7 @@ class TestSchemaCompatibility:
 
             if dominant_count / total < 0.7:
                 import warnings
+
                 warnings.warn(f"Mixed naming conventions: {naming_styles}", stacklevel=2)
 
 
@@ -539,6 +552,7 @@ class TestSchemaDocumentation:
         # Allow some undocumented, but not too many
         if len(undocumented) > len(all_schemas) * 0.5:
             import warnings
+
             warnings.warn(f"Many undocumented schemas: {undocumented[:5]}", stacklevel=2)
 
     def test_properties_have_descriptions(self, all_schemas):
@@ -558,6 +572,7 @@ class TestSchemaDocumentation:
         total_props = len(undocumented_props)
         if total_props > 20:
             import warnings
+
             warnings.warn(f"Properties without descriptions: {total_props}", stacklevel=2)
 
 

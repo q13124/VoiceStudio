@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class ProcessState(Enum):
     """State of the monitored process."""
+
     STOPPED = "stopped"
     STARTING = "starting"
     RUNNING = "running"
@@ -35,7 +36,9 @@ class WatchdogConfig:
     """Configuration for the process watchdog."""
 
     # Process configuration
-    command: list[str] = field(default_factory=lambda: ["python", "-m", "uvicorn", "backend.api.main:app"])
+    command: list[str] = field(
+        default_factory=lambda: ["python", "-m", "uvicorn", "backend.api.main:app"]
+    )
     working_directory: str = "."
     environment: dict[str, str] = field(default_factory=dict)
 
@@ -63,6 +66,7 @@ class WatchdogConfig:
 @dataclass
 class RestartRecord:
     """Record of a process restart."""
+
     timestamp: datetime
     reason: str
     exit_code: int | None = None
@@ -240,9 +244,7 @@ class ProcessWatchdog:
                     # Wait for graceful shutdown
                     try:
                         await asyncio.wait_for(
-                            asyncio.get_event_loop().run_in_executor(
-                                None, self._process.wait
-                            ),
+                            asyncio.get_event_loop().run_in_executor(None, self._process.wait),
                             timeout=self.config.graceful_shutdown_timeout_seconds,
                         )
                     except asyncio.TimeoutError:
@@ -271,9 +273,7 @@ class ProcessWatchdog:
                 try:
                     self._process.terminate()
                     await asyncio.wait_for(
-                        asyncio.get_event_loop().run_in_executor(
-                            None, self._process.wait
-                        ),
+                        asyncio.get_event_loop().run_in_executor(None, self._process.wait),
                         timeout=self.config.graceful_shutdown_timeout_seconds,
                     )
                 except asyncio.TimeoutError:
@@ -297,10 +297,14 @@ class ProcessWatchdog:
         # HTTP health check
         try:
             import aiohttp
-            async with aiohttp.ClientSession() as session, session.get(
-                self.config.health_check_url,
-                timeout=aiohttp.ClientTimeout(total=self.config.health_check_timeout_seconds),
-            ) as response:
+
+            async with (
+                aiohttp.ClientSession() as session,
+                session.get(
+                    self.config.health_check_url,
+                    timeout=aiohttp.ClientTimeout(total=self.config.health_check_timeout_seconds),
+                ) as response,
+            ):
                 if response.status == 200:
                     self._health_check_failures = 0
                     self._reset_restart_delay()
@@ -354,7 +358,10 @@ class ProcessWatchdog:
                 if self._state == ProcessState.RUNNING:
                     healthy = await self.health_check()
 
-                    if not healthy and self._health_check_failures >= self.config.health_check_max_failures:
+                    if (
+                        not healthy
+                        and self._health_check_failures >= self.config.health_check_max_failures
+                    ):
                         logger.warning("Health check failures exceeded threshold")
                         if self._should_run and self._can_restart():
                             await self.restart("health check failures")

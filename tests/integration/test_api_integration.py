@@ -3,7 +3,6 @@ Phase 9: API Integration Tests
 Task 9.2: Integration tests for the API layer.
 """
 
-
 import pytest
 
 
@@ -71,10 +70,7 @@ class TestSynthesisEndpoints:
     @pytest.mark.asyncio
     async def test_synthesis_request(self, test_client, mock_synthesis_request):
         """Test submitting a synthesis request."""
-        response = await test_client.post(
-            "/api/v1/synthesis",
-            json=mock_synthesis_request
-        )
+        response = await test_client.post("/api/v1/synthesis", json=mock_synthesis_request)
 
         if response.status_code == 404:
             pytest.skip("Endpoint not implemented")
@@ -112,10 +108,7 @@ class TestProjectEndpoints:
     @pytest.mark.asyncio
     async def test_create_project(self, test_client, mock_project_data):
         """Test creating a project."""
-        response = await test_client.post(
-            "/api/v1/projects",
-            json=mock_project_data
-        )
+        response = await test_client.post("/api/v1/projects", json=mock_project_data)
 
         if response.status_code == 404:
             pytest.skip("Endpoint not implemented")

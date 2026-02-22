@@ -498,9 +498,9 @@ class TestPluginRegistry:
         service = PluginService()
         # Either public or private method should exist
         has_method = (
-            hasattr(service, "unregister_plugin") or
-            hasattr(service, "_unregister_plugin") or
-            hasattr(service, "unload_plugin")  # May use unload instead
+            hasattr(service, "unregister_plugin")
+            or hasattr(service, "_unregister_plugin")
+            or hasattr(service, "unload_plugin")  # May use unload instead
         )
         assert has_method
 

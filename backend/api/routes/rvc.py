@@ -55,9 +55,11 @@ from ..ws.protocol import (
 
 class RvcStartResponse(BaseModel):
     """Response model for RVC session start."""
+
     session_id: str
     status: str
     message: str
+
 
 logger = logging.getLogger(__name__)
 
@@ -270,7 +272,9 @@ async def convert_realtime(websocket: WebSocket):
 
     try:
         if not ENGINE_AVAILABLE or not engine_router:
-            await websocket.send_json(create_error("Engine router not available", code=ErrorCode.UNAVAILABLE))
+            await websocket.send_json(
+                create_error("Engine router not available", code=ErrorCode.UNAVAILABLE)
+            )
             await websocket.close()
             return
 
@@ -339,7 +343,7 @@ async def convert_realtime(websocket: WebSocket):
                         await websocket.send_json(
                             create_error(
                                 f"RVC engine temporarily unavailable: {e}",
-                                code=ErrorCode.UNAVAILABLE
+                                code=ErrorCode.UNAVAILABLE,
                             )
                         )
                         continue
@@ -352,12 +356,15 @@ async def convert_realtime(websocket: WebSocket):
 
                     # Send converted chunk (using standardized protocol)
                     await websocket.send_json(
-                        create_message(MessageType.CONVERTED_CHUNK, {
-                            "data": converted_b64,
-                            "sample_rate": 40000,
-                            "format": "float32",
-                            "latency_ms": latency_ms,
-                        })
+                        create_message(
+                            MessageType.CONVERTED_CHUNK,
+                            {
+                                "data": converted_b64,
+                                "sample_rate": 40000,
+                                "format": "float32",
+                                "latency_ms": latency_ms,
+                            },
+                        )
                     )
 
                 except Exception as e:
@@ -378,7 +385,9 @@ async def convert_realtime(websocket: WebSocket):
     except Exception as e:
         logger.error(f"RVC WebSocket error: {e}", exc_info=True)
         try:
-            await websocket.send_json(create_error(f"WebSocket error: {e!s}", code=ErrorCode.INTERNAL_ERROR))
+            await websocket.send_json(
+                create_error(f"WebSocket error: {e!s}", code=ErrorCode.INTERNAL_ERROR)
+            )
         except Exception as send_err:
             logger.debug(f"Could not send error to RVC WebSocket client: {send_err}")
     finally:

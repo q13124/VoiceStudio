@@ -42,7 +42,7 @@ def apply_fix() -> dict[str, Any]:
     transformers_patched = False
 
     try:
-        import huggingface_hub  # type: ignore
+        import huggingface_hub
 
         if hasattr(huggingface_hub, "constants"):
             huggingface_hub.constants.HF_INFERENCE_API_BASE = HF_INFERENCE_API_BASE
@@ -65,7 +65,7 @@ def apply_fix() -> dict[str, Any]:
         logger.debug("huggingface_hub patch skipped: %s", ex)
 
     try:
-        import transformers  # type: ignore
+        import transformers
 
         if hasattr(transformers, "API_BASES"):
             transformers.API_BASES["huggingface"] = HF_INFERENCE_API_BASE

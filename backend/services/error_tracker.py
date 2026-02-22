@@ -194,9 +194,9 @@ class ErrorTracker:
             fingerprint = self._generate_fingerprint(exception)
 
             # Get stacktrace
-            stacktrace = "".join(traceback.format_exception(
-                type(exception), exception, exception.__traceback__
-            ))
+            stacktrace = "".join(
+                traceback.format_exception(type(exception), exception, exception.__traceback__)
+            )
 
             # Create tracked error
             error = TrackedError(
@@ -217,7 +217,7 @@ class ErrorTracker:
 
             # Trim if needed
             if len(self._errors) > self.max_errors:
-                self._errors = self._errors[-self.max_errors:]
+                self._errors = self._errors[-self.max_errors :]
 
             # Update aggregate
             self._update_aggregate(error)
@@ -284,9 +284,7 @@ class ErrorTracker:
                 exception_type=error.exception_type,
                 sample_stacktrace=error.stacktrace,
                 affected_endpoints=(
-                    [error.context.endpoint]
-                    if error.context and error.context.endpoint
-                    else []
+                    [error.context.endpoint] if error.context and error.context.endpoint else []
                 ),
             )
 
@@ -390,9 +388,7 @@ class ErrorTracker:
             "recent_errors": [
                 {
                     **asdict(e),
-                    "stacktrace": (
-                        e.stacktrace if include_stacktraces else "[redacted]"
-                    ),
+                    "stacktrace": (e.stacktrace if include_stacktraces else "[redacted]"),
                     "context": asdict(e.context) if e.context else None,
                 }
                 for e in recent_errors
@@ -457,9 +453,7 @@ def track_error(
     tags: list[str] | None = None,
 ) -> TrackedError:
     """Convenience function to track an error."""
-    return get_error_tracker().track_error(
-        exception, severity, category, context, tags
-    )
+    return get_error_tracker().track_error(exception, severity, category, context, tags)
 
 
 def track_request() -> None:

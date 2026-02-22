@@ -56,9 +56,12 @@ class TestAudioWaveformEndpoint:
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             # Create a simple audio file
             import soundfile as sf
+
             sample_rate = 44100
             duration = 1.0
-            samples = np.sin(2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration)))
+            samples = np.sin(
+                2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration))
+            )
             sf.write(tmp.name, samples, sample_rate)
             audio_id = Path(tmp.name).stem
 
@@ -122,9 +125,12 @@ class TestAudioWaveformEndpoint:
 
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             import soundfile as sf
+
             sample_rate = 44100
             duration = 1.0
-            samples = np.sin(2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration)))
+            samples = np.sin(
+                2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration))
+            )
             sf.write(tmp.name, samples, sample_rate)
             audio_id = Path(tmp.name).stem
 
@@ -158,16 +164,21 @@ class TestAudioSpectrogramEndpoint:
 
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             import soundfile as sf
+
             sample_rate = 44100
             duration = 1.0
-            samples = np.sin(2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration)))
+            samples = np.sin(
+                2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration))
+            )
             sf.write(tmp.name, samples, sample_rate)
             audio_id = Path(tmp.name).stem
 
             with patch("backend.api.routes.audio._get_audio_path") as mock_path:
                 mock_path.return_value = tmp.name
 
-                response = client.get(f"/api/audio/spectrogram?audio_id={audio_id}&width=512&height=256")
+                response = client.get(
+                    f"/api/audio/spectrogram?audio_id={audio_id}&width=512&height=256"
+                )
                 assert response.status_code == 200
                 data = response.json()
                 assert "frames" in data
@@ -228,9 +239,12 @@ class TestAudioLoudnessEndpoint:
 
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             import soundfile as sf
+
             sample_rate = 44100
             duration = 1.0
-            samples = np.sin(2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration)))
+            samples = np.sin(
+                2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration))
+            )
             sf.write(tmp.name, samples, sample_rate)
             audio_id = Path(tmp.name).stem
 
@@ -287,9 +301,12 @@ class TestAudioMetersEndpoint:
 
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             import soundfile as sf
+
             sample_rate = 44100
             duration = 1.0
-            samples = np.sin(2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration)))
+            samples = np.sin(
+                2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration))
+            )
             sf.write(tmp.name, samples, sample_rate)
             audio_id = Path(tmp.name).stem
 
@@ -336,9 +353,12 @@ class TestAudioRadarEndpoint:
 
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             import soundfile as sf
+
             sample_rate = 44100
             duration = 1.0
-            samples = np.sin(2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration)))
+            samples = np.sin(
+                2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration))
+            )
             sf.write(tmp.name, samples, sample_rate)
             audio_id = Path(tmp.name).stem
 
@@ -386,6 +406,7 @@ class TestAudioPhaseEndpoint:
 
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             import soundfile as sf
+
             sample_rate = 44100
             duration = 1.0
             # Create stereo audio

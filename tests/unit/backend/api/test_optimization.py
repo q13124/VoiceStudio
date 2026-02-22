@@ -23,16 +23,12 @@ class TestOptimizationImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            optimization is not None
-        ), "Failed to import optimization module"
+        assert optimization is not None, "Failed to import optimization module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
         classes = [
-            name
-            for name in dir(optimization)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(optimization) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "module should have classes"
 
@@ -44,9 +40,7 @@ class TestOptimizationClasses:
         """Test CompressionMiddleware class exists."""
         if hasattr(optimization, "CompressionMiddleware"):
             cls = optimization.CompressionMiddleware
-            assert isinstance(
-                cls, type
-            ), "CompressionMiddleware should be a class"
+            assert isinstance(cls, type), "CompressionMiddleware should be a class"
 
 
 if __name__ == "__main__":

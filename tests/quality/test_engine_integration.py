@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EngineTestResult:
     """Result of testing an engine."""
+
     engine_name: str
     engine_file: str
     has_placeholders: bool
@@ -155,9 +156,11 @@ class EngineIntegrationTester:
             engine_class = None
             for attr_name in dir(module):
                 attr = getattr(module, attr_name)
-                if (isinstance(attr, type) and
-                    attr_name.endswith("Engine") and
-                    attr_name != "EngineProtocol"):
+                if (
+                    isinstance(attr, type)
+                    and attr_name.endswith("Engine")
+                    and attr_name != "EngineProtocol"
+                ):
                     engine_class = attr
                     break
 
@@ -211,7 +214,7 @@ class EngineIntegrationTester:
             error_handling_count=error_handling_count,
             can_initialize=can_initialize,
             initialization_error=init_error,
-            status=status
+            status=status,
         )
 
         return result
@@ -227,22 +230,26 @@ class EngineIntegrationTester:
                 result = self.test_engine(file_path)
                 self.results.append(result)
 
-                status_icon = "✅" if result.status == "pass" else "⚠️" if result.status == "warning" else "❌"
+                status_icon = (
+                    "✅" if result.status == "pass" else "⚠️" if result.status == "warning" else "❌"
+                )
                 logger.info(f"{status_icon} {result.engine_name}: {result.status}")
 
             except Exception as e:
                 logger.error(f"Error testing {file_path.name}: {e}")
-                self.results.append(EngineTestResult(
-                    engine_name=file_path.stem,
-                    engine_file=str(file_path.relative_to(project_root)),
-                    has_placeholders=True,
-                    placeholder_count=1,
-                    has_error_handling=False,
-                    error_handling_count=0,
-                    can_initialize=False,
-                    initialization_error=str(e),
-                    status="fail"
-                ))
+                self.results.append(
+                    EngineTestResult(
+                        engine_name=file_path.stem,
+                        engine_file=str(file_path.relative_to(project_root)),
+                        has_placeholders=True,
+                        placeholder_count=1,
+                        has_error_handling=False,
+                        error_handling_count=0,
+                        can_initialize=False,
+                        initialization_error=str(e),
+                        status="fail",
+                    )
+                )
 
         return self.results
 
@@ -273,7 +280,9 @@ class EngineIntegrationTester:
 """
 
         for result in sorted(self.results, key=lambda x: x.status):
-            status_icon = "✅" if result.status == "pass" else "⚠️" if result.status == "warning" else "❌"
+            status_icon = (
+                "✅" if result.status == "pass" else "⚠️" if result.status == "warning" else "❌"
+            )
             report += f"### {status_icon} {result.engine_name}\n"
             report += f"- **File:** `{result.engine_file}`\n"
             report += f"- **Status:** {result.status.upper()}\n"
@@ -326,4 +335,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

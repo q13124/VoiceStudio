@@ -13,6 +13,7 @@ from typing import Any
 # Import unified config loader (supports JSON, YAML, TOML)
 try:
     from app.core.config.config_loader import ConfigLoader, load_config
+
     HAS_UNIFIED_CONFIG = True
 except ImportError:
     HAS_UNIFIED_CONFIG = False
@@ -33,11 +34,7 @@ class EngineConfig:
             config_path: Path to config.json file
         """
         self.config_path = Path(config_path)
-        self.config: dict[str, Any] = {
-            "defaults": {},
-            "overrides": {},
-            "installed": []
-        }
+        self.config: dict[str, Any] = {"defaults": {}, "overrides": {}, "installed": []}
         self.load()
 
     def load(self):
@@ -48,25 +45,23 @@ class EngineConfig:
                 if HAS_UNIFIED_CONFIG:
                     try:
                         self.config = load_config(self.config_path, validate=False)
-                        logger.info(f"Loaded engine config from {self.config_path} (unified loader)")
+                        logger.info(
+                            f"Loaded engine config from {self.config_path} (unified loader)"
+                        )
                     except Exception as e:
                         logger.warning(f"Unified loader failed, falling back to JSON: {e}")
                         # Fallback to JSON
-                        with open(self.config_path, encoding='utf-8') as f:
+                        with open(self.config_path, encoding="utf-8") as f:
                             self.config = json.load(f)
                         logger.info(f"Loaded engine config from {self.config_path} (JSON fallback)")
                 else:
                     # Fallback to JSON only
-                    with open(self.config_path, encoding='utf-8') as f:
+                    with open(self.config_path, encoding="utf-8") as f:
                         self.config = json.load(f)
                     logger.info(f"Loaded engine config from {self.config_path} (JSON)")
             except Exception as e:
                 logger.error(f"Failed to load engine config: {e}")
-                self.config = {
-                    "defaults": {},
-                    "overrides": {},
-                    "installed": []
-                }
+                self.config = {"defaults": {}, "overrides": {}, "installed": []}
         else:
             logger.warning(f"Config file not found: {self.config_path}, using defaults")
             self.save()  # Create default config file
@@ -75,7 +70,7 @@ class EngineConfig:
         """Save configuration to file."""
         try:
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.config_path, 'w', encoding='utf-8') as f:
+            with open(self.config_path, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=2, ensure_ascii=False)
             logger.info(f"Saved engine config to {self.config_path}")
         except Exception as e:
@@ -219,4 +214,3 @@ def get_engine_config(config_path: str = "engines/config.json") -> EngineConfig:
     if _config_instance is None:
         _config_instance = EngineConfig(config_path)
     return _config_instance
-

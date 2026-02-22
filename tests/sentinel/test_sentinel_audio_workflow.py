@@ -53,6 +53,7 @@ pytestmark = [
 # Schema Validation Tests (No Backend Required)
 # -----------------------------------------------------------------------------
 
+
 @pytest.mark.smoke
 class TestSchemaValidation:
     """Test schema validation without requiring backend."""
@@ -71,9 +72,7 @@ class TestSchemaValidation:
         ]
 
         for schema_name in expected_schemas:
-            assert schema_name in validator._schemas, (
-                f"Schema not loaded: {schema_name}"
-            )
+            assert schema_name in validator._schemas, f"Schema not loaded: {schema_name}"
 
     def test_health_response_valid(self, sample_health_response: dict):
         """Test valid health response passes validation."""
@@ -132,6 +131,7 @@ class TestSchemaValidation:
 # Step Result Tests (Unit Tests)
 # -----------------------------------------------------------------------------
 
+
 @pytest.mark.smoke
 class TestStepResult:
     """Test StepResult dataclass behavior."""
@@ -184,6 +184,7 @@ class TestStepResult:
 # Runner Configuration Tests
 # -----------------------------------------------------------------------------
 
+
 @pytest.mark.smoke
 class TestRunnerConfiguration:
     """Test SentinelRunner configuration and initialization."""
@@ -209,8 +210,13 @@ class TestRunnerConfiguration:
     def test_step_timeouts_defined(self):
         """Test all expected step timeouts are defined."""
         expected_steps = [
-            "health", "upload", "sync_synth", "async_synth",
-            "poll_job", "ab_test", "eval"
+            "health",
+            "upload",
+            "sync_synth",
+            "async_synth",
+            "poll_job",
+            "ab_test",
+            "eval",
         ]
 
         for step in expected_steps:
@@ -234,6 +240,7 @@ class TestRunnerConfiguration:
 # -----------------------------------------------------------------------------
 # Integration Tests (Require Backend)
 # -----------------------------------------------------------------------------
+
 
 @pytest.mark.backend_required
 @pytest.mark.slow
@@ -324,6 +331,7 @@ class TestSentinelWorkflow:
 
         # Correlation ID should be a valid UUID
         import uuid
+
         try:
             uuid.UUID(sentinel_runner._correlation_id)
         except ValueError:
@@ -333,6 +341,7 @@ class TestSentinelWorkflow:
 # -----------------------------------------------------------------------------
 # Repro Packet Tests
 # -----------------------------------------------------------------------------
+
 
 @pytest.mark.smoke
 class TestReproPacket:
@@ -370,37 +379,53 @@ class TestReproPacket:
 # Parameterized Tests
 # -----------------------------------------------------------------------------
 
+
 @pytest.mark.smoke
 class TestSchemaValidationParameterized:
     """Parameterized schema validation tests."""
 
-    @pytest.mark.parametrize("schema_name,valid_data", [
-        ("health_response", {
-            "status": "healthy",
-            "timestamp": "2026-02-12T10:00:00Z",
-            "uptime_seconds": 0,
-            "version": "1.0.0",
-        }),
-        ("health_response", {
-            "status": "degraded",
-            "timestamp": "2026-02-12T10:00:00Z",
-            "uptime_seconds": 3600,
-            "version": "2.0.0-beta",
-            "checks": [],
-        }),
-        ("upload_response", {
-            "id": "abc",
-            "filename": "test.wav",
-            "path": "/path/to/file",
-            "size": 1024,
-        }),
-        ("tts_response", {
-            "audio_id": "synth123",
-            "audio_url": "/download/synth123",
-            "duration": 5.5,
-            "quality_score": 0.95,
-        }),
-    ])
+    @pytest.mark.parametrize(
+        "schema_name,valid_data",
+        [
+            (
+                "health_response",
+                {
+                    "status": "healthy",
+                    "timestamp": "2026-02-12T10:00:00Z",
+                    "uptime_seconds": 0,
+                    "version": "1.0.0",
+                },
+            ),
+            (
+                "health_response",
+                {
+                    "status": "degraded",
+                    "timestamp": "2026-02-12T10:00:00Z",
+                    "uptime_seconds": 3600,
+                    "version": "2.0.0-beta",
+                    "checks": [],
+                },
+            ),
+            (
+                "upload_response",
+                {
+                    "id": "abc",
+                    "filename": "test.wav",
+                    "path": "/path/to/file",
+                    "size": 1024,
+                },
+            ),
+            (
+                "tts_response",
+                {
+                    "audio_id": "synth123",
+                    "audio_url": "/download/synth123",
+                    "duration": 5.5,
+                    "quality_score": 0.95,
+                },
+            ),
+        ],
+    )
     def test_valid_schema_variations(self, schema_name: str, valid_data: dict):
         """Test various valid schema variations pass validation."""
         validator = SchemaValidator(PROJECT_ROOT / CONTRACTS_DIR)
@@ -408,11 +433,29 @@ class TestSchemaValidationParameterized:
 
         assert is_valid, f"Schema {schema_name} failed: {errors}"
 
-    @pytest.mark.parametrize("schema_name,invalid_data,expected_error_field", [
-        ("health_response", {"status": "invalid_status"}, "status"),
-        ("tts_response", {"audio_id": "", "audio_url": "", "duration": -1, "quality_score": 0.5}, "duration"),
-        ("job_response", {"id": "x", "name": "y", "type": "invalid", "status": "pending", "progress": 0, "created": "2026-01-01"}, "type"),
-    ])
+    @pytest.mark.parametrize(
+        "schema_name,invalid_data,expected_error_field",
+        [
+            ("health_response", {"status": "invalid_status"}, "status"),
+            (
+                "tts_response",
+                {"audio_id": "", "audio_url": "", "duration": -1, "quality_score": 0.5},
+                "duration",
+            ),
+            (
+                "job_response",
+                {
+                    "id": "x",
+                    "name": "y",
+                    "type": "invalid",
+                    "status": "pending",
+                    "progress": 0,
+                    "created": "2026-01-01",
+                },
+                "type",
+            ),
+        ],
+    )
     def test_invalid_schema_variations(
         self,
         schema_name: str,
@@ -431,6 +474,7 @@ class TestSchemaValidationParameterized:
 # Mocked Unit Tests (No Backend Required)
 # -----------------------------------------------------------------------------
 
+
 @pytest.mark.smoke
 class TestMockedWorkflowSteps:
     """Unit tests with mocked HTTP responses - no backend required."""
@@ -438,25 +482,30 @@ class TestMockedWorkflowSteps:
     @pytest.fixture
     def mock_response_factory(self):
         """Create mock response objects."""
+
         def _create_response(status_code: int, json_data: dict):
             response = MagicMock()
             response.status_code = status_code
             response.json.return_value = json_data
             response.text = json.dumps(json_data)
             return response
+
         return _create_response
 
     @pytest.mark.asyncio
     async def test_health_step_success_mocked(self, mock_response_factory, tmp_path: Path):
         """Test health step with mocked successful response."""
-        mock_response = mock_response_factory(200, {
-            "status": "healthy",
-            "timestamp": "2026-02-12T10:00:00Z",
-            "uptime_seconds": 3600,
-            "version": "1.0.0",
-        })
+        mock_response = mock_response_factory(
+            200,
+            {
+                "status": "healthy",
+                "timestamp": "2026-02-12T10:00:00Z",
+                "uptime_seconds": 3600,
+                "version": "1.0.0",
+            },
+        )
 
-        with patch.object(httpx.AsyncClient, 'request', new_callable=AsyncMock) as mock_request:
+        with patch.object(httpx.AsyncClient, "request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_response
 
             runner = SentinelRunner(
@@ -473,7 +522,7 @@ class TestMockedWorkflowSteps:
     @pytest.mark.asyncio
     async def test_health_step_timeout_mocked(self, tmp_path: Path):
         """Test health step handles timeout correctly."""
-        with patch.object(httpx.AsyncClient, 'request', new_callable=AsyncMock) as mock_request:
+        with patch.object(httpx.AsyncClient, "request", new_callable=AsyncMock) as mock_request:
             mock_request.side_effect = httpx.TimeoutException("Request timed out")
 
             runner = SentinelRunner(
@@ -493,14 +542,17 @@ class TestMockedWorkflowSteps:
         fixture_path = tmp_path / "test.wav"
         fixture_path.write_bytes(b"RIFF" + b"\x00" * 100)
 
-        mock_response = mock_response_factory(201, {
-            "id": "upload_123",
-            "filename": "test.wav",
-            "path": "/data/audio/upload_123.wav",
-            "size": 104,
-        })
+        mock_response = mock_response_factory(
+            201,
+            {
+                "id": "upload_123",
+                "filename": "test.wav",
+                "path": "/data/audio/upload_123.wav",
+                "size": 104,
+            },
+        )
 
-        with patch.object(httpx.AsyncClient, 'request', new_callable=AsyncMock) as mock_request:
+        with patch.object(httpx.AsyncClient, "request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_response
 
             runner = SentinelRunner(
@@ -531,14 +583,17 @@ class TestMockedWorkflowSteps:
     @pytest.mark.asyncio
     async def test_sync_synth_step_success_mocked(self, mock_response_factory, tmp_path: Path):
         """Test sync synthesis step with mocked response."""
-        mock_response = mock_response_factory(200, {
-            "audio_id": "synth_456",
-            "audio_url": "/api/audio/synth_456/download",
-            "duration": 2.5,
-            "quality_score": 0.85,
-        })
+        mock_response = mock_response_factory(
+            200,
+            {
+                "audio_id": "synth_456",
+                "audio_url": "/api/audio/synth_456/download",
+                "duration": 2.5,
+                "quality_score": 0.85,
+            },
+        )
 
-        with patch.object(httpx.AsyncClient, 'request', new_callable=AsyncMock) as mock_request:
+        with patch.object(httpx.AsyncClient, "request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_response
 
             runner = SentinelRunner(
@@ -569,13 +624,16 @@ class TestMockedWorkflowSteps:
     @pytest.mark.asyncio
     async def test_async_synth_step_success_mocked(self, mock_response_factory, tmp_path: Path):
         """Test async synthesis job creation with mocked response."""
-        mock_response = mock_response_factory(201, {
-            "id": "job_789",
-            "name": "sentinel_batch_test",
-            "status": "pending",
-        })
+        mock_response = mock_response_factory(
+            201,
+            {
+                "id": "job_789",
+                "name": "sentinel_batch_test",
+                "status": "pending",
+            },
+        )
 
-        with patch.object(httpx.AsyncClient, 'request', new_callable=AsyncMock) as mock_request:
+        with patch.object(httpx.AsyncClient, "request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_response
 
             runner = SentinelRunner(
@@ -591,13 +649,16 @@ class TestMockedWorkflowSteps:
     @pytest.mark.asyncio
     async def test_poll_job_success_mocked(self, mock_response_factory, tmp_path: Path):
         """Test job polling with mocked completion response."""
-        mock_response = mock_response_factory(200, {
-            "id": "job_789",
-            "status": "completed",
-            "result_id": "result_abc",
-        })
+        mock_response = mock_response_factory(
+            200,
+            {
+                "id": "job_789",
+                "status": "completed",
+                "result_id": "result_abc",
+            },
+        )
 
-        with patch.object(httpx.AsyncClient, 'request', new_callable=AsyncMock) as mock_request:
+        with patch.object(httpx.AsyncClient, "request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_response
 
             runner = SentinelRunner(
@@ -615,25 +676,28 @@ class TestMockedWorkflowSteps:
     @pytest.mark.asyncio
     async def test_ab_test_step_success_mocked(self, mock_response_factory, tmp_path: Path):
         """Test A/B test step with mocked response."""
-        mock_response = mock_response_factory(200, {
-            "test_id": "ab_test_123",
-            "sample_a": {
-                "sample_label": "A",
-                "audio_id": "a_audio",
-                "audio_url": "/audio/a",
-                "engine": "piper",
-                "duration": 2.0,
+        mock_response = mock_response_factory(
+            200,
+            {
+                "test_id": "ab_test_123",
+                "sample_a": {
+                    "sample_label": "A",
+                    "audio_id": "a_audio",
+                    "audio_url": "/audio/a",
+                    "engine": "piper",
+                    "duration": 2.0,
+                },
+                "sample_b": {
+                    "sample_label": "B",
+                    "audio_id": "b_audio",
+                    "audio_url": "/audio/b",
+                    "engine": "xtts_v2",
+                    "duration": 2.1,
+                },
             },
-            "sample_b": {
-                "sample_label": "B",
-                "audio_id": "b_audio",
-                "audio_url": "/audio/b",
-                "engine": "xtts_v2",
-                "duration": 2.1,
-            },
-        })
+        )
 
-        with patch.object(httpx.AsyncClient, 'request', new_callable=AsyncMock) as mock_request:
+        with patch.object(httpx.AsyncClient, "request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_response
 
             runner = SentinelRunner(
@@ -649,15 +713,18 @@ class TestMockedWorkflowSteps:
     @pytest.mark.asyncio
     async def test_eval_step_success_mocked(self, mock_response_factory, tmp_path: Path):
         """Test evaluation step with mocked response."""
-        mock_response = mock_response_factory(200, {
-            "audio_id": "synth_456",
-            "analysis": {
-                "quality_score": 0.9,
-                "mos_estimate": 4.2,
+        mock_response = mock_response_factory(
+            200,
+            {
+                "audio_id": "synth_456",
+                "analysis": {
+                    "quality_score": 0.9,
+                    "mos_estimate": 4.2,
+                },
             },
-        })
+        )
 
-        with patch.object(httpx.AsyncClient, 'request', new_callable=AsyncMock) as mock_request:
+        with patch.object(httpx.AsyncClient, "request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_response
 
             runner = SentinelRunner(
@@ -676,20 +743,24 @@ class TestMockedWorkflowSteps:
 # Error Scenario Tests
 # -----------------------------------------------------------------------------
 
+
 @pytest.mark.smoke
 class TestErrorScenarios:
     """Test error handling for various HTTP error scenarios."""
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("status_code,expected_status", [
-        (400, StepStatus.FAILED),
-        (401, StepStatus.FAILED),
-        (403, StepStatus.FAILED),
-        (404, StepStatus.FAILED),
-        (500, StepStatus.FAILED),
-        (502, StepStatus.FAILED),
-        (503, StepStatus.FAILED),
-    ])
+    @pytest.mark.parametrize(
+        "status_code,expected_status",
+        [
+            (400, StepStatus.FAILED),
+            (401, StepStatus.FAILED),
+            (403, StepStatus.FAILED),
+            (404, StepStatus.FAILED),
+            (500, StepStatus.FAILED),
+            (502, StepStatus.FAILED),
+            (503, StepStatus.FAILED),
+        ],
+    )
     async def test_error_status_codes(
         self,
         status_code: int,
@@ -702,7 +773,7 @@ class TestErrorScenarios:
         mock_response.json.return_value = {"error": f"Error {status_code}"}
         mock_response.text = f"Error {status_code}"
 
-        with patch.object(httpx.AsyncClient, 'request', new_callable=AsyncMock) as mock_request:
+        with patch.object(httpx.AsyncClient, "request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_response
 
             runner = SentinelRunner(
@@ -715,12 +786,15 @@ class TestErrorScenarios:
             assert result.status == expected_status
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("exception_class,exception_message", [
-        (httpx.ConnectError, "Connection refused"),
-        (httpx.ConnectTimeout, "Connection timed out"),
-        (httpx.TimeoutException, "Request timed out"),
-        (httpx.NetworkError, "Network unreachable"),
-    ])
+    @pytest.mark.parametrize(
+        "exception_class,exception_message",
+        [
+            (httpx.ConnectError, "Connection refused"),
+            (httpx.ConnectTimeout, "Connection timed out"),
+            (httpx.TimeoutException, "Request timed out"),
+            (httpx.NetworkError, "Network unreachable"),
+        ],
+    )
     async def test_network_failures(
         self,
         exception_class: type,
@@ -728,7 +802,7 @@ class TestErrorScenarios:
         tmp_path: Path,
     ):
         """Test handling of various network-level failures."""
-        with patch.object(httpx.AsyncClient, 'request', new_callable=AsyncMock) as mock_request:
+        with patch.object(httpx.AsyncClient, "request", new_callable=AsyncMock) as mock_request:
             mock_request.side_effect = exception_class(exception_message)
 
             runner = SentinelRunner(
@@ -749,7 +823,7 @@ class TestErrorScenarios:
         mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
         mock_response.text = "Not valid JSON {"
 
-        with patch.object(httpx.AsyncClient, 'request', new_callable=AsyncMock) as mock_request:
+        with patch.object(httpx.AsyncClient, "request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_response
 
             runner = SentinelRunner(
@@ -774,7 +848,7 @@ class TestErrorScenarios:
         }
         mock_response.text = "{}"
 
-        with patch.object(httpx.AsyncClient, 'request', new_callable=AsyncMock) as mock_request:
+        with patch.object(httpx.AsyncClient, "request", new_callable=AsyncMock) as mock_request:
             mock_request.return_value = mock_response
 
             runner = SentinelRunner(
@@ -791,6 +865,7 @@ class TestErrorScenarios:
 # -----------------------------------------------------------------------------
 # Circuit Breaker Tests
 # -----------------------------------------------------------------------------
+
 
 @pytest.mark.smoke
 class TestCircuitBreaker:

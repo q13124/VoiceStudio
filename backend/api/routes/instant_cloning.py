@@ -110,20 +110,17 @@ def calculate_embedding_quality(
         audio_score *= 0.85  # Some clipping
 
     # Weighted combination
-    quality_score = (
-        0.35 * embedding_score +
-        0.35 * duration_score +
-        0.30 * audio_score
-    )
+    quality_score = 0.35 * embedding_score + 0.35 * duration_score + 0.30 * audio_score
 
     # Clamp to valid range
     return max(0.1, min(1.0, quality_score))
+
 
 # Audio upload directory - must match audio.py
 UPLOAD_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
     "data",
-    "audio_uploads"
+    "audio_uploads",
 )
 
 
@@ -147,8 +144,7 @@ def resolve_audio_id_to_path(audio_id: str) -> str:
     upload_path = Path(UPLOAD_DIR)
     if not upload_path.exists():
         raise HTTPException(
-            status_code=404,
-            detail="Audio uploads directory not found. Upload audio first."
+            status_code=404, detail="Audio uploads directory not found. Upload audio first."
         )
 
     # Look for files starting with the audio_id
@@ -163,7 +159,7 @@ def resolve_audio_id_to_path(audio_id: str) -> str:
 
     raise HTTPException(
         status_code=404,
-        detail=f"Audio file with ID '{audio_id}' not found. Please upload the audio first."
+        detail=f"Audio file with ID '{audio_id}' not found. Please upload the audio first.",
     )
 
 
@@ -172,6 +168,7 @@ def resolve_audio_id_to_path(audio_id: str) -> str:
 
 class ZeroShotCloneRequest(BaseModel):
     """Request for zero-shot voice cloning."""
+
     audio_id: str = Field(..., description="ID of reference audio (3-10 seconds)")
     text: str = Field(..., description="Text to synthesize")
     language: str = Field("en", description="Language code")
@@ -179,6 +176,7 @@ class ZeroShotCloneRequest(BaseModel):
 
 class ZeroShotCloneResponse(BaseModel):
     """Response for zero-shot voice cloning."""
+
     output_audio_id: str
     embedding_id: str
     quality_score: float
@@ -187,11 +185,13 @@ class ZeroShotCloneResponse(BaseModel):
 
 class EmbeddingExtractionRequest(BaseModel):
     """Request for speaker embedding extraction."""
+
     audio_id: str = Field(..., description="Reference audio ID")
 
 
 class EmbeddingExtractionResponse(BaseModel):
     """Response for embedding extraction."""
+
     embedding_id: str
     embedding_dimension: int
     quality_score: float
@@ -199,6 +199,7 @@ class EmbeddingExtractionResponse(BaseModel):
 
 class InstantPreviewRequest(BaseModel):
     """Request for instant preview synthesis."""
+
     embedding_id: str = Field(..., description="Speaker embedding ID")
     text: str = Field(..., description="Text for preview")
     max_duration_seconds: float = Field(5.0, description="Max preview duration")
@@ -206,6 +207,7 @@ class InstantPreviewRequest(BaseModel):
 
 class InstantPreviewResponse(BaseModel):
     """Response for instant preview."""
+
     audio_id: str
     duration_seconds: float
     latency_ms: float
@@ -213,12 +215,14 @@ class InstantPreviewResponse(BaseModel):
 
 class QualityEstimationRequest(BaseModel):
     """Request for clone quality estimation."""
+
     reference_audio_id: str
     cloned_audio_id: str
 
 
 class QualityEstimationResponse(BaseModel):
     """Response for quality estimation."""
+
     overall_score: float
     similarity_score: float
     naturalness_score: float
@@ -262,8 +266,7 @@ async def zero_shot_clone(request: ZeroShotCloneRequest):
 
         if not result.success:
             raise HTTPException(
-                status_code=500,
-                detail=result.error_message or "Zero-shot cloning failed"
+                status_code=500, detail=result.error_message or "Zero-shot cloning failed"
             )
 
         return ZeroShotCloneResponse(
@@ -277,10 +280,7 @@ async def zero_shot_clone(request: ZeroShotCloneRequest):
         raise
     except Exception as e:
         logger.error(f"Zero-shot cloning failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Zero-shot cloning failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Zero-shot cloning failed: {e!s}") from e
 
 
 @router.post("/extract-embedding", response_model=EmbeddingExtractionResponse)
@@ -308,21 +308,19 @@ async def extract_embedding(request: EmbeddingExtractionRequest):
 
         if embedding is None:
             raise HTTPException(
-                status_code=500,
-                detail=metadata.get("error", "Embedding extraction failed")
+                status_code=500, detail=metadata.get("error", "Embedding extraction failed")
             )
 
         # Calculate quality score from embedding analysis and audio metrics
         quality_score = metadata.get("quality_score")
         if quality_score is None:
-            quality_score = calculate_embedding_quality(
-                embedding=embedding,
-                metadata=metadata
-            )
+            quality_score = calculate_embedding_quality(embedding=embedding, metadata=metadata)
 
         return EmbeddingExtractionResponse(
             embedding_id=request.audio_id,  # Use audio_id as embedding reference
-            embedding_dimension=metadata.get("embedding_dim", len(embedding) if embedding is not None else 256),
+            embedding_dimension=metadata.get(
+                "embedding_dim", len(embedding) if embedding is not None else 256
+            ),
             quality_score=quality_score,
         )
 
@@ -330,10 +328,7 @@ async def extract_embedding(request: EmbeddingExtractionRequest):
         raise
     except Exception as e:
         logger.error(f"Embedding extraction failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Embedding extraction failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Embedding extraction failed: {e!s}") from e
 
 
 @router.post("/preview", response_model=InstantPreviewResponse)
@@ -365,8 +360,7 @@ async def instant_preview(request: InstantPreviewRequest):
 
         if preview_path is None:
             raise HTTPException(
-                status_code=500,
-                detail=metadata.get("error", "Preview synthesis failed")
+                status_code=500, detail=metadata.get("error", "Preview synthesis failed")
             )
 
         return InstantPreviewResponse(
@@ -379,10 +373,7 @@ async def instant_preview(request: InstantPreviewRequest):
         raise
     except Exception as e:
         logger.error(f"Instant preview failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Instant preview failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Instant preview failed: {e!s}") from e
 
 
 @router.post("/estimate-quality", response_model=QualityEstimationResponse)
@@ -430,10 +421,7 @@ async def estimate_quality(request: QualityEstimationRequest):
         raise
     except Exception as e:
         logger.error(f"Quality estimation failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Quality estimation failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Quality estimation failed: {e!s}") from e
 
 
 @router.get("/embeddings")
@@ -449,10 +437,7 @@ async def list_embeddings():
 
     except Exception as e:
         logger.error(f"Failed to list embeddings: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to list embeddings: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to list embeddings: {e!s}") from e
 
 
 @router.delete("/embeddings/{embedding_id}")
@@ -465,10 +450,7 @@ async def delete_embedding(embedding_id: str):
         success = service.delete_embedding(embedding_id)
 
         if not success:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Embedding '{embedding_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Embedding '{embedding_id}' not found")
 
         return {"success": True, "message": f"Embedding '{embedding_id}' deleted"}
 
@@ -476,7 +458,4 @@ async def delete_embedding(embedding_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete embedding: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to delete embedding: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to delete embedding: {e!s}") from e

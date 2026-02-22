@@ -26,8 +26,10 @@ def _get_request_id(request: Request) -> str | None:
 
 # --- Request/Response Models ---
 
+
 class EngineCapability(BaseModel):
     """Engine capability descriptor."""
+
     feature: str
     supported: bool
     config_schema: dict[str, Any] | None = None
@@ -35,6 +37,7 @@ class EngineCapability(BaseModel):
 
 class EngineInfo(BaseModel):
     """Engine information response."""
+
     id: str
     name: str
     version: str
@@ -63,6 +66,7 @@ class EngineInfo(BaseModel):
 
 class EngineListResponse(BaseModel):
     """Paginated engine list response."""
+
     engines: list[EngineInfo]
     cursor: str | None = None
     has_more: bool = False
@@ -70,6 +74,7 @@ class EngineListResponse(BaseModel):
 
 class EngineHealthResponse(BaseModel):
     """Engine health check response."""
+
     engine_id: str
     healthy: bool
     status: str
@@ -78,6 +83,7 @@ class EngineHealthResponse(BaseModel):
 
 
 # --- Endpoints ---
+
 
 @router.get(
     "",
@@ -95,6 +101,7 @@ async def list_engines(
 ):
     """List all available engines with StandardResponse envelope."""
     import logging
+
     logger = logging.getLogger(__name__)
 
     # Gracefully handle engine service failures
@@ -116,19 +123,21 @@ async def list_engines(
     engine_infos = []
     for e in engines[:limit]:
         try:
-            engine_infos.append(EngineInfo(
-                id=e.get("id", ""),
-                name=e.get("name", ""),
-                version=e.get("version", "0.0.0"),
-                type=e.get("type", "unknown"),
-                status=e.get("status", "unknown"),
-                capabilities=[
-                    EngineCapability(feature=cap, supported=True)
-                    for cap in e.get("capabilities", [])
-                ],
-                memory_usage_mb=e.get("memory_usage_mb"),
-                gpu_usage_percent=e.get("gpu_usage_percent"),
-            ))
+            engine_infos.append(
+                EngineInfo(
+                    id=e.get("id", ""),
+                    name=e.get("name", ""),
+                    version=e.get("version", "0.0.0"),
+                    type=e.get("type", "unknown"),
+                    status=e.get("status", "unknown"),
+                    capabilities=[
+                        EngineCapability(feature=cap, supported=True)
+                        for cap in e.get("capabilities", [])
+                    ],
+                    memory_usage_mb=e.get("memory_usage_mb"),
+                    gpu_usage_percent=e.get("gpu_usage_percent"),
+                )
+            )
         except Exception as model_err:
             logger.warning(f"Failed to parse engine info for {e.get('id', 'unknown')}: {model_err}")
             continue
@@ -166,8 +175,7 @@ async def get_engine(
         type=status.get("type", "unknown"),
         status=status.get("status", "unknown"),
         capabilities=[
-            EngineCapability(feature=cap, supported=True)
-            for cap in status.get("capabilities", [])
+            EngineCapability(feature=cap, supported=True) for cap in status.get("capabilities", [])
         ],
         memory_usage_mb=status.get("memory_usage_mb"),
         gpu_usage_percent=status.get("gpu_usage_percent"),
@@ -224,6 +232,7 @@ async def check_engine_health(
 
 class EngineActionResult(BaseModel):
     """Result of an engine action (load/unload)."""
+
     engine_id: str
     action: str
     success: bool = True

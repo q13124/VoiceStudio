@@ -37,9 +37,7 @@ class TestBaseEngineImports:
 
     def test_module_has_engine_protocol(self):
         """Test module has EngineProtocol class."""
-        assert hasattr(
-            base, "EngineProtocol"
-        ), "base module missing EngineProtocol class"
+        assert hasattr(base, "EngineProtocol"), "base module missing EngineProtocol class"
 
 
 class TestEngineProtocol:
@@ -49,9 +47,7 @@ class TestEngineProtocol:
         """Test EngineProtocol is an abstract class."""
         from abc import ABC
 
-        assert issubclass(
-            base.EngineProtocol, ABC
-        ), "EngineProtocol should be an abstract class"
+        assert issubclass(base.EngineProtocol, ABC), "EngineProtocol should be an abstract class"
 
     def test_engine_protocol_has_abstract_methods(self):
         """Test EngineProtocol has required abstract methods."""
@@ -59,12 +55,8 @@ class TestEngineProtocol:
 
         if issubclass(base.EngineProtocol, ABC):
             # Check for abstract methods
-            abstract_methods = getattr(
-                base.EngineProtocol, "__abstractmethods__", set()
-            )
-            assert (
-                len(abstract_methods) > 0
-            ), "EngineProtocol should have abstract methods"
+            abstract_methods = getattr(base.EngineProtocol, "__abstractmethods__", set())
+            assert len(abstract_methods) > 0, "EngineProtocol should have abstract methods"
 
     def test_engine_protocol_has_initialize(self):
         """Test EngineProtocol has initialize method."""
@@ -74,9 +66,7 @@ class TestEngineProtocol:
 
     def test_engine_protocol_has_cleanup(self):
         """Test EngineProtocol has cleanup method."""
-        assert hasattr(
-            base.EngineProtocol, "cleanup"
-        ), "EngineProtocol should have cleanup method"
+        assert hasattr(base.EngineProtocol, "cleanup"), "EngineProtocol should have cleanup method"
 
     def test_engine_protocol_has_is_initialized(self):
         """Test EngineProtocol has is_initialized method."""
@@ -93,4 +83,3 @@ class TestEngineProtocol:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

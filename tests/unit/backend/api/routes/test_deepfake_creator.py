@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def reset_deepfake_state():
     """Reset deepfake state before each test."""
     from backend.api.routes import deepfake_creator
+
     deepfake_creator._deepfake_jobs = {}
     yield
     deepfake_creator._deepfake_jobs = {}
@@ -22,6 +23,7 @@ def reset_deepfake_state():
 def deepfake_client():
     """Create test client for deepfake creator routes."""
     from backend.api.routes.deepfake_creator import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)

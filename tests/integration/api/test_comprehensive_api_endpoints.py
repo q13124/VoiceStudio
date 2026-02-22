@@ -77,7 +77,7 @@ def extract_endpoints_from_file(file_path: Path) -> list[dict[str, Any]]:
             # Find the function definition after the decorator
             func_start = match.end()
             func_match = re.search(
-                r'^async\s+def\s+(\w+)|^def\s+(\w+)', content[func_start:], re.MULTILINE
+                r"^async\s+def\s+(\w+)|^def\s+(\w+)", content[func_start:], re.MULTILINE
             )
 
             func_name = None
@@ -272,9 +272,7 @@ class TestEndpointImplementation:
         if not route_file.exists():
             pytest.skip(f"Route file not found: {route_file}")
 
-        has_impl, message = check_endpoint_function_implementation(
-            route_file, endpoint["function"]
-        )
+        has_impl, message = check_endpoint_function_implementation(route_file, endpoint["function"])
 
         endpoint_key = f"{endpoint['method']} {endpoint['full_path']}"
         if endpoint_key not in test_results:
@@ -292,11 +290,7 @@ class TestEndpointImplementation:
 def generate_test_report():
     """Generate comprehensive test report."""
     report_path = (
-        project_root
-        / "docs"
-        / "governance"
-        / "worker3"
-        / "API_ENDPOINT_TEST_REPORT_2025-01-28.md"
+        project_root / "docs" / "governance" / "worker3" / "API_ENDPOINT_TEST_REPORT_2025-01-28.md"
     )
     report_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -305,9 +299,7 @@ def generate_test_report():
 
     # Count violations
     files_with_violations = sum(
-        1
-        for r in test_results.values()
-        if r.get("code_quality", {}).get("violations", 0) > 0
+        1 for r in test_results.values() if r.get("code_quality", {}).get("violations", 0) > 0
     )
 
     # Count endpoints with implementation issues
@@ -357,13 +349,13 @@ def generate_test_report():
             endpoint_key = f"{endpoint['method']} {endpoint['full_path']}"
             result = test_results.get(endpoint_key, {})
             impl_status = (
-                "✅"
-                if result.get("implementation", {}).get("has_implementation", True)
-                else "❌"
+                "✅" if result.get("implementation", {}).get("has_implementation", True) else "❌"
             )
             func_name = endpoint.get("function", "N/A")
 
-            report += f"| {endpoint['full_path']} | {endpoint['file']} | {func_name} | {impl_status} |\n"
+            report += (
+                f"| {endpoint['full_path']} | {endpoint['file']} | {func_name} | {impl_status} |\n"
+            )
 
     report += "\n---\n\n## 📁 Route Files Analysis\n\n"
     report += "| File | Endpoints | Violations | Structure Issues |\n"
@@ -376,7 +368,9 @@ def generate_test_report():
         structure_issues = result.get("structure", {}).get("issues", [])
         structure_status = "✅" if not structure_issues else f"⚠️ {len(structure_issues)}"
 
-        report += f"| {route_file.name} | {endpoints_count} | {violations_count} | {structure_status} |\n"
+        report += (
+            f"| {route_file.name} | {endpoints_count} | {violations_count} | {structure_status} |\n"
+        )
 
     report += "\n---\n\n## 🔍 Detailed Route File Status\n\n"
 
@@ -428,4 +422,3 @@ def generate_report():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
-

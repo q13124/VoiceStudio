@@ -11,7 +11,7 @@ from backend.voice.effects.chain import AudioEffect, EffectConfig, EffectsChain
 
 class SimpleTestEffect(AudioEffect):
     """Simple effect for testing purposes."""
-    
+
     def process(self, audio: np.ndarray, sample_rate: int) -> np.ndarray:
         """Apply simple gain."""
         return audio * 0.5
@@ -19,11 +19,11 @@ class SimpleTestEffect(AudioEffect):
 
 class GainEffect(AudioEffect):
     """Gain effect for testing."""
-    
+
     def __init__(self, gain: float = 1.0):
         super().__init__()
         self.gain = gain
-    
+
     def process(self, audio: np.ndarray, sample_rate: int) -> np.ndarray:
         """Apply gain."""
         if not self.enabled:
@@ -153,7 +153,7 @@ class TestEffectsChain:
         chain = EffectsChain()
         chain.add_effect(GainEffect(gain=0.5))
         chain.bypassed = True
-        
+
         audio = np.array([1.0, 1.0, 1.0], dtype=np.float32)
         result = chain.process(audio, sample_rate=24000)
         np.testing.assert_array_equal(result, audio)
@@ -163,7 +163,7 @@ class TestEffectsChain:
         chain = EffectsChain()
         chain.add_effect(GainEffect(gain=0.5))
         chain.add_effect(GainEffect(gain=0.5))
-        
+
         audio = np.array([1.0, 1.0, 1.0], dtype=np.float32)
         result = chain.process(audio, sample_rate=24000)
         # Two 0.5 gains = 0.25 final

@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class EnhancementMode(Enum):
     """Enhancement processing modes."""
+
     FULL = "full"  # All enhancements
     VOICE_ONLY = "voice_only"  # Voice isolation + cleanup
     NOISE_REDUCTION = "noise_reduction"  # Noise reduction only
@@ -40,6 +41,7 @@ class EnhancementMode(Enum):
 @dataclass
 class EnhancementPreset:
     """Preset enhancement configuration."""
+
     preset_id: str
     name: str
     description: str
@@ -73,6 +75,7 @@ class EnhancementPreset:
 @dataclass
 class EnhancementResult:
     """Result of audio enhancement."""
+
     success: bool
     output_path: str | None
     original_metrics: dict[str, float]
@@ -98,6 +101,7 @@ class EnhancementResult:
 @dataclass
 class AudioMetrics:
     """Audio quality metrics."""
+
     rms_db: float
     peak_db: float
     lufs: float
@@ -249,11 +253,14 @@ class AIAudioEnhancementService:
 
             try:
                 from demucs.pretrained import get_model
+
                 self._has_voice_separation = True
                 logger.info("Voice separation model (demucs) available")
             except ImportError:
                 self._has_voice_separation = False
-                logger.info("Voice separation model (demucs) not installed; separation features disabled")
+                logger.info(
+                    "Voice separation model (demucs) not installed; separation features disabled"
+                )
 
             self._initialized = True
             logger.info("AIAudioEnhancementService initialized")
@@ -284,6 +291,7 @@ class AIAudioEnhancementService:
             EnhancementResult with processing outcome
         """
         import time
+
         start_time = time.perf_counter()
 
         if not self._initialized:
@@ -319,9 +327,11 @@ class AIAudioEnhancementService:
 
             # Calculate improvements
             improvements = {
-                "noise_reduction_db": original_metrics.noise_floor_db - enhanced_metrics.noise_floor_db,
+                "noise_reduction_db": original_metrics.noise_floor_db
+                - enhanced_metrics.noise_floor_db,
                 "loudness_improvement_lufs": enhanced_metrics.lufs - original_metrics.lufs,
-                "dynamic_range_change_db": enhanced_metrics.dynamic_range_db - original_metrics.dynamic_range_db,
+                "dynamic_range_change_db": enhanced_metrics.dynamic_range_db
+                - original_metrics.dynamic_range_db,
             }
 
             # Save output
@@ -374,6 +384,7 @@ class AIAudioEnhancementService:
             Tuple of (output path, metadata)
         """
         import time
+
         start_time = time.perf_counter()
 
         if not self._initialized:
@@ -425,6 +436,7 @@ class AIAudioEnhancementService:
             Tuple of (output path, metadata)
         """
         import time
+
         start_time = time.perf_counter()
 
         if not self._initialized:
@@ -478,6 +490,7 @@ class AIAudioEnhancementService:
             Tuple of (output path, metadata)
         """
         import time
+
         start_time = time.perf_counter()
 
         if not self._initialized:
@@ -539,6 +552,7 @@ class AIAudioEnhancementService:
             EnhancementResult with processing outcome
         """
         import time
+
         start_time = time.perf_counter()
 
         preset = self._presets.get(preset_id)
@@ -583,7 +597,9 @@ class AIAudioEnhancementService:
 
             # Noise reduction
             if preset.noise_reduction > 0:
-                enhanced = self._reduce_noise_internal(enhanced, sample_rate, preset.noise_reduction)
+                enhanced = self._reduce_noise_internal(
+                    enhanced, sample_rate, preset.noise_reduction
+                )
 
             # De-reverb
             if preset.de_reverb > 0:
@@ -601,14 +617,17 @@ class AIAudioEnhancementService:
 
             # Normalization
             if preset.normalization:
-                enhanced = self._normalize_loudness(enhanced, sample_rate, preset.target_loudness_lufs)
+                enhanced = self._normalize_loudness(
+                    enhanced, sample_rate, preset.target_loudness_lufs
+                )
 
             # Calculate enhanced metrics
             enhanced_metrics = self._calculate_metrics(enhanced, sample_rate)
 
             # Calculate improvements
             improvements = {
-                "noise_reduction_db": original_metrics.noise_floor_db - enhanced_metrics.noise_floor_db,
+                "noise_reduction_db": original_metrics.noise_floor_db
+                - enhanced_metrics.noise_floor_db,
                 "loudness_improvement_lufs": enhanced_metrics.lufs - original_metrics.lufs,
             }
 
@@ -658,6 +677,7 @@ class AIAudioEnhancementService:
         """Load audio file."""
         try:
             import soundfile as sf
+
             audio, sample_rate = sf.read(path)
 
             # Convert to mono if stereo
@@ -686,7 +706,7 @@ class AIAudioEnhancementService:
     def _calculate_metrics(self, audio: np.ndarray, sample_rate: int) -> AudioMetrics:
         """Calculate audio quality metrics."""
         # RMS
-        rms = np.sqrt(np.mean(audio ** 2))
+        rms = np.sqrt(np.mean(audio**2))
         rms_db = 20 * np.log10(rms + 1e-10)
 
         # Peak
@@ -698,7 +718,7 @@ class AIAudioEnhancementService:
 
         # Noise floor (estimate from quietest 10%)
         sorted_abs = np.sort(np.abs(audio))
-        noise_floor = np.mean(sorted_abs[:len(sorted_abs) // 10])
+        noise_floor = np.mean(sorted_abs[: len(sorted_abs) // 10])
         noise_floor_db = 20 * np.log10(noise_floor + 1e-10)
 
         # Dynamic range
@@ -775,7 +795,7 @@ class AIAudioEnhancementService:
             # Estimate noise floor from quietest frames
             magnitudes = np.abs(Zxx)
             frame_energies = np.sum(magnitudes, axis=0)
-            noise_frames = np.argsort(frame_energies)[:max(1, len(frame_energies) // 10)]
+            noise_frames = np.argsort(frame_energies)[: max(1, len(frame_energies) // 10)]
             noise_profile = np.mean(magnitudes[:, noise_frames], axis=1, keepdims=True)
 
             # Spectral gating
@@ -784,7 +804,7 @@ class AIAudioEnhancementService:
             mask = mask.astype(float)
 
             # Smooth mask
-            mask = signal.convolve2d(mask, np.ones((3, 3)) / 9, mode='same')
+            mask = signal.convolve2d(mask, np.ones((3, 3)) / 9, mode="same")
             mask = np.clip(mask, 0, 1)
 
             # Apply mask
@@ -795,7 +815,7 @@ class AIAudioEnhancementService:
 
             # Match length
             if len(cleaned) > len(audio):
-                cleaned = cleaned[:len(audio)]
+                cleaned = cleaned[: len(audio)]
             elif len(cleaned) < len(audio):
                 cleaned = np.pad(cleaned, (0, len(audio) - len(cleaned)))
 
@@ -891,7 +911,7 @@ class AIAudioEnhancementService:
             low = 80 / nyquist
             high = min(8000 / nyquist, 0.99)
 
-            b, a = signal.butter(4, [low, high], btype='band')
+            b, a = signal.butter(4, [low, high], btype="band")
             filtered = signal.filtfilt(b, a, harmonic)
 
             logger.info("Voice isolated using librosa HPSS + bandpass")
@@ -910,10 +930,12 @@ class AIAudioEnhancementService:
             low = 80 / nyquist
             high = min(8000 / nyquist, 0.99)
 
-            b, a = signal.butter(4, [low, high], btype='band')
+            b, a = signal.butter(4, [low, high], btype="band")
             filtered = signal.filtfilt(b, a, audio)
 
-            logger.warning("Voice isolation using basic bandpass filter (install demucs for better results)")
+            logger.warning(
+                "Voice isolation using basic bandpass filter (install demucs for better results)"
+            )
             return filtered.astype(np.float32)
 
         except Exception as e:
@@ -943,13 +965,13 @@ class AIAudioEnhancementService:
 
             direct_estimate = np.zeros_like(magnitudes)
             for i in range(magnitudes.shape[0]):
-                direct_estimate[i] = np.maximum.accumulate(
-                    magnitudes[i][::-1]
-                )[::-1] * (1 - strength * 0.5)
+                direct_estimate[i] = np.maximum.accumulate(magnitudes[i][::-1])[::-1] * (
+                    1 - strength * 0.5
+                )
 
             # Suppress reverb
             mask = np.minimum(1.0, direct_estimate / (magnitudes + 1e-10))
-            mask = mask ** strength
+            mask = mask**strength
 
             Zxx_dereverb = Zxx * mask
 
@@ -958,7 +980,7 @@ class AIAudioEnhancementService:
 
             # Match length
             if len(dereverbed) > len(audio):
-                dereverbed = dereverbed[:len(audio)]
+                dereverbed = dereverbed[: len(audio)]
             elif len(dereverbed) < len(audio):
                 dereverbed = np.pad(dereverbed, (0, len(audio) - len(dereverbed)))
 
@@ -1051,22 +1073,22 @@ class AIAudioEnhancementService:
             # EQ presets (frequency, gain_db, Q)
             presets = {
                 "voice_presence": [
-                    (80, -3, 1.0),    # Reduce rumble
-                    (200, 1, 1.0),    # Warmth
-                    (2000, 3, 1.0),   # Presence
-                    (5000, 2, 1.0),   # Clarity
+                    (80, -3, 1.0),  # Reduce rumble
+                    (200, 1, 1.0),  # Warmth
+                    (2000, 3, 1.0),  # Presence
+                    (5000, 2, 1.0),  # Clarity
                     (8000, -1, 1.0),  # Reduce harshness
                 ],
                 "podcast": [
-                    (100, -2, 1.0),   # Reduce bass
-                    (300, 2, 1.0),    # Warmth
-                    (3000, 2, 1.0),   # Presence
-                    (6000, 1, 1.0),   # Air
+                    (100, -2, 1.0),  # Reduce bass
+                    (300, 2, 1.0),  # Warmth
+                    (3000, 2, 1.0),  # Presence
+                    (6000, 1, 1.0),  # Air
                 ],
                 "clarity": [
-                    (150, -1, 1.0),   # Clean low end
-                    (2500, 3, 1.0),   # Clarity
-                    (5000, 2, 1.0),   # Brightness
+                    (150, -1, 1.0),  # Clean low end
+                    (2500, 3, 1.0),  # Clarity
+                    (5000, 2, 1.0),  # Brightness
                 ],
             }
 
@@ -1104,7 +1126,7 @@ class AIAudioEnhancementService:
         """Normalize audio to target loudness."""
         try:
             # Calculate current loudness
-            rms = np.sqrt(np.mean(audio ** 2))
+            rms = np.sqrt(np.mean(audio**2))
             current_lufs = 20 * np.log10(rms + 1e-10) - 0.691
 
             # Calculate gain

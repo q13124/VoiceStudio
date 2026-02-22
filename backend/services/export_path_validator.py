@@ -32,9 +32,11 @@ def get_export_root() -> Path:
     else:
         try:
             from backend.config.path_config import get_path
+
             root = get_path("artifacts")
         except Exception:
             import tempfile
+
             root = Path(tempfile.gettempdir()) / "voicestudio_export"
     root.mkdir(parents=True, exist_ok=True)
     return root.resolve()

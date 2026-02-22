@@ -109,9 +109,7 @@ class PerformanceBenchmark:
         avg_time = sum(times) / len(times)
         min_time = min(times)
         max_time = max(times)
-        std_time = (
-            sum((t - avg_time) ** 2 for t in times) / len(times)
-        ) ** 0.5
+        std_time = (sum((t - avg_time) ** 2 for t in times) / len(times)) ** 0.5
 
         result = {
             "name": name,
@@ -332,4 +330,3 @@ class TestMemoryBenchmarks:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s"])
-

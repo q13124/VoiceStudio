@@ -92,9 +92,7 @@ def _cache_voxcpm_model(model_name: str, device: str, models: dict):
         except Exception as e:
             logger.warning(f"Error evicting VoxCPM model from cache: {e}")
 
-    logger.debug(
-        f"Cached VoxCPM model: {cache_key} (cache size: {len(_VOXCPM_MODEL_CACHE)})"
-    )
+    logger.debug(f"Cached VoxCPM model: {cache_key} (cache size: {len(_VOXCPM_MODEL_CACHE)})")
 
 
 # Optional quality metrics import
@@ -183,9 +181,7 @@ class VoxCPMEngine(EngineProtocol):
                 self.model = cached_models.get("model")
                 self.tokenizer = cached_models.get("tokenizer")
                 self.vocoder = cached_models.get("vocoder")
-                if hasattr(self.model, "config") and hasattr(
-                    self.model.config, "sample_rate"
-                ):
+                if hasattr(self.model, "config") and hasattr(self.model.config, "sample_rate"):
                     self.sample_rate = self.model.config.sample_rate
                 else:
                     self.sample_rate = self.DEFAULT_SAMPLE_RATE
@@ -196,24 +192,16 @@ class VoxCPMEngine(EngineProtocol):
         try:
             from transformers import AutoModel, AutoTokenizer
         except ImportError:
-            logger.error(
-                "transformers not installed. Install with: pip install transformers"
-            )
+            logger.error("transformers not installed. Install with: pip install transformers")
             self._initialized = False
             return False
 
         try:
             # Try loading from HuggingFace
-            model_id = (
-                "voxcpm/voxcpm"
-                if "voxcpm" in self.model_name.lower()
-                else self.model_name
-            )
+            model_id = "voxcpm/voxcpm" if "voxcpm" in self.model_name.lower() else self.model_name
 
             # Load tokenizer
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                model_id, trust_remote_code=True
-            )
+            self.tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
 
             # Load model
             self.model = AutoModel.from_pretrained(
@@ -225,9 +213,7 @@ class VoxCPMEngine(EngineProtocol):
             self.model.eval()
 
             # Get sample rate from model config if available
-            if hasattr(self.model, "config") and hasattr(
-                self.model.config, "sample_rate"
-            ):
+            if hasattr(self.model, "config") and hasattr(self.model.config, "sample_rate"):
                 self.sample_rate = self.model.config.sample_rate
 
             # Cache models
@@ -242,9 +228,7 @@ class VoxCPMEngine(EngineProtocol):
                     },
                 )
 
-            logger.info(
-                f"VoxCPM model loaded successfully (sample_rate: {self.sample_rate})"
-            )
+            logger.info(f"VoxCPM model loaded successfully (sample_rate: {self.sample_rate})")
             self._initialized = True
             return True
 
@@ -271,9 +255,7 @@ class VoxCPMEngine(EngineProtocol):
                 self._initialized = True
                 return True
             except ImportError:
-                logger.error(
-                    "voxcpm package not found. Install with: pip install voxcpm"
-                )
+                logger.error("voxcpm package not found. Install with: pip install voxcpm")
                 logger.error("Or use transformers with model: voxcpm/voxcpm")
                 self._initialized = False
                 return False
@@ -403,9 +385,7 @@ class VoxCPMEngine(EngineProtocol):
             else:
                 # Try voxcpm package API
                 try:
-                    audio = self.model.synthesize(
-                        text=text, language=language, speed=speed
-                    )
+                    audio = self.model.synthesize(text=text, language=language, speed=speed)
 
                     if isinstance(audio, torch.Tensor):
                         audio = audio.cpu().numpy()
@@ -489,9 +469,7 @@ class VoxCPMEngine(EngineProtocol):
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(
-                            audio, sample_rate, ref_audio, ref_sr
-                        )
+                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")

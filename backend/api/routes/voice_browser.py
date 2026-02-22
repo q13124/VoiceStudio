@@ -23,6 +23,7 @@ except ImportError:
 
         return decorator
 
+
 # Profiles will be imported dynamically in _sync_catalog_from_profiles to avoid circular imports
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,9 @@ def _get_catalog_path() -> str:
     """Get path to catalog persistence file."""
     global _catalog_file_path
     if _catalog_file_path is None:
-        cache_dir = os.getenv("VOICESTUDIO_CACHE_DIR", os.path.join(os.path.expanduser("~"), ".voicestudio", "cache"))
+        cache_dir = os.getenv(
+            "VOICESTUDIO_CACHE_DIR", os.path.join(os.path.expanduser("~"), ".voicestudio", "cache")
+        )
         os.makedirs(cache_dir, exist_ok=True)
         _catalog_file_path = os.path.join(cache_dir, "voice_catalog.json")
     return _catalog_file_path
@@ -110,7 +113,12 @@ def _sync_catalog_from_profiles():
             # Get creation time
             created_timestamp = _profile_timestamps.get(profile_id, 0.0)
             from datetime import datetime
-            created_str = datetime.fromtimestamp(created_timestamp).isoformat() if created_timestamp > 0 else datetime.utcnow().isoformat()
+
+            created_str = (
+                datetime.fromtimestamp(created_timestamp).isoformat()
+                if created_timestamp > 0
+                else datetime.utcnow().isoformat()
+            )
 
             # Convert profile to catalog entry
             catalog_entry = {
@@ -124,7 +132,7 @@ def _sync_catalog_from_profiles():
                 "sample_count": 1 if reference_audio_url else 0,  # Count reference audio as sample
                 "tags": tags if isinstance(tags, list) else [],
                 "preview_audio_id": preview_audio_id,
-                "created": created_str
+                "created": created_str,
             }
 
             # Update catalog if changed
@@ -226,9 +234,7 @@ async def search_voices(
 
     if tags:
         tag_list = [t.strip() for t in tags.split(",")]
-        voices = [
-            v for v in voices if any(tag in v.get("tags", []) for tag in tag_list)
-        ]
+        voices = [v for v in voices if any(tag in v.get("tags", []) for tag in tag_list)]
 
     # Sort by quality score (descending)
     voices.sort(key=lambda v: v.get("quality_score", 0.0), reverse=True)
@@ -261,9 +267,7 @@ async def search_voices(
 
 
 @router.get("/voices/{voice_id}", response_model=VoiceProfileSummary)
-@cache_response(
-    ttl=300
-)  # Cache for 5 minutes (individual voices change less frequently)
+@cache_response(ttl=300)  # Cache for 5 minutes (individual voices change less frequently)
 async def get_voice_summary(voice_id: str):
     """Get detailed summary of a voice profile."""
     # Sync catalog before lookup

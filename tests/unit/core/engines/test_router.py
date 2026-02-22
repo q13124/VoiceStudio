@@ -117,8 +117,7 @@ class TestEngineRouterRegistration:
     def test_register_engine_invalid_type(self, engine_router):
         """Test that registering non-EngineProtocol raises error."""
 
-        class InvalidEngine:
-            ...
+        class InvalidEngine: ...
 
         with pytest.raises(TypeError):
             engine_router.register_engine("invalid", InvalidEngine)
@@ -211,9 +210,11 @@ class TestEngineRouterMemoryMonitoring:
         """Test that engines are cleaned up when memory is high."""
         # Get the actual module from sys.modules to avoid fixture interference
         the_router_module = sys.modules["app.core.engines.router"]
-        
-        with patch.object(the_router_module, "HAS_PSUTIL", True), \
-             patch.object(the_router_module, "psutil") as mock_psutil:
+
+        with (
+            patch.object(the_router_module, "HAS_PSUTIL", True),
+            patch.object(the_router_module, "psutil") as mock_psutil,
+        ):
 
             # Mock psutil.virtual_memory to return high memory usage
             mock_virtual_memory = MagicMock()
@@ -222,9 +223,7 @@ class TestEngineRouterMemoryMonitoring:
 
             # Mock process memory info
             mock_process = MagicMock()
-            mock_process.memory_info.return_value = MagicMock(
-                rss=200 * 1024 * 1024
-            )  # 200MB
+            mock_process.memory_info.return_value = MagicMock(rss=200 * 1024 * 1024)  # 200MB
             engine_router._process = mock_process
 
             # Register and get engines

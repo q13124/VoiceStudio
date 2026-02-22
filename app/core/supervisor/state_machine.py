@@ -19,11 +19,12 @@ logger = logging.getLogger(__name__)
 
 class SupervisorState(str, Enum):
     """States in the supervisor state machine."""
+
     IDLE = "idle"
     ANALYZING = "analyzing"
-    CASUAL_MODE = "casual_mode"        # S2S engine active
+    CASUAL_MODE = "casual_mode"  # S2S engine active
     REASONING_MODE = "reasoning_mode"  # Cascade pipeline active
-    HANDOFF = "handoff"                # Transitioning between modes
+    HANDOFF = "handoff"  # Transitioning between modes
     GENERATING_FILLER = "generating_filler"
     RESPONDING = "responding"
     INTERRUPTED = "interrupted"
@@ -33,6 +34,7 @@ class SupervisorState(str, Enum):
 @dataclass
 class StateTransition:
     """Record of a state transition."""
+
     from_state: SupervisorState
     to_state: SupervisorState
     trigger: str
@@ -152,9 +154,7 @@ class SupervisorStateMachine:
         )
         self._history.append(transition)
 
-        logger.debug(
-            f"Supervisor: {old_state.value} → {to_state.value} ({trigger})"
-        )
+        logger.debug(f"Supervisor: {old_state.value} → {to_state.value} ({trigger})")
 
         # Fire callbacks
         self._fire_callbacks(old_state, to_state)
@@ -170,9 +170,7 @@ class SupervisorStateMachine:
         key = from_state.value if from_state else "_any"
         self._callbacks.setdefault(key, []).append(callback)
 
-    def _fire_callbacks(
-        self, from_state: SupervisorState, to_state: SupervisorState
-    ) -> None:
+    def _fire_callbacks(self, from_state: SupervisorState, to_state: SupervisorState) -> None:
         """Fire registered callbacks for this transition."""
         # Specific callbacks
         for cb in self._callbacks.get(from_state.value, []):

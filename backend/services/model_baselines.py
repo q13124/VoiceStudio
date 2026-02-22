@@ -50,9 +50,7 @@ class ModelBaseline:
             version=data.get("version", "1.0"),
             latency_p95_ms=data.get("latency_p95_ms", 0.0),
             rtf_p95=data.get("rtf_p95", 0.0),
-            throughput_p50_chars_per_sec=data.get(
-                "throughput_p50_chars_per_sec", 0.0
-            ),
+            throughput_p50_chars_per_sec=data.get("throughput_p50_chars_per_sec", 0.0),
             mos=data.get("mos", 0.0),
             sample_count=data.get("sample_count", 0),
             updated_at=data.get("updated_at", ""),
@@ -97,9 +95,7 @@ class ModelBaselinesService:
                             "version": version,
                         }
                     )
-                logger.debug(
-                    f"Loaded {len(self._baselines)} model baselines"
-                )
+                logger.debug(f"Loaded {len(self._baselines)} model baselines")
             except (json.JSONDecodeError, OSError) as e:
                 logger.warning(f"Failed to load model baselines: {e}")
                 self._baselines = {}
@@ -114,9 +110,7 @@ class ModelBaselinesService:
             data = {
                 "version": "1.0",
                 "updated_at": datetime.now(timezone.utc).isoformat(),
-                "baselines": {
-                    k: v.to_dict() for k, v in self._baselines.items()
-                },
+                "baselines": {k: v.to_dict() for k, v in self._baselines.items()},
             }
             with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
@@ -157,22 +151,13 @@ class ModelBaselinesService:
                 if latency_p95_ms > 0
                 else bl.latency_p95_ms
             )
-            bl.rtf_p95 = (
-                (1 - alpha) * bl.rtf_p95 + alpha * rtf_p95
-                if rtf_p95 > 0
-                else bl.rtf_p95
-            )
+            bl.rtf_p95 = (1 - alpha) * bl.rtf_p95 + alpha * rtf_p95 if rtf_p95 > 0 else bl.rtf_p95
             bl.throughput_p50_chars_per_sec = (
-                (1 - alpha) * bl.throughput_p50_chars_per_sec
-                + alpha * throughput_p50_chars_per_sec
+                (1 - alpha) * bl.throughput_p50_chars_per_sec + alpha * throughput_p50_chars_per_sec
                 if throughput_p50_chars_per_sec > 0
                 else bl.throughput_p50_chars_per_sec
             )
-            bl.mos = (
-                (1 - alpha) * bl.mos + alpha * mos
-                if mos > 0
-                else bl.mos
-            )
+            bl.mos = (1 - alpha) * bl.mos + alpha * mos if mos > 0 else bl.mos
             bl.sample_count += 1
             bl.updated_at = now
         else:
@@ -192,9 +177,7 @@ class ModelBaselinesService:
         self._save()
         return bl
 
-    def get_baseline(
-        self, engine_id: str, model_name: str, version: str
-    ) -> ModelBaseline | None:
+    def get_baseline(self, engine_id: str, model_name: str, version: str) -> ModelBaseline | None:
         """Get baseline for a model version."""
         key = self._key(engine_id, model_name, version)
         return self._baselines.get(key)
@@ -240,10 +223,7 @@ class ModelBaselinesService:
                     f"{bl.rtf_p95:.2f} (+{(ratio - 1) * 100:.0f}%)"
                 )
 
-        if (
-            bl.throughput_p50_chars_per_sec > 0
-            and throughput_p50_chars_per_sec > 0
-        ):
+        if bl.throughput_p50_chars_per_sec > 0 and throughput_p50_chars_per_sec > 0:
             ratio = bl.throughput_p50_chars_per_sec / throughput_p50_chars_per_sec
             if ratio > (1 + DEGRADATION_THRESHOLD):
                 degraded = True
@@ -256,7 +236,10 @@ class ModelBaselinesService:
         for msg in warnings:
             logger.warning(
                 "Model performance degradation [%s/%s v%s]: %s",
-                engine_id, model_name, version, msg,
+                engine_id,
+                model_name,
+                version,
+                msg,
             )
 
         return (degraded, warnings)

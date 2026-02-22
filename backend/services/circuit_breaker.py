@@ -45,58 +45,63 @@ T = TypeVar("T")
 
 class CircuitState(Enum):
     """Circuit breaker states."""
-    CLOSED = auto()      # Normal operation
-    OPEN = auto()        # Failing fast
-    HALF_OPEN = auto()   # Testing recovery
+
+    CLOSED = auto()  # Normal operation
+    OPEN = auto()  # Failing fast
+    HALF_OPEN = auto()  # Testing recovery
 
 
 class CircuitBreakerError(Exception):
     """Base class for circuit breaker errors."""
+
     pass
 
 
 class CircuitBreakerOpenError(CircuitBreakerError):
     """Raised when circuit is open and requests are blocked."""
+
     def __init__(self, breaker_name: str, time_until_retry: float = 0.0):
         self.breaker_name = breaker_name
         self.time_until_retry = time_until_retry
         super().__init__(
-            f"Circuit breaker '{breaker_name}' is OPEN. "
-            f"Retry in {time_until_retry:.1f}s"
+            f"Circuit breaker '{breaker_name}' is OPEN. " f"Retry in {time_until_retry:.1f}s"
         )
 
 
 @dataclass
 class CircuitBreakerConfig:
     """Configuration for circuit breaker behavior."""
-    failure_threshold: int = 3          # Failures before opening
-    success_threshold: int = 2          # Successes to close from half-open
-    recovery_timeout: float = 60.0      # Seconds before trying half-open
-    half_open_max_calls: int = 3        # Max concurrent calls in half-open
+
+    failure_threshold: int = 3  # Failures before opening
+    success_threshold: int = 2  # Successes to close from half-open
+    recovery_timeout: float = 60.0  # Seconds before trying half-open
+    half_open_max_calls: int = 3  # Max concurrent calls in half-open
 
 
 @dataclass
 class CircuitBreakerStats:
     """Statistics for circuit breaker monitoring."""
+
     name: str
     state: CircuitState = CircuitState.CLOSED
     failure_count: int = 0
     success_count: int = 0
     last_failure_time: float | None = None
     last_success_time: float | None = None
-    open_count: int = 0                 # Times circuit was opened
+    open_count: int = 0  # Times circuit was opened
     total_calls: int = 0
     total_failures: int = 0
-    total_blocked: int = 0              # Calls blocked by open circuit
+    total_blocked: int = 0  # Calls blocked by open circuit
 
 
 @dataclass
 class CircuitBreakerMetrics:
     """
     GAP-I24: Enhanced metrics for circuit breaker dashboard.
-    
+
     Includes computed fields like failure_rate and state change tracking.
     """
+
     name: str
     state: str  # CLOSED, OPEN, HALF_OPEN
     failure_count: int
@@ -186,8 +191,7 @@ class CircuitBreaker:
             if new_state == CircuitState.OPEN:
                 self._open_count += 1
                 logger.warning(
-                    "Circuit breaker '%s' OPENED after %d failures",
-                    self.name, self._failure_count
+                    "Circuit breaker '%s' OPENED after %d failures", self.name, self._failure_count
                 )
             elif new_state == CircuitState.HALF_OPEN:
                 logger.info("Circuit breaker '%s' entering HALF_OPEN state", self.name)
@@ -308,13 +312,13 @@ class CircuitBreaker:
     def get_metrics(self) -> CircuitBreakerMetrics:
         """
         GAP-I24: Get enhanced metrics for dashboard visualization.
-        
+
         Returns:
             CircuitBreakerMetrics with computed failure rate and state change tracking.
         """
         total = max(self._total_calls, 1)  # Avoid division by zero
         failure_rate = self._total_failures / total
-        
+
         return CircuitBreakerMetrics(
             name=self.name,
             state=self._state.name,

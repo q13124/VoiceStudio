@@ -25,9 +25,11 @@ from dataclasses import dataclass, field
 # Profile Test Data
 # =============================================================================
 
+
 @dataclass
 class TestProfile:
     """Test profile configuration."""
+
     name: str
     description: str = "Test profile"
     engine: str = "xtts"
@@ -82,9 +84,11 @@ PROFILES = {
 # Dataset Test Data
 # =============================================================================
 
+
 @dataclass
 class TestDataset:
     """Test dataset configuration."""
+
     name: str
     description: str = "Test dataset"
     audio_files: list[str] = field(default_factory=list)
@@ -104,8 +108,11 @@ DATASETS = {
         name="Medium Test Dataset",
         description="Medium dataset for integration tests",
         audio_files=[
-            "sample_01.wav", "sample_02.wav", "sample_03.wav",
-            "sample_04.wav", "sample_05.wav",
+            "sample_01.wav",
+            "sample_02.wav",
+            "sample_03.wav",
+            "sample_04.wav",
+            "sample_05.wav",
         ],
         total_duration_seconds=300.0,
     ),
@@ -128,9 +135,11 @@ DATASETS = {
 # Settings Test Data
 # =============================================================================
 
+
 @dataclass
 class TestSettings:
     """Test application settings configuration."""
+
     theme: str = "dark"
     language: str = "en"
     auto_save: bool = True
@@ -144,9 +153,7 @@ SETTINGS = {
     "default": TestSettings(),
     "light_theme": TestSettings(theme="light"),
     "no_auto_save": TestSettings(auto_save=False),
-    "custom_models_path": TestSettings(
-        models_path="C:\\VoiceStudio\\CustomModels"
-    ),
+    "custom_models_path": TestSettings(models_path="C:\\VoiceStudio\\CustomModels"),
     "minimal": TestSettings(
         cache_enabled=False,
         telemetry_enabled=False,
@@ -159,9 +166,11 @@ SETTINGS = {
 # Form Input Test Data
 # =============================================================================
 
+
 @dataclass
 class FormInput:
     """Test form input data."""
+
     field_id: str
     value: str
     expected_valid: bool = True
@@ -188,7 +197,7 @@ FORM_INPUTS = {
     ),
     "profile_name_special_chars": FormInput(
         field_id="ProfileNameTextBox",
-        value="Profile <Test> \"Special\"",
+        value='Profile <Test> "Special"',
         expected_valid=True,  # Should handle special characters
     ),
 }
@@ -198,9 +207,11 @@ FORM_INPUTS = {
 # Navigation Test Data
 # =============================================================================
 
+
 @dataclass
 class NavigationPath:
     """Test navigation path."""
+
     name: str
     steps: list[str]
     expected_panel: str
@@ -236,9 +247,11 @@ NAVIGATION_PATHS = {
 # Keyboard Shortcut Test Data
 # =============================================================================
 
+
 @dataclass
 class KeyboardShortcut:
     """Test keyboard shortcut."""
+
     shortcut: str
     action: str
     expected_result: str
@@ -274,9 +287,11 @@ KEYBOARD_SHORTCUTS = {
 # Error Scenario Test Data
 # =============================================================================
 
+
 @dataclass
 class ErrorScenario:
     """Test error scenario."""
+
     name: str
     trigger: str
     expected_error_type: str
@@ -311,6 +326,7 @@ ERROR_SCENARIOS = {
 # =============================================================================
 # Utility Functions
 # =============================================================================
+
 
 def get_test_profile(name: str = "basic") -> TestProfile:
     """Get a test profile by name."""

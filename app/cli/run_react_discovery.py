@@ -21,11 +21,19 @@ def main():
 
     try:
         result = subprocess.run(
-            ["powershell", "-ExecutionPolicy", "Bypass", "-File", str(script_path), "-SourcePath", "C:\\VoiceStudio"],
+            [
+                "powershell",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                str(script_path),
+                "-SourcePath",
+                "C:\\VoiceStudio",
+            ],
             capture_output=True,
             text=True,
-            encoding='utf-8',
-            errors='replace'
+            encoding="utf-8",
+            errors="replace",
         )
 
         if result.stdout:
@@ -50,7 +58,8 @@ def main():
             print(f"  JSON: {catalog_json}")
 
             import json
-            with open(catalog_json, encoding='utf-8') as f:
+
+            with open(catalog_json, encoding="utf-8") as f:
                 data = json.load(f)
                 print(f"  Total panels: {data.get('totalPanels', 0)}")
                 print(f"  Electron detected: {data.get('electron', {}).get('hasElectron', False)}")
@@ -63,9 +72,10 @@ def main():
     except Exception as e:
         print(f"ERROR: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
+
 if __name__ == "__main__":
     sys.exit(main())
-

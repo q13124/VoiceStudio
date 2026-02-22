@@ -39,6 +39,7 @@ pytestmark = [
 @pytest.fixture
 def api_client():
     """Create API client."""
+
     class APIClient:
         def __init__(self, base_url: str):
             self.base_url = base_url
@@ -77,14 +78,21 @@ class TestInvalidInputValidation:
 
     def test_empty_synthesis_text(self, api_client, backend_available):
         """Test synthesis with empty text."""
-        response = api_client.post("/api/voice/synthesize", json={
-            "text": "",
-            "engine": "piper",
-        }, timeout=10)
+        response = api_client.post(
+            "/api/voice/synthesize",
+            json={
+                "text": "",
+                "engine": "piper",
+            },
+            timeout=10,
+        )
 
         # Should return 400 or 422 for validation error
-        assert response.status_code in [400, 422, 404], \
-            f"Expected validation error, got {response.status_code}"
+        assert response.status_code in [
+            400,
+            422,
+            404,
+        ], f"Expected validation error, got {response.status_code}"
 
         if response.status_code in [400, 422]:
             error = response.json()
@@ -94,13 +102,20 @@ class TestInvalidInputValidation:
 
     def test_invalid_engine_name(self, api_client, backend_available):
         """Test synthesis with invalid engine name."""
-        response = api_client.post("/api/voice/synthesize", json={
-            "text": "Test",
-            "engine": "nonexistent_engine_12345",
-        }, timeout=10)
+        response = api_client.post(
+            "/api/voice/synthesize",
+            json={
+                "text": "Test",
+                "engine": "nonexistent_engine_12345",
+            },
+            timeout=10,
+        )
 
-        assert response.status_code in [400, 404, 422], \
-            f"Expected error for invalid engine, got {response.status_code}"
+        assert response.status_code in [
+            400,
+            404,
+            422,
+        ], f"Expected error for invalid engine, got {response.status_code}"
 
     def test_invalid_json_payload(self, api_client, backend_available):
         """Test endpoint with malformed JSON."""
@@ -108,53 +123,82 @@ class TestInvalidInputValidation:
             "/api/voice/synthesize",
             data="not valid json {{{",
             headers={"Content-Type": "application/json"},
-            timeout=10
+            timeout=10,
         )
 
-        assert response.status_code in [400, 422], \
-            f"Expected JSON parse error, got {response.status_code}"
+        assert response.status_code in [
+            400,
+            422,
+        ], f"Expected JSON parse error, got {response.status_code}"
 
     def test_missing_required_fields(self, api_client, backend_available):
         """Test endpoint with missing required fields."""
-        response = api_client.post("/api/voice/synthesize", json={
-            # Missing "text" field
-            "engine": "piper",
-        }, timeout=10)
+        response = api_client.post(
+            "/api/voice/synthesize",
+            json={
+                # Missing "text" field
+                "engine": "piper",
+            },
+            timeout=10,
+        )
 
-        assert response.status_code in [400, 422, 404], \
-            f"Expected validation error, got {response.status_code}"
+        assert response.status_code in [
+            400,
+            422,
+            404,
+        ], f"Expected validation error, got {response.status_code}"
 
     def test_wrong_data_types(self, api_client, backend_available):
         """Test endpoint with wrong data types."""
-        response = api_client.post("/api/voice/synthesize", json={
-            "text": 12345,  # Should be string
-            "engine": ["array", "not", "string"],  # Wrong type
-        }, timeout=10)
+        response = api_client.post(
+            "/api/voice/synthesize",
+            json={
+                "text": 12345,  # Should be string
+                "engine": ["array", "not", "string"],  # Wrong type
+            },
+            timeout=10,
+        )
 
-        assert response.status_code in [400, 422, 404], \
-            f"Expected type error, got {response.status_code}"
+        assert response.status_code in [
+            400,
+            422,
+            404,
+        ], f"Expected type error, got {response.status_code}"
 
     def test_excessively_long_text(self, api_client, backend_available):
         """Test synthesis with excessively long text."""
         long_text = "A" * 1000000  # 1MB of text
 
-        response = api_client.post("/api/voice/synthesize", json={
-            "text": long_text,
-            "engine": "piper",
-        }, timeout=30)
+        response = api_client.post(
+            "/api/voice/synthesize",
+            json={
+                "text": long_text,
+                "engine": "piper",
+            },
+            timeout=30,
+        )
 
         # Should either reject or handle gracefully
-        assert response.status_code in [400, 413, 422, 500, 404], \
-            f"Expected handling for long text, got {response.status_code}"
+        assert response.status_code in [
+            400,
+            413,
+            422,
+            500,
+            404,
+        ], f"Expected handling for long text, got {response.status_code}"
 
     def test_special_characters_in_text(self, api_client, backend_available):
         """Test synthesis with special characters."""
         special_text = "Test with émojis 🎤🎵 and symbols ©®™ and unicode Üñíçödé"
 
-        response = api_client.post("/api/voice/synthesize", json={
-            "text": special_text,
-            "engine": "piper",
-        }, timeout=30)
+        response = api_client.post(
+            "/api/voice/synthesize",
+            json={
+                "text": special_text,
+                "engine": "piper",
+            },
+            timeout=30,
+        )
 
         # Should either process or return appropriate error
         assert response.status_code in [200, 400, 404, 422, 500]
@@ -172,29 +216,38 @@ class TestMissingResourceHandling:
         """Test accessing nonexistent voice profile."""
         response = api_client.get("/api/profiles/nonexistent-profile-id-12345", timeout=10)
 
-        assert response.status_code == 404, \
-            f"Expected 404 for missing profile, got {response.status_code}"
+        assert (
+            response.status_code == 404
+        ), f"Expected 404 for missing profile, got {response.status_code}"
 
     def test_nonexistent_job(self, api_client, backend_available):
         """Test accessing nonexistent job."""
         response = api_client.get("/api/jobs/nonexistent-job-id-12345", timeout=10)
 
-        assert response.status_code in [404, 400], \
-            f"Expected 404 for missing job, got {response.status_code}"
+        assert response.status_code in [
+            404,
+            400,
+        ], f"Expected 404 for missing job, got {response.status_code}"
 
     def test_nonexistent_audio_file(self, api_client, backend_available):
         """Test accessing nonexistent audio file."""
         response = api_client.get("/api/audio/nonexistent-file-id-12345", timeout=10)
 
-        assert response.status_code in [404, 400], \
-            f"Expected 404 for missing file, got {response.status_code}"
+        assert response.status_code in [
+            404,
+            400,
+        ], f"Expected 404 for missing file, got {response.status_code}"
 
     def test_nonexistent_model(self, api_client, backend_available):
         """Test using nonexistent model."""
-        response = api_client.post("/api/voice/synthesize", json={
-            "text": "Test",
-            "model": "nonexistent-model-12345",
-        }, timeout=10)
+        response = api_client.post(
+            "/api/voice/synthesize",
+            json={
+                "text": "Test",
+                "model": "nonexistent-model-12345",
+            },
+            timeout=10,
+        )
 
         assert response.status_code in [400, 404, 422]
 
@@ -215,10 +268,14 @@ class TestNetworkErrorHandling:
         """Test timeout handling for slow operations."""
         # Try synthesis with very short timeout
         try:
-            response = api_client.post("/api/voice/synthesize", json={
-                "text": "Test timeout handling",
-                "engine": "piper",
-            }, timeout=0.001)  # Extremely short timeout
+            response = api_client.post(
+                "/api/voice/synthesize",
+                json={
+                    "text": "Test timeout handling",
+                    "engine": "piper",
+                },
+                timeout=0.001,
+            )  # Extremely short timeout
 
             # If we get here, request completed before timeout
             print(f"Request completed with status: {response.status_code}")
@@ -260,9 +317,13 @@ class TestConcurrentOperationConflicts:
     def test_update_during_processing(self, api_client, backend_available):
         """Test updating resource while it's being processed."""
         # Try to update a profile that might be in use
-        response = api_client.put("/api/profiles/in-use-profile/settings", json={
-            "pitch": 1.5,
-        }, timeout=10)
+        response = api_client.put(
+            "/api/profiles/in-use-profile/settings",
+            json={
+                "pitch": 1.5,
+            },
+            timeout=10,
+        )
 
         # Should either succeed or return appropriate error
         assert response.status_code in [200, 400, 404, 409, 422]
@@ -302,12 +363,16 @@ class TestResourceExhaustion:
             response = api_client.post(
                 "/api/audio/upload",
                 files={"file": ("large_test.wav", fake_large_content, "audio/wav")},
-                timeout=60
+                timeout=60,
             )
 
             # Should either accept, reject with 413, or handle appropriately
-            assert response.status_code in [200, 400, 413, 422], \
-                f"Unexpected status for large upload: {response.status_code}"
+            assert response.status_code in [
+                200,
+                400,
+                413,
+                422,
+            ], f"Unexpected status for large upload: {response.status_code}"
 
             print(f"Large file upload result: {response.status_code}")
         except requests.Timeout:
@@ -322,22 +387,25 @@ class TestInvalidHTTPMethods:
         """Test GET on POST-only endpoint."""
         response = api_client.get("/api/voice/synthesize", timeout=10)
 
-        assert response.status_code in [405, 404, 422], \
-            f"Expected method not allowed, got {response.status_code}"
+        assert response.status_code in [
+            405,
+            404,
+            422,
+        ], f"Expected method not allowed, got {response.status_code}"
 
     def test_delete_on_readonly_endpoint(self, api_client, backend_available):
         """Test DELETE on read-only endpoint."""
         response = api_client.delete("/api/health", timeout=10)
 
-        assert response.status_code in [405, 404], \
-            f"Expected method not allowed, got {response.status_code}"
+        assert response.status_code in [
+            405,
+            404,
+        ], f"Expected method not allowed, got {response.status_code}"
 
     def test_patch_unsupported(self, api_client, backend_available):
         """Test PATCH method support."""
         response = requests.patch(
-            f"{BACKEND_URL}/api/profiles/test",
-            json={"name": "patched"},
-            timeout=10
+            f"{BACKEND_URL}/api/profiles/test", json={"name": "patched"}, timeout=10
         )
 
         # PATCH might or might not be supported
@@ -350,10 +418,14 @@ class TestEdgeCaseInputs:
 
     def test_null_values(self, api_client, backend_available):
         """Test null values in request."""
-        response = api_client.post("/api/voice/synthesize", json={
-            "text": None,
-            "engine": None,
-        }, timeout=10)
+        response = api_client.post(
+            "/api/voice/synthesize",
+            json={
+                "text": None,
+                "engine": None,
+            },
+            timeout=10,
+        )
 
         # 500 is acceptable if null causes unhandled exception
         assert response.status_code in [400, 422, 404, 500]
@@ -362,10 +434,14 @@ class TestEdgeCaseInputs:
         """Test Unicode control characters."""
         control_chars = "Test\x00\x01\x02\x03text\x1b[31mred\x1b[0m"
 
-        response = api_client.post("/api/voice/synthesize", json={
-            "text": control_chars,
-            "engine": "piper",
-        }, timeout=10)
+        response = api_client.post(
+            "/api/voice/synthesize",
+            json={
+                "text": control_chars,
+                "engine": "piper",
+            },
+            timeout=10,
+        )
 
         # Should handle without crashing
         assert response.status_code in [200, 400, 404, 422]
@@ -374,10 +450,7 @@ class TestEdgeCaseInputs:
         """Test SQL injection protection."""
         injection_attempt = "'; DROP TABLE users; --"
 
-        response = api_client.get(
-            f"/api/profiles/{injection_attempt}",
-            timeout=10
-        )
+        response = api_client.get(f"/api/profiles/{injection_attempt}", timeout=10)
 
         # Should not cause server error - proper sanitization
         assert response.status_code != 500, "Possible SQL injection vulnerability"
@@ -387,10 +460,7 @@ class TestEdgeCaseInputs:
         """Test path traversal protection."""
         traversal_attempt = "../../../etc/passwd"
 
-        response = api_client.get(
-            f"/api/audio/{traversal_attempt}",
-            timeout=10
-        )
+        response = api_client.get(f"/api/audio/{traversal_attempt}", timeout=10)
 
         # Should not allow path traversal
         assert response.status_code in [400, 404, 422]
@@ -399,9 +469,13 @@ class TestEdgeCaseInputs:
         """Test XSS protection."""
         xss_attempt = '<script>alert("xss")</script>'
 
-        response = api_client.post("/api/profiles/create", json={
-            "name": xss_attempt,
-        }, timeout=10)
+        response = api_client.post(
+            "/api/profiles/create",
+            json={
+                "name": xss_attempt,
+            },
+            timeout=10,
+        )
 
         # If created, check the response doesn't reflect raw script
         if response.status_code == 200:
@@ -411,24 +485,32 @@ class TestEdgeCaseInputs:
 
     def test_negative_numbers(self, api_client, backend_available):
         """Test negative number handling."""
-        response = api_client.post("/api/voice/synthesize", json={
-            "text": "Test",
-            "engine": "piper",
-            "speed": -1.5,  # Negative speed
-            "pitch": -999,  # Extreme negative pitch
-        }, timeout=10)
+        response = api_client.post(
+            "/api/voice/synthesize",
+            json={
+                "text": "Test",
+                "engine": "piper",
+                "speed": -1.5,  # Negative speed
+                "pitch": -999,  # Extreme negative pitch
+            },
+            timeout=10,
+        )
 
         # Should validate and reject or clamp values
         assert response.status_code in [200, 400, 404, 422]
 
     def test_extreme_values(self, api_client, backend_available):
         """Test extreme value handling."""
-        response = api_client.post("/api/voice/synthesize", json={
-            "text": "Test",
-            "engine": "piper",
-            "speed": 999999999,
-            "pitch": 999999999.99,  # Very large but JSON-compliant (not infinity)
-        }, timeout=10)
+        response = api_client.post(
+            "/api/voice/synthesize",
+            json={
+                "text": "Test",
+                "engine": "piper",
+                "speed": 999999999,
+                "pitch": 999999999.99,  # Very large but JSON-compliant (not infinity)
+            },
+            timeout=10,
+        )
 
         # Should validate and reject
         assert response.status_code in [400, 404, 422, 500]
@@ -446,10 +528,7 @@ class TestErrorResponseFormat:
             try:
                 error = response.json()
                 has_message = (
-                    "message" in error or
-                    "detail" in error or
-                    "error" in error or
-                    "errors" in error
+                    "message" in error or "detail" in error or "error" in error or "errors" in error
                 )
                 assert has_message, f"Error response missing message field: {error}"
             except json.JSONDecodeError:
@@ -458,9 +537,13 @@ class TestErrorResponseFormat:
 
     def test_validation_error_details(self, api_client, backend_available):
         """Test that validation errors include field details."""
-        response = api_client.post("/api/voice/synthesize", json={
-            "text": "",  # Invalid empty text
-        }, timeout=10)
+        response = api_client.post(
+            "/api/voice/synthesize",
+            json={
+                "text": "",  # Invalid empty text
+            },
+            timeout=10,
+        )
 
         if response.status_code == 422:
             error = response.json()
@@ -475,15 +558,18 @@ class TestErrorRecovery:
     def test_service_continues_after_error(self, api_client, backend_available):
         """Test that service continues operating after an error."""
         # Cause an error
-        api_client.post("/api/voice/synthesize", json={
-            "text": "",
-        }, timeout=10)
+        api_client.post(
+            "/api/voice/synthesize",
+            json={
+                "text": "",
+            },
+            timeout=10,
+        )
 
         # Verify service still works
         health_response = api_client.get("/api/health", timeout=10)
 
-        assert health_response.status_code == 200, \
-            "Service unhealthy after handling error"
+        assert health_response.status_code == 200, "Service unhealthy after handling error"
 
     def test_partial_failure_handling(self, api_client, backend_available):
         """Test partial failure in batch operations."""
@@ -531,27 +617,31 @@ class TestErrorReport:
                         f"{BACKEND_URL}{endpoint}",
                         data=data,
                         headers={"Content-Type": "application/json"},
-                        timeout=10
+                        timeout=10,
                     )
                 elif method == "DELETE":
                     response = api_client.delete(endpoint, timeout=10)
                 else:
                     continue
 
-                results.append({
-                    "test": name,
-                    "endpoint": endpoint,
-                    "status": response.status_code,
-                    "handled": response.status_code < 500,
-                })
+                results.append(
+                    {
+                        "test": name,
+                        "endpoint": endpoint,
+                        "status": response.status_code,
+                        "handled": response.status_code < 500,
+                    }
+                )
             except Exception as e:
-                results.append({
-                    "test": name,
-                    "endpoint": endpoint,
-                    "status": "error",
-                    "error": str(e),
-                    "handled": False,
-                })
+                results.append(
+                    {
+                        "test": name,
+                        "endpoint": endpoint,
+                        "status": "error",
+                        "error": str(e),
+                        "handled": False,
+                    }
+                )
 
         # Print report
         print("\n" + "=" * 60)
@@ -575,15 +665,19 @@ class TestErrorReport:
         report_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(report_path, "w") as f:
-            json.dump({
-                "timestamp": datetime.now().isoformat(),
-                "summary": {
-                    "total": total_count,
-                    "handled": handled_count,
-                    "success_rate": handled_count / total_count if total_count > 0 else 0,
+            json.dump(
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "summary": {
+                        "total": total_count,
+                        "handled": handled_count,
+                        "success_rate": handled_count / total_count if total_count > 0 else 0,
+                    },
+                    "results": results,
                 },
-                "results": results,
-            }, f, indent=2)
+                f,
+                indent=2,
+            )
 
         print(f"\nReport saved to: {report_path}")
 

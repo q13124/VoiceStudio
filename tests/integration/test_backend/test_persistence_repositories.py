@@ -23,7 +23,8 @@ logger = logging.getLogger(__name__)
 async def setup_job_tables(db_path: str) -> None:
     """Create job tables for testing."""
     async with aiosqlite.connect(db_path) as conn:
-        await conn.execute("""
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS job_history (
                 id TEXT PRIMARY KEY,
                 job_type TEXT NOT NULL,
@@ -45,7 +46,8 @@ async def setup_job_tables(db_path: str) -> None:
                 completed_at TEXT,
                 deleted_at TEXT
             )
-        """)
+        """
+        )
         await conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_job_history_status ON job_history(status)"
         )
@@ -58,7 +60,8 @@ async def setup_job_tables(db_path: str) -> None:
 async def setup_training_tables(db_path: str) -> None:
     """Create training job tables for testing."""
     async with aiosqlite.connect(db_path) as conn:
-        await conn.execute("""
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS training_jobs (
                 id TEXT PRIMARY KEY,
                 dataset_id TEXT,
@@ -85,7 +88,8 @@ async def setup_training_tables(db_path: str) -> None:
                 completed_at TEXT,
                 deleted_at TEXT
             )
-        """)
+        """
+        )
         await conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_training_jobs_profile ON training_jobs(profile_id)"
         )
@@ -98,7 +102,8 @@ async def setup_training_tables(db_path: str) -> None:
 async def setup_session_tables(db_path: str) -> None:
     """Create session tables for testing."""
     async with aiosqlite.connect(db_path) as conn:
-        await conn.execute("""
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS sessions (
                 id TEXT PRIMARY KEY,
                 user_id TEXT,
@@ -111,13 +116,10 @@ async def setup_session_tables(db_path: str) -> None:
                 updated_at TEXT DEFAULT (datetime('now')),
                 deleted_at TEXT
             )
-        """)
-        await conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)"
+        """
         )
-        await conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)"
-        )
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)")
+        await conn.execute("CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)")
         await conn.commit()
 
 
@@ -147,10 +149,7 @@ class TestJobRepository(AsyncIntegrationTestBase):
         # Create tables first
         await setup_job_tables(temp_db_path)
 
-        config = ConnectionConfig(
-            database_type=DatabaseType.SQLITE,
-            sqlite_path=temp_db_path
-        )
+        config = ConnectionConfig(database_type=DatabaseType.SQLITE, sqlite_path=temp_db_path)
         repo = JobRepository(config)
         return repo
 
@@ -211,10 +210,13 @@ class TestJobRepository(AsyncIntegrationTestBase):
         await job_repo.create(job_entity)
 
         # Update status
-        updated = await job_repo.update(job_id, {
-            "status": "running",
-            "progress": 0.5,
-        })
+        updated = await job_repo.update(
+            job_id,
+            {
+                "status": "running",
+                "progress": 0.5,
+            },
+        )
 
         assert updated is not None
         assert updated.status == "running"
@@ -311,10 +313,7 @@ class TestTrainingJobRepository(AsyncIntegrationTestBase):
         # Create tables first
         await setup_training_tables(temp_db_path)
 
-        config = ConnectionConfig(
-            database_type=DatabaseType.SQLITE,
-            sqlite_path=temp_db_path
-        )
+        config = ConnectionConfig(database_type=DatabaseType.SQLITE, sqlite_path=temp_db_path)
         repo = TrainingJobRepository(config)
         return repo
 
@@ -357,10 +356,13 @@ class TestTrainingJobRepository(AsyncIntegrationTestBase):
         await training_repo.create(entity)
 
         # Update progress
-        updated = await training_repo.update(job_id, {
-            "epochs_completed": 25,
-            "loss": 0.05,
-        })
+        updated = await training_repo.update(
+            job_id,
+            {
+                "epochs_completed": 25,
+                "loss": 0.05,
+            },
+        )
 
         assert updated is not None
         assert updated.epochs_completed == 25
@@ -460,10 +462,7 @@ class TestSessionRepository(AsyncIntegrationTestBase):
         # Create tables first
         await setup_session_tables(temp_db_path)
 
-        config = ConnectionConfig(
-            database_type=DatabaseType.SQLITE,
-            sqlite_path=temp_db_path
-        )
+        config = ConnectionConfig(database_type=DatabaseType.SQLITE, sqlite_path=temp_db_path)
         repo = SessionRepository(config)
         return repo
 
@@ -521,9 +520,12 @@ class TestSessionRepository(AsyncIntegrationTestBase):
         await session_repo.create(entity)
 
         new_time = datetime.utcnow()
-        updated = await session_repo.update(session_id, {
-            "last_active": new_time,
-        })
+        updated = await session_repo.update(
+            session_id,
+            {
+                "last_active": new_time,
+            },
+        )
 
         assert updated is not None
         # The updated timestamp should be newer
@@ -604,10 +606,7 @@ class TestRepositoryIntegration(AsyncIntegrationTestBase):
         await setup_training_tables(temp_db_path)
         await setup_session_tables(temp_db_path)
 
-        config = ConnectionConfig(
-            database_type=DatabaseType.SQLITE,
-            sqlite_path=temp_db_path
-        )
+        config = ConnectionConfig(database_type=DatabaseType.SQLITE, sqlite_path=temp_db_path)
 
         job_repo = JobRepository(config)
         training_repo = TrainingJobRepository(config)

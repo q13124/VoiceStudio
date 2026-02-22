@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 class SchedulerState(Enum):
     """Scheduler operational state."""
+
     IDLE = "idle"
     PROCESSING = "processing"
     UNDER_PRESSURE = "under_pressure"
@@ -48,6 +49,7 @@ class SchedulerState(Enum):
 @dataclass
 class VRAMRequirement:
     """VRAM requirements for an engine or operation."""
+
     engine_name: str
     model_vram_mb: int  # Base model size
     working_memory_mb: int = 512  # Additional working memory
@@ -93,6 +95,7 @@ ENGINE_VRAM_REQUIREMENTS: dict[str, VRAMRequirement] = {
 @dataclass(order=True)
 class ScheduledRequest:
     """A request waiting in the scheduler queue."""
+
     priority: int  # Lower = higher priority (for heapq)
     submitted_at: datetime = field(compare=False)
     request_id: str = field(compare=False)
@@ -461,9 +464,7 @@ class VRAMScheduler:
             )
 
         if allocation is None:
-            raise MemoryError(
-                f"Cannot allocate {required_bytes / 1e6:.1f}MB for {engine_name}"
-            )
+            raise MemoryError(f"Cannot allocate {required_bytes / 1e6:.1f}MB for {engine_name}")
 
         self.mark_engine_loaded(engine_name)
 

@@ -179,25 +179,15 @@ class UploadResult(BaseModel):
     category: str = Field(description="File category (audio, video, etc.)")
     checksum: str | None = Field(default=None, description="File checksum (SHA-256)")
     upload_timestamp: str = Field(description="ISO timestamp of upload")
-    metadata: dict[str, Any] | None = Field(
-        default=None, description="Additional metadata"
-    )
+    metadata: dict[str, Any] | None = Field(default=None, description="Additional metadata")
 
     # Processing results (for audio files)
-    sample_rate: int | None = Field(
-        default=None, description="Audio sample rate (Hz)"
-    )
-    duration_seconds: float | None = Field(
-        default=None, description="Audio/video duration"
-    )
-    channels: int | None = Field(
-        default=None, description="Number of audio channels"
-    )
+    sample_rate: int | None = Field(default=None, description="Audio sample rate (Hz)")
+    duration_seconds: float | None = Field(default=None, description="Audio/video duration")
+    channels: int | None = Field(default=None, description="Number of audio channels")
 
     # Conversion info
-    converted: bool = Field(
-        default=False, description="Whether file was converted"
-    )
+    converted: bool = Field(default=False, description="Whether file was converted")
     canonical_path: str | None = Field(
         default=None, description="Path to canonical format file (if converted)"
     )
@@ -284,22 +274,12 @@ class UploadService:
             upload_dir: Base directory for permanent file storage.
             temp_dir: Directory for temporary files during processing.
         """
-        default_upload = os.path.join(
-            tempfile.gettempdir(), "voicestudio", "uploads"
-        )
-        default_temp = os.path.join(
-            tempfile.gettempdir(), "voicestudio", "temp"
-        )
+        default_upload = os.path.join(tempfile.gettempdir(), "voicestudio", "uploads")
+        default_temp = os.path.join(tempfile.gettempdir(), "voicestudio", "temp")
         self.upload_dir: str = (
-            upload_dir
-            or os.environ.get("VOICESTUDIO_UPLOAD_DIR")
-            or default_upload
+            upload_dir or os.environ.get("VOICESTUDIO_UPLOAD_DIR") or default_upload
         )
-        self.temp_dir: str = (
-            temp_dir
-            or os.environ.get("VOICESTUDIO_TEMP_DIR")
-            or default_temp
-        )
+        self.temp_dir: str = temp_dir or os.environ.get("VOICESTUDIO_TEMP_DIR") or default_temp
 
         # Ensure directories exist
         os.makedirs(self.upload_dir, exist_ok=True)
@@ -376,9 +356,7 @@ class UploadService:
             metadata=ctx.metadata,
         )
 
-    async def _validate_size(
-        self, ctx: UploadContext, config: UploadValidationConfig
-    ) -> None:
+    async def _validate_size(self, ctx: UploadContext, config: UploadValidationConfig) -> None:
         """Validate file size."""
         if ctx.size_bytes < config.min_size_bytes:
             raise HTTPException(
@@ -411,9 +389,7 @@ class UploadService:
 
         # Determine category
         if detected_type:
-            ctx.category = MIME_TYPE_CATEGORIES.get(
-                detected_type, UploadCategory.OTHER
-            )
+            ctx.category = MIME_TYPE_CATEGORIES.get(detected_type, UploadCategory.OTHER)
         else:
             ctx.category = UploadCategory.OTHER
 
@@ -438,9 +414,7 @@ class UploadService:
 
         return None
 
-    async def _validate_type(
-        self, ctx: UploadContext, config: UploadValidationConfig
-    ) -> None:
+    async def _validate_type(self, ctx: UploadContext, config: UploadValidationConfig) -> None:
         """Validate file type against allowed types."""
         # Check MIME type
         if config.allowed_mime_types:
@@ -448,7 +422,7 @@ class UploadService:
                 raise HTTPException(
                     status_code=415,
                     detail=f"Unsupported file type: {ctx.detected_mime_type}. "
-                           f"Allowed types: {', '.join(config.allowed_mime_types)}",
+                    f"Allowed types: {', '.join(config.allowed_mime_types)}",
                 )
 
         # Check extension
@@ -457,7 +431,7 @@ class UploadService:
                 raise HTTPException(
                     status_code=415,
                     detail=f"Unsupported file extension: {ctx.extension}. "
-                           f"Allowed: {', '.join(config.allowed_extensions)}",
+                    f"Allowed: {', '.join(config.allowed_extensions)}",
                 )
 
         # Check category
@@ -466,13 +440,12 @@ class UploadService:
                 raise HTTPException(
                     status_code=415,
                     detail=f"File category '{ctx.category.value}' not allowed. "
-                           f"Allowed categories: {', '.join(config.allowed_categories)}",
+                    f"Allowed categories: {', '.join(config.allowed_categories)}",
                 )
 
         # Check content-type match if required
         if config.require_content_type_match and ctx.declared_content_type:
-            if (ctx.detected_mime_type and
-                ctx.declared_content_type != ctx.detected_mime_type):
+            if ctx.detected_mime_type and ctx.declared_content_type != ctx.detected_mime_type:
                 logger.warning(
                     f"Content-Type mismatch: declared={ctx.declared_content_type}, "
                     f"detected={ctx.detected_mime_type} for file {ctx.original_filename}"
@@ -482,6 +455,7 @@ class UploadService:
     async def _compute_checksum(self, ctx: UploadContext) -> None:
         """Compute SHA-256 checksum of file content."""
         import hashlib
+
         ctx.checksum = hashlib.sha256(ctx.content).hexdigest()
 
     async def _store_file(self, ctx: UploadContext) -> str:

@@ -40,9 +40,7 @@ class TestSpectrogramRouteHandlers:
     def test_get_spectrogram_handler_exists(self):
         """Test get_spectrogram handler exists."""
         if hasattr(spectrogram, "get_spectrogram"):
-            assert callable(
-                spectrogram.get_spectrogram
-            ), "get_spectrogram is not callable"
+            assert callable(spectrogram.get_spectrogram), "get_spectrogram is not callable"
 
 
 class TestSpectrogramRouter:

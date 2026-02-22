@@ -430,8 +430,10 @@ class TestVoiceBrowserRefreshEndpoint:
         }
 
         with patch("backend.api.routes.voice_browser._sync_catalog_from_profiles") as mock_sync:
+
             def sync_side_effect():
                 voice_browser._voice_catalog["profile1"] = mock_profiles["profile1"]
+
             mock_sync.side_effect = sync_side_effect
 
             response = client.post("/api/voice-browser/refresh")

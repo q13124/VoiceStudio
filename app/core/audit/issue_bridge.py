@@ -203,8 +203,11 @@ class AuditIssueBridge:
             # Create the Issue object
             issue = Issue(
                 id=issue_id,
-                timestamp=datetime.fromisoformat(entry.timestamp.replace("Z", "+00:00"))
-                    if entry.timestamp else datetime.now(timezone.utc),
+                timestamp=(
+                    datetime.fromisoformat(entry.timestamp.replace("Z", "+00:00"))
+                    if entry.timestamp
+                    else datetime.now(timezone.utc)
+                ),
                 instance_type=instance_type,
                 instance_id=entry.subsystem or "audit-bridge",
                 correlation_id=entry.correlation_id,
@@ -349,6 +352,7 @@ def get_audit_issue_bridge() -> AuditIssueBridge:
         # Try to connect to issue store
         try:
             from tools.overseer.issues.store import IssueStore
+
             _audit_issue_bridge.set_issue_store(IssueStore())
         # ALLOWED: bare except - Optional dependency, import failure is acceptable
         except ImportError:
@@ -380,6 +384,7 @@ def setup_audit_issue_bridge(
     # Try to connect to issue store
     try:
         from tools.overseer.issues.store import IssueStore
+
         _audit_issue_bridge.set_issue_store(IssueStore())
     # ALLOWED: bare except - Optional dependency, import failure is acceptable
     except ImportError:

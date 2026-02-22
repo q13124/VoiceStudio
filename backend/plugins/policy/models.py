@@ -171,7 +171,7 @@ class PolicyConfig:
     default_trust_level: TrustLevel = TrustLevel.COMMUNITY
     require_signature: bool = False
     require_manifest_id: bool = True
-    
+
     # System plugin identification
     system_plugin_prefix: str = "com.voicestudio."  # Plugins with this prefix are system-trusted
 

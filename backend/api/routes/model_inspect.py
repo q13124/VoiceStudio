@@ -37,9 +37,7 @@ async def inspect(req: ModelInspectRequest) -> dict:
         layer = req.layer
 
         if layer < 0:
-            raise HTTPException(
-                status_code=400, detail="Layer number must be non-negative"
-            )
+            raise HTTPException(status_code=400, detail="Layer number must be non-negative")
 
         # Try to get model information from engine router
         try:
@@ -47,9 +45,7 @@ async def inspect(req: ModelInspectRequest) -> dict:
             import sys
 
             # Add app directory to path if needed
-            app_path = os.path.join(
-                os.path.dirname(__file__), "..", "..", "..", "app"
-            )
+            app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
             if os.path.exists(app_path) and app_path not in sys.path:
                 sys.path.insert(0, app_path)
 
@@ -119,17 +115,16 @@ async def inspect(req: ModelInspectRequest) -> dict:
                         cached_model = model_cache.get(
                             model_info.get("engine", "unknown"),
                             model_info.get("cache_key"),
-                            device=model_info.get("device", "cpu")
+                            device=model_info.get("device", "cpu"),
                         )
 
                         if cached_model is None:
-                            activation_reason = (
-                                "Model instance is not loaded in the cache."
-                            )
+                            activation_reason = "Model instance is not loaded in the cache."
                         else:
                             # Try to extract activations from PyTorch model
                             try:
                                 import torch
+
                                 if isinstance(cached_model, torch.nn.Module):
                                     # Create dummy input for activation extraction
                                     # For TTS models, use text/audio features
@@ -156,12 +151,19 @@ async def inspect(req: ModelInspectRequest) -> dict:
                                                 # Forward pass with dummy input
                                                 try:
                                                     # Create appropriate dummy input based on model type
-                                                    if "tts" in model_type.lower() or "xtts" in model_name.lower():
+                                                    if (
+                                                        "tts" in model_type.lower()
+                                                        or "xtts" in model_name.lower()
+                                                    ):
                                                         # TTS model: text tokens + speaker embedding
-                                                        dummy_input = torch.randint(0, 1000, (1, 10)).to(model_info.get("device", "cpu"))
+                                                        dummy_input = torch.randint(
+                                                            0, 1000, (1, 10)
+                                                        ).to(model_info.get("device", "cpu"))
                                                     else:
                                                         # Generic: use model's expected input shape if available
-                                                        dummy_input = torch.randn(1, 64).to(model_info.get("device", "cpu"))
+                                                        dummy_input = torch.randn(1, 64).to(
+                                                            model_info.get("device", "cpu")
+                                                        )
 
                                                     _ = cached_model(dummy_input)
                                                     handle.remove()
@@ -171,7 +173,9 @@ async def inspect(req: ModelInspectRequest) -> dict:
                                                         act_data = activations[0]
                                                         # Reshape to 2D for visualization
                                                         if len(act_data.shape) > 2:
-                                                            act_data = act_data.reshape(-1, act_data.shape[-1])
+                                                            act_data = act_data.reshape(
+                                                                -1, act_data.shape[-1]
+                                                            )
                                                         if len(act_data.shape) == 2:
                                                             # Average over batch dimension if present
                                                             if act_data.shape[0] > 1:
@@ -179,32 +183,39 @@ async def inspect(req: ModelInspectRequest) -> dict:
                                                             # Resize to 64x64 for visualization
                                                             try:
                                                                 from scipy.ndimage import zoom
+
                                                                 target_size = 64
                                                                 current_size = act_data.shape[0]
-                                                                zoom_factor = target_size / current_size
-                                                                act_data = zoom(act_data, zoom_factor)
+                                                                zoom_factor = (
+                                                                    target_size / current_size
+                                                                )
+                                                                act_data = zoom(
+                                                                    act_data, zoom_factor
+                                                                )
                                                             except ImportError:
                                                                 # Fallback: simple interpolation using numpy
                                                                 target_size = 64
                                                                 current_size = act_data.shape[0]
-                                                                indices = np.linspace(0, current_size - 1, target_size)
-                                                                act_data = np.interp(indices, np.arange(current_size), act_data)
+                                                                indices = np.linspace(
+                                                                    0, current_size - 1, target_size
+                                                                )
+                                                                act_data = np.interp(
+                                                                    indices,
+                                                                    np.arange(current_size),
+                                                                    act_data,
+                                                                )
                                                             activation_map = act_data
                                                     else:
-                                                        activation_reason = (
-                                                            "No activation data was produced for the requested layer."
-                                                        )
+                                                        activation_reason = "No activation data was produced for the requested layer."
                                                 except Exception as hook_error:
-                                                    logger.debug(f"Failed to extract activations via hook: {hook_error}")
+                                                    logger.debug(
+                                                        f"Failed to extract activations via hook: {hook_error}"
+                                                    )
                                                     handle.remove()
                                 else:
-                                    activation_reason = (
-                                        "Cached model is not a torch module."
-                                    )
+                                    activation_reason = "Cached model is not a torch module."
                             except ImportError as torch_error:
-                                activation_reason = (
-                                    "PyTorch is not available for model inspection."
-                                )
+                                activation_reason = "PyTorch is not available for model inspection."
                                 logger.debug(
                                     "PyTorch not available for model inspection: %s",
                                     torch_error,
@@ -227,9 +238,7 @@ async def inspect(req: ModelInspectRequest) -> dict:
 
                 if activation_map is None:
                     if not activation_reason:
-                        activation_reason = (
-                            "Activation data is unavailable for the selected layer."
-                        )
+                        activation_reason = "Activation data is unavailable for the selected layer."
                     logger.warning(
                         "Activation data unavailable for model %s layer %s: %s",
                         model_name,
@@ -250,9 +259,7 @@ async def inspect(req: ModelInspectRequest) -> dict:
                 # Convert to uint8 for image
                 activation_map = (activation_map * 255).astype(np.uint8)
                 if activation_map.ndim == 1:
-                    activation_map = np.tile(
-                        activation_map, (activation_map.shape[0], 1)
-                    )
+                    activation_map = np.tile(activation_map, (activation_map.shape[0], 1))
                 activation_shape = list(activation_map.shape)
 
                 # Convert to base64
@@ -267,8 +274,7 @@ async def inspect(req: ModelInspectRequest) -> dict:
                 activation_base64 = base64.b64encode(image_data).decode("utf-8")
 
                 logger.info(
-                    f"Model inspection: model={model_name}, "
-                    f"layer={layer}, heads={heads}"
+                    f"Model inspection: model={model_name}, " f"layer={layer}, heads={heads}"
                 )
 
                 return {
@@ -322,9 +328,7 @@ async def inspect(req: ModelInspectRequest) -> dict:
         raise
     except Exception as e:
         logger.error(f"Model inspection failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Model inspection failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Model inspection failed: {e!s}") from e
 
 
 def _build_inspection_status(
@@ -429,6 +433,4 @@ async def list_layers(
 
     except Exception as e:
         logger.error(f"Failed to list layers: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to list layers: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to list layers: {e!s}") from e

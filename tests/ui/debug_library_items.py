@@ -25,12 +25,11 @@ class SimpleDriver:
             "app": app_path,
             "appTopLevelWindow": None,
             "ms:waitForAppLaunch": "10",
-            "deviceName": "WindowsPC"
+            "deviceName": "WindowsPC",
         }
 
         response = requests.post(
-            f"{self.url}/session",
-            json={"capabilities": {"alwaysMatch": caps}}
+            f"{self.url}/session", json={"capabilities": {"alwaysMatch": caps}}
         )
         response.raise_for_status()
         data = response.json()
@@ -54,12 +53,12 @@ class SimpleDriver:
             "accessibility id": "accessibility id",
             "xpath": "xpath",
             "name": "name",
-            "class name": "class name"
+            "class name": "class name",
         }
 
         response = requests.post(
             f"{self.url}/session/{self.session_id}/element",
-            json={"using": strat_map.get(strategy, strategy), "value": value}
+            json={"using": strat_map.get(strategy, strategy), "value": value},
         )
         response.raise_for_status()
         data = response.json()
@@ -72,12 +71,12 @@ class SimpleDriver:
             "accessibility id": "accessibility id",
             "xpath": "xpath",
             "name": "name",
-            "class name": "class name"
+            "class name": "class name",
         }
 
         response = requests.post(
             f"{self.url}/session/{self.session_id}/elements",
-            json={"using": strat_map.get(strategy, strategy), "value": value}
+            json={"using": strat_map.get(strategy, strategy), "value": value},
         )
         response.raise_for_status()
         data = response.json()
@@ -119,14 +118,11 @@ class Element:
 
     def find_elements(self, strategy: str, value: str):
         """Find child elements."""
-        strat_map = {
-            "xpath": "xpath",
-            "class name": "class name"
-        }
+        strat_map = {"xpath": "xpath", "class name": "class name"}
 
         response = requests.post(
             f"{self.driver.url}/session/{self.driver.session_id}/element/{self.element_id}/elements",
-            json={"using": strat_map.get(strategy, strategy), "value": value}
+            json={"using": strat_map.get(strategy, strategy), "value": value},
         )
         response.raise_for_status()
         data = response.json()
@@ -151,7 +147,7 @@ def main():
         response = requests.get("http://localhost:8000/api/library/assets")
         data = response.json()
         print(f"   Backend has {data.get('total', 0)} assets")
-        for asset in data.get('assets', [])[:5]:
+        for asset in data.get("assets", [])[:5]:
             print(f"   - {asset.get('name')}")
     except Exception as e:
         print(f"   Backend error: {e}")
@@ -204,7 +200,10 @@ def main():
             ("//List[@AutomationId='LibraryView_AssetsListView']//ListItem", "List/ListItem"),
             ("//*[@ClassName='ListViewItem']", "ClassName ListViewItem"),
             ("//*[@LocalizedControlType='list item']", "LocalizedControlType list item"),
-            ("//List[@AutomationId='LibraryView_AssetsListView']//*", "All children of AssetsListView"),
+            (
+                "//List[@AutomationId='LibraryView_AssetsListView']//*",
+                "All children of AssetsListView",
+            ),
         ]
 
         for xpath, desc in strategies:
@@ -227,7 +226,7 @@ def main():
             source = driver.get_page_source()
             output_path = Path(r"E:\VoiceStudio\.buildlogs\ui_tests\library_debug.xml")
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            output_path.write_text(source, encoding='utf-8')
+            output_path.write_text(source, encoding="utf-8")
             print(f"   Saved to {output_path}")
 
             # Check if AssetsListView is in the source
@@ -244,6 +243,7 @@ def main():
     except Exception as e:
         print(f"Error: {e}")
         import traceback
+
         traceback.print_exc()
     finally:
         print("\n8. Cleaning up...")

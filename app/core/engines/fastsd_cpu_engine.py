@@ -44,9 +44,7 @@ try:
 except ImportError:
     HAS_DIFFUSERS = False
     if not HAS_DIFFUSERS_ONNX:
-        logger.warning(
-            "diffusers not installed. Install with: pip install diffusers>=0.21.0"
-        )
+        logger.warning("diffusers not installed. Install with: pip install diffusers>=0.21.0")
 
 try:
     import onnxruntime as ort
@@ -54,9 +52,7 @@ try:
     HAS_ONNX = True
 except ImportError:
     HAS_ONNX = False
-    logger.warning(
-        "onnxruntime not installed. Install with: pip install onnxruntime>=1.15.0"
-    )
+    logger.warning("onnxruntime not installed. Install with: pip install onnxruntime>=1.15.0")
 
 # Import base protocol from canonical source
 from .base import EngineProtocol
@@ -406,9 +402,7 @@ class FastSDCPUEngine(EngineProtocol):
         start_time = time.perf_counter()
 
         try:
-            actual_batch_size = (
-                batch_size if batch_size is not None else self.batch_size
-            )
+            actual_batch_size = batch_size if batch_size is not None else self.batch_size
 
             # Process prompts in batches with ThreadPoolExecutor for better
             # parallelization
@@ -490,9 +484,10 @@ class FastSDCPUEngine(EngineProtocol):
         """Clean up resources (enhanced)."""
         try:
             # Don't delete if in cache (other instances might be using it)
-            if (not self.enable_model_cache or (
-                self._model_key is not None and self._model_key not in self._model_cache
-            )) and self.pipe is not None:
+            if (
+                not self.enable_model_cache
+                or (self._model_key is not None and self._model_key not in self._model_cache)
+            ) and self.pipe is not None:
                 del self.pipe
                 self.pipe = None
 
@@ -520,11 +515,7 @@ class FastSDCPUEngine(EngineProtocol):
             return {"enabled": False}
 
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
-        hit_rate = (
-            (self._cache_stats["hits"] / total_requests * 100)
-            if total_requests > 0
-            else 0.0
-        )
+        hit_rate = (self._cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0.0
 
         return {
             "enabled": True,

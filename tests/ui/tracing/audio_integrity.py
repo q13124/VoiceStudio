@@ -12,7 +12,7 @@ Provides comprehensive audio validation including:
 Usage:
     checker = AudioIntegrityChecker()
     result = checker.validate(audio_path)
-    
+
     if result.valid:
         print(f"Audio OK: {result.duration}s @ {result.sample_rate}Hz")
     else:
@@ -84,7 +84,7 @@ class ValidationConstraints:
 class AudioIntegrityChecker:
     """
     Validates audio files for integrity and expected properties.
-    
+
     Supports:
     - WAV file validation with header parsing
     - Property constraints (duration, sample rate, etc.)
@@ -95,7 +95,7 @@ class AudioIntegrityChecker:
     def __init__(self, constraints: ValidationConstraints | None = None):
         """
         Initialize checker with optional constraints.
-        
+
         Args:
             constraints: Validation constraints to apply
         """
@@ -109,11 +109,11 @@ class AudioIntegrityChecker:
     ) -> ValidationResult:
         """
         Validate an audio file.
-        
+
         Args:
             path: Path to audio file
             constraints: Override default constraints for this check
-            
+
         Returns:
             ValidationResult with metadata, errors, and warnings
         """
@@ -149,14 +149,14 @@ class AudioIntegrityChecker:
     ) -> ValidationResult:
         """
         Validate a processed file against its original.
-        
+
         Useful for verifying audio processing operations.
-        
+
         Args:
             original: Path to original audio file
             processed: Path to processed audio file
             allow_different_format: Allow format differences (e.g., WAV->MP3)
-            
+
         Returns:
             Combined validation result
         """
@@ -175,15 +175,11 @@ class AudioIntegrityChecker:
 
         # Check original validity
         if not original_result.valid:
-            combined.add_error(
-                f"Original file invalid: {original_result.errors}"
-            )
+            combined.add_error(f"Original file invalid: {original_result.errors}")
 
         # Check processed validity
         if not processed_result.valid:
-            combined.add_error(
-                f"Processed file invalid: {processed_result.errors}"
-            )
+            combined.add_error(f"Processed file invalid: {processed_result.errors}")
 
         # Compare properties
         if original_result.valid and processed_result.valid:
@@ -193,23 +189,19 @@ class AudioIntegrityChecker:
             # Sample rate should match (unless resampled intentionally)
             if orig_meta.sample_rate != proc_meta.sample_rate:
                 combined.add_warning(
-                    f"Sample rate changed: {orig_meta.sample_rate} "
-                    f"-> {proc_meta.sample_rate}"
+                    f"Sample rate changed: {orig_meta.sample_rate} " f"-> {proc_meta.sample_rate}"
                 )
 
             # Channel count should match (unless remixed intentionally)
             if orig_meta.channels != proc_meta.channels:
                 combined.add_warning(
-                    f"Channels changed: {orig_meta.channels} "
-                    f"-> {proc_meta.channels}"
+                    f"Channels changed: {orig_meta.channels} " f"-> {proc_meta.channels}"
                 )
 
             # Duration should be approximately the same
             duration_diff = abs(orig_meta.duration - proc_meta.duration)
             if duration_diff > 0.5:
-                combined.add_warning(
-                    f"Duration differs by {duration_diff:.2f}s"
-                )
+                combined.add_warning(f"Duration differs by {duration_diff:.2f}s")
 
             combined.add_passed("pair_comparison")
 
@@ -222,11 +214,11 @@ class AudioIntegrityChecker:
     ) -> str:
         """
         Compute checksum of audio file.
-        
+
         Args:
             path: Path to audio file
             algorithm: Hash algorithm (md5, sha256, etc.)
-            
+
         Returns:
             Hex-encoded checksum string
         """
@@ -274,9 +266,7 @@ class AudioIntegrityChecker:
             result.add_error(f"Cannot read file: {e}")
             return False
 
-    def _extract_metadata(
-        self, path: Path, result: ValidationResult
-    ) -> bool:
+    def _extract_metadata(self, path: Path, result: ValidationResult) -> bool:
         """Extract audio metadata from file."""
         suffix = path.suffix.lower().lstrip(".")
 
@@ -300,8 +290,7 @@ class AudioIntegrityChecker:
 
                 if result.metadata.sample_rate > 0:
                     result.metadata.duration = (
-                        result.metadata.frame_count
-                        / result.metadata.sample_rate
+                        result.metadata.frame_count / result.metadata.sample_rate
                     )
 
             # Compute checksum
@@ -329,8 +318,7 @@ class AudioIntegrityChecker:
         if constraints.min_duration is not None:
             if meta.duration < constraints.min_duration:
                 result.add_error(
-                    f"Duration {meta.duration:.2f}s below minimum "
-                    f"{constraints.min_duration}s"
+                    f"Duration {meta.duration:.2f}s below minimum " f"{constraints.min_duration}s"
                 )
             else:
                 result.add_passed("min_duration")
@@ -338,8 +326,7 @@ class AudioIntegrityChecker:
         if constraints.max_duration is not None:
             if meta.duration > constraints.max_duration:
                 result.add_error(
-                    f"Duration {meta.duration:.2f}s exceeds maximum "
-                    f"{constraints.max_duration}s"
+                    f"Duration {meta.duration:.2f}s exceeds maximum " f"{constraints.max_duration}s"
                 )
             else:
                 result.add_passed("max_duration")
@@ -358,8 +345,7 @@ class AudioIntegrityChecker:
         if constraints.expected_channels is not None:
             if meta.channels != constraints.expected_channels:
                 result.add_error(
-                    f"Channels {meta.channels} != expected "
-                    f"{constraints.expected_channels}"
+                    f"Channels {meta.channels} != expected " f"{constraints.expected_channels}"
                 )
             else:
                 result.add_passed("channels_match")
@@ -368,8 +354,7 @@ class AudioIntegrityChecker:
         if constraints.expected_bit_depth is not None:
             if meta.bit_depth != constraints.expected_bit_depth:
                 result.add_error(
-                    f"Bit depth {meta.bit_depth} != expected "
-                    f"{constraints.expected_bit_depth}"
+                    f"Bit depth {meta.bit_depth} != expected " f"{constraints.expected_bit_depth}"
                 )
             else:
                 result.add_passed("bit_depth_match")
@@ -388,8 +373,7 @@ class AudioIntegrityChecker:
         if constraints.max_file_size is not None:
             if meta.file_size > constraints.max_file_size:
                 result.add_error(
-                    f"File size {meta.file_size} exceeds max "
-                    f"{constraints.max_file_size}"
+                    f"File size {meta.file_size} exceeds max " f"{constraints.max_file_size}"
                 )
             else:
                 result.add_passed("file_size_ok")
@@ -402,7 +386,7 @@ class AudioIntegrityChecker:
     ) -> None:
         """
         Analyze audio content for issues.
-        
+
         Basic analysis includes silence detection.
         """
         if result.metadata.format != "wav":
@@ -429,7 +413,7 @@ class AudioIntegrityChecker:
     def _detect_silence_ratio(self, path: Path) -> float:
         """
         Detect ratio of silence in audio file.
-        
+
         Returns float 0.0-1.0 representing silence proportion.
         """
         try:
@@ -451,9 +435,7 @@ class AudioIntegrityChecker:
 
                 for i in range(0, len(frames), sample_width * n_channels * step):
                     try:
-                        sample = struct.unpack(
-                            fmt, frames[i : i + sample_width]
-                        )[0]
+                        sample = struct.unpack(fmt, frames[i : i + sample_width])[0]
                         samples.append(abs(sample))
                     except struct.error:
                         break
@@ -480,13 +462,13 @@ def validate_audio(
 ) -> ValidationResult:
     """
     Convenience function for quick validation.
-    
+
     Args:
         path: Path to audio file
         min_duration: Minimum duration in seconds
         max_duration: Maximum duration in seconds
         expected_sample_rate: Expected sample rate in Hz
-        
+
     Returns:
         ValidationResult
     """
@@ -502,10 +484,10 @@ def validate_audio(
 def quick_validate(path: str | Path) -> bool:
     """
     Quick validation returning bool only.
-    
+
     Args:
         path: Path to audio file
-        
+
     Returns:
         True if valid, False otherwise
     """

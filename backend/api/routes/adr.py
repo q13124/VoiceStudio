@@ -18,12 +18,14 @@ logger = logging.getLogger(__name__)
 
 class AdrAlignResponse(BaseModel):
     """Response model for ADR alignment."""
+
     ok: bool
     offset_ms: int
     offset_seconds: float
     video_id: str
     audio_id: str
     method: str
+
 
 router = APIRouter(prefix="/api/adr", tags=["adr"])
 
@@ -47,14 +49,10 @@ async def align(req: AdrAlignRequest) -> AdrAlignResponse:
         audio_id = req.audio_id
 
         if not video_id:
-            raise HTTPException(
-                status_code=400, detail="video_id is required"
-            )
+            raise HTTPException(status_code=400, detail="video_id is required")
 
         if not audio_id:
-            raise HTTPException(
-                status_code=400, detail="audio_id is required"
-            )
+            raise HTTPException(status_code=400, detail="audio_id is required")
 
         # Get audio file path
         from .voice import _audio_storage
@@ -157,10 +155,7 @@ async def align(req: AdrAlignRequest) -> AdrAlignResponse:
                 )
             else:
                 # No onsets detected, use zero offset
-                logger.warning(
-                    f"No onsets detected in audio {audio_id}, "
-                    "using zero offset"
-                )
+                logger.warning(f"No onsets detected in audio {audio_id}, " "using zero offset")
                 return AdrAlignResponse(
                     ok=True,
                     offset_ms=0,
@@ -171,10 +166,7 @@ async def align(req: AdrAlignRequest) -> AdrAlignResponse:
                 )
 
         except Exception as e:
-            logger.warning(
-                f"Onset detection failed for {audio_id}: {e}, "
-                "using fallback method"
-            )
+            logger.warning(f"Onset detection failed for {audio_id}: {e}, " "using fallback method")
             # Fallback: simple offset estimation
             # In production, this would use more sophisticated methods
             offset_ms = 120  # Default offset
@@ -191,6 +183,4 @@ async def align(req: AdrAlignRequest) -> AdrAlignResponse:
         raise
     except Exception as e:
         logger.error(f"ADR alignment failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"ADR alignment failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"ADR alignment failed: {e!s}") from e

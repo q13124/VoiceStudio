@@ -145,6 +145,7 @@ class EmotionEngine:
         # Clear GPU cache to free VRAM
         try:
             import torch
+
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 logger.debug("GPU cache cleared after emotion engine unload")
@@ -200,8 +201,12 @@ class EmotionEngine:
         except Exception as e:
             logger.warning(f"Emotion detection failed: {e}")
             scores = {
-                "neutral": 0.6, "happy": 0.2, "sad": 0.1,
-                "angry": 0.05, "fearful": 0.03, "surprised": 0.02,
+                "neutral": 0.6,
+                "happy": 0.2,
+                "sad": 0.1,
+                "angry": 0.05,
+                "fearful": 0.03,
+                "surprised": 0.02,
             }
 
         # Find primary emotion
@@ -466,6 +471,7 @@ class EmotionEngine:
         try:
             # Try loading emotion-aware XTTS or similar
             from TTS.api import TTS
+
             tts = TTS("tts_models/en/ljspeech/tacotron2-DDC")
             return {
                 "type": "tts",
@@ -581,9 +587,7 @@ class EmotionEngine:
         elif self._detection_model.get("type") == "speechbrain":
             return await self._classify_speechbrain(audio, sample_rate)
 
-        return self._classify_emotion_rules(
-            self._extract_emotion_features(audio, sample_rate)
-        )
+        return self._classify_emotion_rules(self._extract_emotion_features(audio, sample_rate))
 
     async def _classify_wav2vec(
         self,
@@ -598,14 +602,13 @@ class EmotionEngine:
         device = self._detection_model["device"]
 
         if model is None:
-            return self._classify_emotion_rules(
-                self._extract_emotion_features(audio, sample_rate)
-            )
+            return self._classify_emotion_rules(self._extract_emotion_features(audio, sample_rate))
 
         # Resample to 16kHz if needed
         if sample_rate != 16000:
             try:
                 import librosa
+
                 audio = librosa.resample(audio, orig_sr=sample_rate, target_sr=16000)
             except ImportError:
                 logger.debug("librosa not available for resampling")
@@ -636,6 +639,7 @@ class EmotionEngine:
 
         # SpeechBrain expects file path or tensor
         import torch
+
         audio_tensor = torch.from_numpy(audio).float().unsqueeze(0)
 
         _out_prob, score, _index, text_lab = classifier.classify_batch(audio_tensor)

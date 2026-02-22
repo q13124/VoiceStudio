@@ -53,7 +53,8 @@ class QualityMetricsDatabase:
         """Create schema if not exists."""
         conn = sqlite3.connect(self._db_path)
         try:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS quality_history (
                     id TEXT PRIMARY KEY,
                     profile_id TEXT NOT NULL,
@@ -67,7 +68,8 @@ class QualityMetricsDatabase:
                     metadata TEXT,
                     created_at TEXT
                 )
-            """)
+            """
+            )
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_quality_history_profile_id ON quality_history(profile_id)"
             )
@@ -225,9 +227,7 @@ class QualityMetricsDatabase:
             conn.close()
         return [self._row_to_entry(r) for r in rows]
 
-    def get_engine_metrics(
-        self, engine_id: str, period: timedelta
-    ) -> dict[str, Any]:
+    def get_engine_metrics(self, engine_id: str, period: timedelta) -> dict[str, Any]:
         """
         Get aggregated metrics for an engine over a time period.
 
@@ -261,6 +261,7 @@ class QualityMetricsDatabase:
                 if "latency_ms" in m and m["latency_ms"] is not None:
                     latency_ms_list.append(float(m["latency_ms"]))
         import statistics
+
         avg_q = statistics.mean(quality_scores) if quality_scores else None
         avg_mos = statistics.mean(mos_scores) if mos_scores else None
         avg_sim = statistics.mean(similarity_scores) if similarity_scores else None

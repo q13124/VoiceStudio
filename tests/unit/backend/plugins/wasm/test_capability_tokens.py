@@ -7,7 +7,9 @@ Tests capability-based security for Wasm plugin sandboxing.
 import pytest
 
 # Skip entire module if capability_tokens module not fully implemented
-pytest.importorskip("backend.plugins.wasm.capability_tokens", reason="Phase 6A not fully implemented")
+pytest.importorskip(
+    "backend.plugins.wasm.capability_tokens", reason="Phase 6A not fully implemented"
+)
 
 try:
     from backend.plugins.wasm.capability_tokens import (
@@ -37,6 +39,7 @@ class TestCapabilityToken:
     def test_capability_token_expiry(self) -> None:
         """Test that expired tokens are invalid."""
         import time
+
         token = CapabilityToken(Capability.AUDIO_READ, ttl_seconds=0.001)
         time.sleep(0.01)
         assert not token.is_valid
@@ -120,7 +123,7 @@ class TestParseCapabilities:
         """Test parsing valid permission strings."""
         permissions = ["file_read", "audio_read", "audio_write"]
         cap_set = parse_capabilities_from_manifest(permissions)
-        
+
         assert cap_set.has(Capability.FILE_READ)
         assert cap_set.has(Capability.AUDIO_READ)
         assert cap_set.has(Capability.AUDIO_WRITE)
@@ -129,7 +132,7 @@ class TestParseCapabilities:
         """Test that invalid permissions are ignored."""
         permissions = ["file_read", "invalid_perm", "audio_read"]
         cap_set = parse_capabilities_from_manifest(permissions)
-        
+
         assert cap_set.has(Capability.FILE_READ)
         assert cap_set.has(Capability.AUDIO_READ)
         assert len(cap_set) == 2
@@ -147,7 +150,7 @@ class TestCapabilitySecurityBoundaries:
         """Test that capabilities cannot escalate privileges."""
         cap_set = CapabilitySet()
         cap_set.add(Capability.FILE_READ)
-        
+
         # Should not be able to write without explicit capability
         assert not cap_set.has(Capability.FILE_WRITE)
 
@@ -155,7 +158,7 @@ class TestCapabilitySecurityBoundaries:
         """Test that revoked tokens stay revoked."""
         token = CapabilityToken(Capability.NETWORK_CONNECT)
         token.revoke()
-        
+
         # Attempting to use revoked token should fail
         assert not token.is_valid
         # Token state should not change
@@ -164,9 +167,10 @@ class TestCapabilitySecurityBoundaries:
     def test_expired_token_stays_expired(self) -> None:
         """Test that expired tokens cannot be renewed."""
         import time
+
         token = CapabilityToken(Capability.FILE_WRITE, ttl_seconds=0.001)
         time.sleep(0.01)
-        
+
         assert not token.is_valid
         # Token should not auto-renew
         assert not token.is_valid

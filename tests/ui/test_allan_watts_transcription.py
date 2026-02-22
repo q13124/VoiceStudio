@@ -57,6 +57,7 @@ pytestmark = [
 # Fixtures
 # =============================================================================
 
+
 @pytest.fixture(scope="module")
 def tracer():
     """Create a workflow tracer for transcription tests."""
@@ -77,6 +78,7 @@ def api_monitor():
 @pytest.fixture
 def navigate_to_transcribe(driver, app_launched, tracer):
     """Navigate to Transcribe panel and return success status."""
+
     def _navigate():
         tracer.start_panel_transition("unknown", "Transcribe")
 
@@ -106,6 +108,7 @@ def navigate_to_transcribe(driver, app_launched, tracer):
 # =============================================================================
 # Panel Navigation Tests
 # =============================================================================
+
 
 class TestTranscriptionNavigation:
     """Test Transcribe panel navigation."""
@@ -155,6 +158,7 @@ class TestTranscriptionNavigation:
 # Panel Elements Tests
 # =============================================================================
 
+
 class TestTranscriptionElements:
     """Test Transcribe panel UI elements."""
 
@@ -186,7 +190,10 @@ class TestTranscriptionElements:
         except RuntimeError:
             # Try alternative selector
             try:
-                engine_combo = driver.find_element("xpath", "//*[contains(@AutomationId, 'Engine') and contains(@ClassName, 'ComboBox')]")
+                engine_combo = driver.find_element(
+                    "xpath",
+                    "//*[contains(@AutomationId, 'Engine') and contains(@ClassName, 'ComboBox')]",
+                )
                 tracer.step("Engine combobox found with alternative selector")
                 tracer.success("Engine combobox exists (alternative)")
             except RuntimeError as e:
@@ -201,14 +208,18 @@ class TestTranscriptionElements:
         navigate_to_transcribe()
 
         try:
-            transcribe_btn = driver.find_element("accessibility id", "TranscribeView_TranscribeButton")
+            transcribe_btn = driver.find_element(
+                "accessibility id", "TranscribeView_TranscribeButton"
+            )
             assert transcribe_btn is not None
             tracer.step("Transcribe button found")
             tracer.success("Transcribe button exists")
         except RuntimeError:
             # Try alternative
             try:
-                transcribe_btn = driver.find_element("xpath", "//*[contains(@Name, 'Transcribe') and @IsEnabled='True']")
+                transcribe_btn = driver.find_element(
+                    "xpath", "//*[contains(@Name, 'Transcribe') and @IsEnabled='True']"
+                )
                 tracer.step("Transcribe button found with alternative selector")
                 tracer.success("Transcribe button exists (alternative)")
             except RuntimeError as e:
@@ -221,7 +232,9 @@ class TestTranscriptionElements:
         navigate_to_transcribe()
 
         try:
-            lang_selector = driver.find_element("accessibility id", "TranscribeView_LanguageComboBox")
+            lang_selector = driver.find_element(
+                "accessibility id", "TranscribeView_LanguageComboBox"
+            )
             assert lang_selector is not None
             tracer.step("Language selector found")
             tracer.success("Language selector exists")
@@ -233,6 +246,7 @@ class TestTranscriptionElements:
 # =============================================================================
 # Engine Selection Tests
 # =============================================================================
+
 
 class TestEngineSelection:
     """Test transcription engine selection."""
@@ -276,7 +290,9 @@ class TestEngineSelection:
 
             # Try to find Whisper option
             try:
-                whisper_option = driver.find_element("xpath", "//*[contains(@Name, 'Whisper') or contains(@Name, 'whisper')]")
+                whisper_option = driver.find_element(
+                    "xpath", "//*[contains(@Name, 'Whisper') or contains(@Name, 'whisper')]"
+                )
                 whisper_option.click()
                 tracer.ui_action("select", "TranscribeView_EngineComboBox", {"engine": "Whisper"})
                 tracer.step("Whisper engine selected", driver, SCREENSHOTS_ENABLED)
@@ -294,6 +310,7 @@ class TestEngineSelection:
 # =============================================================================
 # API Integration Tests
 # =============================================================================
+
 
 class TestTranscriptionAPI:
     """Test transcription API endpoints."""
@@ -369,10 +386,13 @@ class TestTranscriptionAPI:
 # Workflow Tests
 # =============================================================================
 
+
 class TestTranscriptionWorkflow:
     """Test complete transcription workflow."""
 
-    def test_transcription_workflow_setup(self, driver, app_launched, navigate_to_transcribe, tracer):
+    def test_transcription_workflow_setup(
+        self, driver, app_launched, navigate_to_transcribe, tracer
+    ):
         """Verify transcription workflow can be set up."""
         tracer.start_phase("transcription_workflow", "Test transcription workflow")
         tracer.step("Setting up transcription workflow")
@@ -418,10 +438,13 @@ class TestTranscriptionWorkflow:
 # Integration Tests
 # =============================================================================
 
+
 class TestTranscriptionIntegration:
     """Test transcription integration with other panels."""
 
-    def test_transcription_to_timeline_event(self, driver, app_launched, navigate_to_transcribe, tracer):
+    def test_transcription_to_timeline_event(
+        self, driver, app_launched, navigate_to_transcribe, tracer
+    ):
         """Document transcription to timeline integration."""
         tracer.start_phase("transcription_integration", "Test panel integration")
         tracer.step("Documenting transcription to timeline workflow")
@@ -433,15 +456,17 @@ class TestTranscriptionIntegration:
             target_panel="Timeline",
             payload={
                 "action": "add_transcript_to_timeline",
-                "expected_data": ["segments", "text", "timing"]
-            }
+                "expected_data": ["segments", "text", "timing"],
+            },
         )
 
         tracer.step("Transcription-to-timeline event documented")
         tracer.end_phase(success=True)
         tracer.success("Integration documented")
 
-    def test_transcription_output_export(self, driver, app_launched, navigate_to_transcribe, tracer):
+    def test_transcription_output_export(
+        self, driver, app_launched, navigate_to_transcribe, tracer
+    ):
         """Document transcription output export options."""
         tracer.step("Documenting transcription export options")
         navigate_to_transcribe()
@@ -451,7 +476,7 @@ class TestTranscriptionIntegration:
         tracer.trace_event(
             "TranscriptionExport",
             source_panel="Transcribe",
-            payload={"available_formats": expected_exports}
+            payload={"available_formats": expected_exports},
         )
 
         tracer.step(f"Expected export formats: {expected_exports}")
@@ -461,6 +486,7 @@ class TestTranscriptionIntegration:
 # =============================================================================
 # Error Handling Tests
 # =============================================================================
+
 
 class TestTranscriptionErrors:
     """Test transcription error handling."""
@@ -474,8 +500,10 @@ class TestTranscriptionErrors:
             response = api_monitor.post("/api/transcribe", json={"engine": "whisper"})
             tracer.api_call("POST", "/api/transcribe (no file)", response)
 
-            assert response.status_code in [400, 422], \
-                f"Missing file should fail validation, got {response.status_code}"
+            assert response.status_code in [
+                400,
+                422,
+            ], f"Missing file should fail validation, got {response.status_code}"
 
             tracer.step(f"No-file rejection: {response.status_code}")
             tracer.success("Missing file handled correctly")
@@ -489,10 +517,10 @@ class TestTranscriptionErrors:
         tracer.step("Testing transcription with invalid engine")
 
         try:
-            response = api_monitor.post("/api/transcribe", json={
-                "engine": "nonexistent_engine_xyz",
-                "audio_path": str(TEST_AUDIO_FILE)
-            })
+            response = api_monitor.post(
+                "/api/transcribe",
+                json={"engine": "nonexistent_engine_xyz", "audio_path": str(TEST_AUDIO_FILE)},
+            )
             tracer.api_call("POST", "/api/transcribe (invalid engine)", response)
 
             if response.status_code in [400, 422, 404]:
@@ -508,11 +536,14 @@ class TestTranscriptionErrors:
 # =============================================================================
 
 if __name__ == "__main__":
-    pytest.main([
-        __file__,
-        "-v",
-        "--tb=short",
-        "-m", "not slow",
-        "--html=.buildlogs/validation/reports/allan_watts_transcription_report.html",
-        "--self-contained-html",
-    ])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--tb=short",
+            "-m",
+            "not slow",
+            "--html=.buildlogs/validation/reports/allan_watts_transcription_report.html",
+            "--self-contained-html",
+        ]
+    )

@@ -367,9 +367,7 @@ class TestStyleAnalysis:
                 "analyze_emotion": False,
             }
 
-            response = client.post(
-                "/api/style-transfer/style/extract", json=request_data
-            )
+            response = client.post("/api/style-transfer/style/extract", json=request_data)
             assert response.status_code == 404
 
     def test_analyze_style_success(self):
@@ -419,9 +417,7 @@ class TestStyleAnalysis:
 
             request_data = {"audio_id": "nonexistent"}
 
-            response = client.post(
-                "/api/style-transfer/style/analyze", json=request_data
-            )
+            response = client.post("/api/style-transfer/style/analyze", json=request_data)
             assert response.status_code == 404
 
     def test_synthesize_with_style_success(self):
@@ -448,9 +444,7 @@ class TestStyleAnalysis:
                 "language": "en",
             }
 
-            response = client.post(
-                "/api/style-transfer/synthesize/style", json=request_data
-            )
+            response = client.post("/api/style-transfer/synthesize/style", json=request_data)
             # May return 200 or 500 depending on dependencies
             assert response.status_code in [200, 500]
 
@@ -465,9 +459,7 @@ class TestStyleAnalysis:
             "style_intensity": 0.8,
         }
 
-        response = client.post(
-            "/api/style-transfer/synthesize/style", json=request_data
-        )
+        response = client.post("/api/style-transfer/synthesize/style", json=request_data)
         assert response.status_code == 422  # Validation error
 
 

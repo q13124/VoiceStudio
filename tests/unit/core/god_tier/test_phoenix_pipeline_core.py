@@ -23,9 +23,7 @@ class TestPhoenixPipelineCoreImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            phoenix_pipeline_core is not None
-        ), "Failed to import phoenix_pipeline_core module"
+        assert phoenix_pipeline_core is not None, "Failed to import phoenix_pipeline_core module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""

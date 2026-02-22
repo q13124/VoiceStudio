@@ -20,11 +20,13 @@ logger = logging.getLogger(__name__)
 
 class RepairClippingResponse(BaseModel):
     """Response model for clipping repair."""
+
     audio_id: str
     repaired_audio_id: str
     clipped_samples: int
     clipped_percentage: float
     method: str
+
 
 router = APIRouter(prefix="/api/repair", tags=["repair"])
 
@@ -47,25 +49,18 @@ async def clipping(req: RepairClippingRequest) -> RepairClippingResponse:
     try:
         audio_id = req.audio_id
         if not audio_id:
-            raise HTTPException(
-                status_code=400,
-                detail="audio_id is required"
-            )
+            raise HTTPException(status_code=400, detail="audio_id is required")
 
         # Get audio file path
         from .voice import _audio_storage, _register_audio_file
 
         if audio_id not in _audio_storage:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Audio file '{audio_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file '{audio_id}' not found")
 
         audio_path = _audio_storage[audio_id]
         if not os.path.exists(audio_path):
             raise HTTPException(
-                status_code=404,
-                detail=f"Audio file at '{audio_path}' does not exist"
+                status_code=404, detail=f"Audio file at '{audio_path}' does not exist"
             )
 
         # Try to load audio processing libraries
@@ -78,7 +73,7 @@ async def clipping(req: RepairClippingRequest) -> RepairClippingResponse:
                 detail=(
                     "Audio repair requires librosa and soundfile. "
                     "Install with: pip install librosa soundfile"
-                )
+                ),
             )
 
         # Load audio
@@ -127,9 +122,9 @@ async def clipping(req: RepairClippingRequest) -> RepairClippingResponse:
             regions = []
             start = clipped_indices[0]
             for i in range(1, len(clipped_indices)):
-                if clipped_indices[i] - clipped_indices[i-1] > 1:
+                if clipped_indices[i] - clipped_indices[i - 1] > 1:
                     # Gap found, end current region
-                    regions.append((start, clipped_indices[i-1]))
+                    regions.append((start, clipped_indices[i - 1]))
                     start = clipped_indices[i]
             regions.append((start, clipped_indices[-1]))
 
@@ -141,7 +136,7 @@ async def clipping(req: RepairClippingRequest) -> RepairClippingResponse:
 
                 # Get values before and after clipped region
                 before_value = audio[before_start:start_idx]
-                after_value = audio[end_idx+1:after_end]
+                after_value = audio[end_idx + 1 : after_end]
 
                 # Interpolate using cubic spline if scipy available, else linear
                 try:
@@ -155,14 +150,15 @@ async def clipping(req: RepairClippingRequest) -> RepairClippingResponse:
 
                     if len(x_all) > 1:
                         interp_func = interp1d(
-                            x_all, y_all,
-                            kind='cubic' if len(x_all) > 3 else 'linear',
-                            fill_value='extrapolate'
+                            x_all,
+                            y_all,
+                            kind="cubic" if len(x_all) > 3 else "linear",
+                            fill_value="extrapolate",
                         )
 
                         # Interpolate clipped region
                         x_clipped = np.arange(start_idx, end_idx + 1)
-                        repaired_audio[start_idx:end_idx+1] = interp_func(x_clipped)
+                        repaired_audio[start_idx : end_idx + 1] = interp_func(x_clipped)
                 except ImportError:
                     # Fallback: Simple linear interpolation
                     if len(before_value) > 0 and len(after_value) > 0:
@@ -176,7 +172,7 @@ async def clipping(req: RepairClippingRequest) -> RepairClippingResponse:
                             repaired_audio[idx] = before_avg * (1 - t) + after_avg * t
                     else:
                         # No surrounding samples, use zero
-                        repaired_audio[start_idx:end_idx+1] = 0.0
+                        repaired_audio[start_idx : end_idx + 1] = 0.0
 
         # Method 2: Spectral reconstruction for severe clipping
         # Use spectral subtraction to reduce artifacts
@@ -191,6 +187,7 @@ async def clipping(req: RepairClippingRequest) -> RepairClippingResponse:
 
                 # Apply gentle spectral smoothing to reduce artifacts
                 from scipy import ndimage
+
                 smoothed_magnitude = ndimage.gaussian_filter(magnitude, sigma=1.0)
 
                 # Reconstruct audio
@@ -229,7 +226,4 @@ async def clipping(req: RepairClippingRequest) -> RepairClippingResponse:
         raise
     except Exception as e:
         logger.error(f"Audio clipping repair failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Audio clipping repair failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Audio clipping repair failed: {e!s}") from e

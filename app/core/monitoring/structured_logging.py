@@ -91,9 +91,7 @@ class StructuredFormatter(logging.Formatter):
             log_data["exception"] = {
                 "type": record.exc_info[0].__name__ if record.exc_info[0] else None,
                 "message": str(record.exc_info[1]) if record.exc_info[1] else None,
-                "traceback": (
-                    self.formatException(record.exc_info) if record.exc_info else None
-                ),
+                "traceback": (self.formatException(record.exc_info) if record.exc_info else None),
             }
 
         # Extra fields from record
@@ -165,9 +163,7 @@ class StructuredLogger:
         if use_json:
             formatter = StructuredFormatter(extra_fields=extra_fields)
         else:
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
         console_handler.setFormatter(formatter)
         self.logger.addHandler(console_handler)

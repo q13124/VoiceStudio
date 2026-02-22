@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class ErrorSeverity(Enum):
     """Error severity levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -31,6 +32,7 @@ class ErrorSeverity(Enum):
 
 class ErrorCategory(Enum):
     """Categories of errors."""
+
     SYSTEM = "system"
     ENGINE = "engine"
     API = "api"
@@ -44,6 +46,7 @@ class ErrorCategory(Enum):
 @dataclass
 class ErrorContext:
     """Context information for an error."""
+
     user_id: str | None = None
     session_id: str | None = None
     request_id: str | None = None
@@ -55,6 +58,7 @@ class ErrorContext:
 @dataclass
 class TrackedError:
     """A tracked error occurrence."""
+
     error_id: str
     fingerprint: str
     exception_type: str
@@ -73,6 +77,7 @@ class TrackedError:
 @dataclass
 class ErrorStats:
     """Error statistics."""
+
     total_errors: int = 0
     errors_by_severity: dict[str, int] = field(default_factory=dict)
     errors_by_category: dict[str, int] = field(default_factory=dict)
@@ -84,10 +89,7 @@ class ErrorTracker:
     """Service for tracking and analyzing errors."""
 
     def __init__(
-        self,
-        storage_path: Path | None = None,
-        max_errors: int = 10000,
-        retention_days: int = 30
+        self, storage_path: Path | None = None, max_errors: int = 10000, retention_days: int = 30
     ):
         self._storage_path = storage_path
         self._max_errors = max_errors
@@ -107,7 +109,7 @@ class ErrorTracker:
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
         category: ErrorCategory = ErrorCategory.UNKNOWN,
         context: ErrorContext | None = None,
-        tags: list[str] | None = None
+        tags: list[str] | None = None,
     ) -> TrackedError:
         """Track an error occurrence."""
         # Get exception details
@@ -173,7 +175,7 @@ class ErrorTracker:
                 "fingerprint": fingerprint,
                 "severity": severity.value,
                 "category": category.value,
-            }
+            },
         )
 
         return error
@@ -182,9 +184,10 @@ class ErrorTracker:
         self,
         severity: ErrorSeverity = ErrorSeverity.MEDIUM,
         category: ErrorCategory = ErrorCategory.UNKNOWN,
-        context: ErrorContext | None = None
+        context: ErrorContext | None = None,
     ):
         """Decorator to track exceptions from a function."""
+
         def decorator(func: Callable) -> Callable:
             import functools
 
@@ -212,7 +215,7 @@ class ErrorTracker:
         severity: ErrorSeverity | None = None,
         category: ErrorCategory | None = None,
         resolved: bool | None = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> list[TrackedError]:
         """Get filtered list of errors."""
         errors = list(self._errors.values())
@@ -248,7 +251,7 @@ class ErrorTracker:
         top_errors = sorted(
             [(e.exception_type, e.occurrence_count) for e in errors],
             key=lambda x: x[1],
-            reverse=True
+            reverse=True,
         )[:10]
 
         # Calculate error rate
@@ -275,15 +278,10 @@ class ErrorTracker:
         """Add an error callback."""
         self._callbacks.append(callback)
 
-    def _generate_fingerprint(
-        self,
-        exc_type: str,
-        message: str,
-        stacktrace: str
-    ) -> str:
+    def _generate_fingerprint(self, exc_type: str, message: str, stacktrace: str) -> str:
         """Generate a fingerprint for error deduplication."""
         # Extract key parts of stacktrace
-        lines = stacktrace.strip().split('\n')
+        lines = stacktrace.strip().split("\n")
         key_lines = [l for l in lines if 'File "' in l][-3:]  # Last 3 file references
 
         content = f"{exc_type}:{message}:{'|'.join(key_lines)}"
@@ -295,10 +293,7 @@ class ErrorTracker:
             return
 
         # Sort by last seen and remove oldest
-        sorted_errors = sorted(
-            self._errors.items(),
-            key=lambda x: x[1].last_seen
-        )
+        sorted_errors = sorted(self._errors.items(), key=lambda x: x[1].last_seen)
 
         to_remove = len(self._errors) - self._max_errors
         for fingerprint, _ in sorted_errors[:to_remove]:
@@ -384,7 +379,7 @@ def get_tracker() -> ErrorTracker:
 def track_error(
     exception: Exception,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-    category: ErrorCategory = ErrorCategory.UNKNOWN
+    category: ErrorCategory = ErrorCategory.UNKNOWN,
 ) -> TrackedError:
     """Convenience function to track an error."""
     return get_tracker().track(exception, severity, category)

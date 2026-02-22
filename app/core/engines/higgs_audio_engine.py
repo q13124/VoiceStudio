@@ -27,6 +27,7 @@ import torch
 # Try importing general model cache
 try:
     from app.core.models.cache import get_model_cache
+
     _model_cache = get_model_cache(max_models=2, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
 except ImportError:
@@ -97,7 +98,10 @@ def _cache_higgs_audio_model(model_name: str, device: str, models: dict):
         except Exception as e:
             logger.warning(f"Error evicting Higgs Audio model from cache: {e}")
 
-    logger.debug(f"Cached Higgs Audio model: {cache_key} (cache size: {len(_HIGGS_AUDIO_MODEL_CACHE)})")
+    logger.debug(
+        f"Cached Higgs Audio model: {cache_key} (cache size: {len(_HIGGS_AUDIO_MODEL_CACHE)})"
+    )
+
 
 # Optional quality metrics import
 try:
@@ -107,6 +111,7 @@ try:
         calculate_naturalness,
         calculate_similarity,
     )
+
     HAS_QUALITY_METRICS = True
 except ImportError:
     HAS_QUALITY_METRICS = False
@@ -119,6 +124,7 @@ try:
         normalize_lufs,
         remove_artifacts,
     )
+
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
@@ -139,18 +145,13 @@ class HiggsAudioEngine(EngineProtocol):
     """
 
     # Supported languages
-    SUPPORTED_LANGUAGES = [
-        "en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko"
-    ]
+    SUPPORTED_LANGUAGES = ["en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko"]
 
     # Default sample rate
     DEFAULT_SAMPLE_RATE = 24000
 
     def __init__(
-        self,
-        model_name: str = "higgs-audio/base",
-        device: str | None = None,
-        gpu: bool = True
+        self, model_name: str = "higgs-audio/base", device: str | None = None, gpu: bool = True
     ):
         """
         Initialize Higgs Audio engine.
@@ -185,7 +186,7 @@ class HiggsAudioEngine(EngineProtocol):
                 self.model = cached_models.get("model")
                 self.tokenizer = cached_models.get("tokenizer")
                 self.vocoder = cached_models.get("vocoder")
-                if hasattr(self.model, 'config') and hasattr(self.model.config, 'sample_rate'):
+                if hasattr(self.model, "config") and hasattr(self.model.config, "sample_rate"):
                     self.sample_rate = self.model.config.sample_rate
                 else:
                     self.sample_rate = self.DEFAULT_SAMPLE_RATE
@@ -202,25 +203,24 @@ class HiggsAudioEngine(EngineProtocol):
 
         try:
             # Try loading from HuggingFace
-            model_id = "higgs-audio/higgs" if "higgs" in self.model_name.lower() else self.model_name
+            model_id = (
+                "higgs-audio/higgs" if "higgs" in self.model_name.lower() else self.model_name
+            )
 
             # Load tokenizer
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                model_id,
-                trust_remote_code=True
-            )
+            self.tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
 
             # Load model
             self.model = AutoModel.from_pretrained(
                 model_id,
                 trust_remote_code=True,
-                torch_dtype=torch.float16 if self.device == "cuda" else torch.float32
+                torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
             )
             self.model = self.model.to(self.device)
             self.model.eval()
 
             # Get sample rate from model config if available
-            if hasattr(self.model, 'config') and hasattr(self.model.config, 'sample_rate'):
+            if hasattr(self.model, "config") and hasattr(self.model.config, "sample_rate"):
                 self.sample_rate = self.model.config.sample_rate
 
             # Cache models
@@ -228,11 +228,7 @@ class HiggsAudioEngine(EngineProtocol):
                 _cache_higgs_audio_model(
                     self.model_name,
                     self.device,
-                    {
-                        "model": self.model,
-                        "tokenizer": self.tokenizer,
-                        "vocoder": self.vocoder
-                    }
+                    {"model": self.model, "tokenizer": self.tokenizer, "vocoder": self.vocoder},
                 )
 
             logger.info(f"Higgs Audio model loaded successfully (sample_rate: {self.sample_rate})")
@@ -246,6 +242,7 @@ class HiggsAudioEngine(EngineProtocol):
             # Alternative: Try direct Higgs Audio package
             try:
                 import higgs_audio
+
                 self.model = higgs_audio.HiggsAudio()
                 self.sample_rate = 24000
 
@@ -254,11 +251,7 @@ class HiggsAudioEngine(EngineProtocol):
                     _cache_higgs_audio_model(
                         self.model_name,
                         self.device,
-                        {
-                            "model": self.model,
-                            "tokenizer": None,
-                            "vocoder": None
-                        }
+                        {"model": self.model, "tokenizer": None, "vocoder": None},
                     )
 
                 logger.info("Higgs Audio loaded via higgs-audio package")
@@ -307,7 +300,7 @@ class HiggsAudioEngine(EngineProtocol):
         output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
-        **kwargs
+        **kwargs,
     ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Synthesize speech from text using Higgs Audio.
@@ -373,11 +366,18 @@ class HiggsAudioEngine(EngineProtocol):
                             if ref_sr != self.sample_rate:
                                 try:
                                     import librosa
-                                    ref_audio = librosa.resample(ref_audio, orig_sr=ref_sr, target_sr=self.sample_rate)
+
+                                    ref_audio = librosa.resample(
+                                        ref_audio, orig_sr=ref_sr, target_sr=self.sample_rate
+                                    )
                                 except ImportError:
                                     logger.warning("librosa not available for resampling")
                             # Convert to tensor
-                            ref_audio_tensor = torch.tensor(ref_audio, dtype=torch.float32).unsqueeze(0).to(self.device)
+                            ref_audio_tensor = (
+                                torch.tensor(ref_audio, dtype=torch.float32)
+                                .unsqueeze(0)
+                                .to(self.device)
+                            )
                             inputs["speaker_audio"] = ref_audio_tensor
 
                             # Cache speaker audio (LRU)
@@ -391,13 +391,10 @@ class HiggsAudioEngine(EngineProtocol):
 
                 # Generate audio with inference mode for better performance
                 with torch.inference_mode():  # Faster than no_grad
-                    if hasattr(self.model, 'generate'):
+                    if hasattr(self.model, "generate"):
                         # Use generate method if available
                         outputs = self.model.generate(
-                            **inputs,
-                            language=language,
-                            temperature=temperature,
-                            max_length=512
+                            **inputs, language=language, temperature=temperature, max_length=512
                         )
                     else:
                         # Use forward pass
@@ -442,10 +439,7 @@ class HiggsAudioEngine(EngineProtocol):
                 # Try higgs-audio package API
                 try:
                     audio = self.model.synthesize(
-                        text=text,
-                        language=language,
-                        speaker_audio=speaker_audio,
-                        speed=speed
+                        text=text, language=language, speaker_audio=speaker_audio, speed=speed
                     )
 
                     if isinstance(audio, torch.Tensor):
@@ -471,6 +465,7 @@ class HiggsAudioEngine(EngineProtocol):
             if speed != 1.0:
                 try:
                     import librosa
+
                     audio = librosa.effects.time_stretch(audio, rate=speed)
                 except ImportError:
                     logger.warning("librosa not available for speed adjustment")
@@ -510,7 +505,7 @@ class HiggsAudioEngine(EngineProtocol):
         sample_rate: int,
         reference_audio: str | Path | None = None,
         enhance: bool = False,
-        calculate: bool = False
+        calculate: bool = False,
     ) -> np.ndarray | tuple[np.ndarray, dict]:
         """Process audio for quality enhancement and/or metrics calculation."""
         quality_metrics = {}
@@ -570,7 +565,7 @@ class HiggsAudioEngine(EngineProtocol):
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         batch_size: int = 2,
-        **kwargs
+        **kwargs,
     ) -> list[np.ndarray | None | tuple[np.ndarray | None, dict]]:
         """
         Synthesize multiple texts in batch with optimized processing.
@@ -607,7 +602,7 @@ class HiggsAudioEngine(EngineProtocol):
                     speaker_wav=speaker_wav,
                     enhance_quality=enhance_quality,
                     calculate_quality=calculate_quality,
-                    **kwargs
+                    **kwargs,
                 )
             except Exception as e:
                 logger.error(f"Batch synthesis failed for text: {e}")
@@ -688,20 +683,19 @@ class HiggsAudioEngine(EngineProtocol):
     def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
-        info.update({
-            "model_name": self.model_name,
-            "sample_rate": self.sample_rate,
-            "supported_languages": len(self.SUPPORTED_LANGUAGES),
-            "zero_shot": True
-        })
+        info.update(
+            {
+                "model_name": self.model_name,
+                "sample_rate": self.sample_rate,
+                "supported_languages": len(self.SUPPORTED_LANGUAGES),
+                "zero_shot": True,
+            }
+        )
         return info
 
 
 def create_higgs_audio_engine(
-    model_name: str = "higgs-audio/base",
-    device: str | None = None,
-    gpu: bool = True
+    model_name: str = "higgs-audio/base", device: str | None = None, gpu: bool = True
 ) -> HiggsAudioEngine:
     """Factory function to create a Higgs Audio engine instance."""
     return HiggsAudioEngine(model_name=model_name, device=device, gpu=gpu)
-

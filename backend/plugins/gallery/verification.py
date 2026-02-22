@@ -33,17 +33,17 @@ logger = logging.getLogger(__name__)
 
 class VerificationLevel(Enum):
     """Level of verification to perform."""
-    
-    NONE = "none"              # Skip verification (not recommended)
-    BASIC = "basic"            # Checksum only
-    STANDARD = "standard"      # Checksum + signature
-    STRICT = "strict"          # Checksum + signature + SBOM + license + vuln scan
+
+    NONE = "none"  # Skip verification (not recommended)
+    BASIC = "basic"  # Checksum only
+    STANDARD = "standard"  # Checksum + signature
+    STRICT = "strict"  # Checksum + signature + SBOM + license + vuln scan
     ENTERPRISE = "enterprise"  # All checks + provenance + audit logging
 
 
 class VerificationStatus(Enum):
     """Status of a verification check."""
-    
+
     PASSED = "passed"
     FAILED = "failed"
     SKIPPED = "skipped"
@@ -58,13 +58,13 @@ class VerificationStatus(Enum):
 @dataclass
 class VerificationCheck:
     """Result of a single verification check."""
-    
+
     name: str
     status: VerificationStatus
     message: str = ""
     details: Dict[str, Any] = field(default_factory=dict)
     duration_ms: float = 0.0
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -79,7 +79,7 @@ class VerificationCheck:
 @dataclass
 class VerificationResult:
     """Complete verification result for a package."""
-    
+
     package_path: str
     plugin_id: str
     version: str
@@ -88,28 +88,28 @@ class VerificationResult:
     passed: bool = False
     verified_at: str = ""
     warnings: List[str] = field(default_factory=list)
-    
+
     # Extracted data
     sbom: Optional[Dict[str, Any]] = None
     provenance: Optional[Dict[str, Any]] = None
     manifest: Optional[Dict[str, Any]] = None
     signature: Optional[Dict[str, Any]] = None
-    
+
     def __post_init__(self):
         """Initialize timestamp if not set."""
         if not self.verified_at:
             self.verified_at = datetime.now(timezone.utc).isoformat()
-    
+
     @property
     def failed_checks(self) -> List[VerificationCheck]:
         """Get failed checks."""
         return [c for c in self.checks if c.status == VerificationStatus.FAILED]
-    
+
     @property
     def warning_checks(self) -> List[VerificationCheck]:
         """Get warning checks."""
         return [c for c in self.checks if c.status == VerificationStatus.WARNING]
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -125,7 +125,7 @@ class VerificationResult:
             "has_provenance": self.provenance is not None,
             "has_signature": self.signature is not None,
         }
-    
+
     def to_json(self, indent: int = 2) -> str:
         """Convert to JSON string."""
         return json.dumps(self.to_dict(), indent=indent)
@@ -134,7 +134,7 @@ class VerificationResult:
 @dataclass
 class VerificationPolicy:
     """Policy for verification requirements."""
-    
+
     level: VerificationLevel = VerificationLevel.STANDARD
     require_signature: bool = True
     require_sbom: bool = False
@@ -145,7 +145,7 @@ class VerificationPolicy:
     max_high_vulns: int = 5
     check_license_compatibility: bool = True
     project_license: str = "MIT"  # For compatibility checking
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -160,7 +160,7 @@ class VerificationPolicy:
             "check_license_compatibility": self.check_license_compatibility,
             "project_license": self.project_license,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> VerificationPolicy:
         """Create from dictionary."""
@@ -186,14 +186,14 @@ class VerificationPolicy:
 class PluginVerificationService:
     """
     Service for verifying plugin packages before installation.
-    
+
     Integrates with supply chain security tools:
         - Signature verification via signer.py
         - SBOM validation via sbom.py
         - License checking via license_checker.py
         - Vulnerability scanning via vuln_scanner.py
         - Provenance validation via provenance.py
-    
+
     Example:
         >>> service = PluginVerificationService()
         >>> result = await service.verify_package(
@@ -203,7 +203,7 @@ class PluginVerificationService:
         >>> if result.passed:
         ...     print("Package verified!")
     """
-    
+
     def __init__(
         self,
         keystore_path: Optional[Path] = None,
@@ -211,7 +211,7 @@ class PluginVerificationService:
     ):
         """
         Initialize verification service.
-        
+
         Args:
             keystore_path: Path to keystore for signature verification
             policy: Default verification policy
@@ -219,7 +219,7 @@ class PluginVerificationService:
         self._keystore_path = keystore_path
         self._default_policy = policy or VerificationPolicy()
         self._keystore = None
-        
+
         # Try to load signer module
         self._signer_available = False
         try:
@@ -227,12 +227,13 @@ class PluginVerificationService:
                 check_signing_available,
                 load_keystore,
             )
+
             self._signer_available = check_signing_available()
             if self._signer_available and keystore_path and keystore_path.exists():
                 self._keystore = load_keystore(keystore_path)
         except ImportError:
             logger.debug("Signer module not available")
-    
+
     async def verify_package(
         self,
         package_path: Path,
@@ -241,19 +242,19 @@ class PluginVerificationService:
     ) -> VerificationResult:
         """
         Verify a plugin package.
-        
+
         Args:
             package_path: Path to the package file (.vspkg or .zip)
             policy: Verification policy (uses default if not provided)
             progress_callback: Optional callback for progress updates
-            
+
         Returns:
             VerificationResult with check details
         """
         import time
-        
+
         policy = policy or self._default_policy
-        
+
         # Initialize result
         result = VerificationResult(
             package_path=str(package_path),
@@ -261,164 +262,180 @@ class PluginVerificationService:
             version="",
             level=policy.level,
         )
-        
+
         def report(message: str, progress: float):
             if progress_callback:
                 progress_callback(message, progress)
-        
+
         try:
             report("Starting verification...", 0.0)
-            
+
             # Verify package exists
             if not package_path.exists():
-                result.checks.append(VerificationCheck(
-                    name="file_exists",
-                    status=VerificationStatus.FAILED,
-                    message=f"Package file not found: {package_path}",
-                ))
+                result.checks.append(
+                    VerificationCheck(
+                        name="file_exists",
+                        status=VerificationStatus.FAILED,
+                        message=f"Package file not found: {package_path}",
+                    )
+                )
                 return result
-            
-            result.checks.append(VerificationCheck(
-                name="file_exists",
-                status=VerificationStatus.PASSED,
-                message="Package file exists",
-            ))
-            
+
+            result.checks.append(
+                VerificationCheck(
+                    name="file_exists",
+                    status=VerificationStatus.PASSED,
+                    message="Package file exists",
+                )
+            )
+
             report("Extracting package metadata...", 0.1)
-            
+
             # Extract manifest
             start = time.time()
             manifest = self._extract_manifest(package_path)
             duration = (time.time() - start) * 1000
-            
+
             if manifest:
                 result.manifest = manifest
                 result.plugin_id = manifest.get("id", "")
                 result.version = manifest.get("version", "")
-                result.checks.append(VerificationCheck(
-                    name="manifest_valid",
-                    status=VerificationStatus.PASSED,
-                    message="Plugin manifest is valid",
-                    details={"id": result.plugin_id, "version": result.version},
-                    duration_ms=duration,
-                ))
+                result.checks.append(
+                    VerificationCheck(
+                        name="manifest_valid",
+                        status=VerificationStatus.PASSED,
+                        message="Plugin manifest is valid",
+                        details={"id": result.plugin_id, "version": result.version},
+                        duration_ms=duration,
+                    )
+                )
             else:
-                result.checks.append(VerificationCheck(
-                    name="manifest_valid",
-                    status=VerificationStatus.FAILED,
-                    message="Could not extract plugin manifest",
-                    duration_ms=duration,
-                ))
-            
+                result.checks.append(
+                    VerificationCheck(
+                        name="manifest_valid",
+                        status=VerificationStatus.FAILED,
+                        message="Could not extract plugin manifest",
+                        duration_ms=duration,
+                    )
+                )
+
             # Level NONE stops here
             if policy.level == VerificationLevel.NONE:
                 result.passed = len(result.failed_checks) == 0
                 return result
-            
+
             report("Verifying checksum...", 0.2)
-            
+
             # Basic verification: checksum
             start = time.time()
             checksum_result = self._verify_checksum(package_path)
             duration = (time.time() - start) * 1000
-            result.checks.append(VerificationCheck(
-                name="checksum",
-                status=VerificationStatus.PASSED if checksum_result else VerificationStatus.WARNING,
-                message="Checksum computed" if checksum_result else "No expected checksum to verify",
-                details={"sha256": checksum_result} if checksum_result else {},
-                duration_ms=duration,
-            ))
-            
+            result.checks.append(
+                VerificationCheck(
+                    name="checksum",
+                    status=(
+                        VerificationStatus.PASSED if checksum_result else VerificationStatus.WARNING
+                    ),
+                    message=(
+                        "Checksum computed" if checksum_result else "No expected checksum to verify"
+                    ),
+                    details={"sha256": checksum_result} if checksum_result else {},
+                    duration_ms=duration,
+                )
+            )
+
             # Level BASIC stops here
             if policy.level == VerificationLevel.BASIC:
                 result.passed = len(result.failed_checks) == 0
                 return result
-            
+
             report("Verifying signature...", 0.3)
-            
+
             # Standard verification: signature
             start = time.time()
             sig_check = await self._verify_signature(package_path, policy)
             sig_check.duration_ms = (time.time() - start) * 1000
             result.checks.append(sig_check)
-            
+
             if sig_check.status == VerificationStatus.PASSED:
                 # Extract signature details
                 result.signature = sig_check.details.get("signature")
-            
+
             # Level STANDARD stops here
             if policy.level == VerificationLevel.STANDARD:
                 result.passed = len(result.failed_checks) == 0
                 return result
-            
+
             report("Validating SBOM...", 0.5)
-            
+
             # Strict verification: SBOM
             start = time.time()
             sbom_check = self._verify_sbom(package_path, policy)
             sbom_check.duration_ms = (time.time() - start) * 1000
             result.checks.append(sbom_check)
-            
+
             if sbom_check.status in (VerificationStatus.PASSED, VerificationStatus.WARNING):
                 result.sbom = sbom_check.details.get("sbom")
-            
+
             report("Checking licenses...", 0.6)
-            
+
             # License check
             if policy.check_license_compatibility and result.sbom:
                 start = time.time()
                 license_check = self._check_licenses(result.sbom, policy)
                 license_check.duration_ms = (time.time() - start) * 1000
                 result.checks.append(license_check)
-                
+
                 if license_check.status == VerificationStatus.WARNING:
                     result.warnings.extend(license_check.details.get("warnings", []))
-            
+
             report("Scanning for vulnerabilities...", 0.7)
-            
+
             # Vulnerability scan
             if result.sbom:
                 start = time.time()
                 vuln_check = await self._scan_vulnerabilities(package_path, result.sbom, policy)
                 vuln_check.duration_ms = (time.time() - start) * 1000
                 result.checks.append(vuln_check)
-            
+
             # Level STRICT stops here
             if policy.level == VerificationLevel.STRICT:
                 result.passed = len(result.failed_checks) == 0
                 return result
-            
+
             report("Validating provenance...", 0.85)
-            
+
             # Enterprise verification: provenance
             start = time.time()
             prov_check = self._verify_provenance(package_path, policy)
             prov_check.duration_ms = (time.time() - start) * 1000
             result.checks.append(prov_check)
-            
+
             if prov_check.status in (VerificationStatus.PASSED, VerificationStatus.WARNING):
                 result.provenance = prov_check.details.get("provenance")
-            
+
             report("Logging audit event...", 0.95)
-            
+
             # Audit logging for enterprise
             await self._log_verification_audit(result)
-            
+
             report("Verification complete", 1.0)
-            
+
             # Final result
             result.passed = len(result.failed_checks) == 0
             return result
-            
+
         except Exception as e:
             logger.error(f"Verification failed: {e}", exc_info=True)
-            result.checks.append(VerificationCheck(
-                name="unexpected_error",
-                status=VerificationStatus.FAILED,
-                message=f"Unexpected error: {e}",
-            ))
+            result.checks.append(
+                VerificationCheck(
+                    name="unexpected_error",
+                    status=VerificationStatus.FAILED,
+                    message=f"Unexpected error: {e}",
+                )
+            )
             return result
-    
+
     def _extract_manifest(self, package_path: Path) -> Optional[Dict[str, Any]]:
         """Extract plugin manifest from package."""
         try:
@@ -435,11 +452,11 @@ class PluginVerificationService:
         except Exception as e:
             logger.warning(f"Failed to extract manifest: {e}")
             return None
-    
+
     def _verify_checksum(self, package_path: Path) -> Optional[str]:
         """Compute and return package checksum."""
         import hashlib
-        
+
         try:
             sha256 = hashlib.sha256()
             with open(package_path, "rb") as f:
@@ -449,7 +466,7 @@ class PluginVerificationService:
         except Exception as e:
             logger.warning(f"Failed to compute checksum: {e}")
             return None
-    
+
     async def _verify_signature(
         self,
         package_path: Path,
@@ -470,7 +487,7 @@ class PluginVerificationService:
                     status=VerificationStatus.SKIPPED,
                     message="Signature verification skipped (cryptography not available)",
                 )
-            
+
             # Look for signature file
             sig_path = package_path.with_suffix(package_path.suffix + ".sig")
             if not sig_path.exists():
@@ -481,7 +498,7 @@ class PluginVerificationService:
                         sig_data = json.loads(sig_content.decode("utf-8"))
                 except (KeyError, zipfile.BadZipFile):
                     sig_data = None
-                
+
                 if not sig_data:
                     if policy.require_signature:
                         return VerificationCheck(
@@ -496,10 +513,10 @@ class PluginVerificationService:
                     )
             else:
                 sig_data = json.loads(sig_path.read_text())
-            
+
             # Import signer
             from backend.plugins.supply_chain.signer import Signature, verify_package
-            
+
             # Reconstruct signature
             signature = Signature(
                 key_id=sig_data.get("key_id", ""),
@@ -508,7 +525,7 @@ class PluginVerificationService:
                 signed_at=sig_data.get("signed_at", ""),
                 package_digest=sig_data.get("package_digest", {}),
             )
-            
+
             # Check allowed signers
             if policy.allowed_signers and signature.key_id not in policy.allowed_signers:
                 return VerificationCheck(
@@ -517,7 +534,7 @@ class PluginVerificationService:
                     message=f"Signer '{signature.key_id}' not in allowed list",
                     details={"key_id": signature.key_id},
                 )
-            
+
             # Verify signature
             if self._keystore:
                 is_valid = verify_package(package_path, signature, keystore=self._keystore)
@@ -529,7 +546,7 @@ class PluginVerificationService:
                     message="Signature present but no keystore configured for verification",
                     details={"signature": sig_data},
                 )
-            
+
             if is_valid:
                 return VerificationCheck(
                     name="signature",
@@ -548,7 +565,7 @@ class PluginVerificationService:
                     message="Signature verification failed",
                     details={"key_id": signature.key_id},
                 )
-            
+
         except Exception as e:
             logger.warning(f"Signature verification error: {e}")
             return VerificationCheck(
@@ -556,7 +573,7 @@ class PluginVerificationService:
                 status=VerificationStatus.FAILED,
                 message=f"Signature verification error: {e}",
             )
-    
+
     def _verify_sbom(
         self,
         package_path: Path,
@@ -565,7 +582,7 @@ class PluginVerificationService:
         """Extract and validate SBOM from package."""
         try:
             sbom_data = None
-            
+
             # Look for SBOM in package
             with zipfile.ZipFile(package_path, "r") as zf:
                 sbom_names = ["sbom.json", "bom.json", "cyclonedx.json"]
@@ -576,7 +593,7 @@ class PluginVerificationService:
                         break
                     except KeyError:
                         continue
-            
+
             if not sbom_data:
                 if policy.require_sbom:
                     return VerificationCheck(
@@ -589,7 +606,7 @@ class PluginVerificationService:
                     status=VerificationStatus.SKIPPED,
                     message="No SBOM found in package",
                 )
-            
+
             # Validate SBOM structure
             if "bomFormat" not in sbom_data:
                 return VerificationCheck(
@@ -598,9 +615,9 @@ class PluginVerificationService:
                     message="SBOM found but format not recognized",
                     details={"sbom": sbom_data},
                 )
-            
+
             component_count = len(sbom_data.get("components", []))
-            
+
             return VerificationCheck(
                 name="sbom",
                 status=VerificationStatus.PASSED,
@@ -612,7 +629,7 @@ class PluginVerificationService:
                     "sbom": sbom_data,
                 },
             )
-            
+
         except Exception as e:
             logger.warning(f"SBOM verification error: {e}")
             return VerificationCheck(
@@ -620,7 +637,7 @@ class PluginVerificationService:
                 status=VerificationStatus.FAILED,
                 message=f"SBOM verification error: {e}",
             )
-    
+
     def _check_licenses(
         self,
         sbom: Dict[str, Any],
@@ -632,37 +649,39 @@ class PluginVerificationService:
                 DependencyLicense,
                 LicenseChecker,
             )
-            
+
             # Build dependency list from SBOM
             deps = []
             for comp in sbom.get("components", []):
                 licenses = comp.get("licenses", [])
                 license_id = "UNKNOWN"
-                
+
                 if licenses:
                     lic = licenses[0]
                     if isinstance(lic, dict):
                         license_obj = lic.get("license", {})
                         license_id = license_obj.get("id", license_obj.get("name", "UNKNOWN"))
-                
-                deps.append(DependencyLicense(
-                    package_name=comp.get("name", "unknown"),
-                    package_version=comp.get("version", ""),
-                    license_id=license_id,
-                    detected_from="sbom",
-                ))
-            
+
+                deps.append(
+                    DependencyLicense(
+                        package_name=comp.get("name", "unknown"),
+                        package_version=comp.get("version", ""),
+                        license_id=license_id,
+                        detected_from="sbom",
+                    )
+                )
+
             # Check licenses
             checker = LicenseChecker(
                 blocked_licenses=set(policy.blocked_licenses or []),
             )
-            
+
             result = checker.check_plugin(
                 plugin_id="package",
                 plugin_license=policy.project_license,
                 dependencies=deps,
             )
-            
+
             if not result.passed:
                 return VerificationCheck(
                     name="license",
@@ -673,7 +692,7 @@ class PluginVerificationService:
                         "warnings": result.warnings,
                     },
                 )
-            
+
             if result.warnings:
                 return VerificationCheck(
                     name="license",
@@ -681,13 +700,13 @@ class PluginVerificationService:
                     message=f"License check passed with {len(result.warnings)} warnings",
                     details={"warnings": result.warnings},
                 )
-            
+
             return VerificationCheck(
                 name="license",
                 status=VerificationStatus.PASSED,
                 message=f"All {len(deps)} dependencies have compatible licenses",
             )
-            
+
         except ImportError:
             return VerificationCheck(
                 name="license",
@@ -701,7 +720,7 @@ class PluginVerificationService:
                 status=VerificationStatus.WARNING,
                 message=f"License check error: {e}",
             )
-    
+
     async def _scan_vulnerabilities(
         self,
         package_path: Path,
@@ -714,33 +733,32 @@ class PluginVerificationService:
                 VulnerabilityScanner,
                 check_scanner_availability,
             )
-            
+
             if not check_scanner_availability():
                 return VerificationCheck(
                     name="vulnerability",
                     status=VerificationStatus.SKIPPED,
                     message="No vulnerability scanner available (pip-audit or grype)",
                 )
-            
+
             # Save SBOM temporarily for scanning
             import tempfile
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".json", delete=False
-            ) as f:
+
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
                 json.dump(sbom, f)
                 sbom_path = Path(f.name)
-            
+
             try:
                 scanner = VulnerabilityScanner()
                 scan_result = await scanner.scan_sbom(sbom_path)
             finally:
                 sbom_path.unlink(missing_ok=True)
-            
+
             # Count by severity
             counts = scan_result.severity_counts()
             critical = counts.get("CRITICAL", 0)
             high = counts.get("HIGH", 0)
-            
+
             # Check against policy
             if critical > policy.max_critical_vulns:
                 return VerificationCheck(
@@ -752,7 +770,7 @@ class PluginVerificationService:
                         "vulnerabilities": [v.to_dict() for v in scan_result.vulnerabilities],
                     },
                 )
-            
+
             if high > policy.max_high_vulns:
                 return VerificationCheck(
                     name="vulnerability",
@@ -763,7 +781,7 @@ class PluginVerificationService:
                         "vulnerabilities": [v.to_dict() for v in scan_result.vulnerabilities],
                     },
                 )
-            
+
             total = len(scan_result.vulnerabilities)
             if total > 0:
                 return VerificationCheck(
@@ -775,13 +793,13 @@ class PluginVerificationService:
                         "vulnerabilities": [v.to_dict() for v in scan_result.vulnerabilities],
                     },
                 )
-            
+
             return VerificationCheck(
                 name="vulnerability",
                 status=VerificationStatus.PASSED,
                 message="No vulnerabilities detected",
             )
-            
+
         except ImportError:
             return VerificationCheck(
                 name="vulnerability",
@@ -795,7 +813,7 @@ class PluginVerificationService:
                 status=VerificationStatus.WARNING,
                 message=f"Vulnerability scan error: {e}",
             )
-    
+
     def _verify_provenance(
         self,
         package_path: Path,
@@ -804,7 +822,7 @@ class PluginVerificationService:
         """Extract and validate build provenance."""
         try:
             prov_data = None
-            
+
             # Look for provenance in package
             with zipfile.ZipFile(package_path, "r") as zf:
                 prov_names = ["provenance.json", "build-provenance.json"]
@@ -815,7 +833,7 @@ class PluginVerificationService:
                         break
                     except KeyError:
                         continue
-            
+
             if not prov_data:
                 if policy.require_provenance:
                     return VerificationCheck(
@@ -828,11 +846,11 @@ class PluginVerificationService:
                     status=VerificationStatus.SKIPPED,
                     message="No provenance data found",
                 )
-            
+
             # Validate provenance structure
             required_fields = ["version", "builder", "build_started_at"]
             missing = [f for f in required_fields if f not in prov_data]
-            
+
             if missing:
                 return VerificationCheck(
                     name="provenance",
@@ -840,7 +858,7 @@ class PluginVerificationService:
                     message=f"Provenance missing fields: {', '.join(missing)}",
                     details={"provenance": prov_data},
                 )
-            
+
             return VerificationCheck(
                 name="provenance",
                 status=VerificationStatus.PASSED,
@@ -852,7 +870,7 @@ class PluginVerificationService:
                     "provenance": prov_data,
                 },
             )
-            
+
         except Exception as e:
             logger.warning(f"Provenance verification error: {e}")
             return VerificationCheck(
@@ -860,31 +878,33 @@ class PluginVerificationService:
                 status=VerificationStatus.WARNING,
                 message=f"Provenance verification error: {e}",
             )
-    
+
     async def _log_verification_audit(self, result: VerificationResult) -> None:
         """Log verification to audit system."""
         try:
             from backend.plugins.supply_chain.audit import (
                 log_signature_verification,
             )
-            
+
             sig_valid = any(
                 c.name == "signature" and c.status == VerificationStatus.PASSED
                 for c in result.checks
             )
-            
+
             log_signature_verification(
                 plugin_id=result.plugin_id or "unknown",
                 success=sig_valid,
                 key_id=result.signature.get("key_id") if result.signature else None,
                 details={
                     "verification_level": result.level.value,
-                    "checks_passed": len([c for c in result.checks if c.status == VerificationStatus.PASSED]),
+                    "checks_passed": len(
+                        [c for c in result.checks if c.status == VerificationStatus.PASSED]
+                    ),
                     "checks_failed": len(result.failed_checks),
                     "warnings": len(result.warnings),
                 },
             )
-            
+
         except ImportError:
             pass  # Audit not available
         except Exception as e:
@@ -903,12 +923,12 @@ async def verify_package(
 ) -> VerificationResult:
     """
     Verify a plugin package with specified level.
-    
+
     Args:
         package_path: Path to package file
         level: Verification level
         **policy_kwargs: Additional policy options
-        
+
     Returns:
         VerificationResult
     """
@@ -923,11 +943,11 @@ def get_verification_service(
 ) -> PluginVerificationService:
     """
     Get a verification service instance.
-    
+
     Args:
         keystore_path: Optional path to keystore
         policy: Optional verification policy
-        
+
     Returns:
         PluginVerificationService instance
     """

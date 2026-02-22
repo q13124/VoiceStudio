@@ -23,9 +23,7 @@ class TestRealESRGANEngineImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            realesrgan_engine is not None
-        ), "Failed to import realesrgan_engine module"
+        assert realesrgan_engine is not None, "Failed to import realesrgan_engine module"
 
     def test_module_has_realesrgan_engine_class(self):
         """Test module has RealESRGANEngine class."""
@@ -61,9 +59,7 @@ class TestRealESRGANEngineClass:
                 engine = realesrgan_engine.RealESRGANEngine(device="cpu", gpu=False)
                 required_methods = ["initialize", "cleanup", "upscale"]
                 for method in required_methods:
-                    assert hasattr(
-                        engine, method
-                    ), f"RealESRGANEngine missing method: {method}"
+                    assert hasattr(engine, method), f"RealESRGANEngine missing method: {method}"
             except ImportError:
                 pytest.skip("realesrgan library not installed")
 
@@ -73,9 +69,7 @@ class TestRealESRGANEngineClass:
             try:
                 engine = realesrgan_engine.RealESRGANEngine(device="cpu", gpu=False)
                 # Check for caching support
-                assert hasattr(
-                    engine, "enable_caching"
-                ), "RealESRGANEngine should support caching"
+                assert hasattr(engine, "enable_caching"), "RealESRGANEngine should support caching"
                 # Check for batch processing (method is called batch_upscale)
                 assert hasattr(
                     engine, "batch_upscale"
@@ -106,9 +100,7 @@ class TestRealESRGANEngineCaching:
             try:
                 engine = realesrgan_engine.RealESRGANEngine(device="cpu", gpu=False)
                 # Check initial state (should be True by default)
-                assert (
-                    engine.enable_caching is True
-                ), "Caching should be enabled by default"
+                assert engine.enable_caching is True, "Caching should be enabled by default"
                 # Test that enable_caching method exists and can be called
                 assert hasattr(engine, "enable_caching"), "enable_caching should exist"
                 # The method sets self.enable_caching, so after calling it becomes a property
@@ -119,9 +111,7 @@ class TestRealESRGANEngineCaching:
                     enable_caching_method(False)
                     # After calling, enable_caching becomes a boolean property
                     # Verify it was set correctly by checking the attribute directly
-                    assert hasattr(
-                        engine, "enable_caching"
-                    ), "enable_caching should still exist"
+                    assert hasattr(engine, "enable_caching"), "enable_caching should still exist"
             except ImportError:
                 pytest.skip("realesrgan library not installed")
 
@@ -145,12 +135,8 @@ class TestRealESRGANEngineBatchProcessing:
         if hasattr(realesrgan_engine, "RealESRGANEngine"):
             try:
                 engine = realesrgan_engine.RealESRGANEngine(device="cpu", gpu=False)
-                assert hasattr(
-                    engine, "batch_size"
-                ), "RealESRGANEngine should have batch_size"
-                assert isinstance(
-                    engine.batch_size, int
-                ), "batch_size should be an integer"
+                assert hasattr(engine, "batch_size"), "RealESRGANEngine should have batch_size"
+                assert isinstance(engine.batch_size, int), "batch_size should be an integer"
                 assert engine.batch_size > 0, "batch_size should be positive"
             except ImportError:
                 pytest.skip("realesrgan library not installed")
@@ -167,9 +153,7 @@ class TestRealESRGANEngineProtocol:
                 # Check for protocol methods
                 assert hasattr(engine, "initialize"), "Should implement initialize"
                 assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                assert hasattr(
-                    engine, "is_initialized"
-                ), "Should implement is_initialized"
+                assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                 assert hasattr(engine, "get_device"), "Should implement get_device"
             except ImportError:
                 pytest.skip("realesrgan library not installed")
@@ -181,9 +165,7 @@ class TestRealESRGANEngineProtocol:
                 engine = realesrgan_engine.RealESRGANEngine(device="cpu", gpu=False)
                 assert engine.get_device() == "cpu"
                 # Test with cuda if available
-                engine_cuda = realesrgan_engine.RealESRGANEngine(
-                    device="cuda", gpu=True
-                )
+                engine_cuda = realesrgan_engine.RealESRGANEngine(device="cuda", gpu=True)
                 assert engine_cuda.get_device() == "cuda"
             except ImportError:
                 pytest.skip("realesrgan library not installed")

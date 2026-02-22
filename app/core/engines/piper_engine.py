@@ -98,9 +98,7 @@ def _cache_piper_instance(voice: str | None, model_path: str | None, instance):
         except Exception as e:
             logger.warning(f"Error evicting Piper instance from cache: {e}")
 
-    logger.debug(
-        f"Cached Piper instance: {cache_key} (cache size: {len(_PIPER_INSTANCE_CACHE)})"
-    )
+    logger.debug(f"Cached Piper instance: {cache_key} (cache size: {len(_PIPER_INSTANCE_CACHE)})")
 
 
 def _get_temp_dir() -> str:
@@ -222,15 +220,9 @@ class PiperEngine(EngineProtocol):
                     candidate,
                 )
 
-    def _find_executable(
-        self, name: str, custom_path: str | None = None
-    ) -> str | None:
+    def _find_executable(self, name: str, custom_path: str | None = None) -> str | None:
         """Find executable in PATH or custom path."""
-        if (
-            custom_path
-            and os.path.isfile(custom_path)
-            and os.access(custom_path, os.X_OK)
-        ):
+        if custom_path and os.path.isfile(custom_path) and os.access(custom_path, os.X_OK):
             return custom_path
 
         if custom_path and os.path.isdir(custom_path):
@@ -297,9 +289,7 @@ class PiperEngine(EngineProtocol):
 
             # Lazy loading: defer until first use
             if self.lazy_load:
-                logger.debug(
-                    "Lazy loading enabled, engine will be initialized on first use"
-                )
+                logger.debug("Lazy loading enabled, engine will be initialized on first use")
                 return True
 
             logger.info("Initializing Piper engine")
@@ -320,9 +310,7 @@ class PiperEngine(EngineProtocol):
             if not self.executable_path:
                 # Try common names
                 for exe_name in ["piper-tts", "piper.exe", "piper-tts.exe"]:
-                    self.executable_path = self._find_executable(
-                        exe_name, self.piper_path
-                    )
+                    self.executable_path = self._find_executable(exe_name, self.piper_path)
                     if self.executable_path:
                         break
 
@@ -422,9 +410,7 @@ class PiperEngine(EngineProtocol):
                     audio = piper.synthesize(text)
 
                     # Get sample rate
-                    self.sample_rate = (
-                        piper.sample_rate if hasattr(piper, "sample_rate") else 22050
-                    )
+                    self.sample_rate = piper.sample_rate if hasattr(piper, "sample_rate") else 22050
 
                     # Convert to numpy if needed
                     if not isinstance(audio, np.ndarray):
@@ -551,9 +537,7 @@ class PiperEngine(EngineProtocol):
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(
-                            audio, sample_rate, ref_audio, ref_sr
-                        )
+                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -656,17 +640,13 @@ class PiperEngine(EngineProtocol):
 
                         # Save to file if output_dir provided
                         if output_dir:
-                            output_path = (
-                                Path(output_dir) / f"output_{batch_start + i:04d}.wav"
-                            )
+                            output_path = Path(output_dir) / f"output_{batch_start + i:04d}.wav"
                             sf.write(str(output_path), audio, self.sample_rate)
                             batch_results.append(None)
                         else:
                             batch_results.append(audio)
                     except Exception as e:
-                        logger.error(
-                            f"Batch synthesis failed for text {batch_start + i}: {e}"
-                        )
+                        logger.error(f"Batch synthesis failed for text {batch_start + i}: {e}")
                         batch_results.append(None)
 
                 results.extend(batch_results)
@@ -677,9 +657,7 @@ class PiperEngine(EngineProtocol):
             def synthesize_single(args):
                 idx, text = args
                 try:
-                    result = self.synthesize(
-                        text=text, language=language, voice=voice, **kwargs
-                    )
+                    result = self.synthesize(text=text, language=language, voice=voice, **kwargs)
                     if output_dir and result is not None:
                         output_path = Path(output_dir) / f"output_{idx:04d}.wav"
                         sf.write(str(output_path), result, self.sample_rate)
@@ -692,9 +670,7 @@ class PiperEngine(EngineProtocol):
             # Process in parallel batches
             with ThreadPoolExecutor(max_workers=batch_size) as executor:
                 results = list(
-                    executor.map(
-                        synthesize_single, [(i, text) for i, text in enumerate(texts)]
-                    )
+                    executor.map(synthesize_single, [(i, text) for i, text in enumerate(texts)])
                 )
 
         return results
@@ -725,9 +701,7 @@ class PiperEngine(EngineProtocol):
             {
                 "model_path": self.model_path,
                 "voice": self.voice,
-                "executable_path": (
-                    str(self.executable_path) if self.executable_path else None
-                ),
+                "executable_path": (str(self.executable_path) if self.executable_path else None),
                 "sample_rate": self.sample_rate,
                 "supported_languages": len(self.SUPPORTED_LANGUAGES),
                 "lightweight": True,

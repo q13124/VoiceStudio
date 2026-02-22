@@ -55,7 +55,7 @@ def get_span_id() -> str | None:
 def set_trace_context(trace_id: str | None, span_id: str | None) -> tuple:
     """
     Set trace and span IDs in context. Returns tokens for reset.
-    
+
     GAP-I08: Called by tracing middleware to propagate IDs.
     """
     trace_token = trace_id_var.set(trace_id)
@@ -85,22 +85,22 @@ class CorrelationIdFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         # Always set these attributes to avoid KeyError in formatters
-        if not hasattr(record, 'correlation_id'):
+        if not hasattr(record, "correlation_id"):
             record.correlation_id = get_correlation_id() or "no-correlation-id"
-        if not hasattr(record, 'trace_id'):
+        if not hasattr(record, "trace_id"):
             record.trace_id = get_trace_id() or "N/A"
-        if not hasattr(record, 'span_id'):
+        if not hasattr(record, "span_id"):
             record.span_id = get_span_id() or "N/A"
         return True
 
 
 def ensure_correlation_attributes(record: logging.LogRecord) -> None:
     """Ensure correlation attributes exist on a log record (for test contexts)."""
-    if not hasattr(record, 'correlation_id'):
+    if not hasattr(record, "correlation_id"):
         record.correlation_id = "no-correlation-id"
-    if not hasattr(record, 'trace_id'):
+    if not hasattr(record, "trace_id"):
         record.trace_id = "N/A"
-    if not hasattr(record, 'span_id'):
+    if not hasattr(record, "span_id"):
         record.span_id = "N/A"
 
 
@@ -150,7 +150,7 @@ class CorrelationIdMiddleware(BaseHTTPMiddleware):
                     "method": request.method,
                     "path": request.url.path,
                     "client_ip": request.client.host if request.client else "unknown",
-                }
+                },
             )
 
             # Process request
@@ -167,7 +167,7 @@ class CorrelationIdMiddleware(BaseHTTPMiddleware):
                     "status_code": response.status_code,
                     "method": request.method,
                     "path": request.url.path,
-                }
+                },
             )
 
             return response
@@ -182,7 +182,7 @@ class CorrelationIdMiddleware(BaseHTTPMiddleware):
                     "path": request.url.path,
                     "exception_type": type(e).__name__,
                 },
-                exc_info=True
+                exc_info=True,
             )
             raise
 

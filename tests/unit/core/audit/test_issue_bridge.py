@@ -49,14 +49,17 @@ class TestAuditIssueBridge:
         bridge.set_issue_store(mock_issue_store)
 
         # Mock the lazy imports that happen in _create_issue
-        with patch.dict('sys.modules', {
-            'tools.overseer.issues.models': MagicMock(
-                Issue=MagicMock(),
-                InstanceType=MagicMock(BACKEND=MagicMock(value="backend")),
-                IssueSeverity=MagicMock(HIGH=MagicMock(value="high")),
-                IssueStatus=MagicMock(NEW=MagicMock(value="new")),
-            )
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "tools.overseer.issues.models": MagicMock(
+                    Issue=MagicMock(),
+                    InstanceType=MagicMock(BACKEND=MagicMock(value="backend")),
+                    IssueSeverity=MagicMock(HIGH=MagicMock(value="high")),
+                    IssueStatus=MagicMock(NEW=MagicMock(value="new")),
+                )
+            },
+        ):
             entry = AuditEntry(
                 event_type=AuditEventType.RUNTIME_EXCEPTION.value,
                 message="Test exception",
@@ -109,14 +112,17 @@ class TestAuditIssueBridge:
         bridge.set_issue_store(mock_issue_store)
 
         # Mock the lazy imports that happen in _create_issue
-        with patch.dict('sys.modules', {
-            'tools.overseer.issues.models': MagicMock(
-                Issue=MagicMock(),
-                InstanceType=MagicMock(BUILD=MagicMock(value="build")),
-                IssueSeverity=MagicMock(HIGH=MagicMock(value="high")),
-                IssueStatus=MagicMock(NEW=MagicMock(value="new")),
-            )
-        }):
+        with patch.dict(
+            "sys.modules",
+            {
+                "tools.overseer.issues.models": MagicMock(
+                    Issue=MagicMock(),
+                    InstanceType=MagicMock(BUILD=MagicMock(value="build")),
+                    IssueSeverity=MagicMock(HIGH=MagicMock(value="high")),
+                    IssueStatus=MagicMock(NEW=MagicMock(value="new")),
+                )
+            },
+        ):
             # First entry should create issue
             entry1 = AuditEntry(
                 event_type=AuditEventType.BUILD_ERROR.value,

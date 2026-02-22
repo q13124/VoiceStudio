@@ -10,6 +10,7 @@ This module verifies that all UI/UX workflows function correctly by:
 Note: These tests verify the backend API that the UI consumes.
 Full UI tests require WinUI3 test host which crashes in headless mode.
 """
+
 import time
 
 import httpx
@@ -24,7 +25,7 @@ def retry_on_rate_limit(func, *args, max_retries=3, **kwargs):
         result = func(*args, **kwargs)
         if result.status_code != 429:
             return result
-        wait_time = 2 ** attempt
+        wait_time = 2**attempt
         time.sleep(wait_time)
     return result
 
@@ -83,14 +84,10 @@ class TestVoiceSynthesisWorkflow:
             "text": "Hello world test",
             "profile_id": "test_profile_id",
             "engine": "xtts",
-            "language": "en"
+            "language": "en",
         }
 
-        response = retry_on_rate_limit(
-            api_client.post,
-            "/api/voice/synthesize",
-            json=request_data
-        )
+        response = retry_on_rate_limit(api_client.post, "/api/voice/synthesize", json=request_data)
 
         if response.status_code == 429:
             pytest.skip("Rate limited")
@@ -98,8 +95,13 @@ class TestVoiceSynthesisWorkflow:
         # Accept 404 (profile not found), 422 (validation error), or 503 (engine not available)
         # These show the endpoint exists and validates correctly
         # Note: Backend returns 404 for "profile not found" (resource not found semantics)
-        assert response.status_code in [200, 201, 404, 422, 503], \
-            f"Unexpected status: {response.status_code}"
+        assert response.status_code in [
+            200,
+            201,
+            404,
+            422,
+            503,
+        ], f"Unexpected status: {response.status_code}"
 
 
 class TestLibraryWorkflow:
@@ -136,23 +138,18 @@ class TestProfilesWorkflow:
 
     def test_profile_crud_workflow(self, api_client):
         """Test complete profile create/read/update/delete workflow."""
-        test_profile = {
-            "name": f"UIWorkflowTest_{int(time.time())}",
-            "language": "en"
-        }
+        test_profile = {"name": f"UIWorkflowTest_{int(time.time())}", "language": "en"}
 
         # CREATE
-        create_response = retry_on_rate_limit(
-            api_client.post,
-            "/api/profiles",
-            json=test_profile
-        )
+        create_response = retry_on_rate_limit(api_client.post, "/api/profiles", json=test_profile)
 
         if create_response.status_code == 429:
             pytest.skip("Rate limited on create")
 
-        assert create_response.status_code in [200, 201], \
-            f"Profile creation failed: {create_response.status_code}"
+        assert create_response.status_code in [
+            200,
+            201,
+        ], f"Profile creation failed: {create_response.status_code}"
 
         created = create_response.json()
         profile_id = created.get("id") or created.get("profile_id")
@@ -160,24 +157,18 @@ class TestProfilesWorkflow:
 
         # READ
         time.sleep(0.5)
-        get_response = retry_on_rate_limit(
-            api_client.get,
-            f"/api/profiles/{profile_id}"
-        )
+        get_response = retry_on_rate_limit(api_client.get, f"/api/profiles/{profile_id}")
 
         if get_response.status_code == 429:
             pytest.skip("Rate limited on read")
 
-        assert get_response.status_code == 200, \
-            f"Profile read failed: {get_response.status_code}"
+        assert get_response.status_code == 200, f"Profile read failed: {get_response.status_code}"
 
         # UPDATE
         time.sleep(0.5)
         update_data = {"name": f"{test_profile['name']}_updated"}
         update_response = retry_on_rate_limit(
-            api_client.put,
-            f"/api/profiles/{profile_id}",
-            json=update_data
+            api_client.put, f"/api/profiles/{profile_id}", json=update_data
         )
 
         if update_response.status_code == 429:
@@ -186,26 +177,27 @@ class TestProfilesWorkflow:
         if update_response.status_code == 405:
             # Try PATCH instead
             update_response = retry_on_rate_limit(
-                api_client.patch,
-                f"/api/profiles/{profile_id}",
-                json=update_data
+                api_client.patch, f"/api/profiles/{profile_id}", json=update_data
             )
 
-        assert update_response.status_code in [200, 204, 405], \
-            f"Profile update failed: {update_response.status_code}"
+        assert update_response.status_code in [
+            200,
+            204,
+            405,
+        ], f"Profile update failed: {update_response.status_code}"
 
         # DELETE
         time.sleep(0.5)
-        delete_response = retry_on_rate_limit(
-            api_client.delete,
-            f"/api/profiles/{profile_id}"
-        )
+        delete_response = retry_on_rate_limit(api_client.delete, f"/api/profiles/{profile_id}")
 
         if delete_response.status_code == 429:
             pytest.skip("Rate limited on delete")
 
-        assert delete_response.status_code in [200, 204, 404], \
-            f"Profile delete failed: {delete_response.status_code}"
+        assert delete_response.status_code in [
+            200,
+            204,
+            404,
+        ], f"Profile delete failed: {delete_response.status_code}"
 
 
 class TestSettingsWorkflow:
@@ -238,18 +230,18 @@ class TestSettingsWorkflow:
 
         # Try to update with a subset of settings
         update_data = {"default_language": "en"}
-        update_response = retry_on_rate_limit(
-            api_client.put,
-            "/api/settings",
-            json=update_data
-        )
+        update_response = retry_on_rate_limit(api_client.put, "/api/settings", json=update_data)
 
         if update_response.status_code == 429:
             pytest.skip("Rate limited on update")
 
         # Accept various valid responses
-        assert update_response.status_code in [200, 204, 422, 405], \
-            f"Settings update returned unexpected status: {update_response.status_code}"
+        assert update_response.status_code in [
+            200,
+            204,
+            422,
+            405,
+        ], f"Settings update returned unexpected status: {update_response.status_code}"
 
 
 class TestBackupRestoreWorkflow:
@@ -314,9 +306,7 @@ class TestUIStatePersistence:
 
         # Create profile
         create_response = retry_on_rate_limit(
-            api_client.post,
-            "/api/profiles",
-            json={"name": test_name, "language": "en"}
+            api_client.post, "/api/profiles", json={"name": test_name, "language": "en"}
         )
 
         if create_response.status_code == 429:
@@ -332,21 +322,20 @@ class TestUIStatePersistence:
 
         with httpx.Client(base_url=BASE_URL, timeout=30.0) as new_client:
             # Recall profile
-            recall_response = retry_on_rate_limit(
-                new_client.get,
-                f"/api/profiles/{profile_id}"
-            )
+            recall_response = retry_on_rate_limit(new_client.get, f"/api/profiles/{profile_id}")
 
             if recall_response.status_code == 429:
                 pytest.skip("Rate limited on recall")
 
-            assert recall_response.status_code == 200, \
-                f"Profile not found in new session: {recall_response.status_code}"
+            assert (
+                recall_response.status_code == 200
+            ), f"Profile not found in new session: {recall_response.status_code}"
 
             recalled = recall_response.json()
             recalled_name = recalled.get("name")
-            assert recalled_name == test_name, \
-                f"Profile name mismatch: expected {test_name}, got {recalled_name}"
+            assert (
+                recalled_name == test_name
+            ), f"Profile name mismatch: expected {test_name}, got {recalled_name}"
 
         # Cleanup
         time.sleep(0.5)
@@ -362,9 +351,7 @@ class TestCrossPanelWorkflows:
 
         # Create via Profiles panel (POST /api/profiles)
         create_response = retry_on_rate_limit(
-            api_client.post,
-            "/api/profiles",
-            json={"name": test_name, "language": "en"}
+            api_client.post, "/api/profiles", json={"name": test_name, "language": "en"}
         )
 
         if create_response.status_code == 429:
@@ -390,19 +377,24 @@ class TestCrossPanelWorkflows:
                 pytest.skip("Rate limited on list")
         else:
             data = list_response.json()
-            profiles = data.get("items", data.get("profiles", data)) if isinstance(data, dict) else data
+            profiles = (
+                data.get("items", data.get("profiles", data)) if isinstance(data, dict) else data
+            )
 
             # Find our profile
             found = any(
-                p.get("id") == profile_id or p.get("profile_id") == profile_id or p.get("name") == test_name
+                p.get("id") == profile_id
+                or p.get("profile_id") == profile_id
+                or p.get("name") == test_name
                 for p in profiles
             )
 
             if not found:
                 # May be due to caching - verify by direct lookup
                 direct_response = api_client.get(f"/api/profiles/{profile_id}")
-                assert direct_response.status_code == 200, \
-                    f"Profile {profile_id} not found after creation"
+                assert (
+                    direct_response.status_code == 200
+                ), f"Profile {profile_id} not found after creation"
 
         # Cleanup
         time.sleep(0.5)
@@ -852,11 +844,7 @@ class TestVoiceCloningWorkflow:
     def test_voice_clone_endpoint_available(self, api_client):
         """Verify voice clone endpoint exists."""
         # Test with minimal data to verify endpoint exists
-        response = retry_on_rate_limit(
-            api_client.post,
-            "/api/voice/clone",
-            json={"name": "test"}
-        )
+        response = retry_on_rate_limit(api_client.post, "/api/voice/clone", json={"name": "test"})
 
         if response.status_code == 429:
             pytest.skip("Rate limited")

@@ -143,28 +143,20 @@ class ComfyUIEngine(EngineProtocol):
             logger.info(f"Connecting to ComfyUI server: {self.server_url}")
 
             try:
-                response = self.session.get(
-                    f"{self.server_url}/system_stats", timeout=5
-                )
+                response = self.session.get(f"{self.server_url}/system_stats", timeout=5)
                 if response.status_code == 200:
                     logger.info("ComfyUI server connection successful")
                     self.client_id = "voice_studio_client"
                     self._initialized = True
                     return True
                 else:
-                    logger.error(
-                        f"ComfyUI server returned status " f"{response.status_code}"
-                    )
+                    logger.error(f"ComfyUI server returned status " f"{response.status_code}")
                     self._initialized = False
                     return False
             except requests.exceptions.RequestException as e:
                 logger.error(f"Failed to connect to ComfyUI server: {e}")
-                logger.error(
-                    f"Make sure ComfyUI server is running at {self.server_url}"
-                )
-                logger.error(
-                    "Install ComfyUI from: " "https://github.com/comfyanonymous/ComfyUI"
-                )
+                logger.error(f"Make sure ComfyUI server is running at {self.server_url}")
+                logger.error("Install ComfyUI from: " "https://github.com/comfyanonymous/ComfyUI")
                 self._initialized = False
                 return False
 
@@ -273,9 +265,7 @@ class ComfyUIEngine(EngineProtocol):
                 workflow_data = workflow
             elif self.workflow_path and os.path.exists(self.workflow_path):
                 # Check workflow cache
-                workflow_cache_key = hashlib.sha256(
-                    self.workflow_path.encode()
-                ).hexdigest()
+                workflow_cache_key = hashlib.sha256(self.workflow_path.encode()).hexdigest()
                 if workflow_cache_key in self._workflow_cache:
                     workflow_data = self._workflow_cache[workflow_cache_key]
                     self._workflow_cache.move_to_end(workflow_cache_key)
@@ -306,9 +296,7 @@ class ComfyUIEngine(EngineProtocol):
                 "prompt": workflow_data,
                 "client_id": self.client_id or "voice_studio",
             }
-            response = self.session.post(
-                f"{self.server_url}/prompt", json=prompt_data, timeout=10
-            )
+            response = self.session.post(f"{self.server_url}/prompt", json=prompt_data, timeout=10)
 
             if response.status_code != 200:
                 logger.error(f"Failed to queue prompt: {response.text}")
@@ -415,9 +403,7 @@ class ComfyUIEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_synthesis_time("comfyui", duration, cached=False)
                 except Exception:
-                    logger.debug(
-                        "Performance metrics unavailable for comfyui batch generation."
-                    )
+                    logger.debug("Performance metrics unavailable for comfyui batch generation.")
                 return result
             except Exception as e:
                 logger.error(f"Batch generation failed for prompt {idx}: {e}")
@@ -471,11 +457,7 @@ class ComfyUIEngine(EngineProtocol):
             return {"enabled": False}
 
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
-        hit_rate = (
-            (self._cache_stats["hits"] / total_requests * 100)
-            if total_requests > 0
-            else 0.0
-        )
+        hit_rate = (self._cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0.0
 
         return {
             "enabled": True,
@@ -535,11 +517,7 @@ class ComfyUIEngine(EngineProtocol):
             },
             ksampler: {
                 "inputs": {
-                    "seed": (
-                        seed
-                        if seed is not None
-                        else int.from_bytes(os.urandom(4), "big")
-                    ),
+                    "seed": (seed if seed is not None else int.from_bytes(os.urandom(4), "big")),
                     "steps": steps,
                     "cfg": cfg_scale,
                     "sampler_name": sampler,
@@ -570,18 +548,14 @@ class ComfyUIEngine(EngineProtocol):
 
         return workflow
 
-    def _wait_for_completion(
-        self, prompt_id: str, timeout: int = 300
-    ) -> Image.Image | None:
+    def _wait_for_completion(self, prompt_id: str, timeout: int = 300) -> Image.Image | None:
         """Wait for prompt completion and retrieve image."""
 
         start_time = time.time()
 
         while time.time() - start_time < timeout:
             try:
-                response = self.session.get(
-                    f"{self.server_url}/history/{prompt_id}", timeout=5
-                )
+                response = self.session.get(f"{self.server_url}/history/{prompt_id}", timeout=5)
                 if response.status_code == 200:
                     history = response.json()
                     if prompt_id in history:
@@ -603,9 +577,7 @@ class ComfyUIEngine(EngineProtocol):
                                         image_url, params=params, timeout=10
                                     )
                                     if img_response.status_code == 200:
-                                        image = Image.open(
-                                            BytesIO(img_response.content)
-                                        )
+                                        image = Image.open(BytesIO(img_response.content))
                                         return image
 
                         logger.warning("Prompt completed but no images found")

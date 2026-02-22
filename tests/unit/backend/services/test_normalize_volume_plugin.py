@@ -28,7 +28,9 @@ class TestNormalizeVolume:
         plugin_out = normalize_samples(samples, sample_rate, mode="peak")
         reference_out = _reference_peak_normalize(samples)
 
-        np.testing.assert_allclose(plugin_out, reference_out.astype(np.float32), rtol=1e-6, atol=1e-6)
+        np.testing.assert_allclose(
+            plugin_out, reference_out.astype(np.float32), rtol=1e-6, atol=1e-6
+        )
 
     def test_normalize_volume_returns_float32(self):
         """Test that output is always float32."""

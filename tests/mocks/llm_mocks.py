@@ -132,9 +132,7 @@ class MockS2SProvider(BaseS2SProvider):
             latency_ms=self._latency_ms,
         )
 
-    async def respond(
-        self, audio_data: bytes, context: str | None = None
-    ) -> S2SResponse:
+    async def respond(self, audio_data: bytes, context: str | None = None) -> S2SResponse:
         self._call_count += 1
         await asyncio.sleep(self._latency_ms / 1000.0)
         self._turn_count += 1

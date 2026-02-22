@@ -24,6 +24,7 @@ try:
         TempFileManager,
         get_temp_file_manager,
     )
+
     HAS_TEMP_FILE_MANAGER = True
 except ImportError:
     HAS_TEMP_FILE_MANAGER = False
@@ -531,4 +532,3 @@ class TestGlobalFunction:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

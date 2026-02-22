@@ -47,7 +47,9 @@ class CreateExperimentRequest(BaseModel):
     id: str = Field(..., description="Unique experiment identifier")
     name: str = Field(..., description="Experiment display name")
     description: str = Field("", description="Experiment description")
-    variants: list[VariantRequest] = Field(..., min_length=2, description="At least 2 variants required")
+    variants: list[VariantRequest] = Field(
+        ..., min_length=2, description="At least 2 variants required"
+    )
     metrics: list[str] = Field(default_factory=list, description="Metrics to track")
     tags: list[str] = Field(default_factory=list, description="Experiment tags")
     target_sample_size: int = Field(0, ge=0, description="Target sample size (0 = unlimited)")
@@ -128,8 +130,7 @@ async def create_experiment(request: CreateExperimentRequest):
     existing = service.get_experiment(request.id)
     if existing:
         raise HTTPException(
-            status_code=409,
-            detail=f"Experiment with ID '{request.id}' already exists"
+            status_code=409, detail=f"Experiment with ID '{request.id}' already exists"
         )
 
     # Convert variant requests to Variant objects
@@ -182,7 +183,7 @@ async def list_experiments(
         except ValueError:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid status: {status}. Valid values: {[s.value for s in ExperimentStatus]}"
+                detail=f"Invalid status: {status}. Valid values: {[s.value for s in ExperimentStatus]}",
             )
 
     if tag:
@@ -203,10 +204,7 @@ async def get_experiment(experiment_id: str):
     experiment = service.get_experiment(experiment_id)
 
     if not experiment:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Experiment '{experiment_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Experiment '{experiment_id}' not found")
 
     return _experiment_to_response(experiment)
 
@@ -223,16 +221,12 @@ async def update_experiment(experiment_id: str, request: UpdateExperimentRequest
     experiment = service.get_experiment(experiment_id)
 
     if not experiment:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Experiment '{experiment_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Experiment '{experiment_id}' not found")
 
     # Check if modifying variants on a non-draft experiment
     if request.variants and experiment.status != ExperimentStatus.DRAFT:
         raise HTTPException(
-            status_code=400,
-            detail="Cannot modify variants on a non-DRAFT experiment"
+            status_code=400, detail="Cannot modify variants on a non-DRAFT experiment"
         )
 
     # Update fields
@@ -277,15 +271,11 @@ async def delete_experiment(experiment_id: str):
     experiment = service.get_experiment(experiment_id)
 
     if not experiment:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Experiment '{experiment_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Experiment '{experiment_id}' not found")
 
     if experiment.status == ExperimentStatus.RUNNING:
         raise HTTPException(
-            status_code=400,
-            detail="Cannot delete a RUNNING experiment. Stop it first."
+            status_code=400, detail="Cannot delete a RUNNING experiment. Stop it first."
         )
 
     # Archive instead of hard delete for audit trail
@@ -312,8 +302,7 @@ async def start_experiment(experiment_id: str):
         if not experiment:
             raise HTTPException(status_code=404, detail=f"Experiment '{experiment_id}' not found")
         raise HTTPException(
-            status_code=400,
-            detail=f"Cannot start experiment in status: {experiment.status.value}"
+            status_code=400, detail=f"Cannot start experiment in status: {experiment.status.value}"
         )
 
     return {"message": f"Experiment '{experiment_id}' started", "status": "running"}
@@ -332,8 +321,7 @@ async def pause_experiment(experiment_id: str):
         if not experiment:
             raise HTTPException(status_code=404, detail=f"Experiment '{experiment_id}' not found")
         raise HTTPException(
-            status_code=400,
-            detail=f"Cannot pause experiment in status: {experiment.status.value}"
+            status_code=400, detail=f"Cannot pause experiment in status: {experiment.status.value}"
         )
 
     return {"message": f"Experiment '{experiment_id}' paused", "status": "paused"}
@@ -352,8 +340,7 @@ async def resume_experiment(experiment_id: str):
         if not experiment:
             raise HTTPException(status_code=404, detail=f"Experiment '{experiment_id}' not found")
         raise HTTPException(
-            status_code=400,
-            detail=f"Cannot resume experiment in status: {experiment.status.value}"
+            status_code=400, detail=f"Cannot resume experiment in status: {experiment.status.value}"
         )
 
     return {"message": f"Experiment '{experiment_id}' resumed", "status": "running"}
@@ -373,7 +360,7 @@ async def complete_experiment(experiment_id: str):
             raise HTTPException(status_code=404, detail=f"Experiment '{experiment_id}' not found")
         raise HTTPException(
             status_code=400,
-            detail=f"Cannot complete experiment in status: {experiment.status.value}"
+            detail=f"Cannot complete experiment in status: {experiment.status.value}",
         )
 
     return {"message": f"Experiment '{experiment_id}' completed", "status": "completed"}
@@ -393,10 +380,7 @@ async def get_experiment_stats(experiment_id: str):
     experiment = service.get_experiment(experiment_id)
 
     if not experiment:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Experiment '{experiment_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Experiment '{experiment_id}' not found")
 
     # Get variant stats
     variant_stats = {}
@@ -433,16 +417,13 @@ async def get_experiment_events(
     experiment = service.get_experiment(experiment_id)
 
     if not experiment:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Experiment '{experiment_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Experiment '{experiment_id}' not found")
 
     events = service.get_experiment_events(experiment_id, event_type=event_type, limit=limit)
 
     return {
         "experiment_id": experiment_id,
-        "events": [e.to_dict() if hasattr(e, 'to_dict') else e for e in events],
+        "events": [e.to_dict() if hasattr(e, "to_dict") else e for e in events],
         "count": len(events),
     }
 

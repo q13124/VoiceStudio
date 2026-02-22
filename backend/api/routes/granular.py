@@ -40,10 +40,7 @@ async def render(req: GranularRenderRequest) -> dict:
         params = req.params
 
         if not audio_id:
-            raise HTTPException(
-                status_code=400,
-                detail="audio_id is required"
-            )
+            raise HTTPException(status_code=400, detail="audio_id is required")
 
         if not params:
             params = {}
@@ -59,16 +56,12 @@ async def render(req: GranularRenderRequest) -> dict:
         from .voice import _audio_storage, _register_audio_file
 
         if audio_id not in _audio_storage:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Audio file '{audio_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file '{audio_id}' not found")
 
         audio_path = _audio_storage[audio_id]
         if not os.path.exists(audio_path):
             raise HTTPException(
-                status_code=404,
-                detail=f"Audio file at '{audio_path}' does not exist"
+                status_code=404, detail=f"Audio file at '{audio_path}' does not exist"
             )
 
         # Try to load audio processing libraries
@@ -81,7 +74,7 @@ async def render(req: GranularRenderRequest) -> dict:
                 detail=(
                     "Granular synthesis requires librosa and soundfile. "
                     "Install with: pip install librosa soundfile"
-                )
+                ),
             )
 
         # Load audio
@@ -142,7 +135,7 @@ async def render(req: GranularRenderRequest) -> dict:
 
         while position < len(audio) - grain_size_samples:
             # Extract grain
-            grain = audio[position:position + grain_size_samples]
+            grain = audio[position : position + grain_size_samples]
 
             # Apply window
             windowed_grain = grain * window
@@ -196,7 +189,4 @@ async def render(req: GranularRenderRequest) -> dict:
         raise
     except Exception as e:
         logger.error(f"Granular synthesis failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Granular synthesis failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Granular synthesis failed: {e!s}") from e

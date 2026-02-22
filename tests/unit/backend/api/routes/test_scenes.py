@@ -43,9 +43,7 @@ class TestScenesRouteHandlers:
     def test_update_scene_handler_exists(self):
         """Test update_scene handler exists."""
         if hasattr(scenes, "update_scene"):
-            assert callable(
-                scenes.update_scene
-            ), "update_scene is not callable"
+            assert callable(scenes.update_scene), "update_scene is not callable"
 
 
 class TestScenesRouter:
@@ -66,4 +64,3 @@ class TestScenesRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

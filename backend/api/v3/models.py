@@ -21,6 +21,7 @@ T = TypeVar("T")
 
 class ResponseStatus(str, Enum):
     """Standard status values for API responses."""
+
     SUCCESS = "success"
     ERROR = "error"
     PARTIAL = "partial"  # For batch operations with some failures
@@ -28,6 +29,7 @@ class ResponseStatus(str, Enum):
 
 class ErrorDetail(BaseModel):
     """Detailed error information for API responses."""
+
     code: str = Field(..., description="Machine-readable error code")
     message: str = Field(..., description="Human-readable error message")
     field: str | None = Field(None, description="Field that caused the error (for validation)")
@@ -36,6 +38,7 @@ class ErrorDetail(BaseModel):
 
 class PaginationMeta(BaseModel):
     """Cursor-based pagination metadata."""
+
     cursor: str | None = Field(None, description="Cursor for next page")
     has_more: bool = Field(False, description="Whether more results exist")
     total_count: int | None = Field(None, description="Total count if available")
@@ -44,6 +47,7 @@ class PaginationMeta(BaseModel):
 
 class RequestMeta(BaseModel):
     """Request metadata for debugging and tracing."""
+
     request_id: str | None = Field(None, description="Unique request identifier")
     correlation_id: str | None = Field(None, description="Correlation ID for distributed tracing")
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Response timestamp")
@@ -82,11 +86,14 @@ class StandardResponse(BaseModel, Generic[T]):
             pagination=PaginationMeta(cursor="abc123", has_more=True)
         )
     """
+
     status: ResponseStatus = Field(..., description="Response status")
     message: str | None = Field(None, description="Human-readable status message")
     data: T | None = Field(None, description="Response payload")
     errors: list[ErrorDetail] | None = Field(None, description="Error details (when status=error)")
-    pagination: PaginationMeta | None = Field(None, description="Pagination info for list responses")
+    pagination: PaginationMeta | None = Field(
+        None, description="Pagination info for list responses"
+    )
     meta: RequestMeta | None = Field(None, description="Request metadata for debugging")
 
     class Config:
@@ -96,15 +103,15 @@ class StandardResponse(BaseModel, Generic[T]):
                     "status": "success",
                     "message": "Voice profile created successfully",
                     "data": {"id": "voice_abc123", "name": "My Voice"},
-                    "meta": {"request_id": "req_123", "timestamp": "2026-02-13T12:00:00Z"}
+                    "meta": {"request_id": "req_123", "timestamp": "2026-02-13T12:00:00Z"},
                 },
                 {
                     "status": "error",
                     "message": "Validation failed",
                     "errors": [
                         {"code": "REQUIRED_FIELD", "message": "Name is required", "field": "name"}
-                    ]
-                }
+                    ],
+                },
             ]
         }
 
@@ -112,11 +119,13 @@ class StandardResponse(BaseModel, Generic[T]):
 # Type aliases for common response patterns
 class SuccessResponse(StandardResponse[T], Generic[T]):
     """Convenience alias for successful responses."""
+
     status: ResponseStatus = ResponseStatus.SUCCESS
 
 
 class ErrorResponse(StandardResponse[None]):
     """Convenience alias for error responses."""
+
     status: ResponseStatus = ResponseStatus.ERROR
     data: None = None
 
@@ -191,6 +200,7 @@ def paginated_response(
 # Standard error codes
 class ErrorCode:
     """Standard error codes for v3 API."""
+
     # Validation errors (4xx)
     INVALID_INPUT = "INVALID_INPUT"
     REQUIRED_FIELD = "REQUIRED_FIELD"

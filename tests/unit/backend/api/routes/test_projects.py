@@ -23,11 +23,11 @@ from fastapi.testclient import TestClient
 def mock_project_store():
     """Create mock project store service."""
     mock_service = MagicMock()
-    
+
     # Use a real temp directory for file operations
     temp_dir = tempfile.mkdtemp()
     mock_service.projects_dir = temp_dir
-    
+
     # Mock project data
     mock_project = MagicMock()
     mock_project.id = "test-project-1"
@@ -36,25 +36,29 @@ def mock_project_store():
     mock_project.created_at = datetime.now().isoformat()
     mock_project.updated_at = datetime.now().isoformat()
     mock_project.voice_profile_ids = []
-    
+
     # Convert to dict for JSON serialization
-    mock_project.model_dump = MagicMock(return_value={
-        "id": "test-project-1",
-        "name": "Test Project",
-        "description": "A test project",
-        "created_at": datetime.now().isoformat(),
-        "updated_at": datetime.now().isoformat(),
-        "voice_profile_ids": [],
-        "schema_version": 1,
-    })
-    
+    mock_project.model_dump = MagicMock(
+        return_value={
+            "id": "test-project-1",
+            "name": "Test Project",
+            "description": "A test project",
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat(),
+            "voice_profile_ids": [],
+            "schema_version": 1,
+        }
+    )
+
     mock_service.list_projects.return_value = [mock_project]
     mock_service.get_project.return_value = mock_project
     mock_service.create_project.return_value = mock_project
     mock_service.update_project.return_value = mock_project
     mock_service.delete_project.return_value = True
-    mock_service.ensure_project_subdir.return_value = os.path.join(temp_dir, "test-project-1", "audio")
-    
+    mock_service.ensure_project_subdir.return_value = os.path.join(
+        temp_dir, "test-project-1", "audio"
+    )
+
     return mock_service
 
 
@@ -101,8 +105,7 @@ class TestProjectCRUD:
     def test_create_project(self, projects_client):
         """Test POST /api/projects creates new project."""
         response = projects_client.post(
-            "/api/projects",
-            json={"name": "New Project", "description": "A new test project"}
+            "/api/projects", json={"name": "New Project", "description": "A new test project"}
         )
         assert response.status_code in [200, 201]
         data = response.json()
@@ -112,7 +115,7 @@ class TestProjectCRUD:
         """Test PUT /api/projects/{id} updates project."""
         response = projects_client.put(
             "/api/projects/test-project-1",
-            json={"name": "Updated Project", "description": "Updated description"}
+            json={"name": "Updated Project", "description": "Updated description"},
         )
         assert response.status_code == 200
 
@@ -145,15 +148,16 @@ class TestProjectAudio:
         """Test POST /api/projects/{id}/audio/save saves audio data."""
         # Create minimal WAV data
         import base64
-        wav_header = b'RIFF' + b'\x00' * 40  # Minimal WAV header
+
+        wav_header = b"RIFF" + b"\x00" * 40  # Minimal WAV header
         audio_base64 = base64.b64encode(wav_header).decode()
-        
+
         response = projects_client.post(
             "/api/projects/test-project-1/audio/save",
             json={
                 "audio_data": audio_base64,
                 "filename": "test.wav",
-            }
+            },
         )
         # May fail due to invalid WAV or succeed with mocking
         assert response.status_code in [200, 400, 422]
@@ -181,10 +185,7 @@ class TestProjectErrors:
 
     def test_create_project_invalid_data(self, projects_client):
         """Test POST with invalid data returns error."""
-        response = projects_client.post(
-            "/api/projects",
-            json={}  # Missing required fields
-        )
+        response = projects_client.post("/api/projects", json={})  # Missing required fields
         assert response.status_code in [400, 422]  # Validation error
 
     def test_delete_nonexistent_project(self, projects_client, mock_project_store):

@@ -15,7 +15,7 @@ from datetime import datetime
 from pathlib import Path
 
 try:
-    import psutil  # type: ignore
+    import psutil
 
     PSUTIL_AVAILABLE = True
 except ImportError:
@@ -107,7 +107,7 @@ def _check_disk_space(required_bytes: float) -> bool:
     if not PSUTIL_AVAILABLE:
         return True  # Assume enough space if psutil unavailable
     try:
-        disk_usage = psutil.disk_usage(BACKUP_DIR)  # type: ignore
+        disk_usage = psutil.disk_usage(BACKUP_DIR)
         free_space = disk_usage.free
         return free_space > int(required_bytes * 1.1)  # 10% buffer
     except Exception as e:
@@ -273,9 +273,7 @@ async def create_backup(
                 models_dir = Path("models")
                 if models_dir.exists():
                     # Check size before copying
-                    total_size = sum(
-                        f.stat().st_size for f in models_dir.rglob("*") if f.is_file()
-                    )
+                    total_size = sum(f.stat().st_size for f in models_dir.rglob("*") if f.is_file())
                     size_mb = total_size / (1024 * 1024)
                     if size_mb > _MAX_BACKUP_SIZE_MB:
                         raise HTTPException(
@@ -327,14 +325,10 @@ async def create_backup(
                                 arcname = file_path.relative_to(temp_dir)
                                 # Ensure arcname doesn't contain parent refs
                                 if ".." in str(arcname):
-                                    raise ValueError(
-                                        f"Invalid path in backup: {arcname}"
-                                    )
+                                    raise ValueError(f"Invalid path in backup: {arcname}")
                                 zipf.write(file_path, arcname)
                             except Exception as e:
-                                logger.warning(
-                                    f"Skipping invalid file path: " f"{file_path}: {e}"
-                                )
+                                logger.warning(f"Skipping invalid file path: " f"{file_path}: {e}")
                                 continue
 
                 # Check final backup size
@@ -451,16 +445,12 @@ async def restore_backup(
                         )
                     zipf.extractall(temp_dir)
             except zipfile.BadZipFile as e:
-                raise HTTPException(
-                    status_code=400, detail=f"Invalid backup file: {e}"
-                ) from e
+                raise HTTPException(status_code=400, detail=f"Invalid backup file: {e}") from e
 
             # Verify metadata
             metadata_file = temp_dir / "metadata.json"
             if not metadata_file.exists():
-                raise HTTPException(
-                    status_code=400, detail="Invalid backup: missing metadata"
-                )
+                raise HTTPException(status_code=400, detail="Invalid backup: missing metadata")
 
             import json
 
@@ -510,9 +500,7 @@ async def restore_backup(
         raise
     except Exception as e:
         logger.error(f"Failed to restore backup: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to restore backup: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to restore backup: {e!s}") from e
 
 
 @router.post("/upload")
@@ -531,8 +519,7 @@ async def upload_backup(
             raise HTTPException(
                 status_code=413,
                 detail=(
-                    f"Upload size ({size_mb:.1f}MB) exceeds "
-                    f"maximum ({_MAX_UPLOAD_SIZE_MB}MB)"
+                    f"Upload size ({size_mb:.1f}MB) exceeds " f"maximum ({_MAX_UPLOAD_SIZE_MB}MB)"
                 ),
             )
 
@@ -586,15 +573,11 @@ async def upload_backup(
                     zipf.extractall(temp_dir)
             except zipfile.BadZipFile as e:
                 backup_path.unlink()
-                raise HTTPException(
-                    status_code=400, detail=f"Invalid ZIP file: {e}"
-                ) from e
+                raise HTTPException(status_code=400, detail=f"Invalid ZIP file: {e}") from e
 
             metadata_file = temp_dir / "metadata.json"
             if not metadata_file.exists():
-                raise HTTPException(
-                    status_code=400, detail="Invalid backup: missing metadata"
-                )
+                raise HTTPException(status_code=400, detail="Invalid backup: missing metadata")
 
             import json
 
@@ -636,9 +619,7 @@ async def upload_backup(
                 backup_path.unlink()
             except Exception:
                 pass  # Ignore cleanup errors
-        raise HTTPException(
-            status_code=500, detail=f"Failed to upload backup: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to upload backup: {e!s}") from e
 
 
 @router.delete("/{backup_id}")

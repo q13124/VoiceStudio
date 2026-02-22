@@ -24,9 +24,7 @@ class TestChatterboxEngineImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            chatterbox_engine is not None
-        ), "Failed to import chatterbox_engine module"
+        assert chatterbox_engine is not None, "Failed to import chatterbox_engine module"
 
     def test_module_has_chatterbox_engine_class(self):
         """Test module has ChatterboxEngine class."""
@@ -50,9 +48,7 @@ class TestChatterboxEngineClass:
             cls = chatterbox_engine.ChatterboxEngine
             if hasattr(cls, "SUPPORTED_LANGUAGES"):
                 languages = cls.SUPPORTED_LANGUAGES
-                assert isinstance(
-                    languages, list
-                ), "SUPPORTED_LANGUAGES should be a list"
+                assert isinstance(languages, list), "SUPPORTED_LANGUAGES should be a list"
 
 
 def test_process_audio_quality_enables_ml_prediction():
@@ -86,4 +82,3 @@ def test_process_audio_quality_enables_ml_prediction():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

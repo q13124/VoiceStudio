@@ -76,6 +76,7 @@ class VoiceStudioBaseModel(BaseModel):
 class ApiOk(VoiceStudioBaseModel):
     ok: bool = True
 
+
 # =============================================================================
 # Request Models
 # =============================================================================
@@ -123,4 +124,3 @@ class BlendRequest(VoiceStudioBaseModel):
     b_id: str
     ratio: float = 0.5
     name: str | None = None
-

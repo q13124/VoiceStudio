@@ -40,9 +40,7 @@ try:
     HAS_DIFFUSERS = True
 except ImportError:
     HAS_DIFFUSERS = False
-    logger.warning(
-        "diffusers not installed. Install with: pip install diffusers>=0.21.0"
-    )
+    logger.warning("diffusers not installed. Install with: pip install diffusers>=0.21.0")
 
 # Optional image processing
 try:
@@ -51,9 +49,7 @@ try:
     HAS_CV2 = True
 except ImportError:
     HAS_CV2 = False
-    logger.warning(
-        "opencv-python not installed. Install with: pip install opencv-python"
-    )
+    logger.warning("opencv-python not installed. Install with: pip install opencv-python")
 
 
 class SVDEngine(EngineProtocol):
@@ -101,8 +97,7 @@ class SVDEngine(EngineProtocol):
         """
         if not HAS_DIFFUSERS:
             raise ImportError(
-                "diffusers not installed. "
-                "Install with: pip install diffusers>=0.21.0"
+                "diffusers not installed. " "Install with: pip install diffusers>=0.21.0"
             )
 
         # Initialize base protocol
@@ -235,10 +230,10 @@ class SVDEngine(EngineProtocol):
         """Clean up resources and free memory (enhanced)."""
         try:
             # Don't delete if in cache (other instances might be using it)
-            if (not self.enable_model_cache or (
-                self._model_key is not None
-                and self._model_key not in self._model_cache
-            )) and self.pipeline is not None:
+            if (
+                not self.enable_model_cache
+                or (self._model_key is not None and self._model_key not in self._model_cache)
+            ) and self.pipeline is not None:
                 del self.pipeline
                 self.pipeline = None
 
@@ -355,6 +350,7 @@ class SVDEngine(EngineProtocol):
                 # Copy to output path if provided
                 if output_path and cached_path != str(output_path):
                     import shutil
+
                     shutil.copy2(cached_path, output_path)
                     return str(output_path)
                 # Record metrics
@@ -363,9 +359,7 @@ class SVDEngine(EngineProtocol):
 
                     metrics = get_engine_metrics()
                     duration = time.perf_counter() - start_time
-                    metrics.record_synthesis_time(
-                        "svd", duration, cached=True
-                    )
+                    metrics.record_synthesis_time("svd", duration, cached=True)
                 except Exception:
                     ...
                 return cached_path
@@ -380,11 +374,7 @@ class SVDEngine(EngineProtocol):
                 else:
                     image = Image.open(image_path).convert("RGB")
             else:
-                image = (
-                    image_path.convert("RGB")
-                    if hasattr(image_path, "convert")
-                    else image_path
-                )
+                image = image_path.convert("RGB") if hasattr(image_path, "convert") else image_path
 
             # Resize image to 1024x576 (SVD requirement)
             if image.size != (1024, 576):
@@ -395,9 +385,7 @@ class SVDEngine(EngineProtocol):
             if seed is not None:
                 generator = torch.Generator(device=self.device).manual_seed(seed)
 
-            logger.info(
-                f"Generating video: {num_frames} frames, {num_inference_steps} steps"
-            )
+            logger.info(f"Generating video: {num_frames} frames, {num_inference_steps} steps")
 
             # Generate video frames
             frames = self.pipeline(
@@ -420,9 +408,7 @@ class SVDEngine(EngineProtocol):
                     os.getenv("TEMP", "C:\\Temp"), "VoiceStudio", "svd_output"
                 )
                 os.makedirs(output_dir, exist_ok=True)
-                output_path = os.path.join(
-                    output_dir, f"svd_video_{hash(str(image_path))}.mp4"
-                )
+                output_path = os.path.join(output_dir, f"svd_video_{hash(str(image_path))}.mp4")
 
             output_path = Path(output_path)
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -448,9 +434,7 @@ class SVDEngine(EngineProtocol):
                 from .performance_metrics import get_engine_metrics
 
                 metrics = get_engine_metrics()
-                metrics.record_synthesis_time(
-                    "svd", duration, cached=False
-                )
+                metrics.record_synthesis_time("svd", duration, cached=False)
             except Exception:
                 ...
 
@@ -509,9 +493,7 @@ class SVDEngine(EngineProtocol):
         start_time = time.perf_counter()
 
         try:
-            actual_batch_size = (
-                batch_size if batch_size is not None else self.batch_size
-            )
+            actual_batch_size = batch_size if batch_size is not None else self.batch_size
 
             # Process images in batches with ThreadPoolExecutor for better
             # parallelization
@@ -559,7 +541,7 @@ class SVDEngine(EngineProtocol):
 
             # Process in batches with ThreadPoolExecutor
             for i in range(0, len(args_list), actual_batch_size):
-                batch_args = args_list[i:i + actual_batch_size]
+                batch_args = args_list[i : i + actual_batch_size]
 
                 with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
                     batch_results = list(executor.map(generate_single, batch_args))
@@ -575,9 +557,7 @@ class SVDEngine(EngineProtocol):
                 from .performance_metrics import get_engine_metrics
 
                 metrics = get_engine_metrics()
-                metrics.record_synthesis_time(
-                    "svd", duration, cached=False
-                )
+                metrics.record_synthesis_time("svd", duration, cached=False)
             except Exception:
                 ...
 
@@ -634,14 +614,8 @@ class SVDEngine(EngineProtocol):
         if not self.enable_response_cache:
             return {"enabled": False}
 
-        total_requests = (
-            self._cache_stats["hits"] + self._cache_stats["misses"]
-        )
-        hit_rate = (
-            (self._cache_stats["hits"] / total_requests * 100)
-            if total_requests > 0
-            else 0.0
-        )
+        total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
+        hit_rate = (self._cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0.0
 
         return {
             "enabled": True,

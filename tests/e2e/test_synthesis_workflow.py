@@ -15,11 +15,7 @@ class TestSynthesisWorkflow:
 
     @pytest.mark.asyncio
     @pytest.mark.slow
-    async def test_complete_synthesis_workflow(
-        self,
-        test_client,
-        temp_dir: Path
-    ):
+    async def test_complete_synthesis_workflow(self, test_client, temp_dir: Path):
         """Test a complete synthesis workflow from request to audio file."""
         # Skip if backend not available
         try:
@@ -36,10 +32,7 @@ class TestSynthesisWorkflow:
             "output_format": "wav",
         }
 
-        response = await test_client.post(
-            "/api/v1/synthesis",
-            json=synthesis_request
-        )
+        response = await test_client.post("/api/v1/synthesis", json=synthesis_request)
 
         if response.status_code == 404:
             pytest.skip("Synthesis endpoint not implemented")
@@ -51,9 +44,7 @@ class TestSynthesisWorkflow:
 
             # Wait for completion
             for _ in range(30):
-                status_response = await test_client.get(
-                    f"/api/v1/synthesis/{job_id}/status"
-                )
+                status_response = await test_client.get(f"/api/v1/synthesis/{job_id}/status")
                 status = status_response.json()
 
                 if status.get("status") == "completed":
@@ -82,10 +73,7 @@ class TestSynthesisWorkflow:
             "items": [{"text": t, "voice_id": "default"} for t in texts],
         }
 
-        response = await test_client.post(
-            "/api/v1/synthesis/batch",
-            json=batch_request
-        )
+        response = await test_client.post("/api/v1/synthesis/batch", json=batch_request)
 
         if response.status_code == 404:
             pytest.skip("Batch synthesis not implemented")
@@ -100,10 +88,7 @@ class TestSynthesisWorkflow:
             "voice_id": "nonexistent-voice",
         }
 
-        response = await test_client.post(
-            "/api/v1/synthesis",
-            json=invalid_request
-        )
+        response = await test_client.post("/api/v1/synthesis", json=invalid_request)
 
         if response.status_code == 404:
             pytest.skip("Synthesis endpoint not implemented")
@@ -125,10 +110,7 @@ class TestProjectWorkflow:
             "description": "Created during E2E testing",
         }
 
-        response = await test_client.post(
-            "/api/v1/projects",
-            json=project_data
-        )
+        response = await test_client.post("/api/v1/projects", json=project_data)
 
         if response.status_code == 404:
             pytest.skip("Project endpoint not implemented")
@@ -145,10 +127,7 @@ class TestProjectWorkflow:
 
         # Update project
         update_data = {"name": "Updated E2E Project"}
-        response = await test_client.patch(
-            f"/api/v1/projects/{project_id}",
-            json=update_data
-        )
+        response = await test_client.patch(f"/api/v1/projects/{project_id}", json=update_data)
 
         if response.status_code != 404:
             assert response.status_code in [200, 204]
@@ -167,11 +146,7 @@ class TestVoiceCloneWorkflow:
     @pytest.mark.asyncio
     @pytest.mark.slow
     @pytest.mark.gpu
-    async def test_voice_clone_workflow(
-        self,
-        test_client,
-        sample_audio_path: Path
-    ):
+    async def test_voice_clone_workflow(self, test_client, sample_audio_path: Path):
         """Test the complete voice cloning workflow."""
         if not sample_audio_path.exists():
             pytest.skip("Sample audio file not available")
@@ -180,9 +155,7 @@ class TestVoiceCloneWorkflow:
         with open(sample_audio_path, "rb") as f:
             files = {"audio": ("sample.wav", f, "audio/wav")}
             response = await test_client.post(
-                "/api/v1/voices/clone",
-                files=files,
-                data={"name": "E2E Clone Test"}
+                "/api/v1/voices/clone", files=files, data={"name": "E2E Clone Test"}
             )
 
         if response.status_code == 404:

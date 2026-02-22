@@ -9,6 +9,7 @@ import pytest
 # Check if cryptography is available
 try:
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
     HAS_CRYPTOGRAPHY = True
 except ImportError:
     HAS_CRYPTOGRAPHY = False
@@ -99,20 +100,30 @@ class TestPluginSigner:
         pkg_path = tmp_path / "unsigned.vspkg"
 
         with zipfile.ZipFile(pkg_path, "w") as zf:
-            zf.writestr("MANIFEST.json", json.dumps({
-                "format_version": "1.0.0",
-                "package_id": "unsigned-pkg",
-                "package_version": "1.0.0",
-                "plugin_manifest": "manifest.json",
-                "created_at": "2026-02-17T00:00:00",
-                "created_by": "test",
-                "min_voicestudio_version": "1.0.0",
-            }))
-            zf.writestr("manifest.json", json.dumps({
-                "id": "unsigned-pkg",
-                "name": "Unsigned Package",
-                "version": "1.0.0",
-            }))
+            zf.writestr(
+                "MANIFEST.json",
+                json.dumps(
+                    {
+                        "format_version": "1.0.0",
+                        "package_id": "unsigned-pkg",
+                        "package_version": "1.0.0",
+                        "plugin_manifest": "manifest.json",
+                        "created_at": "2026-02-17T00:00:00",
+                        "created_by": "test",
+                        "min_voicestudio_version": "1.0.0",
+                    }
+                ),
+            )
+            zf.writestr(
+                "manifest.json",
+                json.dumps(
+                    {
+                        "id": "unsigned-pkg",
+                        "name": "Unsigned Package",
+                        "version": "1.0.0",
+                    }
+                ),
+            )
             zf.writestr("CHECKSUMS.sha256", "abc123  manifest.json\n")
             zf.writestr("plugin.py", "# Plugin code")
 

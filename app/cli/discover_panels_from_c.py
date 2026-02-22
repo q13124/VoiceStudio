@@ -43,7 +43,7 @@ def discover_panels(source_root="C:\\VoiceStudio", target_root="E:\\VoiceStudio"
         "app/ui/views",
         "src/VoiceStudio.App",
         "src/VoiceStudio.App/Views",
-        "src/VoiceStudio.App/Views/Panels"
+        "src/VoiceStudio.App/Views/Panels",
     ]
 
     all_panels = set()
@@ -110,16 +110,17 @@ namespace VoiceStudio.Core {{
 }}
 """
 
-        output_file.write_text(code, encoding='utf-8')
+        output_file.write_text(code, encoding="utf-8")
         print(f"Generated: {output_file}")
         print(f"  Contains {len(sorted_panels)} panels")
 
         # Also create text list
         text_file = output_file.with_suffix(".txt")
-        text_file.write_text("\n".join(sorted_panels), encoding='utf-8')
+        text_file.write_text("\n".join(sorted_panels), encoding="utf-8")
         print(f"Panel list saved to: {text_file}")
 
     return sorted_panels
+
 
 if __name__ == "__main__":
     panels = discover_panels()
@@ -131,4 +132,3 @@ if __name__ == "__main__":
         print()
         print("No panels found!")
         sys.exit(1)
-

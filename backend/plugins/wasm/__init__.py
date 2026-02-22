@@ -18,10 +18,10 @@ Architecture:
 
 Usage:
     from backend.plugins.wasm import WasmRunner, CapabilityToken, CapabilitySet
-    
+
     # Create runner
     runner = WasmRunner()
-    
+
     # Define plugin config with capabilities
     config = WasmPluginConfig(
         plugin_id="my-plugin",
@@ -31,7 +31,7 @@ Usage:
             CapabilityToken.FILE_READ,
         ]),
     )
-    
+
     # Execute plugin function
     result = await runner.execute(config, "process_audio", {"input": data})
 

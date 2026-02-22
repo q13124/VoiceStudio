@@ -18,9 +18,7 @@ class PluginServiceStub:
     outside the full PluginService lifecycle (e.g. in register() or tests).
     """
 
-    def get_plugin_setting(
-        self, plugin_id: str, key: str, default: Any = None
-    ) -> Any:
+    def get_plugin_setting(self, plugin_id: str, key: str, default: Any = None) -> Any:
         return default
 
     def set_plugin_setting(self, plugin_id: str, key: str, value: Any) -> None:

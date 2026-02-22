@@ -36,9 +36,7 @@ try:
     HAS_FFMPEG_PYTHON = True
 except ImportError:
     HAS_FFMPEG_PYTHON = False
-    logger.warning(
-        "ffmpeg-python not installed. Install with: pip install ffmpeg-python"
-    )
+    logger.warning("ffmpeg-python not installed. Install with: pip install ffmpeg-python")
 
 
 class FFmpegAIEngine(EngineProtocol):
@@ -103,9 +101,7 @@ class FFmpegAIEngine(EngineProtocol):
 
             # Check if FFmpeg is available
             if not self._check_ffmpeg():
-                logger.warning(
-                    "FFmpeg not available. Install FFmpeg to use this engine."
-                )
+                logger.warning("FFmpeg not available. Install FFmpeg to use this engine.")
                 self._initialized = False
                 return False
 
@@ -157,9 +153,7 @@ class FFmpegAIEngine(EngineProtocol):
 
                     temp_manager = get_temp_file_manager()
                     temp_manager.remove_temp_file(self._temp_dir, force=True)
-                    logger.debug(
-                        f"Removed temp directory via manager: {self._temp_dir}"
-                    )
+                    logger.debug(f"Removed temp directory via manager: {self._temp_dir}")
                 except Exception:
                     # Fallback to direct removal
                     if os.path.exists(self._temp_dir):
@@ -413,9 +407,7 @@ class FFmpegAIEngine(EngineProtocol):
             return False
 
         try:
-            result = subprocess.run(
-                [self.ffmpeg_path, "-version"], capture_output=True, text=True
-            )
+            result = subprocess.run([self.ffmpeg_path, "-version"], capture_output=True, text=True)
             return result.returncode == 0
         except Exception:
             return False
@@ -464,9 +456,7 @@ class FFmpegAIEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_synthesis_time("ffmpeg_ai", duration, cached=False)
                 except Exception:
-                    logger.debug(
-                        "Performance metrics unavailable for ffmpeg_ai batch transcode."
-                    )
+                    logger.debug("Performance metrics unavailable for ffmpeg_ai batch transcode.")
                 return result
             except Exception as e:
                 logger.error(f"Batch transcoding failed for {input_path}: {e}")
@@ -535,9 +525,7 @@ class FFmpegAIEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_synthesis_time("ffmpeg_ai", duration, cached=False)
                 except Exception:
-                    logger.debug(
-                        "Performance metrics unavailable for ffmpeg_ai batch upscale."
-                    )
+                    logger.debug("Performance metrics unavailable for ffmpeg_ai batch upscale.")
                 return result
             except Exception as e:
                 logger.error(f"Batch upscaling failed for {input_path}: {e}")
@@ -586,11 +574,7 @@ class FFmpegAIEngine(EngineProtocol):
     def get_cache_stats(self) -> dict[str, int | float | str]:
         """Get cache statistics (enhanced)."""
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
-        hit_rate = (
-            (self._cache_stats["hits"] / total_requests * 100)
-            if total_requests > 0
-            else 0.0
-        )
+        hit_rate = (self._cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0.0
         return {
             "cache_size": len(self._processing_cache),
             "max_cache_size": self.cache_size,

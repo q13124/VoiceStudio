@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.audio import enhanced_ensemble_router
 except ImportError:
-    pytest.skip(
-        "Could not import enhanced_ensemble_router", allow_module_level=True
-    )
+    pytest.skip("Could not import enhanced_ensemble_router", allow_module_level=True)
 
 
 class TestEnhancedEnsembleRouterImports:
@@ -46,9 +44,7 @@ class TestEnhancedEnsembleRouterClasses:
         """Test EnhancedEnsembleRouter class exists."""
         if hasattr(enhanced_ensemble_router, "EnhancedEnsembleRouter"):
             cls = enhanced_ensemble_router.EnhancedEnsembleRouter
-            assert isinstance(
-                cls, type
-            ), "EnhancedEnsembleRouter should be a class"
+            assert isinstance(cls, type), "EnhancedEnsembleRouter should be a class"
 
 
 class TestEnhancedEnsembleRouterFunctions:
@@ -64,4 +60,3 @@ class TestEnhancedEnsembleRouterFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

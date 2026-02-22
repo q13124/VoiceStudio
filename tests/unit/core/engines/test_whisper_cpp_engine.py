@@ -23,9 +23,7 @@ class TestWhisperCPPEngineImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            whisper_cpp_engine is not None
-        ), "Failed to import whisper_cpp_engine module"
+        assert whisper_cpp_engine is not None, "Failed to import whisper_cpp_engine module"
 
     def test_module_has_whisper_cpp_engine_class(self):
         """Test module has WhisperCPPEngine class."""
@@ -60,9 +58,7 @@ class TestWhisperCPPEngineClass:
                 engine = whisper_cpp_engine.WhisperCPPEngine(device="cpu", gpu=False)
                 required_methods = ["initialize", "cleanup", "transcribe"]
                 for method in required_methods:
-                    assert hasattr(
-                        engine, method
-                    ), f"WhisperCPPEngine missing method: {method}"
+                    assert hasattr(engine, method), f"WhisperCPPEngine missing method: {method}"
             except (ImportError, Exception):
                 pytest.skip("whisper-cpp dependencies not installed")
 
@@ -72,9 +68,7 @@ class TestWhisperCPPEngineClass:
             try:
                 engine = whisper_cpp_engine.WhisperCPPEngine(device="cpu", gpu=False)
                 # Check for caching support
-                assert hasattr(
-                    engine, "enable_caching"
-                ), "WhisperCPPEngine should support caching"
+                assert hasattr(engine, "enable_caching"), "WhisperCPPEngine should support caching"
                 # Check for batch processing
                 assert hasattr(
                     engine, "batch_transcribe"
@@ -109,9 +103,7 @@ class TestWhisperCPPEngineCaching:
             try:
                 engine = whisper_cpp_engine.WhisperCPPEngine(device="cpu", gpu=False)
                 # Check initial state (should be True by default)
-                assert (
-                    engine.enable_caching is True
-                ), "Caching should be enabled by default"
+                assert engine.enable_caching is True, "Caching should be enabled by default"
                 # Test that enable_caching method exists and can be called
                 assert hasattr(engine, "enable_caching"), "enable_caching should exist"
                 # The method sets self.enable_caching, so after calling it becomes a property
@@ -122,9 +114,7 @@ class TestWhisperCPPEngineCaching:
                     enable_caching_method(False)
                     # After calling, enable_caching becomes a boolean property
                     # Verify it was set correctly by checking the attribute directly
-                    assert hasattr(
-                        engine, "enable_caching"
-                    ), "enable_caching should still exist"
+                    assert hasattr(engine, "enable_caching"), "enable_caching should still exist"
             except (ImportError, Exception):
                 pytest.skip("whisper-cpp dependencies not installed")
 
@@ -167,12 +157,8 @@ class TestWhisperCPPEngineBatchProcessing:
         if hasattr(whisper_cpp_engine, "WhisperCPPEngine"):
             try:
                 engine = whisper_cpp_engine.WhisperCPPEngine(device="cpu", gpu=False)
-                assert hasattr(
-                    engine, "batch_size"
-                ), "WhisperCPPEngine should have batch_size"
-                assert isinstance(
-                    engine.batch_size, int
-                ), "batch_size should be an integer"
+                assert hasattr(engine, "batch_size"), "WhisperCPPEngine should have batch_size"
+                assert isinstance(engine.batch_size, int), "batch_size should be an integer"
                 assert engine.batch_size > 0, "batch_size should be positive"
             except (ImportError, Exception):
                 pytest.skip("whisper-cpp dependencies not installed")
@@ -189,9 +175,7 @@ class TestWhisperCPPEngineProtocol:
                 # Check for protocol methods
                 assert hasattr(engine, "initialize"), "Should implement initialize"
                 assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                assert hasattr(
-                    engine, "is_initialized"
-                ), "Should implement is_initialized"
+                assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                 assert hasattr(engine, "get_device"), "Should implement get_device"
             except (ImportError, Exception):
                 pytest.skip("whisper-cpp dependencies not installed")
@@ -203,9 +187,7 @@ class TestWhisperCPPEngineProtocol:
                 engine = whisper_cpp_engine.WhisperCPPEngine(device="cpu", gpu=False)
                 assert engine.get_device() == "cpu"
                 # Test with cuda if available
-                engine_cuda = whisper_cpp_engine.WhisperCPPEngine(
-                    device="cuda", gpu=True
-                )
+                engine_cuda = whisper_cpp_engine.WhisperCPPEngine(device="cuda", gpu=True)
                 assert engine_cuda.get_device() == "cuda"
             except (ImportError, Exception):
                 pytest.skip("whisper-cpp dependencies not installed")
@@ -259,13 +241,9 @@ class TestWhisperCPPEngineOptimization:
             try:
                 engine = whisper_cpp_engine.WhisperCPPEngine(device="cpu", gpu=False)
                 # Check for LRU cache (OrderedDict)
-                assert hasattr(
-                    engine, "_transcription_cache"
-                ), "Should have transcription cache"
+                assert hasattr(engine, "_transcription_cache"), "Should have transcription cache"
                 # Check for cache max size
-                assert hasattr(
-                    engine, "_cache_max_size"
-                ), "Should have cache max size"
+                assert hasattr(engine, "_cache_max_size"), "Should have cache max size"
                 # Check for cache clearing method
                 assert hasattr(
                     engine, "clear_transcription_cache"
@@ -299,4 +277,3 @@ class TestWhisperCPPEngineModule:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

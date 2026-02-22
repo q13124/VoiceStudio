@@ -43,7 +43,7 @@ async def get_current_user(request: Request) -> User | None:
                     "user_id": user.user_id,
                     "username": user.username,
                     "auth_method": "api_key",
-                }
+                },
             )
             return user
 
@@ -60,7 +60,7 @@ async def get_current_user(request: Request) -> User | None:
                     "user_id": user.user_id,
                     "username": user.username,
                     "auth_method": "jwt",
-                }
+                },
             )
             return user
 
@@ -85,7 +85,7 @@ async def require_authentication(request: Request) -> User:
                 "path": request.url.path,
                 "method": request.method,
                 "request_id": request_id,
-            }
+            },
         )
 
         raise HTTPException(
@@ -121,7 +121,7 @@ async def require_permission_middleware(
                 "path": request.url.path,
                 "method": request.method,
                 "request_id": request_id,
-            }
+            },
         )
 
         raise HTTPException(
@@ -168,7 +168,7 @@ async def require_role_middleware(
                 "path": request.url.path,
                 "method": request.method,
                 "request_id": request_id,
-            }
+            },
         )
 
         raise HTTPException(
@@ -234,6 +234,7 @@ def create_permission_dependency(permission: Permission):
     Usage:
         @router.post("/admin-only", dependencies=[Depends(create_permission_dependency(Permission.ADMIN))])
     """
+
     async def check_permission(request: Request) -> User:
         if not AUTH_REQUIRED:
             # Local mode: skip permission check
@@ -248,5 +249,5 @@ def create_permission_dependency(permission: Permission):
                 permissions=list(Permission),
             )
         return await require_permission_middleware(request, permission)
-    return check_permission
 
+    return check_permission

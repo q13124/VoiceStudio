@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class Permission(Enum):
     """Available permissions."""
+
     # Voice operations
     VOICE_READ = "voice:read"
     VOICE_CREATE = "voice:create"
@@ -48,6 +49,7 @@ class Permission(Enum):
 @dataclass
 class Role:
     """A role with permissions."""
+
     name: str
     description: str
     permissions: set[Permission]
@@ -65,6 +67,7 @@ class Role:
 @dataclass
 class UserRoles:
     """Roles assigned to a user."""
+
     user_id: str
     roles: set[str]
     direct_permissions: set[Permission] = field(default_factory=set)
@@ -215,10 +218,7 @@ class RBACService:
 
         if not user_roles:
             # Return default role permissions
-            default_role = next(
-                (r for r in self._roles.values() if r.is_default),
-                None
-            )
+            default_role = next((r for r in self._roles.values() if r.is_default), None)
             return default_role.permissions if default_role else set()
 
         permissions: set[Permission] = set()

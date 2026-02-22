@@ -206,4 +206,5 @@ class TestVersionRoutes:
         assert timestamp.endswith("Z")
 
         from datetime import datetime
+
         datetime.fromisoformat(timestamp.rstrip("Z"))

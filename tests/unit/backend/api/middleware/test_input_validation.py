@@ -210,28 +210,21 @@ class TestValidateDict:
     def test_validates_nested_strings(self, middleware):
         """Test validation of nested strings."""
         with pytest.raises(HTTPException):
-            middleware._validate_dict({
-                "name": "safe",
-                "nested": {
-                    "evil": "<script>alert(1)</script>"
-                }
-            })
+            middleware._validate_dict(
+                {"name": "safe", "nested": {"evil": "<script>alert(1)</script>"}}
+            )
 
     def test_validates_list_items(self, middleware):
         """Test validation of list items."""
         with pytest.raises(HTTPException):
-            middleware._validate_dict({
-                "items": ["safe", "../traversal", "normal"]
-            })
+            middleware._validate_dict({"items": ["safe", "../traversal", "normal"]})
 
     def test_allows_safe_dicts(self, middleware):
         """Test that safe dictionaries pass validation."""
         # Should not raise
-        middleware._validate_dict({
-            "name": "John",
-            "tags": ["audio", "voice"],
-            "config": {"quality": "high"}
-        })
+        middleware._validate_dict(
+            {"name": "John", "tags": ["audio", "voice"], "config": {"quality": "high"}}
+        )
 
 
 class TestMiddlewareIntegration:

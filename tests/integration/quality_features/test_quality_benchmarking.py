@@ -10,7 +10,9 @@ from fastapi.testclient import TestClient
 class TestQualityBenchmarking:
     """Test suite for Quality Benchmarking endpoint."""
 
-    def test_run_benchmark_with_profile_id(self, client: TestClient, sample_profile_id: str, sample_test_text: str):
+    def test_run_benchmark_with_profile_id(
+        self, client: TestClient, sample_profile_id: str, sample_test_text: str
+    ):
         """Test running benchmark with profile ID."""
         response = client.post(
             "/api/quality/benchmark",
@@ -19,11 +21,15 @@ class TestQualityBenchmarking:
                 "test_text": sample_test_text,
                 "language": "en",
                 "engines": ["xtts", "chatterbox"],
-                "enhance_quality": True
-            }
+                "enhance_quality": True,
+            },
         )
 
-        assert response.status_code in [200, 404, 503]  # 404 if profile not found, 503 if engines not available
+        assert response.status_code in [
+            200,
+            404,
+            503,
+        ]  # 404 if profile not found, 503 if engines not available
         if response.status_code == 200:
             data = response.json()
             assert "results" in data
@@ -33,7 +39,9 @@ class TestQualityBenchmarking:
             assert data["total_engines"] >= 0
             assert data["successful_engines"] >= 0
 
-    def test_run_benchmark_with_reference_audio(self, client: TestClient, sample_reference_audio_id: str, sample_test_text: str):
+    def test_run_benchmark_with_reference_audio(
+        self, client: TestClient, sample_reference_audio_id: str, sample_test_text: str
+    ):
         """Test running benchmark with reference audio ID."""
         response = client.post(
             "/api/quality/benchmark",
@@ -42,8 +50,8 @@ class TestQualityBenchmarking:
                 "test_text": sample_test_text,
                 "language": "en",
                 "engines": ["tortoise"],
-                "enhance_quality": False
-            }
+                "enhance_quality": False,
+            },
         )
 
         assert response.status_code in [200, 404, 503]
@@ -51,7 +59,9 @@ class TestQualityBenchmarking:
             data = response.json()
             assert "results" in data
 
-    def test_run_benchmark_all_engines(self, client: TestClient, sample_profile_id: str, sample_test_text: str):
+    def test_run_benchmark_all_engines(
+        self, client: TestClient, sample_profile_id: str, sample_test_text: str
+    ):
         """Test running benchmark with all available engines."""
         response = client.post(
             "/api/quality/benchmark",
@@ -59,8 +69,8 @@ class TestQualityBenchmarking:
                 "profile_id": sample_profile_id,
                 "test_text": sample_test_text,
                 "language": "en",
-                "enhance_quality": True
-            }
+                "enhance_quality": True,
+            },
         )
 
         assert response.status_code in [200, 404, 503]
@@ -72,24 +82,22 @@ class TestQualityBenchmarking:
     def test_run_benchmark_minimal_request(self, client: TestClient, sample_profile_id: str):
         """Test running benchmark with minimal required fields."""
         response = client.post(
-            "/api/quality/benchmark",
-            json={
-                "profile_id": sample_profile_id,
-                "test_text": "Test"
-            }
+            "/api/quality/benchmark", json={"profile_id": sample_profile_id, "test_text": "Test"}
         )
 
         assert response.status_code in [200, 404, 503]
 
-    def test_run_benchmark_result_structure(self, client: TestClient, sample_profile_id: str, sample_test_text: str):
+    def test_run_benchmark_result_structure(
+        self, client: TestClient, sample_profile_id: str, sample_test_text: str
+    ):
         """Test that benchmark results have correct structure."""
         response = client.post(
             "/api/quality/benchmark",
             json={
                 "profile_id": sample_profile_id,
                 "test_text": sample_test_text,
-                "engines": ["xtts"]
-            }
+                "engines": ["xtts"],
+            },
         )
 
         if response.status_code == 200:
@@ -112,39 +120,33 @@ class TestQualityBenchmarking:
                             assert isinstance(metrics["mos_score"], (int, float))
                             assert 0.0 <= metrics["mos_score"] <= 5.0
 
-    def test_run_benchmark_missing_profile_and_audio(self, client: TestClient, sample_test_text: str):
+    def test_run_benchmark_missing_profile_and_audio(
+        self, client: TestClient, sample_test_text: str
+    ):
         """Test running benchmark without profile_id or reference_audio_id."""
-        response = client.post(
-            "/api/quality/benchmark",
-            json={
-                "test_text": sample_test_text
-            }
-        )
+        response = client.post("/api/quality/benchmark", json={"test_text": sample_test_text})
 
         # Should return validation error
         assert response.status_code == 422
 
     def test_run_benchmark_missing_test_text(self, client: TestClient, sample_profile_id: str):
         """Test running benchmark without test_text."""
-        response = client.post(
-            "/api/quality/benchmark",
-            json={
-                "profile_id": sample_profile_id
-            }
-        )
+        response = client.post("/api/quality/benchmark", json={"profile_id": sample_profile_id})
 
         # Should return validation error
         assert response.status_code == 422
 
-    def test_run_benchmark_invalid_engine_list(self, client: TestClient, sample_profile_id: str, sample_test_text: str):
+    def test_run_benchmark_invalid_engine_list(
+        self, client: TestClient, sample_profile_id: str, sample_test_text: str
+    ):
         """Test running benchmark with invalid engine names."""
         response = client.post(
             "/api/quality/benchmark",
             json={
                 "profile_id": sample_profile_id,
                 "test_text": sample_test_text,
-                "engines": ["invalid_engine_1", "invalid_engine_2"]
-            }
+                "engines": ["invalid_engine_1", "invalid_engine_2"],
+            },
         )
 
         # Should either accept and return failures or return validation error
@@ -165,18 +167,14 @@ class TestQualityBenchmarkingErrorHandling:
         response = client.post(
             "/api/quality/benchmark",
             data="invalid json",
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 422
 
     def test_empty_test_text(self, client: TestClient, sample_profile_id: str):
         """Test with empty test text."""
         response = client.post(
-            "/api/quality/benchmark",
-            json={
-                "profile_id": sample_profile_id,
-                "test_text": ""
-            }
+            "/api/quality/benchmark", json={"profile_id": sample_profile_id, "test_text": ""}
         )
 
         # Should either accept empty text or return validation error
@@ -186,13 +184,8 @@ class TestQualityBenchmarkingErrorHandling:
         """Test with very long test text."""
         long_text = "Test " * 1000
         response = client.post(
-            "/api/quality/benchmark",
-            json={
-                "profile_id": sample_profile_id,
-                "test_text": long_text
-            }
+            "/api/quality/benchmark", json={"profile_id": sample_profile_id, "test_text": long_text}
         )
 
         # Should handle long text (may be slow but should not error)
         assert response.status_code in [200, 404, 413, 503]  # 413 = Payload Too Large
-

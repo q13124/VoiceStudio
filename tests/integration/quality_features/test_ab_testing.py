@@ -13,10 +13,7 @@ class TestABTesting:
     def test_start_ab_test_success(self, client: TestClient, sample_profile_id: str):
         """Test starting an A/B test successfully."""
         response = client.post(
-            "/api/eval/abx/start",
-            json={
-                "items": ["audio-1", "audio-2", "audio-3"]
-            }
+            "/api/eval/abx/start", json={"items": ["audio-1", "audio-2", "audio-3"]}
         )
 
         assert response.status_code == 200
@@ -25,22 +22,14 @@ class TestABTesting:
 
     def test_start_ab_test_empty_items(self, client: TestClient):
         """Test starting A/B test with empty items list."""
-        response = client.post(
-            "/api/eval/abx/start",
-            json={
-                "items": []
-            }
-        )
+        response = client.post("/api/eval/abx/start", json={"items": []})
 
         # Should either accept empty list or return validation error
         assert response.status_code in [200, 422]
 
     def test_start_ab_test_missing_items(self, client: TestClient):
         """Test starting A/B test without items field."""
-        response = client.post(
-            "/api/eval/abx/start",
-            json={}
-        )
+        response = client.post("/api/eval/abx/start", json={})
 
         # Should return validation error
         assert response.status_code == 422
@@ -66,10 +55,7 @@ class TestABTesting:
         """Test complete A/B testing workflow."""
         # 1. Start A/B test
         start_response = client.post(
-            "/api/eval/abx/start",
-            json={
-                "items": ["test-audio-1", "test-audio-2"]
-            }
+            "/api/eval/abx/start", json={"items": ["test-audio-1", "test-audio-2"]}
         )
         assert start_response.status_code == 200
 
@@ -82,10 +68,7 @@ class TestABTesting:
     def test_ab_test_invalid_item_format(self, client: TestClient):
         """Test A/B test with invalid item format."""
         response = client.post(
-            "/api/eval/abx/start",
-            json={
-                "items": [123, 456]  # Should be strings
-            }
+            "/api/eval/abx/start", json={"items": [123, 456]}  # Should be strings
         )
 
         # Should either accept or return validation error
@@ -94,12 +77,7 @@ class TestABTesting:
     def test_ab_test_large_item_list(self, client: TestClient):
         """Test A/B test with large number of items."""
         large_list = [f"audio-{i}" for i in range(100)]
-        response = client.post(
-            "/api/eval/abx/start",
-            json={
-                "items": large_list
-            }
-        )
+        response = client.post("/api/eval/abx/start", json={"items": large_list})
 
         # Should handle large lists (may be slow but should not error)
         assert response.status_code in [200, 422, 413]  # 413 = Payload Too Large
@@ -111,18 +89,13 @@ class TestABTestingErrorHandling:
     def test_invalid_json(self, client: TestClient):
         """Test with invalid JSON."""
         response = client.post(
-            "/api/eval/abx/start",
-            data="invalid json",
-            headers={"Content-Type": "application/json"}
+            "/api/eval/abx/start", data="invalid json", headers={"Content-Type": "application/json"}
         )
         assert response.status_code == 422
 
     def test_missing_content_type(self, client: TestClient):
         """Test without Content-Type header."""
-        response = client.post(
-            "/api/eval/abx/start",
-            data='{"items": ["audio-1"]}'
-        )
+        response = client.post("/api/eval/abx/start", data='{"items": ["audio-1"]}')
         # FastAPI may auto-detect JSON or return error
         assert response.status_code in [200, 422, 415]
 
@@ -131,4 +104,3 @@ class TestABTestingErrorHandling:
         # POST should not be allowed
         response = client.post("/api/eval/abx/results")
         assert response.status_code in [405, 404]  # Method Not Allowed or Not Found
-

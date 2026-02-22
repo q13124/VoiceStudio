@@ -22,9 +22,7 @@ from fastapi.openapi.utils import get_openapi
 logger = logging.getLogger(__name__)
 
 
-def add_examples_to_schema(
-    schema: dict[str, Any], examples: dict[str, Any]
-) -> dict[str, Any]:
+def add_examples_to_schema(schema: dict[str, Any], examples: dict[str, Any]) -> dict[str, Any]:
     """
     Add examples to OpenAPI schema.
 
@@ -436,9 +434,7 @@ def _add_response_examples(openapi_schema: dict[str, Any]):
     )
 
 
-def _add_endpoint_example(
-    paths: dict[str, Any], path: str, method: str, example: dict[str, Any]
-):
+def _add_endpoint_example(paths: dict[str, Any], path: str, method: str, example: dict[str, Any]):
     """Add example to specific endpoint."""
     if path not in paths:
         return
@@ -914,9 +910,7 @@ def _enhance_endpoint_descriptions(openapi_schema: dict[str, Any]):
                     operation.update(description)
 
 
-def generate_api_documentation(
-    app: FastAPI, output_path: str | None = None
-) -> dict[str, Any]:
+def generate_api_documentation(app: FastAPI, output_path: str | None = None) -> dict[str, Any]:
     """
     Generate enhanced API documentation.
 
@@ -1003,9 +997,7 @@ def validate_documentation(app: FastAPI) -> list[str]:
                                 has_example = True
                                 break
                         if not has_example:
-                            warnings.append(
-                                f"Missing example for {method.upper()} {path}"
-                            )
+                            warnings.append(f"Missing example for {method.upper()} {path}")
 
     return warnings
 

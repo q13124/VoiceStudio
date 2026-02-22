@@ -171,9 +171,7 @@ async def validate_audio(request: AudioValidationRequest):
         try:
             audio, sample_rate = audio_utils.load_audio(audio_path)
         except Exception as e:
-            raise HTTPException(
-                status_code=400, detail=f"Failed to load audio file: {e!s}"
-            )
+            raise HTTPException(status_code=400, detail=f"Failed to load audio file: {e!s}")
 
         # Calculate duration
         duration = len(audio) / sample_rate
@@ -182,9 +180,7 @@ async def validate_audio(request: AudioValidationRequest):
         if len(audio.shape) == 1:
             channels = 1
         else:
-            channels = (
-                audio.shape[1] if audio.shape[0] > audio.shape[1] else audio.shape[0]
-            )
+            channels = audio.shape[1] if audio.shape[0] > audio.shape[1] else audio.shape[0]
 
         # Validate audio for voice cloning
         issues = []
@@ -198,9 +194,7 @@ async def validate_audio(request: AudioValidationRequest):
             )
         elif duration < 3.0:
             issues.append("Audio too short (minimum 3 seconds recommended)")
-            recommendations.append(
-                "Record at least 10 seconds for best voice cloning quality"
-            )
+            recommendations.append("Record at least 10 seconds for best voice cloning quality")
         elif duration < 10.0:
             recommendations.append(
                 "Consider recording 10+ seconds for better quality and more natural voice cloning"
@@ -212,17 +206,13 @@ async def validate_audio(request: AudioValidationRequest):
 
         # Check sample rate
         if sample_rate < 8000:
-            issues.append(
-                "Sample rate too low (minimum 8kHz required, 16kHz recommended)"
-            )
+            issues.append("Sample rate too low (minimum 8kHz required, 16kHz recommended)")
             recommendations.append("Use 16kHz or higher sample rate for voice cloning")
         elif sample_rate < 16000:
             issues.append("Sample rate too low (minimum 16kHz recommended)")
             recommendations.append("Use 16kHz or higher sample rate for better quality")
         elif sample_rate < 22050:
-            recommendations.append(
-                "Consider using 22.05kHz or higher for better quality"
-            )
+            recommendations.append("Consider using 22.05kHz or higher for better quality")
         elif sample_rate > 48000:
             recommendations.append(
                 "Very high sample rate detected. 44.1kHz or 48kHz is sufficient for voice cloning"
@@ -230,9 +220,7 @@ async def validate_audio(request: AudioValidationRequest):
 
         # Check channels
         if channels > 2:
-            issues.append(
-                f"Unsupported channel count ({channels}). Mono or stereo required"
-            )
+            issues.append(f"Unsupported channel count ({channels}). Mono or stereo required")
             recommendations.append("Convert to mono or stereo before voice cloning")
         elif channels > 1:
             recommendations.append(
@@ -249,9 +237,7 @@ async def validate_audio(request: AudioValidationRequest):
 
             # Calculate quality metrics
             try:
-                audio_utils.analyze_voice_characteristics(
-                    audio_mono, sample_rate
-                )
+                audio_utils.analyze_voice_characteristics(audio_mono, sample_rate)
 
                 # Check for clipping
                 max_amplitude = np.max(np.abs(audio_mono))
@@ -400,9 +386,7 @@ async def get_wizard_status(job_id: str):
     """Get wizard job status."""
     try:
         if job_id not in _wizard_jobs:
-            raise HTTPException(
-                status_code=404, detail=f"Wizard job '{job_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Wizard job '{job_id}' not found")
 
         job = _wizard_jobs[job_id]
 
@@ -431,9 +415,7 @@ async def process_wizard(job_id: str):
     """Process voice cloning (move from step 2 to step 3)."""
     try:
         if job_id not in _wizard_jobs:
-            raise HTTPException(
-                status_code=404, detail=f"Wizard job '{job_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Wizard job '{job_id}' not found")
 
         job = _wizard_jobs[job_id]
 
@@ -461,9 +443,7 @@ async def process_wizard(job_id: str):
             try:
                 # Get reference audio path
                 if job.reference_audio_id not in _audio_storage:
-                    raise ValueError(
-                        f"Reference audio '{job.reference_audio_id}' not found"
-                    )
+                    raise ValueError(f"Reference audio '{job.reference_audio_id}' not found")
 
                 audio_path = _audio_storage[job.reference_audio_id]
                 if not os.path.exists(audio_path):
@@ -480,8 +460,7 @@ async def process_wizard(job_id: str):
 
                 profile_request = ProfileCreateRequest(
                     name=job.profile_name or f"Wizard Profile {job_id}",
-                    description=job.profile_description
-                    or "Created via Voice Cloning Wizard",
+                    description=job.profile_description or "Created via Voice Cloning Wizard",
                     reference_audio_id=job.reference_audio_id,
                     engine=job.engine,
                     quality_mode=job.quality_mode,
@@ -553,9 +532,7 @@ async def process_wizard(job_id: str):
                 )
 
             except Exception as e:
-                logger.error(
-                    f"Voice cloning wizard processing failed: {e}", exc_info=True
-                )
+                logger.error(f"Voice cloning wizard processing failed: {e}", exc_info=True)
                 job.processing_status = "failed"
                 job.error_message = str(e)
                 job.updated_at = datetime.utcnow().isoformat()
@@ -580,9 +557,7 @@ async def finalize_wizard(job_id: str, request: WizardFinalizeRequest):
     """Finalize wizard and create voice profile."""
     try:
         if job_id not in _wizard_jobs:
-            raise HTTPException(
-                status_code=404, detail=f"Wizard job '{job_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Wizard job '{job_id}' not found")
 
         job = _wizard_jobs[job_id]
 
@@ -631,9 +606,7 @@ async def delete_wizard_job(job_id: str):
     """Delete a wizard job."""
     try:
         if job_id not in _wizard_jobs:
-            raise HTTPException(
-                status_code=404, detail=f"Wizard job '{job_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Wizard job '{job_id}' not found")
 
         del _wizard_jobs[job_id]
         logger.info(f"Deleted wizard job: {job_id}")

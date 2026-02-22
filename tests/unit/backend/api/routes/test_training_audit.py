@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import training_audit
 except ImportError:
-    pytest.skip(
-        "Could not import training_audit route module", allow_module_level=True
-    )
+    pytest.skip("Could not import training_audit route module", allow_module_level=True)
 
 
 class TestTrainingAuditRouteImports:
@@ -25,12 +23,8 @@ class TestTrainingAuditRouteImports:
 
     def test_training_audit_module_imports(self):
         """Test training_audit module can be imported."""
-        assert (
-            training_audit is not None
-        ), "Failed to import training_audit module"
-        assert hasattr(
-            training_audit, "router"
-        ), "training_audit module missing router"
+        assert training_audit is not None, "Failed to import training_audit module"
+        assert hasattr(training_audit, "router"), "training_audit module missing router"
 
 
 class TestTrainingAuditRouteHandlers:
@@ -39,9 +33,7 @@ class TestTrainingAuditRouteHandlers:
     def test_audit_training_handler_exists(self):
         """Test audit_training handler exists."""
         if hasattr(training_audit, "audit_training"):
-            assert callable(
-                training_audit.audit_training
-            ), "audit_training is not callable"
+            assert callable(training_audit.audit_training), "audit_training is not callable"
 
 
 class TestTrainingAuditRouter:
@@ -62,4 +54,3 @@ class TestTrainingAuditRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

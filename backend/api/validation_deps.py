@@ -52,4 +52,3 @@ def optimized_validate_dependency(model: type[T]):
         return get_validator(model)
 
     return _get_validator
-

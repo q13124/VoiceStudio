@@ -57,16 +57,13 @@ async def score(req: DatasetScoreRequest) -> list[ScoreResult]:
         # Validate clip paths/IDs
         for clip in req.clips:
             if not clip or not clip.strip():
-                raise HTTPException(
-                    status_code=400, detail="Clip paths/IDs cannot be empty"
-                )
+                raise HTTPException(status_code=400, detail="Clip paths/IDs cannot be empty")
 
         if not HAS_AUDIO_PROCESSING:
             raise HTTPException(
                 status_code=503,
                 detail=(
-                    "Audio processing libraries not available. "
-                    "Install required dependencies."
+                    "Audio processing libraries not available. " "Install required dependencies."
                 ),
             )
 
@@ -83,16 +80,12 @@ async def score(req: DatasetScoreRequest) -> list[ScoreResult]:
                         clip_path = _audio_storage[clip]
                     else:
                         logger.warning(f"Clip not found: {clip}")
-                        results.append(
-                            ScoreResult(clip=clip, snr=0.0, lufs=-70.0, quality=0.0)
-                        )
+                        results.append(ScoreResult(clip=clip, snr=0.0, lufs=-70.0, quality=0.0))
                         continue
 
                 if not os.path.exists(clip_path):
                     logger.warning(f"Audio file not found: {clip_path}")
-                    results.append(
-                        ScoreResult(clip=clip, snr=0.0, lufs=-70.0, quality=0.0)
-                    )
+                    results.append(ScoreResult(clip=clip, snr=0.0, lufs=-70.0, quality=0.0))
                     continue
 
                 # Load audio file
@@ -143,9 +136,7 @@ async def score(req: DatasetScoreRequest) -> list[ScoreResult]:
                 # Closer to -23 is better
                 optimal_lufs = -23.0
                 lufs_diff = abs(lufs - optimal_lufs)
-                lufs_score = max(
-                    0.0, 1.0 - (lufs_diff / 47.0)
-                )  # 47 = range from -70 to -23
+                lufs_score = max(0.0, 1.0 - (lufs_diff / 47.0))  # 47 = range from -70 to -23
 
                 # Combined quality score (weighted average)
                 quality = (snr_score * 0.6) + (lufs_score * 0.4)
@@ -169,9 +160,7 @@ async def score(req: DatasetScoreRequest) -> list[ScoreResult]:
         raise
     except Exception as e:
         logger.error(f"Failed to score dataset: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to score dataset: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to score dataset: {e!s}") from e
 
 
 @router.post("/cull", response_model=ApiOk)
@@ -193,8 +182,7 @@ async def cull(req: DatasetCullRequest) -> ApiOk:
             raise HTTPException(
                 status_code=503,
                 detail=(
-                    "Audio processing libraries not available. "
-                    "Install required dependencies."
+                    "Audio processing libraries not available. " "Install required dependencies."
                 ),
             )
 
@@ -203,8 +191,7 @@ async def cull(req: DatasetCullRequest) -> ApiOk:
         if not clips:
             # In production, load clips from dataset storage
             logger.warning(
-                f"No clips provided for dataset {dataset_id}, "
-                "attempting to load from storage"
+                f"No clips provided for dataset {dataset_id}, " "attempting to load from storage"
             )
             # Load clips from dataset storage when available
 
@@ -224,9 +211,7 @@ async def cull(req: DatasetCullRequest) -> ApiOk:
 
         for result in score_results:
             should_cull = (
-                result.quality < min_quality
-                or result.snr < min_snr
-                or result.lufs > max_lufs
+                result.quality < min_quality or result.snr < min_snr or result.lufs > max_lufs
             )
 
             if should_cull:
@@ -254,9 +239,7 @@ async def cull(req: DatasetCullRequest) -> ApiOk:
         raise
     except Exception as e:
         logger.error(f"Failed to cull dataset: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to cull dataset: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to cull dataset: {e!s}") from e
 
 
 # Pydantic models for analysis and export
@@ -373,9 +356,7 @@ def _validate_dataset(clips: list[str]) -> DatasetValidationResult:
                     errors.append(f"Clip is empty: {clip}")
                     continue
                 if sample_rate < 8000 or sample_rate > 192000:
-                    warnings.append(
-                        f"Clip has unusual sample rate: {clip} " f"({sample_rate} Hz)"
-                    )
+                    warnings.append(f"Clip has unusual sample rate: {clip} " f"({sample_rate} Hz)")
                 valid_clip_count += 1
             except Exception as e:
                 errors.append(f"Failed to load clip {clip}: {e!s}")
@@ -415,9 +396,7 @@ async def validate_dataset(req: DatasetScoreRequest) -> DatasetValidationResult:
 
     except Exception as e:
         logger.error(f"Failed to validate dataset: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to validate dataset: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to validate dataset: {e!s}") from e
 
 
 @router.post("/analyze", response_model=DatasetAnalysisResult)
@@ -569,9 +548,7 @@ async def analyze_dataset(req: DatasetScoreRequest) -> DatasetAnalysisResult:
         raise
     except Exception as e:
         logger.error(f"Failed to analyze dataset: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to analyze dataset: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to analyze dataset: {e!s}") from e
 
 
 @router.post("/export")
@@ -592,19 +569,13 @@ async def export_dataset(req: DatasetExportRequest):
         if req.output_path:
             output_path = req.output_path
         else:
-            export_dir = os.path.join(
-                os.path.expanduser("~"), "VoiceStudio", "exports", "datasets"
-            )
+            export_dir = os.path.join(os.path.expanduser("~"), "VoiceStudio", "exports", "datasets")
             os.makedirs(export_dir, exist_ok=True)
             timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
             if req.format == "zip":
-                output_path = os.path.join(
-                    export_dir, f"{req.dataset_id}_{timestamp}.zip"
-                )
+                output_path = os.path.join(export_dir, f"{req.dataset_id}_{timestamp}.zip")
             else:
-                output_path = os.path.join(
-                    export_dir, f"{req.dataset_id}_{timestamp}.json"
-                )
+                output_path = os.path.join(export_dir, f"{req.dataset_id}_{timestamp}.json")
 
         if req.format == "zip":
             # Create ZIP archive with audio files
@@ -651,9 +622,7 @@ async def export_dataset(req: DatasetExportRequest):
                                             "quality": score_results[0].quality,
                                         }
                                 except Exception as e:
-                                    logger.warning(
-                                        f"Failed to score clip for export: {e}"
-                                    )
+                                    logger.warning(f"Failed to score clip for export: {e}")
 
                             metadata["clips"].append(clip_info)
 
@@ -725,6 +694,4 @@ async def export_dataset(req: DatasetExportRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to export dataset: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to export dataset: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to export dataset: {e!s}") from e

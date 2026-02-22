@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.engines import router_optimized
 except ImportError:
-    pytest.skip(
-        "Could not import router_optimized", allow_module_level=True
-    )
+    pytest.skip("Could not import router_optimized", allow_module_level=True)
 
 
 class TestRouterOptimizedImports:
@@ -25,16 +23,12 @@ class TestRouterOptimizedImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            router_optimized is not None
-        ), "Failed to import router_optimized module"
+        assert router_optimized is not None, "Failed to import router_optimized module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
         classes = [
-            name
-            for name in dir(router_optimized)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(router_optimized) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "module should have classes"
 
@@ -46,9 +40,7 @@ class TestRouterOptimizedClasses:
         """Test OptimizedEngineRouter class exists."""
         if hasattr(router_optimized, "OptimizedEngineRouter"):
             cls = router_optimized.OptimizedEngineRouter
-            assert isinstance(
-                cls, type
-            ), "OptimizedEngineRouter should be a class"
+            assert isinstance(cls, type), "OptimizedEngineRouter should be a class"
 
 
 if __name__ == "__main__":

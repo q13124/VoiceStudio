@@ -52,4 +52,3 @@ __all__ = [
     "get_structured_logger",
     "setup_structured_logging",
 ]
-

@@ -19,14 +19,18 @@ from app.core.engines.quality_metrics import (
 )
 
 
-def generate_test_audio(duration_seconds: float = 1.0, frequency: float = 440.0, sample_rate: int = 22050) -> np.ndarray:
+def generate_test_audio(
+    duration_seconds: float = 1.0, frequency: float = 440.0, sample_rate: int = 22050
+) -> np.ndarray:
     """Generate test audio signal."""
     t = np.linspace(0, duration_seconds, int(sample_rate * duration_seconds))
     audio = np.sin(2 * np.pi * frequency * t)
     return audio.astype(np.float32)
 
 
-def generate_noisy_audio(duration_seconds: float = 1.0, noise_level: float = 0.1, sample_rate: int = 22050) -> np.ndarray:
+def generate_noisy_audio(
+    duration_seconds: float = 1.0, noise_level: float = 0.1, sample_rate: int = 22050
+) -> np.ndarray:
     """Generate noisy audio signal."""
     signal = generate_test_audio(duration_seconds, 440.0, sample_rate)
     noise = np.random.normal(0, noise_level, len(signal))
@@ -208,4 +212,3 @@ class TestClippingRatio:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

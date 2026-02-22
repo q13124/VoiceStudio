@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ParlerTTSConfig:
     """Configuration for Parler-TTS."""
+
     model_name: str = "parler-tts/parler-tts-mini-v1"
     use_gpu: bool = True
     sample_rate: int = 44100
@@ -108,6 +109,7 @@ class ParlerTTSEngine(EngineProtocol):
 
         try:
             import torch
+
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except ImportError:
@@ -137,7 +139,9 @@ class ParlerTTSEngine(EngineProtocol):
         # Graceful degradation: Generate silence when parler-tts library is not installed.
         # To enable full functionality, install parler-tts: pip install parler-tts
         # See: https://github.com/huggingface/parler-tts for installation instructions.
-        logger.warning("Parler-TTS model not loaded - returning silence. Install parler-tts for actual synthesis.")
+        logger.warning(
+            "Parler-TTS model not loaded - returning silence. Install parler-tts for actual synthesis."
+        )
         duration = len(text) * 0.06
         samples = int(duration * self.config.sample_rate)
         return np.zeros(samples, dtype=np.float32)

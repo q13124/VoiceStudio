@@ -42,9 +42,7 @@ def get_openapi_schema() -> dict:
         return schema
     except Exception as e:
         logger.error(f"Failed to generate OpenAPI schema: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to generate API documentation"
-        )
+        raise HTTPException(status_code=500, detail="Failed to generate API documentation")
 
 
 @router.get("/validate", summary="Validate API documentation")
@@ -108,13 +106,8 @@ def get_documentation_stats() -> dict[str, Any]:
                         if "responses" in operation:
                             for _status_code, response in operation["responses"].items():
                                 if "content" in response:
-                                    for _content_type, content in response[
-                                        "content"
-                                    ].items():
-                                        if (
-                                            "example" in content
-                                            or "examples" in content
-                                        ):
+                                    for _content_type, content in response["content"].items():
+                                        if "example" in content or "examples" in content:
                                             example_count += 1
                                             break
 
@@ -125,12 +118,8 @@ def get_documentation_stats() -> dict[str, Any]:
             "documentation_coverage": (
                 documented_count / endpoint_count if endpoint_count > 0 else 0.0
             ),
-            "example_coverage": (
-                example_count / endpoint_count if endpoint_count > 0 else 0.0
-            ),
+            "example_coverage": (example_count / endpoint_count if endpoint_count > 0 else 0.0),
         }
     except Exception as e:
         logger.error(f"Failed to get documentation stats: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to get documentation statistics"
-        )
+        raise HTTPException(status_code=500, detail="Failed to get documentation statistics")

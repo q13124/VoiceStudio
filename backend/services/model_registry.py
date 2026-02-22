@@ -83,9 +83,7 @@ class EngineModelState:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> EngineModelState:
         """Create from dictionary."""
-        artifacts = [
-            ModelArtifact.from_dict(a) for a in data.get("artifacts", [])
-        ]
+        artifacts = [ModelArtifact.from_dict(a) for a in data.get("artifacts", [])]
         return cls(
             engine_id=data["engine_id"],
             active_model=data.get("active_model"),
@@ -130,18 +128,56 @@ class ModelRegistryService:
                     self._registry[engine_id] = EngineModelState.from_dict(
                         {"engine_id": engine_id, **state_data}
                     )
-                logger.info(
-                    f"Model registry loaded: {len(self._registry)} engines"
-                )
+                logger.info(f"Model registry loaded: {len(self._registry)} engines")
             except (json.JSONDecodeError, OSError) as e:
                 logger.warning(f"Failed to load model registry: {e}")
                 self._registry = {}
         else:
             self._registry = {}
+            self._seed_from_config()
             self._seed_from_index()
 
+    def _seed_from_config(self) -> None:
+        """Seed registry from engines/config.json installed engines (Phase 10 WS2)."""
+        config_path = Path(__file__).resolve().parents[2] / "engines" / "config.json"
+        if not config_path.exists():
+            return
+        try:
+            with open(config_path, encoding="utf-8") as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            logger.debug(f"Could not load engines/config.json: {e}")
+            return
+
+        installed = data.get("installed", [])
+        if not installed:
+            return
+
+        models_path = get_path("models")
+        for engine_id in installed:
+            if engine_id in self._registry:
+                continue
+            engine_path = models_path / engine_id
+            artifact = ModelArtifact(
+                engine_id=engine_id,
+                model_name="default",
+                version="1.0",
+                path=str(engine_path),
+                size_bytes=0,
+                sha256="",
+                status="available",
+                registered_at=datetime.now(timezone.utc).isoformat(),
+                metadata={"source": "engines/config.json"},
+            )
+            self._registry[engine_id] = EngineModelState(
+                engine_id=engine_id,
+                artifacts=[artifact],
+            )
+        self._save()
+        logger.info(f"Model registry seeded from config: {len(installed)} engines")
+
     def _seed_from_index(self) -> None:
-        """Seed registry from engines/models.index.json if present."""
+        """Seed registry from engines/models.index.json if present (adds to existing)."""
         index_path = Path("engines/models.index.json")
         if not index_path.exists():
             return
@@ -165,9 +201,7 @@ class ModelRegistryService:
                     metadata={"source": "models.index.json"},
                 )
                 if engine not in self._registry:
-                    self._registry[engine] = EngineModelState(
-                        engine_id=engine, artifacts=[]
-                    )
+                    self._registry[engine] = EngineModelState(engine_id=engine, artifacts=[])
                 self._registry[engine].artifacts.append(artifact)
             self._save()
         except (json.JSONDecodeError, OSError) as e:
@@ -214,18 +248,19 @@ class ModelRegistryService:
         """
         result: list[dict[str, Any]] = []
         engines_to_include = (
-            self._registry[e] for e in self._registry
-            if engine_id is None or e == engine_id
+            self._registry[e] for e in self._registry if engine_id is None or e == engine_id
         )
         for state in engines_to_include:
             for art in state.artifacts:
-                result.append({
-                    **art.to_dict(),
-                    "active": (
-                        art.model_name == state.active_model
-                        and art.version == state.active_version
-                    ),
-                })
+                result.append(
+                    {
+                        **art.to_dict(),
+                        "active": (
+                            art.model_name == state.active_model
+                            and art.version == state.active_version
+                        ),
+                    }
+                )
         return result
 
     def get_engine_models(self, engine_id: str) -> dict[str, Any]:
@@ -267,9 +302,9 @@ class ModelRegistryService:
 
         state = self._registry[engine_id]
         candidates = [
-            a for a in state.artifacts
-            if a.model_name == model_name
-            and (version is None or a.version == version)
+            a
+            for a in state.artifacts
+            if a.model_name == model_name and (version is None or a.version == version)
         ]
         if not candidates:
             # Register as new artifact if path exists
@@ -306,9 +341,7 @@ class ModelRegistryService:
                 else ("archived" if a.status == "active" else a.status)
             )
         self._save()
-        logger.info(
-            f"Activated model {engine_id}/{model_name} v{target.version}"
-        )
+        logger.info(f"Activated model {engine_id}/{model_name} v{target.version}")
         return self.get_engine_models(engine_id)
 
     def rollback(self, engine_id: str) -> dict[str, Any]:
@@ -323,13 +356,9 @@ class ModelRegistryService:
 
         state = self._registry[engine_id]
         if not state.previous_model or not state.previous_version:
-            raise ValueError(
-                f"No previous model to rollback to for {engine_id}"
-            )
+            raise ValueError(f"No previous model to rollback to for {engine_id}")
 
-        return self.activate_model(
-            engine_id, state.previous_model, state.previous_version
-        )
+        return self.activate_model(engine_id, state.previous_model, state.previous_version)
 
     def register_artifact(
         self,
@@ -352,8 +381,7 @@ class ModelRegistryService:
 
         state = self._registry[engine_id]
         existing = [
-            a for a in state.artifacts
-            if a.model_name == model_name and a.version == version
+            a for a in state.artifacts if a.model_name == model_name and a.version == version
         ]
         if existing:
             return existing[0]

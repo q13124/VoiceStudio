@@ -91,9 +91,7 @@ class TestDeepfilternet:
             import deepfilternet
 
             # Test that we can access the module
-            assert hasattr(deepfilternet, "__version__") or hasattr(
-                deepfilternet, "__file__"
-            )
+            assert hasattr(deepfilternet, "__version__") or hasattr(deepfilternet, "__file__")
             logger.info("deepfilternet basic functionality verified")
         except ImportError:
             pytest.skip("deepfilternet not installed")
@@ -168,9 +166,7 @@ class TestAudiomentations:
             import audiomentations
 
             # Test that we can access the module
-            assert hasattr(audiomentations, "__version__") or hasattr(
-                audiomentations, "__file__"
-            )
+            assert hasattr(audiomentations, "__version__") or hasattr(audiomentations, "__file__")
             logger.info("audiomentations basic functionality verified")
         except ImportError:
             pytest.skip("audiomentations not installed")
@@ -217,9 +213,7 @@ class TestResampyPyrubberband:
             import pyrubberband
 
             # Test that we can access the module
-            assert hasattr(pyrubberband, "time_stretch") or hasattr(
-                pyrubberband, "__file__"
-            )
+            assert hasattr(pyrubberband, "time_stretch") or hasattr(pyrubberband, "__file__")
             logger.info("pyrubberband basic functionality verified")
         except ImportError:
             pytest.skip("pyrubberband not installed")
@@ -343,9 +337,7 @@ class TestRVCLibraries:
             try:
                 import faiss_cpu
 
-                assert hasattr(faiss_cpu, "IndexFlatL2") or hasattr(
-                    faiss_cpu, "__file__"
-                )
+                assert hasattr(faiss_cpu, "IndexFlatL2") or hasattr(faiss_cpu, "__file__")
                 logger.info("faiss_cpu basic functionality verified")
             except ImportError:
                 pytest.skip("faiss/faiss_cpu not installed")

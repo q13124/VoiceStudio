@@ -60,33 +60,40 @@ def mock_breaker_stats():
 @pytest.fixture
 def health_client(mock_health_checker, mock_engine_service, mock_breaker_stats):
     """Create test client with mocked dependencies."""
-    with patch(
-        "backend.api.routes.health.get_health_checker",
-        return_value=mock_health_checker,
-    ), patch(
-        "backend.api.routes.health.get_engine_service",
-        return_value=mock_engine_service,
-    ), patch(
-        "backend.api.routes.health.get_engine_breaker_stats",
-        return_value=mock_breaker_stats,
-    ), patch(
-        "backend.api.routes.health._check_database",
-        return_value=True,
-    ), patch(
-        "backend.api.routes.health._check_gpu",
-        return_value={
-            "status": "healthy",
-            "available": True,
-            "device_count": 1,
-            "device_name": "NVIDIA GeForce RTX 3080",
-        },
-    ), patch(
-        "backend.api.routes.health._check_engines",
-        return_value={
-            "status": "healthy",
-            "available_count": 2,
-            "engines": ["xtts", "piper"],
-        },
+    with (
+        patch(
+            "backend.api.routes.health.get_health_checker",
+            return_value=mock_health_checker,
+        ),
+        patch(
+            "backend.api.routes.health.get_engine_service",
+            return_value=mock_engine_service,
+        ),
+        patch(
+            "backend.api.routes.health.get_engine_breaker_stats",
+            return_value=mock_breaker_stats,
+        ),
+        patch(
+            "backend.api.routes.health._check_database",
+            return_value=True,
+        ),
+        patch(
+            "backend.api.routes.health._check_gpu",
+            return_value={
+                "status": "healthy",
+                "available": True,
+                "device_count": 1,
+                "device_name": "NVIDIA GeForce RTX 3080",
+            },
+        ),
+        patch(
+            "backend.api.routes.health._check_engines",
+            return_value={
+                "status": "healthy",
+                "available_count": 2,
+                "engines": ["xtts", "piper"],
+            },
+        ),
     ):
         from backend.api.routes.health import router
 

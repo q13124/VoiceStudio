@@ -151,11 +151,7 @@ async def chat_with_assistant(request: ChatRequest):
         conversation_id = f"conv-{uuid.uuid4().hex[:8]}"
         conversation = Conversation(
             conversation_id=conversation_id,
-            title=(
-                request.message[:50] + "..."
-                if len(request.message) > 50
-                else request.message
-            ),
+            title=(request.message[:50] + "..." if len(request.message) > 50 else request.message),
             messages=[],
             created=now,
             updated=now,
@@ -180,7 +176,7 @@ async def chat_with_assistant(request: ChatRequest):
             "I'm currently unable to connect to a language model. "
             "To enable the AI assistant, please start Ollama locally "
             "(ollama serve) or configure an API key for a cloud provider. "
-            f"\n\nYour message: \"{request.message}\""
+            f'\n\nYour message: "{request.message}"'
         )
         suggestions = [
             "Install Ollama: https://ollama.com",
@@ -222,11 +218,13 @@ async def chat_with_assistant(request: ChatRequest):
                 tool_results = await registry.process_tool_calls(response.tool_calls)
                 # Generate follow-up response with tool results
                 for result in tool_results:
-                    llm_messages.append(Message(
-                        role=MessageRole.TOOL,
-                        content=result["content"],
-                        tool_call_id=result.get("tool_call_id", ""),
-                    ))
+                    llm_messages.append(
+                        Message(
+                            role=MessageRole.TOOL,
+                            content=result["content"],
+                            tool_call_id=result.get("tool_call_id", ""),
+                        )
+                    )
                 follow_up = await provider.generate(
                     messages=llm_messages,
                     config=config,
@@ -281,9 +279,7 @@ async def list_conversations():
 async def get_conversation(conversation_id: str):
     """Get a conversation by ID."""
     if conversation_id not in _conversations:
-        raise HTTPException(
-            status_code=404, detail="Conversation not found"
-        )
+        raise HTTPException(status_code=404, detail="Conversation not found")
     return Conversation(**_conversations[conversation_id])
 
 
@@ -291,9 +287,7 @@ async def get_conversation(conversation_id: str):
 async def delete_conversation(conversation_id: str):
     """Delete a conversation."""
     if conversation_id not in _conversations:
-        raise HTTPException(
-            status_code=404, detail="Conversation not found"
-        )
+        raise HTTPException(status_code=404, detail="Conversation not found")
     del _conversations[conversation_id]
     logger.info(f"Deleted conversation: {conversation_id}")
     return {"success": True}
@@ -311,8 +305,7 @@ async def suggest_tasks(
         raise HTTPException(
             status_code=503,
             detail=(
-                "No LLM provider available. Start Ollama (ollama serve) "
-                "or configure an API key."
+                "No LLM provider available. Start Ollama (ollama serve) " "or configure an API key."
             ),
         )
 
@@ -348,26 +341,30 @@ async def suggest_tasks(
                 except (ValueError, IndexError):
                     est_time = None
 
-                tasks.append(TaskSuggestion(
-                    task_id=f"task-{uuid.uuid4().hex[:8]}",
-                    title=parts[0],
-                    description=parts[1],
-                    category=parts[2].lower(),
-                    priority=parts[3].lower(),
-                    estimated_time=est_time,
-                    confidence=0.75,
-                ))
+                tasks.append(
+                    TaskSuggestion(
+                        task_id=f"task-{uuid.uuid4().hex[:8]}",
+                        title=parts[0],
+                        description=parts[1],
+                        category=parts[2].lower(),
+                        priority=parts[3].lower(),
+                        estimated_time=est_time,
+                        confidence=0.75,
+                    )
+                )
 
         if not tasks:
             # Fallback: return the raw response as a single suggestion
-            tasks.append(TaskSuggestion(
-                task_id=f"task-{uuid.uuid4().hex[:8]}",
-                title="AI Suggestion",
-                description=response.content[:200],
-                category="general",
-                priority="medium",
-                confidence=0.5,
-            ))
+            tasks.append(
+                TaskSuggestion(
+                    task_id=f"task-{uuid.uuid4().hex[:8]}",
+                    title="AI Suggestion",
+                    description=response.content[:200],
+                    category="general",
+                    priority="medium",
+                    confidence=0.5,
+                )
+            )
 
         return tasks
 

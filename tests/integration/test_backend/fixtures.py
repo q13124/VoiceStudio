@@ -201,10 +201,13 @@ class ServiceTestContext:
     def mock_engine_service(self, **overrides) -> MagicMock:
         """Create mock engine service."""
         mock = MagicMock()
-        mock.get_engines.return_value = overrides.get("engines", [
-            {"id": "xtts_v2", "name": "XTTS v2", "status": "ready"},
-            {"id": "chatterbox", "name": "Chatterbox", "status": "ready"},
-        ])
+        mock.get_engines.return_value = overrides.get(
+            "engines",
+            [
+                {"id": "xtts_v2", "name": "XTTS v2", "status": "ready"},
+                {"id": "chatterbox", "name": "Chatterbox", "status": "ready"},
+            ],
+        )
         mock.get_engine_status.return_value = overrides.get("status", "ready")
         mock.synthesize.return_value = overrides.get("audio_id", "test-audio-123")
         self.mocks["engine_service"] = mock
@@ -214,11 +217,14 @@ class ServiceTestContext:
         """Create mock storage service."""
         mock = MagicMock()
         mock.save_project.return_value = overrides.get("project_id", "test-project-123")
-        mock.load_project.return_value = overrides.get("project", {
-            "id": "test-project-123",
-            "name": "Test Project",
-            "created_at": datetime.utcnow().isoformat(),
-        })
+        mock.load_project.return_value = overrides.get(
+            "project",
+            {
+                "id": "test-project-123",
+                "name": "Test Project",
+                "created_at": datetime.utcnow().isoformat(),
+            },
+        )
         mock.list_projects.return_value = overrides.get("projects", [])
         self.mocks["storage_service"] = mock
         return mock
@@ -228,11 +234,14 @@ class ServiceTestContext:
         mock = MagicMock()
         mock.save_audio.return_value = overrides.get("audio_id", "test-audio-123")
         mock.load_audio.return_value = overrides.get("audio_data", b"\x00" * 1000)
-        mock.get_audio_metadata.return_value = overrides.get("metadata", {
-            "id": "test-audio-123",
-            "duration": 5.0,
-            "sample_rate": 22050,
-        })
+        mock.get_audio_metadata.return_value = overrides.get(
+            "metadata",
+            {
+                "id": "test-audio-123",
+                "duration": 5.0,
+                "sample_rate": 22050,
+            },
+        )
         self.mocks["audio_service"] = mock
         return mock
 
@@ -240,11 +249,14 @@ class ServiceTestContext:
         """Create mock profile service."""
         mock = MagicMock()
         mock.create_profile.return_value = overrides.get("profile_id", "test-profile-123")
-        mock.get_profile.return_value = overrides.get("profile", {
-            "id": "test-profile-123",
-            "name": "Test Profile",
-            "language": "en",
-        })
+        mock.get_profile.return_value = overrides.get(
+            "profile",
+            {
+                "id": "test-profile-123",
+                "name": "Test Profile",
+                "language": "en",
+            },
+        )
         mock.list_profiles.return_value = overrides.get("profiles", [])
         self.mocks["profile_service"] = mock
         return mock
@@ -313,10 +325,12 @@ def create_test_client(
     if app is None:
         try:
             from backend.api.main import app as fastapi_app
+
             app = fastapi_app
         except ImportError:
             # Create minimal mock app
             from fastapi import FastAPI
+
             app = FastAPI()
 
             @app.get("/api/health")

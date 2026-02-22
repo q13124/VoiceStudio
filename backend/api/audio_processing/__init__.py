@@ -14,4 +14,3 @@ __all__ = [
     "PitchTracker",
     "WaveletAnalyzer",
 ]
-

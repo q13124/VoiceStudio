@@ -9,7 +9,8 @@ from pathlib import Path
 
 import requests
 
-sys.stdout.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding="utf-8")
+
 
 def main():
     """Test Import button with WinAppDriver."""
@@ -25,9 +26,10 @@ def main():
     except Exception as e:
         print(f"WinAppDriver not running: {e}")
         print("Starting WinAppDriver...")
-        subprocess.Popen([
-            r"C:\Program Files (x86)\Windows Application Driver\WinAppDriver.exe"
-        ], creationflags=subprocess.CREATE_NEW_CONSOLE)
+        subprocess.Popen(
+            [r"C:\Program Files (x86)\Windows Application Driver\WinAppDriver.exe"],
+            creationflags=subprocess.CREATE_NEW_CONSOLE,
+        )
         time.sleep(3)
 
     # App path
@@ -44,7 +46,7 @@ def main():
         "desiredCapabilities": {
             "app": app_path,
             "platformName": "Windows",
-            "deviceName": "WindowsPC"
+            "deviceName": "WindowsPC",
         }
     }
 
@@ -72,14 +74,9 @@ def main():
 
         # Try to find Import button by name
         print("\n--- Looking for Import button ---")
-        find_payload = {
-            "using": "name",
-            "value": "Import"
-        }
+        find_payload = {"using": "name", "value": "Import"}
         resp = requests.post(
-            f"{winappdriver_url}/session/{session_id}/element",
-            json=find_payload,
-            timeout=10
+            f"{winappdriver_url}/session/{session_id}/element", json=find_payload, timeout=10
         )
 
         if resp.status_code == 200:
@@ -90,8 +87,7 @@ def main():
             # Click Import button
             print("Clicking Import button...")
             click_resp = requests.post(
-                f"{winappdriver_url}/session/{session_id}/element/{element_id}/click",
-                timeout=10
+                f"{winappdriver_url}/session/{session_id}/element/{element_id}/click", timeout=10
             )
             print(f"Click response: {click_resp.status_code}")
 
@@ -104,8 +100,7 @@ def main():
 
             # List all window handles
             resp = requests.get(
-                f"{winappdriver_url}/session/{session_id}/window/handles",
-                timeout=10
+                f"{winappdriver_url}/session/{session_id}/window/handles", timeout=10
             )
             handles = resp.json().get("value", [])
             print(f"Window handles: {len(handles)}")
@@ -117,11 +112,10 @@ def main():
                     requests.post(
                         f"{winappdriver_url}/session/{session_id}/window",
                         json={"handle": handle},
-                        timeout=5
+                        timeout=5,
                     )
                     title_resp = requests.get(
-                        f"{winappdriver_url}/session/{session_id}/title",
-                        timeout=5
+                        f"{winappdriver_url}/session/{session_id}/title", timeout=5
                     )
                     window_title = title_resp.json().get("value", "")
                     print(f"    Title: {window_title}")
@@ -135,7 +129,7 @@ def main():
                     find_resp = requests.post(
                         f"{winappdriver_url}/session/{session_id}/element",
                         json={"using": "name", "value": elem_name},
-                        timeout=5
+                        timeout=5,
                     )
                     if find_resp.status_code == 200:
                         print(f"Found dialog element: '{elem_name}'")
@@ -149,11 +143,11 @@ def main():
 
             try:
                 resp = requests.get(
-                    f"{winappdriver_url}/session/{session_id}/screenshot",
-                    timeout=10
+                    f"{winappdriver_url}/session/{session_id}/screenshot", timeout=10
                 )
                 if resp.status_code == 200:
                     import base64
+
                     screenshot_data = resp.json().get("value", "")
                     if screenshot_data:
                         with open(screenshot_path, "wb") as f:
@@ -168,14 +162,9 @@ def main():
 
             # Try XPath search
             print("\n--- Trying XPath search for Import ---")
-            find_payload = {
-                "using": "xpath",
-                "value": "//*[contains(@Name, 'Import')]"
-            }
+            find_payload = {"using": "xpath", "value": "//*[contains(@Name, 'Import')]"}
             resp = requests.post(
-                f"{winappdriver_url}/session/{session_id}/elements",
-                json=find_payload,
-                timeout=10
+                f"{winappdriver_url}/session/{session_id}/elements", json=find_payload, timeout=10
             )
             if resp.status_code == 200:
                 elements = resp.json().get("value", [])
@@ -185,7 +174,7 @@ def main():
                     # Get element name
                     name_resp = requests.get(
                         f"{winappdriver_url}/session/{session_id}/element/{elem_id}/attribute/Name",
-                        timeout=5
+                        timeout=5,
                     )
                     name = name_resp.json().get("value", "")
                     print(f"  [{i}] Name: {name}")
@@ -196,7 +185,7 @@ def main():
                     print("\n--- Clicking Import element ---")
                     click_resp = requests.post(
                         f"{winappdriver_url}/session/{session_id}/element/{element_id}/click",
-                        timeout=10
+                        timeout=10,
                     )
                     print(f"Click response: {click_resp.status_code}")
 
@@ -209,8 +198,7 @@ def main():
 
                     # List all window handles
                     resp = requests.get(
-                        f"{winappdriver_url}/session/{session_id}/window/handles",
-                        timeout=10
+                        f"{winappdriver_url}/session/{session_id}/window/handles", timeout=10
                     )
                     handles = resp.json().get("value", [])
                     print(f"Window handles: {len(handles)}")
@@ -221,11 +209,10 @@ def main():
                             requests.post(
                                 f"{winappdriver_url}/session/{session_id}/window",
                                 json={"handle": handle},
-                                timeout=5
+                                timeout=5,
                             )
                             title_resp = requests.get(
-                                f"{winappdriver_url}/session/{session_id}/title",
-                                timeout=5
+                                f"{winappdriver_url}/session/{session_id}/title", timeout=5
                             )
                             window_title = title_resp.json().get("value", "")
                             print(f"    Title: {window_title}")
@@ -239,7 +226,7 @@ def main():
                             find_resp = requests.post(
                                 f"{winappdriver_url}/session/{session_id}/element",
                                 json={"using": "name", "value": elem_name},
-                                timeout=5
+                                timeout=5,
                             )
                             if find_resp.status_code == 200:
                                 print(f"Found dialog element: '{elem_name}'")
@@ -253,11 +240,11 @@ def main():
 
                     try:
                         resp = requests.get(
-                            f"{winappdriver_url}/session/{session_id}/screenshot",
-                            timeout=10
+                            f"{winappdriver_url}/session/{session_id}/screenshot", timeout=10
                         )
                         if resp.status_code == 200:
                             import base64
+
                             screenshot_data = resp.json().get("value", "")
                             if screenshot_data:
                                 with open(screenshot_path, "wb") as f:
@@ -275,8 +262,10 @@ def main():
     except Exception as e:
         print(f"Error: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

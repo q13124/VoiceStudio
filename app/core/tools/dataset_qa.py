@@ -117,9 +117,7 @@ class DatasetQA:
         # Check file extension
         valid_extensions = {".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac"}
         if audio_path.suffix.lower() not in valid_extensions:
-            results["warnings"].append(
-                f"Unusual file extension: {audio_path.suffix}"
-            )
+            results["warnings"].append(f"Unusual file extension: {audio_path.suffix}")
 
         # Load and analyze audio
         if HAS_LIBROSA:
@@ -154,9 +152,7 @@ class DatasetQA:
                 if HAS_AUDIO_UTILS:
                     try:
                         silence_regions = detect_silence(audio, sr)
-                        silence_duration = sum(
-                            end - start for start, end in silence_regions
-                        )
+                        silence_duration = sum(end - start for start, end in silence_regions)
                         silence_ratio = silence_duration / duration if duration > 0 else 0.0
 
                         if silence_ratio > self.max_silence_ratio:
@@ -185,9 +181,7 @@ class DatasetQA:
             except Exception as e:
                 results["errors"].append(f"Failed to load audio: {e!s}")
         else:
-            results["warnings"].append(
-                "librosa not available, limited validation"
-            )
+            results["warnings"].append("librosa not available, limited validation")
 
         # File is valid if no errors
         results["valid"] = len(results["errors"]) == 0
@@ -303,18 +297,14 @@ class DatasetQA:
 
         # Overall warnings
         if invalid_count > 0:
-            results["warnings"].append(
-                f"{invalid_count} invalid files found in dataset"
-            )
+            results["warnings"].append(f"{invalid_count} invalid files found in dataset")
 
         if valid_count == 0:
             results["errors"].append("No valid audio files found in dataset")
 
         return results
 
-    def check_duplicates(
-        self, dataset_path: str | Path, recursive: bool = True
-    ) -> dict[str, Any]:
+    def check_duplicates(self, dataset_path: str | Path, recursive: bool = True) -> dict[str, Any]:
         """
         Check for duplicate audio files in dataset.
 
@@ -406,7 +396,9 @@ class DatasetQA:
             report_lines.append("-" * 80)
             if "duration" in stats:
                 dur = stats["duration"]
-                report_lines.append(f"Duration: {dur.get('min', 0):.2f}s - {dur.get('max', 0):.2f}s (mean: {dur.get('mean', 0):.2f}s)")
+                report_lines.append(
+                    f"Duration: {dur.get('min', 0):.2f}s - {dur.get('max', 0):.2f}s (mean: {dur.get('mean', 0):.2f}s)"
+                )
                 report_lines.append(f"Total Duration: {dur.get('total', 0):.2f}s")
             if "sample_rate" in stats:
                 sr = stats["sample_rate"]
@@ -414,7 +406,9 @@ class DatasetQA:
                 report_lines.append(f"Unique Sample Rates: {sr.get('unique', [])}")
             if "quality" in stats:
                 qual = stats["quality"]
-                report_lines.append(f"Quality Score: {qual.get('min', 0):.3f} - {qual.get('max', 0):.3f} (mean: {qual.get('mean', 0):.3f})")
+                report_lines.append(
+                    f"Quality Score: {qual.get('min', 0):.3f} - {qual.get('max', 0):.3f} (mean: {qual.get('mean', 0):.3f})"
+                )
             report_lines.append("")
 
         # Errors and warnings
@@ -470,4 +464,3 @@ def create_dataset_qa(
         max_silence_ratio=max_silence_ratio,
         quality_threshold=quality_threshold,
     )
-

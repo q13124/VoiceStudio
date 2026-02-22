@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def reset_cloning_state():
     """Reset cloning state before each test."""
     from backend.api.routes import instant_cloning
+
     instant_cloning._embeddings = {}
     yield
     instant_cloning._embeddings = {}
@@ -22,6 +23,7 @@ def reset_cloning_state():
 def cloning_client():
     """Create test client for instant cloning routes."""
     from backend.api.routes.instant_cloning import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)

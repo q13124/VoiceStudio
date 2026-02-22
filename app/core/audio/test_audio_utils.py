@@ -66,7 +66,7 @@ def audio_with_silence(sample_rate):
     silence1 = np.zeros(int(sample_rate * 0.5))
 
     # Middle 1.0s: signal
-    signal = np.sin(2 * np.pi * 440.0 * t[:int(sample_rate * 1.0)]).astype(np.float32)
+    signal = np.sin(2 * np.pi * 440.0 * t[: int(sample_rate * 1.0)]).astype(np.float32)
 
     # Last 0.5s: silence
     silence2 = np.zeros(int(sample_rate * 0.5))
@@ -84,6 +84,7 @@ def temp_dir():
 
 
 # Core Audio Utilities Tests
+
 
 def test_normalize_lufs_mono(mono_audio, sample_rate):
     """Test LUFS normalization for mono audio"""
@@ -127,10 +128,7 @@ def test_detect_silence(audio_with_silence, sample_rate):
     """Test silence detection"""
     try:
         silence_regions = detect_silence(
-            audio_with_silence,
-            sample_rate,
-            threshold_db=-40.0,
-            min_silence_duration=0.1
+            audio_with_silence, sample_rate, threshold_db=-40.0, min_silence_duration=0.1
         )
 
         assert isinstance(silence_regions, list)
@@ -150,10 +148,7 @@ def test_detect_silence_no_silence(mono_audio, sample_rate):
     """Test silence detection on audio without silence"""
     try:
         silence_regions = detect_silence(
-            mono_audio,
-            sample_rate,
-            threshold_db=-40.0,
-            min_silence_duration=0.1
+            mono_audio, sample_rate, threshold_db=-40.0, min_silence_duration=0.1
         )
 
         # Should return empty list or very few regions
@@ -212,10 +207,7 @@ def test_convert_format(mono_audio, sample_rate, temp_dir):
         # Convert to FLAC
         output_path = Path(temp_dir) / "output.flac"
         result_path = convert_format(
-            input_path,
-            output_path,
-            output_format="flac",
-            sample_rate=sample_rate
+            input_path, output_path, output_format="flac", sample_rate=sample_rate
         )
 
         assert result_path.exists()
@@ -240,10 +232,7 @@ def test_convert_format_resample(mono_audio, sample_rate, temp_dir):
         output_path = Path(temp_dir) / "output.wav"
         target_sr = 16000
         result_path = convert_format(
-            input_path,
-            output_path,
-            output_format="wav",
-            sample_rate=target_sr
+            input_path, output_path, output_format="wav", sample_rate=target_sr
         )
 
         # Verify resampling occurred
@@ -263,12 +252,7 @@ def test_convert_format_channel_conversion(stereo_audio, sample_rate, temp_dir):
 
         # Convert to mono
         output_path = Path(temp_dir) / "output_mono.wav"
-        result_path = convert_format(
-            input_path,
-            output_path,
-            output_format="wav",
-            channels=1
-        )
+        result_path = convert_format(input_path, output_path, output_format="wav", channels=1)
 
         audio_out, _sr_out = sf.read(str(result_path))
         assert len(audio_out.shape) == 1  # Should be mono
@@ -277,6 +261,7 @@ def test_convert_format_channel_conversion(stereo_audio, sample_rate, temp_dir):
 
 
 # Voice Cloning Quality Functions Tests
+
 
 def test_analyze_voice_characteristics(mono_audio, sample_rate):
     """Test voice characteristics analysis"""
@@ -319,7 +304,7 @@ def test_enhance_voice_quality(mono_audio, sample_rate):
             mono_audio,
             sample_rate,
             normalize=True,
-            denoise=False  # Skip denoising if noisereduce not available
+            denoise=False,  # Skip denoising if noisereduce not available
         )
 
         assert enhanced.shape == mono_audio.shape
@@ -332,12 +317,7 @@ def test_enhance_voice_quality(mono_audio, sample_rate):
 def test_enhance_voice_quality_no_normalize(mono_audio, sample_rate):
     """Test enhancement without normalization"""
     try:
-        enhanced = enhance_voice_quality(
-            mono_audio,
-            sample_rate,
-            normalize=False,
-            denoise=False
-        )
+        enhanced = enhance_voice_quality(mono_audio, sample_rate, normalize=False, denoise=False)
 
         assert enhanced.shape == mono_audio.shape
     except ImportError:
@@ -369,12 +349,7 @@ def test_match_voice_profile(mono_audio, sample_rate):
     """Test voice profile matching"""
     try:
         # Use same audio as both reference and target (should match well)
-        match_result = match_voice_profile(
-            mono_audio,
-            mono_audio,
-            sample_rate,
-            sample_rate
-        )
+        match_result = match_voice_profile(mono_audio, mono_audio, sample_rate, sample_rate)
 
         assert isinstance(match_result, dict)
         assert "f0_similarity" in match_result
@@ -399,12 +374,7 @@ def test_match_voice_profile_different_audio(mono_audio, sample_rate):
         t = np.linspace(0, duration, int(sample_rate * duration), False)
         different_audio = np.sin(2 * np.pi * frequency * t).astype(np.float32)
 
-        match_result = match_voice_profile(
-            mono_audio,
-            different_audio,
-            sample_rate,
-            sample_rate
-        )
+        match_result = match_voice_profile(mono_audio, different_audio, sample_rate, sample_rate)
 
         assert isinstance(match_result, dict)
         assert "overall_similarity" in match_result
@@ -420,12 +390,7 @@ def test_match_voice_profile_resampling(mono_audio, sample_rate):
         target_sr = 16000
         target_audio = resample_audio(mono_audio, sample_rate, target_sr)
 
-        match_result = match_voice_profile(
-            mono_audio,
-            target_audio,
-            sample_rate,
-            target_sr
-        )
+        match_result = match_voice_profile(mono_audio, target_audio, sample_rate, target_sr)
 
         assert isinstance(match_result, dict)
         assert "overall_similarity" in match_result
@@ -434,6 +399,7 @@ def test_match_voice_profile_resampling(mono_audio, sample_rate):
 
 
 # Quality Metric Validation Tests
+
 
 def test_quality_metrics_validation(mono_audio, sample_rate):
     """Test that quality metrics are within expected ranges"""
@@ -459,6 +425,7 @@ def test_quality_metrics_validation(mono_audio, sample_rate):
 
 
 # Integration Tests
+
 
 def test_full_pipeline(mono_audio, sample_rate):
     """Test full audio processing pipeline"""
@@ -488,4 +455,3 @@ def test_full_pipeline(mono_audio, sample_rate):
 if __name__ == "__main__":
     # Run tests with pytest
     pytest.main([__file__, "-v"])
-

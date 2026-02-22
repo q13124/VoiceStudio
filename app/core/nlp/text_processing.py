@@ -306,9 +306,7 @@ class TextPreprocessor:
 
         # Sentence segmentation
         if segment_sentences:
-            result["sentences"] = self.sentence_segmentation(
-                result["normalized"], language
-            )
+            result["sentences"] = self.sentence_segmentation(result["normalized"], language)
 
         # Word count
         words = self.word_tokenization(result["normalized"], language)
@@ -352,9 +350,7 @@ class TextPreprocessor:
 
         return " ".join(sentences)
 
-    def phonemize_text(
-        self, text: str, language: str = "en", backend: str = "espeak"
-    ) -> str:
+    def phonemize_text(self, text: str, language: str = "en", backend: str = "espeak") -> str:
         """
         Convert text to phonemes using phonemizer or gruut.
 
@@ -378,9 +374,7 @@ class TextPreprocessor:
                             phonemes.extend(word.phonemes)
                 return " ".join(phonemes)
             except Exception as e:
-                logger.warning(
-                    f"Gruut phonemization failed: {e}. Falling back to phonemizer."
-                )
+                logger.warning(f"Gruut phonemization failed: {e}. Falling back to phonemizer.")
                 backend = "espeak"
 
         if HAS_PHONEMIZER:

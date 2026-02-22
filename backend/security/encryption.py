@@ -29,6 +29,7 @@ ITERATIONS = 100000
 @dataclass
 class EncryptedData:
     """Encrypted data container."""
+
     ciphertext: bytes
     salt: bytes
     nonce: bytes
@@ -37,10 +38,13 @@ class EncryptedData:
     def to_bytes(self) -> bytes:
         """Serialize to bytes."""
         return (
-            len(self.salt).to_bytes(1, "big") + self.salt +
-            len(self.nonce).to_bytes(1, "big") + self.nonce +
-            len(self.tag).to_bytes(1, "big") + self.tag +
-            self.ciphertext
+            len(self.salt).to_bytes(1, "big")
+            + self.salt
+            + len(self.nonce).to_bytes(1, "big")
+            + self.nonce
+            + len(self.tag).to_bytes(1, "big")
+            + self.tag
+            + self.ciphertext
         )
 
     @classmethod
@@ -50,17 +54,17 @@ class EncryptedData:
 
         salt_len = data[pos]
         pos += 1
-        salt = data[pos:pos + salt_len]
+        salt = data[pos : pos + salt_len]
         pos += salt_len
 
         nonce_len = data[pos]
         pos += 1
-        nonce = data[pos:pos + nonce_len]
+        nonce = data[pos : pos + nonce_len]
         pos += nonce_len
 
         tag_len = data[pos]
         pos += 1
-        tag = data[pos:pos + tag_len]
+        tag = data[pos : pos + tag_len]
         pos += tag_len
 
         ciphertext = data[pos:]
@@ -207,17 +211,13 @@ class EncryptionService:
     def _fallback_decrypt(self, encrypted: EncryptedData, key: bytes) -> bytes:
         """Fallback decryption."""
         # Verify tag
-        expected_tag = hmac.new(
-            key, encrypted.ciphertext, hashlib.sha256
-        ).digest()[:TAG_SIZE]
+        expected_tag = hmac.new(key, encrypted.ciphertext, hashlib.sha256).digest()[:TAG_SIZE]
 
         if not hmac.compare_digest(expected_tag, encrypted.tag):
             raise ValueError("Authentication failed")
 
         # Generate keystream
-        keystream = self._generate_keystream(
-            key, encrypted.nonce, len(encrypted.ciphertext)
-        )
+        keystream = self._generate_keystream(key, encrypted.nonce, len(encrypted.ciphertext))
 
         # XOR decryption
         return bytes(a ^ b for a, b in zip(encrypted.ciphertext, keystream))
@@ -233,9 +233,7 @@ class EncryptionService:
         counter = 0
 
         while len(keystream) < length:
-            block = hashlib.sha256(
-                key + nonce + counter.to_bytes(4, "big")
-            ).digest()
+            block = hashlib.sha256(key + nonce + counter.to_bytes(4, "big")).digest()
             keystream += block
             counter += 1
 

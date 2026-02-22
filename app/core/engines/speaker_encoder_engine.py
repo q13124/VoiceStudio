@@ -33,9 +33,7 @@ logger = logging.getLogger(__name__)
 
 # Log cache availability
 if not HAS_MODEL_CACHE:
-    logger.debug(
-        "General model cache not available, using Speaker Encoder-specific cache"
-    )
+    logger.debug("General model cache not available, using Speaker Encoder-specific cache")
 
 # Fallback: Speaker Encoder-specific cache (for backward compatibility)
 _SPEAKER_ENCODER_MODEL_CACHE: OrderedDict = OrderedDict()
@@ -129,9 +127,7 @@ try:
     HAS_RESEMBLYZER = True
 except ImportError:
     HAS_RESEMBLYZER = False
-    logger.warning(
-        "resemblyzer not installed. " "Install with: pip install resemblyzer"
-    )
+    logger.warning("resemblyzer not installed. " "Install with: pip install resemblyzer")
 
 try:
     from speechbrain.inference.speaker import EncoderClassifier
@@ -237,9 +233,7 @@ class SpeakerEncoderEngine(EngineProtocol):
         """Load model with caching support."""
         # Check cache first
         if self.enable_model_caching:
-            cached_encoders = _get_cached_speaker_encoder_model(
-                self.backend, self.device
-            )
+            cached_encoders = _get_cached_speaker_encoder_model(self.backend, self.device)
             if cached_encoders is not None:
                 logger.debug(f"Using cached Speaker Encoder model: {self.backend}")
                 self.resemblyzer_encoder = cached_encoders.get("resemblyzer")
@@ -247,10 +241,7 @@ class SpeakerEncoderEngine(EngineProtocol):
                 self._initialized = True
                 return True
 
-        logger.info(
-            f"Loading Speaker Encoder "
-            f"(backend: {self.backend}, device: {self.device})"
-        )
+        logger.info(f"Loading Speaker Encoder " f"(backend: {self.backend}, device: {self.device})")
 
         # Initialize resemblyzer backend
         if self.backend == "resemblyzer" and HAS_RESEMBLYZER:
@@ -385,13 +376,9 @@ class SpeakerEncoderEngine(EngineProtocol):
 
             # Extract embedding based on backend
             if self.backend == "resemblyzer" and self.resemblyzer_encoder:
-                embedding = self._extract_resemblyzer_embedding(
-                    audio_array, sample_rate
-                )
+                embedding = self._extract_resemblyzer_embedding(audio_array, sample_rate)
             elif self.backend == "speechbrain" and self.speechbrain_encoder:
-                embedding = self._extract_speechbrain_embedding(
-                    audio_array, sample_rate
-                )
+                embedding = self._extract_speechbrain_embedding(audio_array, sample_rate)
             else:
                 logger.error("No valid encoder backend available")
                 return None
@@ -402,18 +389,14 @@ class SpeakerEncoderEngine(EngineProtocol):
             # Extract additional acoustic features if requested
             if extract_features and HAS_LIBROSA:
                 try:
-                    acoustic_features = self._extract_acoustic_features(
-                        audio_array, sample_rate
-                    )
+                    acoustic_features = self._extract_acoustic_features(audio_array, sample_rate)
                     # Concatenate with embedding for richer representation
                     embedding = np.concatenate([embedding, acoustic_features])
                     logger.debug(
                         f"Enhanced embedding with acoustic features: {len(embedding)} dims"
                     )
                 except Exception as e:
-                    logger.debug(
-                        f"Acoustic feature extraction failed: {e}, using base embedding"
-                    )
+                    logger.debug(f"Acoustic feature extraction failed: {e}, using base embedding")
 
             # Normalize embedding if requested
             if normalize:
@@ -502,9 +485,7 @@ class SpeakerEncoderEngine(EngineProtocol):
             logger.error(f"SpeechBrain embedding extraction failed: {e}")
             return None
 
-    def _extract_acoustic_features(
-        self, audio: np.ndarray, sample_rate: int
-    ) -> np.ndarray:
+    def _extract_acoustic_features(self, audio: np.ndarray, sample_rate: int) -> np.ndarray:
         """
         Extract additional acoustic features to enhance speaker embedding.
 
@@ -530,9 +511,7 @@ class SpeakerEncoderEngine(EngineProtocol):
             features.append(np.std(mfcc, axis=1))  # Std across time
 
             # Spectral features
-            spectral_centroid = librosa.feature.spectral_centroid(
-                y=audio, sr=sample_rate
-            )
+            spectral_centroid = librosa.feature.spectral_centroid(y=audio, sr=sample_rate)
             features.append([np.mean(spectral_centroid), np.std(spectral_centroid)])
 
             spectral_rolloff = librosa.feature.spectral_rolloff(y=audio, sr=sample_rate)
@@ -615,9 +594,7 @@ class SpeakerEncoderEngine(EngineProtocol):
             logger.error(f"Speaker comparison failed: {e}")
             return None
 
-    def _cosine_similarity(
-        self, embedding1: np.ndarray, embedding2: np.ndarray
-    ) -> float:
+    def _cosine_similarity(self, embedding1: np.ndarray, embedding2: np.ndarray) -> float:
         """Calculate cosine similarity between embeddings."""
         # Normalize embeddings
         norm1 = np.linalg.norm(embedding1)
@@ -672,9 +649,7 @@ class SpeakerEncoderEngine(EngineProtocol):
 
         # Use ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
-            embeddings = list(
-                executor.map(extract_single, zip(audio_list, sample_rates))
-            )
+            embeddings = list(executor.map(extract_single, zip(audio_list, sample_rates)))
 
         # Clear GPU cache periodically
         if (
@@ -850,9 +825,7 @@ class SpeakerEncoderEngine(EngineProtocol):
             2D or 3D reduced embeddings as numpy array, or None if umap not available
         """
         if not HAS_UMAP or umap is None:
-            logger.warning(
-                "umap-learn not available. " "Install with: pip install umap-learn"
-            )
+            logger.warning("umap-learn not available. " "Install with: pip install umap-learn")
             return None
 
         if not embeddings or len(embeddings) == 0:

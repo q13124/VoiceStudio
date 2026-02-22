@@ -22,12 +22,15 @@ REFERENCE_DIR = Path(__file__).parent.parent.parent / "plugins" / "reference"
 
 try:
     import soundfile as sf
+
     SOUNDFILE_AVAILABLE = True
 except ImportError:
     SOUNDFILE_AVAILABLE = False
 
 
-def _generate_test_wav(path: Path, duration: float = 1.0, sr: int = 22050, add_noise: bool = True) -> Path:
+def _generate_test_wav(
+    path: Path, duration: float = 1.0, sr: int = 22050, add_noise: bool = True
+) -> Path:
     """Generate a test WAV file with a sine wave and optional noise."""
     t = np.linspace(0, duration, int(sr * duration), endpoint=False)
     tone = 0.5 * np.sin(2 * np.pi * 440 * t)
@@ -83,8 +86,8 @@ class TestNoiseReductionExecution:
 
         original, _ = sf.read(str(input_wav))
         processed, _ = sf.read(str(output_path))
-        original_rms = np.sqrt(np.mean(original ** 2))
-        processed_rms = np.sqrt(np.mean(processed ** 2))
+        original_rms = np.sqrt(np.mean(original**2))
+        processed_rms = np.sqrt(np.mean(processed**2))
         assert processed_rms <= original_rms, "Denoised audio should have equal or lower RMS"
 
         await plugin.deactivate()
@@ -104,7 +107,7 @@ class TestNoiseReductionExecution:
 
         original, _ = sf.read(str(input_wav))
         processed, _ = sf.read(str(result["audio_path"]))
-        correlation = np.corrcoef(original[:len(processed)], processed[:len(original)])[0, 1]
+        correlation = np.corrcoef(original[: len(processed)], processed[: len(original)])[0, 1]
         assert correlation > 0.8, "Clean audio should be largely preserved"
 
         await plugin.deactivate()
@@ -186,10 +189,12 @@ class TestFormatConverterExecution:
         if not activated:
             pytest.skip("FFmpeg not available")
 
-        result = await plugin.process({
-            "audio_path": str(input_wav),
-            "target_format": "flac",
-        })
+        result = await plugin.process(
+            {
+                "audio_path": str(input_wav),
+                "target_format": "flac",
+            }
+        )
 
         if "error" in result and "FFmpeg" in result["error"]:
             pytest.skip("FFmpeg not configured")
@@ -207,10 +212,12 @@ class TestFormatConverterExecution:
         from plugins.reference.format_converter.plugin import FormatConverterPlugin
 
         plugin = FormatConverterPlugin()
-        result = await plugin.process({
-            "audio_path": "/nonexistent.wav",
-            "target_format": "xyz",
-        })
+        result = await plugin.process(
+            {
+                "audio_path": "/nonexistent.wav",
+                "target_format": "xyz",
+            }
+        )
         assert "error" in result
 
 
@@ -263,6 +270,7 @@ class TestPolicyEngineIntegration:
 
     def test_policy_models_import(self):
         from backend.plugins.policy.models import PolicyAction, TrustLevel
+
         assert TrustLevel.UNTRUSTED is not None
         assert TrustLevel.VERIFIED is not None
         assert TrustLevel.OFFICIAL is not None
@@ -271,12 +279,20 @@ class TestPolicyEngineIntegration:
 
     def test_trust_level_ordering(self):
         from backend.plugins.policy.models import TrustLevel
-        levels = [TrustLevel.UNTRUSTED, TrustLevel.COMMUNITY, TrustLevel.VERIFIED, TrustLevel.OFFICIAL, TrustLevel.SYSTEM]
+
+        levels = [
+            TrustLevel.UNTRUSTED,
+            TrustLevel.COMMUNITY,
+            TrustLevel.VERIFIED,
+            TrustLevel.OFFICIAL,
+            TrustLevel.SYSTEM,
+        ]
         for i in range(len(levels) - 1):
             assert levels[i].value <= levels[i + 1].value or True
 
     def test_policy_engine_imports(self):
         from backend.plugins.policy.engine import PolicyEngine
+
         assert PolicyEngine is not None
 
 
@@ -285,10 +301,12 @@ class TestMetricsIntegration:
 
     def test_metrics_collector_imports(self):
         from backend.plugins.metrics.collector import PluginMetricsCollector
+
         assert PluginMetricsCollector is not None
 
     def test_metrics_persistence_imports(self):
         from backend.plugins.metrics.persistence import MetricsPersistence
+
         assert MetricsPersistence is not None
 
     def test_metrics_collector_records_data(self):

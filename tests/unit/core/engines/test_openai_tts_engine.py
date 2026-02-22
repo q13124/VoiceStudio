@@ -24,9 +24,7 @@ class TestOpenAITTSEngineImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            openai_tts_engine is not None
-        ), "Failed to import openai_tts_engine module"
+        assert openai_tts_engine is not None, "Failed to import openai_tts_engine module"
 
     def test_module_has_openai_tts_engine_class(self):
         """Test module has OpenAITTSEngine class."""
@@ -68,9 +66,7 @@ class TestOpenAITTSEngineClass:
                     )
                     required_methods = ["initialize", "cleanup", "synthesize"]
                     for method in required_methods:
-                        assert hasattr(
-                            engine, method
-                        ), f"OpenAITTSEngine missing method: {method}"
+                        assert hasattr(engine, method), f"OpenAITTSEngine missing method: {method}"
             except (ImportError, Exception):
                 pytest.skip("openai_tts dependencies not installed")
 
@@ -117,21 +113,15 @@ class TestOpenAITTSEngineCaching:
                         api_key="test_key", device="cpu", gpu=False
                     )
                     # Check for LRU cache (OrderedDict)
-                    assert hasattr(
-                        engine, "_response_cache"
-                    ), "Should have response cache"
+                    assert hasattr(engine, "_response_cache"), "Should have response cache"
                     from collections import OrderedDict
 
                     assert isinstance(
                         engine._response_cache, OrderedDict
                     ), "Response cache should be OrderedDict for LRU behavior"
                     # Check for cache size
-                    assert hasattr(
-                        engine, "cache_size"
-                    ), "Should have cache_size attribute"
-                    assert isinstance(
-                        engine.cache_size, int
-                    ), "Cache size should be an integer"
+                    assert hasattr(engine, "cache_size"), "Should have cache_size attribute"
+                    assert isinstance(engine.cache_size, int), "Cache size should be an integer"
                     assert engine.cache_size > 0, "Cache size should be positive"
             except (ImportError, Exception):
                 pytest.skip("openai_tts dependencies not installed")
@@ -160,12 +150,8 @@ class TestOpenAITTSEngineCaching:
                     engine = openai_tts_engine.OpenAITTSEngine(
                         api_key="test_key", device="cpu", gpu=False
                     )
-                    assert hasattr(
-                        engine, "clear_cache"
-                    ), "Should have clear_cache method"
-                    assert callable(
-                        engine.clear_cache
-                    ), "clear_cache should be callable"
+                    assert hasattr(engine, "clear_cache"), "Should have clear_cache method"
+                    assert callable(engine.clear_cache), "clear_cache should be callable"
             except (ImportError, Exception):
                 pytest.skip("openai_tts dependencies not installed")
 
@@ -206,9 +192,7 @@ class TestOpenAITTSEngineConnectionPooling:
                             hasattr(openai_tts_engine, "HAS_REQUESTS")
                             and openai_tts_engine.HAS_REQUESTS
                         ):
-                            assert (
-                                engine._session is not None
-                            ), "Session should be initialized"
+                            assert engine._session is not None, "Session should be initialized"
             except (ImportError, Exception):
                 pytest.skip("openai_tts dependencies not installed")
 
@@ -226,9 +210,7 @@ class TestOpenAITTSEngineProtocol:
                     )
                     assert hasattr(engine, "initialize"), "Should implement initialize"
                     assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                    assert hasattr(
-                        engine, "is_initialized"
-                    ), "Should implement is_initialized"
+                    assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                     assert hasattr(engine, "get_device"), "Should implement get_device"
             except (ImportError, Exception):
                 pytest.skip("openai_tts dependencies not installed")
@@ -280,9 +262,7 @@ class TestOpenAITTSEngineOptimization:
                         api_key="test_key", device="cpu", gpu=False
                     )
                     # Check for cache eviction logic
-                    assert hasattr(
-                        engine, "cache_size"
-                    ), "Should have cache_size for eviction"
+                    assert hasattr(engine, "cache_size"), "Should have cache_size for eviction"
                     # Check eviction happens when cache is full
                     import inspect
 

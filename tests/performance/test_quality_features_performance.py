@@ -38,8 +38,7 @@ class TestABTestingPerformance:
         for i in range(10):
             start_time = time.time()
             response = client.post(
-                "/api/eval/abx/start",
-                json={"items": [f"audio-{i}-1", f"audio-{i}-2"]}
+                "/api/eval/abx/start", json={"items": [f"audio-{i}-1", f"audio-{i}-2"]}
             )
             elapsed = (time.time() - start_time) * 1000  # Convert to ms
             times.append(elapsed)
@@ -83,10 +82,7 @@ class TestABTestingPerformance:
         import concurrent.futures
 
         def make_request():
-            return client.post(
-                "/api/eval/abx/start",
-                json={"items": ["audio-1", "audio-2"]}
-            )
+            return client.post("/api/eval/abx/start", json={"items": ["audio-1", "audio-2"]})
 
         start_time = time.time()
 
@@ -119,8 +115,7 @@ class TestEngineRecommendationPerformance:
         for _ in range(10):
             start_time = time.time()
             response = client.get(
-                "/api/quality/engine-recommendation",
-                params={"target_tier": "standard"}
+                "/api/quality/engine-recommendation", params={"target_tier": "standard"}
             )
             elapsed = (time.time() - start_time) * 1000
             times.append(elapsed)
@@ -150,10 +145,7 @@ class TestEngineRecommendationPerformance:
             times = []
             for _ in range(5):
                 start_time = time.time()
-                client.get(
-                    "/api/quality/engine-recommendation",
-                    params={"target_tier": tier}
-                )
+                client.get("/api/quality/engine-recommendation", params={"target_tier": tier})
                 elapsed = (time.time() - start_time) * 1000
                 times.append(elapsed)
 
@@ -184,8 +176,8 @@ class TestQualityBenchmarkingPerformance:
                 json={
                     "profile_id": "test-profile-123",
                     "test_text": "Short test.",
-                    "engines": ["xtts"]
-                }
+                    "engines": ["xtts"],
+                },
             )
             elapsed = (time.time() - start_time) * 1000
             times.append(elapsed)
@@ -209,8 +201,8 @@ class TestQualityBenchmarkingPerformance:
             json={
                 "profile_id": "test-profile-123",
                 "test_text": "Test.",
-                "engines": ["xtts", "chatterbox", "tortoise"]
-            }
+                "engines": ["xtts", "chatterbox", "tortoise"],
+            },
         )
 
         elapsed = (time.time() - start_time) * 1000
@@ -268,10 +260,7 @@ class TestQualityDashboardPerformance:
             times = []
             for _ in range(5):
                 start_time = time.time()
-                client.get(
-                    "/api/quality/dashboard",
-                    params={"days": days}
-                )
+                client.get("/api/quality/dashboard", params={"days": days})
                 elapsed = (time.time() - start_time) * 1000
                 times.append(elapsed)
 
@@ -297,8 +286,7 @@ class TestConcurrentLoadPerformance:
 
         def make_request():
             return client.get(
-                "/api/quality/engine-recommendation",
-                params={"target_tier": "standard"}
+                "/api/quality/engine-recommendation", params={"target_tier": "standard"}
             )
 
         start_time = time.time()
@@ -333,4 +321,3 @@ class TestConcurrentLoadPerformance:
         print(f"  Total time: {elapsed:.2f}ms")
         print(f"  Average per request: {elapsed/10:.2f}ms")
         print(f"  Successful: {sum(1 for r in results if r.status_code == 200)}/10")
-

@@ -25,10 +25,7 @@ class TestEngineRecommendation:
 
     def test_get_recommendation_high_tier(self, client: TestClient):
         """Test getting recommendation for high quality tier."""
-        response = client.get(
-            "/api/quality/engine-recommendation",
-            params={"target_tier": "high"}
-        )
+        response = client.get("/api/quality/engine-recommendation", params={"target_tier": "high"})
 
         assert response.status_code in [200, 503]
         if response.status_code == 200:
@@ -40,10 +37,7 @@ class TestEngineRecommendation:
         """Test getting recommendation with minimum MOS score requirement."""
         response = client.get(
             "/api/quality/engine-recommendation",
-            params={
-                "target_tier": "high",
-                "min_mos_score": 4.0
-            }
+            params={"target_tier": "high", "min_mos_score": 4.0},
         )
 
         assert response.status_code in [200, 503]
@@ -57,10 +51,7 @@ class TestEngineRecommendation:
         """Test getting recommendation with minimum similarity requirement."""
         response = client.get(
             "/api/quality/engine-recommendation",
-            params={
-                "target_tier": "standard",
-                "min_similarity": 0.85
-            }
+            params={"target_tier": "standard", "min_similarity": 0.85},
         )
 
         assert response.status_code in [200, 503]
@@ -74,10 +65,7 @@ class TestEngineRecommendation:
         """Test getting recommendation with minimum naturalness requirement."""
         response = client.get(
             "/api/quality/engine-recommendation",
-            params={
-                "target_tier": "ultra",
-                "min_naturalness": 0.90
-            }
+            params={"target_tier": "ultra", "min_naturalness": 0.90},
         )
 
         assert response.status_code in [200, 503]
@@ -95,8 +83,8 @@ class TestEngineRecommendation:
                 "target_tier": "ultra",
                 "min_mos_score": 4.5,
                 "min_similarity": 0.90,
-                "min_naturalness": 0.90
-            }
+                "min_naturalness": 0.90,
+            },
         )
 
         assert response.status_code in [200, 503]
@@ -109,8 +97,7 @@ class TestEngineRecommendation:
     def test_get_recommendation_invalid_tier(self, client: TestClient):
         """Test getting recommendation with invalid tier."""
         response = client.get(
-            "/api/quality/engine-recommendation",
-            params={"target_tier": "invalid"}
+            "/api/quality/engine-recommendation", params={"target_tier": "invalid"}
         )
 
         # Should either accept and use default or return validation error
@@ -119,8 +106,7 @@ class TestEngineRecommendation:
     def test_get_recommendation_invalid_mos_score(self, client: TestClient):
         """Test getting recommendation with invalid MOS score."""
         response = client.get(
-            "/api/quality/engine-recommendation",
-            params={"min_mos_score": 10.0}  # Out of range
+            "/api/quality/engine-recommendation", params={"min_mos_score": 10.0}  # Out of range
         )
 
         # Should either clamp or return validation error
@@ -130,10 +116,7 @@ class TestEngineRecommendation:
         """Test getting recommendation with negative values."""
         response = client.get(
             "/api/quality/engine-recommendation",
-            params={
-                "min_mos_score": -1.0,
-                "min_similarity": -0.5
-            }
+            params={"min_mos_score": -1.0, "min_similarity": -0.5},
         )
 
         # Should return validation error
@@ -151,8 +134,6 @@ class TestEngineRecommendationErrorHandling:
     def test_invalid_query_parameters(self, client: TestClient):
         """Test with invalid query parameter types."""
         response = client.get(
-            "/api/quality/engine-recommendation",
-            params={"min_mos_score": "not-a-number"}
+            "/api/quality/engine-recommendation", params={"min_mos_score": "not-a-number"}
         )
         assert response.status_code in [422, 400]  # Validation error
-

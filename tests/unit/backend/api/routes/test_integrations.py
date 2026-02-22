@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def integrations_client():
     """Create test client for integrations routes."""
     from backend.api.routes.integrations import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)
@@ -34,15 +35,11 @@ class TestIntegrationsEndpoints:
     def test_configure_integration(self, integrations_client):
         """Test POST /configure configures an integration."""
         response = integrations_client.post(
-            "/api/integrations/configure",
-            json={"name": "test", "config": {}}
+            "/api/integrations/configure", json={"name": "test", "config": {}}
         )
         assert response.status_code in [200, 404, 422]
 
     def test_test_integration(self, integrations_client):
         """Test POST /test tests integration connectivity."""
-        response = integrations_client.post(
-            "/api/integrations/test",
-            json={"name": "test"}
-        )
+        response = integrations_client.post("/api/integrations/test", json={"name": "test"})
         assert response.status_code in [200, 404, 422]

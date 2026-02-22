@@ -133,9 +133,7 @@ def get_quality_preset(preset_name: str) -> dict[str, Any] | None:
     return QUALITY_PRESETS.get(preset_name.lower())
 
 
-def get_engine_preset(
-    engine_name: str, quality_preset: str
-) -> str | None:
+def get_engine_preset(engine_name: str, quality_preset: str) -> str | None:
     """
     Get engine-specific preset name for a quality preset.
 
@@ -236,4 +234,3 @@ def get_preset_target_metrics(preset_name: str) -> dict[str, float]:
     if preset:
         return preset.get("target_metrics", {}).copy()
     return {}
-

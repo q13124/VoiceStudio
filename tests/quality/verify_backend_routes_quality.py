@@ -26,9 +26,9 @@ def check_error_handling(file_path: Path) -> tuple[list[dict], bool]:
     issues = []
 
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
-            lines = content.split('\n')
+            lines = content.split("\n")
 
         # Parse AST
         try:
@@ -48,7 +48,7 @@ def check_error_handling(file_path: Path) -> tuple[list[dict], bool]:
             func_line = func.lineno
 
             # Skip private functions and test functions
-            if func_name.startswith('_') or func_name.startswith('test_'):
+            if func_name.startswith("_") or func_name.startswith("test_"):
                 continue
 
             # Check if function has try/except
@@ -63,11 +63,11 @@ def check_error_handling(file_path: Path) -> tuple[list[dict], bool]:
             for decorator in func.decorator_list:
                 if isinstance(decorator, ast.Call):
                     if isinstance(decorator.func, ast.Attribute):
-                        if decorator.func.attr in ['get', 'post', 'put', 'delete', 'patch']:
+                        if decorator.func.attr in ["get", "post", "put", "delete", "patch"]:
                             is_route = True
                             break
                     elif isinstance(decorator.func, ast.Name):
-                        if decorator.func.id in ['router', 'app']:
+                        if decorator.func.id in ["router", "app"]:
                             is_route = True
                             break
 
@@ -77,23 +77,29 @@ def check_error_handling(file_path: Path) -> tuple[list[dict], bool]:
                 # (e.g., just returns a dict or list)
                 body_simple = len(func.body) == 1
                 if not body_simple:
-                    issues.append({
-                        "file": str(file_path),
-                        "line": func_line,
-                        "type": "missing_error_handling",
-                        "function": func_name,
-                        "content": lines[func_line - 1].strip() if func_line <= len(lines) else "",
-                    })
+                    issues.append(
+                        {
+                            "file": str(file_path),
+                            "line": func_line,
+                            "type": "missing_error_handling",
+                            "function": func_name,
+                            "content": (
+                                lines[func_line - 1].strip() if func_line <= len(lines) else ""
+                            ),
+                        }
+                    )
 
     except Exception as e:
         logger.error(f"Error checking {file_path}: {e}")
-        issues.append({
-            "file": str(file_path),
-            "line": 0,
-            "type": "ERROR",
-            "function": "",
-            "content": f"Failed to check file: {e}",
-        })
+        issues.append(
+            {
+                "file": str(file_path),
+                "line": 0,
+                "type": "ERROR",
+                "function": "",
+                "content": f"Failed to check file: {e}",
+            }
+        )
 
     return issues, len(issues) > 0
 
@@ -108,22 +114,24 @@ def check_logging(file_path: Path) -> tuple[list[dict], bool]:
     issues = []
 
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
-            lines = content.split('\n')
+            lines = content.split("\n")
 
         # Check if logger is imported/defined
         has_logger = False
-        if 'logger' in content or 'logging.getLogger' in content:
+        if "logger" in content or "logging.getLogger" in content:
             has_logger = True
 
         if not has_logger:
-            issues.append({
-                "file": str(file_path),
-                "line": 0,
-                "type": "missing_logger",
-                "content": "No logger import or definition found",
-            })
+            issues.append(
+                {
+                    "file": str(file_path),
+                    "line": 0,
+                    "type": "missing_logger",
+                    "content": "No logger import or definition found",
+                }
+            )
 
         # Parse AST to find route handlers
         try:
@@ -139,7 +147,7 @@ def check_logging(file_path: Path) -> tuple[list[dict], bool]:
                 for decorator in node.decorator_list:
                     if isinstance(decorator, ast.Call):
                         if isinstance(decorator.func, ast.Attribute):
-                            if decorator.func.attr in ['get', 'post', 'put', 'delete', 'patch']:
+                            if decorator.func.attr in ["get", "post", "put", "delete", "patch"]:
                                 route_handlers.append(node)
                                 break
 
@@ -149,19 +157,25 @@ def check_logging(file_path: Path) -> tuple[list[dict], bool]:
             for node in ast.walk(handler):
                 if isinstance(node, ast.Call):
                     if isinstance(node.func, ast.Attribute):
-                        if node.func.attr in ['error', 'warning', 'info', 'debug', 'exception']:
+                        if node.func.attr in ["error", "warning", "info", "debug", "exception"]:
                             has_logging = True
                             break
 
             # Route handlers should have at least error logging
             if not has_logging and len(handler.body) > 3:  # Skip very simple handlers
-                issues.append({
-                    "file": str(file_path),
-                    "line": handler.lineno,
-                    "type": "missing_logging",
-                    "function": handler.name,
-                    "content": lines[handler.lineno - 1].strip() if handler.lineno <= len(lines) else "",
-                })
+                issues.append(
+                    {
+                        "file": str(file_path),
+                        "line": handler.lineno,
+                        "type": "missing_logging",
+                        "function": handler.name,
+                        "content": (
+                            lines[handler.lineno - 1].strip()
+                            if handler.lineno <= len(lines)
+                            else ""
+                        ),
+                    }
+                )
 
     except Exception as e:
         logger.error(f"Error checking {file_path}: {e}")
@@ -179,9 +193,9 @@ def check_validation(file_path: Path) -> tuple[list[dict], bool]:
     issues = []
 
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
-            lines = content.split('\n')
+            lines = content.split("\n")
 
         # Check if Pydantic is imported
 
@@ -198,7 +212,7 @@ def check_validation(file_path: Path) -> tuple[list[dict], bool]:
                 for decorator in node.decorator_list:
                     if isinstance(decorator, ast.Call):
                         if isinstance(decorator.func, ast.Attribute):
-                            if decorator.func.attr in ['get', 'post', 'put', 'delete', 'patch']:
+                            if decorator.func.attr in ["get", "post", "put", "delete", "patch"]:
                                 route_handlers.append(node)
                                 break
 
@@ -212,7 +226,7 @@ def check_validation(file_path: Path) -> tuple[list[dict], bool]:
                         method = decorator.func.attr.lower()
                         break
 
-            if method in ['post', 'put', 'patch']:
+            if method in ["post", "put", "patch"]:
                 # Check if handler has request parameter with type hint
                 has_request_model = False
                 for arg in handler.args.args:
@@ -225,14 +239,20 @@ def check_validation(file_path: Path) -> tuple[list[dict], bool]:
                                 break
 
                 if not has_request_model and len(handler.args.args) > 1:
-                    issues.append({
-                        "file": str(file_path),
-                        "line": handler.lineno,
-                        "type": "missing_validation",
-                        "function": handler.name,
-                        "method": method.upper(),
-                        "content": lines[handler.lineno - 1].strip() if handler.lineno <= len(lines) else "",
-                    })
+                    issues.append(
+                        {
+                            "file": str(file_path),
+                            "line": handler.lineno,
+                            "type": "missing_validation",
+                            "function": handler.name,
+                            "method": method.upper(),
+                            "content": (
+                                lines[handler.lineno - 1].strip()
+                                if handler.lineno <= len(lines)
+                                else ""
+                            ),
+                        }
+                    )
 
     except Exception as e:
         logger.error(f"Error checking {file_path}: {e}")
@@ -250,9 +270,9 @@ def check_response_models(file_path: Path) -> tuple[list[dict], bool]:
     issues = []
 
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
-            lines = content.split('\n')
+            lines = content.split("\n")
 
         # Parse AST
         try:
@@ -267,7 +287,7 @@ def check_response_models(file_path: Path) -> tuple[list[dict], bool]:
                 for decorator in node.decorator_list:
                     if isinstance(decorator, ast.Call):
                         if isinstance(decorator.func, ast.Attribute):
-                            if decorator.func.attr in ['get', 'post', 'put', 'delete', 'patch']:
+                            if decorator.func.attr in ["get", "post", "put", "delete", "patch"]:
                                 route_handlers.append((node, decorator))
                                 break
 
@@ -277,24 +297,30 @@ def check_response_models(file_path: Path) -> tuple[list[dict], bool]:
 
             # Check decorator keyword arguments
             for keyword in decorator.keywords:
-                if keyword.arg == 'response_model':
+                if keyword.arg == "response_model":
                     has_response_model = True
                     break
 
             # Skip DELETE handlers (they often return simple messages)
             method = decorator.func.attr.lower()
-            if method == 'delete':
+            if method == "delete":
                 continue
 
             if not has_response_model:
-                issues.append({
-                    "file": str(file_path),
-                    "line": handler.lineno,
-                    "type": "missing_response_model",
-                    "function": handler.name,
-                    "method": method.upper(),
-                    "content": lines[handler.lineno - 1].strip() if handler.lineno <= len(lines) else "",
-                })
+                issues.append(
+                    {
+                        "file": str(file_path),
+                        "line": handler.lineno,
+                        "type": "missing_response_model",
+                        "function": handler.name,
+                        "method": method.upper(),
+                        "content": (
+                            lines[handler.lineno - 1].strip()
+                            if handler.lineno <= len(lines)
+                            else ""
+                        ),
+                    }
+                )
 
     except Exception as e:
         logger.error(f"Error checking {file_path}: {e}")
@@ -386,16 +412,18 @@ def main():
     print(f"  Validation: {result['issues_by_category']['validation']}")
     print(f"  Response Models: {result['issues_by_category']['response_models']}")
 
-    if result['total_issues'] > 0:
+    if result["total_issues"] > 0:
         print("\n" + "-" * 80)
         print("ISSUES FOUND:")
         print("-" * 80)
 
-        for category, issues in result['issues'].items():
+        for category, issues in result["issues"].items():
             if issues:
                 print(f"\n{category.upper().replace('_', ' ')}:")
                 for issue in issues[:10]:  # Show first 10
-                    print(f"  {issue['file']}:{issue.get('line', 0)} - {issue.get('function', '')} - {issue.get('type', '')}")
+                    print(
+                        f"  {issue['file']}:{issue.get('line', 0)} - {issue.get('function', '')} - {issue.get('type', '')}"
+                    )
                 if len(issues) > 10:
                     print(f"  ... and {len(issues) - 10} more")
 
@@ -412,4 +440,3 @@ def main():
 
 if __name__ == "__main__":
     exit(main())
-

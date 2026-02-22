@@ -31,6 +31,7 @@ class ValueObject(ABC):
         """Convert to dictionary."""
         # Default implementation using dataclass fields
         from dataclasses import fields
+
         return {f.name: getattr(self, f.name) for f in fields(self)}
 
     @classmethod

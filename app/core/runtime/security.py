@@ -20,7 +20,7 @@ class SecurityPolicy:
         allow_net: bool = False,
         allow_fs_roots: list[str] | None = None,
         allowed_hosts: list[str] | None = None,
-        allowed_ports: list[int] | None = None
+        allowed_ports: list[int] | None = None,
     ):
         """
         Initialize security policy.
@@ -101,7 +101,7 @@ class SecurityPolicy:
             "allow_net": self.allow_net,
             "allow_fs_roots": self.allow_fs_roots,
             "allowed_hosts": self.allowed_hosts,
-            "allowed_ports": self.allowed_ports
+            "allowed_ports": self.allowed_ports,
         }
 
     @classmethod
@@ -111,7 +111,7 @@ class SecurityPolicy:
             allow_net=data.get("allow_net", False),
             allow_fs_roots=data.get("allow_fs_roots", []),
             allowed_hosts=data.get("allowed_hosts", ["127.0.0.1", "localhost"]),
-            allowed_ports=data.get("allowed_ports", [])
+            allowed_ports=data.get("allowed_ports", []),
         )
 
 
@@ -129,11 +129,9 @@ def load_security_policy(manifest: dict) -> SecurityPolicy:
 
     return SecurityPolicy(
         allow_net=security_config.get("allow_net", False),
-        allow_fs_roots=security_config.get("allow_fs_roots", [
-            "%PROGRAMDATA%/VoiceStudio/models",
-            "%APPDATA%/VoiceStudio"
-        ]),
+        allow_fs_roots=security_config.get(
+            "allow_fs_roots", ["%PROGRAMDATA%/VoiceStudio/models", "%APPDATA%/VoiceStudio"]
+        ),
         allowed_hosts=security_config.get("allowed_hosts", ["127.0.0.1", "localhost"]),
-        allowed_ports=security_config.get("allowed_ports", [])
+        allowed_ports=security_config.get("allowed_ports", []),
     )
-

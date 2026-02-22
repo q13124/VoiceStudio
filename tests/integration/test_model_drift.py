@@ -10,9 +10,9 @@ import pytest
 
 from backend.services.model_drift_detector import (
     ModelDriftDetector,
-    get_model_drift_detector,
     _compute_psi,
     _values_to_bins,
+    get_model_drift_detector,
 )
 
 
@@ -29,7 +29,7 @@ def test_psi_no_drift() -> None:
 def test_psi_significant_drift() -> None:
     """PSI should be high when distributions differ significantly."""
     baseline = [1] * 50 + [10] * 50  # bimodal low
-    current = [5] * 50 + [5] * 50   # unimodal middle
+    current = [5] * 50 + [5] * 50  # unimodal middle
     b_bins = _values_to_bins(baseline)
     c_bins = _values_to_bins(current)
     psi = _compute_psi(b_bins, c_bins)

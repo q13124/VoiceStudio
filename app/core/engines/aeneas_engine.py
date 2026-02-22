@@ -103,15 +103,9 @@ class AeneasEngine(EngineProtocol):
         self.batch_size = 4  # Default batch size for parallel processing
         self._temp_dir = None  # Reusable temp directory
 
-    def _find_executable(
-        self, name: str, custom_path: str | None = None
-    ) -> str | None:
+    def _find_executable(self, name: str, custom_path: str | None = None) -> str | None:
         """Find executable in PATH or custom path."""
-        if (
-            custom_path
-            and os.path.isfile(custom_path)
-            and os.access(custom_path, os.X_OK)
-        ):
+        if custom_path and os.path.isfile(custom_path) and os.access(custom_path, os.X_OK):
             return custom_path
 
         if custom_path and os.path.isdir(custom_path):
@@ -166,9 +160,7 @@ class AeneasEngine(EngineProtocol):
                 self._initialized = True
                 return True
             except ImportError:
-                logger.info(
-                    "Aeneas Python module not found, will use command-line interface"
-                )
+                logger.info("Aeneas Python module not found, will use command-line interface")
 
             # Find aeneas command-line tool
             self.executable_path = self._find_executable("aeneas", self.aeneas_path)
@@ -321,9 +313,7 @@ class AeneasEngine(EngineProtocol):
 
                     if result:
                         # Read alignment data
-                        alignment_data = self._read_alignment_file(
-                            output_file, output_format
-                        )
+                        alignment_data = self._read_alignment_file(output_file, output_format)
                         logger.info(f"Alignment completed: {output_file}")
 
                         # Cache result if successful (LRU)
@@ -345,14 +335,20 @@ class AeneasEngine(EngineProtocol):
 
                 except ImportError:
                     # Use command-line interface
-                    if "python" in str(self.executable_path) or " -m " in str(
-                        self.executable_path
-                    ):
-                        if (
-                            isinstance(self.executable_path, str)
-                            and " -m " in self.executable_path
-                        ):
-                            cmd = [*self.executable_path.split(), "sync", str(audio_path.absolute()), tmp_text_path, str(output_file.absolute()), f"--language={language}", f"--sync-map={sync_map}", f"--boundary-type={boundary_type}", f"--boundary-percent={boundary_percent}", f"--output-format={output_format}"]
+                    if "python" in str(self.executable_path) or " -m " in str(self.executable_path):
+                        if isinstance(self.executable_path, str) and " -m " in self.executable_path:
+                            cmd = [
+                                *self.executable_path.split(),
+                                "sync",
+                                str(audio_path.absolute()),
+                                tmp_text_path,
+                                str(output_file.absolute()),
+                                f"--language={language}",
+                                f"--sync-map={sync_map}",
+                                f"--boundary-type={boundary_type}",
+                                f"--boundary-percent={boundary_percent}",
+                                f"--output-format={output_format}",
+                            ]
                         else:
                             cmd = [
                                 self.python_executable,
@@ -390,9 +386,7 @@ class AeneasEngine(EngineProtocol):
                     )
 
                     if result.returncode == 0:
-                        alignment_data = self._read_alignment_file(
-                            output_file, output_format
-                        )
+                        alignment_data = self._read_alignment_file(output_file, output_format)
                         logger.info(f"Alignment completed: {output_file}")
 
                         # Cache result if successful (LRU)
@@ -459,9 +453,7 @@ class AeneasEngine(EngineProtocol):
 
     def batch_align(
         self,
-        alignments: list[
-            tuple[str | Path, str, str, str | Path | None, str]
-        ],
+        alignments: list[tuple[str | Path, str, str, str | Path | None, str]],
         batch_size: int | None = None,
         **kwargs,
     ) -> list[dict | None]:
@@ -539,9 +531,7 @@ class AeneasEngine(EngineProtocol):
         info = super().get_info()
         info.update(
             {
-                "executable_path": (
-                    str(self.executable_path) if self.executable_path else None
-                ),
+                "executable_path": (str(self.executable_path) if self.executable_path else None),
                 "python_executable": (
                     str(self.python_executable) if self.python_executable else None
                 ),

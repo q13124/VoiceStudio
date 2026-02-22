@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 try:
     import os
     import sys
+
     app_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "app")
     if os.path.exists(app_path) and app_path not in sys.path:
         sys.path.insert(0, app_path)
@@ -45,14 +46,14 @@ ENGINE_PIPELINE_PRESETS = {
             "denoise": {"enabled": True, "strength": 0.7},
             "normalize": {"enabled": True, "target_lufs": -23.0},
             "remove_artifacts": {"enabled": True},
-            "description": "Fast enhancement for XTTS output"
+            "description": "Fast enhancement for XTTS output",
         },
         "light": {
             "steps": ["normalize"],
             "denoise": {"enabled": False},
             "normalize": {"enabled": True, "target_lufs": -23.0},
             "remove_artifacts": {"enabled": False},
-            "description": "Light enhancement for speed"
+            "description": "Light enhancement for speed",
         },
         "maximum": {
             "steps": ["denoise", "normalize", "remove_artifacts", "spectral_enhance"],
@@ -60,8 +61,8 @@ ENGINE_PIPELINE_PRESETS = {
             "normalize": {"enabled": True, "target_lufs": -23.0},
             "remove_artifacts": {"enabled": True},
             "spectral_enhance": {"enabled": True},
-            "description": "Maximum quality enhancement"
-        }
+            "description": "Maximum quality enhancement",
+        },
     },
     "chatterbox": {
         "default": {
@@ -70,7 +71,7 @@ ENGINE_PIPELINE_PRESETS = {
             "normalize": {"enabled": True, "target_lufs": -23.0},
             "remove_artifacts": {"enabled": True},
             "preserve_emotion": {"enabled": True},
-            "description": "Balanced enhancement preserving emotion"
+            "description": "Balanced enhancement preserving emotion",
         },
         "light": {
             "steps": ["normalize", "remove_artifacts"],
@@ -78,17 +79,23 @@ ENGINE_PIPELINE_PRESETS = {
             "normalize": {"enabled": True, "target_lufs": -23.0},
             "remove_artifacts": {"enabled": True},
             "preserve_emotion": {"enabled": True},
-            "description": "Light enhancement for emotion preservation"
+            "description": "Light enhancement for emotion preservation",
         },
         "maximum": {
-            "steps": ["denoise", "normalize", "remove_artifacts", "spectral_enhance", "preserve_emotion"],
+            "steps": [
+                "denoise",
+                "normalize",
+                "remove_artifacts",
+                "spectral_enhance",
+                "preserve_emotion",
+            ],
             "denoise": {"enabled": True, "strength": 0.8},
             "normalize": {"enabled": True, "target_lufs": -23.0},
             "remove_artifacts": {"enabled": True},
             "spectral_enhance": {"enabled": True},
             "preserve_emotion": {"enabled": True},
-            "description": "Maximum enhancement with emotion preservation"
-        }
+            "description": "Maximum enhancement with emotion preservation",
+        },
     },
     "tortoise": {
         "default": {
@@ -97,32 +104,35 @@ ENGINE_PIPELINE_PRESETS = {
             "normalize": {"enabled": True, "target_lufs": -23.0},
             "remove_artifacts": {"enabled": True},
             "spectral_enhance": {"enabled": True},
-            "description": "Maximum quality enhancement for Tortoise"
+            "description": "Maximum quality enhancement for Tortoise",
         },
         "ultra": {
-            "steps": ["denoise", "normalize", "remove_artifacts", "spectral_enhance", "enhance_prosody"],
+            "steps": [
+                "denoise",
+                "normalize",
+                "remove_artifacts",
+                "spectral_enhance",
+                "enhance_prosody",
+            ],
             "denoise": {"enabled": True, "strength": 0.7},
             "normalize": {"enabled": True, "target_lufs": -23.0},
             "remove_artifacts": {"enabled": True},
             "spectral_enhance": {"enabled": True},
             "enhance_prosody": {"enabled": True},
-            "description": "Ultra quality enhancement"
+            "description": "Ultra quality enhancement",
         },
         "light": {
             "steps": ["normalize", "remove_artifacts"],
             "denoise": {"enabled": False},
             "normalize": {"enabled": True, "target_lufs": -23.0},
             "remove_artifacts": {"enabled": True},
-            "description": "Light enhancement for faster processing"
-        }
-    }
+            "description": "Light enhancement for faster processing",
+        },
+    },
 }
 
 
-def get_engine_pipeline(
-    engine_id: str,
-    preset_name: str = "default"
-) -> dict[str, Any]:
+def get_engine_pipeline(engine_id: str, preset_name: str = "default") -> dict[str, Any]:
     """
     Get pipeline configuration for an engine and preset.
 
@@ -154,7 +164,7 @@ def _get_generic_pipeline(preset_name: str) -> dict[str, Any]:
             "denoise": {"enabled": True, "strength": 0.7},
             "normalize": {"enabled": True, "target_lufs": -23.0},
             "remove_artifacts": {"enabled": True},
-            "description": "Generic enhancement pipeline"
+            "description": "Generic enhancement pipeline",
         }
     }
     return generic_presets.get(preset_name, generic_presets["default"]).copy()
@@ -166,7 +176,7 @@ def apply_engine_pipeline(
     engine_id: str,
     pipeline_config: dict[str, Any] | None = None,
     preset_name: str = "default",
-    reference_audio: str | None = None
+    reference_audio: str | None = None,
 ) -> tuple[np.ndarray, dict[str, Any]]:
     """
     Apply engine-specific quality enhancement pipeline to audio.
@@ -194,9 +204,7 @@ def apply_engine_pipeline(
 
     # Check if advanced enhancement should be used
     use_advanced = (
-        "spectral_enhance" in steps or
-        "enhance_prosody" in steps or
-        HAS_ADVANCED_ENHANCEMENT
+        "spectral_enhance" in steps or "enhance_prosody" in steps or HAS_ADVANCED_ENHANCEMENT
     )
 
     if use_advanced and HAS_ADVANCED_ENHANCEMENT:
@@ -211,7 +219,7 @@ def apply_engine_pipeline(
                 preserve_formants="preserve_emotion" in steps,
                 remove_artifacts="remove_artifacts" in steps,
                 enhance_prosody="enhance_prosody" in steps,
-                target_lufs=pipeline_config.get("normalize", {}).get("target_lufs", -23.0)
+                target_lufs=pipeline_config.get("normalize", {}).get("target_lufs", -23.0),
             )
             logger.debug(f"Applied advanced enhancement pipeline for {engine_id}")
         except Exception as e:
@@ -225,7 +233,7 @@ def apply_engine_pipeline(
                 sample_rate,
                 normalize=pipeline_config.get("normalize", {}).get("enabled", True),
                 denoise=pipeline_config.get("denoise", {}).get("enabled", True),
-                target_lufs=pipeline_config.get("normalize", {}).get("target_lufs", -23.0)
+                target_lufs=pipeline_config.get("normalize", {}).get("target_lufs", -23.0),
             )
             logger.debug(f"Applied standard enhancement pipeline for {engine_id}")
         except Exception as e:
@@ -235,9 +243,7 @@ def apply_engine_pipeline(
     if HAS_QUALITY_METRICS:
         try:
             quality_metrics = calculate_all_metrics(
-                audio=processed_audio,
-                reference_audio=reference_audio,
-                sample_rate=sample_rate
+                audio=processed_audio, reference_audio=reference_audio, sample_rate=sample_rate
             )
         except Exception as e:
             logger.warning(f"Quality metrics calculation failed: {e}")
@@ -251,7 +257,7 @@ def preview_engine_pipeline(
     engine_id: str,
     pipeline_config: dict[str, Any] | None = None,
     preset_name: str = "default",
-    reference_audio: str | None = None
+    reference_audio: str | None = None,
 ) -> tuple[np.ndarray, dict[str, Any], dict[str, Any]]:
     """
     Preview engine pipeline effects (returns both original and enhanced for comparison).
@@ -272,9 +278,7 @@ def preview_engine_pipeline(
     if HAS_QUALITY_METRICS:
         try:
             before_metrics = calculate_all_metrics(
-                audio=audio,
-                reference_audio=reference_audio,
-                sample_rate=sample_rate
+                audio=audio, reference_audio=reference_audio, sample_rate=sample_rate
             )
         except Exception as e:
             logger.warning(f"Before metrics calculation failed: {e}")
@@ -286,7 +290,7 @@ def preview_engine_pipeline(
         engine_id=engine_id,
         pipeline_config=pipeline_config,
         preset_name=preset_name,
-        reference_audio=reference_audio
+        reference_audio=reference_audio,
     )
 
     return enhanced_audio, before_metrics, after_metrics
@@ -298,7 +302,7 @@ def compare_enhancement(
     engine_id: str,
     pipeline_config: dict[str, Any] | None = None,
     preset_name: str = "default",
-    reference_audio: str | None = None
+    reference_audio: str | None = None,
 ) -> dict[str, Any]:
     """
     Compare audio before and after enhancement, returning improvement metrics.
@@ -320,13 +324,13 @@ def compare_enhancement(
         engine_id=engine_id,
         pipeline_config=pipeline_config,
         preset_name=preset_name,
-        reference_audio=reference_audio
+        reference_audio=reference_audio,
     )
 
     comparison = {
         "before_metrics": before_metrics,
         "after_metrics": after_metrics,
-        "improvements": {}
+        "improvements": {},
     }
 
     # Calculate improvements
@@ -343,7 +347,7 @@ def compare_enhancement(
                     "before": before_val,
                     "after": after_val,
                     "improvement": improvement,
-                    "improvement_percent": improvement_percent
+                    "improvement_percent": improvement_percent,
                 }
 
     return comparison
@@ -363,10 +367,7 @@ def list_engine_presets(engine_id: str) -> list[str]:
     return list(engine_presets.keys())
 
 
-def get_pipeline_description(
-    engine_id: str,
-    preset_name: str = "default"
-) -> str:
+def get_pipeline_description(engine_id: str, preset_name: str = "default") -> str:
     """
     Get description for a pipeline preset.
 

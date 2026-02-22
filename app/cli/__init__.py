@@ -8,4 +8,3 @@ from .batch_processor import BatchProcessorCLI
 __all__ = [
     "BatchProcessorCLI",
 ]
-

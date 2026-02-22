@@ -48,23 +48,19 @@ class PerformanceIndexesMigration(Migration):
             "CREATE INDEX IF NOT EXISTS idx_job_history_status_type "
             "ON job_history(status, job_type)",
             # Jobs: sort by updated
-            "CREATE INDEX IF NOT EXISTS idx_job_history_updated "
-            "ON job_history(updated_at)",
+            "CREATE INDEX IF NOT EXISTS idx_job_history_updated " "ON job_history(updated_at)",
             # Transcriptions: filter by language
-            "CREATE INDEX IF NOT EXISTS idx_transcriptions_language "
-            "ON transcriptions(language)",
+            "CREATE INDEX IF NOT EXISTS idx_transcriptions_language " "ON transcriptions(language)",
             # Transcriptions: sort by created
             "CREATE INDEX IF NOT EXISTS idx_transcriptions_created "
             "ON transcriptions(created_at)",
             # Sessions: cleanup expired
-            "CREATE INDEX IF NOT EXISTS idx_sessions_expires "
-            "ON sessions(expires_at)",
+            "CREATE INDEX IF NOT EXISTS idx_sessions_expires " "ON sessions(expires_at)",
             # Training: filter by engine+status
             "CREATE INDEX IF NOT EXISTS idx_training_jobs_engine_status "
             "ON training_jobs(engine_id, status)",
             # Deepfake: sort by created
-            "CREATE INDEX IF NOT EXISTS idx_deepfake_jobs_created "
-            "ON deepfake_jobs(created_at)",
+            "CREATE INDEX IF NOT EXISTS idx_deepfake_jobs_created " "ON deepfake_jobs(created_at)",
             # Pipeline: sort by updated
             "CREATE INDEX IF NOT EXISTS idx_pipeline_sessions_updated "
             "ON pipeline_sessions(updated_at)",

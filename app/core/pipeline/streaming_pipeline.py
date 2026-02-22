@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class StreamChunk:
     """A chunk of data flowing through the streaming pipeline."""
+
     chunk_type: str  # "partial_transcript", "token", "audio_chunk", "complete", "error"
     content: Any = None
     timestamp_ms: float = 0.0
@@ -227,6 +228,7 @@ class StreamingPipeline:
         """Transcribe audio using the configured STT engine."""
         try:
             from backend.services.engine_service import get_engine_service
+
             service = get_engine_service()
             result = await service.transcribe(audio_data=audio_data, engine=self._stt_engine)
             return result.get("text", "")
@@ -240,6 +242,7 @@ class StreamingPipeline:
             return None
         try:
             from backend.services.engine_service import get_engine_service
+
             service = get_engine_service()
             result = await service.synthesize(text=text, engine=self._tts_engine)
             return result.get("audio_data")

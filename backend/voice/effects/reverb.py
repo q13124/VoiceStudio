@@ -18,7 +18,7 @@ class ReverbConfig(EffectConfig):
     """Reverb configuration."""
 
     room_size: float = 0.5  # 0-1
-    damping: float = 0.5    # 0-1
+    damping: float = 0.5  # 0-1
     stereo_width: float = 1.0  # 0-1
     pre_delay_ms: float = 20.0
     decay_time: float = 2.0  # seconds
@@ -64,10 +64,12 @@ class ReverbEffect(AudioEffect):
         # Pre-delay
         pre_delay_samples = int(self._config.pre_delay_ms * sample_rate / 1000)
         if pre_delay_samples > 0:
-            output = np.concatenate([
-                np.zeros(pre_delay_samples),
-                audio[:-pre_delay_samples] if len(audio) > pre_delay_samples else audio,
-            ])[:len(audio)]
+            output = np.concatenate(
+                [
+                    np.zeros(pre_delay_samples),
+                    audio[:-pre_delay_samples] if len(audio) > pre_delay_samples else audio,
+                ]
+            )[: len(audio)]
 
         # Apply simple feedback delay for reverb tail
         decay = self._config.room_size * 0.5
@@ -81,7 +83,7 @@ class ReverbEffect(AudioEffect):
         if self._config.damping > 0:
             damping = self._config.damping * 0.9
             for i in range(1, len(output)):
-                output[i] = output[i] * (1 - damping) + output[i-1] * damping
+                output[i] = output[i] * (1 - damping) + output[i - 1] * damping
 
         return output
 
@@ -90,10 +92,7 @@ class ReverbEffect(AudioEffect):
         # Schroeder reverb delay times (in samples)
         base_delays = [1557, 1617, 1491, 1422, 1277, 1356, 1188, 1116]
 
-        self._delays = [
-            int(d * sample_rate / 44100)
-            for d in base_delays
-        ]
+        self._delays = [int(d * sample_rate / 44100) for d in base_delays]
 
     def reset(self) -> None:
         """Reset reverb state."""

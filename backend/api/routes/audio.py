@@ -43,9 +43,7 @@ try:
     HAS_AUDIO_LIBS = True
 except ImportError:
     HAS_AUDIO_LIBS = False
-    logger.warning(
-        "librosa/soundfile not available. Audio analysis endpoints will be limited."
-    )
+    logger.warning("librosa/soundfile not available. Audio analysis endpoints will be limited.")
 
 
 class WaveformData(BaseModel):
@@ -246,17 +244,13 @@ def _downsample_waveform(
     else:
         # RMS mode: use librosa's frame function
         hop_length = max(1, len(audio) // target_width)
-        frames = librosa.util.frame(
-            audio, frame_length=hop_length, hop_length=hop_length, axis=0
-        )
+        frames = librosa.util.frame(audio, frame_length=hop_length, hop_length=hop_length, axis=0)
         rms = np.sqrt(np.mean(frames**2, axis=0))
         return rms[:target_width]
 
 
 @router.get("/waveform", response_model=WaveformData)
-@cache_response(
-    ttl=300
-)  # Cache for 5 minutes (waveform data is static for a given audio file)
+@cache_response(ttl=300)  # Cache for 5 minutes (waveform data is static for a given audio file)
 def get_waveform_data(
     audio_id: str = Query(..., description="Audio file identifier"),
     width: int = Query(1024, description="Target pixel width for downsampling"),
@@ -284,9 +278,7 @@ def get_waveform_data(
         audio_path = _get_audio_path(audio_id)
         if not audio_path or not os.path.exists(audio_path):
             logger.warning(f"Audio file not found for waveform: {audio_id}")
-            raise HTTPException(
-                status_code=404, detail=f"Audio file not found: {audio_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file not found: {audio_id}")
 
         try:
             # Load audio file
@@ -318,24 +310,16 @@ def get_waveform_data(
                 f"Failed to load or process audio for waveform {audio_id}: {e!s}",
                 exc_info=True,
             )
-            raise HTTPException(
-                status_code=500, detail=f"Failed to process audio: {e!s}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to process audio: {e!s}")
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error generating waveform data for {audio_id}: {e!s}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate waveform data: {e!s}"
-        )
+        logger.error(f"Error generating waveform data for {audio_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to generate waveform data: {e!s}")
 
 
 @router.get("/spectrogram", response_model=SpectrogramData)
-@cache_response(
-    ttl=300
-)  # Cache for 5 minutes (spectrogram data is static for a given audio file)
+@cache_response(ttl=300)  # Cache for 5 minutes (spectrogram data is static for a given audio file)
 def get_spectrogram_data(
     audio_id: str = Query(..., description="Audio file identifier"),
     width: int = Query(512, description="Target pixel width"),
@@ -367,9 +351,7 @@ def get_spectrogram_data(
         audio_path = _get_audio_path(audio_id)
         if not audio_path or not os.path.exists(audio_path):
             logger.warning(f"Audio file not found for spectrogram: {audio_id}")
-            raise HTTPException(
-                status_code=404, detail=f"Audio file not found: {audio_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file not found: {audio_id}")
 
         try:
             # Load audio file
@@ -430,30 +412,20 @@ def get_spectrogram_data(
                 f"Failed to load or process audio for spectrogram {audio_id}: {e!s}",
                 exc_info=True,
             )
-            raise HTTPException(
-                status_code=500, detail=f"Failed to process audio: {e!s}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to process audio: {e!s}")
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error generating spectrogram data for {audio_id}: {e!s}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate spectrogram data: {e!s}"
-        )
+        logger.error(f"Error generating spectrogram data for {audio_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to generate spectrogram data: {e!s}")
 
 
 @router.get("/loudness", response_model=LoudnessData)
-@cache_response(
-    ttl=300
-)  # Cache for 5 minutes (loudness data is static for a given audio file)
+@cache_response(ttl=300)  # Cache for 5 minutes (loudness data is static for a given audio file)
 def get_loudness_data(
     audio_id: str = Query(..., description="Audio file identifier"),
     width: int = Query(1024, description="Target pixel width for downsampling"),
-    block_size: float = Query(
-        0.400, description="Block size in seconds for LUFS measurement"
-    ),
+    block_size: float = Query(0.400, description="Block size in seconds for LUFS measurement"),
 ) -> LoudnessData:
     """
     Get loudness (LUFS) data over time for visualization.
@@ -468,13 +440,9 @@ def get_loudness_data(
         if width > 10000:
             raise HTTPException(status_code=400, detail="Width cannot exceed 10000")
         if block_size <= 0:
-            raise HTTPException(
-                status_code=400, detail="Block size must be greater than 0"
-            )
+            raise HTTPException(status_code=400, detail="Block size must be greater than 0")
         if block_size > 10.0:
-            raise HTTPException(
-                status_code=400, detail="Block size cannot exceed 10 seconds"
-            )
+            raise HTTPException(status_code=400, detail="Block size cannot exceed 10 seconds")
 
         if not HAS_AUDIO_LIBS:
             raise HTTPException(
@@ -489,16 +457,12 @@ def get_loudness_data(
             HAS_PYLOUDNORM = True
         except ImportError:
             HAS_PYLOUDNORM = False
-            logger.warning(
-                "pyloudnorm not available. LUFS calculation will be approximated."
-            )
+            logger.warning("pyloudnorm not available. LUFS calculation will be approximated.")
 
         audio_path = _get_audio_path(audio_id)
         if not audio_path or not os.path.exists(audio_path):
             logger.warning(f"Audio file not found for loudness analysis: {audio_id}")
-            raise HTTPException(
-                status_code=404, detail=f"Audio file not found: {audio_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file not found: {audio_id}")
 
         try:
             # Load audio file
@@ -557,9 +521,7 @@ def get_loudness_data(
                     # LUFS ≈ 20 * log10(RMS) - 0.691 (approximate offset)
                     if rms > 1e-10:
                         lufs_approx = 20 * np.log10(rms) - 0.691
-                        lufs_approx = max(
-                            -70.0, min(0.0, lufs_approx)
-                        )  # Clamp to reasonable range
+                        lufs_approx = max(-70.0, min(0.0, lufs_approx))  # Clamp to reasonable range
                     else:
                         lufs_approx = -70.0
 
@@ -596,18 +558,12 @@ def get_loudness_data(
                 f"Failed to load or process audio for loudness analysis {audio_id}: {e!s}",
                 exc_info=True,
             )
-            raise HTTPException(
-                status_code=500, detail=f"Failed to process audio: {e!s}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to process audio: {e!s}")
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error generating loudness data for {audio_id}: {e!s}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate loudness data: {e!s}"
-        )
+        logger.error(f"Error generating loudness data for {audio_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to generate loudness data: {e!s}")
 
 
 @router.get("/meters", response_model=AudioMeters)
@@ -633,9 +589,7 @@ def get_audio_meters(
         audio_path = _get_audio_path(audio_id)
         if not audio_path or not os.path.exists(audio_path):
             logger.warning(f"Audio file not found for meters: {audio_id}")
-            raise HTTPException(
-                status_code=404, detail=f"Audio file not found: {audio_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file not found: {audio_id}")
 
         try:
             # Load audio file
@@ -676,35 +630,23 @@ def get_audio_meters(
                 # Fallback: estimate from RMS
                 lufs = float(20 * np.log10(max(overall_rms, 1e-10)))
 
-            return AudioMeters(
-                peak=overall_peak, rms=overall_rms, lufs=lufs, channels=channels
-            )
+            return AudioMeters(peak=overall_peak, rms=overall_rms, lufs=lufs, channels=channels)
         except Exception as e:
             logger.error(
                 f"Failed to load or process audio for meters {audio_id}: {e!s}",
                 exc_info=True,
             )
-            raise HTTPException(
-                status_code=500, detail=f"Failed to process audio: {e!s}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to process audio: {e!s}")
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error calculating audio meters for {audio_id}: {e!s}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to calculate audio meters: {e!s}"
-        )
+        logger.error(f"Error calculating audio meters for {audio_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to calculate audio meters: {e!s}")
 
 
 @router.get("/radar", response_model=RadarData)
-@cache_response(
-    ttl=300
-)  # Cache for 5 minutes (radar data is static for a given audio file)
-def get_radar_data(
-    audio_id: str = Query(..., description="Audio file identifier")
-) -> RadarData:
+@cache_response(ttl=300)  # Cache for 5 minutes (radar data is static for a given audio file)
+def get_radar_data(audio_id: str = Query(..., description="Audio file identifier")) -> RadarData:
     """
     Get radar chart data for frequency domain visualization.
 
@@ -724,9 +666,7 @@ def get_radar_data(
         audio_path = _get_audio_path(audio_id)
         if not audio_path or not os.path.exists(audio_path):
             logger.warning(f"Audio file not found for radar analysis: {audio_id}")
-            raise HTTPException(
-                status_code=404, detail=f"Audio file not found: {audio_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file not found: {audio_id}")
 
         try:
             # Load audio file
@@ -774,9 +714,7 @@ def get_radar_data(
                     # Normalize magnitude (0-1 range)
                     max_magnitude = np.max(avg_spectrum)
                     normalized_magnitude = (
-                        float(band_magnitude / max_magnitude)
-                        if max_magnitude > 0
-                        else 0.0
+                        float(band_magnitude / max_magnitude) if max_magnitude > 0 else 0.0
                     )
 
                     magnitudes.append(normalized_magnitude)
@@ -800,29 +738,19 @@ def get_radar_data(
                 f"Failed to load or process audio for radar analysis {audio_id}: {e!s}",
                 exc_info=True,
             )
-            raise HTTPException(
-                status_code=500, detail=f"Failed to process audio: {e!s}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to process audio: {e!s}")
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error generating radar data for {audio_id}: {e!s}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate radar data: {e!s}"
-        )
+        logger.error(f"Error generating radar data for {audio_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to generate radar data: {e!s}")
 
 
 @router.get("/phase", response_model=PhaseData)
-@cache_response(
-    ttl=300
-)  # Cache for 5 minutes (phase data is static for a given audio file)
+@cache_response(ttl=300)  # Cache for 5 minutes (phase data is static for a given audio file)
 def get_phase_data(
     audio_id: str = Query(..., description="Audio file identifier"),
-    window_size: float = Query(
-        0.1, description="Window size in seconds for phase analysis"
-    ),
+    window_size: float = Query(0.1, description="Window size in seconds for phase analysis"),
 ) -> PhaseData:
     """
     Get phase analysis data for visualization.
@@ -833,13 +761,9 @@ def get_phase_data(
         if not audio_id or not audio_id.strip():
             raise HTTPException(status_code=400, detail="Audio ID is required")
         if window_size <= 0:
-            raise HTTPException(
-                status_code=400, detail="Window size must be greater than 0"
-            )
+            raise HTTPException(status_code=400, detail="Window size must be greater than 0")
         if window_size > 5.0:
-            raise HTTPException(
-                status_code=400, detail="Window size cannot exceed 5 seconds"
-            )
+            raise HTTPException(status_code=400, detail="Window size cannot exceed 5 seconds")
 
         if not HAS_AUDIO_LIBS:
             raise HTTPException(
@@ -850,9 +774,7 @@ def get_phase_data(
         audio_path = _get_audio_path(audio_id)
         if not audio_path or not os.path.exists(audio_path):
             logger.warning(f"Audio file not found for phase analysis: {audio_id}")
-            raise HTTPException(
-                status_code=404, detail=f"Audio file not found: {audio_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file not found: {audio_id}")
 
         try:
             # Load audio file
@@ -873,9 +795,7 @@ def get_phase_data(
             # Calculate window samples
             window_samples = int(window_size * sample_rate)
             hop_samples = window_samples // 2  # 50% overlap
-            num_windows = max(
-                1, (len(left_channel) - window_samples) // hop_samples + 1
-            )
+            num_windows = max(1, (len(left_channel) - window_samples) // hop_samples + 1)
 
             times = []
             correlations = []
@@ -922,9 +842,9 @@ def get_phase_data(
                 # Average phase difference (weighted by magnitude)
                 magnitudes = np.abs(left_fft) + np.abs(right_fft)
                 if np.sum(magnitudes) > 0:
-                    phase_diff = np.sum(
-                        (left_phase - right_phase) * magnitudes
-                    ) / np.sum(magnitudes)
+                    phase_diff = np.sum((left_phase - right_phase) * magnitudes) / np.sum(
+                        magnitudes
+                    )
                     # Convert to degrees
                     phase_diff_degrees = float(np.degrees(phase_diff))
                     phase_diff_degrees = np.clip(phase_diff_degrees, -180, 180)
@@ -954,18 +874,12 @@ def get_phase_data(
                 f"Failed to load or process audio for phase analysis {audio_id}: {e!s}",
                 exc_info=True,
             )
-            raise HTTPException(
-                status_code=500, detail=f"Failed to process audio: {e!s}"
-            )
+            raise HTTPException(status_code=500, detail=f"Failed to process audio: {e!s}")
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error generating phase data for {audio_id}: {e!s}", exc_info=True
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate phase data: {e!s}"
-        )
+        logger.error(f"Error generating phase data for {audio_id}: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to generate phase data: {e!s}")
 
 
 # --- Audio Upload ---
@@ -973,7 +887,8 @@ def get_phase_data(
 # Base upload directory
 _UPLOAD_BASE = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
-    "data", "audio_uploads"
+    "data",
+    "audio_uploads",
 )
 UPLOAD_DIR = _UPLOAD_BASE  # Legacy compatibility
 UPLOAD_ORIGINALS_DIR = os.path.join(_UPLOAD_BASE, "originals")
@@ -982,6 +897,7 @@ UPLOAD_WAV_DIR = os.path.join(_UPLOAD_BASE, "wav")
 
 class AudioUploadResponse(BaseModel):
     """Response from audio upload."""
+
     id: str
     filename: str
     path: str  # Path to canonical WAV file
@@ -1040,6 +956,7 @@ async def upload_audio(file: UploadFile = File(...)):
             FileCategory,
             validate_media_for_audio_extraction,
         )
+
         file_info = validate_media_for_audio_extraction(content, filename=file.filename)
         detected_format = file_info.extension
         is_video_source = file_info.category == FileCategory.VIDEO
@@ -1057,8 +974,7 @@ async def upload_audio(file: UploadFile = File(...)):
             validation_error,
         )
         raise HTTPException(
-            status_code=400,
-            detail=f"Invalid audio file: {validation_error!s}"
+            status_code=400, detail=f"Invalid audio file: {validation_error!s}"
         ) from validation_error
 
     file_id = str(uuid.uuid4())
@@ -1096,16 +1012,12 @@ async def upload_audio(file: UploadFile = File(...)):
                 )
 
                 if not result.success:
-                    logger.error(
-                        f"Audio conversion failed for {file.filename}: {result.error}"
-                    )
+                    logger.error(f"Audio conversion failed for {file.filename}: {result.error}")
                     # Fall back to keeping original only
                     shutil.copy2(original_path, wav_path)
                 else:
                     converted = True
-                    logger.info(
-                        f"Converted {file.filename} ({detected_format}) to WAV"
-                    )
+                    logger.info(f"Converted {file.filename} ({detected_format}) to WAV")
             except ImportError:
                 logger.warning("AudioConversionService not available; copying original")
                 shutil.copy2(original_path, wav_path)
@@ -1142,8 +1054,10 @@ async def upload_audio(file: UploadFile = File(...)):
 
 # --- Audio Export ---
 
+
 class AudioExportRequest(BaseModel):
     """Request for audio export with format conversion."""
+
     source: str  # audio_id or filename
     format: str  # Target format (wav, mp3, flac, ogg, opus, m4a, aac, wma, aiff)
     sample_rate: int | None = None  # Output sample rate (Hz)
@@ -1154,6 +1068,7 @@ class AudioExportRequest(BaseModel):
 
 class AudioExportResponse(BaseModel):
     """Response from audio export."""
+
     success: bool
     filename: str
     format: str
@@ -1213,16 +1128,13 @@ async def export_audio(request: AudioExportRequest):
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported export format: {request.format}. "
-                   f"Supported formats: {', '.join(EXPORT_FORMAT_MIME_TYPES.keys())}"
+            f"Supported formats: {', '.join(EXPORT_FORMAT_MIME_TYPES.keys())}",
         )
 
     # Find source audio file
     audio_path = _get_audio_path(request.source)
     if not audio_path or not os.path.exists(audio_path):
-        raise HTTPException(
-            status_code=404,
-            detail=f"Audio file not found: {request.source}"
-        )
+        raise HTTPException(status_code=404, detail=f"Audio file not found: {request.source}")
 
     # Import conversion service
     try:
@@ -1230,10 +1142,7 @@ async def export_audio(request: AudioExportRequest):
         from backend.core.audio.formats import AudioFormat, get_format_by_extension
     except ImportError as e:
         logger.error(f"Audio conversion module not available: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail="Audio conversion service not available"
-        )
+        raise HTTPException(status_code=503, detail="Audio conversion service not available")
 
     # Map format string to AudioFormat enum
     format_map = {
@@ -1250,16 +1159,10 @@ async def export_audio(request: AudioExportRequest):
 
     audio_format = format_map.get(target_format)
     if audio_format is None:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unknown audio format: {target_format}"
-        )
+        raise HTTPException(status_code=400, detail=f"Unknown audio format: {target_format}")
 
     # Create temporary output file
-    with tempfile.NamedTemporaryFile(
-        suffix=f".{target_format}",
-        delete=False
-    ) as tmp:
+    with tempfile.NamedTemporaryFile(suffix=f".{target_format}", delete=False) as tmp:
         output_path = Path(tmp.name)
 
     try:
@@ -1276,10 +1179,7 @@ async def export_audio(request: AudioExportRequest):
         )
 
         if not result.success:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Conversion failed: {result.error}"
-            )
+            raise HTTPException(status_code=500, detail=f"Conversion failed: {result.error}")
 
         # Generate output filename
         source_basename = os.path.splitext(os.path.basename(audio_path))[0]
@@ -1303,7 +1203,7 @@ async def export_audio(request: AudioExportRequest):
             headers={
                 "Content-Disposition": f'attachment; filename="{output_filename}"',
                 "Content-Length": str(result.file_size_bytes),
-            }
+            },
         )
 
     except HTTPException:
@@ -1324,10 +1224,7 @@ async def export_audio(request: AudioExportRequest):
             except Exception:
                 pass
         logger.error(f"Audio export failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Export failed: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Export failed: {e!s}")
 
 
 @router.get("/formats")
@@ -1343,16 +1240,18 @@ async def get_supported_formats():
 
         formats = []
         for fmt_info in STANDARD_AUDIO_FORMATS.values():
-            formats.append({
-                "id": fmt_info.format.value,
-                "name": fmt_info.name,
-                "description": fmt_info.description,
-                "extensions": list(fmt_info.extensions),
-                "mime_types": list(fmt_info.mime_types),
-                "is_lossy": fmt_info.is_lossy,
-                "supports_metadata": fmt_info.supports_metadata,
-                "default_bitrate_kbps": fmt_info.default_bitrate_kbps,
-            })
+            formats.append(
+                {
+                    "id": fmt_info.format.value,
+                    "name": fmt_info.name,
+                    "description": fmt_info.description,
+                    "extensions": list(fmt_info.extensions),
+                    "mime_types": list(fmt_info.mime_types),
+                    "is_lossy": fmt_info.is_lossy,
+                    "supports_metadata": fmt_info.supports_metadata,
+                    "default_bitrate_kbps": fmt_info.default_bitrate_kbps,
+                }
+            )
 
         return {
             "formats": formats,

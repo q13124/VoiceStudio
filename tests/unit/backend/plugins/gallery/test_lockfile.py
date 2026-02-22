@@ -444,13 +444,15 @@ class TestLockfile:
 
     def test_from_json(self):
         """Test deserialization from JSON."""
-        json_str = json.dumps({
-            "version": "1.0",
-            "generated_at": "2024-01-15T10:30:00Z",
-            "voicestudio_version": "1.5.0",
-            "plugins": {},
-            "integrity_hash": "",
-        })
+        json_str = json.dumps(
+            {
+                "version": "1.0",
+                "generated_at": "2024-01-15T10:30:00Z",
+                "voicestudio_version": "1.5.0",
+                "plugins": {},
+                "integrity_hash": "",
+            }
+        )
         lockfile = Lockfile.from_json(json_str)
         assert lockfile.voicestudio_version == "1.5.0"
 
@@ -458,7 +460,7 @@ class TestLockfile:
         """Test save and load roundtrip."""
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "test.lock"
-            
+
             lockfile = Lockfile(voicestudio_version="1.5.0")
             plugin = LockedPlugin(
                 plugin_id="my-plugin",
@@ -468,7 +470,7 @@ class TestLockfile:
             )
             lockfile.add_plugin(plugin)
             lockfile.save(path)
-            
+
             loaded = Lockfile.load(path)
             assert loaded.voicestudio_version == "1.5.0"
             assert loaded.has_plugin("my-plugin")
@@ -515,10 +517,10 @@ class TestLockfileManager:
         }
         registry_path = temp_plugins_dir / "registry.json"
         registry_path.write_text(json.dumps(registry))
-        
+
         manager = LockfileManager(plugins_dir=temp_plugins_dir)
         lockfile = manager.generate_lockfile()
-        
+
         assert len(lockfile.plugins) == 2
         assert lockfile.has_plugin("plugin1")
         assert lockfile.has_plugin("plugin2")
@@ -526,7 +528,7 @@ class TestLockfileManager:
     def test_save_and_load_lockfile(self, temp_plugins_dir):
         """Test saving and loading lockfile."""
         manager = LockfileManager(plugins_dir=temp_plugins_dir)
-        
+
         lockfile = Lockfile()
         plugin = LockedPlugin(
             plugin_id="my-plugin",
@@ -536,9 +538,9 @@ class TestLockfileManager:
         )
         lockfile.add_plugin(plugin)
         manager.save_lockfile(lockfile)
-        
+
         assert manager.lockfile_exists() is True
-        
+
         loaded = manager.load_lockfile()
         assert loaded is not None
         assert loaded.has_plugin("my-plugin")
@@ -561,7 +563,7 @@ class TestLockfileManager:
         }
         registry_path = temp_plugins_dir / "registry.json"
         registry_path.write_text(json.dumps(registry))
-        
+
         # Create lockfile that matches
         lockfile = Lockfile()
         plugin = LockedPlugin(
@@ -571,10 +573,10 @@ class TestLockfileManager:
             install_date="2024-01-15T10:30:00Z",
         )
         lockfile.add_plugin(plugin)
-        
+
         manager = LockfileManager(plugins_dir=temp_plugins_dir)
         manager.save_lockfile(lockfile)
-        
+
         result = manager.validate_lockfile()
         assert result.valid is True
         assert result.status == LockfileStatus.VALID
@@ -590,7 +592,7 @@ class TestLockfileManager:
         }
         registry_path = temp_plugins_dir / "registry.json"
         registry_path.write_text(json.dumps(registry))
-        
+
         # Create lockfile with different version
         lockfile = Lockfile()
         plugin = LockedPlugin(
@@ -600,10 +602,10 @@ class TestLockfileManager:
             install_date="2024-01-15T10:30:00Z",
         )
         lockfile.add_plugin(plugin)
-        
+
         manager = LockfileManager(plugins_dir=temp_plugins_dir)
         manager.save_lockfile(lockfile)
-        
+
         result = manager.validate_lockfile()
         assert result.valid is False
         assert result.status == LockfileStatus.VERSION_MISMATCH
@@ -616,7 +618,7 @@ class TestLockfileManager:
         registry = {}
         registry_path = temp_plugins_dir / "registry.json"
         registry_path.write_text(json.dumps(registry))
-        
+
         # Lockfile expects a plugin
         lockfile = Lockfile()
         plugin = LockedPlugin(
@@ -626,10 +628,10 @@ class TestLockfileManager:
             install_date="2024-01-15T10:30:00Z",
         )
         lockfile.add_plugin(plugin)
-        
+
         manager = LockfileManager(plugins_dir=temp_plugins_dir)
         manager.save_lockfile(lockfile)
-        
+
         result = manager.validate_lockfile()
         assert result.valid is False
         assert result.status == LockfileStatus.MISSING_PLUGINS
@@ -646,13 +648,13 @@ class TestLockfileManager:
         }
         registry_path = temp_plugins_dir / "registry.json"
         registry_path.write_text(json.dumps(registry))
-        
+
         # Empty lockfile
         lockfile = Lockfile()
-        
+
         manager = LockfileManager(plugins_dir=temp_plugins_dir)
         manager.save_lockfile(lockfile)
-        
+
         result = manager.validate_lockfile()
         assert result.valid is False
         assert result.status == LockfileStatus.EXTRA_PLUGINS
@@ -672,13 +674,13 @@ class TestLockfileManager:
     def test_unlock_plugin(self, temp_plugins_dir):
         """Test unlocking a plugin."""
         manager = LockfileManager(plugins_dir=temp_plugins_dir)
-        
+
         # First lock a plugin
         manager.lock_plugin(
             plugin_id="my-plugin",
             version="1.0.0",
         )
-        
+
         # Then unlock it
         lockfile = manager.unlock_plugin("my-plugin")
         assert lockfile is not None
@@ -695,7 +697,7 @@ class TestLockfileManager:
         }
         registry_path = temp_plugins_dir / "registry.json"
         registry_path.write_text(json.dumps(registry))
-        
+
         lockfile = Lockfile()
         plugin = LockedPlugin(
             plugin_id="plugin1",
@@ -704,10 +706,10 @@ class TestLockfileManager:
             install_date="2024-01-15T10:30:00Z",
         )
         lockfile.add_plugin(plugin)
-        
+
         manager = LockfileManager(plugins_dir=temp_plugins_dir)
         manager.save_lockfile(lockfile)
-        
+
         plan = manager.get_install_plan()
         assert plan["install_count"] == 0
         assert plan["change_count"] == 0
@@ -718,7 +720,7 @@ class TestLockfileManager:
         registry = {}
         registry_path = temp_plugins_dir / "registry.json"
         registry_path.write_text(json.dumps(registry))
-        
+
         lockfile = Lockfile()
         plugin = LockedPlugin(
             plugin_id="plugin1",
@@ -727,10 +729,10 @@ class TestLockfileManager:
             install_date="2024-01-15T10:30:00Z",
         )
         lockfile.add_plugin(plugin)
-        
+
         manager = LockfileManager(plugins_dir=temp_plugins_dir)
         manager.save_lockfile(lockfile)
-        
+
         plan = manager.get_install_plan()
         assert plan["install_count"] == 1
         assert plan["actions"][0]["action"] == "install"
@@ -740,11 +742,11 @@ class TestLockfileManager:
         """Test exporting lockfile."""
         with tempfile.TemporaryDirectory() as export_dir:
             export_path = Path(export_dir) / "exported.lock"
-            
+
             manager = LockfileManager(plugins_dir=temp_plugins_dir)
             manager.lock_plugin("my-plugin", "1.0.0")
             manager.export_lockfile(export_path)
-            
+
             assert export_path.exists()
             loaded = Lockfile.load(export_path)
             assert loaded.has_plugin("my-plugin")
@@ -753,7 +755,7 @@ class TestLockfileManager:
         """Test importing lockfile."""
         with tempfile.TemporaryDirectory() as import_dir:
             import_path = Path(import_dir) / "import.lock"
-            
+
             # Create a lockfile to import
             lockfile = Lockfile()
             plugin = LockedPlugin(
@@ -764,10 +766,10 @@ class TestLockfileManager:
             )
             lockfile.add_plugin(plugin)
             lockfile.save(import_path)
-            
+
             manager = LockfileManager(plugins_dir=temp_plugins_dir)
             imported = manager.import_lockfile(import_path)
-            
+
             assert imported.has_plugin("imported-plugin")
             assert manager.lockfile_exists()
 
@@ -779,20 +781,20 @@ class TestConvenienceFunctions:
     def temp_plugins_dir(self, monkeypatch):
         """Create temp plugins dir and patch singleton."""
         import backend.plugins.gallery.lockfile as lockfile_module
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             plugins_dir = Path(tmpdir) / "plugins"
             plugins_dir.mkdir()
-            
+
             # Reset singleton
             lockfile_module._lockfile_manager = None
-            
+
             # Create new manager
             manager = LockfileManager(plugins_dir=plugins_dir)
             lockfile_module._lockfile_manager = manager
-            
+
             yield plugins_dir
-            
+
             # Clean up singleton
             lockfile_module._lockfile_manager = None
 
@@ -817,7 +819,7 @@ class TestConvenienceFunctions:
         """Test unlock_plugin function."""
         # First lock
         lock_plugin("test-plugin", "1.0.0")
-        
+
         # Then unlock
         lockfile = unlock_plugin("test-plugin")
         assert lockfile is not None

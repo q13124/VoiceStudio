@@ -169,12 +169,11 @@ class TestPluginSigningSecurityRules:
         catalog_path = Path(__file__).parent.parent.parent / "shared" / "catalog" / "plugins.json"
         catalog = json.loads(catalog_path.read_text())
         for plugin in catalog["plugins"]:
-            assert plugin.get("verified") is True, (
-                f"Catalog plugin {plugin['id']} must be verified"
-            )
+            assert plugin.get("verified") is True, f"Catalog plugin {plugin['id']} must be verified"
 
     def test_signing_module_available(self):
         from backend.plugins.supply_chain.signer import check_signing_available
+
         available = check_signing_available()
         if not available:
             pytest.skip("cryptography library not installed")
@@ -186,6 +185,7 @@ class TestPluginSigningSecurityRules:
             KeyStatus,
             check_signing_available,
         )
+
         if not check_signing_available():
             pytest.skip("cryptography library not installed")
 
@@ -233,6 +233,6 @@ class TestManifestSecurityFields:
     def test_no_arbitrary_subprocess_for_analysis_plugins(self, manifest):
         if manifest["category"] == "audio_analysis":
             perms = manifest["permissions"]
-            assert perms.get("subprocess") is not True, (
-                "Analysis plugins should not require subprocess access"
-            )
+            assert (
+                perms.get("subprocess") is not True
+            ), "Analysis plugins should not require subprocess access"

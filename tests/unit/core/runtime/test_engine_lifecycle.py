@@ -28,9 +28,7 @@ class TestEngineLifecycleImports:
     def test_lifecycle_has_classes(self):
         """Test engine_lifecycle has expected classes."""
         classes = [
-            name
-            for name in dir(engine_lifecycle)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(engine_lifecycle) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "engine_lifecycle should have classes"
 
@@ -41,23 +39,17 @@ class TestEngineLifecycleFunctions:
     def test_start_engine_function_exists(self):
         """Test start_engine function exists."""
         if hasattr(engine_lifecycle, "start_engine"):
-            assert callable(
-                engine_lifecycle.start_engine
-            ), "start_engine should be callable"
+            assert callable(engine_lifecycle.start_engine), "start_engine should be callable"
 
     def test_stop_engine_function_exists(self):
         """Test stop_engine function exists."""
         if hasattr(engine_lifecycle, "stop_engine"):
-            assert callable(
-                engine_lifecycle.stop_engine
-            ), "stop_engine should be callable"
+            assert callable(engine_lifecycle.stop_engine), "stop_engine should be callable"
 
     def test_check_health_function_exists(self):
         """Test check_health function exists."""
         if hasattr(engine_lifecycle, "check_health"):
-            assert callable(
-                engine_lifecycle.check_health
-            ), "check_health should be callable"
+            assert callable(engine_lifecycle.check_health), "check_health should be callable"
 
 
 class TestEngineLifecycleClasses:
@@ -110,9 +102,7 @@ class TestEngineLifecycleFunctionality:
             # Mock engine ID
             engine_id = "test-engine"
             result = engine_lifecycle.check_health(engine_id)
-            assert isinstance(
-                result, (bool, dict)
-            ), "check_health should return bool or dict"
+            assert isinstance(result, (bool, dict)), "check_health should return bool or dict"
         except Exception as e:
             pytest.skip(f"check_health test skipped: {e}")
 

@@ -101,10 +101,7 @@ async def search_images(request: ImageSearchRequest):
             for source_name in ["unsplash", "pexels", "pixabay"]:
                 # Search for key by service name
                 for key_obj in api_key_storage.values():
-                    if (
-                        key_obj.service_name.lower() == source_name.lower()
-                        and key_obj.is_active
-                    ):
+                    if key_obj.service_name.lower() == source_name.lower() and key_obj.is_active:
                         api_keys[source_name] = key_obj.key_value
                         break
         except ImportError:
@@ -134,9 +131,7 @@ async def search_images(request: ImageSearchRequest):
         if request.min_height:
             results = [r for r in results if r.height >= request.min_height]
         if request.orientation:
-            results = [
-                r for r in results if _matches_orientation(r, request.orientation)
-            ]
+            results = [r for r in results if _matches_orientation(r, request.orientation)]
         if request.color:
             results = [r for r in results if _matches_color(r, request.color)]
 
@@ -475,9 +470,7 @@ async def _search_pixabay(
     return results
 
 
-async def _search_local_images(
-    query: str, request: ImageSearchRequest
-) -> list[ImageSearchResult]:
+async def _search_local_images(query: str, request: ImageSearchRequest) -> list[ImageSearchResult]:
     """Search local image library."""
     results: list[ImageSearchResult] = []
 
@@ -527,9 +520,7 @@ async def _search_local_images(
                             )
                             results.append(result)
                         except Exception as e:
-                            logger.debug(
-                                f"Failed to process local image {file_path}: {e}"
-                            )
+                            logger.debug(f"Failed to process local image {file_path}: {e}")
                             continue
     except Exception as e:
         logger.warning(f"Failed to search local images: {e}")
@@ -561,11 +552,9 @@ def _matches_color(result: ImageSearchResult, color: str) -> bool:
 
     # Check if color is mentioned in tags or title
     color_lower = color.lower()
-    searchable_text = " ".join([
-        result.title or "",
-        result.description or "",
-        " ".join(result.tags or [])
-    ]).lower()
+    searchable_text = " ".join(
+        [result.title or "", result.description or "", " ".join(result.tags or [])]
+    ).lower()
 
     # Basic color matching in text
     color_keywords = {

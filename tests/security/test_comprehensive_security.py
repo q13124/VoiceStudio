@@ -11,12 +11,12 @@ Tests for security-critical functionality including:
 Part of the Testing Expansion Plan.
 """
 
-
 import pytest
 
 # Attempt to import test client
 try:
     from httpx import Client as HttpClient
+
     HAS_HTTPX = True
 except ImportError:
     HAS_HTTPX = False
@@ -53,9 +53,7 @@ def authenticated_client():
 
     try:
         client = HttpClient(
-            base_url=API_BASE_URL,
-            timeout=10.0,
-            headers={"X-API-Key": TEST_API_KEY}
+            base_url=API_BASE_URL, timeout=10.0, headers={"X-API-Key": TEST_API_KEY}
         )
         return client
     except Exception as e:
@@ -80,24 +78,20 @@ class TestAPIKeySecurity:
             if response.status_code not in [401, 403, 404]:
                 # 404 is acceptable if endpoint doesn't exist
                 continue
-            assert response.status_code in [401, 403], \
-                f"Endpoint {endpoint} should require authentication"
+            assert response.status_code in [
+                401,
+                403,
+            ], f"Endpoint {endpoint} should require authentication"
 
     def test_invalid_api_key_rejection(self, api_client):
         """Verify invalid API keys are rejected."""
-        response = api_client.get(
-            "/api/admin/settings",
-            headers={"X-API-Key": "invalid-key-12345"}
-        )
+        response = api_client.get("/api/admin/settings", headers={"X-API-Key": "invalid-key-12345"})
         # Should be rejected (401/403) or not found (404)
         assert response.status_code in [401, 403, 404]
 
     def test_empty_api_key_rejection(self, api_client):
         """Verify empty API keys are rejected."""
-        response = api_client.get(
-            "/api/admin/settings",
-            headers={"X-API-Key": ""}
-        )
+        response = api_client.get("/api/admin/settings", headers={"X-API-Key": ""})
         assert response.status_code in [401, 403, 404]
 
     def test_malformed_api_key_handling(self, api_client):
@@ -110,13 +104,9 @@ class TestAPIKeySecurity:
         ]
 
         for key in malformed_keys:
-            response = api_client.get(
-                "/api/admin/settings",
-                headers={"X-API-Key": key}
-            )
+            response = api_client.get("/api/admin/settings", headers={"X-API-Key": key})
             # Should not cause 500 error
-            assert response.status_code != 500, \
-                f"Malformed key caused server error: {key[:50]}"
+            assert response.status_code != 500, f"Malformed key caused server error: {key[:50]}"
 
     def test_api_key_rate_limiting(self, api_client):
         """Verify rate limiting is enforced."""
@@ -148,13 +138,11 @@ class TestInputSanitization:
 
         for payload in sql_payloads:
             # Try injection in query parameter
-            response = api_client.get(
-                "/api/profiles",
-                params={"search": payload}
-            )
+            response = api_client.get("/api/profiles", params={"search": payload})
             # Should not cause 500 error (indicates unhandled exception)
-            assert response.status_code != 500, \
-                f"Potential SQL injection vulnerability with: {payload}"
+            assert (
+                response.status_code != 500
+            ), f"Potential SQL injection vulnerability with: {payload}"
 
     def test_path_traversal_prevention(self, api_client):
         """Verify path traversal attacks are prevented."""
@@ -170,8 +158,12 @@ class TestInputSanitization:
             # Try in file path parameter
             response = api_client.get(f"/api/files/{payload}")
             # Should be 400 or 404, not expose system files
-            assert response.status_code in [400, 403, 404, 422], \
-                f"Path traversal may have succeeded: {payload}"
+            assert response.status_code in [
+                400,
+                403,
+                404,
+                422,
+            ], f"Path traversal may have succeeded: {payload}"
 
     def test_xss_prevention(self, api_client):
         """Verify XSS payloads are sanitized."""
@@ -186,8 +178,7 @@ class TestInputSanitization:
         for payload in xss_payloads:
             # Try in text input
             response = api_client.post(
-                "/api/synthesis/preview",
-                json={"text": payload, "engine": "default"}
+                "/api/synthesis/preview", json={"text": payload, "engine": "default"}
             )
             # Should handle safely (may fail validation but not 500)
             assert response.status_code != 500
@@ -205,10 +196,9 @@ class TestInputSanitization:
         for payload in cmd_payloads:
             response = api_client.post(
                 "/api/synthesis/generate",
-                json={"text": payload, "output_path": f"test{payload}.wav"}
+                json={"text": payload, "output_path": f"test{payload}.wav"},
             )
-            assert response.status_code != 500, \
-                f"Potential command injection: {payload}"
+            assert response.status_code != 500, f"Potential command injection: {payload}"
 
     def test_json_injection_handling(self, api_client):
         """Verify malformed JSON is handled safely."""
@@ -222,13 +212,14 @@ class TestInputSanitization:
 
         for payload in malformed_payloads:
             response = api_client.post(
-                "/api/profiles",
-                content=payload,
-                headers={"Content-Type": "application/json"}
+                "/api/profiles", content=payload, headers={"Content-Type": "application/json"}
             )
             # Should return 400/422 for invalid JSON, not 500
-            assert response.status_code in [400, 422, 415], \
-                f"Malformed JSON caused unexpected response: {payload}"
+            assert response.status_code in [
+                400,
+                422,
+                415,
+            ], f"Malformed JSON caused unexpected response: {payload}"
 
 
 class TestFileUploadSecurity:
@@ -240,13 +231,11 @@ class TestFileUploadSecurity:
         large_content = b"A" * (10 * 1024 * 1024)
 
         response = api_client.post(
-            "/api/files/upload",
-            files={"file": ("large.wav", large_content, "audio/wav")}
+            "/api/files/upload", files={"file": ("large.wav", large_content, "audio/wav")}
         )
 
         # Should be rejected with 413 or 400
-        assert response.status_code in [400, 413, 422, 404], \
-            "Large file upload should be rejected"
+        assert response.status_code in [400, 413, 422, 404], "Large file upload should be rejected"
 
     def test_mime_type_validation(self, api_client):
         """Verify MIME type validation for uploads."""
@@ -254,8 +243,7 @@ class TestFileUploadSecurity:
         exe_content = b"MZ" + b"\x00" * 100  # PE header
 
         response = api_client.post(
-            "/api/files/upload",
-            files={"file": ("audio.wav", exe_content, "audio/wav")}
+            "/api/files/upload", files={"file": ("audio.wav", exe_content, "audio/wav")}
         )
 
         # Should be rejected if MIME validation is implemented
@@ -275,12 +263,10 @@ class TestFileUploadSecurity:
 
         for name in malicious_names:
             response = api_client.post(
-                "/api/files/upload",
-                files={"file": (name, b"test content", "audio/wav")}
+                "/api/files/upload", files={"file": (name, b"test content", "audio/wav")}
             )
             # Should handle safely
-            assert response.status_code != 500, \
-                f"Malicious filename caused error: {name}"
+            assert response.status_code != 500, f"Malicious filename caused error: {name}"
 
     def test_double_extension_handling(self, api_client):
         """Verify double extensions are handled safely."""
@@ -293,8 +279,7 @@ class TestFileUploadSecurity:
 
         for name in double_extensions:
             response = api_client.post(
-                "/api/files/upload",
-                files={"file": (name, b"test", "application/octet-stream")}
+                "/api/files/upload", files={"file": (name, b"test", "application/octet-stream")}
             )
             # Should reject or sanitize
             assert response.status_code in [400, 404, 415, 422]
@@ -302,8 +287,7 @@ class TestFileUploadSecurity:
     def test_null_byte_in_filename(self, api_client):
         """Verify null byte injection in filenames is prevented."""
         response = api_client.post(
-            "/api/files/upload",
-            files={"file": ("file.wav\x00.exe", b"test", "audio/wav")}
+            "/api/files/upload", files={"file": ("file.wav\x00.exe", b"test", "audio/wav")}
         )
         # Should handle safely
         assert response.status_code != 500
@@ -319,33 +303,29 @@ class TestCORSPolicy:
             headers={
                 "Origin": "http://localhost:3000",
                 "Access-Control-Request-Method": "GET",
-            }
+            },
         )
 
         # Should include CORS headers or be 405 if OPTIONS not handled
         if response.status_code == 200:
             # Check for CORS headers
             headers = response.headers
-            assert "access-control-allow-origin" in headers or \
-                   "Access-Control-Allow-Origin" in headers or \
-                   response.status_code == 405
+            assert (
+                "access-control-allow-origin" in headers
+                or "Access-Control-Allow-Origin" in headers
+                or response.status_code == 405
+            )
 
     def test_cors_allowed_origins(self, api_client):
         """Verify CORS allows configured origins."""
-        response = api_client.get(
-            "/api/health",
-            headers={"Origin": "http://localhost:8088"}
-        )
+        response = api_client.get("/api/health", headers={"Origin": "http://localhost:8088"})
 
         # Should respond successfully
         assert response.status_code in [200, 204]
 
     def test_cors_blocks_unauthorized_origins(self, api_client):
         """Verify CORS blocks unauthorized origins."""
-        response = api_client.get(
-            "/api/health",
-            headers={"Origin": "http://malicious-site.com"}
-        )
+        response = api_client.get("/api/health", headers={"Origin": "http://malicious-site.com"})
 
         # Server may allow (if permissive) or block
         # Check that sensitive endpoints don't leak data
@@ -360,10 +340,7 @@ class TestSessionManagement:
     def test_session_token_generation(self, api_client):
         """Verify session tokens are properly generated."""
         # Login endpoint if exists
-        response = api_client.post(
-            "/api/auth/login",
-            json={"username": "test", "password": "test"}
-        )
+        response = api_client.post("/api/auth/login", json={"username": "test", "password": "test"})
 
         if response.status_code == 404:
             pytest.skip("Auth endpoints not implemented")
@@ -382,8 +359,7 @@ class TestSessionManagement:
         expired_token = "expired-test-token-12345"
 
         response = api_client.get(
-            "/api/user/profile",
-            headers={"Authorization": f"Bearer {expired_token}"}
+            "/api/user/profile", headers={"Authorization": f"Bearer {expired_token}"}
         )
 
         # Should be rejected
@@ -450,14 +426,13 @@ class TestErrorDisclosure:
                 # Should not contain stack trace indicators
                 sensitive_patterns = [
                     "Traceback",
-                    "File \"",
-                    ".py\", line",
+                    'File "',
+                    '.py", line',
                     "Exception:",
                     "at 0x",
                 ]
                 for pattern in sensitive_patterns:
-                    assert pattern not in body, \
-                        f"Response may expose internal details: {pattern}"
+                    assert pattern not in body, f"Response may expose internal details: {pattern}"
             except Exception:
                 pass  # Response body not readable
 

@@ -194,13 +194,10 @@ async def run(req: AssistantRunRequest) -> dict:
         except Exception as e:
             status = "failed"
             error_message = str(e)
-            logger.error(
-                f"Action execution failed: {action_id}, error: {e}", exc_info=True
-            )
+            logger.error(f"Action execution failed: {action_id}, error: {e}", exc_info=True)
 
         logger.info(
-            f"Assistant action executed: {action_id} -> {execution_id}, "
-            f"status={status}"
+            f"Assistant action executed: {action_id} -> {execution_id}, " f"status={status}"
         )
 
         return {

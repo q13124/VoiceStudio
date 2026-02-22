@@ -23,16 +23,12 @@ class TestEngineHooksImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            engine_hooks is not None
-        ), "Failed to import engine_hooks module"
+        assert engine_hooks is not None, "Failed to import engine_hooks module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
         classes = [
-            name
-            for name in dir(engine_hooks)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(engine_hooks) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "module should have classes"
 
@@ -53,18 +49,13 @@ class TestEngineHooksFunctions:
     def test_register_hook_function_exists(self):
         """Test register_hook function exists."""
         if hasattr(engine_hooks, "register_hook"):
-            assert callable(
-                engine_hooks.register_hook
-            ), "register_hook should be callable"
+            assert callable(engine_hooks.register_hook), "register_hook should be callable"
 
     def test_execute_hooks_function_exists(self):
         """Test execute_hooks function exists."""
         if hasattr(engine_hooks, "execute_hooks"):
-            assert callable(
-                engine_hooks.execute_hooks
-            ), "execute_hooks should be callable"
+            assert callable(engine_hooks.execute_hooks), "execute_hooks should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

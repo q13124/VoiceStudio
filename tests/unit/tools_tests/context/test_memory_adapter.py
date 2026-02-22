@@ -34,6 +34,7 @@ try:
         _resolve_openmemory_path,
         _try_all_mcp_providers,
     )
+
     TOOLS_AVAILABLE = True
 except ImportError:
     TOOLS_AVAILABLE = False
@@ -114,7 +115,9 @@ Handles theme switching and persistence.
 
     def test_health_check_with_openmemory_file(self, adapter, temp_openmemory_dir):
         """Test health check when openmemory.md exists."""
-        with patch.dict(os.environ, {"OPENMEMORY_PATH": str(Path(temp_openmemory_dir) / "openmemory.md")}):
+        with patch.dict(
+            os.environ, {"OPENMEMORY_PATH": str(Path(temp_openmemory_dir) / "openmemory.md")}
+        ):
             assert adapter.health_check() is True
 
     def test_health_check_with_context_memo(self, adapter):
@@ -129,12 +132,16 @@ Handles theme switching and persistence.
     def test_health_check_no_sources(self, adapter):
         """Test health check when no sources available."""
         with patch.dict(os.environ, {}, clear=True):
-            with patch("tools.context.sources.memory_adapter._resolve_openmemory_path", return_value=None):
+            with patch(
+                "tools.context.sources.memory_adapter._resolve_openmemory_path", return_value=None
+            ):
                 assert adapter.health_check() is False
 
     def test_fetch_returns_context(self, adapter, temp_openmemory_dir):
         """Test that fetch returns memory context."""
-        with patch.dict(os.environ, {"OPENMEMORY_PATH": str(Path(temp_openmemory_dir) / "openmemory.md")}):
+        with patch.dict(
+            os.environ, {"OPENMEMORY_PATH": str(Path(temp_openmemory_dir) / "openmemory.md")}
+        ):
             context = AllocationContext(
                 task_id="TEST-0001",
                 phase="Test",
@@ -150,13 +157,15 @@ Handles theme switching and persistence.
             assert result.source_name == "memory"
             # SourceResult has 'data' not 'content'
             assert result.data is not None and (
-                (isinstance(result.data, str) and len(result.data) > 0) or
-                (isinstance(result.data, (list, dict)) and len(result.data) > 0)
+                (isinstance(result.data, str) and len(result.data) > 0)
+                or (isinstance(result.data, (list, dict)) and len(result.data) > 0)
             )
 
     def test_fetch_with_query(self, adapter, temp_openmemory_dir):
         """Test fetch with specific query."""
-        with patch.dict(os.environ, {"OPENMEMORY_PATH": str(Path(temp_openmemory_dir) / "openmemory.md")}):
+        with patch.dict(
+            os.environ, {"OPENMEMORY_PATH": str(Path(temp_openmemory_dir) / "openmemory.md")}
+        ):
             context = AllocationContext(
                 task_id="TEST-0002",
                 phase="Test",
@@ -182,7 +191,9 @@ Handles theme switching and persistence.
 
     def test_estimate_size(self, adapter, temp_openmemory_dir):
         """Test size estimation."""
-        with patch.dict(os.environ, {"OPENMEMORY_PATH": str(Path(temp_openmemory_dir) / "openmemory.md")}):
+        with patch.dict(
+            os.environ, {"OPENMEMORY_PATH": str(Path(temp_openmemory_dir) / "openmemory.md")}
+        ):
             context = AllocationContext(
                 task_id="TEST-0003",
                 phase="Test",
@@ -231,13 +242,18 @@ class TestMCPProtocol:
         )
 
         # First call should log
-        with patch("tools.context.sources.memory_adapter._try_all_mcp_providers", return_value=None):
+        with patch(
+            "tools.context.sources.memory_adapter._try_all_mcp_providers", return_value=None
+        ):
             with patch("tools.context.sources.memory_adapter.logger") as mock_logger:
                 adapter._call_openmemory_mcp("test query")
 
                 if not MemorySourceAdapter._mcp_unavailable_logged:
                     # Check warning was called
-                    assert mock_logger.warning.called or not MemorySourceAdapter._mcp_unavailable_logged
+                    assert (
+                        mock_logger.warning.called
+                        or not MemorySourceAdapter._mcp_unavailable_logged
+                    )
 
     def test_mcp_disabled_skips_protocol(self):
         """Test that MCP protocol is skipped when disabled."""
@@ -264,7 +280,9 @@ class TestMCPProtocol:
             {"content": "Test memory 2", "source": "openmemory", "relevance": 0.8},
         ]
 
-        with patch("tools.context.sources.memory_adapter._try_all_mcp_providers", return_value=mock_results):
+        with patch(
+            "tools.context.sources.memory_adapter._try_all_mcp_providers", return_value=mock_results
+        ):
             result = adapter._call_openmemory_mcp("test query")
 
             assert result == mock_results
@@ -304,7 +322,10 @@ class TestMCPResultParsing:
         """Test parsing OpenMemory HSG format."""
         mock_result = MagicMock()
         mock_result.content = [
-            MagicMock(type="text", text='{"memories": [{"content": "Test content", "sector": "semantic", "salience": 0.85}]}')
+            MagicMock(
+                type="text",
+                text='{"memories": [{"content": "Test content", "sector": "semantic", "salience": 0.85}]}',
+            )
         ]
 
         result = _parse_mcp_tool_result(mock_result, 5)
@@ -318,7 +339,10 @@ class TestMCPResultParsing:
         """Test parsing Mem0 format."""
         mock_result = MagicMock()
         mock_result.content = [
-            MagicMock(type="text", text='{"results": [{"memory": {"content": "Mem0 content"}, "metadata": {"source": "mem0"}}]}')
+            MagicMock(
+                type="text",
+                text='{"results": [{"memory": {"content": "Mem0 content"}, "metadata": {"source": "mem0"}}]}',
+            )
         ]
 
         result = _parse_mcp_tool_result(mock_result, 5)
@@ -331,7 +355,10 @@ class TestMCPResultParsing:
         """Test parsing plain list format."""
         mock_result = MagicMock()
         mock_result.content = [
-            MagicMock(type="text", text='[{"content": "Item 1", "source": "test"}, {"content": "Item 2", "source": "test"}]')
+            MagicMock(
+                type="text",
+                text='[{"content": "Item 1", "source": "test"}, {"content": "Item 2", "source": "test"}]',
+            )
         ]
 
         result = _parse_mcp_tool_result(mock_result, 5)
@@ -352,9 +379,7 @@ class TestMCPResultParsing:
         """Test that parsing respects max_results limit."""
         mock_result = MagicMock()
         items = [{"content": f"Item {i}", "source": "test"} for i in range(10)]
-        mock_result.content = [
-            MagicMock(type="text", text=json.dumps(items))
-        ]
+        mock_result.content = [MagicMock(type="text", text=json.dumps(items))]
 
         result = _parse_mcp_tool_result(mock_result, 3)
 
@@ -426,7 +451,9 @@ class TestFallbackChain:
         """Test fallback to openmemory.md when MCP fails."""
         with tempfile.TemporaryDirectory() as tmpdir:
             openmemory_path = Path(tmpdir) / "openmemory.md"
-            openmemory_path.write_text("# Fallback Content\n\n## Overview\nTest fallback.", encoding="utf-8")
+            openmemory_path.write_text(
+                "# Fallback Content\n\n## Overview\nTest fallback.", encoding="utf-8"
+            )
 
             adapter = MemorySourceAdapter(
                 offline=False,
@@ -434,11 +461,15 @@ class TestFallbackChain:
             )
 
             with patch.dict(os.environ, {"OPENMEMORY_PATH": str(openmemory_path)}):
-                with patch("tools.context.sources.memory_adapter._try_all_mcp_providers", return_value=None):
+                with patch(
+                    "tools.context.sources.memory_adapter._try_all_mcp_providers", return_value=None
+                ):
                     result = adapter._call_openmemory_mcp("test query")
 
                     # Should fall back to file
-                    assert result is not None or adapter._try_mcp_query({"query": "test"}) is not None
+                    assert (
+                        result is not None or adapter._try_mcp_query({"query": "test"}) is not None
+                    )
 
     def test_full_fallback_chain(self):
         """Test complete fallback chain."""
@@ -448,9 +479,13 @@ class TestFallbackChain:
         )
 
         # Ensure MCP fails
-        with patch("tools.context.sources.memory_adapter._try_all_mcp_providers", return_value=None):
+        with patch(
+            "tools.context.sources.memory_adapter._try_all_mcp_providers", return_value=None
+        ):
             # Ensure no openmemory.md
-            with patch("tools.context.sources.memory_adapter._resolve_openmemory_path", return_value=None):
+            with patch(
+                "tools.context.sources.memory_adapter._resolve_openmemory_path", return_value=None
+            ):
                 # CONTEXT_MEMO should be the last resort
                 with patch.dict(os.environ, {"CONTEXT_MEMO": "Last resort context"}):
                     items = adapter._fetch_env_hint()

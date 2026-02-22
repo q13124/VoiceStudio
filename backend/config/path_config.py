@@ -110,7 +110,11 @@ def get_ffmpeg_path() -> Path:
                 return ffmpeg_exe
 
     # 4. Bundled (relative to this module)
-    bundled = Path(__file__).resolve().parents[2] / "bin" / ("ffmpeg.exe" if os.name == "nt" else "ffmpeg")
+    bundled = (
+        Path(__file__).resolve().parents[2]
+        / "bin"
+        / ("ffmpeg.exe" if os.name == "nt" else "ffmpeg")
+    )
     if bundled.exists() and _is_ffmpeg(bundled):
         return bundled
 

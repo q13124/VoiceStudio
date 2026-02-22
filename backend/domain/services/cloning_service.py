@@ -16,6 +16,7 @@ from backend.domain.services.base import DomainService
 @dataclass
 class CloneRequest:
     """Request for voice cloning."""
+
     name: str
     sample_paths: list[str]
     language: str = "en"
@@ -26,6 +27,7 @@ class CloneRequest:
 @dataclass
 class SampleValidation:
     """Validation result for a sample."""
+
     path: str
     valid: bool
     duration_seconds: float = 0.0

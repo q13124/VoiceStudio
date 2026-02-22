@@ -142,16 +142,12 @@ def main() -> int:
             "ready_engines": ready_engines,
             "missing_models": missing_models,
             "models_path": str(
-                Path(
-                    os.environ.get("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models")
-                )
+                Path(os.environ.get("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models"))
             ),
         }
         print(json.dumps(output, indent=2))
     else:
-        models_path = Path(
-            os.environ.get("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models")
-        )
+        models_path = Path(os.environ.get("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models"))
         print(f"Engine readiness check (models path: {models_path})")
         print("=" * 70)
 

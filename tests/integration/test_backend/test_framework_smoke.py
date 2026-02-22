@@ -191,6 +191,7 @@ class TestAsyncFramework(AsyncIntegrationTestBase):
     async def test_async_test_execution(self):
         """Verify async tests work correctly."""
         import asyncio
+
         await asyncio.sleep(0.01)
         assert True
 

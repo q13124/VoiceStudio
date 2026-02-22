@@ -121,9 +121,7 @@ class EnhancedJobQueue:
         # Job tracking
         self.jobs: dict[str, Job] = {}
         self.active_jobs: dict[str, Job] = {}
-        self.job_dependencies: dict[str, set[str]] = (
-            {}
-        )  # job_id -> set of dependency job_ids
+        self.job_dependencies: dict[str, set[str]] = {}  # job_id -> set of dependency job_ids
         self.job_retries: dict[str, int] = {}  # job_id -> retry count
         # job_id -> next retry timestamp
         self.job_retry_times: dict[str, float] = {}
@@ -265,8 +263,7 @@ class EnhancedJobQueue:
                         ready_jobs = [
                             job
                             for job in batch.jobs
-                            if not check_dependencies
-                            or self._check_dependencies(job.job_id)
+                            if not check_dependencies or self._check_dependencies(job.job_id)
                         ]
                         if ready_jobs:
                             # Return first ready job from batch
@@ -289,9 +286,7 @@ class EnhancedJobQueue:
                         _, _, job = queue.get_nowait()
 
                         # Check dependencies
-                        if check_dependencies and not self._check_dependencies(
-                            job.job_id
-                        ):
+                        if check_dependencies and not self._check_dependencies(job.job_id):
                             # Dependencies not met, put back
                             queue.put((priority.value, time.time(), job))
                             continue
@@ -482,9 +477,7 @@ class EnhancedJobQueue:
 
                 # Use resource manager if available
                 if self.resource_manager:
-                    self.resource_manager.complete_job(
-                        job_id, success=False, error=error
-                    )
+                    self.resource_manager.complete_job(job_id, success=False, error=error)
 
                 # Send WebSocket notification
                 self._notify_websocket(
@@ -539,17 +532,11 @@ class EnhancedJobQueue:
             if any(j.job_id == job_id for j in batch.jobs):
                 # Update batch progress
                 batch.total_jobs = len(batch.jobs)
-                batch.completed_jobs = sum(
-                    1 for j in batch.jobs if j.status == JobStatus.COMPLETED
-                )
-                batch.failed_jobs = sum(
-                    1 for j in batch.jobs if j.status == JobStatus.FAILED
-                )
+                batch.completed_jobs = sum(1 for j in batch.jobs if j.status == JobStatus.COMPLETED)
+                batch.failed_jobs = sum(1 for j in batch.jobs if j.status == JobStatus.FAILED)
 
                 if batch.total_jobs > 0:
-                    batch.progress = (
-                        batch.completed_jobs + batch.failed_jobs
-                    ) / batch.total_jobs
+                    batch.progress = (batch.completed_jobs + batch.failed_jobs) / batch.total_jobs
 
                 # Send batch progress notification
                 self._notify_websocket(
@@ -686,9 +673,7 @@ class EnhancedJobQueue:
                 "task": job.task,
                 "created_at": (job.created_at.isoformat() if job.created_at else None),
                 "started_at": (job.started_at.isoformat() if job.started_at else None),
-                "completed_at": (
-                    job.completed_at.isoformat() if job.completed_at else None
-                ),
+                "completed_at": (job.completed_at.isoformat() if job.completed_at else None),
                 "error": job.error,
                 "retry_count": retry_count,
                 "dependencies": list(self.job_dependencies.get(job_id, set())),
@@ -698,9 +683,7 @@ class EnhancedJobQueue:
             if job_id in self.job_retry_times:
                 retry_time = self.job_retry_times[job_id]
                 if time.time() < retry_time:
-                    status["next_retry"] = datetime.fromtimestamp(
-                        retry_time
-                    ).isoformat()
+                    status["next_retry"] = datetime.fromtimestamp(retry_time).isoformat()
 
             # Add progress info
             if job_id in self.job_progress:
@@ -749,9 +732,7 @@ class EnhancedJobQueue:
                 "batches": {
                     "total": len(self.job_batches),
                     "pending": len(self.pending_batches),
-                    "running": sum(
-                        1 for b in self.job_batches.values() if b.status == "running"
-                    ),
+                    "running": sum(1 for b in self.job_batches.values() if b.status == "running"),
                     "completed": sum(
                         1 for b in self.job_batches.values() if b.status == "completed"
                     ),
@@ -759,9 +740,7 @@ class EnhancedJobQueue:
                 "statistics": self.stats.copy(),
             }
 
-    def create_batch(
-        self, batch_id: str, job_ids: list[str] | None = None
-    ) -> JobBatch:
+    def create_batch(self, batch_id: str, job_ids: list[str] | None = None) -> JobBatch:
         """
         Create a new job batch.
 

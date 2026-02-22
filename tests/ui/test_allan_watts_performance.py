@@ -64,6 +64,7 @@ pytestmark = [
 # Fixtures
 # =============================================================================
 
+
 @pytest.fixture(scope="module")
 def tracer():
     """Create a workflow tracer for performance tests."""
@@ -116,6 +117,7 @@ def calculate_stats(timings: list[float]) -> dict[str, float]:
 # API Latency Tests
 # =============================================================================
 
+
 class TestAPILatency:
     """Test API endpoint latency."""
 
@@ -130,11 +132,14 @@ class TestAPILatency:
         timings = run_multiple_times(health_check, iterations=10)
         stats = calculate_stats(timings)
 
-        tracer.step(f"Health check: min={stats['min']:.1f}ms, avg={stats['avg']:.1f}ms, max={stats['max']:.1f}ms")
+        tracer.step(
+            f"Health check: min={stats['min']:.1f}ms, avg={stats['avg']:.1f}ms, max={stats['max']:.1f}ms"
+        )
         tracer.record_timing("api_health", stats["avg"])
 
-        assert stats["avg"] < THRESHOLDS["api_health_check"], \
-            f"Health check too slow: {stats['avg']:.1f}ms > {THRESHOLDS['api_health_check']}ms"
+        assert (
+            stats["avg"] < THRESHOLDS["api_health_check"]
+        ), f"Health check too slow: {stats['avg']:.1f}ms > {THRESHOLDS['api_health_check']}ms"
 
         tracer.end_phase(success=True)
         tracer.success("Health check latency acceptable")
@@ -149,7 +154,9 @@ class TestAPILatency:
         timings = run_multiple_times(list_engines, iterations=5)
         stats = calculate_stats(timings)
 
-        tracer.step(f"Engines list: min={stats['min']:.1f}ms, avg={stats['avg']:.1f}ms, max={stats['max']:.1f}ms")
+        tracer.step(
+            f"Engines list: min={stats['min']:.1f}ms, avg={stats['avg']:.1f}ms, max={stats['max']:.1f}ms"
+        )
         tracer.record_timing("api_engines_list", stats["avg"])
 
         tracer.success("Engines list latency measured")
@@ -164,7 +171,9 @@ class TestAPILatency:
         timings = run_multiple_times(list_voices, iterations=5)
         stats = calculate_stats(timings)
 
-        tracer.step(f"Voices list: min={stats['min']:.1f}ms, avg={stats['avg']:.1f}ms, max={stats['max']:.1f}ms")
+        tracer.step(
+            f"Voices list: min={stats['min']:.1f}ms, avg={stats['avg']:.1f}ms, max={stats['max']:.1f}ms"
+        )
         tracer.record_timing("api_voices_list", stats["avg"])
 
         tracer.success("Voices list latency measured")
@@ -179,7 +188,9 @@ class TestAPILatency:
         timings = run_multiple_times(list_assets, iterations=5)
         stats = calculate_stats(timings)
 
-        tracer.step(f"Assets list: min={stats['min']:.1f}ms, avg={stats['avg']:.1f}ms, max={stats['max']:.1f}ms")
+        tracer.step(
+            f"Assets list: min={stats['min']:.1f}ms, avg={stats['avg']:.1f}ms, max={stats['max']:.1f}ms"
+        )
         tracer.record_timing("api_assets_list", stats["avg"])
 
         tracer.success("Assets list latency measured")
@@ -188,6 +199,7 @@ class TestAPILatency:
 # =============================================================================
 # Panel Navigation Timing Tests
 # =============================================================================
+
 
 class TestPanelNavigationTiming:
     """Test panel navigation timing."""
@@ -284,6 +296,7 @@ class TestPanelNavigationTiming:
 # UI Responsiveness Tests
 # =============================================================================
 
+
 class TestUIResponsiveness:
     """Test UI responsiveness."""
 
@@ -329,7 +342,9 @@ class TestUIResponsiveness:
             nav_button.click()
             time.sleep(0.5)
 
-            text_input = driver.find_element("xpath", "//*[contains(@AutomationId, 'Text') and contains(@ClassName, 'TextBox')]")
+            text_input = driver.find_element(
+                "xpath", "//*[contains(@AutomationId, 'Text') and contains(@ClassName, 'TextBox')]"
+            )
 
             # Measure typing speed
             test_text = "Performance test text input."
@@ -338,7 +353,9 @@ class TestUIResponsiveness:
             elapsed_ms = (time.perf_counter() - start) * 1000
 
             chars_per_second = len(test_text) / (elapsed_ms / 1000)
-            tracer.step(f"Text input: {elapsed_ms:.1f}ms for {len(test_text)} chars ({chars_per_second:.0f} chars/sec)")
+            tracer.step(
+                f"Text input: {elapsed_ms:.1f}ms for {len(test_text)} chars ({chars_per_second:.0f} chars/sec)"
+            )
             tracer.record_timing("ui_text_input", elapsed_ms)
 
             text_input.clear()
@@ -350,6 +367,7 @@ class TestUIResponsiveness:
 # =============================================================================
 # File Operation Performance Tests
 # =============================================================================
+
 
 class TestFileOperationPerformance:
     """Test file operation performance."""
@@ -393,6 +411,7 @@ class TestFileOperationPerformance:
 # Operation Throughput Tests
 # =============================================================================
 
+
 class TestOperationThroughput:
     """Test operation throughput."""
 
@@ -417,7 +436,9 @@ class TestOperationThroughput:
         elapsed_ms = (time.perf_counter() - start) * 1000
         requests_per_second = (num_requests / (elapsed_ms / 1000)) if elapsed_ms > 0 else 0
 
-        tracer.step(f"Throughput: {requests_per_second:.1f} req/sec ({successes}/{num_requests} success)")
+        tracer.step(
+            f"Throughput: {requests_per_second:.1f} req/sec ({successes}/{num_requests} success)"
+        )
         tracer.record_timing("api_throughput", elapsed_ms, f"{num_requests} requests")
 
         tracer.end_phase(success=True)
@@ -427,6 +448,7 @@ class TestOperationThroughput:
 # =============================================================================
 # Benchmark Comparison Tests
 # =============================================================================
+
 
 class TestBenchmarks:
     """Benchmark comparison tests."""
@@ -467,6 +489,7 @@ class TestBenchmarks:
 # Performance Summary Tests
 # =============================================================================
 
+
 class TestPerformanceSummary:
     """Generate performance summary."""
 
@@ -478,10 +501,12 @@ class TestPerformanceSummary:
         summary = tracer.get_performance_summary()
 
         for category, stats in summary.items():
-            tracer.step(f"{category}: min={stats.get('min', 0):.1f}ms, "
-                       f"avg={stats.get('avg', 0):.1f}ms, "
-                       f"max={stats.get('max', 0):.1f}ms, "
-                       f"count={stats.get('count', 0)}")
+            tracer.step(
+                f"{category}: min={stats.get('min', 0):.1f}ms, "
+                f"avg={stats.get('avg', 0):.1f}ms, "
+                f"max={stats.get('max', 0):.1f}ms, "
+                f"count={stats.get('count', 0)}"
+            )
 
         tracer.end_phase(success=True)
         tracer.success("Performance summary generated")
@@ -500,6 +525,7 @@ class TestPerformanceSummary:
 # =============================================================================
 # Resource Utilization Tests
 # =============================================================================
+
 
 class TestResourceUtilization:
     """Test resource utilization."""
@@ -546,11 +572,14 @@ class TestResourceUtilization:
 # =============================================================================
 
 if __name__ == "__main__":
-    pytest.main([
-        __file__,
-        "-v",
-        "--tb=short",
-        "-m", "not slow",
-        "--html=.buildlogs/validation/reports/allan_watts_performance_report.html",
-        "--self-contained-html",
-    ])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--tb=short",
+            "-m",
+            "not slow",
+            "--html=.buildlogs/validation/reports/allan_watts_performance_report.html",
+            "--self-contained-html",
+        ]
+    )

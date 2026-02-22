@@ -23,9 +23,7 @@ class TestParakeetEngineImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            parakeet_engine is not None
-        ), "Failed to import parakeet_engine module"
+        assert parakeet_engine is not None, "Failed to import parakeet_engine module"
 
     def test_module_has_parakeet_engine_class(self):
         """Test module has ParakeetEngine class."""
@@ -61,9 +59,7 @@ class TestParakeetEngineClass:
                 engine = parakeet_engine.ParakeetEngine(device="cpu", gpu=False)
                 required_methods = ["initialize", "cleanup", "synthesize"]
                 for method in required_methods:
-                    assert hasattr(
-                        engine, method
-                    ), f"ParakeetEngine missing method: {method}"
+                    assert hasattr(engine, method), f"ParakeetEngine missing method: {method}"
             except (ImportError, Exception):
                 pytest.skip("parakeet dependencies not installed")
 
@@ -72,9 +68,7 @@ class TestParakeetEngineClass:
         if hasattr(parakeet_engine, "ParakeetEngine"):
             try:
                 engine = parakeet_engine.ParakeetEngine(device="cpu", gpu=False)
-                assert hasattr(
-                    engine, "enable_caching"
-                ), "ParakeetEngine should support caching"
+                assert hasattr(engine, "enable_caching"), "ParakeetEngine should support caching"
                 assert hasattr(
                     engine, "batch_synthesize"
                 ), "ParakeetEngine should support batch processing"
@@ -121,9 +115,7 @@ class TestParakeetEngineProtocol:
                 engine = parakeet_engine.ParakeetEngine(device="cpu", gpu=False)
                 assert hasattr(engine, "initialize"), "Should implement initialize"
                 assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                assert hasattr(
-                    engine, "is_initialized"
-                ), "Should implement is_initialized"
+                assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                 assert hasattr(engine, "get_device"), "Should implement get_device"
             except (ImportError, Exception):
                 pytest.skip("parakeet dependencies not installed")
@@ -150,4 +142,3 @@ class TestParakeetEngineOptimization:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

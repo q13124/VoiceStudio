@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class AudioFormat(Enum):
     """Supported audio formats."""
+
     WAV = "wav"
     MP3 = "mp3"
     FLAC = "flac"
@@ -30,6 +31,7 @@ class AudioFormat(Enum):
 
 class SampleRate(Enum):
     """Common sample rates."""
+
     SR_8000 = 8000
     SR_16000 = 16000
     SR_22050 = 22050
@@ -40,6 +42,7 @@ class SampleRate(Enum):
 
 class BitDepth(Enum):
     """Common bit depths."""
+
     BIT_8 = 8
     BIT_16 = 16
     BIT_24 = 24
@@ -49,6 +52,7 @@ class BitDepth(Enum):
 @dataclass
 class ExportSettings:
     """Audio export settings."""
+
     format: AudioFormat = AudioFormat.WAV
     sample_rate: int = 44100
     bit_depth: int = 16
@@ -65,6 +69,7 @@ class ExportSettings:
 @dataclass
 class ExportResult:
     """Result of an export operation."""
+
     success: bool
     output_path: Path | None = None
     file_size: int = 0
@@ -80,18 +85,12 @@ class AudioExporter:
         self._ffmpeg_path: Path | None = None
 
     async def export(
-        self,
-        input_path: Path,
-        output_path: Path,
-        settings: ExportSettings
+        self, input_path: Path, output_path: Path, settings: ExportSettings
     ) -> ExportResult:
         """Export audio file with specified settings."""
         try:
             if not input_path.exists():
-                return ExportResult(
-                    success=False,
-                    error=f"Input file not found: {input_path}"
-                )
+                return ExportResult(success=False, error=f"Input file not found: {input_path}")
 
             # Ensure output directory exists
             output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -107,15 +106,12 @@ class AudioExporter:
             return ExportResult(success=False, error=str(e))
 
     async def _export_wav(
-        self,
-        input_path: Path,
-        output_path: Path,
-        settings: ExportSettings
+        self, input_path: Path, output_path: Path, settings: ExportSettings
     ) -> ExportResult:
         """Export to WAV format."""
         try:
             # Read input
-            with wave.open(str(input_path), 'rb') as wav_in:
+            with wave.open(str(input_path), "rb") as wav_in:
                 n_channels = wav_in.getnchannels()
                 sample_width = wav_in.getsampwidth()
                 frame_rate = wav_in.getframerate()
@@ -124,12 +120,14 @@ class AudioExporter:
 
             # Apply processing if needed
             if settings.normalize:
-                audio_data = self._normalize_audio(audio_data, sample_width, settings.normalize_level)
+                audio_data = self._normalize_audio(
+                    audio_data, sample_width, settings.normalize_level
+                )
 
             # Write output
-            output_path = output_path.with_suffix('.wav')
+            output_path = output_path.with_suffix(".wav")
 
-            with wave.open(str(output_path), 'wb') as wav_out:
+            with wave.open(str(output_path), "wb") as wav_out:
                 wav_out.setnchannels(settings.channels or n_channels)
                 wav_out.setsampwidth(settings.bit_depth // 8)
                 wav_out.setframerate(settings.sample_rate or frame_rate)
@@ -149,10 +147,7 @@ class AudioExporter:
             return ExportResult(success=False, error=str(e))
 
     async def _export_with_ffmpeg(
-        self,
-        input_path: Path,
-        output_path: Path,
-        settings: ExportSettings
+        self, input_path: Path, output_path: Path, settings: ExportSettings
     ) -> ExportResult:
         """Export using FFmpeg."""
         try:
@@ -165,29 +160,29 @@ class AudioExporter:
 
             # Format-specific settings
             if settings.format == AudioFormat.MP3:
-                output_path = output_path.with_suffix('.mp3')
+                output_path = output_path.with_suffix(".mp3")
                 cmd.extend(["-c:a", "libmp3lame"])
                 if settings.bitrate:
                     cmd.extend(["-b:a", f"{settings.bitrate}k"])
 
             elif settings.format == AudioFormat.FLAC:
-                output_path = output_path.with_suffix('.flac')
+                output_path = output_path.with_suffix(".flac")
                 cmd.extend(["-c:a", "flac"])
 
             elif settings.format == AudioFormat.OGG:
-                output_path = output_path.with_suffix('.ogg')
+                output_path = output_path.with_suffix(".ogg")
                 cmd.extend(["-c:a", "libvorbis"])
                 if settings.bitrate:
                     cmd.extend(["-b:a", f"{settings.bitrate}k"])
 
             elif settings.format == AudioFormat.AAC:
-                output_path = output_path.with_suffix('.aac')
+                output_path = output_path.with_suffix(".aac")
                 cmd.extend(["-c:a", "aac"])
                 if settings.bitrate:
                     cmd.extend(["-b:a", f"{settings.bitrate}k"])
 
             elif settings.format == AudioFormat.OPUS:
-                output_path = output_path.with_suffix('.opus')
+                output_path = output_path.with_suffix(".opus")
                 cmd.extend(["-c:a", "libopus"])
                 if settings.bitrate:
                     cmd.extend(["-b:a", f"{settings.bitrate}k"])
@@ -215,17 +210,14 @@ class AudioExporter:
 
             # Execute
             process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
 
             _stdout, stderr = await process.communicate()
 
             if process.returncode != 0:
                 return ExportResult(
-                    success=False,
-                    error=stderr.decode() if stderr else "FFmpeg error"
+                    success=False, error=stderr.decode() if stderr else "FFmpeg error"
                 )
 
             return ExportResult(
@@ -236,19 +228,11 @@ class AudioExporter:
             )
 
         except FileNotFoundError:
-            return ExportResult(
-                success=False,
-                error="FFmpeg not found. Please install FFmpeg."
-            )
+            return ExportResult(success=False, error="FFmpeg not found. Please install FFmpeg.")
         except Exception as e:
             return ExportResult(success=False, error=str(e))
 
-    def _normalize_audio(
-        self,
-        audio_data: bytes,
-        sample_width: int,
-        target_db: float
-    ) -> bytes:
+    def _normalize_audio(self, audio_data: bytes, sample_width: int, target_db: float) -> bytes:
         """Normalize audio to target level."""
         # Convert to samples
         if sample_width == 2:

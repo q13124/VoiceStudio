@@ -142,16 +142,12 @@ class InvokeAIEngine(EngineProtocol):
                     self._initialized = True
                     return True
                 else:
-                    logger.error(
-                        f"InvokeAI server returned status " f"{response.status_code}"
-                    )
+                    logger.error(f"InvokeAI server returned status " f"{response.status_code}")
                     self._initialized = False
                     return False
             except requests.exceptions.RequestException as e:
                 logger.error(f"Failed to connect to InvokeAI server: {e}")
-                logger.error(
-                    f"Make sure InvokeAI server is running at " f"{self.server_url}"
-                )
+                logger.error(f"Make sure InvokeAI server is running at " f"{self.server_url}")
                 logger.error("Install from: https://github.com/invoke-ai/InvokeAI")
                 self._initialized = False
                 return False
@@ -370,9 +366,7 @@ class InvokeAIEngine(EngineProtocol):
                     metrics = get_engine_metrics()
                     metrics.record_synthesis_time("invokeai", duration, cached=False)
                 except Exception:
-                    logger.debug(
-                        "Performance metrics unavailable for invokeai batch generation."
-                    )
+                    logger.debug("Performance metrics unavailable for invokeai batch generation.")
                 return result
             except Exception as e:
                 logger.error(f"Batch generation failed for prompt {idx}: {e}")
@@ -394,9 +388,7 @@ class InvokeAIEngine(EngineProtocol):
 
         args_list = [
             (i, prompt, seed, output_path)
-            for i, (prompt, seed, output_path) in enumerate(
-                zip(prompts, seeds, output_paths)
-            )
+            for i, (prompt, seed, output_path) in enumerate(zip(prompts, seeds, output_paths))
         ]
 
         # Optimize batch processing with better chunking
@@ -423,11 +415,7 @@ class InvokeAIEngine(EngineProtocol):
             return {"enabled": False}
 
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
-        hit_rate = (
-            (self._cache_stats["hits"] / total_requests * 100)
-            if total_requests > 0
-            else 0.0
-        )
+        hit_rate = (self._cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0.0
 
         return {
             "enabled": True,

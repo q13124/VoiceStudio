@@ -125,9 +125,7 @@ class TestSystemIntegration:
                 if engine.initialize():
                     with Timer("synthesis", auto_record=True):
                         synthesized = engine.synthesize(
-                            text="Test",
-                            speaker_wav=audio,
-                            sample_rate=24000
+                            text="Test", speaker_wav=audio, sample_rate=24000
                         )
                     engine.cleanup()
                 else:
@@ -137,19 +135,11 @@ class TestSystemIntegration:
 
             # Step 2: Enhance
             with Timer("enhancement", auto_record=True):
-                enhanced = enhance_voice_quality(
-                    synthesized,
-                    sample_rate=24000,
-                    normalize=True
-                )
+                enhanced = enhance_voice_quality(synthesized, sample_rate=24000, normalize=True)
 
             # Step 3: Calculate metrics
             with Timer("metrics", auto_record=True):
-                metrics = calculate_all_metrics(
-                    enhanced,
-                    reference_audio=audio,
-                    sample_rate=24000
-                )
+                metrics = calculate_all_metrics(enhanced, reference_audio=audio, sample_rate=24000)
 
             # Verify results
             assert enhanced is not None, "Enhancement failed"
@@ -161,10 +151,9 @@ class TestSystemIntegration:
             metrics_stats = collector.get_timer_stats("metrics")
 
             # At least one should have stats
-            assert any(stats is not None for stats in [
-                synthesis_stats, enhancement_stats, metrics_stats
-            ]), "No metrics were recorded"
+            assert any(
+                stats is not None for stats in [synthesis_stats, enhancement_stats, metrics_stats]
+            ), "No metrics were recorded"
 
         except ImportError:
             pytest.skip("Required modules not available")
-

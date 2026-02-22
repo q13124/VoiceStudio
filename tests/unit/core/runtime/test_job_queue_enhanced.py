@@ -21,9 +21,7 @@ try:
         ResourceRequirement,
     )
 except ImportError:
-    pytest.skip(
-        "Could not import job_queue_enhanced", allow_module_level=True
-    )
+    pytest.skip("Could not import job_queue_enhanced", allow_module_level=True)
 
 
 class TestJobQueueEnhancedImports:
@@ -31,9 +29,7 @@ class TestJobQueueEnhancedImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            job_queue_enhanced is not None
-        ), "Failed to import job_queue_enhanced module"
+        assert job_queue_enhanced is not None, "Failed to import job_queue_enhanced module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
@@ -106,12 +102,8 @@ class TestJobQueueEnhancedOptimization:
         if hasattr(job_queue_enhanced, "EnhancedJobQueue"):
             try:
                 queue = job_queue_enhanced.EnhancedJobQueue()
-                assert hasattr(
-                    queue, "create_batch"
-                ), "Should have create_batch method"
-                assert callable(
-                    queue.create_batch
-                ), "create_batch should be callable"
+                assert hasattr(queue, "create_batch"), "Should have create_batch method"
+                assert callable(queue.create_batch), "create_batch should be callable"
             except (ImportError, Exception):
                 pytest.skip("job_queue_enhanced dependencies not installed")
 
@@ -123,9 +115,7 @@ class TestJobQueueEnhancedOptimization:
                 assert hasattr(
                     queue, "_update_batch_status"
                 ), "Should have _update_batch_status method"
-                assert hasattr(
-                    queue, "pending_batches"
-                ), "Should have pending_batches attribute"
+                assert hasattr(queue, "pending_batches"), "Should have pending_batches attribute"
             except (ImportError, Exception):
                 pytest.skip("job_queue_enhanced dependencies not installed")
 
@@ -148,12 +138,8 @@ class TestJobQueueEnhancedFunctions:
         if hasattr(job_queue_enhanced, "EnhancedJobQueue"):
             try:
                 queue = job_queue_enhanced.EnhancedJobQueue()
-                assert hasattr(
-                    queue, "get_job_status"
-                ), "Should have get_job_status method"
-                assert callable(
-                    queue.get_job_status
-                ), "get_job_status should be callable"
+                assert hasattr(queue, "get_job_status"), "Should have get_job_status method"
+                assert callable(queue.get_job_status), "get_job_status should be callable"
             except (ImportError, Exception):
                 pytest.skip("job_queue_enhanced dependencies not installed")
 
@@ -162,9 +148,7 @@ class TestJobQueueEnhancedFunctions:
         if hasattr(job_queue_enhanced, "EnhancedJobQueue"):
             try:
                 queue = job_queue_enhanced.EnhancedJobQueue()
-                assert hasattr(
-                    queue, "cancel_job"
-                ), "Should have cancel_job method"
+                assert hasattr(queue, "cancel_job"), "Should have cancel_job method"
                 assert callable(queue.cancel_job), "cancel_job should be callable"
             except (ImportError, Exception):
                 pytest.skip("job_queue_enhanced dependencies not installed")

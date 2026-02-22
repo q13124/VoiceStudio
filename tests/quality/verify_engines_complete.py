@@ -51,8 +51,7 @@ def check_file_for_placeholders(file_path: Path) -> tuple[list[dict], bool]:
             # Skip comments that are just documentation
             stripped = line.strip()
             if stripped.startswith("#") and not any(
-                keyword in stripped.upper()
-                for keyword in ["TODO", "FIXME", "PLACEHOLDER", "STUB"]
+                keyword in stripped.upper() for keyword in ["TODO", "FIXME", "PLACEHOLDER", "STUB"]
             ):
                 continue
 
@@ -67,9 +66,7 @@ def check_file_for_placeholders(file_path: Path) -> tuple[list[dict], bool]:
                         # Only flag if it's actually a TODO comment, not "Todo" in code
                         if not re.search(r"#.*TODO|//.*TODO", line, re.IGNORECASE):
                             # Check if it's "Todo" (capitalized, part of identifier)
-                            if re.search(r"\bTodo\b", line) and not re.search(
-                                r"#", line
-                            ):
+                            if re.search(r"\bTodo\b", line) and not re.search(r"#", line):
                                 is_allowed = True
 
                     # Allow if it's in a string literal (not a comment)
@@ -116,9 +113,7 @@ def check_file_for_placeholders(file_path: Path) -> tuple[list[dict], bool]:
                                 "line": line_num,
                                 "pattern": "NotImplementedError",
                                 "content": (
-                                    lines[line_num - 1].strip()
-                                    if line_num <= len(lines)
-                                    else ""
+                                    lines[line_num - 1].strip() if line_num <= len(lines) else ""
                                 ),
                             }
                         )

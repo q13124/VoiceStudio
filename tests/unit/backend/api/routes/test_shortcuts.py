@@ -18,9 +18,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import shortcuts
 except ImportError:
-    pytest.skip(
-        "Could not import shortcuts route module", allow_module_level=True
-    )
+    pytest.skip("Could not import shortcuts route module", allow_module_level=True)
 
 
 class TestShortcutsRouteImports:
@@ -28,12 +26,8 @@ class TestShortcutsRouteImports:
 
     def test_shortcuts_module_imports(self):
         """Test shortcuts module can be imported."""
-        assert (
-            shortcuts is not None
-        ), "Failed to import shortcuts module"
-        assert hasattr(
-            shortcuts, "router"
-        ), "shortcuts module missing router"
+        assert shortcuts is not None, "Failed to import shortcuts module"
+        assert hasattr(shortcuts, "router"), "shortcuts module missing router"
 
     def test_router_exists(self):
         """Test router exists and is configured."""
@@ -268,9 +262,7 @@ class TestShortcutsEndpoints:
         client = TestClient(app)
 
         # API expects key_code and modifiers[] query parameters
-        response = client.get(
-            "/api/shortcuts/check-conflict?key_code=N&modifiers=Ctrl"
-        )
+        response = client.get("/api/shortcuts/check-conflict?key_code=N&modifiers=Ctrl")
         assert response.status_code == 200
         data = response.json()
         assert "has_conflict" in data or "conflicts" in data

@@ -294,12 +294,14 @@ async def check_compatibility(
     }
 
     if not client_version:
-        result.update({
-            "client_version": None,
-            "compatible": True,
-            "message": "No client version specified. Using default.",
-            "recommendation": None,
-        })
+        result.update(
+            {
+                "client_version": None,
+                "compatible": True,
+                "message": "No client version specified. Using default.",
+                "recommendation": None,
+            }
+        )
         return result
 
     # Check if client version is supported
@@ -307,13 +309,15 @@ async def check_compatibility(
         client = APIVersion(client_version.lower())
         is_current = client == current
 
-        result.update({
-            "client_version": client_version,
-            "compatible": True,
-            "is_current": is_current,
-            "message": "Client version is supported.",
-            "recommendation": None if is_current else f"Consider upgrading to {current.value}",
-        })
+        result.update(
+            {
+                "client_version": client_version,
+                "compatible": True,
+                "is_current": is_current,
+                "message": "Client version is supported.",
+                "recommendation": None if is_current else f"Consider upgrading to {current.value}",
+            }
+        )
 
         # Add deprecation info if applicable
         metadata = VERSION_METADATA.get(client.value, {})
@@ -324,11 +328,13 @@ async def check_compatibility(
             result["recommendation"] = f"Upgrade to {current.value} before sunset."
 
     except ValueError:
-        result.update({
-            "client_version": client_version,
-            "compatible": False,
-            "message": f"Client version '{client_version}' is not supported.",
-            "recommendation": f"Use one of: {[v.value for v in supported]}",
-        })
+        result.update(
+            {
+                "client_version": client_version,
+                "compatible": False,
+                "message": f"Client version '{client_version}' is not supported.",
+                "recommendation": f"Use one of: {[v.value for v in supported]}",
+            }
+        )
 
     return result

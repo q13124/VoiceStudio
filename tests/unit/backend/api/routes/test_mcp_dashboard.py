@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import mcp_dashboard
 except ImportError:
-    pytest.skip(
-        "Could not import mcp_dashboard route module", allow_module_level=True
-    )
+    pytest.skip("Could not import mcp_dashboard route module", allow_module_level=True)
 
 
 class TestMCPDashboardRouteImports:
@@ -25,12 +23,8 @@ class TestMCPDashboardRouteImports:
 
     def test_mcp_dashboard_module_imports(self):
         """Test mcp_dashboard module can be imported."""
-        assert (
-            mcp_dashboard is not None
-        ), "Failed to import mcp_dashboard module"
-        assert hasattr(
-            mcp_dashboard, "router"
-        ), "mcp_dashboard module missing router"
+        assert mcp_dashboard is not None, "Failed to import mcp_dashboard module"
+        assert hasattr(mcp_dashboard, "router"), "mcp_dashboard module missing router"
 
 
 class TestMCPDashboardRouteHandlers:
@@ -39,9 +33,7 @@ class TestMCPDashboardRouteHandlers:
     def test_get_mcp_data_handler_exists(self):
         """Test get_mcp_data handler exists."""
         if hasattr(mcp_dashboard, "get_mcp_data"):
-            assert callable(
-                mcp_dashboard.get_mcp_data
-            ), "get_mcp_data is not callable"
+            assert callable(mcp_dashboard.get_mcp_data), "get_mcp_data is not callable"
 
 
 class TestMCPDashboardRouter:
@@ -62,4 +54,3 @@ class TestMCPDashboardRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

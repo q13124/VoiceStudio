@@ -68,9 +68,7 @@ class ModelExplainer:
             if explainer_type == "TreeExplainer":
                 explainer = shap.TreeExplainer(model)
             elif explainer_type == "KernelExplainer":
-                explainer = shap.KernelExplainer(
-                    model.predict, X[:100] if len(X) > 100 else X
-                )
+                explainer = shap.KernelExplainer(model.predict, X[:100] if len(X) > 100 else X)
             elif explainer_type == "LinearExplainer":
                 explainer = shap.LinearExplainer(model, X)
             else:
@@ -102,9 +100,7 @@ class ModelExplainer:
                 # Create feature importance dict
                 result["feature_importance_dict"] = {
                     name: float(importance)
-                    for name, importance in zip(
-                        feature_names, feature_importance
-                    )
+                    for name, importance in zip(feature_names, feature_importance)
                 }
 
             return result
@@ -156,8 +152,7 @@ class ModelExplainer:
             result = {
                 "explanation": exp_list,
                 "top_features": [
-                    {"feature": feat, "weight": weight}
-                    for feat, weight in exp_list[:num_features]
+                    {"feature": feat, "weight": weight} for feat, weight in exp_list[:num_features]
                 ],
                 "prediction": float(model.predict(instance.reshape(1, -1))[0]),
             }
@@ -183,4 +178,3 @@ class ModelExplainer:
         if self.lime_available:
             methods.append("lime")
         return methods
-

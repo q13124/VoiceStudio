@@ -77,14 +77,10 @@ class PerformanceReportGenerator:
             baseline_result = baseline_map[name]
 
             # Get times to compare
-            current_time = (
-                result.get("metrics", {}).get("avg_time") or
-                result.get("elapsed", 0)
-            )
-            baseline_time = (
-                baseline_result.get("metrics", {}).get("avg_time") or
-                baseline_result.get("elapsed", 0)
-            )
+            current_time = result.get("metrics", {}).get("avg_time") or result.get("elapsed", 0)
+            baseline_time = baseline_result.get("metrics", {}).get(
+                "avg_time"
+            ) or baseline_result.get("elapsed", 0)
 
             if baseline_time == 0:
                 continue
@@ -92,13 +88,15 @@ class PerformanceReportGenerator:
             change = (current_time - baseline_time) / baseline_time
             is_regression = change > self.regression_threshold
 
-            comparisons.append({
-                "name": name,
-                "baseline_time": baseline_time,
-                "current_time": current_time,
-                "change_percent": change * 100,
-                "is_regression": is_regression,
-            })
+            comparisons.append(
+                {
+                    "name": name,
+                    "baseline_time": baseline_time,
+                    "current_time": current_time,
+                    "change_percent": change * 100,
+                    "is_regression": is_regression,
+                }
+            )
 
         return comparisons
 
@@ -163,10 +161,7 @@ class PerformanceReportGenerator:
 """
 
         for result in results.get("results", []):
-            time_val = (
-                result.get("metrics", {}).get("avg_time") or
-                result.get("elapsed", 0)
-            )
+            time_val = result.get("metrics", {}).get("avg_time") or result.get("elapsed", 0)
             max_time = result.get("max_time", "-")
             passed = result.get("passed", True)
             status_class = "passed" if passed else "failed"
@@ -195,8 +190,10 @@ class PerformanceReportGenerator:
         </tr>
 """
             for comp in comparisons:
-                row_class = "regression" if comp["is_regression"] else (
-                    "improvement" if comp["change_percent"] < -10 else ""
+                row_class = (
+                    "regression"
+                    if comp["is_regression"]
+                    else ("improvement" if comp["change_percent"] < -10 else "")
                 )
                 change_sign = "+" if comp["change_percent"] > 0 else ""
 
@@ -245,10 +242,7 @@ class PerformanceReportGenerator:
 """
 
         for result in results.get("results", []):
-            time_val = (
-                result.get("metrics", {}).get("avg_time") or
-                result.get("elapsed", 0)
-            )
+            time_val = result.get("metrics", {}).get("avg_time") or result.get("elapsed", 0)
             max_time = result.get("max_time", "-")
             passed = result.get("passed", True)
             status = ":white_check_mark:" if passed else ":x:"
@@ -332,9 +326,7 @@ def main():
         output_path = args.output
     else:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        ext = "html" if args.format == "html" else (
-            "md" if args.format == "markdown" else "json"
-        )
+        ext = "html" if args.format == "html" else ("md" if args.format == "markdown" else "json")
         output_path = Path(f".buildlogs/performance/report_{timestamp}.{ext}")
 
     # Generate report

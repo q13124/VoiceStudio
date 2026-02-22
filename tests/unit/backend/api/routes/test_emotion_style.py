@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import emotion_style
 except ImportError:
-    pytest.skip(
-        "Could not import emotion_style route module", allow_module_level=True
-    )
+    pytest.skip("Could not import emotion_style route module", allow_module_level=True)
 
 
 class TestEmotionStyleRouteImports:
@@ -25,12 +23,8 @@ class TestEmotionStyleRouteImports:
 
     def test_emotion_style_module_imports(self):
         """Test emotion_style module can be imported."""
-        assert (
-            emotion_style is not None
-        ), "Failed to import emotion_style module"
-        assert hasattr(
-            emotion_style, "router"
-        ), "emotion_style module missing router"
+        assert emotion_style is not None, "Failed to import emotion_style module"
+        assert hasattr(emotion_style, "router"), "emotion_style module missing router"
 
 
 class TestEmotionStyleRouteHandlers:
@@ -62,4 +56,3 @@ class TestEmotionStyleRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

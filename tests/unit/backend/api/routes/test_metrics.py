@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def metrics_client():
     """Create test client for metrics routes."""
     from backend.api.routes.metrics import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)
@@ -40,9 +41,6 @@ class TestMetricsEndpoints:
 
     def test_set_metric(self, metrics_client):
         """Test POST /metrics sets a metric value."""
-        response = metrics_client.post(
-            "/api/metrics",
-            json={"name": "test_metric", "value": 1.0}
-        )
+        response = metrics_client.post("/api/metrics", json={"name": "test_metric", "value": 1.0})
         # POST may not be implemented (read-only metrics)
         assert response.status_code in [200, 201, 405, 422]

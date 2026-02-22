@@ -48,7 +48,7 @@ def generate_test_wav_bytes(
     audio = (np.sin(2 * np.pi * frequency * t) * 32767 * 0.5).astype(np.int16)
 
     buffer = io.BytesIO()
-    with wave.open(buffer, 'wb') as wav:
+    with wave.open(buffer, "wb") as wav:
         wav.setnchannels(1)
         wav.setsampwidth(2)
         wav.setframerate(sample_rate)
@@ -60,6 +60,7 @@ def generate_test_wav_bytes(
 def retry_on_rate_limit(func, *args, max_retries: int = 3, base_delay: float = 2.0, **kwargs):
     """Retry a function call if rate limited (429)."""
     import httpx
+
     last_response = None
     for attempt in range(max_retries):
         try:
@@ -67,7 +68,7 @@ def retry_on_rate_limit(func, *args, max_retries: int = 3, base_delay: float = 2
             if response.status_code != 429:
                 return response
             last_response = response
-            delay = base_delay * (2 ** attempt)
+            delay = base_delay * (2**attempt)
             logger.info(f"Rate limited, waiting {delay}s before retry {attempt + 1}/{max_retries}")
             time.sleep(delay)
         except httpx.RequestError as e:
@@ -127,6 +128,7 @@ def rate_limit_delay():
 # Upload Workflow Tests
 # =============================================================================
 
+
 class TestUploadWorkflows:
     """Test all upload/import workflows."""
 
@@ -166,8 +168,10 @@ class TestUploadWorkflows:
         if upload_response.status_code == 404:
             pytest.skip("Library upload endpoint not implemented")
 
-        assert upload_response.status_code in [200, 201], \
-            f"Upload failed: {upload_response.status_code} - {upload_response.text}"
+        assert upload_response.status_code in [
+            200,
+            201,
+        ], f"Upload failed: {upload_response.status_code} - {upload_response.text}"
 
         asset_data = upload_response.json()
         asset_id = asset_data.get("id") or asset_data.get("asset_id")
@@ -175,16 +179,15 @@ class TestUploadWorkflows:
 
         # Step 2: Recall specific asset (primary verification - not affected by list cache)
         get_response = api_client.get(f"/api/library/assets/{asset_id}")
-        assert get_response.status_code == 200, \
-            f"Asset recall failed: {get_response.status_code}"
+        assert get_response.status_code == 200, f"Asset recall failed: {get_response.status_code}"
         recalled = get_response.json()
-        assert recalled.get("id") == asset_id or recalled.get("asset_id") == asset_id, \
-            "Asset ID mismatch in recall"
+        assert (
+            recalled.get("id") == asset_id or recalled.get("asset_id") == asset_id
+        ), "Asset ID mismatch in recall"
 
         # Step 3: Verify list endpoint works (may be cached, so just check 200)
         list_response = api_client.get("/api/library/assets")
-        assert list_response.status_code == 200, \
-            f"Asset list failed: {list_response.status_code}"
+        assert list_response.status_code == 200, f"Asset list failed: {list_response.status_code}"
         # Note: List might be cached and not include the new asset immediately
 
     def test_backup_create_list_workflow(self, api_client):
@@ -204,8 +207,11 @@ class TestUploadWorkflows:
         if create_response.status_code in [404, 405]:
             pytest.skip("Backup create endpoint not implemented or method not allowed")
 
-        assert create_response.status_code in [200, 201, 202], \
-            f"Backup creation failed: {create_response.status_code}"
+        assert create_response.status_code in [
+            200,
+            201,
+            202,
+        ], f"Backup creation failed: {create_response.status_code}"
 
         backup_data = create_response.json()
         backup_id = backup_data.get("id") or backup_data.get("backup_id")
@@ -213,8 +219,9 @@ class TestUploadWorkflows:
         # Step 2: Verify backup by direct fetch (bypasses list cache)
         if backup_id:
             detail_response = api_client.get(f"/api/backup/{backup_id}")
-            assert detail_response.status_code == 200, \
-                f"Backup direct fetch failed: {detail_response.status_code}"
+            assert (
+                detail_response.status_code == 200
+            ), f"Backup direct fetch failed: {detail_response.status_code}"
             backup_detail = detail_response.json()
             assert backup_detail.get("id") == backup_id, "Backup ID mismatch"
 
@@ -227,6 +234,7 @@ class TestUploadWorkflows:
 # =============================================================================
 # Profile Workflow Tests
 # =============================================================================
+
 
 class TestProfileWorkflows:
     """Test profile CRUD and persistence workflows."""
@@ -247,8 +255,10 @@ class TestProfileWorkflows:
         if create_response.status_code == 404:
             pytest.skip("Profiles endpoint not implemented")
 
-        assert create_response.status_code in [200, 201], \
-            f"Profile creation failed: {create_response.status_code} - {create_response.text}"
+        assert create_response.status_code in [
+            200,
+            201,
+        ], f"Profile creation failed: {create_response.status_code} - {create_response.text}"
 
         created = create_response.json()
         profile_id = created.get("profile_id") or created.get("id")
@@ -302,16 +312,16 @@ class TestProfileWorkflows:
         if update_response.status_code == 429:
             pytest.skip("Rate limited after retries")
 
-        assert update_response.status_code == 200, \
-            f"Update failed: {update_response.status_code}"
+        assert update_response.status_code == 200, f"Update failed: {update_response.status_code}"
 
         # Verify update persisted
         get_response = api_client.get(f"/api/profiles/{profile_id}")
         assert get_response.status_code == 200
         retrieved = get_response.json()
         # Verify name or language was updated
-        assert retrieved.get("name") == updated_name or retrieved.get("language") == "es", \
-            f"Update did not persist: {retrieved}"
+        assert (
+            retrieved.get("name") == updated_name or retrieved.get("language") == "es"
+        ), f"Update did not persist: {retrieved}"
 
     def test_profile_list_workflow(self, api_client):
         """Test listing all profiles."""
@@ -321,9 +331,7 @@ class TestProfileWorkflows:
             "engine": "piper",
         }
 
-        create_response = retry_on_rate_limit(
-            api_client.post, "/api/profiles", json=profile_data
-        )
+        create_response = retry_on_rate_limit(api_client.post, "/api/profiles", json=profile_data)
         if create_response.status_code == 404:
             pytest.skip("Profiles endpoint not implemented")
         if create_response.status_code == 429:
@@ -347,6 +355,7 @@ class TestProfileWorkflows:
 # =============================================================================
 # Processing Workflow Tests
 # =============================================================================
+
 
 class TestProcessingWorkflows:
     """Test processing workflows (synthesis, transcription, jobs)."""
@@ -377,8 +386,11 @@ class TestProcessingWorkflows:
         if create_response.status_code in [404, 405]:
             pytest.skip("Jobs POST endpoint not implemented")
 
-        assert create_response.status_code in [200, 201, 202], \
-            f"Job creation failed: {create_response.status_code}"
+        assert create_response.status_code in [
+            200,
+            201,
+            202,
+        ], f"Job creation failed: {create_response.status_code}"
 
         job_data = create_response.json()
         job_id = job_data.get("job_id") or job_data.get("id")
@@ -425,13 +437,17 @@ class TestProcessingWorkflows:
         if transcribe_response.status_code in [503, 422]:
             pytest.skip(f"Transcription engine not available: {transcribe_response.status_code}")
 
-        assert transcribe_response.status_code in [200, 201, 202], \
-            f"Transcription failed: {transcribe_response.status_code}"
+        assert transcribe_response.status_code in [
+            200,
+            201,
+            202,
+        ], f"Transcription failed: {transcribe_response.status_code}"
 
 
 # =============================================================================
 # Persistence Verification Tests
 # =============================================================================
+
 
 class TestPersistenceVerification:
     """Test data persistence and recall."""
@@ -448,9 +464,7 @@ class TestPersistenceVerification:
         }
 
         with httpx.Client(timeout=30.0, base_url=API_BASE_URL) as client1:
-            create_response = retry_on_rate_limit(
-                client1.post, "/api/profiles", json=profile_data
-            )
+            create_response = retry_on_rate_limit(client1.post, "/api/profiles", json=profile_data)
             if create_response.status_code == 404:
                 pytest.skip("Profiles endpoint not implemented")
             if create_response.status_code == 429:
@@ -463,16 +477,13 @@ class TestPersistenceVerification:
         # Use a fresh client to verify persistence
         with httpx.Client(timeout=30.0, base_url=API_BASE_URL) as client2:
             # Retrieve with new client
-            get_response = retry_on_rate_limit(
-                client2.get, f"/api/profiles/{profile_id}"
-            )
+            get_response = retry_on_rate_limit(client2.get, f"/api/profiles/{profile_id}")
             if get_response.status_code == 429:
                 pytest.skip("Rate limited after retries")
             assert get_response.status_code == 200
 
             retrieved = get_response.json()
-            assert retrieved.get("name") == unique_name, \
-                "Profile did not persist across sessions"
+            assert retrieved.get("name") == unique_name, "Profile did not persist across sessions"
 
     def test_settings_persistence(self, api_client):
         """Test that settings persist."""
@@ -513,6 +524,7 @@ class TestPersistenceVerification:
 # Workflow Integration Tests (End-to-End)
 # =============================================================================
 
+
 class TestEndToEndWorkflows:
     """Test complete end-to-end workflows."""
 
@@ -525,9 +537,7 @@ class TestEndToEndWorkflows:
             "engine": "piper",
         }
 
-        create_response = retry_on_rate_limit(
-            api_client.post, "/api/profiles", json=profile_data
-        )
+        create_response = retry_on_rate_limit(api_client.post, "/api/profiles", json=profile_data)
         if create_response.status_code == 404:
             pytest.skip("Profiles endpoint not implemented")
         if create_response.status_code == 429:
@@ -538,13 +548,13 @@ class TestEndToEndWorkflows:
         profile_id = created.get("profile_id") or created.get("id")
 
         # Verify profile exists by direct lookup (list may be cached)
-        get_response = retry_on_rate_limit(
-            api_client.get, f"/api/profiles/{profile_id}"
-        )
+        get_response = retry_on_rate_limit(api_client.get, f"/api/profiles/{profile_id}")
         if get_response.status_code == 200:
             # Direct lookup succeeded
-            assert get_response.json().get("id") == profile_id or \
-                   get_response.json().get("profile_id") == profile_id
+            assert (
+                get_response.json().get("id") == profile_id
+                or get_response.json().get("profile_id") == profile_id
+            )
         else:
             # Fall back to list verification
             list_response = api_client.get("/api/profiles")
@@ -558,14 +568,12 @@ class TestEndToEndWorkflows:
 
         # Update
         update_response = api_client.put(
-            f"/api/profiles/{profile_id}",
-            json={"description": "Updated E2E test"}
+            f"/api/profiles/{profile_id}", json={"description": "Updated E2E test"}
         )
 
         if update_response.status_code == 405:
             update_response = api_client.patch(
-                f"/api/profiles/{profile_id}",
-                json={"description": "Updated E2E test"}
+                f"/api/profiles/{profile_id}", json={"description": "Updated E2E test"}
             )
 
         # Delete (optional - cleanup)
@@ -587,16 +595,22 @@ class TestEndToEndWorkflows:
 
         if synth_response.status_code in [503, 422]:
             # 503 = engine not available, 422 = validation issue (might need profile)
-            pytest.skip(f"Synthesis engine not available or requires valid profile: {synth_response.status_code}")
+            pytest.skip(
+                f"Synthesis engine not available or requires valid profile: {synth_response.status_code}"
+            )
 
         # Could return audio directly or job ID
-        assert synth_response.status_code in [200, 201, 202], \
-            f"Synthesis failed: {synth_response.status_code}"
+        assert synth_response.status_code in [
+            200,
+            201,
+            202,
+        ], f"Synthesis failed: {synth_response.status_code}"
 
 
 # =============================================================================
 # Repository Tests
 # =============================================================================
+
 
 class TestRepositoryOperations:
     """Test repository CRUD operations directly."""

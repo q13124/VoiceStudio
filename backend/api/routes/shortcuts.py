@@ -192,9 +192,9 @@ def _check_conflict(
         if exclude_id and shortcut_id == exclude_id:
             continue
 
-        if shortcut.get("key_code") == key_code and set(
-            shortcut.get("modifiers", [])
-        ) == set(modifiers):
+        if shortcut.get("key_code") == key_code and set(shortcut.get("modifiers", [])) == set(
+            modifiers
+        ):
             return shortcut_id
 
     return None
@@ -215,9 +215,7 @@ async def get_shortcuts(
 
     if panel_id:
         shortcuts = [
-            s
-            for s in shortcuts
-            if s.get("panel_id") == panel_id or s.get("panel_id") is None
+            s for s in shortcuts if s.get("panel_id") == panel_id or s.get("panel_id") is None
         ]
 
     if not include_custom:
@@ -228,6 +226,7 @@ async def get_shortcuts(
 
 # NOTE: Specific routes must be defined BEFORE parameterized routes to avoid
 # FastAPI matching "check-conflict" or "categories" as shortcut_id values.
+
 
 @router.get("/check-conflict")
 @cache_response(ttl=60)  # Cache for 60 seconds (conflicts may change)
@@ -282,15 +281,11 @@ async def update_shortcut(shortcut_id: str, request: ShortcutUpdateRequest):
     if request.key_code or request.modifiers is not None:
         new_key_code = request.key_code or shortcut.get("key_code")
         new_modifiers = (
-            request.modifiers
-            if request.modifiers is not None
-            else shortcut.get("modifiers", [])
+            request.modifiers if request.modifiers is not None else shortcut.get("modifiers", [])
         )
 
         # Check for conflicts
-        conflict_id = _check_conflict(
-            new_key_code, new_modifiers, exclude_id=shortcut_id
-        )
+        conflict_id = _check_conflict(new_key_code, new_modifiers, exclude_id=shortcut_id)
         if conflict_id:
             conflict_desc = _shortcuts[conflict_id].get("description", "unknown")
             raise HTTPException(

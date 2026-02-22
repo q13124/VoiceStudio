@@ -39,6 +39,7 @@ except ImportError:
 
 try:
     from PIL import Image, ImageChops
+
     PIL_AVAILABLE = True
 except ImportError:
     PIL_AVAILABLE = False
@@ -47,12 +48,27 @@ try:
     from fixtures.automation_ids import CATEGORIES, PANELS_BY_CATEGORY, PanelInfo, get_all_panels
 except ImportError:
     PANELS_BY_CATEGORY = {}
+
     def get_all_panels():
         return []
+
     CATEGORIES = []
 
 # Configuration
-APP_PATH = os.getenv("VOICESTUDIO_APP_PATH", str(PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "x64" / "Debug" / "net8.0-windows10.0.22621.0" / "win-x64" / "VoiceStudio.App.exe"))
+APP_PATH = os.getenv(
+    "VOICESTUDIO_APP_PATH",
+    str(
+        PROJECT_ROOT
+        / "src"
+        / "VoiceStudio.App"
+        / "bin"
+        / "x64"
+        / "Debug"
+        / "net8.0-windows10.0.22621.0"
+        / "win-x64"
+        / "VoiceStudio.App.exe"
+    ),
+)
 WINAPPDRIVER_URL = "http://127.0.0.1:4723"
 OUTPUT_DIR = Path(os.getenv("VOICESTUDIO_OUTPUT_DIR", ".buildlogs/visual"))
 BASELINE_DIR = OUTPUT_DIR / "baselines"
@@ -75,6 +91,7 @@ pytestmark = [
 @dataclass
 class VisualComparisonResult:
     """Result of visual comparison."""
+
     panel_name: str
     baseline_exists: bool
     screenshots_match: bool
@@ -90,32 +107,24 @@ KEY_PANELS = [
     # Core synthesis panels
     {"name": "VoiceSynthesis", "nav_name": "Synthesize", "category": "synthesis"},
     {"name": "MultiVoiceGenerator", "nav_name": "Multi-Voice", "category": "synthesis"},
-
     # Transcription panels
     {"name": "Transcribe", "nav_name": "Transcribe", "category": "transcription"},
-
     # Voice cloning panels
     {"name": "VoiceCloningWizard", "nav_name": "Voice Cloning", "category": "cloning"},
     {"name": "VoiceQuickClone", "nav_name": "Quick Clone", "category": "cloning"},
-
     # Effects panels
     {"name": "Effects", "nav_name": "Effects", "category": "effects"},
     {"name": "AudioEnhancer", "nav_name": "Enhancer", "category": "effects"},
-
     # Library panels
     {"name": "Library", "nav_name": "Library", "category": "library"},
     {"name": "Profiles", "nav_name": "Profiles", "category": "library"},
-
     # Training panels
     {"name": "Training", "nav_name": "Training", "category": "training"},
-
     # Settings panels
     {"name": "Settings", "nav_name": "Settings", "category": "settings"},
     {"name": "Diagnostics", "nav_name": "Diagnostics", "category": "settings"},
-
     # Timeline
     {"name": "Timeline", "nav_name": "Timeline", "category": "timeline"},
-
     # Batch processing
     {"name": "BatchProcessing", "nav_name": "Batch", "category": "batch"},
 ]
@@ -172,6 +181,7 @@ def driver(winappdriver_process):
     # This bypasses Selenium 4.x W3C capabilities issue
     try:
         from conftest import WinAppDriverSession
+
         session = WinAppDriverSession(APP_PATH, WINAPPDRIVER_URL)
         session.implicitly_wait(10)
         time.sleep(3)
@@ -307,17 +317,21 @@ class TestBaselineCapture:
             if success:
                 time.sleep(0.3)
                 screenshot_path = capture_screenshot(driver, panel_name, BASELINE_DIR)
-                results.append({
-                    "panel": panel_name,
-                    "captured": screenshot_path is not None,
-                    "path": str(screenshot_path) if screenshot_path else None,
-                })
+                results.append(
+                    {
+                        "panel": panel_name,
+                        "captured": screenshot_path is not None,
+                        "path": str(screenshot_path) if screenshot_path else None,
+                    }
+                )
             else:
-                results.append({
-                    "panel": panel_name,
-                    "captured": False,
-                    "error": "Navigation failed",
-                })
+                results.append(
+                    {
+                        "panel": panel_name,
+                        "captured": False,
+                        "error": "Navigation failed",
+                    }
+                )
 
         # Report
         captured_count = sum(1 for r in results if r["captured"])
@@ -326,10 +340,14 @@ class TestBaselineCapture:
         # Save manifest
         manifest_path = BASELINE_DIR / "manifest.json"
         with open(manifest_path, "w", encoding="utf-8") as f:
-            json.dump({
-                "timestamp": datetime.now().isoformat(),
-                "panels": results,
-            }, f, indent=2)
+            json.dump(
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "panels": results,
+                },
+                f,
+                indent=2,
+            )
 
 
 class TestVisualComparison:
@@ -366,7 +384,9 @@ class TestVisualComparison:
             print(f"  Current: {current_path}")
             print(f"  Diff: {diff_path}")
 
-        assert match, f"Visual regression detected in {panel_name}: {diff_percent:.2f}% pixels differ"
+        assert (
+            match
+        ), f"Visual regression detected in {panel_name}: {diff_percent:.2f}% pixels differ"
 
     def test_compare_all_panels(self, driver):
         """Compare all key panels to baselines."""
@@ -421,7 +441,9 @@ class TestVisualComparison:
         self._generate_report(results)
 
         # Assert no regressions
-        regressions = [r for r in results if not r.screenshots_match and r.baseline_exists and not r.error]
+        regressions = [
+            r for r in results if not r.screenshots_match and r.baseline_exists and not r.error
+        ]
         if regressions:
             regression_names = [r.panel_name for r in regressions]
             pytest.fail(f"Visual regressions detected in: {regression_names}")
@@ -434,7 +456,9 @@ class TestVisualComparison:
 
         match_count = sum(1 for r in results if r.screenshots_match)
         baseline_count = sum(1 for r in results if r.baseline_exists)
-        regression_count = sum(1 for r in results if not r.screenshots_match and r.baseline_exists and not r.error)
+        regression_count = sum(
+            1 for r in results if not r.screenshots_match and r.baseline_exists and not r.error
+        )
 
         print(f"\nTotal panels: {len(results)}")
         print(f"Baselines exist: {baseline_count}")
@@ -567,7 +591,9 @@ def capture_all_baselines():
                 path = capture_screenshot(driver, panel_name, BASELINE_DIR)
                 results.append({"panel": panel_name, "success": path is not None})
             else:
-                results.append({"panel": panel_name, "success": False, "error": "Navigation failed"})
+                results.append(
+                    {"panel": panel_name, "success": False, "error": "Navigation failed"}
+                )
 
         # Report
         success_count = sum(1 for r in results if r["success"])

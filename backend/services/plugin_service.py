@@ -46,6 +46,7 @@ try:
         WasmPluginConfig,
         WasmRunner,
     )
+
     WASM_RUNNER_AVAILABLE = True
 except ImportError:
     WASM_RUNNER_AVAILABLE = False
@@ -62,6 +63,7 @@ try:
         check_signing_available,
         verify_package_auto,
     )
+
     SIGNING_AVAILABLE = check_signing_available()
 except ImportError:
     SIGNING_AVAILABLE = False
@@ -76,6 +78,7 @@ _phase6_ecosystem: Phase6Ecosystem | None = None
 try:
     from watchdog.events import FileModifiedEvent, FileSystemEventHandler
     from watchdog.observers import Observer
+
     WATCHDOG_AVAILABLE = True
 except ImportError:
     WATCHDOG_AVAILABLE = False
@@ -104,6 +107,7 @@ def is_version_compatible(app_version: str, min_required: str) -> bool:
 
 class PluginType(Enum):
     """Types of plugins."""
+
     ENGINE = "engine"  # Audio synthesis/processing engine
     PROCESSOR = "processor"  # Audio post-processor
     EXPORTER = "exporter"  # Export format handler
@@ -114,6 +118,7 @@ class PluginType(Enum):
 
 class PluginState(Enum):
     """Plugin lifecycle states."""
+
     DISCOVERED = "discovered"
     LOADED = "loaded"
     ACTIVATED = "activated"
@@ -124,6 +129,7 @@ class PluginState(Enum):
 @dataclass
 class PluginManifest:
     """Plugin manifest describing a plugin."""
+
     plugin_id: str
     name: str
     version: str
@@ -171,6 +177,7 @@ class PluginManifest:
 @dataclass
 class PluginInfo:
     """Runtime plugin information."""
+
     manifest: PluginManifest
     state: PluginState
     path: Path
@@ -201,6 +208,7 @@ class PluginBase(ABC):
 
     def __init__(self, plugin_service: PluginService):
         import warnings
+
         warnings.warn(
             f"{self.__class__.__name__} inherits from deprecated PluginBase. "
             "Migrate to 'from app.core.plugins_api import Plugin'. "
@@ -229,15 +237,11 @@ class PluginBase(ABC):
 
     def get_setting(self, key: str, default: Any = None) -> Any:
         """Get plugin setting."""
-        return self.plugin_service.get_plugin_setting(
-            self.manifest.plugin_id, key, default
-        )
+        return self.plugin_service.get_plugin_setting(self.manifest.plugin_id, key, default)
 
     def set_setting(self, key: str, value: Any):
         """Set plugin setting."""
-        self.plugin_service.set_plugin_setting(
-            self.manifest.plugin_id, key, value
-        )
+        self.plugin_service.set_plugin_setting(self.manifest.plugin_id, key, value)
 
 
 class EnginePlugin(PluginBase):
@@ -417,11 +421,7 @@ class PluginFileWatcher(FileSystemEventHandler if WATCHDOG_AVAILABLE else object
         if plugin_id in self._debounce_timers:
             self._debounce_timers[plugin_id].cancel()
 
-        timer = threading.Timer(
-            self._debounce_delay,
-            self._trigger_reload,
-            args=[plugin_id]
-        )
+        timer = threading.Timer(self._debounce_delay, self._trigger_reload, args=[plugin_id])
         self._debounce_timers[plugin_id] = timer
         timer.start()
 
@@ -455,8 +455,7 @@ class PluginFileWatcher(FileSystemEventHandler if WATCHDOG_AVAILABLE else object
             loop = asyncio.get_event_loop()
             if loop.is_running():
                 asyncio.run_coroutine_threadsafe(
-                    self._plugin_service.reload_plugin(plugin_id),
-                    loop
+                    self._plugin_service.reload_plugin(plugin_id), loop
                 )
             else:
                 asyncio.run(self._plugin_service.reload_plugin(plugin_id))
@@ -466,10 +465,12 @@ class PluginFileWatcher(FileSystemEventHandler if WATCHDOG_AVAILABLE else object
 
 def register_extension(point_name: str) -> Callable:
     """Decorator to register an extension point handler."""
+
     def decorator(func: ExtensionPoint) -> ExtensionPoint:
         if point_name in EXTENSION_POINTS:
             EXTENSION_POINTS[point_name].append(func)
         return func
+
     return decorator
 
 
@@ -615,13 +616,13 @@ class PluginService:
     ) -> PluginManifest:
         """
         Convert manifest data to internal PluginManifest.
-        
+
         Handles both unified schema (manifest.json) and legacy (plugin.json) formats.
         """
         if using_unified_schema:
             # Map unified schema fields to internal PluginManifest
             plugin_type_str = data.get("plugin_type", "tool")
-            
+
             # Determine plugin type from capabilities
             capabilities = data.get("capabilities", {})
             if capabilities.get("engines"):
@@ -636,14 +637,14 @@ class PluginService:
                 plugin_type = PluginType.UI_PANEL
             else:
                 plugin_type = PluginType.TOOL
-            
+
             entry_points = data.get("entry_points", {})
             entry_point = entry_points.get("backend", "")
-            
+
             dependencies = data.get("dependencies", {})
             python_deps = dependencies.get("python", [])
             plugin_deps = dependencies.get("plugins", [])
-            
+
             return PluginManifest(
                 plugin_id=data.get("name", ""),
                 name=data.get("display_name") or data.get("name", ""),
@@ -689,7 +690,7 @@ class PluginService:
             if not manifest_path.exists():
                 manifest_path = plugin_info.path / "plugin.json"
                 using_unified_schema = False
-            
+
             if manifest_path.exists():
                 if using_unified_schema:
                     is_valid, errors, manifest_data = validate_plugin_manifest_file(manifest_path)
@@ -776,19 +777,16 @@ class PluginService:
                     continue
 
                 # Prefer unified Plugin class (Phase 4+)
-                if (
-                    issubclass(obj, UnifiedPlugin) and
-                    obj is not UnifiedPlugin
-                ):
+                if issubclass(obj, UnifiedPlugin) and obj is not UnifiedPlugin:
                     plugin_class = obj
                     uses_unified_plugin = True
                     break
 
                 # Fallback to deprecated PluginBase
                 if (
-                    issubclass(obj, PluginBase) and
-                    obj is not PluginBase and
-                    obj not in (EnginePlugin, ProcessorPlugin, ExporterPlugin, ImporterPlugin)
+                    issubclass(obj, PluginBase)
+                    and obj is not PluginBase
+                    and obj not in (EnginePlugin, ProcessorPlugin, ExporterPlugin, ImporterPlugin)
                 ):
                     plugin_class = obj
                     break
@@ -933,9 +931,7 @@ class PluginService:
 
         if verification.get("error"):
             result["error"] = verification["message"]
-            logger.warning(
-                f"Plugin {plugin_id} rejected: {verification['message']}"
-            )
+            logger.warning(f"Plugin {plugin_id} rejected: {verification['message']}")
             return result
 
         # Log verification status
@@ -945,9 +941,7 @@ class PluginService:
                     f"Plugin {plugin_id} signature verified (key: {verification['key_id']})"
                 )
             else:
-                logger.warning(
-                    f"Plugin {plugin_id} signature invalid: {verification['message']}"
-                )
+                logger.warning(f"Plugin {plugin_id} signature invalid: {verification['message']}")
         else:
             logger.debug(f"Plugin {plugin_id} is unsigned")
 
@@ -957,9 +951,7 @@ class PluginService:
 
         if not loaded:
             plugin_info = self._plugins.get(plugin_id)
-            result["error"] = (
-                plugin_info.error_message if plugin_info else "Unknown error"
-            )
+            result["error"] = plugin_info.error_message if plugin_info else "Unknown error"
 
         return result
 
@@ -1258,6 +1250,7 @@ class PluginService:
 
         # Create runner and execute
         import time
+
         start_time = time.perf_counter()
 
         try:
@@ -1402,6 +1395,7 @@ class Phase6AIQuality:
                 CodeReviewer,
                 RecommendationEngine,
             )
+
             self._code_reviewer = CodeReviewer()
             self._anomaly_detector = AnomalyDetector()
             self._recommendation_engine = RecommendationEngine()
@@ -1462,6 +1456,7 @@ class Phase6Compliance:
             return True
         try:
             from backend.plugins.compliance import ComplianceScanner, PrivacyEngine
+
             self._compliance_scanner = ComplianceScanner()
             self._privacy_engine = PrivacyEngine()
             self._initialized = True
@@ -1505,6 +1500,7 @@ class Phase6Ecosystem:
             return True
         try:
             from backend.plugins.ecosystem import DeveloperAnalytics, FeaturedPluginsManager
+
             self._developer_analytics = DeveloperAnalytics()
             self._featured_plugins = FeaturedPluginsManager()
             self._initialized = True

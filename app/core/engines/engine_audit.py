@@ -94,12 +94,8 @@ class EngineAuditor:
         result = EngineAuditResult(engine_name=engine_name, engine_class=engine_class)
 
         # Get all methods from the class
-        methods = {
-            name for name, _ in inspect.getmembers(engine_class, inspect.isfunction)
-        }
-        methods.update(
-            {name for name, _ in inspect.getmembers(engine_class, inspect.ismethod)}
-        )
+        methods = {name for name, _ in inspect.getmembers(engine_class, inspect.isfunction)}
+        methods.update({name for name, _ in inspect.getmembers(engine_class, inspect.ismethod)})
 
         # Check required methods
         for method in self.REQUIRED_METHODS:
@@ -113,22 +109,19 @@ class EngineAuditor:
 
         # Check for features
         result.has_batch_processing = any(
-            feature_method in methods
-            for feature_method in self.FEATURES["batch_processing"]
+            feature_method in methods for feature_method in self.FEATURES["batch_processing"]
         )
         result.has_streaming = any(
             feature_method in methods for feature_method in self.FEATURES["streaming"]
         )
         result.has_quality_metrics = any(
-            feature_method in methods
-            for feature_method in self.FEATURES["quality_metrics"]
+            feature_method in methods for feature_method in self.FEATURES["quality_metrics"]
         )
         result.has_caching = any(
             feature_method in methods for feature_method in self.FEATURES["caching"]
         )
         result.has_lazy_loading = any(
-            feature_method in methods
-            for feature_method in self.FEATURES["lazy_loading"]
+            feature_method in methods for feature_method in self.FEATURES["lazy_loading"]
         )
 
         # Check for optimization opportunities
@@ -237,22 +230,14 @@ class EngineAuditor:
                 1 for r in self.audit_results.values() if r.has_batch_processing
             ),
             "streaming": sum(1 for r in self.audit_results.values() if r.has_streaming),
-            "quality_metrics": sum(
-                1 for r in self.audit_results.values() if r.has_quality_metrics
-            ),
+            "quality_metrics": sum(1 for r in self.audit_results.values() if r.has_quality_metrics),
             "caching": sum(1 for r in self.audit_results.values() if r.has_caching),
-            "lazy_loading": sum(
-                1 for r in self.audit_results.values() if r.has_lazy_loading
-            ),
+            "lazy_loading": sum(1 for r in self.audit_results.values() if r.has_lazy_loading),
         }
 
         # Count issues
-        total_missing_methods = sum(
-            len(r.missing_methods) for r in self.audit_results.values()
-        )
-        total_missing_features = sum(
-            len(r.missing_features) for r in self.audit_results.values()
-        )
+        total_missing_methods = sum(len(r.missing_methods) for r in self.audit_results.values())
+        total_missing_features = sum(len(r.missing_features) for r in self.audit_results.values())
         total_optimizations = sum(
             len(r.optimization_opportunities) for r in self.audit_results.values()
         )
@@ -274,9 +259,7 @@ class EngineAuditor:
             },
         }
 
-    def get_engines_needing_attention(
-        self, min_score: float = 70.0
-    ) -> list[EngineAuditResult]:
+    def get_engines_needing_attention(self, min_score: float = 70.0) -> list[EngineAuditResult]:
         """
         Get engines that need attention (score below threshold).
 
@@ -286,9 +269,7 @@ class EngineAuditor:
         Returns:
             List of engines needing attention
         """
-        return [
-            result for result in self.audit_results.values() if result.score < min_score
-        ]
+        return [result for result in self.audit_results.values() if result.score < min_score]
 
     def generate_enhancement_report(self) -> str:
         """
@@ -310,9 +291,7 @@ class EngineAuditor:
         lines.append("## Feature Coverage\n")
         for feature, count in summary["features"].items():
             percentage = (count / summary["total_engines"]) * 100
-            lines.append(
-                f"- {feature}: {count}/{summary['total_engines']} ({percentage:.1f}%)"
-            )
+            lines.append(f"- {feature}: {count}/{summary['total_engines']} ({percentage:.1f}%)")
 
         # Engines needing attention
         lines.append("\n## Engines Needing Attention\n")
@@ -324,13 +303,9 @@ class EngineAuditor:
             if result.missing_features:
                 lines.append(f"- Missing Features: {len(result.missing_features)}")
             if result.optimization_opportunities:
-                lines.append(
-                    f"- Optimizations: {', '.join(result.optimization_opportunities)}"
-                )
+                lines.append(f"- Optimizations: {', '.join(result.optimization_opportunities)}")
             if result.quality_enhancements:
-                lines.append(
-                    f"- Quality Enhancements: {', '.join(result.quality_enhancements)}"
-                )
+                lines.append(f"- Quality Enhancements: {', '.join(result.quality_enhancements)}")
 
         return "\n".join(lines)
 

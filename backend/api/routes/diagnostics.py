@@ -124,10 +124,7 @@ async def get_quick_status():
 
 @router.get("/run", response_model=DiagnosticReportResponse)
 async def run_diagnostics(
-    include_sensitive: bool = Query(
-        False,
-        description="Include sensitive information in report"
-    ),
+    include_sensitive: bool = Query(False, description="Include sensitive information in report"),
 ):
     """
     Run full system diagnostics.
@@ -153,14 +150,8 @@ async def run_diagnostics(
 
 @router.get("/checks", response_model=list[DiagnosticCheckResponse])
 async def get_checks(
-    category: str | None = Query(
-        None,
-        description="Filter by category"
-    ),
-    status: str | None = Query(
-        None,
-        description="Filter by status (pass, warn, fail)"
-    ),
+    category: str | None = Query(None, description="Filter by category"),
+    status: str | None = Query(None, description="Filter by status (pass, warn, fail)"),
 ):
     """
     Run diagnostics and get individual check results.
@@ -204,10 +195,7 @@ async def get_categories():
 
 @router.post("/save", response_model=SaveReportResponse)
 async def save_diagnostic_report(
-    filename: str | None = Query(
-        None,
-        description="Custom filename for the report"
-    ),
+    filename: str | None = Query(None, description="Custom filename for the report"),
 ):
     """
     Run diagnostics and save report to file.

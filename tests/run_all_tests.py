@@ -24,49 +24,37 @@ def run_test_suite(suite_name: str, test_path: Path) -> dict[str, Any]:
 
     if not test_path.exists():
         logger.warning(f"Test path does not exist: {test_path}")
-        return {
-            "suite": suite_name,
-            "status": "skipped",
-            "reason": "Test path not found"
-        }
+        return {"suite": suite_name, "status": "skipped", "reason": "Test path not found"}
 
     cmd = [
-        sys.executable, "-m", "pytest",
+        sys.executable,
+        "-m",
+        "pytest",
         str(test_path),
         "-v",
         "--tb=short",
         "--json-report",
-        "--json-report-file=.pytest_cache/report.json"
+        "--json-report-file=.pytest_cache/report.json",
     ]
 
     try:
-        result = subprocess.run(
-            cmd,
-            cwd=project_root,
-            capture_output=True,
-            text=True,
-            timeout=300
-        )
+        result = subprocess.run(cmd, cwd=project_root, capture_output=True, text=True, timeout=300)
 
         return {
             "suite": suite_name,
             "status": "passed" if result.returncode == 0 else "failed",
             "exit_code": result.returncode,
             "stdout": result.stdout,
-            "stderr": result.stderr
+            "stderr": result.stderr,
         }
     except subprocess.TimeoutExpired:
         return {
             "suite": suite_name,
             "status": "timeout",
-            "reason": "Test suite exceeded 5 minute timeout"
+            "reason": "Test suite exceeded 5 minute timeout",
         }
     except Exception as e:
-        return {
-            "suite": suite_name,
-            "status": "error",
-            "error": str(e)
-        }
+        return {"suite": suite_name, "status": "error", "error": str(e)}
 
 
 def run_placeholder_verification() -> dict[str, Any]:
@@ -82,33 +70,23 @@ def run_placeholder_verification() -> dict[str, Any]:
         return {
             "suite": "placeholder_verification",
             "status": "skipped",
-            "reason": "Script not found"
+            "reason": "Script not found",
         }
 
     cmd = [sys.executable, str(script_path)]
 
     try:
-        result = subprocess.run(
-            cmd,
-            cwd=project_root,
-            capture_output=True,
-            text=True,
-            timeout=600
-        )
+        result = subprocess.run(cmd, cwd=project_root, capture_output=True, text=True, timeout=600)
 
         return {
             "suite": "placeholder_verification",
             "status": "passed" if result.returncode == 0 else "failed",
             "exit_code": result.returncode,
             "stdout": result.stdout,
-            "stderr": result.stderr
+            "stderr": result.stderr,
         }
     except Exception as e:
-        return {
-            "suite": "placeholder_verification",
-            "status": "error",
-            "error": str(e)
-        }
+        return {"suite": "placeholder_verification", "status": "error", "error": str(e)}
 
 
 def generate_test_report(results: list[dict[str, Any]]) -> str:
@@ -160,11 +138,20 @@ def main():
     logger.info(f"Project root: {project_root}")
 
     test_suites = [
-        ("Engine Integration Tests", project_root / "tests" / "integration" / "engines" / "test_engine_integration.py"),
-        ("Backend API Tests", project_root / "tests" / "integration" / "api" / "test_backend_endpoints.py"),
+        (
+            "Engine Integration Tests",
+            project_root / "tests" / "integration" / "engines" / "test_engine_integration.py",
+        ),
+        (
+            "Backend API Tests",
+            project_root / "tests" / "integration" / "api" / "test_backend_endpoints.py",
+        ),
         ("End-to-End Tests", project_root / "tests" / "e2e" / "test_complete_workflows.py"),
         ("Engine Unit Tests", project_root / "tests" / "unit" / "test_engines_unit.py"),
-        ("Backend Route Unit Tests", project_root / "tests" / "unit" / "test_backend_routes_unit.py"),
+        (
+            "Backend Route Unit Tests",
+            project_root / "tests" / "unit" / "test_backend_routes_unit.py",
+        ),
     ]
 
     results = []
@@ -180,7 +167,7 @@ def main():
     print(report)
 
     report_file = project_root / "test_report.txt"
-    with open(report_file, 'w', encoding='utf-8') as f:
+    with open(report_file, "w", encoding="utf-8") as f:
         f.write(report)
 
     logger.info(f"Test report saved to: {report_file}")
@@ -191,4 +178,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

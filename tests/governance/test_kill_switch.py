@@ -3,7 +3,6 @@ Tests for kill switch functionality.
 """
 
 
-
 class TestKillSwitch:
     """Test kill switch behavior."""
 

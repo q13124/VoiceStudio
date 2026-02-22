@@ -21,10 +21,12 @@ logger = logging.getLogger(__name__)
 
 class SpectralInpaintResponse(BaseModel):
     """Response model for spectral inpainting."""
+
     audio_id: str
     inpainted_audio_id: str
     mask_type: str
     mask: str
+
 
 router = APIRouter(prefix="/api/spectral", tags=["spectral"])
 
@@ -55,9 +57,7 @@ async def inpaint(req: SpectralInpaintRequest) -> SpectralInpaintResponse:
         from .voice import _audio_storage, _register_audio_file
 
         if audio_id not in _audio_storage:
-            raise HTTPException(
-                status_code=404, detail=f"Audio file '{audio_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file '{audio_id}' not found")
 
         audio_path = _audio_storage[audio_id]
         if not os.path.exists(audio_path):
@@ -151,9 +151,7 @@ async def inpaint(req: SpectralInpaintRequest) -> SpectralInpaintResponse:
                 np.arange(magnitude.shape[1]), sr=sample_rate, hop_length=hop_length
             )
 
-            masked_frames = np.where(
-                (frame_times >= mask_start) & (frame_times <= mask_end)
-            )[0]
+            masked_frames = np.where((frame_times >= mask_start) & (frame_times <= mask_end))[0]
 
             if len(masked_frames) > 0:
                 # Inpaint masked frames using spectral interpolation
@@ -248,6 +246,4 @@ async def inpaint(req: SpectralInpaintRequest) -> SpectralInpaintResponse:
         raise
     except Exception as e:
         logger.error(f"Spectral inpainting failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Spectral inpainting failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Spectral inpainting failed: {e!s}") from e

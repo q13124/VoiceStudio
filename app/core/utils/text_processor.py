@@ -75,10 +75,7 @@ def load_spacy_model(language: str = "en") -> any | None:
         except OSError:
             # Model not installed, try to use base language
             if language != "en":
-                logger.warning(
-                    f"spacy model {model_name} not found, "
-                    "falling back to English"
-                )
+                logger.warning(f"spacy model {model_name} not found, " "falling back to English")
                 return load_spacy_model("en")
             else:
                 logger.warning(
@@ -122,11 +119,7 @@ def preprocess_text(
 
             # Extract tokens
             if remove_punctuation:
-                tokens = [
-                    token.text
-                    for token in doc
-                    if not token.is_punct and not token.is_space
-                ]
+                tokens = [token.text for token in doc if not token.is_punct and not token.is_space]
             else:
                 tokens = [token.text for token in doc if not token.is_space]
 
@@ -152,9 +145,7 @@ def preprocess_text(
     return processed.strip()
 
 
-def extract_phonemes(
-    text: str, language: str = "en"
-) -> list[dict[str, str | float]] | None:
+def extract_phonemes(text: str, language: str = "en") -> list[dict[str, str | float]] | None:
     """
     Extract phonemes from text using spacy (if available).
 
@@ -194,9 +185,7 @@ def extract_phonemes(
         return None
 
 
-def segment_text(
-    text: str, language: str = "en", max_length: int = 200
-) -> list[str]:
+def segment_text(text: str, language: str = "en", max_length: int = 200) -> list[str]:
     """
     Segment text into sentences or chunks for TTS.
 
@@ -261,9 +250,7 @@ def segment_text(
     return segments if segments else [text]
 
 
-def analyze_text_quality(
-    text: str, language: str = "en"
-) -> dict[str, int | float | list[str]]:
+def analyze_text_quality(text: str, language: str = "en") -> dict[str, int | float | list[str]]:
     """
     Analyze text quality and characteristics.
 
@@ -309,9 +296,7 @@ def analyze_text_quality(
 
             # Named entities
             if doc.ents:
-                analysis["entities"] = [
-                    {"text": ent.text, "label": ent.label_} for ent in doc.ents
-                ]
+                analysis["entities"] = [{"text": ent.text, "label": ent.label_} for ent in doc.ents]
         except Exception as e:
             logger.warning(f"spacy text analysis failed: {e}, using basic analysis")
 
@@ -336,4 +321,3 @@ def cleanup_spacy_models():
     global _spacy_models
     _spacy_models.clear()
     logger.debug("Cleaned up spacy models from memory")
-

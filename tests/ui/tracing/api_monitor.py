@@ -24,12 +24,7 @@ class APIMonitor:
     Can be used standalone or integrated with WorkflowTracer.
     """
 
-    def __init__(
-        self,
-        base_url: str = "http://127.0.0.1:8000",
-        timeout: float = 30.0,
-        tracer=None
-    ):
+    def __init__(self, base_url: str = "http://127.0.0.1:8000", timeout: float = 30.0, tracer=None):
         """
         Initialize the API monitor.
 
@@ -54,7 +49,7 @@ class APIMonitor:
         params: Any = None,
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
-        **kwargs
+        **kwargs,
     ) -> requests.Response:
         """
         Make a request and log details.
@@ -90,7 +85,7 @@ class APIMonitor:
                 params=params,
                 headers=request_headers,
                 timeout=timeout or self.timeout,
-                **kwargs
+                **kwargs,
             )
             elapsed_ms = (time.perf_counter() - start_time) * 1000
 
@@ -222,7 +217,9 @@ class APIMonitor:
             "total_calls": len(self.call_log),
             "successful_calls": len(successful),
             "failed_calls": len(failed),
-            "avg_response_time_ms": sum(response_times) / len(response_times) if response_times else 0,
+            "avg_response_time_ms": (
+                sum(response_times) / len(response_times) if response_times else 0
+            ),
             "min_response_time_ms": min(response_times) if response_times else 0,
             "max_response_time_ms": max(response_times) if response_times else 0,
             "by_endpoint": {

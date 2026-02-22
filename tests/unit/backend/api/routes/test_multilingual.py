@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import multilingual
 except ImportError:
-    pytest.skip(
-        "Could not import multilingual route module", allow_module_level=True
-    )
+    pytest.skip("Could not import multilingual route module", allow_module_level=True)
 
 
 class TestMultilingualRouteImports:
@@ -25,12 +23,8 @@ class TestMultilingualRouteImports:
 
     def test_multilingual_module_imports(self):
         """Test multilingual module can be imported."""
-        assert (
-            multilingual is not None
-        ), "Failed to import multilingual module"
-        assert hasattr(
-            multilingual, "router"
-        ), "multilingual module missing router"
+        assert multilingual is not None, "Failed to import multilingual module"
+        assert hasattr(multilingual, "router"), "multilingual module missing router"
 
 
 class TestMultilingualRouteHandlers:
@@ -39,9 +33,7 @@ class TestMultilingualRouteHandlers:
     def test_detect_language_handler_exists(self):
         """Test detect_language handler exists."""
         if hasattr(multilingual, "detect_language"):
-            assert callable(
-                multilingual.detect_language
-            ), "detect_language is not callable"
+            assert callable(multilingual.detect_language), "detect_language is not callable"
 
     def test_synthesize_multilingual_handler_exists(self):
         """Test synthesize_multilingual handler exists."""
@@ -69,4 +61,3 @@ class TestMultilingualRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

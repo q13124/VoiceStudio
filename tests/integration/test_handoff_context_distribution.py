@@ -40,12 +40,14 @@ class MockContextBundle:
         return f"## Context for {self.role}\n\nPhase: {self.phase}\nTask: {self.task_id}"
 
     def to_json(self) -> str:
-        return json.dumps({
-            "role": self.role,
-            "task_id": self.task_id,
-            "phase": self.phase,
-            "content": self.content,
-        })
+        return json.dumps(
+            {
+                "role": self.role,
+                "task_id": self.task_id,
+                "phase": self.phase,
+                "content": self.content,
+            }
+        )
 
 
 class MockContextDistributor:
@@ -70,12 +72,14 @@ class MockContextDistributor:
                 "task": f"Task {task_id}" if task_id else "No task",
             },
         )
-        self._distributions.append({
-            "role": target_role,
-            "task_id": task_id,
-            "phase": phase,
-            "timestamp": datetime.now().isoformat(),
-        })
+        self._distributions.append(
+            {
+                "role": target_role,
+                "task_id": task_id,
+                "phase": phase,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
         return bundle
 
     @property

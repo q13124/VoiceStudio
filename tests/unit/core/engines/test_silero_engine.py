@@ -59,9 +59,7 @@ class TestSileroEngineClass:
                 engine = silero_engine.SileroEngine(device="cpu", gpu=False)
                 required_methods = ["initialize", "cleanup", "synthesize"]
                 for method in required_methods:
-                    assert hasattr(
-                        engine, method
-                    ), f"SileroEngine missing method: {method}"
+                    assert hasattr(engine, method), f"SileroEngine missing method: {method}"
             except (ImportError, Exception):
                 pytest.skip("silero dependencies not installed")
 
@@ -71,9 +69,7 @@ class TestSileroEngineClass:
             try:
                 engine = silero_engine.SileroEngine(device="cpu", gpu=False)
                 # Check for caching support
-                assert hasattr(
-                    engine, "enable_caching"
-                ), "SileroEngine should support caching"
+                assert hasattr(engine, "enable_caching"), "SileroEngine should support caching"
                 # Check for batch processing
                 assert hasattr(
                     engine, "batch_synthesize"
@@ -95,17 +91,13 @@ class TestSileroEngineCaching:
             try:
                 engine = silero_engine.SileroEngine(device="cpu", gpu=False)
                 # Check initial state (should be True by default)
-                assert (
-                    engine.enable_caching is True
-                ), "Caching should be enabled by default"
+                assert engine.enable_caching is True, "Caching should be enabled by default"
                 # Test that enable_caching method exists
                 assert hasattr(engine, "enable_caching"), "enable_caching should exist"
                 enable_caching_method = engine.enable_caching
                 if callable(enable_caching_method):
                     enable_caching_method(False)
-                    assert hasattr(
-                        engine, "enable_caching"
-                    ), "enable_caching should still exist"
+                    assert hasattr(engine, "enable_caching"), "enable_caching should still exist"
             except (ImportError, Exception):
                 pytest.skip("silero dependencies not installed")
 
@@ -146,9 +138,7 @@ class TestSileroEngineProtocol:
                 engine = silero_engine.SileroEngine(device="cpu", gpu=False)
                 assert hasattr(engine, "initialize"), "Should implement initialize"
                 assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                assert hasattr(
-                    engine, "is_initialized"
-                ), "Should implement is_initialized"
+                assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                 assert hasattr(engine, "get_device"), "Should implement get_device"
             except (ImportError, Exception):
                 pytest.skip("silero dependencies not installed")
@@ -182,4 +172,3 @@ class TestSileroEngineConfiguration:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

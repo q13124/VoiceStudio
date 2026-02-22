@@ -26,17 +26,13 @@ class SynthesisPage(BasePage):
     # Locators - Root
     # ==========================================================================
 
-    ROOT = ElementLocator.by_automation_id(
-        "SynthesisView_Root", "Synthesis root element"
-    )
+    ROOT = ElementLocator.by_automation_id("SynthesisView_Root", "Synthesis root element")
 
     # ==========================================================================
     # Locators - Voice Selection
     # ==========================================================================
 
-    VOICE_SELECTOR = ElementLocator.by_automation_id(
-        "VoiceSelector", "Voice selection dropdown"
-    )
+    VOICE_SELECTOR = ElementLocator.by_automation_id("VoiceSelector", "Voice selection dropdown")
     SELECTED_VOICE_NAME = ElementLocator.by_automation_id(
         "SelectedVoiceName", "Selected voice name display"
     )
@@ -48,32 +44,20 @@ class SynthesisPage(BasePage):
     # Locators - Text Input
     # ==========================================================================
 
-    TEXT_INPUT = ElementLocator.by_automation_id(
-        "TextInput", "Text to synthesize input"
-    )
-    CHARACTER_COUNT = ElementLocator.by_automation_id(
-        "CharacterCount", "Character count display"
-    )
-    CLEAR_TEXT_BUTTON = ElementLocator.by_automation_id(
-        "ClearTextButton", "Clear text button"
-    )
+    TEXT_INPUT = ElementLocator.by_automation_id("TextInput", "Text to synthesize input")
+    CHARACTER_COUNT = ElementLocator.by_automation_id("CharacterCount", "Character count display")
+    CLEAR_TEXT_BUTTON = ElementLocator.by_automation_id("ClearTextButton", "Clear text button")
 
     # ==========================================================================
     # Locators - Engine Settings
     # ==========================================================================
 
-    ENGINE_SELECTOR = ElementLocator.by_automation_id(
-        "EngineSelector", "Engine selection dropdown"
-    )
+    ENGINE_SELECTOR = ElementLocator.by_automation_id("EngineSelector", "Engine selection dropdown")
     QUALITY_SELECTOR = ElementLocator.by_automation_id(
         "QualitySelector", "Quality mode selection dropdown"
     )
-    SPEED_SLIDER = ElementLocator.by_automation_id(
-        "SpeedSlider", "Speech speed slider"
-    )
-    PITCH_SLIDER = ElementLocator.by_automation_id(
-        "PitchSlider", "Speech pitch slider"
-    )
+    SPEED_SLIDER = ElementLocator.by_automation_id("SpeedSlider", "Speech speed slider")
+    PITCH_SLIDER = ElementLocator.by_automation_id("PitchSlider", "Speech pitch slider")
 
     # ==========================================================================
     # Locators - Synthesis Actions
@@ -82,57 +66,35 @@ class SynthesisPage(BasePage):
     SYNTHESIZE_BUTTON = ElementLocator.by_automation_id(
         "SynthesizeButton", "Start synthesis button"
     )
-    PREVIEW_BUTTON = ElementLocator.by_automation_id(
-        "PreviewButton", "Preview synthesis button"
-    )
-    STOP_BUTTON = ElementLocator.by_automation_id(
-        "StopButton", "Stop synthesis button"
-    )
+    PREVIEW_BUTTON = ElementLocator.by_automation_id("PreviewButton", "Preview synthesis button")
+    STOP_BUTTON = ElementLocator.by_automation_id("StopButton", "Stop synthesis button")
 
     # ==========================================================================
     # Locators - Progress/Status
     # ==========================================================================
 
-    SYNTHESIS_STATUS = ElementLocator.by_automation_id(
-        "SynthesisStatus", "Synthesis status text"
-    )
+    SYNTHESIS_STATUS = ElementLocator.by_automation_id("SynthesisStatus", "Synthesis status text")
     SYNTHESIS_PROGRESS = ElementLocator.by_automation_id(
         "SynthesisProgress", "Synthesis progress bar"
     )
-    LOADING_INDICATOR = ElementLocator.by_automation_id(
-        "LoadingIndicator", "Loading spinner"
-    )
+    LOADING_INDICATOR = ElementLocator.by_automation_id("LoadingIndicator", "Loading spinner")
 
     # ==========================================================================
     # Locators - Output
     # ==========================================================================
 
-    OUTPUT_PLAYER = ElementLocator.by_automation_id(
-        "OutputPlayer", "Audio output player"
-    )
-    PLAY_BUTTON = ElementLocator.by_automation_id(
-        "PlayButton", "Play audio button"
-    )
-    PAUSE_BUTTON = ElementLocator.by_automation_id(
-        "PauseButton", "Pause audio button"
-    )
-    SAVE_BUTTON = ElementLocator.by_automation_id(
-        "SaveButton", "Save audio button"
-    )
-    DOWNLOAD_BUTTON = ElementLocator.by_automation_id(
-        "DownloadButton", "Download audio button"
-    )
+    OUTPUT_PLAYER = ElementLocator.by_automation_id("OutputPlayer", "Audio output player")
+    PLAY_BUTTON = ElementLocator.by_automation_id("PlayButton", "Play audio button")
+    PAUSE_BUTTON = ElementLocator.by_automation_id("PauseButton", "Pause audio button")
+    SAVE_BUTTON = ElementLocator.by_automation_id("SaveButton", "Save audio button")
+    DOWNLOAD_BUTTON = ElementLocator.by_automation_id("DownloadButton", "Download audio button")
 
     # ==========================================================================
     # Locators - Error/Success
     # ==========================================================================
 
-    SUCCESS_MESSAGE = ElementLocator.by_automation_id(
-        "SuccessMessage", "Success message display"
-    )
-    ERROR_MESSAGE = ElementLocator.by_automation_id(
-        "ErrorMessage", "Error message display"
-    )
+    SUCCESS_MESSAGE = ElementLocator.by_automation_id("SuccessMessage", "Success message display")
+    ERROR_MESSAGE = ElementLocator.by_automation_id("ErrorMessage", "Error message display")
 
     # ==========================================================================
     # Validation
@@ -340,7 +302,7 @@ class SynthesisPage(BasePage):
         engine: str | None = None,
         quality: str | None = None,
         wait_for_completion: bool = True,
-        timeout: float = 60.0
+        timeout: float = 60.0,
     ):
         """
         Complete a full text synthesis workflow.

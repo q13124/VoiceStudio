@@ -27,7 +27,7 @@ def find_all_panels(workspace_root):
         "app/ui/views",
         "Views/Panels",
         "Views",
-        "Panels"
+        "Panels",
     ]
 
     panels = set()
@@ -54,6 +54,7 @@ def find_all_panels(workspace_root):
 
     return sorted(panels)
 
+
 def check_panel_registry(workspace_root):
     """Check PanelRegistry.Auto.cs."""
     workspace = Path(workspace_root)
@@ -64,12 +65,13 @@ def check_panel_registry(workspace_root):
         return []
 
     # Extract panel paths from registry
-    content = registry_file.read_text(encoding='utf-8')
+    content = registry_file.read_text(encoding="utf-8")
     # Find all quoted strings
     pattern = r'"([^"]+\.xaml)"'
     registered = re.findall(pattern, content)
 
     return registered
+
 
 def main():
     """Run panel verification."""
@@ -133,6 +135,6 @@ def main():
         print("Run: .\tools\\Find-AllPanels.ps1 to regenerate PanelRegistry.Auto.cs")
         return 1
 
+
 if __name__ == "__main__":
     sys.exit(main())
-

@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class ImportFormat(Enum):
     """Supported import formats."""
+
     VOICESTUDIO_PROJECT = "vsproj"
     VOICESTUDIO_ARCHIVE = "vsarc"
     AUDIO_FILE = "audio"
@@ -31,6 +32,7 @@ class ImportFormat(Enum):
 @dataclass
 class ImportResult:
     """Result of an import operation."""
+
     success: bool
     imported_items: list[str] = field(default_factory=list)
     skipped_items: list[str] = field(default_factory=list)
@@ -42,6 +44,7 @@ class ImportResult:
 @dataclass
 class ImportOptions:
     """Options for importing."""
+
     overwrite_existing: bool = False
     import_voices: bool = True
     import_settings: bool = False
@@ -53,17 +56,15 @@ class ImportOptions:
 class ProjectImporter:
     """Importer for VoiceStudio projects and assets."""
 
-    SUPPORTED_AUDIO = {'.wav', '.mp3', '.flac', '.ogg', '.m4a', '.aac'}
-    SUPPORTED_TEXT = {'.txt', '.srt', '.vtt', '.ass', '.ssa'}
+    SUPPORTED_AUDIO = {".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac"}
+    SUPPORTED_TEXT = {".txt", ".srt", ".vtt", ".ass", ".ssa"}
 
     def __init__(self, projects_dir: Path | None = None):
         self._projects_dir = projects_dir or Path.home() / "VoiceStudio/Projects"
         self._projects_dir.mkdir(parents=True, exist_ok=True)
 
     async def import_project_archive(
-        self,
-        archive_path: Path,
-        options: ImportOptions | None = None
+        self, archive_path: Path, options: ImportOptions | None = None
     ) -> ImportResult:
         """Import a VoiceStudio project archive."""
         options = options or ImportOptions()
@@ -71,16 +72,13 @@ class ProjectImporter:
 
         try:
             if not archive_path.exists():
-                return ImportResult(
-                    success=False,
-                    errors=[f"Archive not found: {archive_path}"]
-                )
+                return ImportResult(success=False, errors=[f"Archive not found: {archive_path}"])
 
             # Extract archive
-            with zipfile.ZipFile(archive_path, 'r') as zf:
+            with zipfile.ZipFile(archive_path, "r") as zf:
                 # Read manifest
                 try:
-                    manifest_data = zf.read('manifest.json').decode('utf-8')
+                    manifest_data = zf.read("manifest.json").decode("utf-8")
                     manifest = json.loads(manifest_data)
                 except (KeyError, json.JSONDecodeError):
                     manifest = {}
@@ -88,7 +86,7 @@ class ProjectImporter:
                 result.metadata = manifest
 
                 # Determine project directory
-                project_name = manifest.get('name', archive_path.stem)
+                project_name = manifest.get("name", archive_path.stem)
                 if options.rename_prefix:
                     project_name = f"{options.rename_prefix}_{project_name}"
 
@@ -98,8 +96,9 @@ class ProjectImporter:
                     # Generate unique name
                     counter = 1
                     while project_dir.exists():
-                        project_dir = (options.target_directory or self._projects_dir) / \
-                                     f"{project_name}_{counter}"
+                        project_dir = (
+                            options.target_directory or self._projects_dir
+                        ) / f"{project_name}_{counter}"
                         counter += 1
 
                 # Extract files
@@ -110,15 +109,15 @@ class ProjectImporter:
                         continue
 
                     # Skip certain files based on options
-                    if file_info.filename.startswith('voices/') and not options.import_voices:
+                    if file_info.filename.startswith("voices/") and not options.import_voices:
                         result.skipped_items.append(file_info.filename)
                         continue
 
-                    if file_info.filename.startswith('settings/') and not options.import_settings:
+                    if file_info.filename.startswith("settings/") and not options.import_settings:
                         result.skipped_items.append(file_info.filename)
                         continue
 
-                    if file_info.filename.startswith('workflows/') and not options.import_workflows:
+                    if file_info.filename.startswith("workflows/") and not options.import_workflows:
                         result.skipped_items.append(file_info.filename)
                         continue
 
@@ -136,10 +135,7 @@ class ProjectImporter:
         return result
 
     async def import_audio_files(
-        self,
-        file_paths: list[Path],
-        project_path: Path,
-        options: ImportOptions | None = None
+        self, file_paths: list[Path], project_path: Path, options: ImportOptions | None = None
     ) -> ImportResult:
         """Import audio files into a project."""
         options = options or ImportOptions()
@@ -179,9 +175,7 @@ class ProjectImporter:
         return result
 
     async def import_text_file(
-        self,
-        file_path: Path,
-        options: ImportOptions | None = None
+        self, file_path: Path, options: ImportOptions | None = None
     ) -> ImportResult:
         """Import a text or subtitle file."""
         options = options or ImportOptions()
@@ -189,15 +183,12 @@ class ProjectImporter:
 
         try:
             if not file_path.exists():
-                return ImportResult(
-                    success=False,
-                    errors=[f"File not found: {file_path}"]
-                )
+                return ImportResult(success=False, errors=[f"File not found: {file_path}"])
 
             suffix = file_path.suffix.lower()
 
-            if suffix == '.txt':
-                content = file_path.read_text(encoding='utf-8')
+            if suffix == ".txt":
+                content = file_path.read_text(encoding="utf-8")
                 result.metadata = {
                     "type": "text",
                     "content": content,
@@ -205,8 +196,8 @@ class ProjectImporter:
                     "word_count": len(content.split()),
                 }
 
-            elif suffix == '.srt':
-                content = file_path.read_text(encoding='utf-8')
+            elif suffix == ".srt":
+                content = file_path.read_text(encoding="utf-8")
                 subtitles = self._parse_srt(content)
                 result.metadata = {
                     "type": "subtitle",
@@ -215,8 +206,8 @@ class ProjectImporter:
                     "count": len(subtitles),
                 }
 
-            elif suffix == '.vtt':
-                content = file_path.read_text(encoding='utf-8')
+            elif suffix == ".vtt":
+                content = file_path.read_text(encoding="utf-8")
                 subtitles = self._parse_vtt(content)
                 result.metadata = {
                     "type": "subtitle",
@@ -234,10 +225,7 @@ class ProjectImporter:
         return result
 
     async def import_voice_model(
-        self,
-        model_path: Path,
-        voices_dir: Path,
-        options: ImportOptions | None = None
+        self, model_path: Path, voices_dir: Path, options: ImportOptions | None = None
     ) -> ImportResult:
         """Import a voice model."""
         options = options or ImportOptions()
@@ -283,29 +271,31 @@ class ProjectImporter:
     def _parse_srt(self, content: str) -> list[dict[str, Any]]:
         """Parse SRT subtitle format."""
         entries = []
-        blocks = content.strip().split('\n\n')
+        blocks = content.strip().split("\n\n")
 
         for block in blocks:
-            lines = block.strip().split('\n')
+            lines = block.strip().split("\n")
             if len(lines) >= 3:
                 try:
                     # Parse index
                     index = int(lines[0])
 
                     # Parse timing
-                    timing = lines[1].split(' --> ')
+                    timing = lines[1].split(" --> ")
                     start_time = self._parse_srt_time(timing[0])
                     end_time = self._parse_srt_time(timing[1])
 
                     # Join remaining lines as text
-                    text = '\n'.join(lines[2:])
+                    text = "\n".join(lines[2:])
 
-                    entries.append({
-                        "index": index,
-                        "start": start_time,
-                        "end": end_time,
-                        "text": text,
-                    })
+                    entries.append(
+                        {
+                            "index": index,
+                            "start": start_time,
+                            "end": end_time,
+                            "text": text,
+                        }
+                    )
                 except (ValueError, IndexError):
                     continue
 
@@ -313,8 +303,8 @@ class ProjectImporter:
 
     def _parse_srt_time(self, time_str: str) -> float:
         """Parse SRT time format to seconds."""
-        time_str = time_str.strip().replace(',', '.')
-        parts = time_str.split(':')
+        time_str = time_str.strip().replace(",", ".")
+        parts = time_str.split(":")
 
         hours = int(parts[0])
         minutes = int(parts[1])
@@ -325,12 +315,12 @@ class ProjectImporter:
     def _parse_vtt(self, content: str) -> list[dict[str, Any]]:
         """Parse WebVTT subtitle format."""
         entries = []
-        lines = content.strip().split('\n')
+        lines = content.strip().split("\n")
 
         # Skip WEBVTT header
         start_idx = 0
         for i, line in enumerate(lines):
-            if line.strip() == 'WEBVTT':
+            if line.strip() == "WEBVTT":
                 start_idx = i + 1
                 break
 
@@ -339,9 +329,9 @@ class ProjectImporter:
         for line in lines[start_idx:]:
             line = line.strip()
 
-            if '-->' in line:
+            if "-->" in line:
                 # Timing line
-                parts = line.split('-->')
+                parts = line.split("-->")
                 start_time = self._parse_vtt_time(parts[0])
                 end_time = self._parse_vtt_time(parts[1].split()[0])
 
@@ -370,7 +360,7 @@ class ProjectImporter:
         time_str = time_str.strip()
 
         # Handle both HH:MM:SS.mmm and MM:SS.mmm formats
-        parts = time_str.split(':')
+        parts = time_str.split(":")
 
         if len(parts) == 3:
             hours = int(parts[0])

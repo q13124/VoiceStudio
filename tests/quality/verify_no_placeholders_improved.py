@@ -130,9 +130,7 @@ def is_acceptable_context(line: str, term: str, file_path: Path) -> bool:
 
     # Checksum (acceptable)
     if term_lower == "check" and (
-        "checksum" in line_lower
-        or "check_health" in line_lower
-        or "checkhealth" in line_lower
+        "checksum" in line_lower or "check_health" in line_lower or "checkhealth" in line_lower
     ):
         return True
 
@@ -177,9 +175,8 @@ def check_file_for_violations(file_path: Path) -> list[tuple[int, str, str]]:
                         # Special handling for "pass" - only flag if not in abstract method or exception handler
                         if term_lower == "pass":
                             # Check if it's just "pass" on its own (likely a stub)
-                            if (
-                                line_stripped.strip() == "pass"
-                                or line_stripped.strip().endswith(": pass")
+                            if line_stripped.strip() == "pass" or line_stripped.strip().endswith(
+                                ": pass"
                             ):
                                 violations.append((line_num, term, line_stripped[:100]))
                         else:
@@ -224,9 +221,7 @@ def scan_directory(directory: Path) -> dict[str, list[tuple[int, str, str]]]:
         if file_path.is_file() and should_check_file(file_path):
             violations = check_file_for_violations(file_path)
             if violations:
-                violations_by_file[str(file_path.relative_to(project_root))] = (
-                    violations
-                )
+                violations_by_file[str(file_path.relative_to(project_root))] = violations
 
     return violations_by_file
 

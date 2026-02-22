@@ -21,6 +21,7 @@ T = TypeVar("T", bound=BaseModel)
 @dataclass
 class ValidationResult:
     """Result of validation."""
+
     is_valid: bool
     errors: list[dict[str, Any]] = field(default_factory=list)
     validated_data: Any | None = None
@@ -106,19 +107,15 @@ class SchemaValidator:
         schema_fields = schema.model_fields
 
         # Filter to only provided fields
-        filtered_data = {
-            k: v for k, v in data.items()
-            if k in schema_fields
-        }
+        filtered_data = {k: v for k, v in data.items() if k in schema_fields}
 
         # Check required fields
         if required_fields:
             missing = [f for f in required_fields if f not in filtered_data]
             if missing:
-                return ValidationResult.failure([
-                    {"field": f, "message": "Field is required"}
-                    for f in missing
-                ])
+                return ValidationResult.failure(
+                    [{"field": f, "message": "Field is required"} for f in missing]
+                )
 
         try:
             # Create partial model
@@ -137,12 +134,14 @@ class SchemaValidator:
         for e in error.errors():
             field_path = ".".join(str(loc) for loc in e["loc"])
 
-            errors.append({
-                "field": field_path,
-                "message": e["msg"],
-                "type": e["type"],
-                "input": e.get("input"),
-            })
+            errors.append(
+                {
+                    "field": field_path,
+                    "message": e["msg"],
+                    "type": e["type"],
+                    "input": e.get("input"),
+                }
+            )
 
         return errors
 

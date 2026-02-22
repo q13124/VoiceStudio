@@ -100,15 +100,9 @@ class RHVoiceEngine(EngineProtocol):
         self._synthesis_cache = OrderedDict()  # LRU cache for synthesis results
         self._cache_max_size = 100  # Maximum cached synthesis results
 
-    def _find_executable(
-        self, name: str, custom_path: str | None = None
-    ) -> str | None:
+    def _find_executable(self, name: str, custom_path: str | None = None) -> str | None:
         """Find executable in PATH or custom path."""
-        if (
-            custom_path
-            and os.path.isfile(custom_path)
-            and os.access(custom_path, os.X_OK)
-        ):
+        if custom_path and os.path.isfile(custom_path) and os.access(custom_path, os.X_OK):
             return custom_path
 
         if custom_path and os.path.isdir(custom_path):
@@ -142,17 +136,11 @@ class RHVoiceEngine(EngineProtocol):
             logger.info("Initializing RHVoice engine")
 
             # Find executable
-            self.executable_path = self._find_executable(
-                "rhvoice-say", self.rhvoice_path
-            )
+            self.executable_path = self._find_executable("rhvoice-say", self.rhvoice_path)
             if not self.executable_path:
-                logger.error(
-                    "RHVoice executable not found. Install RHVoice or set rhvoice_path."
-                )
+                logger.error("RHVoice executable not found. Install RHVoice or set rhvoice_path.")
                 logger.error("Install from: https://github.com/Olga-Yakovleva/RHVoice")
-                logger.error(
-                    "Linux: Install via package manager (rhvoice, rhvoice-common)"
-                )
+                logger.error("Linux: Install via package manager (rhvoice, rhvoice-common)")
                 logger.error("Windows: Download from GitHub releases")
                 self._initialized = False
                 return False
@@ -191,9 +179,7 @@ class RHVoiceEngine(EngineProtocol):
                         if result.returncode == 0 and result.stdout.strip():
                             # Parse voices from output
                             lines = result.stdout.strip().split("\n")
-                            self.voices = [
-                                line.strip() for line in lines if line.strip()
-                            ]
+                            self.voices = [line.strip() for line in lines if line.strip()]
                             # Extract languages from voices
                             for voice in self.voices:
                                 # Voice format might be "voice_name (language)" or just "voice_name"
@@ -290,9 +276,7 @@ class RHVoiceEngine(EngineProtocol):
                 tmp_output = os.path.join(self._temp_dir, f"{uuid.uuid4().hex}.wav")
             else:
                 # Fallback to standard temp file
-                with tempfile.NamedTemporaryFile(
-                    suffix=".wav", delete=False
-                ) as tmp_file:
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_file:
                     tmp_output = tmp_file.name
 
             try:
@@ -454,9 +438,7 @@ class RHVoiceEngine(EngineProtocol):
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(
-                            audio, sample_rate, ref_audio, ref_sr
-                        )
+                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -480,11 +462,7 @@ class RHVoiceEngine(EngineProtocol):
         """Get available languages."""
         if not self._initialized and not self.initialize():
             return []
-        return (
-            self.available_languages
-            if self.available_languages
-            else self.SUPPORTED_LANGUAGES
-        )
+        return self.available_languages if self.available_languages else self.SUPPORTED_LANGUAGES
 
     def cleanup(self):
         """Clean up resources."""
@@ -553,9 +531,7 @@ class RHVoiceEngine(EngineProtocol):
         if output_paths is None:
             output_paths = [None] * len(text_list)
         elif len(output_paths) != len(text_list):
-            logger.warning(
-                "output_paths length doesn't match text_list, using None for extras"
-            )
+            logger.warning("output_paths length doesn't match text_list, using None for extras")
             output_paths = output_paths[: len(text_list)] + [None] * (
                 len(text_list) - len(output_paths)
             )
@@ -579,9 +555,7 @@ class RHVoiceEngine(EngineProtocol):
 
         # Use ThreadPoolExecutor for parallel processing
         with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
-            results = list(
-                executor.map(synthesize_single, zip(text_list, output_paths))
-            )
+            results = list(executor.map(synthesize_single, zip(text_list, output_paths)))
 
         return results
 

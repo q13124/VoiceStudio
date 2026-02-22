@@ -320,9 +320,7 @@ class TestEngineServiceFactory:
 
     def test_get_engine_by_id_delegates_to_service(self) -> None:
         """get_engine_by_id delegates to engine service."""
-        with patch(
-            "backend.services.engine_service.get_engine_service"
-        ) as mock_get_service:
+        with patch("backend.services.engine_service.get_engine_service") as mock_get_service:
             mock_svc = MagicMock()
             mock_engine = MagicMock()
             mock_svc.get_engine.return_value = mock_engine

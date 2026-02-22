@@ -19,6 +19,7 @@ from fastapi.testclient import TestClient
 def reset_pipeline_state():
     """Reset pipeline state before each test."""
     from backend.api.routes import pipeline
+
     pipeline._sessions = {}
     yield
     pipeline._sessions = {}
@@ -74,7 +75,7 @@ class TestPipelineProviders:
         response = pipeline_client.get("/api/pipeline/providers")
         assert response.status_code == 200
         data = response.json()
-        
+
         # Should have stt, llm, tts sections
         assert "stt" in data
         assert "llm" in data
@@ -85,7 +86,7 @@ class TestPipelineProviders:
         response = pipeline_client.get("/api/pipeline/providers")
         assert response.status_code == 200
         data = response.json()
-        
+
         assert "available" in data["stt"]
         assert "default" in data["stt"]
         assert isinstance(data["stt"]["available"], list)
@@ -95,7 +96,7 @@ class TestPipelineProviders:
         response = pipeline_client.get("/api/pipeline/providers")
         assert response.status_code == 200
         data = response.json()
-        
+
         assert "available" in data["tts"]
         assert "default" in data["tts"]
         assert isinstance(data["tts"]["available"], list)
@@ -139,11 +140,13 @@ class TestPipelineProcess:
         # Mock successful orchestrator
         mock_orchestrator = MagicMock()
         mock_orchestrator.initialize = AsyncMock(return_value=True)
-        mock_orchestrator.process_text = AsyncMock(return_value={
-            "response": "Hello back!",
-            "audio": None,
-            "metrics": {"latency_ms": 100},
-        })
+        mock_orchestrator.process_text = AsyncMock(
+            return_value={
+                "response": "Hello back!",
+                "audio": None,
+                "metrics": {"latency_ms": 100},
+            }
+        )
         mock_orchestrator.cleanup = AsyncMock()
         mock_orchestrator_class.return_value = mock_orchestrator
 
@@ -162,10 +165,12 @@ class TestPipelineProcess:
         """Test pipeline processing with custom options."""
         mock_orchestrator = MagicMock()
         mock_orchestrator.initialize = AsyncMock(return_value=True)
-        mock_orchestrator.process_text = AsyncMock(return_value={
-            "response": "Custom response",
-            "audio": None,
-        })
+        mock_orchestrator.process_text = AsyncMock(
+            return_value={
+                "response": "Custom response",
+                "audio": None,
+            }
+        )
         mock_orchestrator.cleanup = AsyncMock()
         mock_orchestrator_class.return_value = mock_orchestrator
 

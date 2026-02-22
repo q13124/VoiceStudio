@@ -42,6 +42,7 @@ WINAPPDRIVER_URL = "http://127.0.0.1:4723"
 OUTPUT_DIR = Path(os.getenv("VOICESTUDIO_OUTPUT_DIR", ".buildlogs/e2e"))
 SCREENSHOTS_ENABLED = os.getenv("VOICESTUDIO_SCREENSHOTS_ENABLED", "true").lower() == "true"
 
+
 # Resolve app path - check VS_APP_PATH first, then VOICESTUDIO_APP_PATH, then search for it
 def _find_app_path() -> str:
     """Find the VoiceStudio app executable."""
@@ -52,11 +53,36 @@ def _find_app_path() -> str:
 
     # Search in common build locations
     possible_paths = [
-        PROJECT_ROOT / ".buildlogs" / "x64" / "Debug" / "net8.0-windows10.0.19041.0" / "VoiceStudio.App.exe",
+        PROJECT_ROOT
+        / ".buildlogs"
+        / "x64"
+        / "Debug"
+        / "net8.0-windows10.0.19041.0"
+        / "VoiceStudio.App.exe",
         PROJECT_ROOT / ".buildlogs" / "publish" / "VoiceStudio.App.exe",
-        PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "x64" / "Debug" / "net8.0-windows10.0.19041.0" / "VoiceStudio.App.exe",
-        PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "x64" / "Debug" / "net8.0-windows10.0.22621.0" / "VoiceStudio.App.exe",
-        PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "Debug" / "net8.0-windows10.0.19041.0" / "VoiceStudio.App.exe",
+        PROJECT_ROOT
+        / "src"
+        / "VoiceStudio.App"
+        / "bin"
+        / "x64"
+        / "Debug"
+        / "net8.0-windows10.0.19041.0"
+        / "VoiceStudio.App.exe",
+        PROJECT_ROOT
+        / "src"
+        / "VoiceStudio.App"
+        / "bin"
+        / "x64"
+        / "Debug"
+        / "net8.0-windows10.0.22621.0"
+        / "VoiceStudio.App.exe",
+        PROJECT_ROOT
+        / "src"
+        / "VoiceStudio.App"
+        / "bin"
+        / "Debug"
+        / "net8.0-windows10.0.19041.0"
+        / "VoiceStudio.App.exe",
     ]
 
     for path in possible_paths:
@@ -65,6 +91,7 @@ def _find_app_path() -> str:
 
     # Return the most likely path for error messages
     return str(possible_paths[0])
+
 
 APP_PATH = _find_app_path()
 
@@ -247,12 +274,14 @@ def workflow_state():
     }
 
     def record_step(name: str, success: bool = True, data: dict | None = None):
-        state["steps"].append({
-            "name": name,
-            "success": success,
-            "data": data,
-            "timestamp": datetime.now().isoformat(),
-        })
+        state["steps"].append(
+            {
+                "name": name,
+                "success": success,
+                "data": data,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
     def record_artifact(path: str, type: str):
         state["artifacts"].append({"path": path, "type": type})

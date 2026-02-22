@@ -28,34 +28,52 @@ class PathValidationError(Exception):
 @dataclass
 class PathValidatorConfig:
     """Configuration for path validator."""
+
     # Allowed base directories
-    allowed_bases: list[str] = field(default_factory=lambda: [
-        "data",
-        "uploads",
-        "projects",
-        "exports",
-    ])
+    allowed_bases: list[str] = field(
+        default_factory=lambda: [
+            "data",
+            "uploads",
+            "projects",
+            "exports",
+        ]
+    )
 
     # Blocked patterns
-    blocked_patterns: list[str] = field(default_factory=lambda: [
-        r"\.\.",           # Parent directory
-        r"~",              # Home directory
-        r"^\s*\|",         # Pipe commands
-        r";\s*",           # Command chaining
-        r"\$\(",           # Command substitution
-        r"`",              # Backtick execution
-        r"\x00",           # Null bytes
-    ])
+    blocked_patterns: list[str] = field(
+        default_factory=lambda: [
+            r"\.\.",  # Parent directory
+            r"~",  # Home directory
+            r"^\s*\|",  # Pipe commands
+            r";\s*",  # Command chaining
+            r"\$\(",  # Command substitution
+            r"`",  # Backtick execution
+            r"\x00",  # Null bytes
+        ]
+    )
 
     # Blocked file names
-    blocked_names: set[str] = field(default_factory=lambda: {
-        "con", "prn", "aux", "nul",  # Windows reserved
-        "com1", "com2", "com3", "com4",
-        "lpt1", "lpt2", "lpt3", "lpt4",
-        ".htaccess", ".htpasswd",
-        "web.config",
-        ".git", ".svn",
-    })
+    blocked_names: set[str] = field(
+        default_factory=lambda: {
+            "con",
+            "prn",
+            "aux",
+            "nul",  # Windows reserved
+            "com1",
+            "com2",
+            "com3",
+            "com4",
+            "lpt1",
+            "lpt2",
+            "lpt3",
+            "lpt4",
+            ".htaccess",
+            ".htpasswd",
+            "web.config",
+            ".git",
+            ".svn",
+        }
+    )
 
     # Maximum path length
     max_path_length: int = 260
@@ -79,9 +97,7 @@ class PathValidator:
     def __init__(self, config: PathValidatorConfig | None = None):
         self.config = config or PathValidatorConfig()
 
-        self._blocked_patterns = [
-            re.compile(p) for p in self.config.blocked_patterns
-        ]
+        self._blocked_patterns = [re.compile(p) for p in self.config.blocked_patterns]
 
     def validate(
         self,

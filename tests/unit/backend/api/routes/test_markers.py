@@ -21,6 +21,7 @@ from fastapi.testclient import TestClient
 def reset_markers_state():
     """Reset markers state before each test."""
     from backend.api.routes import markers
+
     markers._markers = {}
     yield
     markers._markers = {}
@@ -264,7 +265,7 @@ class TestMarkerListAndFilter:
         """Test markers are returned sorted by time."""
         # Use a unique project to isolate this test
         test_project = "sort-test-proj"
-        
+
         # Create markers out of order
         markers_client.post(
             "/api/markers",

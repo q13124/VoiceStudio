@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.tools import audio_quality_benchmark
 except ImportError:
-    pytest.skip(
-        "Could not import audio_quality_benchmark", allow_module_level=True
-    )
+    pytest.skip("Could not import audio_quality_benchmark", allow_module_level=True)
 
 
 class TestAudioQualityBenchmarkImports:
@@ -48,4 +46,3 @@ class TestAudioQualityBenchmarkFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

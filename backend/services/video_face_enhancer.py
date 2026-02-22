@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 class EnhancementMode(Enum):
     """Face enhancement modes."""
+
     LIP_SYNC = "lip_sync"  # Focus on mouth/lip area
     EXPRESSION = "expression"  # Full facial expression enhancement
     RESTORATION = "restoration"  # Face restoration/upscaling
@@ -39,6 +40,7 @@ class EnhancementMode(Enum):
 
 class QualityPreset(Enum):
     """Output quality presets."""
+
     PREVIEW = "preview"  # Fast, lower quality
     STANDARD = "standard"  # Balanced
     HIGH = "high"  # High quality
@@ -48,6 +50,7 @@ class QualityPreset(Enum):
 @dataclass
 class FaceRegion:
     """Detected face region in a frame."""
+
     x: int
     y: int
     width: int
@@ -67,6 +70,7 @@ class FaceRegion:
 @dataclass
 class FrameEnhancement:
     """Enhancement result for a single frame."""
+
     frame_number: int
     face_regions: list[FaceRegion]
     enhanced_data: np.ndarray | None = None
@@ -77,6 +81,7 @@ class FrameEnhancement:
 @dataclass
 class EnhancementJob:
     """Face enhancement job."""
+
     job_id: str
     input_path: str
     output_path: str
@@ -214,7 +219,7 @@ class VideoFaceEnhancer:
             batch_size = settings["batch_size"]
 
             for i in range(0, len(frame_files), batch_size):
-                batch = frame_files[i:i + batch_size]
+                batch = frame_files[i : i + batch_size]
 
                 # Process batch
                 for frame_file in batch:
@@ -236,7 +241,7 @@ class VideoFaceEnhancer:
                     pct = int(job.progress * 100)
                     progress_callback(
                         0.1 + job.progress * 0.7,
-                        f"Processing frame {job.frames_processed}/{job.total_frames} ({pct}%)"
+                        f"Processing frame {job.frames_processed}/{job.total_frames} ({pct}%)",
                     )
 
             if progress_callback:
@@ -302,14 +307,16 @@ class VideoFaceEnhancer:
             )
 
             regions = []
-            for (x, y, w, h) in faces:
-                regions.append(FaceRegion(
-                    x=int(x),
-                    y=int(y),
-                    width=int(w),
-                    height=int(h),
-                    confidence=0.9,
-                ))
+            for x, y, w, h in faces:
+                regions.append(
+                    FaceRegion(
+                        x=int(x),
+                        y=int(y),
+                        width=int(w),
+                        height=int(h),
+                        confidence=0.9,
+                    )
+                )
 
             return regions
 
@@ -368,11 +375,16 @@ class VideoFaceEnhancer:
             import subprocess
 
             cmd = [
-                "ffprobe", "-v", "error",
-                "-select_streams", "v:0",
+                "ffprobe",
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
                 "-count_packets",
-                "-show_entries", "stream=nb_read_packets",
-                "-of", "csv=p=0",
+                "-show_entries",
+                "stream=nb_read_packets",
+                "-of",
+                "csv=p=0",
                 video_path,
             ]
 
@@ -389,8 +401,11 @@ class VideoFaceEnhancer:
         """Extract frames from video."""
 
         cmd = [
-            "ffmpeg", "-i", video_path,
-            "-vf", "fps=30",
+            "ffmpeg",
+            "-i",
+            video_path,
+            "-vf",
+            "fps=30",
             str(output_dir / "frame_%06d.png"),
         ]
 
@@ -479,6 +494,7 @@ class VideoFaceEnhancer:
         """Save a frame to file."""
         try:
             import cv2
+
             cv2.imwrite(str(output_path), frame)
         except Exception as e:
             logger.error(f"Failed to save frame: {e}")
@@ -492,17 +508,28 @@ class VideoFaceEnhancer:
         """Encode frames back to video."""
 
         cmd = [
-            "ffmpeg", "-y",
-            "-framerate", "30",
-            "-i", str(frames_dir / "frame_%06d.png"),
-            "-i", audio_source,
-            "-c:v", "libx264",
-            "-preset", "medium",
-            "-crf", "18",
-            "-c:a", "aac",
-            "-b:a", "192k",
-            "-map", "0:v:0",
-            "-map", "1:a:0?",
+            "ffmpeg",
+            "-y",
+            "-framerate",
+            "30",
+            "-i",
+            str(frames_dir / "frame_%06d.png"),
+            "-i",
+            audio_source,
+            "-c:v",
+            "libx264",
+            "-preset",
+            "medium",
+            "-crf",
+            "18",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "192k",
+            "-map",
+            "0:v:0",
+            "-map",
+            "1:a:0?",
             "-shortest",
             output_path,
         ]

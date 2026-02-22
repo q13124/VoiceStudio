@@ -135,19 +135,21 @@ class PackageConfig:
     include_transitive_deps: bool = True
     sign_package: bool = False
     signing_key: Optional[str] = None
-    exclude_patterns: List[str] = field(default_factory=lambda: [
-        "__pycache__",
-        "*.pyc",
-        "*.pyo",
-        ".git",
-        ".gitignore",
-        "*.egg-info",
-        ".pytest_cache",
-        ".tox",
-        ".venv",
-        "venv",
-        "*.log",
-    ])
+    exclude_patterns: List[str] = field(
+        default_factory=lambda: [
+            "__pycache__",
+            "*.pyc",
+            "*.pyo",
+            ".git",
+            ".gitignore",
+            "*.egg-info",
+            ".pytest_cache",
+            ".tox",
+            ".venv",
+            "venv",
+            "*.log",
+        ]
+    )
 
 
 class PluginPackager:
@@ -233,6 +235,7 @@ class PluginPackager:
                     if "*" in pattern:
                         # Glob pattern
                         import fnmatch
+
                         if any(fnmatch.fnmatch(part, pattern) for part in relative.parts):
                             excluded = True
                             break
@@ -268,14 +271,19 @@ class PluginPackager:
         Returns:
             PackageResult with package details
         """
-        def report(phase: PackagePhase, progress: float, message: str = "", current_file: str | None = None):
+
+        def report(
+            phase: PackagePhase, progress: float, message: str = "", current_file: str | None = None
+        ):
             if progress_callback:
-                progress_callback(PackageProgress(
-                    phase=phase,
-                    progress=progress,
-                    message=message,
-                    current_file=current_file,
-                ))
+                progress_callback(
+                    PackageProgress(
+                        phase=phase,
+                        progress=progress,
+                        message=message,
+                        current_file=current_file,
+                    )
+                )
 
         warnings = []
 
@@ -284,9 +292,13 @@ class PluginPackager:
 
             # Read plugin metadata
             metadata = self._read_plugin_metadata()
-            plugin_name = self.config.plugin_name or metadata.get("name") or self.config.plugin_path.name
+            plugin_name = (
+                self.config.plugin_name or metadata.get("name") or self.config.plugin_path.name
+            )
             plugin_version = self.config.plugin_version or metadata.get("version") or "0.0.0"
-            plugin_id = metadata.get("id") or plugin_name.lower().replace(" ", "-").replace("_", "-")
+            plugin_id = metadata.get("id") or plugin_name.lower().replace(" ", "-").replace(
+                "_", "-"
+            )
 
             report(PackagePhase.VALIDATING, 0.1, "Validating plugin structure...")
 
@@ -303,7 +315,9 @@ class PluginPackager:
             # Generate SBOM if requested
             sbom: Optional[SBOM] = None
             if self.config.include_sbom:
-                report(PackagePhase.GENERATING_SBOM, 0.2, "Generating Software Bill of Materials...")
+                report(
+                    PackagePhase.GENERATING_SBOM, 0.2, "Generating Software Bill of Materials..."
+                )
 
                 try:
                     generator = SBOMGenerator(
@@ -350,7 +364,9 @@ class PluginPackager:
                 report(PackagePhase.FINALIZING, 0.8, "Creating package manifest...")
 
                 # Create archive
-                package_filename = f"{plugin_id}-{plugin_version}.{self.config.package_format.value}"
+                package_filename = (
+                    f"{plugin_id}-{plugin_version}.{self.config.package_format.value}"
+                )
                 archive_path = temp_path / package_filename
 
                 if self.config.package_format == PackageFormat.VSPKG:
@@ -484,6 +500,7 @@ def extract_package_sbom(package_path: Path | str) -> Optional[SBOM]:
                         content = f.read().decode("utf-8")
                         if member.name.endswith(".json"):
                             from .sbom import SBOM
+
                             return SBOM.from_dict(json.loads(content))
                         # TODO: Add XML parsing if needed
 

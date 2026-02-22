@@ -34,8 +34,14 @@ class TestErrorDialog:
     def test_app_handles_navigation_without_error(self, driver, app_launched):
         """Test that navigation doesn't trigger error dialogs."""
         nav_buttons = [
-            "NavStudio", "NavProfiles", "NavLibrary", "NavEffects",
-            "NavTrain", "NavAnalyze", "NavSettings", "NavLogs",
+            "NavStudio",
+            "NavProfiles",
+            "NavLibrary",
+            "NavEffects",
+            "NavTrain",
+            "NavAnalyze",
+            "NavSettings",
+            "NavLogs",
         ]
 
         for nav_id in nav_buttons:
@@ -45,9 +51,7 @@ class TestErrorDialog:
 
             # Check that no error dialog appeared
             try:
-                error_dialog = driver.find_element(
-                    "accessibility id", "ErrorDialog_Root"
-                )
+                error_dialog = driver.find_element("accessibility id", "ErrorDialog_Root")
                 # If we found it, that's a failure
                 assert error_dialog is None, "Unexpected error dialog appeared"
             except RuntimeError:
@@ -127,9 +131,7 @@ class TestConfirmationDialogs:
         time.sleep(1)
 
         try:
-            save_button = driver.find_element(
-                "accessibility id", "SettingsView_SaveButton"
-            )
+            save_button = driver.find_element("accessibility id", "SettingsView_SaveButton")
             if save_button.is_enabled():
                 # Click save - may trigger confirmation
                 save_button.click()
@@ -147,9 +149,7 @@ class TestConfirmationDialogs:
         time.sleep(1)
 
         try:
-            reset_button = driver.find_element(
-                "accessibility id", "SettingsView_ResetButton"
-            )
+            reset_button = driver.find_element("accessibility id", "SettingsView_ResetButton")
             if reset_button.is_enabled():
                 # Reset typically requires confirmation
                 pass  # Don't actually click to avoid state change
@@ -225,8 +225,14 @@ class TestDialogAccessibility:
     def test_all_navigation_accessible(self, driver, app_launched):
         """Test that all navigation is accessible after potential dialogs."""
         nav_buttons = [
-            "NavStudio", "NavProfiles", "NavLibrary", "NavEffects",
-            "NavTrain", "NavAnalyze", "NavSettings", "NavLogs",
+            "NavStudio",
+            "NavProfiles",
+            "NavLibrary",
+            "NavEffects",
+            "NavTrain",
+            "NavAnalyze",
+            "NavSettings",
+            "NavLogs",
         ]
 
         for nav_id in nav_buttons:
@@ -295,9 +301,7 @@ class TestProfileDialogs:
 
         # Check for profiles panel elements
         try:
-            create_button = driver.find_element(
-                "accessibility id", "ProfilesView_CreateButton"
-            )
+            create_button = driver.find_element("accessibility id", "ProfilesView_CreateButton")
             if create_button is not None:
                 assert create_button.is_enabled() or not create_button.is_enabled()
         except RuntimeError:

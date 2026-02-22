@@ -117,11 +117,7 @@ async def get_analytics_summary(
         from datetime import datetime, timedelta
 
         end = datetime.utcnow()
-        start = (
-            end - timedelta(days=30)
-            if not start_date
-            else datetime.fromisoformat(start_date)
-        )
+        start = end - timedelta(days=30) if not start_date else datetime.fromisoformat(start_date)
 
         # Get projects data
         try:
@@ -131,9 +127,7 @@ async def get_analytics_summary(
             projects_in_period = [
                 p
                 for p in projects
-                if datetime.fromisoformat(
-                    p.get("created", end.isoformat()).replace("Z", "+00:00")
-                )
+                if datetime.fromisoformat(p.get("created", end.isoformat()).replace("Z", "+00:00"))
                 >= start
             ]
             total_projects = len(projects_in_period)
@@ -172,9 +166,7 @@ async def get_analytics_summary(
             average_quality_score = 4.0
 
         # Estimate processing time (rough calculation)
-        total_processing_time = (
-            total_synthesis * 2.0
-        )  # Estimate 2 seconds per synthesis
+        total_processing_time = total_synthesis * 2.0  # Estimate 2 seconds per synthesis
 
         # Build categories
         categories = []
@@ -250,11 +242,7 @@ async def get_category_metrics(
         from datetime import datetime, timedelta
 
         end = datetime.utcnow()
-        start = (
-            end - timedelta(days=30)
-            if not start_date
-            else datetime.fromisoformat(start_date)
-        )
+        start = end - timedelta(days=30) if not start_date else datetime.fromisoformat(start_date)
 
         # Get data based on category
         metrics = []
@@ -314,9 +302,7 @@ async def get_category_metrics(
                     interval_entries = [
                         e
                         for e in all_entries
-                        if datetime.fromisoformat(
-                            e.timestamp.replace("Z", "+00:00")
-                        ).date()
+                        if datetime.fromisoformat(e.timestamp.replace("Z", "+00:00")).date()
                         == current.date()
                     ]
                     if interval_entries:
@@ -375,9 +361,7 @@ async def list_analytics_categories():
 
 
 @router.get("/explain-quality")
-@cache_response(
-    ttl=300
-)  # Cache for 5 minutes (explanations are static for given audio)
+@cache_response(ttl=300)  # Cache for 5 minutes (explanations are static for given audio)
 async def explain_quality_prediction(audio_id: str, method: str = "shap"):
     """
     Explain quality prediction using SHAP or LIME.
@@ -439,8 +423,7 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
                         for entry in entries:
                             # Check if audio_id matches in audio_url or metadata
                             if (entry.audio_url and audio_id in entry.audio_url) or (
-                                entry.metadata
-                                and entry.metadata.get("audio_id") == audio_id
+                                entry.metadata and entry.metadata.get("audio_id") == audio_id
                             ):
                                 quality_entry = entry
                                 break
@@ -452,9 +435,7 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
                         # Calculate feature importance based on actual metrics
                         # Simple heuristic: normalize metrics to sum to 1.0
                         total = sum(
-                            abs(v)
-                            for k, v in metrics.items()
-                            if isinstance(v, (int, float))
+                            abs(v) for k, v in metrics.items() if isinstance(v, (int, float))
                         )
                         if total > 0:
                             feature_importance = {
@@ -482,9 +463,7 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
 
                         rms = np.sqrt(np.mean(audio**2))
                         peak = np.max(np.abs(audio))
-                        snr_estimate = (
-                            20 * np.log10(peak / (rms + 1e-10)) if rms > 0 else 20.0
-                        )
+                        snr_estimate = 20 * np.log10(peak / (rms + 1e-10)) if rms > 0 else 20.0
 
                         # Estimate feature importance
                         feature_importance = {
@@ -517,9 +496,7 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
                 return explanation
             except Exception as e:
                 logger.error(f"SHAP explanation failed: {e}")
-                raise HTTPException(
-                    status_code=500, detail=f"SHAP explanation failed: {e!s}"
-                )
+                raise HTTPException(status_code=500, detail=f"SHAP explanation failed: {e!s}")
 
         elif method == "lime" and explainer.lime_available:
             # LIME explanation
@@ -555,8 +532,7 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
                         for entry in entries:
                             # Check if audio_id matches in audio_url or metadata
                             if (entry.audio_url and audio_id in entry.audio_url) or (
-                                entry.metadata
-                                and entry.metadata.get("audio_id") == audio_id
+                                entry.metadata and entry.metadata.get("audio_id") == audio_id
                             ):
                                 quality_entry = entry
                                 break
@@ -567,9 +543,7 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
                         metrics = quality_entry.metrics
                         # Calculate feature weights based on actual metrics
                         total = sum(
-                            abs(v)
-                            for k, v in metrics.items()
-                            if isinstance(v, (int, float))
+                            abs(v) for k, v in metrics.items() if isinstance(v, (int, float))
                         )
                         if total > 0:
                             explanation_list = [
@@ -578,9 +552,7 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
                                 if isinstance(v, (int, float))
                             ]
                             # Sort by weight descending
-                            explanation_list.sort(
-                                key=lambda x: x["weight"], reverse=True
-                            )
+                            explanation_list.sort(key=lambda x: x["weight"], reverse=True)
                         else:
                             explanation_list = [
                                 {"feature": "mos_score", "weight": 0.3},
@@ -628,10 +600,7 @@ async def explain_quality_prediction(audio_id: str, method: str = "shap"):
         else:
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    f"Explanation method '{method}' not available. "
-                    "Install shap or lime."
-                ),
+                detail=(f"Explanation method '{method}' not available. " "Install shap or lime."),
             )
     except HTTPException:
         raise
@@ -723,9 +692,7 @@ async def visualize_quality_metrics(
                     visualizer.show(outpath=None)  # Render to current figure
                 else:
                     # Fallback to matplotlib
-                    residuals = [
-                        actual - pred for actual, pred in zip(mos_scores, predicted)
-                    ]
+                    residuals = [actual - pred for actual, pred in zip(mos_scores, predicted)]
                     plt.figure(figsize=(10, 6))
                     plt.scatter(predicted, residuals, alpha=0.6)
                     plt.axhline(y=0, color="r", linestyle="--")
@@ -931,9 +898,7 @@ async def export_analytics_summary(
 
             # Categories section
             writer.writerow([])
-            writer.writerow(
-                ["Category", "Total", "Count", "Average", "Min", "Max", "Trend"]
-            )
+            writer.writerow(["Category", "Total", "Count", "Average", "Min", "Max", "Trend"])
             for category in summary.categories:
                 writer.writerow(
                     [
@@ -952,11 +917,7 @@ async def export_analytics_summary(
             return Response(
                 content=output.getvalue(),
                 media_type="text/csv",
-                headers={
-                    "Content-Disposition": (
-                        'attachment; filename="analytics_summary.csv"'
-                    )
-                },
+                headers={"Content-Disposition": ('attachment; filename="analytics_summary.csv"')},
             )
         else:
             # JSON format

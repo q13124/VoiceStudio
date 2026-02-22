@@ -2,6 +2,7 @@
 Unit Tests for SSML API Route
 Tests SSML (Speech Synthesis Markup Language) endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -303,9 +304,7 @@ class TestSSMLPreview:
             "profile_id": "test-profile",
         }
 
-        with patch(
-            "backend.api.routes.ssml._synthesize_ssml_preview"
-        ) as mock_synthesize:
+        with patch("backend.api.routes.ssml._synthesize_ssml_preview") as mock_synthesize:
             mock_synthesize.return_value = {
                 "audio_url": "/path/to/audio.wav",
                 "duration": 2.5,

@@ -70,11 +70,13 @@ class MockContextManager:
         if self._should_fail:
             raise RuntimeError("Context allocation failed")
 
-        self._allocations.append({
-            "task_id": getattr(context, "task_id", None),
-            "phase": getattr(context, "phase", None),
-            "role": getattr(context, "role", None),
-        })
+        self._allocations.append(
+            {
+                "task_id": getattr(context, "task_id", None),
+                "phase": getattr(context, "phase", None),
+                "role": getattr(context, "role", None),
+            }
+        )
 
         if self._custom_bundle:
             return self._custom_bundle
@@ -193,9 +195,7 @@ class TestOnboardingContextIntegration:
 
                             from tools.onboarding.core.assembler import OnboardingAssembler
 
-                            assembler = OnboardingAssembler(
-                                context_manager=mock_cm
-                            )
+                            assembler = OnboardingAssembler(context_manager=mock_cm)
                             packet = assembler.assemble("4")
 
                             # Verify context manager was called
@@ -263,9 +263,7 @@ class TestOnboardingContextIntegration:
 
                             from tools.onboarding.core.assembler import OnboardingAssembler
 
-                            assembler = OnboardingAssembler(
-                                context_manager=mock_cm
-                            )
+                            assembler = OnboardingAssembler(context_manager=mock_cm)
                             packet = assembler.assemble("4")
                             rendered = assembler.render(packet)
 
@@ -322,9 +320,7 @@ class TestOnboardingContextIntegration:
 
                             from tools.onboarding.core.assembler import OnboardingAssembler
 
-                            assembler = OnboardingAssembler(
-                                context_manager=mock_cm
-                            )
+                            assembler = OnboardingAssembler(context_manager=mock_cm)
 
                             # Should not raise - graceful degradation
                             packet = assembler.assemble("4")
@@ -374,14 +370,14 @@ class TestOnboardingContextIntegration:
                             mock_context.blockers = []
                             mock_cs.return_value.load.return_value = mock_context
 
-                            with patch("tools.onboarding.core.assembler._default_context_manager") as mock_dcm:
+                            with patch(
+                                "tools.onboarding.core.assembler._default_context_manager"
+                            ) as mock_dcm:
                                 mock_dcm.return_value = None
 
                                 from tools.onboarding.core.assembler import OnboardingAssembler
 
-                                assembler = OnboardingAssembler(
-                                    context_manager=None
-                                )
+                                assembler = OnboardingAssembler(context_manager=None)
                                 packet = assembler.assemble("4")
 
                                 # Packet should be valid
@@ -443,9 +439,7 @@ class TestContextAllocationParameters:
 
                             from tools.onboarding.core.assembler import OnboardingAssembler
 
-                            assembler = OnboardingAssembler(
-                                context_manager=mock_cm
-                            )
+                            assembler = OnboardingAssembler(context_manager=mock_cm)
                             assembler.assemble("4")
 
                             assert mock_cm.allocations[0]["task_id"] == "TASK-0099"
@@ -495,9 +489,7 @@ class TestContextAllocationParameters:
 
                             from tools.onboarding.core.assembler import OnboardingAssembler
 
-                            assembler = OnboardingAssembler(
-                                context_manager=mock_cm
-                            )
+                            assembler = OnboardingAssembler(context_manager=mock_cm)
                             assembler.assemble("5")
 
                             assert mock_cm.allocations[0]["phase"] == "Verify"
@@ -585,7 +577,11 @@ class TestRoleSpecificContext:
 
         roles_tested = []
 
-        for role_id, short_name in [("3", "ui-engineer"), ("4", "core-platform"), ("5", "engine-engineer")]:
+        for role_id, short_name in [
+            ("3", "ui-engineer"),
+            ("4", "core-platform"),
+            ("5", "engine-engineer"),
+        ]:
             with patch("tools.onboarding.core.assembler.RoleRegistry") as mock_registry_cls:
                 mock_registry = MagicMock()
                 mock_role = MagicMock()
@@ -619,16 +615,16 @@ class TestRoleSpecificContext:
                             mock_state.active_task_title = None
                             mock_ss.return_value.load.return_value = (mock_state, None)
 
-                            with patch("tools.onboarding.core.assembler.RoleContextSource") as mock_cs:
+                            with patch(
+                                "tools.onboarding.core.assembler.RoleContextSource"
+                            ) as mock_cs:
                                 mock_context = MagicMock()
                                 mock_context.blockers = []
                                 mock_cs.return_value.load.return_value = mock_context
 
                                 from tools.onboarding.core.assembler import OnboardingAssembler
 
-                                assembler = OnboardingAssembler(
-                                    context_manager=mock_cm
-                                )
+                                assembler = OnboardingAssembler(context_manager=mock_cm)
                                 assembler.assemble(role_id)
                                 roles_tested.append(short_name)
 
@@ -697,9 +693,7 @@ class TestEndToEndOnboardingFlow:
                             from tools.onboarding.core.assembler import OnboardingAssembler
 
                             # 1. Create assembler with context manager
-                            assembler = OnboardingAssembler(
-                                context_manager=mock_cm
-                            )
+                            assembler = OnboardingAssembler(context_manager=mock_cm)
 
                             # 2. Assemble packet
                             packet = assembler.assemble("4")

@@ -104,12 +104,11 @@ class TestIssueE2EFlow:
         feedback_path.parent.mkdir(parents=True, exist_ok=True)
 
         with _patch_feedback(feedback_path):
-            assert record_recommendation_outcome(
-                "issue-1", "retry_with_params", "success", note="e2e"
-            ) is True
-            assert record_recommendation_outcome(
-                "issue-2", "retry_with_params", "failure"
-            ) is True
+            assert (
+                record_recommendation_outcome("issue-1", "retry_with_params", "success", note="e2e")
+                is True
+            )
+            assert record_recommendation_outcome("issue-2", "retry_with_params", "failure") is True
 
         with _patch_feedback(feedback_path):
             rate = get_action_success_rate("retry_with_params", days=90)

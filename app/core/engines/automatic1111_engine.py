@@ -163,9 +163,7 @@ class Automatic1111Engine(EngineProtocol):
                     return False
             except requests.exceptions.RequestException as e:
                 logger.error(f"Failed to connect to AUTOMATIC1111 WebUI server: {e}")
-                logger.error(
-                    f"Make sure AUTOMATIC1111 WebUI server is running at {self.webui_url}"
-                )
+                logger.error(f"Make sure AUTOMATIC1111 WebUI server is running at {self.webui_url}")
                 logger.error(
                     "Install from: https://github.com/AUTOMATIC1111/stable-diffusion-webui"
                 )
@@ -279,9 +277,7 @@ class Automatic1111Engine(EngineProtocol):
                 "width": width,
                 "height": height,
                 "steps": steps if steps is not None else self.default_steps,
-                "cfg_scale": (
-                    cfg_scale if cfg_scale is not None else self.default_cfg_scale
-                ),
+                "cfg_scale": (cfg_scale if cfg_scale is not None else self.default_cfg_scale),
                 "sampler_name": sampler if sampler else self.default_sampler,
                 "seed": seed if seed is not None else -1,  # -1 for random
                 "batch_size": 1,
@@ -338,9 +334,7 @@ class Automatic1111Engine(EngineProtocol):
 
             # Add ControlNet if provided
             if "controlnet" in kwargs:
-                payload["alwayson_scripts"] = {
-                    "controlnet": {"args": [kwargs["controlnet"]]}
-                }
+                payload["alwayson_scripts"] = {"controlnet": {"args": [kwargs["controlnet"]]}}
 
             # Request generation
             response = self.session.post(endpoint, json=payload, timeout=300)
@@ -444,9 +438,7 @@ class Automatic1111Engine(EngineProtocol):
                     from .performance_metrics import get_engine_metrics
 
                     metrics = get_engine_metrics()
-                    metrics.record_synthesis_time(
-                        "automatic1111", duration, cached=False
-                    )
+                    metrics.record_synthesis_time("automatic1111", duration, cached=False)
                 except Exception:
                     logger.debug(
                         "Performance metrics unavailable for automatic1111 batch generation."
@@ -472,9 +464,7 @@ class Automatic1111Engine(EngineProtocol):
 
         args_list = [
             (i, prompt, seed, output_path)
-            for i, (prompt, seed, output_path) in enumerate(
-                zip(prompts, seeds, output_paths)
-            )
+            for i, (prompt, seed, output_path) in enumerate(zip(prompts, seeds, output_paths))
         ]
 
         # Optimize batch processing with better chunking
@@ -501,11 +491,7 @@ class Automatic1111Engine(EngineProtocol):
             return {"enabled": False}
 
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
-        hit_rate = (
-            (self._cache_stats["hits"] / total_requests * 100)
-            if total_requests > 0
-            else 0.0
-        )
+        hit_rate = (self._cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0.0
 
         return {
             "enabled": True,

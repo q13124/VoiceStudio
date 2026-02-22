@@ -77,9 +77,7 @@ async def detect_voice_activity(
 
     audio_path = _get_audio_path(audio_id)
     if not audio_path or not os.path.exists(audio_path):
-        raise HTTPException(
-            status_code=404, detail=f"Audio file not found: {audio_id}"
-        )
+        raise HTTPException(status_code=404, detail=f"Audio file not found: {audio_id}")
 
     try:
         import soundfile as sf
@@ -125,18 +123,14 @@ async def phonemize_text(request: PhonemizationRequest):
                 request.text,
                 language=request.language,
             )
-            return PhonemizationResponse(
-                phonemes=phonemes, backend="phonemizer"
-            )
+            return PhonemizationResponse(phonemes=phonemes, backend="phonemizer")
         elif request.backend == "gruut" and phonemizer.gruut_available:
             words = phonemizer.phonemize_with_gruut(
                 request.text,
                 language=request.language,
             )
             phonemes_str = " ".join([w.get("phonemes_str", "") for w in words])
-            return PhonemizationResponse(
-                phonemes=phonemes_str, words=words, backend="gruut"
-            )
+            return PhonemizationResponse(phonemes=phonemes_str, words=words, backend="gruut")
         else:
             available = phonemizer.get_available_backends()
             raise HTTPException(
@@ -148,9 +142,7 @@ async def phonemize_text(request: PhonemizationRequest):
         raise
     except Exception as e:
         logger.error(f"Error in phonemization: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to phonemize text: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to phonemize text: {e!s}")
 
 
 @router.post("/recognize", response_model=SpeechRecognitionResponse)
@@ -215,4 +207,3 @@ async def get_available_backends():
         "vad_available": vad.silero_available,
         "speech_recognition_available": recognizer.vosk_available,
     }
-

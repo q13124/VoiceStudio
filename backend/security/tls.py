@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TLSConfig:
     """TLS configuration."""
+
     # Certificate paths
     cert_file: str | None = None
     key_file: str | None = None
@@ -207,13 +208,15 @@ def generate_self_signed_cert(
     )
 
     # Create certificate
-    subject = issuer = x509.Name([
-        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "State"),
-        x509.NameAttribute(NameOID.LOCALITY_NAME, "City"),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "VoiceStudio Dev"),
-        x509.NameAttribute(NameOID.COMMON_NAME, hostname),
-    ])
+    subject = issuer = x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "State"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "City"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "VoiceStudio Dev"),
+            x509.NameAttribute(NameOID.COMMON_NAME, hostname),
+        ]
+    )
 
     cert = (
         x509.CertificateBuilder()
@@ -224,10 +227,12 @@ def generate_self_signed_cert(
         .not_valid_before(datetime.utcnow())
         .not_valid_after(datetime.utcnow() + timedelta(days=days))
         .add_extension(
-            x509.SubjectAlternativeName([
-                x509.DNSName(hostname),
-                x509.DNSName("localhost"),
-            ]),
+            x509.SubjectAlternativeName(
+                [
+                    x509.DNSName(hostname),
+                    x509.DNSName("localhost"),
+                ]
+            ),
             critical=False,
         )
         .sign(key, hashes.SHA256())
@@ -244,11 +249,13 @@ def generate_self_signed_cert(
         f.write(cert.public_bytes(serialization.Encoding.PEM))
 
     with open(key_path, "wb") as f:
-        f.write(key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.NoEncryption(),
-        ))
+        f.write(
+            key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
 
     logger.info(f"Generated self-signed cert: {cert_path}")
     return str(cert_path), str(key_path)

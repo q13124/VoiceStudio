@@ -336,4 +336,3 @@ async def apply_scene(scene_id: str, target_project_id: str):
         "success": True,
         "message": f"Scene '{scene.get('name')}' applied to project",
     }
-

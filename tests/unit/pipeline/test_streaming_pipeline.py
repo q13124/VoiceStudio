@@ -24,18 +24,15 @@ class TestStreamingPipeline:
     @pytest.mark.asyncio
     async def test_process_text_stream_yields_tokens(self):
         """Test process_text_stream yields token chunks."""
+
         async def mock_stream(messages):
             for token in ["Hello", " ", "world"]:
                 yield token
 
         self.mock_llm.generate_stream = mock_stream
 
-        with patch(
-            "backend.services.engine_service.get_engine_service"
-        ) as mock_service:
-            mock_service.return_value.synthesize = AsyncMock(
-                return_value={"audio_data": b"audio"}
-            )
+        with patch("backend.services.engine_service.get_engine_service") as mock_service:
+            mock_service.return_value.synthesize = AsyncMock(return_value={"audio_data": b"audio"})
 
             chunks = []
             async for chunk in self.pipeline.process_text_stream("test"):
@@ -59,17 +56,14 @@ class TestStreamingPipeline:
     @pytest.mark.asyncio
     async def test_process_text_stream_yields_complete(self):
         """Test process_text_stream yields a complete chunk at end."""
+
         async def mock_stream(messages):
             yield "Response"
 
         self.mock_llm.generate_stream = mock_stream
 
-        with patch(
-            "backend.services.engine_service.get_engine_service"
-        ) as mock_service:
-            mock_service.return_value.synthesize = AsyncMock(
-                return_value={"audio_data": None}
-            )
+        with patch("backend.services.engine_service.get_engine_service") as mock_service:
+            mock_service.return_value.synthesize = AsyncMock(return_value={"audio_data": None})
 
             chunks = []
             async for chunk in self.pipeline.process_text_stream("test"):
@@ -81,6 +75,7 @@ class TestStreamingPipeline:
     @pytest.mark.asyncio
     async def test_process_text_stream_handles_exception(self):
         """Test process_text_stream handles exceptions gracefully."""
+
         async def mock_stream(messages):
             yield "Start"
             raise Exception("Stream error")
@@ -103,15 +98,12 @@ class TestStreamingPipeline:
     @pytest.mark.asyncio
     async def test_process_audio_stream_with_empty_transcript(self):
         """Test process_audio_stream with empty transcript."""
+
         async def mock_audio_chunks():
             yield b"audio_chunk"
 
-        with patch(
-            "backend.services.engine_service.get_engine_service"
-        ) as mock_service:
-            mock_service.return_value.transcribe = AsyncMock(
-                return_value={"text": ""}
-            )
+        with patch("backend.services.engine_service.get_engine_service") as mock_service:
+            mock_service.return_value.transcribe = AsyncMock(return_value={"text": ""})
 
             chunks = []
             async for chunk in self.pipeline.process_audio_stream(mock_audio_chunks()):

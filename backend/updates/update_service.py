@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class UpdateChannel(Enum):
     """Update channels."""
+
     STABLE = "stable"
     BETA = "beta"
     NIGHTLY = "nightly"
@@ -27,6 +28,7 @@ class UpdateChannel(Enum):
 
 class UpdateStatus(Enum):
     """Update status."""
+
     UP_TO_DATE = "up_to_date"
     UPDATE_AVAILABLE = "update_available"
     DOWNLOADING = "downloading"
@@ -38,6 +40,7 @@ class UpdateStatus(Enum):
 @dataclass
 class UpdateInfo:
     """Information about an available update."""
+
     version: str
     channel: UpdateChannel
     release_date: datetime
@@ -54,6 +57,7 @@ class UpdateInfo:
 @dataclass
 class UpdateProgress:
     """Progress of an update operation."""
+
     status: UpdateStatus
     progress_percent: float = 0.0
     downloaded_bytes: int = 0
@@ -66,6 +70,7 @@ class UpdateProgress:
 @dataclass
 class UpdateSettings:
     """Settings for the update service."""
+
     channel: UpdateChannel = UpdateChannel.STABLE
     auto_check: bool = True
     auto_download: bool = False
@@ -78,12 +83,7 @@ class UpdateSettings:
 class UpdateService:
     """Service for managing application updates."""
 
-    def __init__(
-        self,
-        current_version: str,
-        app_path: Path,
-        update_path: Path | None = None
-    ):
+    def __init__(self, current_version: str, app_path: Path, update_path: Path | None = None):
         self._current_version = current_version
         self._app_path = app_path
         self._update_path = update_path or app_path / "updates"
@@ -110,15 +110,14 @@ class UpdateService:
         """Get current update progress."""
         return self._progress
 
-    async def check_for_updates(
-        self,
-        force: bool = False
-    ) -> UpdateInfo | None:
+    async def check_for_updates(self, force: bool = False) -> UpdateInfo | None:
         """Check for available updates."""
         try:
             # Check if we should skip based on interval
             if not force and self._settings.last_check:
-                hours_since_check = (datetime.now() - self._settings.last_check).total_seconds() / 3600
+                hours_since_check = (
+                    datetime.now() - self._settings.last_check
+                ).total_seconds() / 3600
                 if hours_since_check < self._settings.check_interval_hours:
                     return self._current_update
 
@@ -202,10 +201,14 @@ class UpdateService:
 
             # Update version file
             version_file = self._app_path / "version.json"
-            version_file.write_text(json.dumps({
-                "version": self._current_update.version,
-                "installed_at": datetime.now().isoformat(),
-            }))
+            version_file.write_text(
+                json.dumps(
+                    {
+                        "version": self._current_update.version,
+                        "installed_at": datetime.now().isoformat(),
+                    }
+                )
+            )
 
             self._progress.status = UpdateStatus.UP_TO_DATE
             self._progress.message = "Update installed. Please restart the application."
@@ -276,8 +279,9 @@ class UpdateService:
 
     def _is_newer_version(self, version: str) -> bool:
         """Check if version is newer than current."""
+
         def parse_version(v: str) -> tuple[int, ...]:
-            return tuple(int(x) for x in v.split('.'))
+            return tuple(int(x) for x in v.split("."))
 
         try:
             current = parse_version(self._current_version)
@@ -293,8 +297,8 @@ class UpdateService:
 
         hasher = hashlib.sha256()
 
-        with open(file_path, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), b''):
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
                 hasher.update(chunk)
 
         return hasher.hexdigest() == self._current_update.checksum
@@ -304,7 +308,7 @@ class UpdateService:
         backup_path.mkdir(parents=True, exist_ok=True)
 
         # Copy important files
-        important_paths = ['app', 'engines', 'config']
+        important_paths = ["app", "engines", "config"]
 
         for path_name in important_paths:
             source = self._app_path / path_name
@@ -337,5 +341,5 @@ class UpdateService:
         """Extract update archive."""
         import zipfile
 
-        with zipfile.ZipFile(update_file, 'r') as zf:
+        with zipfile.ZipFile(update_file, "r") as zf:
             zf.extractall(self._app_path)

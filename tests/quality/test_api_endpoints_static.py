@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EndpointTestResult:
     """Result of testing an endpoint."""
+
     method: str
     path: str
     file: str
@@ -88,23 +89,29 @@ class APIEndpointTester:
                 path = match.group(2)
 
                 # Find the function name after the decorator
-                func_match = re.search(r'def\s+(\w+)\s*\(', content[match.end():match.end()+200])
+                func_match = re.search(
+                    r"def\s+(\w+)\s*\(", content[match.end() : match.end() + 200]
+                )
                 function_name = func_match.group(1) if func_match else ""
 
-                endpoints.append({
-                    "method": method,
-                    "path": path,
-                    "file": file_path.name,
-                    "function_name": function_name,
-                    "start_pos": match.start()
-                })
+                endpoints.append(
+                    {
+                        "method": method,
+                        "path": path,
+                        "file": file_path.name,
+                        "function_name": function_name,
+                        "start_pos": match.start(),
+                    }
+                )
 
         except Exception as e:
             logger.error(f"Error reading {file_path}: {e}")
 
         return endpoints
 
-    def check_for_placeholders(self, file_path: Path, start_pos: int, end_pos: int | None = None) -> tuple[bool, int]:
+    def check_for_placeholders(
+        self, file_path: Path, start_pos: int, end_pos: int | None = None
+    ) -> tuple[bool, int]:
         """Check if endpoint function has placeholders."""
         try:
             content = file_path.read_text(encoding="utf-8")
@@ -129,7 +136,9 @@ class APIEndpointTester:
             logger.error(f"Error checking placeholders in {file_path}: {e}")
             return True, 1
 
-    def check_error_handling(self, file_path: Path, start_pos: int, end_pos: int | None = None) -> tuple[bool, int]:
+    def check_error_handling(
+        self, file_path: Path, start_pos: int, end_pos: int | None = None
+    ) -> tuple[bool, int]:
         """Check if endpoint has error handling."""
         try:
             content = file_path.read_text(encoding="utf-8")
@@ -164,7 +173,9 @@ class APIEndpointTester:
             logger.error(f"Error checking error handling in {file_path}: {e}")
             return False, 0
 
-    def check_validation(self, file_path: Path, start_pos: int, end_pos: int | None = None) -> tuple[bool, int]:
+    def check_validation(
+        self, file_path: Path, start_pos: int, end_pos: int | None = None
+    ) -> tuple[bool, int]:
         """Check if endpoint has validation."""
         try:
             content = file_path.read_text(encoding="utf-8")
@@ -263,7 +274,7 @@ class APIEndpointTester:
             has_validation=has_validation,
             validation_count=validation_count,
             has_response_model=has_response_model,
-            status=status
+            status=status,
         )
 
         return result
@@ -282,7 +293,11 @@ class APIEndpointTester:
                     result = self.test_endpoint(endpoint, file_path)
                     self.endpoints.append(result)
 
-                    status_icon = "✅" if result.status == "pass" else "⚠️" if result.status == "warning" else "❌"
+                    status_icon = (
+                        "✅"
+                        if result.status == "pass"
+                        else "⚠️" if result.status == "warning" else "❌"
+                    )
                     logger.debug(f"{status_icon} {result.method} {result.path}: {result.status}")
 
             except Exception as e:
@@ -398,4 +413,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

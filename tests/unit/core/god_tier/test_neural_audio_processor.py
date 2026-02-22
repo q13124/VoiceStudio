@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.god_tier import neural_audio_processor
 except ImportError:
-    pytest.skip(
-        "Could not import neural_audio_processor", allow_module_level=True
-    )
+    pytest.skip("Could not import neural_audio_processor", allow_module_level=True)
 
 
 class TestNeuralAudioProcessorImports:
@@ -25,9 +23,7 @@ class TestNeuralAudioProcessorImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            neural_audio_processor is not None
-        ), "Failed to import neural_audio_processor module"
+        assert neural_audio_processor is not None, "Failed to import neural_audio_processor module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
@@ -46,9 +42,7 @@ class TestNeuralAudioProcessorClasses:
         """Test NeuralAudioProcessor class exists."""
         if hasattr(neural_audio_processor, "NeuralAudioProcessor"):
             cls = neural_audio_processor.NeuralAudioProcessor
-            assert isinstance(
-                cls, type
-            ), "NeuralAudioProcessor should be a class"
+            assert isinstance(cls, type), "NeuralAudioProcessor should be a class"
 
 
 if __name__ == "__main__":

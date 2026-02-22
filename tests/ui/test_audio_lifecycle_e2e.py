@@ -87,17 +87,15 @@ class TestAudioLifecycleE2E:
 
         with open(self.audio_path, "rb") as f:
             files = {"file": (self.audio_path.name, f, "audio/wav")}
-            response = self.api_monitor.post(
-                "/api/library/assets/upload",
-                files=files
-            )
+            response = self.api_monitor.post("/api/library/assets/upload", files=files)
 
         self.tracer.api_call("POST", "/api/library/assets/upload", response)
 
         # Validate upload
-        assert response.status_code in (200, 201), (
-            f"Upload failed: {response.status_code} - {response.text}"
-        )
+        assert response.status_code in (
+            200,
+            201,
+        ), f"Upload failed: {response.status_code} - {response.text}"
 
         data = response.json()
         self.uploaded_asset_id = data.get("id") or data.get("asset_id")
@@ -116,9 +114,7 @@ class TestAudioLifecycleE2E:
         response = self.api_monitor.get("/api/library/assets")
         self.tracer.api_call("GET", "/api/library/assets", response)
 
-        assert response.status_code == 200, (
-            f"Library list failed: {response.status_code}"
-        )
+        assert response.status_code == 200, f"Library list failed: {response.status_code}"
 
         # Step 2.2: Find uploaded asset
         assets = response.json()
@@ -130,28 +126,20 @@ class TestAudioLifecycleE2E:
 
         # Verify our asset is present
         if self.uploaded_asset_id:
-            assert self.uploaded_asset_id in asset_ids, (
-                f"Uploaded asset {self.uploaded_asset_id} not in library"
-            )
+            assert (
+                self.uploaded_asset_id in asset_ids
+            ), f"Uploaded asset {self.uploaded_asset_id} not in library"
             self.tracer.step("Uploaded asset found in library")
 
         # Step 2.3: Get asset details
         if self.uploaded_asset_id:
             self.tracer.step("Fetching asset details")
-            response = self.api_monitor.get(
-                f"/api/library/assets/{self.uploaded_asset_id}"
-            )
-            self.tracer.api_call(
-                "GET",
-                f"/api/library/assets/{self.uploaded_asset_id}",
-                response
-            )
+            response = self.api_monitor.get(f"/api/library/assets/{self.uploaded_asset_id}")
+            self.tracer.api_call("GET", f"/api/library/assets/{self.uploaded_asset_id}", response)
 
             if response.status_code == 200:
                 details = response.json()
-                self.tracer.step(
-                    f"Asset details: {details.get('filename', 'unknown')}"
-                )
+                self.tracer.step(f"Asset details: {details.get('filename', 'unknown')}")
 
         self.tracer.complete_phase("library")
 
@@ -174,7 +162,8 @@ class TestAudioLifecycleE2E:
 
         transcription_available = any(
             e.get("type") == "transcription" or "whisper" in str(e).lower()
-            for e in engines if isinstance(e, dict)
+            for e in engines
+            if isinstance(e, dict)
         )
 
         # Step 3.2: Try transcription if available
@@ -186,7 +175,7 @@ class TestAudioLifecycleE2E:
                     "audio_id": self.uploaded_asset_id,
                     "engine": "whisper",
                     "language": "en",
-                }
+                },
             )
             self.tracer.api_call("POST", "/api/transcription/start", response)
 
@@ -195,9 +184,7 @@ class TestAudioLifecycleE2E:
                 # Poll for completion (simplified)
                 time.sleep(2)
             else:
-                self.tracer.step(
-                    f"Transcription not available: {response.status_code}"
-                )
+                self.tracer.step(f"Transcription not available: {response.status_code}")
         else:
             self.tracer.step("Transcription engine not available, skipping")
 
@@ -208,16 +195,14 @@ class TestAudioLifecycleE2E:
             json_data={
                 "source": self.uploaded_asset_id,
                 "format": "mp3",
-            }
+            },
         )
         self.tracer.api_call("POST", "/api/audio/convert", response)
 
         if response.status_code in (200, 202):
             self.tracer.step("Conversion initiated")
         else:
-            self.tracer.step(
-                f"Conversion endpoint returned: {response.status_code}"
-            )
+            self.tracer.step(f"Conversion endpoint returned: {response.status_code}")
 
         self.tracer.complete_phase("process")
 
@@ -232,9 +217,7 @@ class TestAudioLifecycleE2E:
                 f"/api/library/assets/{self.uploaded_asset_id}/download"
             )
             self.tracer.api_call(
-                "GET",
-                f"/api/library/assets/{self.uploaded_asset_id}/download",
-                response
+                "GET", f"/api/library/assets/{self.uploaded_asset_id}/download", response
             )
 
             if response.status_code == 200:
@@ -242,9 +225,7 @@ class TestAudioLifecycleE2E:
                 # Verify response is audio data
                 content_type = response.headers.get("Content-Type", "")
                 if "audio" in content_type or "octet-stream" in content_type:
-                    self.tracer.step(
-                        f"Export returned audio: {len(response.content)} bytes"
-                    )
+                    self.tracer.step(f"Export returned audio: {len(response.content)} bytes")
             else:
                 self.tracer.step(f"Export returned: {response.status_code}")
 
@@ -291,10 +272,7 @@ class TestAudioLifecycleAPIOnly:
         # Upload
         with open(self.audio_path, "rb") as f:
             files = {"file": (self.audio_path.name, f, "audio/wav")}
-            response = self.api_monitor.post(
-                "/api/library/assets/upload",
-                files=files
-            )
+            response = self.api_monitor.post("/api/library/assets/upload", files=files)
 
         if response.status_code not in (200, 201):
             pytest.fail(f"Upload failed: {response.status_code}")

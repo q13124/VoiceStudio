@@ -34,6 +34,7 @@ def _get_memory_mb() -> float:
     """Get current process memory in MB."""
     try:
         import psutil
+
         proc = psutil.Process()
         return proc.memory_info().rss / (1024 * 1024)
     except ImportError:
@@ -59,7 +60,9 @@ def test_cache_stats_available() -> None:
     """Model cache stats endpoint should return valid structure."""
     try:
         from fastapi.testclient import TestClient
+
         from backend.api.main import app
+
         client = TestClient(app)
         resp = client.get("/api/cache/stats")
         assert resp.status_code in (200, 500)  # 500 if cache not initialized
@@ -77,7 +80,9 @@ def test_gpu_status_endpoint() -> None:
     """GPU status endpoint should return device info or CPU fallback."""
     try:
         from fastapi.testclient import TestClient
+
         from backend.api.main import app
+
         client = TestClient(app)
         resp = client.get("/api/gpu-status")
         assert resp.status_code == 200
@@ -91,6 +96,7 @@ def test_cuda_compatibility_check() -> None:
     """Verify CUDA/torch compatibility when torch is available."""
     try:
         import torch
+
         cuda_available = torch.cuda.is_available()
         if cuda_available:
             props = torch.cuda.get_device_properties(0)

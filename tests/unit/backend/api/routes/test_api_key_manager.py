@@ -26,12 +26,8 @@ class TestAPIKeyManagerRouteImports:
 
     def test_api_key_manager_module_imports(self):
         """Test api_key_manager module can be imported."""
-        assert (
-            api_key_manager is not None
-        ), "Failed to import api_key_manager module"
-        assert hasattr(
-            api_key_manager, "router"
-        ), "api_key_manager module missing router"
+        assert api_key_manager is not None, "Failed to import api_key_manager module"
+        assert hasattr(api_key_manager, "router"), "api_key_manager module missing router"
 
 
 class TestAPIKeyManagerRouteHandlers:
@@ -40,16 +36,12 @@ class TestAPIKeyManagerRouteHandlers:
     def test_list_api_keys_handler_exists(self):
         """Test list_api_keys handler exists."""
         if hasattr(api_key_manager, "list_api_keys"):
-            assert callable(
-                api_key_manager.list_api_keys
-            ), "list_api_keys is not callable"
+            assert callable(api_key_manager.list_api_keys), "list_api_keys is not callable"
 
     def test_create_api_key_handler_exists(self):
         """Test create_api_key handler exists."""
         if hasattr(api_key_manager, "create_api_key"):
-            assert callable(
-                api_key_manager.create_api_key
-            ), "create_api_key is not callable"
+            assert callable(api_key_manager.create_api_key), "create_api_key is not callable"
 
 
 class TestAPIKeyManagerRouter:
@@ -70,4 +62,3 @@ class TestAPIKeyManagerRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

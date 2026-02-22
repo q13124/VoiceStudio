@@ -26,6 +26,7 @@ METRICS_COLLECTION_TIMEOUT = 5.0  # seconds
 
 class HealthResponse(BaseModel):
     """Health check response."""
+
     status: str
     timestamp: datetime
     uptime_seconds: float
@@ -35,12 +36,14 @@ class HealthResponse(BaseModel):
 
 class MetricsResponse(BaseModel):
     """Metrics response."""
+
     timestamp: datetime
     metrics: dict[str, Any]
 
 
 class AlertResponse(BaseModel):
     """Alert response."""
+
     alert_id: str
     severity: str
     status: str
@@ -51,6 +54,7 @@ class AlertResponse(BaseModel):
 
 class DiagnosticsResponse(BaseModel):
     """Diagnostics response."""
+
     timestamp: datetime
     overall_status: str
     system_info: dict[str, Any]
@@ -183,6 +187,7 @@ async def get_prometheus_metrics():
         )
     except ImportError:
         from fastapi.responses import PlainTextResponse
+
         return PlainTextResponse(
             content="# No metrics available\n",
             media_type="text/plain; charset=utf-8",

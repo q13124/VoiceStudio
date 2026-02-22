@@ -23,9 +23,7 @@ class TestSpeakerEncoderEngineImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            speaker_encoder_engine is not None
-        ), "Failed to import speaker_encoder_engine module"
+        assert speaker_encoder_engine is not None, "Failed to import speaker_encoder_engine module"
 
     def test_module_has_speaker_encoder_engine_class(self):
         """Test module has SpeakerEncoderEngine class."""
@@ -47,9 +45,7 @@ class TestSpeakerEncoderEngineClass:
         """Test SpeakerEncoderEngine can be instantiated."""
         if hasattr(speaker_encoder_engine, "SpeakerEncoderEngine"):
             try:
-                engine = speaker_encoder_engine.SpeakerEncoderEngine(
-                    device="cpu", gpu=False
-                )
+                engine = speaker_encoder_engine.SpeakerEncoderEngine(device="cpu", gpu=False)
                 assert engine is not None
                 assert hasattr(engine, "device")
                 assert engine.device == "cpu"
@@ -60,14 +56,10 @@ class TestSpeakerEncoderEngineClass:
         """Test SpeakerEncoderEngine has required methods."""
         if hasattr(speaker_encoder_engine, "SpeakerEncoderEngine"):
             try:
-                engine = speaker_encoder_engine.SpeakerEncoderEngine(
-                    device="cpu", gpu=False
-                )
+                engine = speaker_encoder_engine.SpeakerEncoderEngine(device="cpu", gpu=False)
                 required_methods = ["initialize", "cleanup", "extract_embedding"]
                 for method in required_methods:
-                    assert hasattr(
-                        engine, method
-                    ), f"SpeakerEncoderEngine missing method: {method}"
+                    assert hasattr(engine, method), f"SpeakerEncoderEngine missing method: {method}"
             except ImportError:
                 pytest.skip("speaker encoder dependencies not installed")
 
@@ -75,9 +67,7 @@ class TestSpeakerEncoderEngineClass:
         """Test SpeakerEncoderEngine has optimization features."""
         if hasattr(speaker_encoder_engine, "SpeakerEncoderEngine"):
             try:
-                engine = speaker_encoder_engine.SpeakerEncoderEngine(
-                    device="cpu", gpu=False
-                )
+                engine = speaker_encoder_engine.SpeakerEncoderEngine(device="cpu", gpu=False)
                 # Check for batch processing (method is extract_batch_embeddings)
                 assert hasattr(
                     engine, "extract_batch_embeddings"
@@ -114,9 +104,7 @@ class TestSpeakerEncoderEngineCaching:
         """Test embedding cache support."""
         if hasattr(speaker_encoder_engine, "SpeakerEncoderEngine"):
             try:
-                engine = speaker_encoder_engine.SpeakerEncoderEngine(
-                    device="cpu", gpu=False
-                )
+                engine = speaker_encoder_engine.SpeakerEncoderEngine(device="cpu", gpu=False)
                 # Check for embedding cache (LRU cache)
                 assert hasattr(
                     engine, "_embedding_cache"
@@ -135,9 +123,7 @@ class TestSpeakerEncoderEngineBatchProcessing:
         """Test extract_batch_embeddings method exists."""
         if hasattr(speaker_encoder_engine, "SpeakerEncoderEngine"):
             try:
-                engine = speaker_encoder_engine.SpeakerEncoderEngine(
-                    device="cpu", gpu=False
-                )
+                engine = speaker_encoder_engine.SpeakerEncoderEngine(device="cpu", gpu=False)
                 assert hasattr(
                     engine, "extract_batch_embeddings"
                 ), "SpeakerEncoderEngine should have extract_batch_embeddings method"
@@ -148,15 +134,9 @@ class TestSpeakerEncoderEngineBatchProcessing:
         """Test batch_size attribute exists and is valid."""
         if hasattr(speaker_encoder_engine, "SpeakerEncoderEngine"):
             try:
-                engine = speaker_encoder_engine.SpeakerEncoderEngine(
-                    device="cpu", gpu=False
-                )
-                assert hasattr(
-                    engine, "batch_size"
-                ), "SpeakerEncoderEngine should have batch_size"
-                assert isinstance(
-                    engine.batch_size, int
-                ), "batch_size should be an integer"
+                engine = speaker_encoder_engine.SpeakerEncoderEngine(device="cpu", gpu=False)
+                assert hasattr(engine, "batch_size"), "SpeakerEncoderEngine should have batch_size"
+                assert isinstance(engine.batch_size, int), "batch_size should be an integer"
                 assert engine.batch_size > 0, "batch_size should be positive"
             except ImportError:
                 pytest.skip("speaker encoder dependencies not installed")
@@ -169,15 +149,11 @@ class TestSpeakerEncoderEngineProtocol:
         """Test SpeakerEncoderEngine implements EngineProtocol."""
         if hasattr(speaker_encoder_engine, "SpeakerEncoderEngine"):
             try:
-                engine = speaker_encoder_engine.SpeakerEncoderEngine(
-                    device="cpu", gpu=False
-                )
+                engine = speaker_encoder_engine.SpeakerEncoderEngine(device="cpu", gpu=False)
                 # Check for protocol methods
                 assert hasattr(engine, "initialize"), "Should implement initialize"
                 assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                assert hasattr(
-                    engine, "is_initialized"
-                ), "Should implement is_initialized"
+                assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                 assert hasattr(engine, "get_device"), "Should implement get_device"
             except ImportError:
                 pytest.skip("speaker encoder dependencies not installed")
@@ -186,14 +162,10 @@ class TestSpeakerEncoderEngineProtocol:
         """Test device management methods."""
         if hasattr(speaker_encoder_engine, "SpeakerEncoderEngine"):
             try:
-                engine = speaker_encoder_engine.SpeakerEncoderEngine(
-                    device="cpu", gpu=False
-                )
+                engine = speaker_encoder_engine.SpeakerEncoderEngine(device="cpu", gpu=False)
                 assert engine.get_device() == "cpu"
                 # Test with cuda if available
-                engine_cuda = speaker_encoder_engine.SpeakerEncoderEngine(
-                    device="cuda", gpu=True
-                )
+                engine_cuda = speaker_encoder_engine.SpeakerEncoderEngine(device="cuda", gpu=True)
                 assert engine_cuda.get_device() == "cuda"
             except ImportError:
                 pytest.skip("speaker encoder dependencies not installed")
@@ -206,9 +178,7 @@ class TestSpeakerEncoderEngineConfiguration:
         """Test backend attribute exists."""
         if hasattr(speaker_encoder_engine, "SpeakerEncoderEngine"):
             try:
-                engine = speaker_encoder_engine.SpeakerEncoderEngine(
-                    device="cpu", gpu=False
-                )
+                engine = speaker_encoder_engine.SpeakerEncoderEngine(device="cpu", gpu=False)
                 assert hasattr(engine, "backend"), "Should have backend attribute"
             except ImportError:
                 pytest.skip("speaker encoder dependencies not installed")
@@ -224,15 +194,11 @@ class TestSpeakerEncoderEngineOptimization:
                 # Check source code for inference_mode usage in helper methods
                 import inspect
 
-                engine = speaker_encoder_engine.SpeakerEncoderEngine(
-                    device="cpu", gpu=False
-                )
+                engine = speaker_encoder_engine.SpeakerEncoderEngine(device="cpu", gpu=False)
                 # Check helper methods that use inference_mode
                 if hasattr(engine, "_extract_speechbrain_embedding"):
                     try:
-                        source = inspect.getsource(
-                            engine._extract_speechbrain_embedding
-                        )
+                        source = inspect.getsource(engine._extract_speechbrain_embedding)
                         if "inference_mode" in source or "no_grad" in source:
                             pass
                     except (OSError, TypeError):
@@ -251,9 +217,7 @@ class TestSpeakerEncoderEngineOptimization:
                 # Check source code for ThreadPoolExecutor usage
                 import inspect
 
-                engine = speaker_encoder_engine.SpeakerEncoderEngine(
-                    device="cpu", gpu=False
-                )
+                engine = speaker_encoder_engine.SpeakerEncoderEngine(device="cpu", gpu=False)
                 # Try to find batch processing method
                 batch_method = None
                 for method_name in [
@@ -285,9 +249,7 @@ class TestSpeakerEncoderEngineOptimization:
                 # Check source code for GPU cache clearing
                 import inspect
 
-                engine = speaker_encoder_engine.SpeakerEncoderEngine(
-                    device="cpu", gpu=False
-                )
+                engine = speaker_encoder_engine.SpeakerEncoderEngine(device="cpu", gpu=False)
                 # Get batch processing method
                 if hasattr(engine, "extract_batch_embeddings"):
                     batch_method = engine.extract_batch_embeddings
@@ -307,13 +269,9 @@ class TestSpeakerEncoderEngineOptimization:
         """Test LRU embedding cache implementation."""
         if hasattr(speaker_encoder_engine, "SpeakerEncoderEngine"):
             try:
-                engine = speaker_encoder_engine.SpeakerEncoderEngine(
-                    device="cpu", gpu=False
-                )
+                engine = speaker_encoder_engine.SpeakerEncoderEngine(device="cpu", gpu=False)
                 # Check for LRU cache (OrderedDict)
-                assert hasattr(
-                    engine, "_embedding_cache"
-                ), "Should have embedding cache"
+                assert hasattr(engine, "_embedding_cache"), "Should have embedding cache"
                 # Check for cache methods
                 assert hasattr(engine, "_cache_embedding") or hasattr(
                     engine, "_get_cached_embedding"

@@ -338,11 +338,13 @@ async def startup_event():
             get_all_migrations,
         )
         from backend.data.repository_base import ConnectionConfig
+
         config = ConnectionConfig()
         db_path = config.sqlite_path
 
         # Ensure data directory exists
         from pathlib import Path
+
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
 
         async with aiosqlite.connect(db_path) as connection:
@@ -365,7 +367,9 @@ async def startup_event():
                     logger.info(f"  - v{result.version}: {result.name} ({result.status.value})")
             else:
                 status = runner.get_status()
-                logger.info(f"Database ready: {status['applied_count']} migration(s) applied, 0 pending")
+                logger.info(
+                    f"Database ready: {status['applied_count']} migration(s) applied, 0 pending"
+                )
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}", exc_info=True)
         # Don't fail startup - fall back to in-memory if database unavailable
@@ -429,6 +433,7 @@ async def startup_event():
         # Load all engines from manifests
         try:
             from app.core.engines.router import router as engine_router
+
             engine_router.load_all_engines("engines")
             engine_count = len(engine_router.list_engines())
             failed_engines = engine_router.get_failed_engines()
@@ -490,7 +495,9 @@ async def shutdown_event():
                     logger.info("Shutting down %d running engine(s)...", len(running_engines))
                     for engine_id in running_engines:
                         try:
-                            engine_stop_timeout = app_config.timeouts.engine_stop if app_config else 10.0
+                            engine_stop_timeout = (
+                                app_config.timeouts.engine_stop if app_config else 10.0
+                            )
                             await manager.stop_engine(engine_id, timeout=engine_stop_timeout)
                             logger.info("Engine '%s' stopped", engine_id)
                         except Exception as e:
@@ -604,9 +611,9 @@ async def shutdown_event():
                 _shutdown_scheduler(),
                 _shutdown_database(),
                 _shutdown_security_services(),
-                return_exceptions=True
+                return_exceptions=True,
             ),
-            timeout=shutdown_timeout * 0.3
+            timeout=shutdown_timeout * 0.3,
         )
 
         # Phase 4: Lifecycle orchestrator (final cleanup)
@@ -656,7 +663,11 @@ app = FastAPI(
     },
     servers=[
         {
-            "url": f"{app_config.server.base_url}/api/v1" if app_config else "http://localhost:8000/api/v1",
+            "url": (
+                f"{app_config.server.base_url}/api/v1"
+                if app_config
+                else "http://localhost:8000/api/v1"
+            ),
             "description": "Development server (v1)",
         },
         {
@@ -863,9 +874,9 @@ async def api_versioning_middleware(request: Request, call_next):
         if path.startswith(LEGACY_API_PREFIX):
             response.headers["Deprecation"] = "true"
             response.headers["Sunset"] = API_SUNSET_DATE
-            response.headers[
-                "Link"
-            ] = f'<{API_VERSION_PREFIX}{path[len(LEGACY_API_PREFIX):]}>; rel="alternate"'
+            response.headers["Link"] = (
+                f'<{API_VERSION_PREFIX}{path[len(LEGACY_API_PREFIX):]}>; rel="alternate"'
+            )
 
     # Add version headers to all responses
     version_headers = get_version_headers(negotiated_version)
@@ -1027,7 +1038,7 @@ def _initialize_rate_limiting():
 _cors_env = app_config.cors.allowed_origins if app_config else None
 if _cors_env:
     allowed_origins = [origin.strip() for origin in _cors_env.split(",")]
-elif (app_config and app_config.cors.environment == "production"):
+elif app_config and app_config.cors.environment == "production":
     # Production without explicit origins: restrictive default
     allowed_origins = ["http://localhost:8001"]
     logger.warning("CORS_ALLOWED_ORIGINS not set in production; using restrictive default")
@@ -1627,6 +1638,7 @@ def api_version_info(request: Request):
 def health():
     """Basic health check endpoint."""
     from backend.settings import config
+
     return {
         "status": "ok",
         "version": "1.0",

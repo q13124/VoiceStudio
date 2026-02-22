@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class EmotionType(Enum):
     """Available emotion types."""
+
     HAPPY = "happy"
     SAD = "sad"
     ANGRY = "angry"
@@ -45,6 +46,7 @@ class EmotionType(Enum):
 @dataclass
 class EmotionTag:
     """Represents an emotion tag with position and intensity."""
+
     emotion: EmotionType
     intensity: float  # 0-100
     start_index: int
@@ -64,6 +66,7 @@ class EmotionTag:
 @dataclass
 class EmotionPhrase:
     """A phrase with applied emotion."""
+
     text: str
     emotion: EmotionType
     intensity: float
@@ -83,6 +86,7 @@ class EmotionPhrase:
 @dataclass
 class EmotionPreset:
     """Saved emotion combination preset."""
+
     preset_id: str
     name: str
     description: str | None
@@ -112,6 +116,7 @@ class EmotionPreset:
 @dataclass
 class ParsedEmotionText:
     """Result of parsing emotion-tagged text."""
+
     original_text: str
     clean_text: str  # Text with tags removed
     phrases: list[EmotionPhrase]
@@ -139,15 +144,11 @@ class PhraseEmotionService:
 
     # Regex pattern for emotion tags: [emotion:intensity]text[/emotion] or [emotion]text[/emotion]
     EMOTION_TAG_PATTERN = re.compile(
-        r'\[(\w+)(?::(\d+(?:\.\d+)?))?\](.*?)\[/\1\]',
-        re.DOTALL | re.IGNORECASE
+        r"\[(\w+)(?::(\d+(?:\.\d+)?))?\](.*?)\[/\1\]", re.DOTALL | re.IGNORECASE
     )
 
     # Simple tag pattern: [emotion]text[/emotion]
-    SIMPLE_TAG_PATTERN = re.compile(
-        r'\[(\w+)\](.*?)\[/\1\]',
-        re.DOTALL | re.IGNORECASE
-    )
+    SIMPLE_TAG_PATTERN = re.compile(r"\[(\w+)\](.*?)\[/\1\]", re.DOTALL | re.IGNORECASE)
 
     # Valid emotion names (lowercase)
     VALID_EMOTIONS = {e.value for e in EmotionType}
@@ -267,18 +268,20 @@ class PhraseEmotionService:
 
             # Add text before this tag
             if match.start() > current_pos:
-                before_text = text[current_pos:match.start()]
+                before_text = text[current_pos : match.start()]
                 clean_parts.append(before_text)
 
                 # Add neutral phrase for untagged text
                 if before_text.strip():
-                    phrases.append(EmotionPhrase(
-                        text=before_text,
-                        emotion=EmotionType.NEUTRAL,
-                        intensity=50.0,
-                        start_char=clean_offset,
-                        end_char=clean_offset + len(before_text),
-                    ))
+                    phrases.append(
+                        EmotionPhrase(
+                            text=before_text,
+                            emotion=EmotionType.NEUTRAL,
+                            intensity=50.0,
+                            start_char=clean_offset,
+                            end_char=clean_offset + len(before_text),
+                        )
+                    )
                 clean_offset += len(before_text)
 
             # Add emotion phrase
@@ -289,13 +292,15 @@ class PhraseEmotionService:
             except ValueError:
                 emotion_type = EmotionType.NEUTRAL
 
-            phrases.append(EmotionPhrase(
-                text=tagged_text,
-                emotion=emotion_type,
-                intensity=intensity,
-                start_char=clean_offset,
-                end_char=clean_offset + len(tagged_text),
-            ))
+            phrases.append(
+                EmotionPhrase(
+                    text=tagged_text,
+                    emotion=emotion_type,
+                    intensity=intensity,
+                    start_char=clean_offset,
+                    end_char=clean_offset + len(tagged_text),
+                )
+            )
 
             clean_offset += len(tagged_text)
             current_pos = match.end()
@@ -306,13 +311,15 @@ class PhraseEmotionService:
             clean_parts.append(remaining_text)
 
             if remaining_text.strip():
-                phrases.append(EmotionPhrase(
-                    text=remaining_text,
-                    emotion=EmotionType.NEUTRAL,
-                    intensity=50.0,
-                    start_char=clean_offset,
-                    end_char=clean_offset + len(remaining_text),
-                ))
+                phrases.append(
+                    EmotionPhrase(
+                        text=remaining_text,
+                        emotion=EmotionType.NEUTRAL,
+                        intensity=50.0,
+                        start_char=clean_offset,
+                        end_char=clean_offset + len(remaining_text),
+                    )
+                )
 
         clean_text = "".join(clean_parts)
 
@@ -413,24 +420,23 @@ class PhraseEmotionService:
                     if blend_mode == "smooth":
                         # Smooth blending (ease in/out)
                         import math
+
                         t = secondary_norm
                         smooth_t = t * t * (3 - 2 * t)  # Smoothstep
                         blended_deviation = (
-                            primary_deviation * (1 - smooth_t) +
-                            secondary_deviation * smooth_t
+                            primary_deviation * (1 - smooth_t) + secondary_deviation * smooth_t
                         )
                     elif blend_mode == "crossfade":
                         # Crossfade (equal power)
                         import math
-                        blended_deviation = (
-                            primary_deviation * math.cos(secondary_norm * math.pi / 2) +
-                            secondary_deviation * math.sin(secondary_norm * math.pi / 2)
-                        )
+
+                        blended_deviation = primary_deviation * math.cos(
+                            secondary_norm * math.pi / 2
+                        ) + secondary_deviation * math.sin(secondary_norm * math.pi / 2)
                     else:
                         # Linear blending
                         blended_deviation = (
-                            primary_deviation * primary_norm +
-                            secondary_deviation * secondary_norm
+                            primary_deviation * primary_norm + secondary_deviation * secondary_norm
                         )
 
                     result[key] = 1.0 + blended_deviation

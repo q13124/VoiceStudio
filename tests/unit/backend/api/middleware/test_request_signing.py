@@ -271,18 +271,21 @@ class TestGetSecretKey:
 class TestIsSigningEnabled:
     """Tests for is_signing_enabled function."""
 
-    @pytest.mark.parametrize("value,expected", [
-        ("true", True),
-        ("True", True),
-        ("TRUE", True),
-        ("1", True),
-        ("yes", True),
-        ("false", False),
-        ("False", False),
-        ("0", False),
-        ("no", False),
-        ("", False),
-    ])
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            ("true", True),
+            ("True", True),
+            ("TRUE", True),
+            ("1", True),
+            ("yes", True),
+            ("false", False),
+            ("False", False),
+            ("0", False),
+            ("no", False),
+            ("", False),
+        ],
+    )
     def test_various_values(self, value, expected):
         """Test various env var values."""
         with patch.dict(os.environ, {"VOICESTUDIO_IPC_SIGNING_ENABLED": value}):
@@ -330,10 +333,13 @@ class TestRequestSigningMiddleware:
     def test_excluded_path_no_signature_required(self, app_with_middleware):
         """Excluded paths don't require signature."""
         # Patch the middleware to be enabled
-        with patch.dict(os.environ, {
-            "VOICESTUDIO_IPC_SIGNING_ENABLED": "true",
-            "VOICESTUDIO_IPC_SECRET": TEST_SECRET_B64,
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "VOICESTUDIO_IPC_SIGNING_ENABLED": "true",
+                "VOICESTUDIO_IPC_SECRET": TEST_SECRET_B64,
+            },
+        ):
             client = TestClient(app_with_middleware, raise_server_exceptions=False)
             response = client.get("/health")
 
@@ -341,10 +347,13 @@ class TestRequestSigningMiddleware:
 
     def test_missing_signature_rejected(self, app_with_middleware):
         """Requests without signature are rejected when enabled."""
-        with patch.dict(os.environ, {
-            "VOICESTUDIO_IPC_SIGNING_ENABLED": "true",
-            "VOICESTUDIO_IPC_SECRET": TEST_SECRET_B64,
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "VOICESTUDIO_IPC_SIGNING_ENABLED": "true",
+                "VOICESTUDIO_IPC_SECRET": TEST_SECRET_B64,
+            },
+        ):
             client = TestClient(app_with_middleware, raise_server_exceptions=False)
             response = client.get("/api/v1/test")
 
@@ -352,10 +361,13 @@ class TestRequestSigningMiddleware:
 
     def test_valid_signature_accepted(self, app_with_middleware):
         """Requests with valid signature are accepted."""
-        with patch.dict(os.environ, {
-            "VOICESTUDIO_IPC_SIGNING_ENABLED": "true",
-            "VOICESTUDIO_IPC_SECRET": TEST_SECRET_B64,
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "VOICESTUDIO_IPC_SIGNING_ENABLED": "true",
+                "VOICESTUDIO_IPC_SECRET": TEST_SECRET_B64,
+            },
+        ):
             timestamp = datetime.now(timezone.utc).isoformat()
             signature = compute_signature(
                 TEST_SECRET,
@@ -372,17 +384,20 @@ class TestRequestSigningMiddleware:
                     SIGNATURE_HEADER: signature,
                     TIMESTAMP_HEADER: timestamp,
                     VERSION_HEADER: "1",
-                }
+                },
             )
 
             assert response.status_code == 200
 
     def test_invalid_signature_rejected(self, app_with_middleware):
         """Requests with invalid signature are rejected."""
-        with patch.dict(os.environ, {
-            "VOICESTUDIO_IPC_SIGNING_ENABLED": "true",
-            "VOICESTUDIO_IPC_SECRET": TEST_SECRET_B64,
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "VOICESTUDIO_IPC_SIGNING_ENABLED": "true",
+                "VOICESTUDIO_IPC_SECRET": TEST_SECRET_B64,
+            },
+        ):
             timestamp = datetime.now(timezone.utc).isoformat()
 
             client = TestClient(app_with_middleware, raise_server_exceptions=False)
@@ -392,17 +407,20 @@ class TestRequestSigningMiddleware:
                     SIGNATURE_HEADER: "invalid_signature",
                     TIMESTAMP_HEADER: timestamp,
                     VERSION_HEADER: "1",
-                }
+                },
             )
 
             assert response.status_code == 401
 
     def test_expired_timestamp_rejected(self, app_with_middleware):
         """Requests with expired timestamp are rejected."""
-        with patch.dict(os.environ, {
-            "VOICESTUDIO_IPC_SIGNING_ENABLED": "true",
-            "VOICESTUDIO_IPC_SECRET": TEST_SECRET_B64,
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "VOICESTUDIO_IPC_SIGNING_ENABLED": "true",
+                "VOICESTUDIO_IPC_SECRET": TEST_SECRET_B64,
+            },
+        ):
             # Use old timestamp
             old = datetime.now(timezone.utc) - timedelta(seconds=600)
             timestamp = old.isoformat()
@@ -421,16 +439,19 @@ class TestRequestSigningMiddleware:
                     SIGNATURE_HEADER: signature,
                     TIMESTAMP_HEADER: timestamp,
                     VERSION_HEADER: "1",
-                }
+                },
             )
 
             assert response.status_code == 401
 
     def test_signing_disabled_no_verification(self, app_with_middleware):
         """No verification when signing is disabled."""
-        with patch.dict(os.environ, {
-            "VOICESTUDIO_IPC_SIGNING_ENABLED": "false",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "VOICESTUDIO_IPC_SIGNING_ENABLED": "false",
+            },
+        ):
             client = TestClient(app_with_middleware, raise_server_exceptions=False)
             response = client.get("/api/v1/test")
 
@@ -453,14 +474,17 @@ class TestReplayAttackPrevention:
         )
 
         # Verify immediately - should pass
-        assert verify_signature(
-            TEST_SECRET,
-            signature,
-            "GET",
-            "/api/v1/test",
-            timestamp,
-            "",
-        ) is True
+        assert (
+            verify_signature(
+                TEST_SECRET,
+                signature,
+                "GET",
+                "/api/v1/test",
+                timestamp,
+                "",
+            )
+            is True
+        )
 
         # Timestamp validation should fail for old timestamps
         old_timestamp = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
@@ -473,13 +497,16 @@ class TestReplayAttackPrevention:
         )
 
         # Signature itself is valid but timestamp is expired
-        assert verify_signature(
-            TEST_SECRET,
-            old_signature,
-            "GET",
-            "/api/v1/test",
-            old_timestamp,
-            "",
-        ) is True  # Signature is technically valid
+        assert (
+            verify_signature(
+                TEST_SECRET,
+                old_signature,
+                "GET",
+                "/api/v1/test",
+                old_timestamp,
+                "",
+            )
+            is True
+        )  # Signature is technically valid
 
         assert validate_timestamp(old_timestamp) is False  # But timestamp is expired

@@ -145,9 +145,7 @@ class EnhancedPreprocessor:
                 )
                 sample_rate = self.target_sample_rate
             elif HAS_AUDIO_UTILS:
-                processed = resample_audio(
-                    processed, sample_rate, self.target_sample_rate
-                )
+                processed = resample_audio(processed, sample_rate, self.target_sample_rate)
                 sample_rate = self.target_sample_rate
 
         # 4. Voice activity detection and silence trimming
@@ -202,9 +200,7 @@ class EnhancedPreprocessor:
             return audio
 
         try:
-            b, a = signal.iirfilter(
-                4, normalized_cutoff, btype="highpass", ftype="butter"
-            )
+            b, a = signal.iirfilter(4, normalized_cutoff, btype="highpass", ftype="butter")
 
             if len(audio.shape) == 1:
                 return signal.filtfilt(b, a, audio)
@@ -258,9 +254,7 @@ class EnhancedPreprocessor:
             logger.warning(f"Silence trimming failed: {e}")
             return audio
 
-    def _apply_denoising(
-        self, audio: np.ndarray, sample_rate: int, config: dict
-    ) -> np.ndarray:
+    def _apply_denoising(self, audio: np.ndarray, sample_rate: int, config: dict) -> np.ndarray:
         """Apply advanced denoising."""
         if HAS_AUDIO_UTILS:
             try:
@@ -359,9 +353,7 @@ class EnhancedPreprocessor:
 
         # Calculate RMS envelope
         window_size = int(sample_rate * 0.01)  # 10ms window
-        rms = np.sqrt(
-            np.convolve(audio**2, np.ones(window_size) / window_size, mode="same")
-        )
+        rms = np.sqrt(np.convolve(audio**2, np.ones(window_size) / window_size, mode="same"))
 
         # Convert target level to linear
         target_linear = 10.0 ** (target_level / 20.0)
@@ -491,9 +483,7 @@ def create_enhanced_preprocessor(
     Returns:
         Initialized EnhancedPreprocessor instance
     """
-    return EnhancedPreprocessor(
-        sample_rate=sample_rate, target_sample_rate=target_sample_rate
-    )
+    return EnhancedPreprocessor(sample_rate=sample_rate, target_sample_rate=target_sample_rate)
 
 
 def preprocess_audio(

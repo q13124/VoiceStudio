@@ -88,7 +88,9 @@ class TestAssessRisk:
     def test_assess_risk_returns_dict_with_expected_keys(self, temp_store: IssueStore) -> None:
         issue = _issue()
         temp_store.append(issue)
-        with patch("tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store):
+        with patch(
+            "tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store
+        ):
             risk = assess_risk(issue)
         assert "score" in risk
         assert "frequency_24h" in risk
@@ -103,7 +105,9 @@ class TestAssessRisk:
         critical_issue = _issue(severity=IssueSeverity.CRITICAL)
         temp_store.append(low_issue)
         temp_store.append(critical_issue)
-        with patch("tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store):
+        with patch(
+            "tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store
+        ):
             risk_low = assess_risk(low_issue)
             risk_critical = assess_risk(critical_issue)
         assert risk_critical["score"] >= risk_low["score"]
@@ -113,17 +117,23 @@ class TestSuggestActions:
     def test_no_matches_yields_investigate(self, temp_store: IssueStore) -> None:
         issue = _issue()
         temp_store.append(issue)
-        with patch("tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store):
+        with patch(
+            "tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store
+        ):
             recs = suggest_actions(issue, [])
         assert len(recs) >= 1
         assert recs[0].action == "investigate"
         assert recs[0].confidence == 0.5
 
-    def test_parameter_adjustment_pattern_yields_retry_with_params(self, temp_store: IssueStore) -> None:
+    def test_parameter_adjustment_pattern_yields_retry_with_params(
+        self, temp_store: IssueStore
+    ) -> None:
         issue = _issue()
         temp_store.append(issue)
         pattern = _failure_pattern(resolution_strategy="parameter_adjustment")
-        with patch("tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store):
+        with patch(
+            "tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store
+        ):
             recs = suggest_actions(issue, [(pattern, 0.9)])
         assert any(r.action == "retry_with_params" for r in recs)
 
@@ -131,14 +141,18 @@ class TestSuggestActions:
         issue = _issue()
         temp_store.append(issue)
         pattern = _failure_pattern(resolution_confirmed=True, fix_id="fix-123")
-        with patch("tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store):
+        with patch(
+            "tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store
+        ):
             recs = suggest_actions(issue, [(pattern, 0.9)])
         assert any(r.action == "apply_fix:fix-123" for r in recs)
 
     def test_critical_no_matches_yields_escalate_to_human(self, temp_store: IssueStore) -> None:
         issue = _issue(severity=IssueSeverity.CRITICAL)
         temp_store.append(issue)
-        with patch("tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store):
+        with patch(
+            "tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store
+        ):
             recs = suggest_actions(issue, [])
         assert any(r.action == "escalate_to_human" for r in recs)
         assert any(r.confidence == 1.0 for r in recs)
@@ -148,7 +162,9 @@ class TestGenerateRecommendations:
     def test_generate_recommendations_returns_list(self, temp_store: IssueStore) -> None:
         issue = _issue()
         temp_store.append(issue)
-        with patch("tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store):
+        with patch(
+            "tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store
+        ):
             recs = generate_recommendations(issue)
         assert isinstance(recs, list)
         assert len(recs) >= 1
@@ -158,20 +174,31 @@ class TestGenerateRecommendations:
 
 class TestRecordRecommendationOutcome:
     def test_record_accepts_success_failure_deferred(self, feedback_dir: Path) -> None:
-        with patch("tools.overseer.issues.store.get_feedback_file_path", return_value=feedback_dir / "feedback.jsonl"):
+        with patch(
+            "tools.overseer.issues.store.get_feedback_file_path",
+            return_value=feedback_dir / "feedback.jsonl",
+        ):
             assert record_recommendation_outcome("i1", "retry_with_params", "success") is True
-            assert record_recommendation_outcome("i2", "apply_fix:fix-1", "failure", note="n") is True
+            assert (
+                record_recommendation_outcome("i2", "apply_fix:fix-1", "failure", note="n") is True
+            )
             assert record_recommendation_outcome("i3", "restart", "deferred") is True
 
     def test_record_rejects_invalid_outcome(self, feedback_dir: Path) -> None:
-        with patch("tools.overseer.issues.store.get_feedback_file_path", return_value=feedback_dir / "feedback.jsonl"):
+        with patch(
+            "tools.overseer.issues.store.get_feedback_file_path",
+            return_value=feedback_dir / "feedback.jsonl",
+        ):
             assert record_recommendation_outcome("i1", "retry_with_params", "invalid") is False
             assert record_recommendation_outcome("i1", "retry_with_params", "") is False
 
 
 class TestGetActionSuccessRate:
     def test_empty_feedback_returns_none(self, feedback_dir: Path) -> None:
-        with patch("tools.overseer.issues.store.get_feedback_file_path", return_value=feedback_dir / "feedback.jsonl"):
+        with patch(
+            "tools.overseer.issues.store.get_feedback_file_path",
+            return_value=feedback_dir / "feedback.jsonl",
+        ):
             assert get_action_success_rate("retry_with_params") is None
 
     def test_success_rate_calibrated_from_feedback(self, feedback_dir: Path) -> None:
@@ -179,9 +206,21 @@ class TestGetActionSuccessRate:
         path.parent.mkdir(parents=True, exist_ok=True)
         now = datetime.now(timezone.utc).isoformat()
         with open(path, "w", encoding="utf-8") as f:
-            f.write('{"issue_id":"a","action":"retry_with_params","outcome":"success","applied_at":"' + now + '"}\n')
-            f.write('{"issue_id":"b","action":"retry_with_params","outcome":"failure","applied_at":"' + now + '"}\n')
-            f.write('{"issue_id":"c","action":"retry_with_params","outcome":"success","applied_at":"' + now + '"}\n')
+            f.write(
+                '{"issue_id":"a","action":"retry_with_params","outcome":"success","applied_at":"'
+                + now
+                + '"}\n'
+            )
+            f.write(
+                '{"issue_id":"b","action":"retry_with_params","outcome":"failure","applied_at":"'
+                + now
+                + '"}\n'
+            )
+            f.write(
+                '{"issue_id":"c","action":"retry_with_params","outcome":"success","applied_at":"'
+                + now
+                + '"}\n'
+            )
         with patch("tools.overseer.issues.store.get_feedback_file_path", return_value=path):
             rate = get_action_success_rate("retry_with_params", days=90)
         assert rate is not None
@@ -193,7 +232,9 @@ class TestSuggestActionsRollbackRestartDefer:
         issue = _issue()
         temp_store.append(issue)
         pattern = _failure_pattern(resolution_strategy="rollback")
-        with patch("tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store):
+        with patch(
+            "tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store
+        ):
             recs = suggest_actions(issue, [(pattern, 0.85)])
         assert any(r.action == "rollback" for r in recs)
 
@@ -201,13 +242,17 @@ class TestSuggestActionsRollbackRestartDefer:
         issue = _issue()
         temp_store.append(issue)
         pattern = _failure_pattern(resolution_strategy="restart")
-        with patch("tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store):
+        with patch(
+            "tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store
+        ):
             recs = suggest_actions(issue, [(pattern, 0.85)])
         assert any(r.action == "restart" for r in recs)
 
     def test_low_severity_no_match_yields_defer(self, temp_store: IssueStore) -> None:
         issue = _issue(severity=IssueSeverity.LOW)
         temp_store.append(issue)
-        with patch("tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store):
+        with patch(
+            "tools.overseer.issues.recommendation_engine._get_store", return_value=temp_store
+        ):
             recs = suggest_actions(issue, [])
         assert any(r.action == "defer" for r in recs)

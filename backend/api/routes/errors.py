@@ -119,12 +119,16 @@ def _convert_error(error: TrackedError) -> TrackedErrorResponse:
         message=error.message,
         exception_type=error.exception_type,
         stacktrace=error.stacktrace,
-        context=ErrorContextResponse(
-            request_id=error.context.request_id,
-            user_id=error.context.user_id,
-            endpoint=error.context.endpoint,
-            method=error.context.method,
-        ) if error.context else None,
+        context=(
+            ErrorContextResponse(
+                request_id=error.context.request_id,
+                user_id=error.context.user_id,
+                endpoint=error.context.endpoint,
+                method=error.context.method,
+            )
+            if error.context
+            else None
+        ),
         tags=error.tags,
         resolved=error.resolved,
     )
@@ -204,20 +208,14 @@ async def get_recent_errors(
             try:
                 severity_enum = ErrorSeverity(severity)
             except ValueError:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid severity: {severity}"
-                )
+                raise HTTPException(status_code=400, detail=f"Invalid severity: {severity}")
 
         category_enum = None
         if category:
             try:
                 category_enum = ErrorCategory(category)
             except ValueError:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid category: {category}"
-                )
+                raise HTTPException(status_code=400, detail=f"Invalid category: {category}")
 
         errors = tracker.get_errors(
             limit=limit,
@@ -245,10 +243,7 @@ async def get_error_aggregates(
     """
     try:
         if sort_by not in ("count", "recent"):
-            raise HTTPException(
-                status_code=400,
-                detail="sort_by must be 'count' or 'recent'"
-            )
+            raise HTTPException(status_code=400, detail="sort_by must be 'count' or 'recent'")
 
         tracker = get_error_tracker()
         aggregates = tracker.get_aggregates(limit=limit, sort_by=sort_by)
@@ -287,10 +282,7 @@ async def resolve_error(
         success = tracker.resolve_error(error_id, request.resolution_notes)
 
         if not success:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Error not found: {error_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Error not found: {error_id}")
 
         return ResolveResponse(
             success=True,

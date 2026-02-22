@@ -151,7 +151,9 @@ class CertificationResult:
         if not self.certificate_id and self.certified:
             # Generate deterministic certificate ID
             content = f"{self.plugin_id}:{self.plugin_version}:{self.certified_at}"
-            self.certificate_id = f"VS-CERT-{hashlib.sha256(content.encode()).hexdigest()[:16].upper()}"
+            self.certificate_id = (
+                f"VS-CERT-{hashlib.sha256(content.encode()).hexdigest()[:16].upper()}"
+            )
 
     @property
     def passed_gates(self) -> list[QualityGate]:
@@ -166,15 +168,34 @@ class CertificationResult:
     def get_quality_gates_summary(self) -> dict[str, bool]:
         """Get quality gates as bool dict for manifest schema."""
         return {
-            "manifest_valid": any(g.id == "manifest" and g.status == GateStatus.PASSED for g in self.quality_gates),
-            "signature_valid": any(g.id == "signature" and g.status == GateStatus.PASSED for g in self.quality_gates),
-            "sbom_present": any(g.id == "sbom" and g.status == GateStatus.PASSED for g in self.quality_gates),
-            "vulnerabilities_passed": any(g.id == "vulnerabilities" and g.status == GateStatus.PASSED for g in self.quality_gates),
-            "licenses_compatible": any(g.id == "licenses" and g.status == GateStatus.PASSED for g in self.quality_gates),
-            "provenance_verified": any(g.id == "provenance" and g.status == GateStatus.PASSED for g in self.quality_gates),
-            "tests_passed": any(g.id == "tests" and g.status == GateStatus.PASSED for g in self.quality_gates),
-            "performance_acceptable": any(g.id == "performance" and g.status == GateStatus.PASSED for g in self.quality_gates),
-            "security_review_passed": any(g.id == "security" and g.status == GateStatus.PASSED for g in self.quality_gates),
+            "manifest_valid": any(
+                g.id == "manifest" and g.status == GateStatus.PASSED for g in self.quality_gates
+            ),
+            "signature_valid": any(
+                g.id == "signature" and g.status == GateStatus.PASSED for g in self.quality_gates
+            ),
+            "sbom_present": any(
+                g.id == "sbom" and g.status == GateStatus.PASSED for g in self.quality_gates
+            ),
+            "vulnerabilities_passed": any(
+                g.id == "vulnerabilities" and g.status == GateStatus.PASSED
+                for g in self.quality_gates
+            ),
+            "licenses_compatible": any(
+                g.id == "licenses" and g.status == GateStatus.PASSED for g in self.quality_gates
+            ),
+            "provenance_verified": any(
+                g.id == "provenance" and g.status == GateStatus.PASSED for g in self.quality_gates
+            ),
+            "tests_passed": any(
+                g.id == "tests" and g.status == GateStatus.PASSED for g in self.quality_gates
+            ),
+            "performance_acceptable": any(
+                g.id == "performance" and g.status == GateStatus.PASSED for g in self.quality_gates
+            ),
+            "security_review_passed": any(
+                g.id == "security" and g.status == GateStatus.PASSED for g in self.quality_gates
+            ),
         }
 
     def to_dict(self) -> dict[str, Any]:
@@ -285,22 +306,40 @@ class CertificationEngine:
         "manifest": {
             "name": "Manifest Validation",
             "description": "Plugin manifest is valid and complete",
-            "required_for": [CertificationLevel.BASIC, CertificationLevel.STANDARD, CertificationLevel.PREMIUM, CertificationLevel.ENTERPRISE],
+            "required_for": [
+                CertificationLevel.BASIC,
+                CertificationLevel.STANDARD,
+                CertificationLevel.PREMIUM,
+                CertificationLevel.ENTERPRISE,
+            ],
         },
         "vulnerabilities": {
             "name": "Vulnerability Scan",
             "description": "No critical or high vulnerabilities",
-            "required_for": [CertificationLevel.BASIC, CertificationLevel.STANDARD, CertificationLevel.PREMIUM, CertificationLevel.ENTERPRISE],
+            "required_for": [
+                CertificationLevel.BASIC,
+                CertificationLevel.STANDARD,
+                CertificationLevel.PREMIUM,
+                CertificationLevel.ENTERPRISE,
+            ],
         },
         "sbom": {
             "name": "SBOM Validation",
             "description": "Software Bill of Materials is present and valid",
-            "required_for": [CertificationLevel.STANDARD, CertificationLevel.PREMIUM, CertificationLevel.ENTERPRISE],
+            "required_for": [
+                CertificationLevel.STANDARD,
+                CertificationLevel.PREMIUM,
+                CertificationLevel.ENTERPRISE,
+            ],
         },
         "licenses": {
             "name": "License Compatibility",
             "description": "All dependency licenses are compatible",
-            "required_for": [CertificationLevel.STANDARD, CertificationLevel.PREMIUM, CertificationLevel.ENTERPRISE],
+            "required_for": [
+                CertificationLevel.STANDARD,
+                CertificationLevel.PREMIUM,
+                CertificationLevel.ENTERPRISE,
+            ],
         },
         "signature": {
             "name": "Signature Verification",
@@ -594,7 +633,9 @@ class CertificationEngine:
                 gate.message = f"Found {critical} critical vulnerabilities (max: {policy.max_critical_vulnerabilities})"
             elif high > policy.max_high_vulnerabilities:
                 gate.status = GateStatus.FAILED
-                gate.message = f"Found {high} high vulnerabilities (max: {policy.max_high_vulnerabilities})"
+                gate.message = (
+                    f"Found {high} high vulnerabilities (max: {policy.max_high_vulnerabilities})"
+                )
             elif medium > policy.max_medium_vulnerabilities:
                 gate.status = GateStatus.FAILED
                 gate.message = f"Found {medium} medium vulnerabilities (max: {policy.max_medium_vulnerabilities})"

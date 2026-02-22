@@ -121,15 +121,9 @@ class FestivalFliteEngine(EngineProtocol):
             "misses": 0,
         }
 
-    def _find_executable(
-        self, name: str, custom_path: str | None = None
-    ) -> str | None:
+    def _find_executable(self, name: str, custom_path: str | None = None) -> str | None:
         """Find executable in PATH or custom path."""
-        if (
-            custom_path
-            and os.path.isfile(custom_path)
-            and os.access(custom_path, os.X_OK)
-        ):
+        if custom_path and os.path.isfile(custom_path) and os.access(custom_path, os.X_OK):
             return custom_path
 
         # Try custom path directory
@@ -168,25 +162,17 @@ class FestivalFliteEngine(EngineProtocol):
             if self.use_flite:
                 self.executable_path = self._find_executable("flite", self.flite_path)
                 if not self.executable_path:
-                    logger.error(
-                        "Flite executable not found. "
-                        "Install Flite or set flite_path."
-                    )
+                    logger.error("Flite executable not found. " "Install Flite or set flite_path.")
                     logger.error("Install from: http://www.festvox.org/flite/")
                     self._initialized = False
                     return False
             else:
-                self.executable_path = self._find_executable(
-                    "festival", self.festival_path
-                )
+                self.executable_path = self._find_executable("festival", self.festival_path)
                 if not self.executable_path:
                     logger.error(
-                        "Festival executable not found. "
-                        "Install Festival or set festival_path."
+                        "Festival executable not found. " "Install Festival or set festival_path."
                     )
-                    logger.error(
-                        "Install from: " "http://www.cstr.ed.ac.uk/projects/festival/"
-                    )
+                    logger.error("Install from: " "http://www.cstr.ed.ac.uk/projects/festival/")
                     self._initialized = False
                     return False
 
@@ -322,18 +308,14 @@ class FestivalFliteEngine(EngineProtocol):
                         )
                         return None
                     if calculate_quality:
-                        return cached_result["audio"], cached_result.get(
-                            "quality_metrics", {}
-                        )
+                        return cached_result["audio"], cached_result.get("quality_metrics", {})
                     return cached_result["audio"]
                 else:
                     self._cache_stats["misses"] += 1
 
             # Create temporary output file (use reusable temp dir)
             temp_dir = self._temp_dir if self._temp_dir else None
-            with tempfile.NamedTemporaryFile(
-                suffix=".wav", delete=False, dir=temp_dir
-            ) as tmp_file:
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False, dir=temp_dir) as tmp_file:
                 tmp_output = tmp_file.name
 
             try:
@@ -398,9 +380,7 @@ class FestivalFliteEngine(EngineProtocol):
                 if self.enable_cache:
                     # Process quality if needed for caching
                     if calculate_quality:
-                        quality_metrics_result = self._calculate_quality_metrics(
-                            audio, sample_rate
-                        )
+                        quality_metrics_result = self._calculate_quality_metrics(audio, sample_rate)
 
                     # Manage cache size - remove oldest entries if cache is full
                     if len(self._synthesis_cache) >= self._cache_max_size:
@@ -413,9 +393,7 @@ class FestivalFliteEngine(EngineProtocol):
                     self._synthesis_cache[cache_key] = {
                         "audio": audio.copy(),
                         "sample_rate": sample_rate,
-                        "quality_metrics": (
-                            quality_metrics_result if calculate_quality else {}
-                        ),
+                        "quality_metrics": (quality_metrics_result if calculate_quality else {}),
                     }
                     self._synthesis_cache.move_to_end(cache_key)  # LRU update
 
@@ -449,11 +427,7 @@ class FestivalFliteEngine(EngineProtocol):
                 try:
                     if os.path.exists(tmp_output):
                         os.unlink(tmp_output)
-                    if (
-                        not self.use_flite
-                        and "scm_path" in locals()
-                        and os.path.exists(scm_path)
-                    ):
+                    if not self.use_flite and "scm_path" in locals() and os.path.exists(scm_path):
                         os.unlink(scm_path)
                 except Exception as e:
                     logger.warning(f"Failed to cleanup temp files: {e}")
@@ -480,9 +454,7 @@ class FestivalFliteEngine(EngineProtocol):
                 if reference_audio:
                     try:
                         ref_audio, ref_sr = sf.read(reference_audio)
-                        similarity = calculate_similarity(
-                            audio, sample_rate, ref_audio, ref_sr
-                        )
+                        similarity = calculate_similarity(audio, sample_rate, ref_audio, ref_sr)
                         quality_metrics["similarity"] = similarity
                     except Exception as e:
                         logger.warning(f"Similarity calculation failed: {e}")
@@ -512,9 +484,7 @@ class FestivalFliteEngine(EngineProtocol):
                 logger.warning(f"Quality enhancement failed: {e}")
 
         if calculate:
-            quality_metrics = self._calculate_quality_metrics(
-                audio, sample_rate, reference_audio
-            )
+            quality_metrics = self._calculate_quality_metrics(audio, sample_rate, reference_audio)
 
         if calculate:
             return audio, quality_metrics
@@ -530,11 +500,7 @@ class FestivalFliteEngine(EngineProtocol):
         """Get available languages."""
         if not self._initialized and not self.initialize():
             return []
-        return (
-            self.available_languages
-            if self.available_languages
-            else self.SUPPORTED_LANGUAGES
-        )
+        return self.available_languages if self.available_languages else self.SUPPORTED_LANGUAGES
 
     def batch_synthesize(
         self,
@@ -567,9 +533,7 @@ class FestivalFliteEngine(EngineProtocol):
         if output_paths is None:
             output_paths = [None] * len(text_list)
         elif len(output_paths) != len(text_list):
-            logger.warning(
-                "output_paths length doesn't match text_list, using None for extras"
-            )
+            logger.warning("output_paths length doesn't match text_list, using None for extras")
             output_paths = output_paths[: len(text_list)] + [None] * (
                 len(text_list) - len(output_paths)
             )
@@ -578,9 +542,7 @@ class FestivalFliteEngine(EngineProtocol):
             text, output_path = args
             try:
                 # Record synthesis time if metrics available
-                start_time = (
-                    time.perf_counter() if hasattr(time, "perf_counter") else None
-                )
+                start_time = time.perf_counter() if hasattr(time, "perf_counter") else None
                 result = self.synthesize(
                     text=text,
                     language=language,
@@ -596,13 +558,9 @@ class FestivalFliteEngine(EngineProtocol):
                         metrics = get_engine_metrics()
                         duration = time.perf_counter() - start_time
                         engine_name = "flite" if self.use_flite else "festival"
-                        metrics.record_synthesis_time(
-                            engine_name, duration, cached=False
-                        )
+                        metrics.record_synthesis_time(engine_name, duration, cached=False)
                     except Exception:
-                        logger.debug(
-                            "Performance metrics unavailable for festival/flite batch."
-                        )
+                        logger.debug("Performance metrics unavailable for festival/flite batch.")
                 return result
             except Exception as e:
                 logger.error(f"Batch synthesis failed for text: {e}")
@@ -645,9 +603,7 @@ class FestivalFliteEngine(EngineProtocol):
 
                     temp_manager = get_temp_file_manager()
                     temp_manager.remove_temp_file(self._temp_dir, force=True)
-                    logger.debug(
-                        f"Removed temp directory via manager: {self._temp_dir}"
-                    )
+                    logger.debug(f"Removed temp directory via manager: {self._temp_dir}")
                 except Exception:
                     # Fallback to direct removal
                     if os.path.exists(self._temp_dir):
@@ -675,11 +631,7 @@ class FestivalFliteEngine(EngineProtocol):
     def get_cache_stats(self) -> dict[str, int | float | str]:
         """Get cache statistics (enhanced)."""
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
-        hit_rate = (
-            (self._cache_stats["hits"] / total_requests * 100)
-            if total_requests > 0
-            else 0.0
-        )
+        hit_rate = (self._cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0.0
         return {
             "cache_size": len(self._synthesis_cache),
             "max_cache_size": self._cache_max_size,

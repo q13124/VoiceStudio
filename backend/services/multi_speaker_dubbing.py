@@ -49,6 +49,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SpeakerSegment:
     """Segment of audio attributed to a speaker."""
+
     segment_id: str
     speaker_id: str
     start_time: float
@@ -75,6 +76,7 @@ class SpeakerSegment:
 @dataclass
 class Speaker:
     """Identified speaker in content."""
+
     speaker_id: str
     label: str  # User-friendly name
     total_duration: float
@@ -96,6 +98,7 @@ class Speaker:
 @dataclass
 class DubbingProject:
     """Multi-speaker dubbing project."""
+
     project_id: str
     name: str
     source_audio_path: str
@@ -131,6 +134,7 @@ class DubbingProject:
 @dataclass
 class DubbingResult:
     """Result of dubbing operation."""
+
     success: bool
     project_id: str
     output_audio_path: str | None
@@ -184,6 +188,7 @@ class MultiSpeakerDubbingService:
             try:
                 import torch
                 from pyannote.audio import Pipeline
+
                 hf_token = os.environ.get("HF_TOKEN")
                 if hf_token:
                     self._diarization_model = Pipeline.from_pretrained(
@@ -416,6 +421,7 @@ class MultiSpeakerDubbingService:
             DubbingResult with processing outcome
         """
         import time
+
         start_time = time.perf_counter()
 
         project = self._projects.get(project_id)
@@ -556,6 +562,7 @@ class MultiSpeakerDubbingService:
         """Load audio file."""
         try:
             import soundfile as sf
+
             audio, sample_rate = sf.read(path)
 
             if len(audio.shape) > 1:
@@ -570,6 +577,7 @@ class MultiSpeakerDubbingService:
         """Save audio file."""
         try:
             import soundfile as sf
+
             Path(path).parent.mkdir(parents=True, exist_ok=True)
             sf.write(path, audio, sample_rate)
         except Exception as e:
@@ -590,9 +598,7 @@ class MultiSpeakerDubbingService:
         """
         # Try pyannote.audio first
         try:
-            return await self._diarize_with_pyannote(
-                audio, sample_rate, min_speakers, max_speakers
-            )
+            return await self._diarize_with_pyannote(audio, sample_rate, min_speakers, max_speakers)
         except ImportError:
             logger.debug("pyannote not available, trying alternatives")
         except Exception as e:
@@ -609,10 +615,10 @@ class MultiSpeakerDubbingService:
             logger.debug(f"resemblyzer diarization failed: {e}")
 
         # Fallback to energy-based segmentation
-        logger.warning("Using basic energy-based diarization (install pyannote.audio for better results)")
-        return await self._diarize_energy_based(
-            audio, sample_rate, min_speakers, max_speakers
+        logger.warning(
+            "Using basic energy-based diarization (install pyannote.audio for better results)"
         )
+        return await self._diarize_energy_based(audio, sample_rate, min_speakers, max_speakers)
 
     async def _diarize_with_pyannote(
         self,
@@ -671,13 +677,15 @@ class MultiSpeakerDubbingService:
 
         speakers = []
         for speaker_id, data in speakers_data.items():
-            speakers.append(Speaker(
-                speaker_id=speaker_id,
-                label=speaker_id.replace("_", " ").title(),
-                total_duration=data["duration"],
-                segment_count=data["count"],
-                voice_profile_id=None,
-            ))
+            speakers.append(
+                Speaker(
+                    speaker_id=speaker_id,
+                    label=speaker_id.replace("_", " ").title(),
+                    total_duration=data["duration"],
+                    segment_count=data["count"],
+                    voice_profile_id=None,
+                )
+            )
 
         logger.info(f"Diarized {len(segments)} segments with {len(speakers)} speakers (pyannote)")
         return segments, speakers
@@ -698,6 +706,7 @@ class MultiSpeakerDubbingService:
         # Resample to 16kHz if needed
         if sample_rate != 16000:
             import librosa
+
             audio = librosa.resample(audio, orig_sr=sample_rate, target_sr=16000)
             sample_rate = 16000
 
@@ -709,10 +718,10 @@ class MultiSpeakerDubbingService:
         chunk_times = []
 
         for i in range(0, len(audio) - chunk_samples, chunk_samples // 2):
-            chunk = audio[i:i + chunk_samples]
+            chunk = audio[i : i + chunk_samples]
 
             # Skip silent chunks
-            if np.sqrt(np.mean(chunk ** 2)) < 0.01:
+            if np.sqrt(np.mean(chunk**2)) < 0.01:
                 continue
 
             # Extract embedding
@@ -756,15 +765,19 @@ class MultiSpeakerDubbingService:
 
         speakers = []
         for speaker_id, data in speakers_data.items():
-            speakers.append(Speaker(
-                speaker_id=speaker_id,
-                label=speaker_id.replace("_", " ").title(),
-                total_duration=data["duration"],
-                segment_count=data["count"],
-                voice_profile_id=None,
-            ))
+            speakers.append(
+                Speaker(
+                    speaker_id=speaker_id,
+                    label=speaker_id.replace("_", " ").title(),
+                    total_duration=data["duration"],
+                    segment_count=data["count"],
+                    voice_profile_id=None,
+                )
+            )
 
-        logger.info(f"Diarized {len(segments)} segments with {len(speakers)} speakers (resemblyzer)")
+        logger.info(
+            f"Diarized {len(segments)} segments with {len(speakers)} speakers (resemblyzer)"
+        )
         return segments, speakers
 
     async def _diarize_energy_based(
@@ -788,8 +801,8 @@ class MultiSpeakerDubbingService:
         speaker_count = 1
 
         for i in range(0, len(audio), frame_samples):
-            frame = audio[i:i + frame_samples]
-            energy = np.sqrt(np.mean(frame ** 2))
+            frame = audio[i : i + frame_samples]
+            energy = np.sqrt(np.mean(frame**2))
             time_pos = i / sample_rate
 
             energy_change = abs(energy - last_energy)
@@ -839,13 +852,15 @@ class MultiSpeakerDubbingService:
 
         speakers = []
         for speaker_id, data in speakers_data.items():
-            speakers.append(Speaker(
-                speaker_id=speaker_id,
-                label=speaker_id.replace("_", " ").title(),
-                total_duration=data["duration"],
-                segment_count=data["count"],
-                voice_profile_id=None,
-            ))
+            speakers.append(
+                Speaker(
+                    speaker_id=speaker_id,
+                    label=speaker_id.replace("_", " ").title(),
+                    total_duration=data["duration"],
+                    segment_count=data["count"],
+                    voice_profile_id=None,
+                )
+            )
 
         return segments, speakers
 
@@ -876,7 +891,7 @@ class MultiSpeakerDubbingService:
             return {}
 
         # Extract characteristics
-        rms = np.sqrt(np.mean(speaker_audio ** 2))
+        rms = np.sqrt(np.mean(speaker_audio**2))
 
         # Estimate pitch range (simplified)
         # In production, use a proper pitch detection algorithm
@@ -975,8 +990,7 @@ class MultiSpeakerDubbingService:
             synthesized[-beep_samples:] = beep
 
         logger.debug(
-            f"Generated placeholder audio for segment {segment.segment_id} "
-            f"(TTS not available)"
+            f"Generated placeholder audio for segment {segment.segment_id} " f"(TTS not available)"
         )
 
         return synthesized
@@ -1003,7 +1017,7 @@ class MultiSpeakerDubbingService:
 
             if end > len(output):
                 end = len(output)
-                dubbed_audio = dubbed_audio[:end - start]
+                dubbed_audio = dubbed_audio[: end - start]
 
             output[start:end] += dubbed_audio
 
@@ -1027,12 +1041,18 @@ class MultiSpeakerDubbingService:
             cmd = [
                 "ffmpeg",
                 "-y",
-                "-i", video_path,
-                "-i", audio_path,
-                "-c:v", "copy",
-                "-c:a", "aac",
-                "-map", "0:v:0",
-                "-map", "1:a:0",
+                "-i",
+                video_path,
+                "-i",
+                audio_path,
+                "-c:v",
+                "copy",
+                "-c:a",
+                "aac",
+                "-map",
+                "0:v:0",
+                "-map",
+                "1:a:0",
                 output_path,
             ]
 

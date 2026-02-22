@@ -62,17 +62,13 @@ class TestF5TTSEngineClass:
         if hasattr(f5_tts_engine, "F5TTSEngine"):
             engine = f5_tts_engine.F5TTSEngine(device="cpu", gpu=False)
             # Check for caching support
-            assert hasattr(
-                engine, "enable_caching"
-            ), "F5TTSEngine should support caching"
+            assert hasattr(engine, "enable_caching"), "F5TTSEngine should support caching"
             # Check for batch processing (method is called batch_synthesize)
             assert hasattr(
                 engine, "batch_synthesize"
             ), "F5TTSEngine should support batch processing"
             # Check for batch_size attribute
-            assert hasattr(
-                engine, "batch_size"
-            ), "F5TTSEngine should have batch_size attribute"
+            assert hasattr(engine, "batch_size"), "F5TTSEngine should have batch_size attribute"
 
 
 class TestF5TTSEngineCaching:
@@ -103,9 +99,7 @@ class TestF5TTSEngineCaching:
                 enable_caching_method(False)
                 # After calling, enable_caching becomes a boolean property
                 # Verify it was set correctly by checking the attribute directly
-                assert hasattr(
-                    engine, "enable_caching"
-                ), "enable_caching should still exist"
+                assert hasattr(engine, "enable_caching"), "enable_caching should still exist"
 
 
 class TestF5TTSEngineBatchProcessing:
@@ -159,9 +153,7 @@ class TestF5TTSEngineConfiguration:
         if hasattr(f5_tts_engine, "F5TTSEngine"):
             engine = f5_tts_engine.F5TTSEngine(device="cpu", gpu=False)
             assert hasattr(engine, "sample_rate"), "Should have sample_rate attribute"
-            assert isinstance(
-                engine.sample_rate, int
-            ), "sample_rate should be an integer"
+            assert isinstance(engine.sample_rate, int), "sample_rate should be an integer"
             assert engine.sample_rate > 0, "sample_rate should be positive"
 
     def test_model_name_attribute(self):

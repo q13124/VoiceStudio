@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class StreamState(Enum):
     """Stream processing state."""
+
     IDLE = "idle"
     STARTING = "starting"
     ACTIVE = "active"
@@ -325,10 +326,7 @@ class StreamingProcessor:
         """
         Get current end-to-end latency in milliseconds.
         """
-        buffered_samples = (
-            self._input_buffer.available() +
-            self._output_buffer.available()
-        )
+        buffered_samples = self._input_buffer.available() + self._output_buffer.available()
 
         latency_samples = buffered_samples + self._config.chunk_size
         latency_ms = (latency_samples / self._config.sample_rate) * 1000

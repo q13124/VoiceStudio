@@ -60,9 +60,7 @@ def test_ensure_sovits_missing_files_raises(tmp_path, monkeypatch):
             }
         )
 
-    monkeypatch.setattr(
-        model_preflight, "get_engine_config_service", _fake_config_service
-    )
+    monkeypatch.setattr(model_preflight, "get_engine_config_service", _fake_config_service)
 
     with pytest.raises((HTTPException, model_preflight.PreflightError)) as exc:
         model_preflight.ensure_sovits(auto_download=False)
@@ -95,9 +93,7 @@ def test_ensure_sovits_ok_when_files_exist(tmp_path, monkeypatch):
             }
         )
 
-    monkeypatch.setattr(
-        model_preflight, "get_engine_config_service", _fake_config_service
-    )
+    monkeypatch.setattr(model_preflight, "get_engine_config_service", _fake_config_service)
 
     result = model_preflight.ensure_sovits(auto_download=False)
     assert result["ok"] is True

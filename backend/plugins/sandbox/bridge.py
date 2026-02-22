@@ -69,9 +69,7 @@ class IPCBridge:
     state: BridgeState = BridgeState.DISCONNECTED
     _next_id: int = field(default=0, repr=False)
     _pending: Dict[Union[int, str], PendingRequest] = field(default_factory=dict, repr=False)
-    _handlers: Dict[str, Callable[..., Awaitable[Any]]] = field(
-        default_factory=dict, repr=False
-    )
+    _handlers: Dict[str, Callable[..., Awaitable[Any]]] = field(default_factory=dict, repr=False)
     _notification_handlers: Dict[str, Callable[..., Awaitable[None]]] = field(
         default_factory=dict, repr=False
     )
@@ -141,9 +139,7 @@ class IPCBridge:
             if pending.timeout_task:
                 pending.timeout_task.cancel()
             if not pending.future.done():
-                pending.future.set_exception(
-                    RuntimeError("Bridge closed while request pending")
-                )
+                pending.future.set_exception(RuntimeError("Bridge closed while request pending"))
         self._pending.clear()
 
         # Close writer
@@ -247,9 +243,7 @@ class IPCBridge:
             response = await future
 
             if response.error:
-                raise Exception(
-                    f"RPC error {response.error.code}: {response.error.message}"
-                )
+                raise Exception(f"RPC error {response.error.code}: {response.error.message}")
 
             return response.result
 
@@ -283,9 +277,7 @@ class IPCBridge:
         data = encode_message(message)
 
         if len(data) > self.max_message_size:
-            raise ValueError(
-                f"Message size {len(data)} exceeds maximum {self.max_message_size}"
-            )
+            raise ValueError(f"Message size {len(data)} exceeds maximum {self.max_message_size}")
 
         self.writer.write(data)
         await self.writer.drain()

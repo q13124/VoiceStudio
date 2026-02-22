@@ -21,6 +21,7 @@ import numpy as np
 # Try importing general model cache
 try:
     from app.core.models.cache import get_model_cache
+
     _model_cache = get_model_cache(max_models=2, max_memory_mb=2048.0)  # 2GB max
     HAS_MODEL_CACHE = True
 except ImportError:
@@ -110,6 +111,7 @@ def _cache_voice_cloning(cache_key: str, prompt: any):
         logger.debug(f"Evicted voice cloning from cache: {oldest_key[:8]}")
 
     logger.debug(f"Cached voice cloning: {cache_key[:8]} (cache size: {len(_VOICE_CLONING_CACHE)})")
+
 
 # Import base protocol
 try:
@@ -337,7 +339,7 @@ class BarkEngine(EngineProtocol):
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         batch_size: int = 2,
-        **kwargs
+        **kwargs,
     ) -> list[np.ndarray | None | tuple[np.ndarray | None, dict]]:
         """
         Synthesize multiple texts in batch with optimized processing.
@@ -375,7 +377,7 @@ class BarkEngine(EngineProtocol):
                     speaker=speaker,
                     enhance_quality=enhance_quality,
                     calculate_quality=calculate_quality,
-                    **kwargs
+                    **kwargs,
                 )
             except Exception as e:
                 logger.error(f"Batch synthesis failed for text: {e}")
@@ -396,6 +398,7 @@ class BarkEngine(EngineProtocol):
                         audio, metrics = result
                         if audio is not None:
                             import soundfile as sf
+
                             sf.write(str(output_path), audio, self.DEFAULT_SAMPLE_RATE)
                             results.append((None, metrics))
                         else:
@@ -403,6 +406,7 @@ class BarkEngine(EngineProtocol):
                     else:
                         if result is not None:
                             import soundfile as sf
+
                             sf.write(str(output_path), result, self.DEFAULT_SAMPLE_RATE)
                             results.append(None)
                         else:
@@ -486,10 +490,15 @@ class BarkEngine(EngineProtocol):
 
             # Check synthesis cache
             import hashlib
+
             ref_key = (
-                str(reference_audio) if isinstance(reference_audio, (str, Path))
-                else hashlib.md5(np.array(reference_audio).tobytes()).hexdigest()
-                if reference_audio is not None else "none"
+                str(reference_audio)
+                if isinstance(reference_audio, (str, Path))
+                else (
+                    hashlib.md5(np.array(reference_audio).tobytes()).hexdigest()
+                    if reference_audio is not None
+                    else "none"
+                )
             )
             # Get emotion from parameter or kwargs, validate against supported emotions
             effective_emotion = emotion or kwargs.get("emotion", "neutral")
@@ -559,7 +568,11 @@ class BarkEngine(EngineProtocol):
                         history_prompt=history_prompt,
                         text_temp=kwargs.get("temperature", 0.7),
                         waveform_temp=kwargs.get("fine_temperature", 0.7),
-                        **{k: v for k, v in kwargs.items() if k not in ["temperature", "fine_temperature"]},
+                        **{
+                            k: v
+                            for k, v in kwargs.items()
+                            if k not in ["temperature", "fine_temperature"]
+                        },
                     )
             else:
                 audio_array = generate_audio(
@@ -567,7 +580,11 @@ class BarkEngine(EngineProtocol):
                     history_prompt=history_prompt,
                     text_temp=kwargs.get("temperature", 0.7),
                     waveform_temp=kwargs.get("fine_temperature", 0.7),
-                    **{k: v for k, v in kwargs.items() if k not in ["temperature", "fine_temperature"]},
+                    **{
+                        k: v
+                        for k, v in kwargs.items()
+                        if k not in ["temperature", "fine_temperature"]
+                    },
                 )
 
             if audio_array is None:
@@ -709,4 +726,3 @@ def create_bark_engine(
 ) -> BarkEngine:
     """Factory function to create a Bark engine instance."""
     return BarkEngine(device=device, gpu=gpu, model_path=model_path)
-

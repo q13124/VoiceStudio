@@ -74,9 +74,7 @@ def audit_all_modules() -> dict[str, Any]:
         }
     except Exception as e:
         logger.error(f"Failed to audit audio modules: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to audit audio modules: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to audit audio modules: {e!s}")
 
 
 @router.get("/summary", summary="Get audit summary")
@@ -97,9 +95,7 @@ def get_audit_summary() -> dict[str, Any]:
         return auditor.get_audit_summary()
     except Exception as e:
         logger.error(f"Failed to get audit summary: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get audit summary: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get audit summary: {e!s}")
 
 
 @router.get("/needing-attention", summary="Get modules needing attention")
@@ -169,6 +165,4 @@ def generate_enhancement_report() -> dict[str, str]:
         return {"report": report}
     except Exception as e:
         logger.error(f"Failed to generate report: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate report: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to generate report: {e!s}")

@@ -116,7 +116,9 @@ class TestOpenAPISchemaDrift:
 
                 # Check that responses have at least one status code
                 responses = operation["responses"]
-                assert len(responses) > 0, f"Operation {method} {path} must have at least one response"
+                assert (
+                    len(responses) > 0
+                ), f"Operation {method} {path} must have at least one response"
 
 
 @pytest.fixture(scope="session", autouse=True)

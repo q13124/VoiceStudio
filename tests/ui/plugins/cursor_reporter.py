@@ -37,43 +37,33 @@ class CursorAgentReporter:
         self.session_start: Optional[float] = None
         self.current_test: Optional[str] = None
         self.test_results: Dict[str, Dict[str, Any]] = {}
-        self.output_dir = Path(
-            os.environ.get("VOICESTUDIO_UI_TEST_OUTPUT", ".buildlogs/ui-tests")
-        )
+        self.output_dir = Path(os.environ.get("VOICESTUDIO_UI_TEST_OUTPUT", ".buildlogs/ui-tests"))
         self.screenshot_dir = Path(
             os.environ.get("VOICESTUDIO_UI_SCREENSHOT_DIR", self.output_dir / "screenshots")
         )
-        
-    def _emit_event(
-        self,
-        event_type: str,
-        data: Dict[str, Any],
-        level: str = "INFO"
-    ) -> None:
+
+    def _emit_event(self, event_type: str, data: Dict[str, Any], level: str = "INFO") -> None:
         """Emit a structured event for agent consumption."""
         event = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "type": event_type,
             "level": level,
-            "data": data
+            "data": data,
         }
         self.events.append(event)
-        
+
         # Also print for real-time consumption
         marker = f"[CURSOR:{event_type}]"
         print(f"{marker} {json.dumps(data, default=str)}", file=sys.stderr)
 
-    def _extract_failure_context(
-        self,
-        report: pytest.TestReport
-    ) -> Dict[str, Any]:
+    def _extract_failure_context(self, report: pytest.TestReport) -> Dict[str, Any]:
         """Extract detailed failure context for debugging assistance."""
         context: Dict[str, Any] = {
             "nodeid": report.nodeid,
             "duration": report.duration,
             "outcome": report.outcome,
         }
-        
+
         if report.longrepr:
             # Extract exception info
             if hasattr(report.longrepr, "reprcrash"):
@@ -83,29 +73,31 @@ class CursorAgentReporter:
                     "lineno": crash.lineno,
                     "message": crash.message,
                 }
-            
+
             # Extract traceback entries
             if hasattr(report.longrepr, "reprtraceback"):
                 entries = []
                 for entry in report.longrepr.reprtraceback.reprentries:
                     if hasattr(entry, "reprfileloc"):
                         loc = entry.reprfileloc
-                        entries.append({
-                            "path": str(loc.path) if loc.path else None,
-                            "lineno": loc.lineno,
-                            "message": loc.message if hasattr(loc, "message") else None,
-                        })
+                        entries.append(
+                            {
+                                "path": str(loc.path) if loc.path else None,
+                                "lineno": loc.lineno,
+                                "message": loc.message if hasattr(loc, "message") else None,
+                            }
+                        )
                 context["traceback"] = entries
-            
+
             # Full string representation
             context["longrepr_str"] = str(report.longrepr)
-        
+
         return context
 
     def _categorize_failure(self, context: Dict[str, Any]) -> str:
         """Categorize failure type for targeted debugging."""
         longrepr = context.get("longrepr_str", "")
-        
+
         if "WinAppDriver" in longrepr or "element" in longrepr.lower():
             return "UI_ELEMENT"
         elif "connection" in longrepr.lower() or "refused" in longrepr.lower():
@@ -182,11 +174,14 @@ def pytest_sessionstart(session: pytest.Session) -> None:
     """Called when test session starts."""
     reporter = session.config._cursor_reporter
     reporter.session_start = time.time()
-    reporter._emit_event("session_start", {
-        "python_version": sys.version,
-        "pytest_version": pytest.__version__,
-        "cwd": os.getcwd(),
-    })
+    reporter._emit_event(
+        "session_start",
+        {
+            "python_version": sys.version,
+            "pytest_version": pytest.__version__,
+            "cwd": os.getcwd(),
+        },
+    )
 
 
 @pytest.hookimpl(trylast=True)
@@ -194,27 +189,29 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     """Called when test session ends."""
     reporter = session.config._cursor_reporter
     duration = time.time() - reporter.session_start if reporter.session_start else 0
-    
+
     # Aggregate results
     total = len(reporter.test_results)
     passed = sum(1 for r in reporter.test_results.values() if r["outcome"] == "passed")
     failed = sum(1 for r in reporter.test_results.values() if r["outcome"] == "failed")
     skipped = sum(1 for r in reporter.test_results.values() if r["outcome"] == "skipped")
     errors = sum(1 for r in reporter.test_results.values() if r["outcome"] == "error")
-    
+
     # Collect failures with analysis
     failures = []
     for nodeid, result in reporter.test_results.items():
         if result["outcome"] in ("failed", "error"):
             category = reporter._categorize_failure(result)
-            failures.append({
-                "nodeid": nodeid,
-                "category": category,
-                "duration": result.get("duration", 0),
-                "message": result.get("crash", {}).get("message", "Unknown"),
-                "suggestions": reporter._suggest_remediation(category, result),
-            })
-    
+            failures.append(
+                {
+                    "nodeid": nodeid,
+                    "category": category,
+                    "duration": result.get("duration", 0),
+                    "message": result.get("crash", {}).get("message", "Unknown"),
+                    "suggestions": reporter._suggest_remediation(category, result),
+                }
+            )
+
     summary = {
         "status": "PASSED" if exitstatus == 0 else "FAILED",
         "exit_code": exitstatus,
@@ -228,10 +225,9 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
         },
         "failures": failures,
     }
-    
-    reporter._emit_event("session_finish", summary,
-                         level="SUCCESS" if exitstatus == 0 else "ERROR")
-    
+
+    reporter._emit_event("session_finish", summary, level="SUCCESS" if exitstatus == 0 else "ERROR")
+
     # Output final summary for agent parsing
     print("\n--- CURSOR_AGENT_SESSION_SUMMARY ---", file=sys.stderr)
     print(json.dumps(summary, indent=2), file=sys.stderr)
@@ -243,18 +239,21 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     """Called before each test setup."""
     reporter = item.config._cursor_reporter
     reporter.current_test = item.nodeid
-    reporter._emit_event("test_setup", {
-        "nodeid": item.nodeid,
-        "name": item.name,
-        "markers": [m.name for m in item.iter_markers()],
-    })
+    reporter._emit_event(
+        "test_setup",
+        {
+            "nodeid": item.nodeid,
+            "name": item.name,
+            "markers": [m.name for m in item.iter_markers()],
+        },
+    )
 
 
 @pytest.hookimpl(trylast=True)
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> None:
     """Called after each test phase (setup, call, teardown)."""
     reporter = item.config._cursor_reporter
-    
+
     if call.when == "call":
         # Extract result for this test
         outcome = "passed" if call.excinfo is None else "failed"
@@ -263,16 +262,17 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> None:
             "duration": call.duration,
             "when": call.when,
         }
-        
+
         if call.excinfo:
             result["exception_type"] = call.excinfo.typename
             result["exception_value"] = str(call.excinfo.value)
-            
+
             # Capture screenshot on failure if enabled
             screenshot_dir = reporter.screenshot_dir
             if screenshot_dir and screenshot_dir.exists():
                 try:
                     from tests.ui.helpers.visual import capture_screenshot
+
                     safe_name = item.nodeid.replace("::", "_").replace("/", "_").replace("\\", "_")
                     screenshot_path = screenshot_dir / f"failure_{safe_name}.png"
                     # Note: This requires an active WinAppDriver session
@@ -280,12 +280,13 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> None:
                     result["screenshot"] = str(screenshot_path)
                 except Exception:
                     pass
-        
+
         reporter.test_results[item.nodeid] = result
-        reporter._emit_event("test_result", {
-            "nodeid": item.nodeid,
-            **result
-        }, level="SUCCESS" if outcome == "passed" else "ERROR")
+        reporter._emit_event(
+            "test_result",
+            {"nodeid": item.nodeid, **result},
+            level="SUCCESS" if outcome == "passed" else "ERROR",
+        )
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -298,10 +299,11 @@ def pytest_runtest_logreport(report: pytest.TestReport) -> None:
             reporter = config._cursor_reporter
             context = reporter._extract_failure_context(report)
             category = reporter._categorize_failure(context)
-            
+
             # Update stored result with detailed context
             if report.nodeid in reporter.test_results:
                 reporter.test_results[report.nodeid].update(context)
                 reporter.test_results[report.nodeid]["category"] = category
-                reporter.test_results[report.nodeid]["suggestions"] = \
-                    reporter._suggest_remediation(category, context)
+                reporter.test_results[report.nodeid]["suggestions"] = reporter._suggest_remediation(
+                    category, context
+                )

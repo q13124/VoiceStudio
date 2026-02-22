@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def slo_client():
     """Create test client for SLO routes."""
     from backend.api.routes.slo import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)
@@ -60,8 +61,7 @@ class TestSLOAlerts:
     def test_acknowledge_alert(self, slo_client):
         """Test POST /alerts/{alert_id}/acknowledge acknowledges alert."""
         response = slo_client.post(
-            "/api/slo/alerts/test-alert/acknowledge",
-            json={"acknowledged_by": "test-user"}
+            "/api/slo/alerts/test-alert/acknowledge", json={"acknowledged_by": "test-user"}
         )
         assert response.status_code in [200, 404, 422]
 
@@ -76,8 +76,5 @@ class TestSLOManagement:
 
     def test_record_metric(self, slo_client):
         """Test POST /record/{metric_name} records a metric."""
-        response = slo_client.post(
-            "/api/slo/record/test_metric",
-            json={"value": 100.0}
-        )
+        response = slo_client.post("/api/slo/record/test_metric", json={"value": 100.0})
         assert response.status_code in [200, 422]

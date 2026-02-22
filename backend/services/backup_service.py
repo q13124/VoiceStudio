@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class BackupType(Enum):
     """Types of backups."""
+
     FULL = "full"
     INCREMENTAL = "incremental"
     DIFFERENTIAL = "differential"
@@ -32,6 +33,7 @@ class BackupType(Enum):
 
 class BackupStatus(Enum):
     """Status of a backup."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -42,6 +44,7 @@ class BackupStatus(Enum):
 @dataclass
 class BackupManifest:
     """Manifest for a backup."""
+
     backup_id: str
     backup_type: BackupType
     created_at: datetime
@@ -59,6 +62,7 @@ class BackupManifest:
 @dataclass
 class BackupConfig:
     """Configuration for backup service."""
+
     backup_path: str = "data/backups"
     retention_days: int = 30
     max_backups: int = 10
@@ -67,20 +71,24 @@ class BackupConfig:
     verify_after_backup: bool = True
 
     # Paths to backup
-    source_paths: list[str] = field(default_factory=lambda: [
-        "data/projects",
-        "data/voices",
-        "data/settings",
-        "data/voicestudio.db",
-    ])
+    source_paths: list[str] = field(
+        default_factory=lambda: [
+            "data/projects",
+            "data/voices",
+            "data/settings",
+            "data/voicestudio.db",
+        ]
+    )
 
     # Patterns to exclude
-    exclude_patterns: list[str] = field(default_factory=lambda: [
-        "*.tmp",
-        "*.log",
-        "__pycache__",
-        ".git",
-    ])
+    exclude_patterns: list[str] = field(
+        default_factory=lambda: [
+            "*.tmp",
+            "*.log",
+            "__pycache__",
+            ".git",
+        ]
+    )
 
 
 class BackupService:
@@ -122,7 +130,11 @@ class BackupService:
                         backup_id=manifest_data["backup_id"],
                         backup_type=BackupType(manifest_data["backup_type"]),
                         created_at=datetime.fromisoformat(manifest_data["created_at"]),
-                        completed_at=datetime.fromisoformat(manifest_data["completed_at"]) if manifest_data.get("completed_at") else None,
+                        completed_at=(
+                            datetime.fromisoformat(manifest_data["completed_at"])
+                            if manifest_data.get("completed_at")
+                            else None
+                        ),
                         status=BackupStatus(manifest_data["status"]),
                         size_bytes=manifest_data.get("size_bytes", 0),
                         file_count=manifest_data.get("file_count", 0),
@@ -145,7 +157,9 @@ class BackupService:
                 "backup_id": manifest.backup_id,
                 "backup_type": manifest.backup_type.value,
                 "created_at": manifest.created_at.isoformat(),
-                "completed_at": manifest.completed_at.isoformat() if manifest.completed_at else None,
+                "completed_at": (
+                    manifest.completed_at.isoformat() if manifest.completed_at else None
+                ),
                 "status": manifest.status.value,
                 "size_bytes": manifest.size_bytes,
                 "file_count": manifest.file_count,
@@ -410,7 +424,11 @@ class BackupService:
                                 source.unlink()
                             else:
                                 shutil.rmtree(source)
-                        shutil.copytree(backup_source, source) if backup_source.is_dir() else shutil.copy2(backup_source, source)
+                        (
+                            shutil.copytree(backup_source, source)
+                            if backup_source.is_dir()
+                            else shutil.copy2(backup_source, source)
+                        )
 
             # Cleanup
             if backup_path.suffix == ".gz":

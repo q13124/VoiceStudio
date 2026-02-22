@@ -113,7 +113,9 @@ class TestSafeZoneManagement:
             pattern = zones[0].pattern
             safe_zone_manager.disable_zone(pattern)
 
-            disabled_zones = [z for z in safe_zone_manager.get_zones(enabled_only=False) if z.pattern == pattern]
+            disabled_zones = [
+                z for z in safe_zone_manager.get_zones(enabled_only=False) if z.pattern == pattern
+            ]
             assert len(disabled_zones) == 1
             assert not disabled_zones[0].enabled
 

@@ -33,9 +33,7 @@ try:
     HAS_DIFFUSERS = True
 except ImportError:
     HAS_DIFFUSERS = False
-    logger.warning(
-        "diffusers not installed. " "Install with: pip install diffusers>=0.21.0"
-    )
+    logger.warning("diffusers not installed. " "Install with: pip install diffusers>=0.21.0")
 
 # Import base protocol from canonical source
 from .base import EngineProtocol
@@ -104,8 +102,7 @@ class SDXLEngine(EngineProtocol):
 
         if not HAS_DIFFUSERS:
             raise ImportError(
-                "diffusers library not installed. "
-                "Install with: pip install diffusers>=0.21.0"
+                "diffusers library not installed. " "Install with: pip install diffusers>=0.21.0"
             )
 
         # Override device if GPU requested and available
@@ -193,9 +190,7 @@ class SDXLEngine(EngineProtocol):
                 logger.info("SDXL engine initialized from cache")
                 return True
 
-            logger.info(
-                f"Loading SDXL model: {self.model_id} " f"(device: {self.device})"
-            )
+            logger.info(f"Loading SDXL model: {self.model_id} " f"(device: {self.device})")
 
             # Use model cache directory if available
             model_cache_dir = os.getenv("VOICESTUDIO_MODELS_PATH")
@@ -212,9 +207,7 @@ class SDXLEngine(EngineProtocol):
             try:
                 self.pipe = StableDiffusionXLPipeline.from_pretrained(
                     self.model_id,
-                    torch_dtype=(
-                        torch.float16 if self.device == "cuda" else torch.float32
-                    ),
+                    torch_dtype=(torch.float16 if self.device == "cuda" else torch.float32),
                     cache_dir=model_cache_dir,
                 )
                 self.pipe = self.pipe.to(self.device)
@@ -228,9 +221,7 @@ class SDXLEngine(EngineProtocol):
                 try:
                     self.refiner = StableDiffusionXLImg2ImgPipeline.from_pretrained(
                         self.refiner_id,
-                        torch_dtype=(
-                            torch.float16 if self.device == "cuda" else torch.float32
-                        ),
+                        torch_dtype=(torch.float16 if self.device == "cuda" else torch.float32),
                         cache_dir=model_cache_dir,
                     )
                     self.refiner = self.refiner.to(self.device)
@@ -376,9 +367,7 @@ class SDXLEngine(EngineProtocol):
             if self.use_refiner and self.refiner is not None:
                 try:
                     # Use enable_model_cpu_offload for better GPU memory
-                    if self.device == "cuda" and hasattr(
-                        self.refiner, "enable_model_cpu_offload"
-                    ):
+                    if self.device == "cuda" and hasattr(self.refiner, "enable_model_cpu_offload"):
                         self.refiner.enable_model_cpu_offload()
 
                     refined_images = self.refiner(
@@ -485,9 +474,7 @@ class SDXLEngine(EngineProtocol):
                 else:
                     width, height = 1024, 1024
 
-            actual_batch_size = (
-                batch_size if batch_size is not None else self.batch_size
-            )
+            actual_batch_size = batch_size if batch_size is not None else self.batch_size
 
             # Record start time for metrics
             start_time = time.perf_counter()
@@ -498,9 +485,7 @@ class SDXLEngine(EngineProtocol):
             for i in range(0, len(prompts), actual_batch_size):
                 batch_prompts = prompts[i : i + actual_batch_size]
                 batch_seeds = (
-                    seeds[i : i + actual_batch_size]
-                    if seeds
-                    else [None] * len(batch_prompts)
+                    seeds[i : i + actual_batch_size] if seeds else [None] * len(batch_prompts)
                 )
 
                 # Set generators for batch
@@ -513,9 +498,7 @@ class SDXLEngine(EngineProtocol):
                     generators.append(gen)
 
                 # Use enable_model_cpu_offload for better GPU memory
-                if self.device == "cuda" and hasattr(
-                    self.pipe, "enable_model_cpu_offload"
-                ):
+                if self.device == "cuda" and hasattr(self.pipe, "enable_model_cpu_offload"):
                     self.pipe.enable_model_cpu_offload()
 
                 # Generate batch
@@ -539,9 +522,7 @@ class SDXLEngine(EngineProtocol):
             # Apply refiner if available
             if self.use_refiner and self.refiner is not None:
                 try:
-                    if self.device == "cuda" and hasattr(
-                        self.refiner, "enable_model_cpu_offload"
-                    ):
+                    if self.device == "cuda" and hasattr(self.refiner, "enable_model_cpu_offload"):
                         self.refiner.enable_model_cpu_offload()
 
                     refined_images = []
@@ -643,11 +624,7 @@ class SDXLEngine(EngineProtocol):
             return {"enabled": False}
 
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
-        hit_rate = (
-            (self._cache_stats["hits"] / total_requests * 100)
-            if total_requests > 0
-            else 0.0
-        )
+        hit_rate = (self._cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0.0
 
         return {
             "enabled": True,

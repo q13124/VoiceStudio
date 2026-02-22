@@ -63,9 +63,7 @@ class AudioModuleAuditor:
         """Initialize audio module auditor."""
         self.audit_results: dict[str, AudioModuleAuditResult] = {}
 
-    def audit_module(
-        self, module_name: str, module_class: type
-    ) -> AudioModuleAuditResult:
+    def audit_module(self, module_name: str, module_class: type) -> AudioModuleAuditResult:
         """
         Audit a single audio module.
 
@@ -76,15 +74,11 @@ class AudioModuleAuditor:
         Returns:
             Audit result
         """
-        result = AudioModuleAuditResult(
-            module_name=module_name, module_class=module_class
-        )
+        result = AudioModuleAuditResult(module_name=module_name, module_class=module_class)
 
         # Get all methods from the class
         methods = {name for name, _ in inspect.getmembers(module_class, inspect.isfunction)}
-        methods.update(
-            {name for name, _ in inspect.getmembers(module_class, inspect.ismethod)}
-        )
+        methods.update({name for name, _ in inspect.getmembers(module_class, inspect.ismethod)})
 
         # Check for features
         result.has_batch_processing = any(
@@ -92,20 +86,16 @@ class AudioModuleAuditor:
             for feature_method in self.RECOMMENDED_FEATURES["batch_processing"]
         )
         result.has_streaming = any(
-            feature_method in methods
-            for feature_method in self.RECOMMENDED_FEATURES["streaming"]
+            feature_method in methods for feature_method in self.RECOMMENDED_FEATURES["streaming"]
         )
         result.has_caching = any(
-            feature_method in methods
-            for feature_method in self.RECOMMENDED_FEATURES["caching"]
+            feature_method in methods for feature_method in self.RECOMMENDED_FEATURES["caching"]
         )
         result.has_presets = any(
-            feature_method in methods
-            for feature_method in self.RECOMMENDED_FEATURES["presets"]
+            feature_method in methods for feature_method in self.RECOMMENDED_FEATURES["presets"]
         )
         result.has_validation = any(
-            feature_method in methods
-            for feature_method in self.RECOMMENDED_FEATURES["validation"]
+            feature_method in methods for feature_method in self.RECOMMENDED_FEATURES["validation"]
         )
 
         # Check for missing features
@@ -126,9 +116,7 @@ class AudioModuleAuditor:
             if "for " in source and "range(" in source:
                 # Check if vectorization could help
                 if "np." not in source or "vectorize" not in source:
-                    result.optimization_opportunities.append(
-                        "Consider vectorization for loops"
-                    )
+                    result.optimization_opportunities.append("Consider vectorization for loops")
 
             if "ThreadPoolExecutor" not in source and "ProcessPoolExecutor" not in source:
                 if "process" in methods or "apply" in methods:
@@ -140,9 +128,7 @@ class AudioModuleAuditor:
             if "try:" not in source or "except" not in source:
                 result.error_handling_issues.append("Missing error handling")
             elif source.count("except") < 2:
-                result.error_handling_issues.append(
-                    "Limited error handling coverage"
-                )
+                result.error_handling_issues.append("Limited error handling coverage")
 
             # Check for performance issues
             if "deepcopy" in source:
@@ -186,9 +172,7 @@ class AudioModuleAuditor:
 
         return max(0.0, min(100.0, score))
 
-    def audit_all_modules(
-        self, modules: dict[str, type]
-    ) -> dict[str, AudioModuleAuditResult]:
+    def audit_all_modules(self, modules: dict[str, type]) -> dict[str, AudioModuleAuditResult]:
         """
         Audit all modules.
 
@@ -225,48 +209,29 @@ class AudioModuleAuditor:
             return {"error": "No audits performed"}
 
         total_modules = len(self.audit_results)
-        complete_modules = sum(
-            1 for r in self.audit_results.values() if r.is_complete
-        )
-        avg_score = (
-            sum(r.score for r in self.audit_results.values()) / total_modules
-        )
+        complete_modules = sum(1 for r in self.audit_results.values() if r.is_complete)
+        avg_score = sum(r.score for r in self.audit_results.values()) / total_modules
 
         # Count features
         features_count = {
             "batch_processing": sum(
-                1
-                for r in self.audit_results.values()
-                if r.has_batch_processing
+                1 for r in self.audit_results.values() if r.has_batch_processing
             ),
-            "streaming": sum(
-                1 for r in self.audit_results.values() if r.has_streaming
-            ),
-            "caching": sum(
-                1 for r in self.audit_results.values() if r.has_caching
-            ),
-            "presets": sum(
-                1 for r in self.audit_results.values() if r.has_presets
-            ),
-            "validation": sum(
-                1 for r in self.audit_results.values() if r.has_validation
-            ),
+            "streaming": sum(1 for r in self.audit_results.values() if r.has_streaming),
+            "caching": sum(1 for r in self.audit_results.values() if r.has_caching),
+            "presets": sum(1 for r in self.audit_results.values() if r.has_presets),
+            "validation": sum(1 for r in self.audit_results.values() if r.has_validation),
         }
 
         # Count issues
-        total_missing_features = sum(
-            len(r.missing_features) for r in self.audit_results.values()
-        )
+        total_missing_features = sum(len(r.missing_features) for r in self.audit_results.values())
         total_optimizations = sum(
-            len(r.optimization_opportunities)
-            for r in self.audit_results.values()
+            len(r.optimization_opportunities) for r in self.audit_results.values()
         )
         total_error_handling = sum(
             len(r.error_handling_issues) for r in self.audit_results.values()
         )
-        total_performance = sum(
-            len(r.performance_issues) for r in self.audit_results.values()
-        )
+        total_performance = sum(len(r.performance_issues) for r in self.audit_results.values())
 
         return {
             "total_modules": total_modules,
@@ -294,11 +259,7 @@ class AudioModuleAuditor:
         Returns:
             List of modules needing attention
         """
-        return [
-            result
-            for result in self.audit_results.values()
-            if result.score < min_score
-        ]
+        return [result for result in self.audit_results.values() if result.score < min_score]
 
     def generate_enhancement_report(self) -> str:
         """
@@ -320,38 +281,24 @@ class AudioModuleAuditor:
         lines.append("## Feature Coverage\n")
         for feature, count in summary["features"].items():
             percentage = (count / summary["total_modules"]) * 100
-            lines.append(
-                f"- {feature}: {count}/{summary['total_modules']} "
-                f"({percentage:.1f}%)"
-            )
+            lines.append(f"- {feature}: {count}/{summary['total_modules']} " f"({percentage:.1f}%)")
 
         # Modules needing attention
         lines.append("\n## Modules Needing Attention\n")
         needing_attention = self.get_modules_needing_attention()
         for result in sorted(needing_attention, key=lambda x: x.score):
-            lines.append(
-                f"\n### {result.module_name} (Score: {result.score:.1f})"
-            )
+            lines.append(f"\n### {result.module_name} (Score: {result.score:.1f})")
             if result.missing_features:
-                lines.append(
-                    f"- Missing Features: {', '.join(result.missing_features)}"
-                )
+                lines.append(f"- Missing Features: {', '.join(result.missing_features)}")
             if result.optimization_opportunities:
-                lines.append(
-                    f"- Optimizations: {', '.join(result.optimization_opportunities)}"
-                )
+                lines.append(f"- Optimizations: {', '.join(result.optimization_opportunities)}")
             if result.error_handling_issues:
-                lines.append(
-                    f"- Error Handling: {', '.join(result.error_handling_issues)}"
-                )
+                lines.append(f"- Error Handling: {', '.join(result.error_handling_issues)}")
             if result.performance_issues:
-                lines.append(
-                    f"- Performance: {', '.join(result.performance_issues)}"
-                )
+                lines.append(f"- Performance: {', '.join(result.performance_issues)}")
 
         return "\n".join(lines)
 
 
 # Export
 __all__ = ["AudioModuleAuditResult", "AudioModuleAuditor"]
-

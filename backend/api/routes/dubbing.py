@@ -36,13 +36,11 @@ async def translate(req: DubTranslateRequest) -> DubTranslateResponse:
         target_lang = req.lang
 
         if not audio_id or not target_lang:
-            raise HTTPException(
-                status_code=400,
-                detail="audio_id and lang are required"
-            )
+            raise HTTPException(status_code=400, detail="audio_id and lang are required")
 
         # Get audio transcription
         from .transcribe import _transcriptions
+
         transcription = None
 
         # Check if transcription exists for this audio
@@ -59,9 +57,7 @@ async def translate(req: DubTranslateRequest) -> DubTranslateResponse:
                 from .transcribe import transcribe_audio
 
                 transcribe_req = TranscriptionRequest(
-                    audio_id=audio_id,
-                    engine="whisper",
-                    language="auto"
+                    audio_id=audio_id, engine="whisper", language="auto"
                 )
                 transcription_result = await transcribe_audio(transcribe_req)
                 source_text = transcription_result.text
@@ -69,8 +65,7 @@ async def translate(req: DubTranslateRequest) -> DubTranslateResponse:
             except Exception as e:
                 logger.error(f"Failed to transcribe audio: {e}")
                 raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to transcribe audio for translation: {e!s}"
+                    status_code=500, detail=f"Failed to transcribe audio for translation: {e!s}"
                 )
         else:
             source_text = transcription.get("text", "")
@@ -79,7 +74,7 @@ async def translate(req: DubTranslateRequest) -> DubTranslateResponse:
         if not source_text:
             raise HTTPException(
                 status_code=404,
-                detail="No transcription found for audio. Cannot translate empty text."
+                detail="No transcription found for audio. Cannot translate empty text.",
             )
 
         # Translate the transcription
@@ -89,7 +84,7 @@ async def translate(req: DubTranslateRequest) -> DubTranslateResponse:
         translation_req = TranslationRequest(
             text=source_text,
             source_language=detected_lang if detected_lang != "auto" else "auto",
-            target_language=target_lang
+            target_language=target_lang,
         )
 
         # Use real translation service
@@ -99,17 +94,14 @@ async def translate(req: DubTranslateRequest) -> DubTranslateResponse:
             text=translation_result.translated_text,
             source_language=translation_result.source_language,
             target_language=translation_result.target_language,
-            confidence=translation_result.confidence
+            confidence=translation_result.confidence,
         )
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Translation failed for dubbing: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Translation failed: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Translation failed: {e!s}")
 
 
 @router.post("/sync", response_model=DubSyncResponse)
@@ -184,10 +176,7 @@ async def sync(req: DubSyncRequest) -> DubSyncResponse:
                 if original_timing and isinstance(original_timing, list):
                     # Map translated text to original timing
                     timing_segments = []
-                    sum(
-                        seg.get("end", 0) - seg.get("start", 0)
-                        for seg in original_timing
-                    )
+                    sum(seg.get("end", 0) - seg.get("start", 0) for seg in original_timing)
 
                     # Distribute translated text proportionally
                     char_count = len(translated_text)
@@ -201,11 +190,7 @@ async def sync(req: DubSyncRequest) -> DubSyncResponse:
                             else:
                                 # Estimate timing based on sentence length
                                 sentence_ratio = len(sentence) / char_count
-                                start = (
-                                    timing_segments[-1]["end"]
-                                    if timing_segments
-                                    else 0
-                                )
+                                start = timing_segments[-1]["end"] if timing_segments else 0
                                 end = min(
                                     start + (sentence_ratio * audio_duration),
                                     audio_duration,
@@ -231,9 +216,7 @@ async def sync(req: DubSyncRequest) -> DubSyncResponse:
                                 {
                                     "text": sentence,
                                     "start": round(current_time, 3),
-                                    "end": round(
-                                        min(current_time + duration, audio_duration), 3
-                                    ),
+                                    "end": round(min(current_time + duration, audio_duration), 3),
                                 }
                             )
                             current_time += duration
@@ -252,9 +235,7 @@ async def sync(req: DubSyncRequest) -> DubSyncResponse:
 
             except ImportError:
                 # Aeneas not available, use fallback method
-                logger.warning(
-                    "Aeneas engine not available, using fallback alignment"
-                )
+                logger.warning("Aeneas engine not available, using fallback alignment")
                 raise ImportError("Aeneas not available")
 
         except ImportError:
@@ -277,9 +258,7 @@ async def sync(req: DubSyncRequest) -> DubSyncResponse:
                         {
                             "text": sentence,
                             "start": round(current_time, 3),
-                            "end": round(
-                                min(current_time + duration, audio_duration), 3
-                            ),
+                            "end": round(min(current_time + duration, audio_duration), 3),
                         }
                     )
                     current_time += duration
@@ -312,4 +291,3 @@ async def sync(req: DubSyncRequest) -> DubSyncResponse:
             status_code=500,
             detail=f"Dubbing synchronization failed: {e!s}",
         ) from e
-

@@ -44,9 +44,7 @@ try:
     HAS_CV2 = True
 except ImportError:
     HAS_CV2 = False
-    logger.warning(
-        "opencv-python not installed. Install with: pip install opencv-python"
-    )
+    logger.warning("opencv-python not installed. Install with: pip install opencv-python")
 
 
 def _load_diffusers_pipeline():
@@ -249,10 +247,10 @@ class DeforumEngine(EngineProtocol):
         """Clean up resources and free memory (enhanced)."""
         try:
             # Don't delete if in cache (other instances might be using it)
-            if (not self.enable_model_cache or (
-                self._model_key is not None
-                and self._model_key not in self._model_cache
-            )) and self.pipeline is not None:
+            if (
+                not self.enable_model_cache
+                or (self._model_key is not None and self._model_key not in self._model_cache)
+            ) and self.pipeline is not None:
                 del self.pipeline
                 self.pipeline = None
 
@@ -370,6 +368,7 @@ class DeforumEngine(EngineProtocol):
                 # Copy to output path if provided
                 if output_path and cached_path != str(output_path):
                     import shutil
+
                     shutil.copy2(cached_path, output_path)
                     return str(output_path)
                 # Record metrics
@@ -378,9 +377,7 @@ class DeforumEngine(EngineProtocol):
 
                     metrics = get_engine_metrics()
                     duration = time.perf_counter() - start_time
-                    metrics.record_synthesis_time(
-                        "deforum", duration, cached=True
-                    )
+                    metrics.record_synthesis_time("deforum", duration, cached=True)
                 except Exception:
                     ...
                 return cached_path
@@ -412,9 +409,7 @@ class DeforumEngine(EngineProtocol):
                 prompt = self._interpolate_prompt(prompt_dict, frame_idx, num_frames)
 
                 # Interpolate camera motion
-                cam_params = self._interpolate_camera(
-                    camera_motion, frame_idx, num_frames
-                )
+                cam_params = self._interpolate_camera(camera_motion, frame_idx, num_frames)
 
                 # Get keyframe parameters if available
                 frame_params = keyframes.get(frame_idx, {})
@@ -437,9 +432,7 @@ class DeforumEngine(EngineProtocol):
                     # Subsequent frames - use previous frame as init
                     prev_image = frames[-1]
                     # Apply camera transform
-                    transformed_image = self._apply_camera_transform(
-                        prev_image, cam_params
-                    )
+                    transformed_image = self._apply_camera_transform(prev_image, cam_params)
 
                     image = self.pipeline(
                         prompt=prompt,
@@ -494,9 +487,7 @@ class DeforumEngine(EngineProtocol):
                 from .performance_metrics import get_engine_metrics
 
                 metrics = get_engine_metrics()
-                metrics.record_synthesis_time(
-                    "deforum", duration, cached=False
-                )
+                metrics.record_synthesis_time("deforum", duration, cached=False)
             except Exception:
                 ...
 
@@ -547,9 +538,7 @@ class DeforumEngine(EngineProtocol):
         start_time = time.perf_counter()
 
         try:
-            actual_batch_size = (
-                batch_size if batch_size is not None else self.batch_size
-            )
+            actual_batch_size = batch_size if batch_size is not None else self.batch_size
 
             # Process animations in batches with ThreadPoolExecutor for better
             # parallelization
@@ -579,14 +568,12 @@ class DeforumEngine(EngineProtocol):
                     return None
 
             # Prepare arguments
-            args_list = [
-                (i, config) for i, config in enumerate(animations_config)
-            ]
+            args_list = [(i, config) for i, config in enumerate(animations_config)]
 
             # Process in batches with ThreadPoolExecutor
             all_outputs = []
             for i in range(0, len(args_list), actual_batch_size):
-                batch_args = args_list[i:i + actual_batch_size]
+                batch_args = args_list[i : i + actual_batch_size]
 
                 with ThreadPoolExecutor(max_workers=actual_batch_size) as executor:
                     batch_results = list(executor.map(generate_single, batch_args))
@@ -602,9 +589,7 @@ class DeforumEngine(EngineProtocol):
                 from .performance_metrics import get_engine_metrics
 
                 metrics = get_engine_metrics()
-                metrics.record_synthesis_time(
-                    "deforum", duration, cached=False
-                )
+                metrics.record_synthesis_time("deforum", duration, cached=False)
             except Exception:
                 ...
 
@@ -639,18 +624,14 @@ class DeforumEngine(EngineProtocol):
         else:
             return prompts
 
-    def _interpolate_prompt(
-        self, prompt_dict: dict[int, str], frame: int, num_frames: int
-    ) -> str:
+    def _interpolate_prompt(self, prompt_dict: dict[int, str], frame: int, num_frames: int) -> str:
         """Interpolate prompt between keyframes."""
         if frame in prompt_dict:
             return prompt_dict[frame]
 
         # Find surrounding keyframes
         prev_frame = max([f for f in prompt_dict if f <= frame], default=0)
-        next_frame = min(
-            [f for f in prompt_dict if f > frame], default=num_frames - 1
-        )
+        next_frame = min([f for f in prompt_dict if f > frame], default=num_frames - 1)
 
         if prev_frame == next_frame:
             return prompt_dict[prev_frame]
@@ -658,9 +639,7 @@ class DeforumEngine(EngineProtocol):
         # Linear interpolation (simple - just use previous prompt)
         return prompt_dict[prev_frame]
 
-    def _interpolate_camera(
-        self, camera_motion: dict, frame: int, num_frames: int
-    ) -> dict:
+    def _interpolate_camera(self, camera_motion: dict, frame: int, num_frames: int) -> dict:
         """Interpolate camera motion parameters."""
         zoom_start = camera_motion.get("zoom_start", camera_motion.get("zoom", 1.0))
         zoom_end = camera_motion.get("zoom_end", zoom_start)
@@ -668,9 +647,7 @@ class DeforumEngine(EngineProtocol):
         pan_x_end = camera_motion.get("pan_x_end", pan_x_start)
         pan_y_start = camera_motion.get("pan_y_start", camera_motion.get("pan_y", 0.0))
         pan_y_end = camera_motion.get("pan_y_end", pan_y_start)
-        rotate_start = camera_motion.get(
-            "rotate_start", camera_motion.get("rotate", 0.0)
-        )
+        rotate_start = camera_motion.get("rotate_start", camera_motion.get("rotate", 0.0))
         rotate_end = camera_motion.get("rotate_end", rotate_start)
 
         t = frame / (num_frames - 1) if num_frames > 1 else 0
@@ -682,9 +659,7 @@ class DeforumEngine(EngineProtocol):
             "rotate": rotate_start + (rotate_end - rotate_start) * t,
         }
 
-    def _apply_camera_transform(
-        self, image: Image.Image, cam_params: dict
-    ) -> Image.Image:
+    def _apply_camera_transform(self, image: Image.Image, cam_params: dict) -> Image.Image:
         """Apply camera transform to image."""
         if not HAS_CV2:
             return image
@@ -753,14 +728,8 @@ class DeforumEngine(EngineProtocol):
         if not self.enable_response_cache:
             return {"enabled": False}
 
-        total_requests = (
-            self._cache_stats["hits"] + self._cache_stats["misses"]
-        )
-        hit_rate = (
-            (self._cache_stats["hits"] / total_requests * 100)
-            if total_requests > 0
-            else 0.0
-        )
+        total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
+        hit_rate = (self._cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0.0
 
         return {
             "enabled": True,

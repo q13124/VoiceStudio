@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class AuditAction(Enum):
     """Types of auditable actions."""
+
     CREATE = "create"
     READ = "read"
     UPDATE = "update"
@@ -37,6 +38,7 @@ class AuditAction(Enum):
 
 class AuditSeverity(Enum):
     """Severity levels for audit events."""
+
     DEBUG = "debug"
     INFO = "info"
     WARNING = "warning"
@@ -47,6 +49,7 @@ class AuditSeverity(Enum):
 @dataclass
 class AuditEntry:
     """An audit log entry."""
+
     id: str
     timestamp: datetime
     action: AuditAction
@@ -66,13 +69,14 @@ class AuditEntry:
 @dataclass
 class AuditConfig:
     """Configuration for audit logging."""
+
     storage_path: str = "data/audit"
     max_entries_per_file: int = 10000
     retention_days: int = 90
     log_reads: bool = False
-    sensitive_fields: list[str] = field(default_factory=lambda: [
-        "password", "token", "secret", "api_key", "credential"
-    ])
+    sensitive_fields: list[str] = field(
+        default_factory=lambda: ["password", "token", "secret", "api_key", "credential"]
+    )
     async_writes: bool = True
 
 

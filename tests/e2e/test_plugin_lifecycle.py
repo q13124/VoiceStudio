@@ -36,9 +36,15 @@ class TestPluginCatalogIntegrity:
     def test_catalog_has_reference_plugins(self):
         catalog = json.loads(CATALOG_PATH.read_text())
         plugin_ids = [p["id"] for p in catalog["plugins"]]
-        assert "com.voicestudio.noise_reduction" in plugin_ids
-        assert "com.voicestudio.format_converter" in plugin_ids
-        assert "com.voicestudio.silence_detector" in plugin_ids
+        expected = [
+            "com.voicestudio.noise_reduction",
+            "com.voicestudio.format_converter",
+            "com.voicestudio.silence_detector",
+            "com.voicestudio.pitch_shifter",
+            "com.voicestudio.silence_trimmer",
+        ]
+        for pid in expected:
+            assert pid in plugin_ids, f"Missing plugin {pid} in catalog"
 
     def test_catalog_plugins_have_required_fields(self):
         catalog = json.loads(CATALOG_PATH.read_text())
@@ -73,7 +79,15 @@ class TestPluginCatalogIntegrity:
 class TestReferencePluginManifests:
     """Verify reference plugin manifest files are valid."""
 
-    @pytest.fixture(params=["noise_reduction", "format_converter", "silence_detector"])
+    @pytest.fixture(
+        params=[
+            "noise_reduction",
+            "format_converter",
+            "silence_detector",
+            "pitch_shifter",
+            "silence_trimmer",
+        ]
+    )
     def plugin_dir(self, request):
         return REFERENCE_PLUGINS_DIR / request.param
 
@@ -120,6 +134,7 @@ class TestReferencePluginImports:
 
     def test_noise_reduction_imports(self):
         from plugins.reference.noise_reduction.plugin import NoiseReductionPlugin
+
         p = NoiseReductionPlugin()
         info = p.get_info()
         assert info["id"] == "com.voicestudio.noise_reduction"
@@ -127,15 +142,33 @@ class TestReferencePluginImports:
 
     def test_format_converter_imports(self):
         from plugins.reference.format_converter.plugin import FormatConverterPlugin
+
         p = FormatConverterPlugin()
         info = p.get_info()
         assert info["id"] == "com.voicestudio.format_converter"
 
     def test_silence_detector_imports(self):
         from plugins.reference.silence_detector.plugin import SilenceDetectorPlugin
+
         p = SilenceDetectorPlugin()
         info = p.get_info()
         assert info["id"] == "com.voicestudio.silence_detector"
+
+    def test_pitch_shifter_imports(self):
+        from plugins.reference.pitch_shifter.plugin import PitchShifterPlugin
+
+        p = PitchShifterPlugin()
+        info = p.get_info()
+        assert info["id"] == "com.voicestudio.pitch_shifter"
+        assert info["version"] == "1.0.0"
+
+    def test_silence_trimmer_imports(self):
+        from plugins.reference.silence_trimmer.plugin import SilenceTrimmerPlugin
+
+        p = SilenceTrimmerPlugin()
+        info = p.get_info()
+        assert info["id"] == "com.voicestudio.silence_trimmer"
+        assert info["version"] == "1.0.0"
 
 
 class TestPluginLifecycle:
@@ -144,6 +177,7 @@ class TestPluginLifecycle:
     @pytest.mark.asyncio
     async def test_noise_reduction_lifecycle(self):
         from plugins.reference.noise_reduction.plugin import NoiseReductionPlugin
+
         p = NoiseReductionPlugin()
         activated = await p.activate()
         assert activated is True
@@ -158,6 +192,7 @@ class TestPluginLifecycle:
     @pytest.mark.asyncio
     async def test_silence_detector_lifecycle(self):
         from plugins.reference.silence_detector.plugin import SilenceDetectorPlugin
+
         p = SilenceDetectorPlugin()
         activated = await p.activate()
         assert activated is True
@@ -171,6 +206,7 @@ class TestPluginLifecycle:
     @pytest.mark.asyncio
     async def test_format_converter_lifecycle(self):
         from plugins.reference.format_converter.plugin import FormatConverterPlugin
+
         p = FormatConverterPlugin()
         activated = await p.activate()
 
@@ -184,6 +220,7 @@ class TestPluginLifecycle:
     @pytest.mark.asyncio
     async def test_process_with_missing_file_returns_error(self):
         from plugins.reference.noise_reduction.plugin import NoiseReductionPlugin
+
         p = NoiseReductionPlugin()
         await p.activate()
 
@@ -198,16 +235,19 @@ class TestPluginServiceIntegration:
 
     def test_plugin_service_imports(self):
         from backend.services.plugin_service import PluginService, PluginState, PluginType
+
         assert PluginType.PROCESSOR is not None
         assert PluginState.DISCOVERED is not None
 
     def test_plugin_service_instantiates(self):
         from backend.services.plugin_service import PluginService
+
         service = PluginService()
         assert service is not None
 
     def test_plugin_manifest_from_dict(self):
         from backend.services.plugin_service import PluginManifest, PluginType
+
         data = {
             "plugin_id": "test.plugin",
             "name": "Test Plugin",
@@ -227,6 +267,7 @@ class TestPluginSandbox:
 
     def test_sandbox_imports(self):
         from backend.services.plugin_sandbox import PluginSandbox, SandboxPermissions
+
         assert PluginSandbox is not None
         assert SandboxPermissions is not None
 
@@ -236,6 +277,7 @@ class TestPluginSandbox:
             SandboxPermissions,
             SandboxState,
         )
+
         perms = SandboxPermissions(plugin_id="test.plugin")
         sandbox = PluginSandbox(plugin_id="test.plugin", permissions=perms)
         assert sandbox.state == SandboxState.IDLE
@@ -243,12 +285,14 @@ class TestPluginSandbox:
 
     def test_sandbox_temp_workspace_is_isolated(self):
         from backend.services.plugin_sandbox import PluginSandbox, SandboxPermissions
+
         perms = SandboxPermissions(plugin_id="test.isolation")
         sandbox = PluginSandbox(plugin_id="test.isolation", permissions=perms)
         workspace = sandbox._create_temp_workspace()
         assert workspace.exists()
         assert "vs_plugin_test.isolation_" in str(workspace)
         import shutil
+
         shutil.rmtree(workspace, ignore_errors=True)
 
 
@@ -261,11 +305,13 @@ class TestPluginSigningInfrastructure:
             SignatureAlgorithm,
             check_signing_available,
         )
+
         assert KeyStatus.ACTIVE is not None
         assert SignatureAlgorithm.ED25519 is not None
 
     def test_signing_availability(self):
         from backend.plugins.supply_chain.signer import check_signing_available
+
         available = check_signing_available()
         if available:
             logger.info("Ed25519 signing is available (cryptography library present)")
@@ -274,6 +320,7 @@ class TestPluginSigningInfrastructure:
 
     def test_key_metadata_creation(self):
         from backend.plugins.supply_chain.signer import KeyMetadata, KeyStatus
+
         meta = KeyMetadata(
             key_id="test-key-001",
             fingerprint="abc123",
@@ -302,9 +349,40 @@ class TestUnsignedPluginRejection:
     def test_signature_field_required_for_catalog(self):
         catalog = json.loads(CATALOG_PATH.read_text())
         for plugin in catalog["plugins"]:
-            assert plugin.get("verified") is True, (
-                f"Plugin {plugin['id']} is not verified"
-            )
+            assert plugin.get("verified") is True, f"Plugin {plugin['id']} is not verified"
+
+
+class TestGalleryAPICatalog:
+    """Verify catalog service returns all 5 reference plugins when using local catalog."""
+
+    @pytest.mark.asyncio
+    async def test_catalog_service_loads_five_plugins_from_local(self, monkeypatch):
+        """When VOICESTUDIO_PLUGIN_CATALOG_URL points to local file, catalog has 5 plugins."""
+        catalog_path = CATALOG_PATH.resolve()
+        monkeypatch.setenv("VOICESTUDIO_PLUGIN_CATALOG_URL", str(catalog_path))
+        import backend.plugins.gallery.catalog as catalog_mod
+
+        catalog_mod._catalog_service = None
+        try:
+            from backend.plugins.gallery import get_catalog_service
+
+            service = get_catalog_service()
+            catalog = await service.get_catalog(force_refresh=True)
+            plugin_ids = [p.id for p in catalog.plugins]
+            expected = [
+                "com.voicestudio.noise_reduction",
+                "com.voicestudio.format_converter",
+                "com.voicestudio.silence_detector",
+                "com.voicestudio.pitch_shifter",
+                "com.voicestudio.silence_trimmer",
+            ]
+            for pid in expected:
+                assert pid in plugin_ids, f"Catalog missing plugin {pid}"
+            assert (
+                len(catalog.plugins) >= 5
+            ), f"Expected at least 5 plugins, got {len(catalog.plugins)}"
+        finally:
+            catalog_mod._catalog_service = None
 
 
 class TestGalleryAPIModels:
@@ -312,6 +390,7 @@ class TestGalleryAPIModels:
 
     def test_plugin_summary_model(self):
         from backend.api.routes.plugin_gallery import PluginSummary
+
         summary = PluginSummary(
             id="com.voicestudio.test",
             name="Test Plugin",
@@ -330,12 +409,14 @@ class TestGalleryAPIModels:
 
     def test_install_request_model(self):
         from backend.api.routes.plugin_gallery import InstallRequest
+
         req = InstallRequest(plugin_id="com.voicestudio.noise_reduction")
         assert req.plugin_id == "com.voicestudio.noise_reduction"
         assert req.version is None
 
     def test_install_response_model(self):
         from backend.api.routes.plugin_gallery import InstallResponse
+
         resp = InstallResponse(
             success=True,
             plugin_id="com.voicestudio.noise_reduction",

@@ -189,9 +189,7 @@ class TestWaveformData:
                     mock_audio = np.random.randn(samples, 1).astype(np.float32)
                     mock_load.return_value = (mock_audio, sample_rate)
 
-                    response = client.get(
-                        "/api/waveform/data/test-audio?zoom_level=2.0"
-                    )
+                    response = client.get("/api/waveform/data/test-audio?zoom_level=2.0")
                     # May return 200 or 500 depending on dependencies
                     assert response.status_code in [200, 500]
 
@@ -280,9 +278,7 @@ class TestWaveformCompare:
                 mock_path.return_value = None
 
                 response = client.get(
-                    "/api/waveform/compare"
-                    "?audio_id_1=nonexistent1"
-                    "&audio_id_2=nonexistent2"
+                    "/api/waveform/compare" "?audio_id_1=nonexistent1" "&audio_id_2=nonexistent2"
                 )
                 assert response.status_code == 404
 

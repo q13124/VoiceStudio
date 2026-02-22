@@ -166,10 +166,7 @@ class MetricsCleanupService:
         CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
         config = {
-            "policies": {
-                name: policy.to_dict()
-                for name, policy in self._policies.items()
-            },
+            "policies": {name: policy.to_dict() for name, policy in self._policies.items()},
             "last_updated": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -275,9 +272,7 @@ class MetricsCleanupService:
 
         try:
             # Get all matching files with their stats
-            files = self._get_files_with_stats(
-                policy.directory, policy.file_pattern
-            )
+            files = self._get_files_with_stats(policy.directory, policy.file_pattern)
 
             if not files:
                 return result
@@ -322,9 +317,7 @@ class MetricsCleanupService:
 
         return result
 
-    def _get_files_with_stats(
-        self, directory: Path, pattern: str
-    ) -> list[tuple]:
+    def _get_files_with_stats(self, directory: Path, pattern: str) -> list[tuple]:
         """Get list of (path, mtime, size) tuples for matching files."""
         files = []
         for filepath in directory.glob(pattern):
@@ -336,9 +329,7 @@ class MetricsCleanupService:
                     continue
         return files
 
-    def _delete_file(
-        self, filepath: Path, result: CleanupResult
-    ) -> bool:
+    def _delete_file(self, filepath: Path, result: CleanupResult) -> bool:
         """Delete a file and update result statistics."""
         try:
             size = filepath.stat().st_size
@@ -354,10 +345,7 @@ class MetricsCleanupService:
     def get_status(self) -> dict[str, Any]:
         """Get current status of all managed directories."""
         status = {
-            "last_cleanup": (
-                self._last_cleanup.isoformat()
-                if self._last_cleanup else None
-            ),
+            "last_cleanup": (self._last_cleanup.isoformat() if self._last_cleanup else None),
             "policies": {},
         }
 
@@ -370,13 +358,9 @@ class MetricsCleanupService:
             }
 
             if policy.directory.exists():
-                files = self._get_files_with_stats(
-                    policy.directory, policy.file_pattern
-                )
+                files = self._get_files_with_stats(policy.directory, policy.file_pattern)
                 dir_status["current_files"] = len(files)
-                dir_status["current_size_mb"] = round(
-                    sum(f[2] for f in files) / (1024 * 1024), 2
-                )
+                dir_status["current_size_mb"] = round(sum(f[2] for f in files) / (1024 * 1024), 2)
             else:
                 dir_status["current_files"] = 0
                 dir_status["current_size_mb"] = 0

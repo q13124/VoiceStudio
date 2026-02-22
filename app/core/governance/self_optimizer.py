@@ -63,9 +63,7 @@ class SelfOptimizer:
             optimization_data_path: Optional path to optimization data
         """
         self.ai_governor = ai_governor
-        self.optimization_data_path = optimization_data_path or Path(
-            ".optimization_data.json"
-        )
+        self.optimization_data_path = optimization_data_path or Path(".optimization_data.json")
 
         # Optimization tracking
         self._optimization_history: list[dict[str, Any]] = []
@@ -137,10 +135,7 @@ class SelfOptimizer:
                         avg_latency = total_latency / count
 
                         # Score based on quality and latency
-                        score = (
-                            avg_quality * 0.7
-                            + (1.0 - min(avg_latency / 2000.0, 1.0)) * 0.3
-                        )
+                        score = avg_quality * 0.7 + (1.0 - min(avg_latency / 2000.0, 1.0)) * 0.3
                         engine_scores[engine_name] = score
 
             except Exception as e:
@@ -209,9 +204,7 @@ class SelfOptimizer:
             }
 
         # Use parameter optimizer
-        ParameterOptimizer(
-            optimization_strategy="grid_search", max_iterations=9
-        )
+        ParameterOptimizer(optimization_strategy="grid_search", max_iterations=9)
 
         # Optimize (simplified - would need actual training data)
         best_params = {}
@@ -284,12 +277,12 @@ class SelfOptimizer:
             baseline = self._performance_baseline[component]
             for metric_name, current_value in metrics.items():
                 baseline_value = baseline.get(metric_name)
-                if baseline_value is not None and isinstance(
-                    current_value, (int, float)
-                ) and baseline_value > 0:
-                    improvement = (
-                        (baseline_value - current_value) / baseline_value
-                    ) * 100.0
+                if (
+                    baseline_value is not None
+                    and isinstance(current_value, (int, float))
+                    and baseline_value > 0
+                ):
+                    improvement = ((baseline_value - current_value) / baseline_value) * 100.0
                     improvements[metric_name] = improvement
 
         result = {
@@ -320,9 +313,7 @@ class SelfOptimizer:
         logger.info(f"Performance optimization complete for {component}")
         return result
 
-    def continuous_optimization(
-        self, optimization_interval: int = 3600
-    ) -> dict[str, Any]:
+    def continuous_optimization(self, optimization_interval: int = 3600) -> dict[str, Any]:
         """
         Run continuous optimization cycle.
 
@@ -349,25 +340,19 @@ class SelfOptimizer:
                 if "error" not in result:
                     results["engine_selections"][task_type] = result
             except Exception as e:
-                logger.warning(
-                    f"Failed to optimize engine selection for {task_type}: {e}"
-                )
+                logger.warning(f"Failed to optimize engine selection for {task_type}: {e}")
 
         # Optimize parameters for common engines
         if self.ai_governor and hasattr(self.ai_governor, "engine_hook"):
             if self.ai_governor.engine_hook:
-                common_engines = self.ai_governor.engine_hook.list_available_engines()[
-                    :3
-                ]
+                common_engines = self.ai_governor.engine_hook.list_available_engines()[:3]
                 for engine_name in common_engines:
                     try:
                         result = self.optimize_parameters(engine_name, "tts")
                         if "error" not in result:
                             results["parameters"][engine_name] = result
                     except Exception as e:
-                        logger.warning(
-                            f"Failed to optimize parameters for {engine_name}: {e}"
-                        )
+                        logger.warning(f"Failed to optimize parameters for {engine_name}: {e}")
 
         logger.info("Continuous optimization cycle complete")
         return results
@@ -481,6 +466,4 @@ def create_self_optimizer(
     Returns:
         Initialized SelfOptimizer instance
     """
-    return SelfOptimizer(
-        ai_governor=ai_governor, optimization_data_path=optimization_data_path
-    )
+    return SelfOptimizer(ai_governor=ai_governor, optimization_data_path=optimization_data_path)

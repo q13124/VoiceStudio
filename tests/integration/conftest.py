@@ -33,8 +33,7 @@ sys.path.insert(0, str(project_root))
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
@@ -69,55 +68,19 @@ TEST_CONFIG = IntegrationTestConfig()
 
 def pytest_configure(config):
     """Configure custom pytest markers."""
-    config.addinivalue_line(
-        "markers",
-        "integration: mark test as integration test"
-    )
-    config.addinivalue_line(
-        "markers",
-        "api: mark test as API test"
-    )
-    config.addinivalue_line(
-        "markers",
-        "slow: mark test as slow running"
-    )
-    config.addinivalue_line(
-        "markers",
-        "requires_backend: mark test as requiring running backend"
-    )
-    config.addinivalue_line(
-        "markers",
-        "requires_gpu: mark test as requiring GPU"
-    )
-    config.addinivalue_line(
-        "markers",
-        "smoke: mark test as smoke test"
-    )
+    config.addinivalue_line("markers", "integration: mark test as integration test")
+    config.addinivalue_line("markers", "api: mark test as API test")
+    config.addinivalue_line("markers", "slow: mark test as slow running")
+    config.addinivalue_line("markers", "requires_backend: mark test as requiring running backend")
+    config.addinivalue_line("markers", "requires_gpu: mark test as requiring GPU")
+    config.addinivalue_line("markers", "smoke: mark test as smoke test")
     # Phase 4B: Additional markers for error scenario test organization
-    config.addinivalue_line(
-        "markers",
-        "errors: mark test as error handling test"
-    )
-    config.addinivalue_line(
-        "markers",
-        "negative: mark test as negative test case"
-    )
-    config.addinivalue_line(
-        "markers",
-        "validation: mark test as input validation test"
-    )
-    config.addinivalue_line(
-        "markers",
-        "resource: mark test as resource handling test"
-    )
-    config.addinivalue_line(
-        "markers",
-        "network: mark test as network/connection test"
-    )
-    config.addinivalue_line(
-        "markers",
-        "concurrency: mark test as concurrency test"
-    )
+    config.addinivalue_line("markers", "errors: mark test as error handling test")
+    config.addinivalue_line("markers", "negative: mark test as negative test case")
+    config.addinivalue_line("markers", "validation: mark test as input validation test")
+    config.addinivalue_line("markers", "resource: mark test as resource handling test")
+    config.addinivalue_line("markers", "network: mark test as network/connection test")
+    config.addinivalue_line("markers", "concurrency: mark test as concurrency test")
 
 
 # =============================================================================
@@ -256,15 +219,13 @@ class IntegrationTestClient:
 
     def assert_success(self, response: TestResponse):
         """Assert response is successful."""
-        assert response.is_success, (
-            f"Expected success, got {response.status_code}: {response.body}"
-        )
+        assert response.is_success, f"Expected success, got {response.status_code}: {response.body}"
 
     def assert_status(self, response: TestResponse, expected: int):
         """Assert response has expected status."""
-        assert response.status_code == expected, (
-            f"Expected {expected}, got {response.status_code}: {response.body}"
-        )
+        assert (
+            response.status_code == expected
+        ), f"Expected {expected}, got {response.status_code}: {response.body}"
 
 
 # =============================================================================
@@ -297,14 +258,15 @@ def app():
     try:
         # Reset logging to simple format to avoid correlation_id issues
         import logging
+
         for handler in logging.root.handlers[:]:
             logging.root.removeHandler(handler)
         logging.basicConfig(
-            level=logging.WARNING,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            level=logging.WARNING, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
 
         from backend.api.main import app as fastapi_app
+
         return fastapi_app
     except ImportError as e:
         # Return a mock if import fails (for isolated testing)
@@ -409,10 +371,7 @@ def validate_error_response(response: TestResponse):
         # Standard error should have 'detail' or 'error'
         has_error_info = "detail" in body or "error" in body
         if not has_error_info:
-            logger.warning(
-                "Non-standard error response: %s",
-                json.dumps(body)[:200]
-            )
+            logger.warning("Non-standard error response: %s", json.dumps(body)[:200])
 
 
 def validate_version_headers(response: TestResponse):
@@ -440,13 +399,13 @@ def retry_request(func, *args, retries: int = 3, delay: float = 1.0, **kwargs):
         except Exception as e:
             last_error = e
             if attempt < retries - 1:
-                sleep_time = delay * (2 ** attempt)
+                sleep_time = delay * (2**attempt)
                 logger.warning(
                     "Request failed (attempt %d/%d), retrying in %.1fs: %s",
                     attempt + 1,
                     retries,
                     sleep_time,
-                    str(e)[:100]
+                    str(e)[:100],
                 )
                 time.sleep(sleep_time)
 
@@ -467,7 +426,5 @@ def is_backend_available(base_url: str | None = None) -> bool:
 
 # Skip decorator for tests requiring backend
 requires_backend = pytest.mark.skipif(
-    not is_backend_available(),
-    reason="Backend server is not available"
+    not is_backend_available(), reason="Backend server is not available"
 )
-

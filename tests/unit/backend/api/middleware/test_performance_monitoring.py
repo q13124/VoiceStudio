@@ -330,9 +330,7 @@ class TestPerformanceMonitoringMiddleware:
         middleware = PerformanceMonitoringMiddleware(app)
 
         # Add some metrics
-        middleware._update_metrics(
-            "GET:/test", "/test", "GET", 0.1, 100, 200, 200
-        )
+        middleware._update_metrics("GET:/test", "/test", "GET", 0.1, 100, 200, 200)
 
         metrics = middleware.get_metrics("GET:/test")
         assert metrics["path"] == "/test"
@@ -449,6 +447,7 @@ class TestGlobalFunctions:
         """Test get_performance_middleware returns None when not set."""
         # Clear global instance
         import backend.api.middleware.performance_monitoring as pm_module
+
         pm_module._performance_middleware = None
 
         middleware = get_performance_middleware()
@@ -475,4 +474,3 @@ class TestGlobalFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

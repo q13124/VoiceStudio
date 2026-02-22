@@ -46,15 +46,17 @@ class TestQualityBenchmarkingWorkflow:
                 "test_text": "This is a quality benchmark test.",
                 "language": "en",
                 "engines": ["xtts", "chatterbox", "tortoise"],
-                "enhance_quality": True
-            }
+                "enhance_quality": True,
+            },
         )
 
         assert benchmark_response.status_code in [200, 404, 503]
 
         if benchmark_response.status_code == 200:
             benchmark = benchmark_response.json()
-            print(f"[E2E] Benchmark completed: {benchmark['successful_engines']}/{benchmark['total_engines']} successful")
+            print(
+                f"[E2E] Benchmark completed: {benchmark['successful_engines']}/{benchmark['total_engines']} successful"
+            )
 
             # Step 2: Analyze results
             print("[E2E] Step 2: Analyzing benchmark results...")
@@ -70,7 +72,7 @@ class TestQualityBenchmarkingWorkflow:
                 sorted_results = sorted(
                     successful_results,
                     key=lambda x: x.get("quality_metrics", {}).get("mos_score", 0),
-                    reverse=True
+                    reverse=True,
                 )
 
                 print("[E2E] Engine Rankings:")
@@ -95,7 +97,7 @@ class TestQualityBenchmarkingWorkflow:
         test_texts = [
             "Short test.",
             "This is a longer test sentence with more words.",
-            "Testing emotional content: I'm so excited about this feature!"
+            "Testing emotional content: I'm so excited about this feature!",
         ]
 
         all_results = []
@@ -109,8 +111,8 @@ class TestQualityBenchmarkingWorkflow:
                 json={
                     "profile_id": "test-profile-123",
                     "test_text": text,
-                    "engines": ["xtts", "chatterbox"]
-                }
+                    "engines": ["xtts", "chatterbox"],
+                },
             )
 
             if response.status_code == 200:
@@ -134,10 +136,7 @@ class TestQualityBenchmarkingWorkflow:
         print("[E2E] Attempting benchmark with invalid profile...")
         invalid_response = client.post(
             "/api/quality/benchmark",
-            json={
-                "profile_id": "non-existent-profile",
-                "test_text": "Test"
-            }
+            json={"profile_id": "non-existent-profile", "test_text": "Test"},
         )
         assert invalid_response.status_code in [404, 503]
 
@@ -145,14 +144,9 @@ class TestQualityBenchmarkingWorkflow:
         print("[E2E] Attempting recovery with valid request...")
         valid_response = client.post(
             "/api/quality/benchmark",
-            json={
-                "profile_id": "test-profile-123",
-                "test_text": "Test",
-                "engines": ["xtts"]
-            }
+            json={"profile_id": "test-profile-123", "test_text": "Test", "engines": ["xtts"]},
         )
         # May succeed or fail depending on engine availability
         assert valid_response.status_code in [200, 404, 503]
 
         print("[E2E] ✅ Error recovery workflow completed")
-

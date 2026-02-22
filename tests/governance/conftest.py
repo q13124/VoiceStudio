@@ -68,7 +68,14 @@ def policy_engine(temp_dir: Path):
     policies_dir = temp_dir / "policies"
     policies_dir.mkdir(parents=True, exist_ok=True)
 
-    source_policy = Path(__file__).parent.parent.parent / "tools" / "overseer" / "agent" / "policies" / "base_policy.yaml"
+    source_policy = (
+        Path(__file__).parent.parent.parent
+        / "tools"
+        / "overseer"
+        / "agent"
+        / "policies"
+        / "base_policy.yaml"
+    )
     if source_policy.exists():
         shutil.copy(source_policy, policies_dir / "base_policy.yaml")
 

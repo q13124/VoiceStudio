@@ -36,8 +36,9 @@ class TestChatterboxVenvFamily:
         )
 
         manager = get_venv_manager()
-        assert manager.is_venv_created(VenvFamily.ADVANCED_TTS), \
-            "venv_advanced_tts should be created"
+        assert manager.is_venv_created(
+            VenvFamily.ADVANCED_TTS
+        ), "venv_advanced_tts should be created"
 
     def test_venv_advanced_tts_has_chatterbox(self):
         """Test that Chatterbox is installed in venv_advanced_tts."""
@@ -57,6 +58,7 @@ class TestChatterboxVenvFamily:
             pytest.skip("Python executable not found")
 
         import subprocess
+
         result = subprocess.run(
             [str(python_exe), "-c", "from chatterbox.tts import ChatterboxTTS; print('OK')"],
             capture_output=True,
@@ -88,6 +90,7 @@ class TestChatterboxEngineLifecycle:
 
         # Create a mock engine instance with Chatterbox manifest
         from app.core.runtime.engine_lifecycle import EngineInstance
+
         engine = EngineInstance(
             engine_id="chatterbox",
             manifest={

@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class OAuthProvider(Enum):
     """Supported OAuth providers."""
+
     GOOGLE = "google"
     MICROSOFT = "microsoft"
     GITHUB = "github"
@@ -30,6 +31,7 @@ class OAuthProvider(Enum):
 @dataclass
 class OAuthConfig:
     """Configuration for an OAuth provider."""
+
     provider: OAuthProvider
     client_id: str
     client_secret: str
@@ -83,6 +85,7 @@ class OAuthConfig:
 @dataclass
 class OAuthToken:
     """OAuth token response."""
+
     access_token: str
     token_type: str
     expires_in: int
@@ -99,6 +102,7 @@ class OAuthToken:
 @dataclass
 class OAuthUser:
     """User info from OAuth provider."""
+
     provider: OAuthProvider
     provider_id: str
     email: str | None
@@ -136,10 +140,7 @@ class OAuthState:
     def _cleanup(self) -> None:
         """Remove expired states."""
         now = datetime.now()
-        expired = [
-            s for s, (created, _) in self._states.items()
-            if now - created > self._ttl
-        ]
+        expired = [s for s, (created, _) in self._states.items() if now - created > self._ttl]
         for s in expired:
             del self._states[s]
 
@@ -156,6 +157,7 @@ class PKCEChallenge:
         """Generate S256 code challenge from verifier."""
         digest = hashlib.sha256(self.code_verifier.encode()).digest()
         import base64
+
         return base64.urlsafe_b64encode(digest).decode().rstrip("=")
 
 
@@ -398,11 +400,14 @@ class OAuthService:
         try:
             import aiohttp
 
-            async with aiohttp.ClientSession() as session, session.post(
-                config.token_url,
-                data=data,
-                headers={"Accept": "application/json"},
-            ) as response:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.post(
+                    config.token_url,
+                    data=data,
+                    headers={"Accept": "application/json"},
+                ) as response,
+            ):
                 if response.status != 200:
                     return None
 

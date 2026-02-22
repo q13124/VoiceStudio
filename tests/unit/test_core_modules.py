@@ -63,8 +63,9 @@ class TestQualityModules:
             module = load_module(quality_metrics_path)
             assert module is not None, "Failed to import quality_metrics"
 
-            assert hasattr(module, 'calculate_mos_score') or hasattr(module, 'calculate_all_metrics'), \
-                "Quality metrics missing expected functions"
+            assert hasattr(module, "calculate_mos_score") or hasattr(
+                module, "calculate_all_metrics"
+            ), "Quality metrics missing expected functions"
         except Exception as e:
             pytest.skip(f"Could not import quality_metrics: {e}")
 
@@ -88,4 +89,3 @@ class TestRouterModules:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

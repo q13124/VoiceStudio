@@ -95,11 +95,7 @@ def compute_signature(
     # Build payload: METHOD|PATH|TIMESTAMP|BODY
     payload = f"{method}|{path}|{timestamp}|{body}"
 
-    signature = hmac.new(
-        secret_key,
-        payload.encode("utf-8"),
-        hashlib.sha256
-    ).digest()
+    signature = hmac.new(secret_key, payload.encode("utf-8"), hashlib.sha256).digest()
 
     return base64.b64encode(signature).decode("ascii")
 
@@ -132,7 +128,9 @@ def verify_signature(
     return hmac.compare_digest(signature, expected)
 
 
-def validate_timestamp(timestamp_str: str, max_age_seconds: int = MAX_TIMESTAMP_AGE_SECONDS) -> bool:
+def validate_timestamp(
+    timestamp_str: str, max_age_seconds: int = MAX_TIMESTAMP_AGE_SECONDS
+) -> bool:
     """
     Validate that a timestamp is recent enough.
 
@@ -280,7 +278,7 @@ class RequestSigningMiddleware(BaseHTTPMiddleware):
                     "method": request.method,
                     "has_signature": bool(signature),
                     "has_timestamp": bool(timestamp),
-                }
+                },
             )
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -299,7 +297,7 @@ class RequestSigningMiddleware(BaseHTTPMiddleware):
         if not validate_timestamp(timestamp):
             logger.warning(
                 f"Invalid or expired timestamp: {timestamp}",
-                extra={"path": path, "timestamp": timestamp}
+                extra={"path": path, "timestamp": timestamp},
             )
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -330,7 +328,7 @@ class RequestSigningMiddleware(BaseHTTPMiddleware):
                     "path": path,
                     "method": request.method,
                     "timestamp": timestamp,
-                }
+                },
             )
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -340,7 +338,7 @@ class RequestSigningMiddleware(BaseHTTPMiddleware):
         # Signature valid - proceed with request
         logger.debug(
             f"Signature verified for {request.method} {path}",
-            extra={"path": path, "method": request.method}
+            extra={"path": path, "method": request.method},
         )
 
         return await call_next(request)

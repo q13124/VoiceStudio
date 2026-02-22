@@ -24,6 +24,7 @@ import pytest
 # Try to import test dependencies
 try:
     from httpx import Client as HttpClient
+
     HAS_HTTPX = True
 except ImportError:
     HAS_HTTPX = False
@@ -31,6 +32,7 @@ except ImportError:
 
 try:
     import psutil
+
     HAS_PSUTIL = True
 except ImportError:
     HAS_PSUTIL = False
@@ -73,18 +75,19 @@ class TestConcurrentSynthesis:
 
     def test_10_concurrent_requests(self, api_client):
         """Verify system handles 10 concurrent synthesis requests."""
+
         def make_request(index: int) -> dict[str, Any]:
             start = time.time()
             try:
                 response = api_client.post(
                     "/api/synthesis/preview",
-                    json={"text": f"Test synthesis {index}", "engine": "default"}
+                    json={"text": f"Test synthesis {index}", "engine": "default"},
                 )
                 return {
                     "index": index,
                     "status": response.status_code,
                     "duration": time.time() - start,
-                    "success": response.status_code in [200, 202]
+                    "success": response.status_code in [200, 202],
                 }
             except Exception as e:
                 return {
@@ -92,7 +95,7 @@ class TestConcurrentSynthesis:
                     "status": 0,
                     "duration": time.time() - start,
                     "success": False,
-                    "error": str(e)
+                    "error": str(e),
                 }
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
@@ -117,6 +120,7 @@ class TestConcurrentSynthesis:
 
     def test_50_concurrent_requests(self, api_client):
         """Verify system handles 50 concurrent requests."""
+
         def make_request(index: int) -> dict[str, Any]:
             start = time.time()
             try:
@@ -126,14 +130,14 @@ class TestConcurrentSynthesis:
                     "index": index,
                     "status": response.status_code,
                     "duration": time.time() - start,
-                    "success": response.status_code == 200
+                    "success": response.status_code == 200,
                 }
             except Exception:
                 return {
                     "index": index,
                     "status": 0,
                     "duration": time.time() - start,
-                    "success": False
+                    "success": False,
                 }
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
@@ -156,19 +160,20 @@ class TestConcurrentSynthesis:
             response = retry_on_rate_limit(
                 api_client.post,
                 "/api/synthesis/preview",
-                json={"text": f"Queue test {i}", "engine": "default"}
+                json={"text": f"Queue test {i}", "engine": "default"},
             )
             duration = time.time() - start
-            request_times.append({
-                "index": i,
-                "duration": duration,
-                "status": response.status_code
-            })
+            request_times.append({"index": i, "duration": duration, "status": response.status_code})
 
         # Verify all requests completed
         for req in request_times:
-            assert req["status"] in [200, 202, 429, 503, 404], \
-                f"Request {req['index']} failed with {req['status']}"
+            assert req["status"] in [
+                200,
+                202,
+                429,
+                503,
+                404,
+            ], f"Request {req['index']} failed with {req['status']}"
 
     def test_response_time_under_load(self, api_client):
         """Verify response times remain acceptable under load."""
@@ -218,7 +223,7 @@ class TestMemoryPressure:
         response = retry_on_rate_limit(
             api_client.post,
             "/api/synthesis/preview",
-            json={"text": large_text, "engine": "default"}
+            json={"text": large_text, "engine": "default"},
         )
 
         # Check memory after request
@@ -226,8 +231,11 @@ class TestMemoryPressure:
         memory_increase = final_memory - initial_memory
 
         # Memory increase should be reasonable (< 500MB for a single request)
-        assert memory_increase < 500 or response.status_code in [400, 413, 404], \
-            f"Excessive memory increase: {memory_increase:.0f}MB"
+        assert memory_increase < 500 or response.status_code in [
+            400,
+            413,
+            404,
+        ], f"Excessive memory increase: {memory_increase:.0f}MB"
 
     @pytest.mark.skipif(not HAS_PSUTIL, reason="psutil not installed")
     def test_batch_memory_management(self, api_client):
@@ -242,7 +250,7 @@ class TestMemoryPressure:
         for i in range(10):
             response = api_client.post(
                 "/api/synthesis/preview",
-                json={"text": f"Batch test sentence {i} " * 50, "engine": "default"}
+                json={"text": f"Batch test sentence {i} " * 50, "engine": "default"},
             )
             if response.status_code not in [200, 202, 404]:
                 continue
@@ -259,10 +267,7 @@ class TestMemoryPressure:
         """Verify memory is cleaned up after errors."""
         # Trigger errors with invalid requests
         for _i in range(10):
-            api_client.post(
-                "/api/synthesis/generate",
-                json={"invalid": "data"}
-            )
+            api_client.post("/api/synthesis/generate", json={"invalid": "data"})
 
         # Force cleanup
         gc.collect()
@@ -284,7 +289,7 @@ class TestGPUContention:
             response = retry_on_rate_limit(
                 api_client.post,
                 "/api/synthesis/preview",
-                json={"text": f"GPU test {i}", "engine": "default"}
+                json={"text": f"GPU test {i}", "engine": "default"},
             )
             results.append(response.status_code)
 
@@ -297,11 +302,7 @@ class TestGPUContention:
         response = retry_on_rate_limit(
             api_client.post,
             "/api/synthesis/preview",
-            json={
-                "text": "CPU fallback test",
-                "engine": "default",
-                "prefer_cpu": True
-            }
+            json={"text": "CPU fallback test", "engine": "default", "prefer_cpu": True},
         )
 
         # Should process on CPU
@@ -315,7 +316,7 @@ class TestGPUContention:
         response = api_client.post(
             "/api/synthesis/generate",
             json={"text": large_text, "engine": "default"},
-            timeout=120.0  # Allow more time
+            timeout=120.0,  # Allow more time
         )
 
         # Should either succeed, reject gracefully, or indicate resource limit
@@ -327,6 +328,7 @@ class TestDatabasePerformance:
 
     def test_connection_pool_under_load(self, api_client):
         """Verify database connection pooling handles load."""
+
         def make_db_request():
             try:
                 return api_client.get("/api/profiles").status_code
@@ -370,8 +372,7 @@ class TestDatabasePerformance:
         for i in range(5):
             start = time.time()
             response = api_client.post(
-                "/api/profiles",
-                json={"name": f"Perf Test {i}", "settings": {}}
+                "/api/profiles", json={"name": f"Perf Test {i}", "settings": {}}
             )
             if response.status_code in [200, 201]:
                 times.append(time.time() - start)
@@ -524,7 +525,7 @@ class TestResourceMonitoring:
                 with contextlib.suppress(Exception):
                     api_client.post(
                         "/api/synthesis/preview",
-                        json={"text": "CPU load test", "engine": "default"}
+                        json={"text": "CPU load test", "engine": "default"},
                     )
 
         # Measure CPU during load
@@ -556,5 +557,7 @@ class TestResourceMonitoring:
         growth = final_memory - initial_memory
 
         # Memory growth should be bounded
-        print(f"\nMemory: Initial={initial_memory:.0f}MB, Final={final_memory:.0f}MB, Growth={growth:.0f}MB")
+        print(
+            f"\nMemory: Initial={initial_memory:.0f}MB, Final={final_memory:.0f}MB, Growth={growth:.0f}MB"
+        )
         assert growth < 200, f"Memory grew significantly: {growth:.0f}MB"

@@ -86,9 +86,7 @@ class TestDataManager:
     def cleanup(self):
         """Clean up all created test data."""
         try:
-            if self.base_dir.exists() and str(self.base_dir).startswith(
-                tempfile.gettempdir()
-            ):
+            if self.base_dir.exists() and str(self.base_dir).startswith(tempfile.gettempdir()):
                 shutil.rmtree(self.base_dir)
         except Exception as e:
             logger.warning(f"Failed to cleanup test data: {e}")
@@ -206,9 +204,7 @@ class TestAssertions:
             raise AssertionError(message or f"Invalid JSON in {file_path}: {e}")
 
     @staticmethod
-    def assert_dict_contains(
-        data: dict[str, Any], keys: list[str], message: str | None = None
-    ):
+    def assert_dict_contains(data: dict[str, Any], keys: list[str], message: str | None = None):
         """
         Assert that a dictionary contains specified keys.
 
@@ -218,9 +214,7 @@ class TestAssertions:
             message: Optional error message
         """
         missing_keys = [key for key in keys if key not in data]
-        assert not missing_keys, (
-            message or f"Missing keys in dictionary: {missing_keys}"
-        )
+        assert not missing_keys, message or f"Missing keys in dictionary: {missing_keys}"
 
 
 def create_mock_engine(
@@ -247,9 +241,7 @@ def create_mock_engine(
     mock_engine.cleanup = Mock()
     mock_engine.synthesize = AsyncMock(return_value="test_output.wav")
     mock_engine.batch_synthesize = (
-        AsyncMock(return_value=["output1.wav", "output2.wav"])
-        if supports_batch
-        else None
+        AsyncMock(return_value=["output1.wav", "output2.wav"]) if supports_batch else None
     )
     return mock_engine
 
@@ -277,9 +269,7 @@ def create_mock_api_response(
     return mock_response
 
 
-def create_temp_audio_file(
-    duration_seconds: float = 1.0, sample_rate: int = 22050
-) -> Path:
+def create_temp_audio_file(duration_seconds: float = 1.0, sample_rate: int = 22050) -> Path:
     """
     Create a temporary audio file for testing.
 
@@ -319,4 +309,3 @@ def cleanup_temp_files(*file_paths: Path):
                 shutil.rmtree(path)
         except Exception as e:
             logger.warning(f"Failed to cleanup {path}: {e}")
-

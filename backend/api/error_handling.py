@@ -22,11 +22,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from backend.api.v3.models import (
-    ErrorCode as V3ErrorCode,
-)
-
 # v3 StandardResponse imports for unified error format
+from backend.api.v3.models import ErrorCode as V3ErrorCode
 from backend.api.v3.models import (
     ErrorDetail,
     RequestMeta,
@@ -38,6 +35,7 @@ from backend.api.v3.models import (
 try:
     from app.core.monitoring.error_tracking import ErrorSeverity, get_error_tracker
     from app.core.monitoring.structured_logging import get_structured_logger
+
     HAS_MONITORING = True
 except ImportError:
     HAS_MONITORING = False
@@ -46,6 +44,7 @@ except ImportError:
 try:
     from app.core.resilience.circuit_breaker import CircuitBreaker, CircuitState
     from app.core.resilience.retry import RetryHelper, RetryStrategy
+
     HAS_RESILIENCE = True
 except ImportError:
     HAS_RESILIENCE = False
@@ -55,6 +54,7 @@ logger = logging.getLogger(__name__)
 
 class StandardErrorResponse(BaseModel):
     """Standardized error response format."""
+
     error: bool = True
     error_code: str
     message: str
@@ -67,6 +67,7 @@ class StandardErrorResponse(BaseModel):
 
 class ErrorCodes:
     """Standard error codes for the API."""
+
     # Validation errors (4xx)
     VALIDATION_ERROR = "VALIDATION_ERROR"
     INVALID_INPUT = "INVALID_INPUT"
@@ -200,10 +201,14 @@ def to_v3_error_response(
         code=v3_code,
         message=message,
         field=field,
-        details={
-            **(details or {}),
-            **({"recovery_suggestion": recovery_suggestion} if recovery_suggestion else {}),
-        } if details or recovery_suggestion else None,
+        details=(
+            {
+                **(details or {}),
+                **({"recovery_suggestion": recovery_suggestion} if recovery_suggestion else {}),
+            }
+            if details or recovery_suggestion
+            else None
+        ),
     )
 
     # Build request metadata
@@ -236,12 +241,14 @@ def to_v3_validation_errors(
     """
     errors = []
     for err in validation_errors:
-        errors.append(ErrorDetail(
-            code=V3ErrorCode.INVALID_INPUT,
-            message=err.get("message", str(err.get("msg", "Invalid value"))),
-            field=err.get("field"),
-            details={"type": err.get("type")} if err.get("type") else None,
-        ))
+        errors.append(
+            ErrorDetail(
+                code=V3ErrorCode.INVALID_INPUT,
+                message=err.get("message", str(err.get("msg", "Invalid value"))),
+                field=err.get("field"),
+                details={"type": err.get("type")} if err.get("type") else None,
+            )
+        )
 
     meta = RequestMeta(request_id=request_id)
 
@@ -301,7 +308,7 @@ def raise_standardized_error(
     message: str,
     status_code: int = 400,
     details: dict[str, Any] | None = None,
-    recovery_suggestion: str | None = None
+    recovery_suggestion: str | None = None,
 ) -> HTTPException:
     """
     Raise a standardized HTTPException with error code and context.
@@ -347,7 +354,7 @@ def create_error_response(
     status_code: int = 400,
     details: dict[str, Any] | None = None,
     path: str | None = None,
-    recovery_suggestion: str | None = None
+    recovery_suggestion: str | None = None,
 ) -> JSONResponse:
     """Create a standardized error response."""
     response_data = StandardErrorResponse(
@@ -358,18 +365,14 @@ def create_error_response(
         timestamp=datetime.utcnow().isoformat(),
         details=details,
         path=path,
-        recovery_suggestion=recovery_suggestion
+        recovery_suggestion=recovery_suggestion,
     )
 
-    return JSONResponse(
-        status_code=status_code,
-        content=response_data.dict(exclude_none=True)
-    )
+    return JSONResponse(status_code=status_code, content=response_data.dict(exclude_none=True))
 
 
 async def validation_exception_handler(
-    request: Request,
-    exc: RequestValidationError
+    request: Request, exc: RequestValidationError
 ) -> JSONResponse:
     """
     Handle Pydantic validation errors.
@@ -383,16 +386,18 @@ async def validation_exception_handler(
     error_details: list[ErrorDetail] = []
     for error in exc.errors():
         field_path = " -> ".join(str(loc) for loc in error["loc"])
-        error_details.append(ErrorDetail(
-            code=V3ErrorCode.INVALID_INPUT,
-            message=error["msg"],
-            field=field_path,
-            details={"type": error["type"]} if error.get("type") else None,
-        ))
+        error_details.append(
+            ErrorDetail(
+                code=V3ErrorCode.INVALID_INPUT,
+                message=error["msg"],
+                field=field_path,
+                details={"type": error["type"]} if error.get("type") else None,
+            )
+        )
 
     logger.warning(
         f"Validation error on {request.url.path}: {len(error_details)} errors",
-        extra={"request_id": request_id}
+        extra={"request_id": request_id},
     )
 
     # Build v3 StandardResponse
@@ -410,10 +415,7 @@ async def validation_exception_handler(
     )
 
 
-async def http_exception_handler(
-    request: Request,
-    exc: HTTPException
-) -> JSONResponse:
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     """Handle HTTP exceptions with standardized format."""
     request_id = getattr(request.state, "request_id", generate_request_id())
 
@@ -423,11 +425,11 @@ async def http_exception_handler(
     details = None
 
     # Check if exception has custom attributes (VoiceStudioException)
-    if hasattr(exc, 'error_code'):
+    if hasattr(exc, "error_code"):
         error_code = exc.error_code
-    if hasattr(exc, 'recovery_suggestion'):
+    if hasattr(exc, "recovery_suggestion"):
         recovery_suggestion = exc.recovery_suggestion
-    if hasattr(exc, 'context'):
+    if hasattr(exc, "context"):
         details = exc.context
 
     # Map status codes to error codes if not already set
@@ -457,7 +459,7 @@ async def http_exception_handler(
                 request_id=request_id,
                 path=request.url.path,
                 method=request.method,
-                context=details
+                context=details,
             )
         except Exception:
             # Fallback to standard logging
@@ -496,7 +498,7 @@ async def http_exception_handler(
                     "method": request.method,
                     "error_code": error_code,
                     "details": details,
-                }
+                },
             )
         except Exception:
             pass  # Error tracking is optional
@@ -507,18 +509,19 @@ async def http_exception_handler(
         message=str(exc.detail),
         status_code=exc.status_code,
         request_id=request_id,
-        details={
-            **(details or {}),
-            "path": request.url.path,
-        } if details else {"path": request.url.path},
+        details=(
+            {
+                **(details or {}),
+                "path": request.url.path,
+            }
+            if details
+            else {"path": request.url.path}
+        ),
         recovery_suggestion=recovery_suggestion,
     )
 
 
-async def general_exception_handler(
-    request: Request,
-    exc: Exception
-) -> JSONResponse:
+async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle unexpected exceptions with enhanced logging and error tracking."""
     request_id = getattr(request.state, "request_id", generate_request_id())
 
@@ -537,18 +540,18 @@ async def general_exception_handler(
                 exception_message=exception_message,
                 request_id=request_id,
                 path=request.url.path,
-                traceback=error_traceback
+                traceback=error_traceback,
             )
         except Exception:
             # Fallback to standard logging
             logger.error(
                 f"Unhandled exception on {request.url.path}: {exception_message}\n{error_traceback}",
-                extra={"request_id": request_id}
+                extra={"request_id": request_id},
             )
     else:
         logger.error(
             f"Unhandled exception on {request.url.path}: {exception_message}\n{error_traceback}",
-            extra={"request_id": request_id}
+            extra={"request_id": request_id},
         )
 
     # Track error with error tracker if available
@@ -556,7 +559,11 @@ async def general_exception_handler(
         try:
             error_tracker = get_error_tracker()
             # Determine severity based on exception type
-            severity = ErrorSeverity.CRITICAL if isinstance(exc, (SystemError, MemoryError)) else ErrorSeverity.HIGH
+            severity = (
+                ErrorSeverity.CRITICAL
+                if isinstance(exc, (SystemError, MemoryError))
+                else ErrorSeverity.HIGH
+            )
             error_tracker.record_error(
                 exc,
                 severity=severity,
@@ -564,7 +571,7 @@ async def general_exception_handler(
                     "request_id": request_id,
                     "path": request.url.path,
                     "method": request.method,
-                }
+                },
             )
         except Exception:
             pass  # Error tracking is optional
@@ -575,6 +582,7 @@ async def general_exception_handler(
 
     # In development, include more details
     import os
+
     if os.getenv("ENVIRONMENT", "production") == "development":
         details = {
             "exception_type": exception_type,
@@ -618,11 +626,13 @@ def get_error_metrics() -> dict[str, Any]:
 def _track_error(error_type: str, message: str) -> None:
     """Track an error for metrics."""
     _error_counts[error_type] = _error_counts.get(error_type, 0) + 1
-    _recent_errors.append({
-        "type": error_type,
-        "message": message[:200],  # Truncate long messages
-        "timestamp": datetime.utcnow().isoformat(),
-    })
+    _recent_errors.append(
+        {
+            "type": error_type,
+            "message": message[:200],  # Truncate long messages
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+    )
     # Keep only recent errors
     if len(_recent_errors) > _MAX_RECENT_ERRORS:
         _recent_errors.pop(0)
@@ -657,6 +667,7 @@ async def add_request_id_middleware(request: Request, call_next):
         # Log exception to audit system
         try:
             from app.core.audit import get_audit_logger
+
             audit_logger = get_audit_logger()
             audit_logger.log_runtime_exception(
                 exception=exc,
@@ -666,11 +677,10 @@ async def add_request_id_middleware(request: Request, call_next):
                     "method": request.method,
                     "task_id": request.headers.get("X-Task-ID"),
                     "subsystem": "Backend.API",
-                }
+                },
             )
         except ImportError:
             pass  # Audit system is optional
         except Exception:
             pass  # Don't let audit logging break the request
         raise
-

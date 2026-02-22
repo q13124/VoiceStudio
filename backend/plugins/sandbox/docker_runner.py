@@ -44,6 +44,7 @@ try:
     import docker
     from docker.errors import ContainerError, DockerException, ImageNotFound, NotFound
     from docker.types import Mount, Ulimit
+
     DOCKER_AVAILABLE = True
 except ImportError:
     docker = None
@@ -167,9 +168,7 @@ class DockerRunner:
     _on_state_change: List[Callable[[ContainerState], None]] = field(
         default_factory=list, repr=False
     )
-    _on_crash: List[Callable[[str], Awaitable[None]]] = field(
-        default_factory=list, repr=False
-    )
+    _on_crash: List[Callable[[str], Awaitable[None]]] = field(default_factory=list, repr=False)
 
     def __post_init__(self):
         """Initialize internal state."""
@@ -179,9 +178,7 @@ class DockerRunner:
         self._request_queue = asyncio.Queue()
 
         if not DOCKER_AVAILABLE:
-            logger.warning(
-                "Docker package not installed. Install with: pip install docker"
-            )
+            logger.warning("Docker package not installed. Install with: pip install docker")
 
     @staticmethod
     def is_available() -> bool:
@@ -232,13 +229,15 @@ class DockerRunner:
             RuntimeError: If already running or Docker unavailable
             TimeoutError: If startup times out
         """
-        if self.state not in (ContainerState.NOT_CREATED, ContainerState.STOPPED, ContainerState.REMOVED):
+        if self.state not in (
+            ContainerState.NOT_CREATED,
+            ContainerState.STOPPED,
+            ContainerState.REMOVED,
+        ):
             raise RuntimeError(f"Cannot start in state {self.state}")
 
         if not DOCKER_AVAILABLE:
-            raise RuntimeError(
-                "Docker package not installed. Install with: pip install docker"
-            )
+            raise RuntimeError("Docker package not installed. Install with: pip install docker")
 
         self._set_state(ContainerState.CREATING)
 
@@ -375,9 +374,7 @@ class DockerRunner:
             return ""
 
         try:
-            logs = await asyncio.to_thread(
-                self._container.logs, tail=tail, decode=True
-            )
+            logs = await asyncio.to_thread(self._container.logs, tail=tail, decode=True)
             return logs
         except Exception as e:
             logger.warning(f"Failed to get container logs: {e}")
@@ -389,9 +386,7 @@ class DockerRunner:
             return {}
 
         try:
-            stats = await asyncio.to_thread(
-                self._container.stats, stream=False, decode=True
-            )
+            stats = await asyncio.to_thread(self._container.stats, stream=False, decode=True)
             return self._parse_stats(stats)
         except Exception as e:
             logger.warning(f"Failed to get container stats: {e}")
@@ -432,18 +427,14 @@ class DockerRunner:
 
         try:
             # Check if image exists locally
-            await asyncio.to_thread(
-                self._client.images.get, self.config.image
-            )
+            await asyncio.to_thread(self._client.images.get, self.config.image)
             self._image_ready = True
             logger.debug(f"Image found: {self.config.image}")
 
         except ImageNotFound:
             # Pull the image
             logger.info(f"Pulling image: {self.config.image}")
-            await asyncio.to_thread(
-                self._client.images.pull, self.config.image
-            )
+            await asyncio.to_thread(self._client.images.pull, self.config.image)
             self._image_ready = True
             logger.info(f"Image pulled: {self.config.image}")
 
@@ -507,7 +498,7 @@ class DockerRunner:
     def _build_entry_command(self) -> List[str]:
         """Build the command to run inside the container."""
         # Python entry script that bootstraps the plugin
-        bootstrap_script = f'''
+        bootstrap_script = f"""
 import sys
 import os
 import asyncio
@@ -525,7 +516,7 @@ except ImportError:
     # Fallback: minimal bootstrap
     from backend.plugins.sandbox.subprocess_bootstrap import run_plugin_subprocess
     asyncio.run(run_plugin_subprocess("{self.config.entry_module}"))
-'''
+"""
         return ["python", "-c", bootstrap_script]
 
     async def _copy_plugin_files(self) -> None:
@@ -576,18 +567,14 @@ except ImportError:
                 elif self._container.status in ("exited", "dead"):
                     # Container crashed during startup
                     logs = await self.get_logs(tail=50)
-                    raise RuntimeError(
-                        f"Container exited during startup: {logs}"
-                    )
+                    raise RuntimeError(f"Container exited during startup: {logs}")
 
             except NotFound:
                 raise RuntimeError("Container was removed unexpectedly")
 
             await asyncio.sleep(0.5)
 
-        raise TimeoutError(
-            f"Plugin initialization timed out after {timeout}s"
-        )
+        raise TimeoutError(f"Plugin initialization timed out after {timeout}s")
 
     def _start_health_monitoring(self) -> None:
         """Start the health monitoring task."""
@@ -733,9 +720,7 @@ except ImportError:
             }
             if result["memory"]["limit_bytes"] > 0:
                 result["memory"]["percent"] = (
-                    result["memory"]["usage_bytes"]
-                    / result["memory"]["limit_bytes"]
-                    * 100
+                    result["memory"]["usage_bytes"] / result["memory"]["limit_bytes"] * 100
                 )
 
         # CPU stats
@@ -745,9 +730,7 @@ except ImportError:
             cpu_delta = cpu.get("cpu_usage", {}).get("total_usage", 0) - precpu.get(
                 "cpu_usage", {}
             ).get("total_usage", 0)
-            system_delta = cpu.get("system_cpu_usage", 0) - precpu.get(
-                "system_cpu_usage", 0
-            )
+            system_delta = cpu.get("system_cpu_usage", 0) - precpu.get("system_cpu_usage", 0)
             online_cpus = cpu.get("online_cpus", 1)
 
             if system_delta > 0:

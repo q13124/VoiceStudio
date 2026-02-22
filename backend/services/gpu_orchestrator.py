@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class GPUVendor(Enum):
     """GPU vendor types."""
+
     NVIDIA = "nvidia"
     AMD = "amd"
     INTEL = "intel"
@@ -35,6 +36,7 @@ class GPUVendor(Enum):
 
 class GPUMemoryState(Enum):
     """GPU memory utilization state."""
+
     LOW = "low"  # < 50%
     MEDIUM = "medium"  # 50-80%
     HIGH = "high"  # 80-95%
@@ -44,6 +46,7 @@ class GPUMemoryState(Enum):
 @dataclass
 class GPUInfo:
     """GPU device information."""
+
     device_id: int
     name: str
     vendor: GPUVendor
@@ -93,6 +96,7 @@ class GPUInfo:
 @dataclass
 class GPUTask:
     """Task assigned to a GPU."""
+
     task_id: str
     device_id: int
     task_type: str
@@ -104,6 +108,7 @@ class GPUTask:
 
 class LoadBalancingStrategy(Enum):
     """GPU load balancing strategies."""
+
     ROUND_ROBIN = "round_robin"
     LEAST_LOADED = "least_loaded"
     MEMORY_AWARE = "memory_aware"
@@ -165,6 +170,7 @@ class GPUOrchestrator:
         # Try CUDA/NVIDIA
         try:
             import torch
+
             if torch.cuda.is_available():
                 self._cuda_available = True
                 for i in range(torch.cuda.device_count()):
@@ -179,18 +185,20 @@ class GPUOrchestrator:
                     except Exception:
                         free_memory = total_memory // 2  # Estimate
 
-                    gpus.append(GPUInfo(
-                        device_id=i,
-                        name=props.name,
-                        vendor=GPUVendor.NVIDIA,
-                        total_memory_mb=total_memory,
-                        available_memory_mb=free_memory,
-                        compute_capability=(props.major, props.minor),
-                        temperature_c=None,  # Requires pynvml
-                        utilization_percent=0.0,
-                        power_usage_watts=None,
-                        is_available=True,
-                    ))
+                    gpus.append(
+                        GPUInfo(
+                            device_id=i,
+                            name=props.name,
+                            vendor=GPUVendor.NVIDIA,
+                            total_memory_mb=total_memory,
+                            available_memory_mb=free_memory,
+                            compute_capability=(props.major, props.minor),
+                            temperature_c=None,  # Requires pynvml
+                            utilization_percent=0.0,
+                            power_usage_watts=None,
+                            is_available=True,
+                        )
+                    )
 
                 logger.info(f"Detected {len(gpus)} NVIDIA GPU(s)")
         except ImportError:
@@ -201,18 +209,20 @@ class GPUOrchestrator:
         # If no GPUs found, check for CPU fallback
         if not gpus:
             logger.info("No GPUs detected, using CPU fallback")
-            gpus.append(GPUInfo(
-                device_id=-1,
-                name="CPU",
-                vendor=GPUVendor.UNKNOWN,
-                total_memory_mb=0,
-                available_memory_mb=0,
-                compute_capability=None,
-                temperature_c=None,
-                utilization_percent=0.0,
-                power_usage_watts=None,
-                is_available=True,
-            ))
+            gpus.append(
+                GPUInfo(
+                    device_id=-1,
+                    name="CPU",
+                    vendor=GPUVendor.UNKNOWN,
+                    total_memory_mb=0,
+                    available_memory_mb=0,
+                    compute_capability=None,
+                    temperature_c=None,
+                    utilization_percent=0.0,
+                    power_usage_watts=None,
+                    is_available=True,
+                )
+            )
 
         return gpus
 
@@ -304,7 +314,8 @@ class GPUOrchestrator:
     ) -> int | None:
         """Select the best GPU for a task."""
         available_gpus = [
-            gpu for gpu in self._gpus
+            gpu
+            for gpu in self._gpus
             if gpu.is_available and gpu.memory_state != GPUMemoryState.CRITICAL
         ]
 

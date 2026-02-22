@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import numpy as np
+
     HAS_NUMPY = True
 except ImportError:
     HAS_NUMPY = False
@@ -25,18 +26,18 @@ except ImportError:
 
 try:
     import whisperx
+
     HAS_WHISPERX = True
 except ImportError:
     HAS_WHISPERX = False
     whisperx = None
-    logger.warning(
-        "whisperx not installed. Install with: pip install whisperx"
-    )
+    logger.warning("whisperx not installed. Install with: pip install whisperx")
 
 
 def _get_torch():
     try:
         import torch
+
         return torch
     except ImportError:
         return None
@@ -66,12 +67,71 @@ class WhisperXEngine(EngineProtocol):
 
     SUPPORTED_MODELS = ["tiny", "base", "small", "medium", "large-v2", "large-v3"]
     SUPPORTED_LANGUAGES = [
-        "auto", "en", "zh", "de", "es", "ru", "ja", "pt", "fr", "it", "ko",
-        "pl", "tr", "nl", "ar", "cs", "fi", "hu", "sv", "vi", "id", "hi", "th",
-        "uk", "el", "da", "no", "he", "fa", "ta", "ur", "bn", "te", "kn", "ml",
-        "si", "my", "km", "lo", "ka", "am", "sw", "af", "az", "mk", "be", "eu",
-        "gl", "ha", "jv", "kk", "ky", "lb", "mg", "ms", "ne", "ny", "ps", "so",
-        "su", "tg", "uz", "yi", "yo", "zu",
+        "auto",
+        "en",
+        "zh",
+        "de",
+        "es",
+        "ru",
+        "ja",
+        "pt",
+        "fr",
+        "it",
+        "ko",
+        "pl",
+        "tr",
+        "nl",
+        "ar",
+        "cs",
+        "fi",
+        "hu",
+        "sv",
+        "vi",
+        "id",
+        "hi",
+        "th",
+        "uk",
+        "el",
+        "da",
+        "no",
+        "he",
+        "fa",
+        "ta",
+        "ur",
+        "bn",
+        "te",
+        "kn",
+        "ml",
+        "si",
+        "my",
+        "km",
+        "lo",
+        "ka",
+        "am",
+        "sw",
+        "af",
+        "az",
+        "mk",
+        "be",
+        "eu",
+        "gl",
+        "ha",
+        "jv",
+        "kk",
+        "ky",
+        "lb",
+        "mg",
+        "ms",
+        "ne",
+        "ny",
+        "ps",
+        "so",
+        "su",
+        "tg",
+        "uz",
+        "yi",
+        "yo",
+        "zu",
     ]
 
     def __init__(
@@ -85,9 +145,7 @@ class WhisperXEngine(EngineProtocol):
     ):
         super().__init__(device=device, gpu=gpu)
         if not HAS_WHISPERX:
-            raise ImportError(
-                "whisperx not installed. Install with: pip install whisperx"
-            )
+            raise ImportError("whisperx not installed. Install with: pip install whisperx")
         if not HAS_NUMPY:
             raise ImportError("numpy is required for WhisperX. Install with: pip install numpy")
         self.model_name = model_name
@@ -205,12 +263,14 @@ class WhisperXEngine(EngineProtocol):
             out_segments.append(seg_dict)
             if word_timestamps and "words" in seg:
                 for w in seg["words"]:
-                    word_ts.append({
-                        "word": w.get("word", ""),
-                        "start": float(w.get("start", start)),
-                        "end": float(w.get("end", end)),
-                        "probability": w.get("score"),
-                    })
+                    word_ts.append(
+                        {
+                            "word": w.get("word", ""),
+                            "start": float(w.get("start", start)),
+                            "end": float(w.get("end", end)),
+                            "probability": w.get("score"),
+                        }
+                    )
         full_text = " ".join(text_parts).strip()
         duration = sum(s["end"] - s["start"] for s in out_segments)
         return {
@@ -235,9 +295,11 @@ class WhisperXEngine(EngineProtocol):
 
     def get_info(self) -> dict[str, Any]:
         info = super().get_info()
-        info.update({
-            "model_name": self.model_name,
-            "compute_type": self.compute_type,
-            "supported_models": self.SUPPORTED_MODELS,
-        })
+        info.update(
+            {
+                "model_name": self.model_name,
+                "compute_type": self.compute_type,
+                "supported_models": self.SUPPORTED_MODELS,
+            }
+        )
         return info

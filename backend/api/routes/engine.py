@@ -72,9 +72,7 @@ async def telemetry(
                         if isinstance(s, dict)
                     )
                     total_underruns = sum(
-                        s.get("underruns", 0)
-                        for s in all_stats.values()
-                        if isinstance(s, dict)
+                        s.get("underruns", 0) for s in all_stats.values() if isinstance(s, dict)
                     )
                     total_vram = sum(
                         s.get("vram_usage_percent", 0.0)
@@ -259,6 +257,4 @@ async def record_telemetry(
         raise
     except Exception as e:
         logger.error(f"Failed to record telemetry: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to record telemetry: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to record telemetry: {e!s}") from e

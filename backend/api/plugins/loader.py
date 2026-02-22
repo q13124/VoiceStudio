@@ -48,9 +48,7 @@ class PluginLoader:
             Number of plugins loaded
         """
         if not self.plugins_directory.exists():
-            logger.warning(
-                f"Plugins directory does not exist: {self.plugins_directory}"
-            )
+            logger.warning(f"Plugins directory does not exist: {self.plugins_directory}")
             return 0
 
         loaded_count = 0
@@ -61,17 +59,14 @@ class PluginLoader:
                 continue
 
             # Skip hidden directories and example plugin
-            if plugin_dir.name.startswith('.') or plugin_dir.name == 'example':
+            if plugin_dir.name.startswith(".") or plugin_dir.name == "example":
                 continue
 
             try:
                 if self._load_plugin(plugin_dir, app):
                     loaded_count += 1
             except Exception as e:
-                logger.error(
-                    f"Failed to load plugin from {plugin_dir}: {e}",
-                    exc_info=True
-                )
+                logger.error(f"Failed to load plugin from {plugin_dir}: {e}", exc_info=True)
 
         logger.info(f"Loaded {loaded_count} plugin(s)")
         return loaded_count
@@ -95,7 +90,7 @@ class PluginLoader:
 
         # Load manifest
         try:
-            with open(manifest_path, encoding='utf-8') as f:
+            with open(manifest_path, encoding="utf-8") as f:
                 manifest = json.load(f)
         except Exception as e:
             logger.error(f"Failed to load manifest from {manifest_path}: {e}")
@@ -118,8 +113,7 @@ class PluginLoader:
 
         if not backend_entry:
             logger.warning(
-                f"Plugin {plugin_name} has backend_routes=True but no "
-                f"backend entry_point"
+                f"Plugin {plugin_name} has backend_routes=True but no " f"backend entry_point"
             )
             return False
 
@@ -131,10 +125,7 @@ class PluginLoader:
 
         try:
             # Import plugin module
-            spec = importlib.util.spec_from_file_location(
-                f"plugin_{plugin_name}",
-                plugin_py
-            )
+            spec = importlib.util.spec_from_file_location(f"plugin_{plugin_name}", plugin_py)
 
             if spec is None or spec.loader is None:
                 logger.error(f"Failed to create module spec for {plugin_py}")
@@ -168,14 +159,11 @@ class PluginLoader:
                         continue
                     origin = getattr(getattr(mod, "__spec__", None), "origin", None) or ""
                     mod_file = getattr(mod, "__file__", None) or ""
-                    if (
-                        origin.startswith(plugin_dir_str)
-                        or mod_file.startswith(plugin_dir_str)
-                    ):
+                    if origin.startswith(plugin_dir_str) or mod_file.startswith(plugin_dir_str):
                         del sys.modules[mod_name]
 
             # Call entry point function
-            entry_parts = backend_entry.split('.')
+            entry_parts = backend_entry.split(".")
             if len(entry_parts) == 1:
                 # Simple function name
                 register_func = getattr(module, entry_parts[0], None)
@@ -189,10 +177,7 @@ class PluginLoader:
                 register_func = obj
 
             if register_func is None:
-                logger.error(
-                    f"Entry point '{backend_entry}' not found in plugin "
-                    f"{plugin_name}"
-                )
+                logger.error(f"Entry point '{backend_entry}' not found in plugin " f"{plugin_name}")
                 return False
 
             # Register plugin
@@ -205,7 +190,7 @@ class PluginLoader:
                 "version": manifest.get("version", "1.0.0"),
                 "author": manifest.get("author", "Unknown"),
                 "description": manifest.get("description", ""),
-                "directory": str(plugin_dir)
+                "directory": str(plugin_dir),
             }
 
             logger.info(f"Successfully loaded plugin: {plugin_name}")
@@ -213,8 +198,7 @@ class PluginLoader:
 
         except Exception as e:
             logger.error(
-                f"Error loading plugin {plugin_name} from {plugin_dir}: {e}",
-                exc_info=True
+                f"Error loading plugin {plugin_name} from {plugin_dir}: {e}", exc_info=True
             )
             return False
 
@@ -253,4 +237,3 @@ def load_all_plugins(app: FastAPI, plugins_directory: str | None = None) -> int:
 def get_plugin_loader() -> PluginLoader | None:
     """Get the global plugin loader instance"""
     return _plugin_loader
-

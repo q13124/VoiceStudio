@@ -252,11 +252,13 @@ class Phase6Persistence:
             cursor = conn.cursor()
 
             # Schema version table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS schema_version (
                     version INTEGER PRIMARY KEY
                 )
-            """)
+            """
+            )
 
             # Check current version
             cursor.execute("SELECT version FROM schema_version LIMIT 1")
@@ -274,7 +276,8 @@ class Phase6Persistence:
 
         if from_version < 1:
             # Q-2: Anomaly baselines table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS anomaly_baselines (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     plugin_id TEXT NOT NULL,
@@ -291,14 +294,18 @@ class Phase6Persistence:
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(plugin_id, metric_name)
                 )
-            """)
-            cursor.execute("""
+            """
+            )
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_baselines_plugin
                 ON anomaly_baselines(plugin_id)
-            """)
+            """
+            )
 
             # D-1: Analytics events table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS analytics_events (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     plugin_id TEXT NOT NULL,
@@ -309,22 +316,30 @@ class Phase6Persistence:
                     metadata TEXT,
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
-            cursor.execute("""
+            """
+            )
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_events_plugin
                 ON analytics_events(plugin_id)
-            """)
-            cursor.execute("""
+            """
+            )
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_events_timestamp
                 ON analytics_events(timestamp)
-            """)
-            cursor.execute("""
+            """
+            )
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_events_type
                 ON analytics_events(event_type)
-            """)
+            """
+            )
 
             # D-1: Aggregated plugin metrics table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS plugin_metrics (
                     plugin_id TEXT PRIMARY KEY,
                     total_installs INTEGER DEFAULT 0,
@@ -336,10 +351,12 @@ class Phase6Persistence:
                     rating_count INTEGER DEFAULT 0,
                     last_updated TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             # C-1: Consent records table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS consent_records (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id TEXT NOT NULL,
@@ -350,18 +367,24 @@ class Phase6Persistence:
                     categories TEXT,
                     UNIQUE(user_id, plugin_id)
                 )
-            """)
-            cursor.execute("""
+            """
+            )
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_consent_user
                 ON consent_records(user_id)
-            """)
-            cursor.execute("""
+            """
+            )
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_consent_plugin
                 ON consent_records(plugin_id)
-            """)
+            """
+            )
 
             # C-1: Plugin data declarations table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS data_declarations (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     plugin_id TEXT UNIQUE NOT NULL,
@@ -371,7 +394,8 @@ class Phase6Persistence:
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                     updated_at TEXT
                 )
-            """)
+            """
+            )
 
             # Update schema version
             cursor.execute("DELETE FROM schema_version")
@@ -380,7 +404,9 @@ class Phase6Persistence:
                 (self.SCHEMA_VERSION,),
             )
 
-        logger.info(f"Phase 6 database schema migrated from v{from_version} to v{self.SCHEMA_VERSION}")
+        logger.info(
+            f"Phase 6 database schema migrated from v{from_version} to v{self.SCHEMA_VERSION}"
+        )
 
     # =========================================================================
     # Q-2: Anomaly Baseline Methods
@@ -472,7 +498,9 @@ class Phase6Persistence:
                     q3=row["q3"],
                     sample_count=row["sample_count"],
                     last_updated=datetime.fromisoformat(row["last_updated"]),
-                    created_at=datetime.fromisoformat(row["created_at"]) if row["created_at"] else None,
+                    created_at=(
+                        datetime.fromisoformat(row["created_at"]) if row["created_at"] else None
+                    ),
                 )
             return None
 
@@ -500,7 +528,9 @@ class Phase6Persistence:
                         q3=row["q3"],
                         sample_count=row["sample_count"],
                         last_updated=datetime.fromisoformat(row["last_updated"]),
-                        created_at=datetime.fromisoformat(row["created_at"]) if row["created_at"] else None,
+                        created_at=(
+                            datetime.fromisoformat(row["created_at"]) if row["created_at"] else None
+                        ),
                     )
                 )
             return baselines
@@ -638,8 +668,15 @@ class Phase6Persistence:
                     updates = []
                     params = []
                     for key, value in kwargs.items():
-                        if key in ("total_installs", "active_installs", "total_views",
-                                   "total_uses", "total_errors", "avg_rating", "rating_count"):
+                        if key in (
+                            "total_installs",
+                            "active_installs",
+                            "total_views",
+                            "total_uses",
+                            "total_errors",
+                            "avg_rating",
+                            "rating_count",
+                        ):
                             updates.append(f"{key} = ?")
                             params.append(value)
 
@@ -771,12 +808,16 @@ class Phase6Persistence:
                     plugin_id=row["plugin_id"],
                     privacy_level=row["privacy_level"],
                     consented_at=datetime.fromisoformat(row["consented_at"]),
-                    revoked_at=datetime.fromisoformat(row["revoked_at"]) if row["revoked_at"] else None,
+                    revoked_at=(
+                        datetime.fromisoformat(row["revoked_at"]) if row["revoked_at"] else None
+                    ),
                     categories=json.loads(row["categories"] or "[]"),
                 )
             return None
 
-    def get_user_consents(self, user_id: str, active_only: bool = True) -> list[PersistedConsentRecord]:
+    def get_user_consents(
+        self, user_id: str, active_only: bool = True
+    ) -> list[PersistedConsentRecord]:
         """Get all consents for a user."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
@@ -800,7 +841,9 @@ class Phase6Persistence:
                         plugin_id=row["plugin_id"],
                         privacy_level=row["privacy_level"],
                         consented_at=datetime.fromisoformat(row["consented_at"]),
-                        revoked_at=datetime.fromisoformat(row["revoked_at"]) if row["revoked_at"] else None,
+                        revoked_at=(
+                            datetime.fromisoformat(row["revoked_at"]) if row["revoked_at"] else None
+                        ),
                         categories=json.loads(row["categories"] or "[]"),
                     )
                 )
@@ -857,7 +900,9 @@ class Phase6Persistence:
                     retention_days=row["retention_days"],
                     required_consent_level=row["required_consent_level"],
                     created_at=datetime.fromisoformat(row["created_at"]),
-                    updated_at=datetime.fromisoformat(row["updated_at"]) if row["updated_at"] else None,
+                    updated_at=(
+                        datetime.fromisoformat(row["updated_at"]) if row["updated_at"] else None
+                    ),
                 )
             return None
 
@@ -893,7 +938,9 @@ class Phase6Persistence:
 
                 conn.commit()
 
-                logger.info(f"Retention policy applied: deleted {events_deleted} events older than {days} days")
+                logger.info(
+                    f"Retention policy applied: deleted {events_deleted} events older than {days} days"
+                )
                 return {"analytics_events": events_deleted}
 
     def get_storage_stats(self) -> dict[str, Any]:

@@ -2,6 +2,7 @@
 Unit Tests for Voice Morph API Route
 Tests voice morphing endpoints in isolation.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -39,9 +40,7 @@ try:
         _morph_configs,
     )
 except ImportError:
-    pytest.skip(
-        "Could not import voice_morph route module", allow_module_level=True
-    )
+    pytest.skip("Could not import voice_morph route module", allow_module_level=True)
 
 
 class TestVoiceMorphRouteImports:
@@ -49,12 +48,8 @@ class TestVoiceMorphRouteImports:
 
     def test_voice_morph_module_imports(self):
         """Test voice_morph module can be imported."""
-        assert (
-            voice_morph is not None
-        ), "Failed to import voice_morph module"
-        assert hasattr(
-            voice_morph, "router"
-        ), "voice_morph module missing router"
+        assert voice_morph is not None, "Failed to import voice_morph module"
+        assert hasattr(voice_morph, "router"), "voice_morph module missing router"
 
     def test_voice_morph_models_import(self):
         """Test voice morph models can be imported."""
@@ -270,9 +265,7 @@ class TestVoiceMorphRouteEndpoints:
             "source_audio_id": "audio-456",
             "target_voices": [{"voice_profile_id": "voice-2", "weight": 1.0}],
         }
-        response = client.put(
-            "/api/voice-morph/configs/nonexistent", json=update_data
-        )
+        response = client.put("/api/voice-morph/configs/nonexistent", json=update_data)
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()

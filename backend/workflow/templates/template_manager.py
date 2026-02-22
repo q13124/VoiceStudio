@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class TemplateCategory(Enum):
     """Template categories."""
+
     PROJECT = "project"
     WORKFLOW = "workflow"
     VOICE = "voice"
@@ -29,6 +30,7 @@ class TemplateCategory(Enum):
 @dataclass
 class TemplateVariable:
     """A variable in a template."""
+
     name: str
     description: str
     type: str  # string, number, boolean, path, choice
@@ -41,6 +43,7 @@ class TemplateVariable:
 @dataclass
 class Template:
     """A template definition."""
+
     id: str
     name: str
     description: str
@@ -57,6 +60,7 @@ class Template:
 @dataclass
 class InstantiatedTemplate:
     """Result of instantiating a template."""
+
     success: bool
     output_path: Path | None = None
     files_created: list[str] = field(default_factory=list)
@@ -80,7 +84,7 @@ class TemplateManager:
         # Load user templates
         for template_file in self._templates_dir.glob("*.json"):
             try:
-                data = json.loads(template_file.read_text(encoding='utf-8'))
+                data = json.loads(template_file.read_text(encoding="utf-8"))
                 template = self._parse_template(data)
                 self._templates[template.id] = template
             except Exception as e:
@@ -105,13 +109,14 @@ class TemplateManager:
                 ),
             ],
             files={
-                "project.json": json.dumps({
-                    "name": "{{project_name}}",
-                    "version": "1.0",
-                    "tracks": [
-                        {"name": "Main", "type": "audio"}
-                    ],
-                }, indent=2),
+                "project.json": json.dumps(
+                    {
+                        "name": "{{project_name}}",
+                        "version": "1.0",
+                        "tracks": [{"name": "Main", "type": "audio"}],
+                    },
+                    indent=2,
+                ),
                 "README.md": "# {{project_name}}\n\nVoiceStudio project.\n",
             },
         )
@@ -140,16 +145,19 @@ class TemplateManager:
                 ),
             ],
             files={
-                "project.json": json.dumps({
-                    "name": "{{project_name}} - Episode {{episode_number}}",
-                    "type": "podcast",
-                    "tracks": [
-                        {"name": "Host", "type": "voice"},
-                        {"name": "Guest", "type": "voice"},
-                        {"name": "Music", "type": "audio"},
-                        {"name": "SFX", "type": "audio"},
-                    ],
-                }, indent=2),
+                "project.json": json.dumps(
+                    {
+                        "name": "{{project_name}} - Episode {{episode_number}}",
+                        "type": "podcast",
+                        "tracks": [
+                            {"name": "Host", "type": "voice"},
+                            {"name": "Guest", "type": "voice"},
+                            {"name": "Music", "type": "audio"},
+                            {"name": "SFX", "type": "audio"},
+                        ],
+                    },
+                    indent=2,
+                ),
                 "assets/.gitkeep": "",
                 "exports/.gitkeep": "",
             },
@@ -185,12 +193,15 @@ class TemplateManager:
                 ),
             ],
             files={
-                "project.json": json.dumps({
-                    "name": "{{book_title}}",
-                    "author": "{{author_name}}",
-                    "type": "audiobook",
-                    "chapters": "{{num_chapters}}",
-                }, indent=2),
+                "project.json": json.dumps(
+                    {
+                        "name": "{{book_title}}",
+                        "author": "{{author_name}}",
+                        "type": "audiobook",
+                        "chapters": "{{num_chapters}}",
+                    },
+                    indent=2,
+                ),
                 "chapters/.gitkeep": "",
                 "voices/.gitkeep": "",
             },
@@ -220,19 +231,22 @@ class TemplateManager:
                 ),
             ],
             files={
-                "workflow.json": json.dumps({
-                    "name": "Batch Synthesis",
-                    "steps": [
-                        {
-                            "type": "synthesize",
-                            "config": {"voice": "{{voice}}"},
-                        },
-                        {
-                            "type": "export",
-                            "config": {"format": "{{output_format}}"},
-                        },
-                    ],
-                }, indent=2),
+                "workflow.json": json.dumps(
+                    {
+                        "name": "Batch Synthesis",
+                        "steps": [
+                            {
+                                "type": "synthesize",
+                                "config": {"voice": "{{voice}}"},
+                            },
+                            {
+                                "type": "export",
+                                "config": {"format": "{{output_format}}"},
+                            },
+                        ],
+                    },
+                    indent=2,
+                ),
             },
         )
 
@@ -268,10 +282,7 @@ class TemplateManager:
         """Get a template by ID."""
         return self._templates.get(template_id)
 
-    def list_templates(
-        self,
-        category: TemplateCategory | None = None
-    ) -> list[Template]:
+    def list_templates(self, category: TemplateCategory | None = None) -> list[Template]:
         """List available templates."""
         templates = list(self._templates.values())
 
@@ -281,17 +292,13 @@ class TemplateManager:
         return templates
 
     def instantiate(
-        self,
-        template_id: str,
-        output_path: Path,
-        variables: dict[str, Any]
+        self, template_id: str, output_path: Path, variables: dict[str, Any]
     ) -> InstantiatedTemplate:
         """Instantiate a template with variables."""
         template = self._templates.get(template_id)
         if not template:
             return InstantiatedTemplate(
-                success=False,
-                errors=[f"Template not found: {template_id}"]
+                success=False, errors=[f"Template not found: {template_id}"]
             )
 
         result = InstantiatedTemplate(success=True)
@@ -323,7 +330,7 @@ class TemplateManager:
                 # Write file
                 full_path = output_path / processed_path
                 full_path.parent.mkdir(parents=True, exist_ok=True)
-                full_path.write_text(processed_content, encoding='utf-8')
+                full_path.write_text(processed_content, encoding="utf-8")
 
                 result.files_created.append(str(full_path))
 
@@ -370,7 +377,7 @@ class TemplateManager:
             }
 
             path = self._templates_dir / f"{template.id}.json"
-            path.write_text(json.dumps(data, indent=2), encoding='utf-8')
+            path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
             self._templates[template.id] = template
 

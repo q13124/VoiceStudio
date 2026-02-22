@@ -10,6 +10,7 @@ Validates that all engine adapters correctly implement the EngineProtocol interf
 These tests ensure adapters behave consistently and prevent "engine A fix breaks engine B"
 regressions.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -84,6 +85,7 @@ VALID_DEVICES = {"cuda", "cpu", "cuda:0", "cuda:1", "mps"}
 # ENGINE DISCOVERY
 # =============================================================================
 
+
 def discover_engine_modules() -> list[str]:
     """Discover all engine modules in app/core/engines/."""
     engines_dir = PROJECT_ROOT / "app" / "core" / "engines"
@@ -126,6 +128,7 @@ def discover_engine_classes() -> list[tuple]:
 # FIXTURES
 # =============================================================================
 
+
 @pytest.fixture(scope="module")
 def engine_modules() -> list[str]:
     """Get list of engine module names."""
@@ -142,12 +145,14 @@ def engine_classes() -> list[tuple]:
 def engine_protocol_class():
     """Get the EngineProtocol base class for comparison."""
     from app.core.engines.base import EngineProtocol
+
     return EngineProtocol
 
 
 # =============================================================================
 # CONTRACT TESTS: METHOD SIGNATURES
 # =============================================================================
+
 
 class TestEngineProtocolCompliance:
     """Test that all engines implement required EngineProtocol methods."""
@@ -161,9 +166,9 @@ class TestEngineProtocolCompliance:
     @pytest.mark.parametrize("method_name,spec", list(REQUIRED_METHODS.items()))
     def test_protocol_has_required_methods(self, engine_protocol_class, method_name, spec):
         """EngineProtocol base class should define all required methods."""
-        assert hasattr(engine_protocol_class, method_name), (
-            f"EngineProtocol missing required method: {method_name}"
-        )
+        assert hasattr(
+            engine_protocol_class, method_name
+        ), f"EngineProtocol missing required method: {method_name}"
         method = getattr(engine_protocol_class, method_name)
         assert callable(method), f"{method_name} should be callable"
 
@@ -183,9 +188,7 @@ class TestEngineMethodSignatures:
     def test_initialize_signature(self, engine_classes):
         """All engines should have initialize() -> bool."""
         for _module_name, class_name, cls in engine_classes:
-            assert hasattr(cls, "initialize"), (
-                f"{class_name} missing initialize() method"
-            )
+            assert hasattr(cls, "initialize"), f"{class_name} missing initialize() method"
             method = cls.initialize
             sig = inspect.signature(method)
 
@@ -197,33 +200,25 @@ class TestEngineMethodSignatures:
     def test_cleanup_signature(self, engine_classes):
         """All engines should have cleanup() -> None."""
         for _module_name, class_name, cls in engine_classes:
-            assert hasattr(cls, "cleanup"), (
-                f"{class_name} missing cleanup() method"
-            )
+            assert hasattr(cls, "cleanup"), f"{class_name} missing cleanup() method"
 
     @pytest.mark.contract
     def test_is_initialized_signature(self, engine_classes):
         """All engines should have is_initialized() -> bool."""
         for _module_name, class_name, cls in engine_classes:
-            assert hasattr(cls, "is_initialized"), (
-                f"{class_name} missing is_initialized() method"
-            )
+            assert hasattr(cls, "is_initialized"), f"{class_name} missing is_initialized() method"
 
     @pytest.mark.contract
     def test_get_device_signature(self, engine_classes):
         """All engines should have get_device() -> str."""
         for _module_name, class_name, cls in engine_classes:
-            assert hasattr(cls, "get_device"), (
-                f"{class_name} missing get_device() method"
-            )
+            assert hasattr(cls, "get_device"), f"{class_name} missing get_device() method"
 
     @pytest.mark.contract
     def test_get_info_signature(self, engine_classes):
         """All engines should have get_info() -> Dict."""
         for _module_name, class_name, cls in engine_classes:
-            assert hasattr(cls, "get_info"), (
-                f"{class_name} missing get_info() method"
-            )
+            assert hasattr(cls, "get_info"), f"{class_name} missing get_info() method"
 
 
 class TestEngineConstructorContract:
@@ -239,13 +234,12 @@ class TestEngineConstructorContract:
             # Should have device parameter (or accept **kwargs)
             has_device = "device" in params
             has_kwargs = any(
-                sig.parameters[p].kind == inspect.Parameter.VAR_KEYWORD
-                for p in params
+                sig.parameters[p].kind == inspect.Parameter.VAR_KEYWORD for p in params
             )
 
-            assert has_device or has_kwargs, (
-                f"{class_name}.__init__ should accept 'device' parameter"
-            )
+            assert (
+                has_device or has_kwargs
+            ), f"{class_name}.__init__ should accept 'device' parameter"
 
     @pytest.mark.contract
     def test_constructor_accepts_gpu_parameter(self, engine_classes):
@@ -256,8 +250,7 @@ class TestEngineConstructorContract:
 
             has_gpu = "gpu" in params
             has_kwargs = any(
-                sig.parameters[p].kind == inspect.Parameter.VAR_KEYWORD
-                for p in params
+                sig.parameters[p].kind == inspect.Parameter.VAR_KEYWORD for p in params
             )
 
             # GPU parameter is recommended but not strictly required if kwargs exists
@@ -269,12 +262,14 @@ class TestEngineConstructorContract:
 # CONTRACT TESTS: INFO DICTIONARY
 # =============================================================================
 
+
 class TestEngineInfoContract:
     """Test that get_info() returns expected structure."""
 
     @pytest.mark.contract
     def test_info_dict_structure(self, engine_protocol_class):
         """EngineProtocol.get_info() should return dict with required fields."""
+
         # Create a minimal implementation to test the base class
         class TestEngine(engine_protocol_class):
             def initialize(self) -> bool:
@@ -295,6 +290,7 @@ class TestEngineInfoContract:
     @pytest.mark.contract
     def test_info_dict_types(self, engine_protocol_class):
         """Info dict fields should have correct types."""
+
         class TestEngine(engine_protocol_class):
             def initialize(self) -> bool:
                 self._initialized = True
@@ -315,6 +311,7 @@ class TestEngineInfoContract:
 # CONTRACT TESTS: ERROR HANDLING
 # =============================================================================
 
+
 class TestEngineErrorContract:
     """Test that engines use standardized error handling."""
 
@@ -322,6 +319,7 @@ class TestEngineErrorContract:
     def test_operation_cancelled_error_exists(self):
         """OperationCancelledError should be importable from base."""
         from app.core.engines.base import OperationCancelledError
+
         assert issubclass(OperationCancelledError, Exception)
 
     @pytest.mark.contract
@@ -353,15 +351,18 @@ class TestEngineErrorContract:
 # CONTRACT TESTS: DEVICE HANDLING
 # =============================================================================
 
+
 class TestEngineDeviceContract:
     """Test that engines handle device specification correctly."""
 
     @pytest.mark.contract
     def test_protocol_default_device_cpu(self, engine_protocol_class):
         """Engine with gpu=False should default to cpu device."""
+
         class TestEngine(engine_protocol_class):
             def initialize(self) -> bool:
                 return True
+
             def cleanup(self) -> None:
                 pass
 
@@ -371,9 +372,11 @@ class TestEngineDeviceContract:
     @pytest.mark.contract
     def test_protocol_explicit_device(self, engine_protocol_class):
         """Engine should respect explicit device parameter."""
+
         class TestEngine(engine_protocol_class):
             def initialize(self) -> bool:
                 return True
+
             def cleanup(self) -> None:
                 pass
 
@@ -385,6 +388,7 @@ class TestEngineDeviceContract:
 # CONTRACT TESTS: INHERITANCE
 # =============================================================================
 
+
 class TestEngineInheritanceContract:
     """Test that engines properly inherit from EngineProtocol."""
 
@@ -393,9 +397,9 @@ class TestEngineInheritanceContract:
         """All engine classes should inherit from EngineProtocol."""
         for _module_name, class_name, cls in engine_classes:
             # Check if EngineProtocol is in the MRO
-            assert engine_protocol_class in cls.__mro__, (
-                f"{class_name} should inherit from EngineProtocol"
-            )
+            assert (
+                engine_protocol_class in cls.__mro__
+            ), f"{class_name} should inherit from EngineProtocol"
 
     @pytest.mark.contract
     def test_engines_not_abstract(self, engine_classes):
@@ -403,14 +407,15 @@ class TestEngineInheritanceContract:
         for _module_name, class_name, cls in engine_classes:
             # Check for abstractmethod decorators on the class itself
             abstract_methods = getattr(cls, "__abstractmethods__", set())
-            assert len(abstract_methods) == 0, (
-                f"{class_name} has unimplemented abstract methods: {abstract_methods}"
-            )
+            assert (
+                len(abstract_methods) == 0
+            ), f"{class_name} has unimplemented abstract methods: {abstract_methods}"
 
 
 # =============================================================================
 # CONTRACT TESTS: PIPELINE PROPERTIES
 # =============================================================================
+
 
 class TestEnginePipelineContract:
     """Test pipeline property invariants."""
@@ -419,7 +424,8 @@ class TestEnginePipelineContract:
     def test_synthesize_method_exists_for_tts_engines(self, engine_classes):
         """TTS engines should have a synthesize method."""
         tts_engines = [
-            (m, n, c) for m, n, c in engine_classes
+            (m, n, c)
+            for m, n, c in engine_classes
             if "tts" in n.lower() or "xtts" in n.lower() or "voice" in n.lower()
         ]
 
@@ -428,15 +434,16 @@ class TestEnginePipelineContract:
             has_tts = hasattr(cls, "tts")
             has_generate = hasattr(cls, "generate")
 
-            assert has_synthesize or has_tts or has_generate, (
-                f"TTS engine {class_name} should have synthesize/tts/generate method"
-            )
+            assert (
+                has_synthesize or has_tts or has_generate
+            ), f"TTS engine {class_name} should have synthesize/tts/generate method"
 
     @pytest.mark.contract
     def test_transcribe_method_exists_for_stt_engines(self, engine_classes):
         """STT engines should have a transcribe method."""
         stt_engines = [
-            (m, n, c) for m, n, c in engine_classes
+            (m, n, c)
+            for m, n, c in engine_classes
             if "whisper" in n.lower() or "transcri" in n.lower() or "stt" in n.lower()
         ]
 
@@ -444,15 +451,16 @@ class TestEnginePipelineContract:
             has_transcribe = hasattr(cls, "transcribe")
             has_recognize = hasattr(cls, "recognize")
 
-            assert has_transcribe or has_recognize, (
-                f"STT engine {class_name} should have transcribe/recognize method"
-            )
+            assert (
+                has_transcribe or has_recognize
+            ), f"STT engine {class_name} should have transcribe/recognize method"
 
     @pytest.mark.contract
     def test_convert_method_exists_for_rvc_engines(self, engine_classes):
         """RVC engines should have a convert method."""
         rvc_engines = [
-            (m, n, c) for m, n, c in engine_classes
+            (m, n, c)
+            for m, n, c in engine_classes
             if "rvc" in n.lower() or "conversion" in n.lower()
         ]
 
@@ -461,14 +469,15 @@ class TestEnginePipelineContract:
             has_process = hasattr(cls, "process")
             has_infer = hasattr(cls, "infer")
 
-            assert has_convert or has_process or has_infer, (
-                f"RVC engine {class_name} should have convert/process/infer method"
-            )
+            assert (
+                has_convert or has_process or has_infer
+            ), f"RVC engine {class_name} should have convert/process/infer method"
 
 
 # =============================================================================
 # CONTRACT TESTS: MANIFEST ALIGNMENT
 # =============================================================================
+
 
 class TestEngineManifestAlignment:
     """Test that engine classes align with their manifests."""
@@ -525,6 +534,7 @@ class TestEngineManifestAlignment:
 # SUMMARY TEST
 # =============================================================================
 
+
 class TestEngineContractSummary:
     """Summary test that provides an overview of contract compliance."""
 
@@ -574,6 +584,7 @@ class TestEngineContractSummary:
 # =============================================================================
 # CONTRACT TESTS: PIPELINE PROPERTY INVARIANTS
 # =============================================================================
+
 
 class TestPipelinePropertyInvariants:
     """
@@ -649,6 +660,7 @@ class TestPipelinePropertyInvariants:
 # =============================================================================
 # CONTRACT TESTS: STANDARD REQUEST/RESPONSE FORMAT
 # =============================================================================
+
 
 class TestStandardRequestResponseFormat:
     """

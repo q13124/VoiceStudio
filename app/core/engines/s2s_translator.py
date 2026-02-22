@@ -20,14 +20,16 @@ logger = logging.getLogger(__name__)
 
 class TranslationMode(Enum):
     """Translation processing mode."""
-    STREAMING = "streaming"    # Real-time chunk processing
-    BATCH = "batch"           # Process complete audio
-    SENTENCE = "sentence"     # Process sentence by sentence
+
+    STREAMING = "streaming"  # Real-time chunk processing
+    BATCH = "batch"  # Process complete audio
+    SENTENCE = "sentence"  # Process sentence by sentence
 
 
 @dataclass
 class S2SConfig:
     """Configuration for speech-to-speech translation."""
+
     # Languages
     source_language: str = "auto"
     target_language: str = "en"
@@ -50,6 +52,7 @@ class S2SConfig:
 @dataclass
 class S2SResult:
     """Result from speech-to-speech translation."""
+
     audio: np.ndarray
     sample_rate: int
     source_text: str
@@ -114,6 +117,7 @@ class SpeechToSpeechTranslator:
         """Load ASR model."""
         try:
             import whisper
+
             model = whisper.load_model("base")
             return {"model": model, "type": "whisper"}
         except ImportError:
@@ -144,6 +148,7 @@ class SpeechToSpeechTranslator:
         try:
             # Try XTTS
             from TTS.api import TTS
+
             tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2")
             return {"model": tts, "type": "xtts"}
         except ImportError:
@@ -152,6 +157,7 @@ class SpeechToSpeechTranslator:
         try:
             # Try Coqui TTS
             from TTS.api import TTS
+
             tts = TTS("tts_models/en/ljspeech/tacotron2-DDC")
             return {"model": tts, "type": "coqui"}
         except ImportError:
@@ -164,6 +170,7 @@ class SpeechToSpeechTranslator:
         """Load speaker encoder for voice cloning."""
         try:
             from resemblyzer import VoiceEncoder
+
             encoder = VoiceEncoder()
             return {"model": encoder, "type": "resemblyzer"}
         except ImportError:
@@ -181,6 +188,7 @@ class SpeechToSpeechTranslator:
 
         try:
             import torch
+
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except ImportError:
@@ -221,7 +229,9 @@ class SpeechToSpeechTranslator:
 
         # Step 2: Transcribe source audio
         source_text, detected_lang = await self._transcribe(audio, sample_rate)
-        source_lang = detected_lang if self.config.source_language == "auto" else self.config.source_language
+        source_lang = (
+            detected_lang if self.config.source_language == "auto" else self.config.source_language
+        )
 
         # Step 3: Translate text
         translated_text = await self._translate_text(source_text, source_lang, target)
@@ -256,6 +266,7 @@ class SpeechToSpeechTranslator:
         """Extract speaker embedding for voice cloning."""
         if self._speaker_encoder and self._speaker_encoder.get("type") == "resemblyzer":
             from resemblyzer import preprocess_wav
+
             encoder = self._speaker_encoder["model"]
             wav = preprocess_wav(audio, source_sr=sample_rate)
             return encoder.embed_utterance(wav)
@@ -263,6 +274,7 @@ class SpeechToSpeechTranslator:
         # Placeholder: return mel-based pseudo-embedding
         try:
             import librosa
+
             mel = librosa.feature.melspectrogram(y=audio, sr=sample_rate, n_mels=256)
             embedding = np.mean(mel, axis=1)
             return embedding / (np.linalg.norm(embedding) + 1e-8)
@@ -282,6 +294,7 @@ class SpeechToSpeechTranslator:
             if sample_rate != 16000:
                 try:
                     import librosa
+
                     audio = librosa.resample(audio, orig_sr=sample_rate, target_sr=16000)
                 except ImportError:
                     logger.debug("librosa not available for resampling")
@@ -306,10 +319,17 @@ class SpeechToSpeechTranslator:
 
             # NLLB language codes
             nllb_codes = {
-                "en": "eng_Latn", "es": "spa_Latn", "fr": "fra_Latn",
-                "de": "deu_Latn", "it": "ita_Latn", "pt": "por_Latn",
-                "zh": "zho_Hans", "ja": "jpn_Jpan", "ko": "kor_Hang",
-                "ru": "rus_Cyrl", "ar": "arb_Arab",
+                "en": "eng_Latn",
+                "es": "spa_Latn",
+                "fr": "fra_Latn",
+                "de": "deu_Latn",
+                "it": "ita_Latn",
+                "pt": "por_Latn",
+                "zh": "zho_Hans",
+                "ja": "jpn_Jpan",
+                "ko": "kor_Hang",
+                "ru": "rus_Cyrl",
+                "ar": "arb_Arab",
             }
 
             src_code = nllb_codes.get(source_lang, "eng_Latn")
@@ -374,7 +394,34 @@ class SpeechToSpeechTranslator:
     def supported_languages(self) -> list[str]:
         """Get list of supported languages."""
         return [
-            "en", "es", "fr", "de", "it", "pt", "nl", "pl", "ru", "uk",
-            "zh", "ja", "ko", "ar", "hi", "th", "vi", "id", "ms", "tl",
-            "tr", "cs", "el", "hu", "ro", "sv", "da", "fi", "no", "he",
+            "en",
+            "es",
+            "fr",
+            "de",
+            "it",
+            "pt",
+            "nl",
+            "pl",
+            "ru",
+            "uk",
+            "zh",
+            "ja",
+            "ko",
+            "ar",
+            "hi",
+            "th",
+            "vi",
+            "id",
+            "ms",
+            "tl",
+            "tr",
+            "cs",
+            "el",
+            "hu",
+            "ro",
+            "sv",
+            "da",
+            "fi",
+            "no",
+            "he",
         ]

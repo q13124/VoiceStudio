@@ -23,9 +23,7 @@ class TestQualityComparisonImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            quality_comparison is not None
-        ), "Failed to import quality_comparison module"
+        assert quality_comparison is not None, "Failed to import quality_comparison module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""

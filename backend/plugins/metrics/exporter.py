@@ -111,9 +111,7 @@ class MetricsExporter:
             for pid, collector in collectors.items():
                 plugin_data[pid] = {
                     "stats": collector.get_stats(),
-                    "metrics": [
-                        m.to_dict() for m in collector.get_metrics(since=since)
-                    ],
+                    "metrics": [m.to_dict() for m in collector.get_metrics(since=since)],
                 }
 
             system_health = self._aggregator.get_system_health()
@@ -159,43 +157,71 @@ class MetricsExporter:
             labels = f'plugin_id="{pid}"'
 
             # Total calls
-            lines.append('# HELP voicestudio_plugin_calls_total Total plugin method calls')
-            lines.append('# TYPE voicestudio_plugin_calls_total counter')
-            lines.append(f'voicestudio_plugin_calls_total{{{labels}}} {summary.get("total_calls", 0)}')
+            lines.append("# HELP voicestudio_plugin_calls_total Total plugin method calls")
+            lines.append("# TYPE voicestudio_plugin_calls_total counter")
+            lines.append(
+                f'voicestudio_plugin_calls_total{{{labels}}} {summary.get("total_calls", 0)}'
+            )
 
             # Total errors
-            lines.append('# HELP voicestudio_plugin_errors_total Total plugin errors')
-            lines.append('# TYPE voicestudio_plugin_errors_total counter')
-            lines.append(f'voicestudio_plugin_errors_total{{{labels}}} {summary.get("total_errors", 0)}')
+            lines.append("# HELP voicestudio_plugin_errors_total Total plugin errors")
+            lines.append("# TYPE voicestudio_plugin_errors_total counter")
+            lines.append(
+                f'voicestudio_plugin_errors_total{{{labels}}} {summary.get("total_errors", 0)}'
+            )
 
             # Per-method metrics
             for method, method_stats in execution.items():
                 method_labels = f'plugin_id="{pid}",method="{method}"'
 
                 # Duration histogram
-                lines.append(f'voicestudio_plugin_duration_ms_sum{{{method_labels}}} {method_stats.get("total_duration_ms", 0)}')
-                lines.append(f'voicestudio_plugin_duration_ms_count{{{method_labels}}} {method_stats.get("call_count", 0)}')
+                lines.append(
+                    f'voicestudio_plugin_duration_ms_sum{{{method_labels}}} {method_stats.get("total_duration_ms", 0)}'
+                )
+                lines.append(
+                    f'voicestudio_plugin_duration_ms_count{{{method_labels}}} {method_stats.get("call_count", 0)}'
+                )
 
                 # Quantiles
-                lines.append(f'voicestudio_plugin_duration_ms{{quantile="0.5",{method_labels}}} {method_stats.get("p50_duration_ms", 0)}')
-                lines.append(f'voicestudio_plugin_duration_ms{{quantile="0.95",{method_labels}}} {method_stats.get("p95_duration_ms", 0)}')
-                lines.append(f'voicestudio_plugin_duration_ms{{quantile="0.99",{method_labels}}} {method_stats.get("p99_duration_ms", 0)}')
+                lines.append(
+                    f'voicestudio_plugin_duration_ms{{quantile="0.5",{method_labels}}} {method_stats.get("p50_duration_ms", 0)}'
+                )
+                lines.append(
+                    f'voicestudio_plugin_duration_ms{{quantile="0.95",{method_labels}}} {method_stats.get("p95_duration_ms", 0)}'
+                )
+                lines.append(
+                    f'voicestudio_plugin_duration_ms{{quantile="0.99",{method_labels}}} {method_stats.get("p99_duration_ms", 0)}'
+                )
 
             # IPC metrics
-            lines.append(f'voicestudio_plugin_ipc_requests_total{{{labels}}} {counters.get("ipc_requests", 0)}')
-            lines.append(f'voicestudio_plugin_ipc_errors_total{{{labels}}} {counters.get("ipc_errors", 0)}')
+            lines.append(
+                f'voicestudio_plugin_ipc_requests_total{{{labels}}} {counters.get("ipc_requests", 0)}'
+            )
+            lines.append(
+                f'voicestudio_plugin_ipc_errors_total{{{labels}}} {counters.get("ipc_errors", 0)}'
+            )
 
             # Permission metrics
-            lines.append(f'voicestudio_plugin_permission_checks_total{{{labels}}} {counters.get("permission_checks", 0)}')
-            lines.append(f'voicestudio_plugin_permission_denials_total{{{labels}}} {counters.get("permission_denials", 0)}')
+            lines.append(
+                f'voicestudio_plugin_permission_checks_total{{{labels}}} {counters.get("permission_checks", 0)}'
+            )
+            lines.append(
+                f'voicestudio_plugin_permission_denials_total{{{labels}}} {counters.get("permission_denials", 0)}'
+            )
 
             # Lifecycle metrics
-            lines.append(f'voicestudio_plugin_starts_total{{{labels}}} {counters.get("lifecycle_starts", 0)}')
-            lines.append(f'voicestudio_plugin_crashes_total{{{labels}}} {counters.get("lifecycle_crashes", 0)}')
+            lines.append(
+                f'voicestudio_plugin_starts_total{{{labels}}} {counters.get("lifecycle_starts", 0)}'
+            )
+            lines.append(
+                f'voicestudio_plugin_crashes_total{{{labels}}} {counters.get("lifecycle_crashes", 0)}'
+            )
 
             # Gauges
             if "memory_bytes" in gauges:
-                lines.append(f'voicestudio_plugin_memory_bytes{{{labels}}} {gauges["memory_bytes"]}')
+                lines.append(
+                    f'voicestudio_plugin_memory_bytes{{{labels}}} {gauges["memory_bytes"]}'
+                )
 
         return "\n".join(lines)
 
@@ -263,10 +289,10 @@ class MetricsExporter:
             metrics = collector.get_metrics(since=since)
             for metric in metrics:
                 # Tags
-                tags = [f'plugin_id={self._escape_influx(pid)}']
-                tags.append(f'metric_type={self._escape_influx(metric.metric_type.value)}')
+                tags = [f"plugin_id={self._escape_influx(pid)}"]
+                tags.append(f"metric_type={self._escape_influx(metric.metric_type.value)}")
                 for k, v in metric.labels.items():
-                    tags.append(f'{self._escape_influx(k)}={self._escape_influx(v)}')
+                    tags.append(f"{self._escape_influx(k)}={self._escape_influx(v)}")
 
                 tags_str = ",".join(tags)
 

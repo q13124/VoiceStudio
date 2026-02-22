@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.engines import dependency_validator
 except ImportError:
-    pytest.skip(
-        "Could not import dependency_validator", allow_module_level=True
-    )
+    pytest.skip("Could not import dependency_validator", allow_module_level=True)
 
 
 class TestDependencyValidatorImports:
@@ -25,9 +23,7 @@ class TestDependencyValidatorImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            dependency_validator is not None
-        ), "Failed to import dependency_validator module"
+        assert dependency_validator is not None, "Failed to import dependency_validator module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -48,4 +44,3 @@ class TestDependencyValidatorFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

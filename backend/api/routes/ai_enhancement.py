@@ -23,14 +23,18 @@ router = APIRouter(prefix="/api/ai-enhancement", tags=["ai-enhancement"])
 
 class EnhanceRequest(BaseModel):
     """Request for audio enhancement."""
+
     audio_id: str = Field(..., description="Audio ID to enhance")
-    mode: str = Field("balanced", description="Enhancement mode: speech, music, balanced, podcast, broadcast")
+    mode: str = Field(
+        "balanced", description="Enhancement mode: speech, music, balanced, podcast, broadcast"
+    )
     strength: float = Field(0.5, ge=0.0, le=1.0, description="Enhancement strength (0.0-1.0)")
     preset: str | None = Field(None, description="Optional preset name")
 
 
 class EnhanceResponse(BaseModel):
     """Response for audio enhancement."""
+
     output_audio_id: str
     mode: str
     strength: float
@@ -39,12 +43,14 @@ class EnhanceResponse(BaseModel):
 
 class VoiceIsolationRequest(BaseModel):
     """Request for voice isolation."""
+
     audio_id: str = Field(..., description="Audio ID to process")
     preserve_vocals: bool = Field(True, description="Keep vocals (True) or remove vocals (False)")
 
 
 class VoiceIsolationResponse(BaseModel):
     """Response for voice isolation."""
+
     output_audio_id: str
     vocals_removed: bool
     separation_quality: float
@@ -52,12 +58,14 @@ class VoiceIsolationResponse(BaseModel):
 
 class DeReverbRequest(BaseModel):
     """Request for room reverb removal."""
+
     audio_id: str = Field(..., description="Audio ID to process")
     strength: float = Field(0.7, ge=0.0, le=1.0, description="De-reverb strength")
 
 
 class DeReverbResponse(BaseModel):
     """Response for de-reverb."""
+
     output_audio_id: str
     reverb_reduction_db: float
     estimated_rt60: float
@@ -65,6 +73,7 @@ class DeReverbResponse(BaseModel):
 
 class RepairRequest(BaseModel):
     """Request for audio repair."""
+
     audio_id: str = Field(..., description="Audio ID to repair")
     repair_clicks: bool = Field(True, description="Repair clicks and pops")
     repair_clipping: bool = Field(True, description="Repair clipping distortion")
@@ -73,6 +82,7 @@ class RepairRequest(BaseModel):
 
 class RepairResponse(BaseModel):
     """Response for audio repair."""
+
     output_audio_id: str
     clicks_repaired: int
     clipping_repaired_samples: int
@@ -81,6 +91,7 @@ class RepairResponse(BaseModel):
 
 class PresetInfo(BaseModel):
     """Enhancement preset information."""
+
     name: str
     description: str
     mode: str
@@ -116,10 +127,7 @@ async def enhance_audio(request: EnhanceRequest):
         )
 
         if not result.get("success", False):
-            raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "Enhancement failed")
-            )
+            raise HTTPException(status_code=500, detail=result.get("error", "Enhancement failed"))
 
         return EnhanceResponse(
             output_audio_id=result["output_audio_id"],
@@ -132,10 +140,7 @@ async def enhance_audio(request: EnhanceRequest):
         raise
     except Exception as e:
         logger.error(f"Audio enhancement failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Audio enhancement failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Audio enhancement failed: {e!s}") from e
 
 
 @router.post("/isolate-voice", response_model=VoiceIsolationResponse)
@@ -162,8 +167,7 @@ async def isolate_voice(request: VoiceIsolationRequest):
 
         if not result.get("success", False):
             raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "Voice isolation failed")
+                status_code=500, detail=result.get("error", "Voice isolation failed")
             )
 
         return VoiceIsolationResponse(
@@ -176,10 +180,7 @@ async def isolate_voice(request: VoiceIsolationRequest):
         raise
     except Exception as e:
         logger.error(f"Voice isolation failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Voice isolation failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Voice isolation failed: {e!s}") from e
 
 
 @router.post("/de-reverb", response_model=DeReverbResponse)
@@ -205,10 +206,7 @@ async def remove_reverb(request: DeReverbRequest):
         )
 
         if not result.get("success", False):
-            raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "De-reverb failed")
-            )
+            raise HTTPException(status_code=500, detail=result.get("error", "De-reverb failed"))
 
         return DeReverbResponse(
             output_audio_id=result["output_audio_id"],
@@ -220,10 +218,7 @@ async def remove_reverb(request: DeReverbRequest):
         raise
     except Exception as e:
         logger.error(f"De-reverb failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"De-reverb failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"De-reverb failed: {e!s}") from e
 
 
 @router.post("/repair", response_model=RepairResponse)
@@ -251,10 +246,7 @@ async def repair_audio(request: RepairRequest):
         )
 
         if not result.get("success", False):
-            raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "Audio repair failed")
-            )
+            raise HTTPException(status_code=500, detail=result.get("error", "Audio repair failed"))
 
         return RepairResponse(
             output_audio_id=result["output_audio_id"],
@@ -267,10 +259,7 @@ async def repair_audio(request: RepairRequest):
         raise
     except Exception as e:
         logger.error(f"Audio repair failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Audio repair failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Audio repair failed: {e!s}") from e
 
 
 @router.get("/presets", response_model=list[PresetInfo])
@@ -294,10 +283,7 @@ async def list_presets():
 
     except Exception as e:
         logger.error(f"Failed to list presets: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to list presets: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to list presets: {e!s}") from e
 
 
 @router.get("/modes")

@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, List, Optional, Set
 # resource module is Unix-only; provide fallback for Windows
 try:
     import resource
+
     HAS_RESOURCE_MODULE = True
 except ImportError:
     resource = None  # type: ignore
@@ -26,6 +27,7 @@ except ImportError:
 # psutil for Windows resource monitoring (optional)
 try:
     import psutil
+
     HAS_PSUTIL = True
 except ImportError:
     psutil = None  # type: ignore
@@ -36,21 +38,25 @@ logger = logging.getLogger(__name__)
 
 class SandboxViolation(Exception):
     """Raised when a plugin violates sandbox restrictions."""
+
     pass
 
 
 class ResourceLimitExceeded(SandboxViolation):
     """Raised when a plugin exceeds resource limits."""
+
     pass
 
 
 class PermissionViolation(SandboxViolation):
     """Raised when a plugin attempts an unpermitted operation."""
+
     pass
 
 
 class SandboxState(str, Enum):
     """State of a plugin sandbox."""
+
     IDLE = "idle"
     RUNNING = "running"
     SUSPENDED = "suspended"
@@ -61,6 +67,7 @@ class SandboxState(str, Enum):
 @dataclass
 class ResourceLimits:
     """Resource limits for sandboxed plugin execution."""
+
     max_memory_mb: int = 512
     max_cpu_seconds: float = 30.0
     max_cpu_percent: float = 100.0  # Windows: terminate if CPU exceeds this (0-100)
@@ -74,6 +81,7 @@ class ResourceLimits:
 @dataclass
 class SandboxPermissions:
     """Permissions granted to a sandboxed plugin."""
+
     plugin_id: str
     granted_permissions: Set[str] = field(default_factory=set)
     allowed_paths: List[Path] = field(default_factory=list)
@@ -88,15 +96,12 @@ class SandboxPermissions:
         """Check if path access is allowed. Target must be the allowed dir or under it."""
         resolved = path.resolve()
         return any(
-            resolved == allowed or allowed in resolved.parents
-            for allowed in self.allowed_paths
+            resolved == allowed or allowed in resolved.parents for allowed in self.allowed_paths
         )
 
     def can_access_network(self, host: str, port: int) -> bool:
         """Check if network access is allowed."""
-        if not (
-            self.has_permission("network.http") or self.has_permission("network.websocket")
-        ):
+        if not (self.has_permission("network.http") or self.has_permission("network.websocket")):
             return False
         if self.allowed_hosts and host not in self.allowed_hosts:
             return False
@@ -106,6 +111,7 @@ class SandboxPermissions:
 @dataclass
 class SandboxMetrics:
     """Metrics collected during sandbox execution."""
+
     start_time: float = 0.0
     end_time: float = 0.0
     cpu_time: float = 0.0
@@ -125,7 +131,7 @@ class SandboxMetrics:
 class PluginSandbox:
     """
     Sandbox for executing plugin code with resource limits and permission checks.
-    
+
     Uses a combination of:
     - Resource limits (memory, CPU, file descriptors)
     - Path restrictions
@@ -136,7 +142,7 @@ class PluginSandbox:
         self,
         plugin_id: str,
         permissions: SandboxPermissions,
-        limits: Optional[ResourceLimits] = None
+        limits: Optional[ResourceLimits] = None,
     ):
         self.plugin_id = plugin_id
         self.permissions = permissions
@@ -157,6 +163,7 @@ class PluginSandbox:
         """Clean up temporary workspace."""
         if self._temp_dir and self._temp_dir.exists():
             import shutil
+
             try:
                 shutil.rmtree(self._temp_dir)
                 logger.debug(f"Cleaned up sandbox workspace: {self._temp_dir}")
@@ -190,13 +197,13 @@ class PluginSandbox:
             # Open files limit
             resource.setrlimit(  # type: ignore
                 resource.RLIMIT_NOFILE,  # type: ignore
-                (self.limits.max_open_files, self.limits.max_open_files)
+                (self.limits.max_open_files, self.limits.max_open_files),
             )
 
             # Process limit
             resource.setrlimit(  # type: ignore
                 resource.RLIMIT_NPROC,  # type: ignore
-                (self.limits.max_processes, self.limits.max_processes)
+                (self.limits.max_processes, self.limits.max_processes),
             )
 
             logger.debug(f"Applied resource limits for plugin {self.plugin_id}")
@@ -208,11 +215,11 @@ class PluginSandbox:
     def check_file_permission(self, path: Path, operation: str) -> None:
         """
         Check if file operation is permitted.
-        
+
         Args:
             path: Target path
             operation: 'read', 'write', 'execute', 'delete'
-            
+
         Raises:
             PermissionViolation: If operation is not permitted
         """
@@ -242,7 +249,7 @@ class PluginSandbox:
     def check_network_permission(self, host: str, port: int) -> None:
         """
         Check if network operation is permitted.
-        
+
         Raises:
             PermissionViolation: If operation is not permitted
         """
@@ -257,7 +264,7 @@ class PluginSandbox:
     def execute_context(self):
         """
         Context manager for sandboxed execution.
-        
+
         Applies resource limits and tracks metrics.
         """
         with self._lock:
@@ -283,23 +290,18 @@ class PluginSandbox:
                 if self.state == SandboxState.RUNNING:
                     self.state = SandboxState.IDLE
 
-    async def execute_async(
-        self,
-        func: Callable[..., Any],
-        *args: Any,
-        **kwargs: Any
-    ) -> Any:
+    async def execute_async(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """
         Execute a function in the sandbox asynchronously.
-        
+
         Args:
             func: Function to execute
             *args: Positional arguments
             **kwargs: Keyword arguments
-            
+
         Returns:
             Function result
-            
+
         Raises:
             SandboxViolation: On security or resource limit violations
             asyncio.TimeoutError: If execution exceeds timeout
@@ -311,7 +313,7 @@ class PluginSandbox:
                 # Run with timeout
                 result = await asyncio.wait_for(
                     loop.run_in_executor(None, lambda: func(*args, **kwargs)),
-                    timeout=self.limits.execution_timeout_seconds
+                    timeout=self.limits.execution_timeout_seconds,
                 )
                 return result
 
@@ -325,17 +327,17 @@ class PluginSandbox:
         command: List[str],
         cwd: Optional[Path] = None,
         env: Optional[Dict[str, str]] = None,
-        capture_output: bool = True
+        capture_output: bool = True,
     ) -> subprocess.CompletedProcess:
         """
         Execute a subprocess in the sandbox.
-        
+
         Args:
             command: Command and arguments
             cwd: Working directory
             env: Environment variables
             capture_output: Whether to capture stdout/stderr
-            
+
         Returns:
             CompletedProcess result
         """
@@ -365,10 +367,7 @@ class PluginSandbox:
                         sandbox_env[key] = value
 
             try:
-                use_windows_monitor = (
-                    sys.platform == "win32"
-                    and HAS_PSUTIL
-                )
+                use_windows_monitor = sys.platform == "win32" and HAS_PSUTIL
                 if use_windows_monitor:
                     kwargs = {
                         "cwd": work_dir,
@@ -487,16 +486,16 @@ class SandboxManager:
         self,
         plugin_id: str,
         permissions: SandboxPermissions,
-        limits: Optional[ResourceLimits] = None
+        limits: Optional[ResourceLimits] = None,
     ) -> PluginSandbox:
         """
         Create or get existing sandbox for a plugin.
-        
+
         Args:
             plugin_id: Plugin identifier
             permissions: Permissions for the sandbox
             limits: Resource limits (uses defaults if None)
-            
+
         Returns:
             PluginSandbox instance
         """
@@ -508,9 +507,7 @@ class SandboxManager:
                 return existing
 
             sandbox = PluginSandbox(
-                plugin_id=plugin_id,
-                permissions=permissions,
-                limits=limits or self._default_limits
+                plugin_id=plugin_id, permissions=permissions, limits=limits or self._default_limits
             )
             self._sandboxes[plugin_id] = sandbox
             return sandbox
@@ -535,10 +532,7 @@ class SandboxManager:
 
     def get_all_metrics(self) -> Dict[str, SandboxMetrics]:
         """Get metrics for all sandboxes."""
-        return {
-            plugin_id: sandbox.get_metrics()
-            for plugin_id, sandbox in self._sandboxes.items()
-        }
+        return {plugin_id: sandbox.get_metrics() for plugin_id, sandbox in self._sandboxes.items()}
 
     def get_all_violations(self) -> Dict[str, List[str]]:
         """Get violations for all sandboxes."""

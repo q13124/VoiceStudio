@@ -2,6 +2,7 @@
 Unit Tests for Prosody API Route
 Tests prosody control endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -436,9 +437,7 @@ class TestProsodyApply:
             "voice_profile_id": "test-profile",
         }
 
-        with patch(
-            "backend.api.routes.prosody._synthesize_with_prosody"
-        ) as mock_synthesize:
+        with patch("backend.api.routes.prosody._synthesize_with_prosody") as mock_synthesize:
             mock_synthesize.return_value = {
                 "audio_url": "/path/to/audio.wav",
                 "duration": 2.5,
@@ -701,9 +700,7 @@ class TestProsodyEdgeCases:
         # Create very long text (1000 words)
         long_text = "hello " * 1000
 
-        response = client.post(
-            f"/api/prosody/phonemes/analyze?text={long_text}&language=en"
-        )
+        response = client.post(f"/api/prosody/phonemes/analyze?text={long_text}&language=en")
         # Should handle long text (may take time or fail gracefully)
         assert response.status_code in [200, 400, 500, 503]
 
@@ -715,9 +712,7 @@ class TestProsodyEdgeCases:
 
         unicode_text = "Hello 世界 🌍"
 
-        response = client.post(
-            f"/api/prosody/phonemes/analyze?text={unicode_text}&language=en"
-        )
+        response = client.post(f"/api/prosody/phonemes/analyze?text={unicode_text}&language=en")
         # Should handle unicode (may succeed or fail gracefully)
         assert response.status_code in [200, 400, 500, 503]
 
@@ -727,9 +722,7 @@ class TestProsodyEdgeCases:
         app.include_router(prosody.router)
         client = TestClient(app)
 
-        response = client.post(
-            "/api/prosody/phonemes/analyze?text=hello&language=invalid"
-        )
+        response = client.post("/api/prosody/phonemes/analyze?text=hello&language=invalid")
         # May succeed with fallback or fail gracefully
         assert response.status_code in [200, 400, 500, 503]
 
@@ -786,9 +779,7 @@ class TestProsodyEdgeCases:
             "voice_profile_id": "test-profile",
         }
 
-        with patch(
-            "backend.api.routes.prosody._synthesize_with_prosody"
-        ) as mock_synthesize:
+        with patch("backend.api.routes.prosody._synthesize_with_prosody") as mock_synthesize:
             mock_synthesize.return_value = {
                 "audio_url": "/path/to/audio.wav",
                 "duration": 2.5,

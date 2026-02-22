@@ -67,10 +67,7 @@ class TestTracingEndpoints:
         # First, generate some spans by calling an API
         client.get("/api/health")
 
-        response = client.get(
-            "/api/tracing/recent",
-            params={"limit": 50, "operation": "http"}
-        )
+        response = client.get("/api/tracing/recent", params={"limit": 50, "operation": "http"})
 
         if response.status_code == 404:
             pytest.skip("Tracing route not registered")
@@ -110,7 +107,7 @@ class TestTracingEndpoints:
         """Test GET /api/tracing/slow-spans endpoint."""
         response = client.get(
             "/api/tracing/slow-spans",
-            params={"threshold_ms": 0, "limit": 10}  # 0ms to get all spans
+            params={"threshold_ms": 0, "limit": 10},  # 0ms to get all spans
         )
 
         if response.status_code == 404:
@@ -151,10 +148,7 @@ class TestTracingEndpoints:
         client.get("/api/health")
         client.get("/api/version")
 
-        response = client.post(
-            "/api/tracing/export",
-            params={"limit": 100}
-        )
+        response = client.post("/api/tracing/export", params={"limit": 100})
 
         if response.status_code == 404:
             pytest.skip("Tracing route not registered")
@@ -172,8 +166,7 @@ class TestTracingEndpoints:
     def test_export_traces_with_filename(self, client):
         """Test exporting traces with custom filename."""
         response = client.post(
-            "/api/tracing/export",
-            params={"limit": 10, "filename": "custom_export.json"}
+            "/api/tracing/export", params={"limit": 10, "filename": "custom_export.json"}
         )
 
         if response.status_code == 404:
@@ -217,10 +210,7 @@ class TestTracingParameterValidation:
 
     def test_recent_limit_max(self, client):
         """Test that limit parameter is capped."""
-        response = client.get(
-            "/api/tracing/recent",
-            params={"limit": 10000}  # Over max
-        )
+        response = client.get("/api/tracing/recent", params={"limit": 10000})  # Over max
 
         if response.status_code == 404:
             pytest.skip("Tracing route not registered")
@@ -230,10 +220,7 @@ class TestTracingParameterValidation:
 
     def test_slow_spans_negative_threshold(self, client):
         """Test threshold parameter validation."""
-        response = client.get(
-            "/api/tracing/slow-spans",
-            params={"threshold_ms": -100}
-        )
+        response = client.get("/api/tracing/slow-spans", params={"threshold_ms": -100})
 
         if response.status_code == 404:
             pytest.skip("Tracing route not registered")
@@ -243,10 +230,7 @@ class TestTracingParameterValidation:
 
     def test_summary_limit_range(self, client):
         """Test limit parameter range for summary."""
-        response = client.get(
-            "/api/tracing/summary",
-            params={"limit": 0}  # Below minimum
-        )
+        response = client.get("/api/tracing/summary", params={"limit": 0})  # Below minimum
 
         if response.status_code == 404:
             pytest.skip("Tracing route not registered")

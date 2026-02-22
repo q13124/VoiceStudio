@@ -22,6 +22,7 @@ try:
         ESpeakNGEngine,
         create_espeak_ng_engine,
     )
+
     HAS_ESPEAK = True
 except ImportError:
     HAS_ESPEAK = False
@@ -48,6 +49,7 @@ class TestESpeakNGEngineImports:
         if not HAS_ESPEAK:
             pytest.skip("eSpeak-NG engine not available")
         from app.core.engines.espeak_ng_engine import ESpeakNGEngine
+
         assert ESpeakNGEngine is not None
 
     def test_import_create_function(self):
@@ -55,6 +57,7 @@ class TestESpeakNGEngineImports:
         if not HAS_ESPEAK:
             pytest.skip("eSpeak-NG engine not available")
         from app.core.engines.espeak_ng_engine import create_espeak_ng_engine
+
         assert create_espeak_ng_engine is not None
 
 
@@ -83,13 +86,12 @@ class TestESpeakNGEngineStructure:
         """Test that engine has reusable temp directory."""
         assert hasattr(espeak_engine, "_temp_dir")
         # Initially None until initialized
-        assert espeak_engine._temp_dir is None or isinstance(
-            espeak_engine._temp_dir, str
-        )
+        assert espeak_engine._temp_dir is None or isinstance(espeak_engine._temp_dir, str)
 
     def test_engine_protocol_compliance(self, espeak_engine):
         """Test that engine implements EngineProtocol."""
         from app.core.engines.protocols import EngineProtocol
+
         assert isinstance(espeak_engine, EngineProtocol)
         assert hasattr(espeak_engine, "initialize")
         assert hasattr(espeak_engine, "cleanup")
@@ -152,9 +154,7 @@ class TestESpeakNGEngineCache:
 
         # Add one more - manually evict oldest if needed
         # (simulating cache behavior)
-        if len(espeak_engine._synthesis_cache) >= (
-            espeak_engine._cache_max_size
-        ):
+        if len(espeak_engine._synthesis_cache) >= (espeak_engine._cache_max_size):
             oldest_key = next(iter(espeak_engine._synthesis_cache))
             del espeak_engine._synthesis_cache[oldest_key]
         espeak_engine._synthesis_cache["key3"] = {"data": "value3"}
@@ -182,9 +182,7 @@ class TestESpeakNGEngineBatchProcessing:
         assert callable(espeak_engine.batch_synthesize)
 
     @patch("app.core.engines.espeak_ng_engine.ThreadPoolExecutor")
-    def test_batch_synthesize_uses_thread_pool(
-        self, mock_executor, espeak_engine
-    ):
+    def test_batch_synthesize_uses_thread_pool(self, mock_executor, espeak_engine):
         """Test that batch_synthesize uses ThreadPoolExecutor."""
         # Mock the synthesize method to return success
         espeak_engine.synthesize = Mock(return_value=b"fake audio data")
@@ -192,9 +190,7 @@ class TestESpeakNGEngineBatchProcessing:
 
         # Mock ThreadPoolExecutor
         mock_executor_instance = MagicMock()
-        mock_executor.return_value.__enter__.return_value = (
-            mock_executor_instance
-        )
+        mock_executor.return_value.__enter__.return_value = mock_executor_instance
         mock_executor.return_value.__exit__.return_value = None
 
         # Create batch synthesis tasks
@@ -236,17 +232,14 @@ class TestESpeakNGEngineOptimization:
     def test_reusable_temp_directory(self, espeak_engine):
         """Test that engine uses reusable temp directory."""
         # Initialize to create temp directory
-        with patch(
-            "app.core.engines.espeak_ng_engine.tempfile.mkdtemp"
-        ) as mock_mkdtemp:
+        with patch("app.core.engines.espeak_ng_engine.tempfile.mkdtemp") as mock_mkdtemp:
             mock_mkdtemp.return_value = "/tmp/test_espeak"
 
             # Mock initialization to succeed
-            with patch.object(
-                espeak_engine, "_find_executable", return_value="/usr/bin/espeak-ng"
-            ), patch(
-                "app.core.engines.espeak_ng_engine.subprocess.run"
-            ) as mock_run:
+            with (
+                patch.object(espeak_engine, "_find_executable", return_value="/usr/bin/espeak-ng"),
+                patch("app.core.engines.espeak_ng_engine.subprocess.run") as mock_run,
+            ):
                 mock_run.return_value.returncode = 0
                 mock_run.return_value.stdout = "eSpeak-ng text-to-speech"
 
@@ -277,6 +270,7 @@ class TestESpeakNGEngineCreateFunction:
         if not HAS_ESPEAK:
             pytest.skip("eSpeak-NG engine not available")
         from app.core.engines.espeak_ng_engine import create_espeak_ng_engine
+
         assert callable(create_espeak_ng_engine)
 
     def test_create_function_returns_engine(self):
@@ -284,9 +278,9 @@ class TestESpeakNGEngineCreateFunction:
         if not HAS_ESPEAK:
             pytest.skip("eSpeak-NG engine not available")
         from app.core.engines.espeak_ng_engine import create_espeak_ng_engine
+
         engine = create_espeak_ng_engine(device="cpu", gpu=False)
         assert engine is not None
         assert isinstance(engine, ESpeakNGEngine)
         with contextlib.suppress(Exception):
             engine.cleanup()
-

@@ -53,6 +53,7 @@ class LipSyncServiceUnavailable(Exception):
     This exception should be caught by the API layer and converted to
     an HTTP 503 Service Unavailable response.
     """
+
     def __init__(
         self,
         message: str = "Lip sync service unavailable",
@@ -80,6 +81,7 @@ class LipSyncServiceUnavailable(Exception):
 
 class LipSyncEngine(Enum):
     """Available lip sync engines."""
+
     WAV2LIP = "wav2lip"
     SADTALKER = "sadtalker"
     FOMM = "fomm"  # First Order Motion Model
@@ -87,6 +89,7 @@ class LipSyncEngine(Enum):
 
 class LipSyncQuality(Enum):
     """Output quality presets."""
+
     DRAFT = "draft"  # Fast preview
     STANDARD = "standard"  # Balanced
     HIGH = "high"  # High quality
@@ -96,6 +99,7 @@ class LipSyncQuality(Enum):
 @dataclass
 class LipSyncTimestamp:
     """Timestamp for lip sync frame."""
+
     frame_number: int
     time_seconds: float
     phoneme: str
@@ -106,6 +110,7 @@ class LipSyncTimestamp:
 @dataclass
 class LipSyncProject:
     """Lip sync project configuration."""
+
     project_id: str
     name: str
     video_path: str
@@ -148,6 +153,7 @@ class LipSyncProject:
 @dataclass
 class LipSyncResult:
     """Result of lip sync generation."""
+
     success: bool
     project_id: str
     output_path: str | None
@@ -177,28 +183,22 @@ PHONEME_MOUTH_SHAPES = {
     "b": "closed",
     "p": "closed",
     "silence": "closed",
-
     # Slightly open
     "f": "narrow",
     "v": "narrow",
-
     # Wide
     "ee": "wide",
     "i": "wide",
-
     # Round
     "oo": "round",
     "u": "round",
     "w": "round",
-
     # Open
     "ah": "open",
     "a": "open",
-
     # Teeth
     "th": "teeth",
     "l": "teeth",
-
     # Default
     "default": "neutral",
 }
@@ -352,6 +352,7 @@ class LipSyncService:
             LipSyncResult with processing outcome
         """
         import time
+
         start_time = time.perf_counter()
 
         project = self._projects.get(project_id)
@@ -456,21 +457,20 @@ class LipSyncService:
         # Filter by time range if specified
         if time_range:
             start, end = time_range
-            timestamps = [
-                t for t in timestamps
-                if start <= t.time_seconds <= end
-            ]
+            timestamps = [t for t in timestamps if start <= t.time_seconds <= end]
 
         # Generate preview frames info
         frames = []
         for ts in timestamps:
-            frames.append({
-                "frame": ts.frame_number,
-                "time": ts.time_seconds,
-                "phoneme": ts.phoneme,
-                "mouth_shape": ts.mouth_shape,
-                "confidence": ts.confidence,
-            })
+            frames.append(
+                {
+                    "frame": ts.frame_number,
+                    "time": ts.time_seconds,
+                    "phoneme": ts.phoneme,
+                    "mouth_shape": ts.mouth_shape,
+                    "confidence": ts.confidence,
+                }
+            )
 
         return {
             "project_id": project_id,
@@ -534,10 +534,7 @@ class LipSyncService:
 
     def get_available_engines(self) -> list[LipSyncEngine]:
         """Get list of available engines."""
-        return [
-            engine for engine, available in self._engines_available.items()
-            if available
-        ]
+        return [engine for engine, available in self._engines_available.items() if available]
 
     # Internal methods
 
@@ -550,8 +547,10 @@ class LipSyncService:
             # Use ffprobe to get video info
             cmd = [
                 "ffprobe",
-                "-v", "quiet",
-                "-print_format", "json",
+                "-v",
+                "quiet",
+                "-print_format",
+                "json",
                 "-show_format",
                 "-show_streams",
                 video_path,
@@ -607,6 +606,7 @@ class LipSyncService:
         try:
             # Load audio
             import soundfile as sf
+
             audio, sample_rate = sf.read(audio_path)
 
             if len(audio.shape) > 1:
@@ -628,7 +628,7 @@ class LipSyncService:
                 end = min((i + 1) * frame_samples, len(audio))
 
                 frame_audio = audio[start:end]
-                energy = np.sqrt(np.mean(frame_audio ** 2))
+                energy = np.sqrt(np.mean(frame_audio**2))
 
                 # Map energy to phoneme (simplified)
                 if energy < 0.01:
@@ -642,13 +642,15 @@ class LipSyncService:
 
                 mouth_shape = PHONEME_MOUTH_SHAPES.get(phoneme, "neutral")
 
-                timestamps.append(LipSyncTimestamp(
-                    frame_number=i,
-                    time_seconds=i / fps,
-                    phoneme=phoneme,
-                    mouth_shape=mouth_shape,
-                    confidence=0.7 + energy * 0.3,
-                ))
+                timestamps.append(
+                    LipSyncTimestamp(
+                        frame_number=i,
+                        time_seconds=i / fps,
+                        phoneme=phoneme,
+                        mouth_shape=mouth_shape,
+                        confidence=0.7 + energy * 0.3,
+                    )
+                )
 
             return timestamps
 
@@ -681,12 +683,18 @@ class LipSyncService:
             if Path(wav2lip_path).exists():
                 # Use Wav2Lip CLI
                 cmd = [
-                    "python", f"{wav2lip_path}/inference.py",
-                    "--checkpoint_path", f"{wav2lip_path}/checkpoints/wav2lip_gan.pth",
-                    "--face", project.video_path,
-                    "--audio", project.audio_path,
-                    "--outfile", output_path,
-                    "--resize_factor", "1" if not preview_only else "2",
+                    "python",
+                    f"{wav2lip_path}/inference.py",
+                    "--checkpoint_path",
+                    f"{wav2lip_path}/checkpoints/wav2lip_gan.pth",
+                    "--face",
+                    project.video_path,
+                    "--audio",
+                    project.audio_path,
+                    "--outfile",
+                    output_path,
+                    "--resize_factor",
+                    "1" if not preview_only else "2",
                 ]
 
                 if preview_only:
@@ -722,13 +730,20 @@ class LipSyncService:
         # Try using ffmpeg for basic audio overlay (fallback)
         try:
             cmd = [
-                "ffmpeg", "-y",
-                "-i", project.video_path,
-                "-i", project.audio_path,
-                "-c:v", "copy" if not preview_only else "libx264",
-                "-c:a", "aac",
-                "-map", "0:v:0",
-                "-map", "1:a:0",
+                "ffmpeg",
+                "-y",
+                "-i",
+                project.video_path,
+                "-i",
+                project.audio_path,
+                "-c:v",
+                "copy" if not preview_only else "libx264",
+                "-c:a",
+                "aac",
+                "-map",
+                "0:v:0",
+                "-map",
+                "1:a:0",
                 "-shortest",
                 output_path,
             ]
@@ -773,8 +788,7 @@ class LipSyncService:
         # Try using actual SadTalker
         try:
             sadtalker_path = os.environ.get(
-                "VOICESTUDIO_SADTALKER_PATH",
-                "runtime/external/sadtalker"
+                "VOICESTUDIO_SADTALKER_PATH", "runtime/external/sadtalker"
             )
 
             if Path(sadtalker_path).exists() and Path(f"{sadtalker_path}/inference.py").exists():
@@ -782,15 +796,20 @@ class LipSyncService:
                 source_image = project.video_path
 
                 # If video, extract first frame
-                if project.video_path.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
+                if project.video_path.lower().endswith((".mp4", ".avi", ".mov", ".mkv")):
                     import tempfile
+
                     source_image = tempfile.mktemp(suffix=".png")
 
                     extract_cmd = [
-                        "ffmpeg", "-y",
-                        "-i", project.video_path,
-                        "-vframes", "1",
-                        "-q:v", "2",
+                        "ffmpeg",
+                        "-y",
+                        "-i",
+                        project.video_path,
+                        "-vframes",
+                        "1",
+                        "-q:v",
+                        "2",
                         source_image,
                     ]
 
@@ -808,11 +827,16 @@ class LipSyncService:
 
                 # Build SadTalker command
                 cmd = [
-                    "python", f"{sadtalker_path}/inference.py",
-                    "--driven_audio", project.audio_path,
-                    "--source_image", source_image,
-                    "--result_dir", str(Path(output_path).parent),
-                    "--enhancer", "gfpgan",  # Face enhancement
+                    "python",
+                    f"{sadtalker_path}/inference.py",
+                    "--driven_audio",
+                    project.audio_path,
+                    "--source_image",
+                    source_image,
+                    "--result_dir",
+                    str(Path(output_path).parent),
+                    "--enhancer",
+                    "gfpgan",  # Face enhancement
                 ]
 
                 if preview_only:
@@ -847,6 +871,7 @@ class LipSyncService:
                         # Move the most recent file to output path
                         latest = max(generated_files, key=lambda p: p.stat().st_mtime)
                         import shutil
+
                         shutil.move(str(latest), output_path)
 
                         project.progress = 0.95
@@ -863,13 +888,20 @@ class LipSyncService:
         # Fallback to ffmpeg audio overlay
         try:
             cmd = [
-                "ffmpeg", "-y",
-                "-i", project.video_path,
-                "-i", project.audio_path,
-                "-c:v", "libx264" if not preview_only else "copy",
-                "-c:a", "aac",
-                "-map", "0:v:0",
-                "-map", "1:a:0",
+                "ffmpeg",
+                "-y",
+                "-i",
+                project.video_path,
+                "-i",
+                project.audio_path,
+                "-c:v",
+                "libx264" if not preview_only else "copy",
+                "-c:a",
+                "aac",
+                "-map",
+                "0:v:0",
+                "-map",
+                "1:a:0",
                 "-shortest",
                 output_path,
             ]
@@ -913,10 +945,7 @@ class LipSyncService:
         project.progress = 0.4
 
         try:
-            fomm_path = os.environ.get(
-                "VOICESTUDIO_FOMM_PATH",
-                "runtime/external/fomm"
-            )
+            fomm_path = os.environ.get("VOICESTUDIO_FOMM_PATH", "runtime/external/fomm")
 
             if Path(fomm_path).exists() and Path(f"{fomm_path}/demo.py").exists():
                 # FOMM requires a driving video (with motion to transfer)
@@ -927,15 +956,20 @@ class LipSyncService:
                 source_image = project.video_path
 
                 # Extract first frame as source if input is video
-                if project.video_path.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
+                if project.video_path.lower().endswith((".mp4", ".avi", ".mov", ".mkv")):
                     import tempfile
+
                     source_image = tempfile.mktemp(suffix=".png")
 
                     extract_cmd = [
-                        "ffmpeg", "-y",
-                        "-i", project.video_path,
-                        "-vframes", "1",
-                        "-q:v", "2",
+                        "ffmpeg",
+                        "-y",
+                        "-i",
+                        project.video_path,
+                        "-vframes",
+                        "1",
+                        "-q:v",
+                        "2",
                         source_image,
                     ]
 
@@ -953,12 +987,18 @@ class LipSyncService:
 
                 # Build FOMM command
                 cmd = [
-                    "python", f"{fomm_path}/demo.py",
-                    "--config", f"{fomm_path}/config/vox-256.yaml",
-                    "--checkpoint", f"{fomm_path}/checkpoints/vox-cpk.pth.tar",
-                    "--source_image", source_image,
-                    "--driving_video", driving_video,
-                    "--result_video", output_path,
+                    "python",
+                    f"{fomm_path}/demo.py",
+                    "--config",
+                    f"{fomm_path}/config/vox-256.yaml",
+                    "--checkpoint",
+                    f"{fomm_path}/checkpoints/vox-cpk.pth.tar",
+                    "--source_image",
+                    source_image,
+                    "--driving_video",
+                    driving_video,
+                    "--result_video",
+                    output_path,
                 ]
 
                 if preview_only:
@@ -983,16 +1023,24 @@ class LipSyncService:
                     # Add audio to the generated video
                     temp_output = output_path + ".temp.mp4"
                     import shutil
+
                     shutil.move(output_path, temp_output)
 
                     audio_cmd = [
-                        "ffmpeg", "-y",
-                        "-i", temp_output,
-                        "-i", project.audio_path,
-                        "-c:v", "copy",
-                        "-c:a", "aac",
-                        "-map", "0:v:0",
-                        "-map", "1:a:0",
+                        "ffmpeg",
+                        "-y",
+                        "-i",
+                        temp_output,
+                        "-i",
+                        project.audio_path,
+                        "-c:v",
+                        "copy",
+                        "-c:a",
+                        "aac",
+                        "-map",
+                        "0:v:0",
+                        "-map",
+                        "1:a:0",
                         "-shortest",
                         output_path,
                     ]
@@ -1021,13 +1069,20 @@ class LipSyncService:
         # Fallback to ffmpeg audio overlay
         try:
             cmd = [
-                "ffmpeg", "-y",
-                "-i", project.video_path,
-                "-i", project.audio_path,
-                "-c:v", "copy",
-                "-c:a", "aac",
-                "-map", "0:v:0",
-                "-map", "1:a:0",
+                "ffmpeg",
+                "-y",
+                "-i",
+                project.video_path,
+                "-i",
+                project.audio_path,
+                "-c:v",
+                "copy",
+                "-c:a",
+                "aac",
+                "-map",
+                "0:v:0",
+                "-map",
+                "1:a:0",
                 "-shortest",
                 output_path,
             ]
@@ -1072,7 +1127,7 @@ class LipSyncService:
 
         raise LipSyncServiceUnavailable(
             message=f"Lip sync processing failed: '{engine or 'unknown'}' engine "
-                    "models are not installed or configured",
+            "models are not installed or configured",
             engine=engine,
             setup_instructions=[
                 "1. Install the required models following docs/engines/lip_sync.md",
@@ -1088,6 +1143,7 @@ class LipSyncService:
     async def _async_sleep(self, seconds: float):
         """Async sleep helper."""
         import asyncio
+
         await asyncio.sleep(seconds)
 
 

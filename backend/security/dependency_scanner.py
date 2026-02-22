@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class Severity(Enum):
     """Vulnerability severity levels."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -32,6 +33,7 @@ class Severity(Enum):
 
 class LicenseRisk(Enum):
     """License risk categories."""
+
     PERMISSIVE = "permissive"  # MIT, Apache, BSD
     WEAK_COPYLEFT = "weak_copyleft"  # LGPL
     STRONG_COPYLEFT = "strong_copyleft"  # GPL
@@ -42,6 +44,7 @@ class LicenseRisk(Enum):
 @dataclass
 class Vulnerability:
     """A security vulnerability."""
+
     id: str  # CVE ID
     package: str
     installed_version: str
@@ -54,6 +57,7 @@ class Vulnerability:
 @dataclass
 class DependencyInfo:
     """Information about a dependency."""
+
     name: str
     version: str
     license: str
@@ -65,6 +69,7 @@ class DependencyInfo:
 @dataclass
 class ScanResult:
     """Result of a dependency scan."""
+
     scanned_at: datetime
     total_packages: int
     vulnerabilities: list[Vulnerability]
@@ -86,6 +91,7 @@ class ScanResult:
 @dataclass
 class SBOM:
     """Software Bill of Materials."""
+
     format: str = "CycloneDX"
     version: str = "1.4"
     generated_at: datetime = field(default_factory=datetime.now)
@@ -93,19 +99,22 @@ class SBOM:
 
     def to_json(self) -> str:
         """Export SBOM as JSON."""
-        return json.dumps({
-            "bomFormat": self.format,
-            "specVersion": self.version,
-            "version": 1,
-            "metadata": {
-                "timestamp": self.generated_at.isoformat(),
-                "component": {
-                    "name": "VoiceStudio",
-                    "type": "application",
+        return json.dumps(
+            {
+                "bomFormat": self.format,
+                "specVersion": self.version,
+                "version": 1,
+                "metadata": {
+                    "timestamp": self.generated_at.isoformat(),
+                    "component": {
+                        "name": "VoiceStudio",
+                        "type": "application",
+                    },
                 },
+                "components": self.components,
             },
-            "components": self.components,
-        }, indent=2)
+            indent=2,
+        )
 
 
 class DependencyScanner:
@@ -121,16 +130,32 @@ class DependencyScanner:
 
     # License classifications
     PERMISSIVE_LICENSES = {
-        "MIT", "Apache-2.0", "Apache 2.0", "BSD-3-Clause", "BSD-2-Clause",
-        "ISC", "Unlicense", "0BSD", "CC0-1.0", "WTFPL",
+        "MIT",
+        "Apache-2.0",
+        "Apache 2.0",
+        "BSD-3-Clause",
+        "BSD-2-Clause",
+        "ISC",
+        "Unlicense",
+        "0BSD",
+        "CC0-1.0",
+        "WTFPL",
     }
 
     WEAK_COPYLEFT_LICENSES = {
-        "LGPL-2.1", "LGPL-3.0", "LGPL-2.0", "MPL-2.0", "EPL-2.0",
+        "LGPL-2.1",
+        "LGPL-3.0",
+        "LGPL-2.0",
+        "MPL-2.0",
+        "EPL-2.0",
     }
 
     STRONG_COPYLEFT_LICENSES = {
-        "GPL-2.0", "GPL-3.0", "AGPL-3.0", "GPL-2.0-only", "GPL-3.0-only",
+        "GPL-2.0",
+        "GPL-3.0",
+        "AGPL-3.0",
+        "GPL-2.0-only",
+        "GPL-3.0-only",
     }
 
     # Allowed licenses for VoiceStudio
@@ -191,11 +216,13 @@ class DependencyScanner:
             detailed = []
             for pkg in packages:
                 info = await self._get_package_info(pkg["name"])
-                detailed.append({
-                    "name": pkg["name"],
-                    "version": pkg["version"],
-                    **info,
-                })
+                detailed.append(
+                    {
+                        "name": pkg["name"],
+                        "version": pkg["version"],
+                        **info,
+                    }
+                )
 
             return detailed
 
@@ -248,15 +275,17 @@ class DependencyScanner:
                 for item in data.get("dependencies", []):
                     if item.get("name", "").lower() == package.lower():
                         for vuln in item.get("vulns", []):
-                            vulns.append(Vulnerability(
-                                id=vuln.get("id", "UNKNOWN"),
-                                package=package,
-                                installed_version=version,
-                                fixed_version=vuln.get("fix_versions", [None])[0],
-                                severity=self._parse_severity(vuln.get("severity", "UNKNOWN")),
-                                description=vuln.get("description", ""),
-                                url=vuln.get("url"),
-                            ))
+                            vulns.append(
+                                Vulnerability(
+                                    id=vuln.get("id", "UNKNOWN"),
+                                    package=package,
+                                    installed_version=version,
+                                    fixed_version=vuln.get("fix_versions", [None])[0],
+                                    severity=self._parse_severity(vuln.get("severity", "UNKNOWN")),
+                                    description=vuln.get("description", ""),
+                                    url=vuln.get("url"),
+                                )
+                            )
                         break
 
         except FileNotFoundError:
@@ -307,13 +336,15 @@ class DependencyScanner:
         packages = await self._get_python_packages()
 
         for pkg in packages:
-            sbom.components.append({
-                "type": "library",
-                "name": pkg["name"],
-                "version": pkg["version"],
-                "purl": f"pkg:pypi/{pkg['name']}@{pkg['version']}",
-                "licenses": [{"license": {"id": pkg.get("license", "UNKNOWN")}}],
-            })
+            sbom.components.append(
+                {
+                    "type": "library",
+                    "name": pkg["name"],
+                    "version": pkg["version"],
+                    "purl": f"pkg:pypi/{pkg['name']}@{pkg['version']}",
+                    "licenses": [{"license": {"id": pkg.get("license", "UNKNOWN")}}],
+                }
+            )
 
         return sbom
 
@@ -347,12 +378,14 @@ class DependencyScanner:
                 outdated = json.loads(result.stdout)
 
                 for pkg in outdated:
-                    recommendations.append({
-                        "package": pkg["name"],
-                        "current": pkg["version"],
-                        "latest": pkg["latest_version"],
-                        "type": pkg.get("latest_filetype", "unknown"),
-                    })
+                    recommendations.append(
+                        {
+                            "package": pkg["name"],
+                            "current": pkg["version"],
+                            "latest": pkg["latest_version"],
+                            "type": pkg.get("latest_filetype", "unknown"),
+                        }
+                    )
 
         except Exception as e:
             logger.error(f"Failed to check outdated packages: {e}")

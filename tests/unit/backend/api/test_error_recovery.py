@@ -23,16 +23,12 @@ class TestErrorRecoveryImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            error_recovery is not None
-        ), "Failed to import error_recovery module"
+        assert error_recovery is not None, "Failed to import error_recovery module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
         classes = [
-            name
-            for name in dir(error_recovery)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(error_recovery) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "module should have classes or functions"
 
@@ -44,9 +40,7 @@ class TestErrorRecoveryClasses:
         """Test ErrorRecoveryManager class exists."""
         if hasattr(error_recovery, "ErrorRecoveryManager"):
             cls = error_recovery.ErrorRecoveryManager
-            assert isinstance(
-                cls, type
-            ), "ErrorRecoveryManager should be a class"
+            assert isinstance(cls, type), "ErrorRecoveryManager should be a class"
 
 
 class TestErrorRecoveryFunctions:
@@ -62,4 +56,3 @@ class TestErrorRecoveryFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

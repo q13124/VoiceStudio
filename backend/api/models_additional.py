@@ -151,8 +151,7 @@ class VoiceSynthesizeRequest(VoiceStudioBaseModel):
     engine: str | None = Field(
         default=None,
         description=(
-            "Engine name (e.g., xtts_v2, piper, chatterbox). "
-            "Defaults to XTTS if not specified."
+            "Engine name (e.g., xtts_v2, piper, chatterbox). " "Defaults to XTTS if not specified."
         ),
         min_length=1,
         max_length=50,
@@ -199,8 +198,7 @@ class VoiceSynthesizeRequest(VoiceStudioBaseModel):
         """Validate profile ID format."""
         if not re.match(r"^[a-zA-Z0-9_-]+$", v):
             raise ValueError(
-                "Profile ID must contain only alphanumeric characters, "
-                "hyphens, and underscores"
+                "Profile ID must contain only alphanumeric characters, " "hyphens, and underscores"
             )
         return v
 
@@ -208,9 +206,7 @@ class VoiceSynthesizeRequest(VoiceStudioBaseModel):
     def validate_language(cls, v):
         """Validate language code format."""
         if v and not re.match(r"^[a-z]{2}(-[A-Z]{2})?$", v.lower()):
-            raise ValueError(
-                "Language must be a valid ISO 639-1 code (e.g., 'en', 'en-US')"
-            )
+            raise ValueError("Language must be a valid ISO 639-1 code (e.g., 'en', 'en-US')")
         return v.lower() if v else v
 
     @validator("text")
@@ -240,13 +236,12 @@ class QualityMetrics(VoiceStudioBaseModel):
     has_clicks: bool | None = None
     # Whether distortion detected
     has_distortion: bool | None = None
-    voice_profile_match: dict[str, Any] | None = (
-        None  # Voice profile matching results
-    )
+    voice_profile_match: dict[str, Any] | None = None  # Voice profile matching results
 
 
 class VoiceSynthesizeResponse(VoiceStudioBaseModel):
     """Voice synthesis response (GAP-I16)."""
+
     audio_id: str
     audio_url: str
     duration: float
@@ -317,9 +312,7 @@ class ABTestResult(VoiceStudioBaseModel):
         None,
         description="Overall quality score",
     )
-    quality_metrics: QualityMetrics | None = Field(
-        None, description="Detailed quality metrics"
-    )
+    quality_metrics: QualityMetrics | None = Field(None, description="Detailed quality metrics")
 
 
 class ABTestResponse(VoiceStudioBaseModel):
@@ -336,6 +329,7 @@ class ABTestResponse(VoiceStudioBaseModel):
 
 class VoiceAnalyzeResponse(VoiceStudioBaseModel):
     """Voice analysis response (GAP-I16)."""
+
     # mos, similarity, naturalness, snr, lufs, etc.
     metrics: dict[str, float]
     quality_score: float | None = None
@@ -353,9 +347,7 @@ class VoiceCloneRequest(VoiceStudioBaseModel):
     text: str | None = Field(
         default=None, description="Optional text for synthesis", max_length=10000
     )
-    engine: str = Field(
-        default="xtts", description="Engine to use", min_length=1, max_length=50
-    )
+    engine: str = Field(default="xtts", description="Engine to use", min_length=1, max_length=50)
     quality_mode: str = Field(
         default="standard", description="Quality mode: fast, standard, high, ultra"
     )
@@ -412,9 +404,7 @@ class VoiceCloneRequest(VoiceStudioBaseModel):
             valid_keys = {"pitch", "tempo", "formant_shift", "energy"}
             invalid_keys = set(v.keys()) - valid_keys
             if invalid_keys:
-                raise ValueError(
-                    f"Invalid prosody parameters: {', '.join(invalid_keys)}"
-                )
+                raise ValueError(f"Invalid prosody parameters: {', '.join(invalid_keys)}")
 
             # Validate ranges
             if "pitch" in v and not (-12 <= v["pitch"] <= 12):
@@ -430,6 +420,7 @@ class VoiceCloneRequest(VoiceStudioBaseModel):
 
 class VoiceCloneResponse(VoiceStudioBaseModel):
     """Voice cloning response (GAP-I16)."""
+
     profile_id: str
     audio_id: str | None = None
     audio_url: str | None = None
@@ -488,9 +479,7 @@ class MultiPassSynthesisRequest(VoiceStudioBaseModel):
     )
     pass_preset: str | None = Field(
         default=None,
-        description=(
-            "Pass preset: naturalness_focus, similarity_focus, artifact_focus"
-        ),
+        description=("Pass preset: naturalness_focus, similarity_focus, artifact_focus"),
     )
     adaptive: bool | None = Field(
         default=True,
@@ -598,13 +587,10 @@ class ArtifactRemovalRequest(BaseModel):
     artifact_types: list[str] | None = Field(
         default=None,
         description=(
-            "Specific artifact types to remove: clicks, pops, distortion, "
-            "glitches, phase_issues"
+            "Specific artifact types to remove: clicks, pops, distortion, " "glitches, phase_issues"
         ),
     )
-    preview: bool | None = Field(
-        default=False, description="Preview removal without applying"
-    )
+    preview: bool | None = Field(default=False, description="Preview removal without applying")
     repair_preset: str | None = Field(
         default=None,
         description="Repair preset: click_removal, distortion_repair, comprehensive",
@@ -1165,9 +1151,7 @@ class DubSyncRequest(BaseModel):
 
     audio_id: str = Field(..., description="Audio ID to sync")
     translated_text: str = Field(..., description="Translated text to sync")
-    original_text: str | None = Field(
-        default=None, description="Original text (optional)"
-    )
+    original_text: str | None = Field(default=None, description="Original text (optional)")
     original_timing: list[dict[str, Any]] | None = Field(
         default=None, description="Original timing segments"
     )
@@ -1192,12 +1176,8 @@ class DatasetCullRequest(BaseModel):
     """Request model for dataset culling."""
 
     dataset_id: str = Field(..., description="Dataset ID to cull")
-    clips: list[str] | None = Field(
-        default=None, description="List of clips to evaluate"
-    )
-    min_quality: float = Field(
-        default=0.7, ge=0.0, le=1.0, description="Minimum quality threshold"
-    )
+    clips: list[str] | None = Field(default=None, description="List of clips to evaluate")
+    min_quality: float = Field(default=0.7, ge=0.0, le=1.0, description="Minimum quality threshold")
     min_snr: float = Field(default=20.0, ge=0.0, description="Minimum SNR threshold")
     max_lufs: float = Field(default=-10.0, description="Maximum LUFS threshold")
 
@@ -1213,12 +1193,8 @@ class RmPredictRequest(BaseModel):
     model_id: str | None = Field(
         default=None, description="Model ID to use (uses latest if not specified)"
     )
-    audio_id: str | None = Field(
-        default=None, description="Audio ID to predict score for"
-    )
-    features: list[float] | None = Field(
-        default=None, description="Pre-computed features"
-    )
+    audio_id: str | None = Field(default=None, description="Audio ID to predict score for")
+    features: list[float] | None = Field(default=None, description="Pre-computed features")
 
 
 class RmPredictResponse(BaseModel):

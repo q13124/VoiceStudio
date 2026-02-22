@@ -75,9 +75,7 @@ class TrainingModuleAuditor:
         """Initialize training module auditor."""
         self.audit_results: dict[str, TrainingModuleAuditResult] = {}
 
-    def audit_module(
-        self, module_name: str, module_class: type
-    ) -> TrainingModuleAuditResult:
+    def audit_module(self, module_name: str, module_class: type) -> TrainingModuleAuditResult:
         """
         Audit a single training module.
 
@@ -88,20 +86,15 @@ class TrainingModuleAuditor:
         Returns:
             Audit result
         """
-        result = TrainingModuleAuditResult(
-            module_name=module_name, module_class=module_class
-        )
+        result = TrainingModuleAuditResult(module_name=module_name, module_class=module_class)
 
         # Get all methods from the class
         methods = {name for name, _ in inspect.getmembers(module_class, inspect.isfunction)}
-        methods.update(
-            {name for name, _ in inspect.getmembers(module_class, inspect.ismethod)}
-        )
+        methods.update({name for name, _ in inspect.getmembers(module_class, inspect.ismethod)})
 
         # Check for features
         result.has_analytics = any(
-            feature_method in methods
-            for feature_method in self.RECOMMENDED_FEATURES["analytics"]
+            feature_method in methods for feature_method in self.RECOMMENDED_FEATURES["analytics"]
         )
         result.has_checkpoint_management = any(
             feature_method in methods
@@ -146,9 +139,7 @@ class TrainingModuleAuditor:
             if "try:" not in source or "except" not in source:
                 result.error_handling_issues.append("Missing error handling")
             elif source.count("except") < 2:
-                result.error_handling_issues.append(
-                    "Limited error handling coverage"
-                )
+                result.error_handling_issues.append("Limited error handling coverage")
 
             # Check for performance issues
             if "deepcopy" in source:
@@ -196,9 +187,7 @@ class TrainingModuleAuditor:
 
         return max(0.0, min(100.0, score))
 
-    def audit_all_modules(
-        self, modules: dict[str, type]
-    ) -> dict[str, TrainingModuleAuditResult]:
+    def audit_all_modules(self, modules: dict[str, type]) -> dict[str, TrainingModuleAuditResult]:
         """
         Audit all modules.
 
@@ -235,54 +224,35 @@ class TrainingModuleAuditor:
             return {"error": "No audits performed"}
 
         total_modules = len(self.audit_results)
-        complete_modules = sum(
-            1 for r in self.audit_results.values() if r.is_complete
-        )
-        avg_score = (
-            sum(r.score for r in self.audit_results.values()) / total_modules
-        )
+        complete_modules = sum(1 for r in self.audit_results.values() if r.is_complete)
+        avg_score = sum(r.score for r in self.audit_results.values()) / total_modules
 
         # Count features
         features_count = {
-            "analytics": sum(
-                1 for r in self.audit_results.values() if r.has_analytics
-            ),
+            "analytics": sum(1 for r in self.audit_results.values() if r.has_analytics),
             "checkpoint_management": sum(
-                1
-                for r in self.audit_results.values()
-                if r.has_checkpoint_management
+                1 for r in self.audit_results.values() if r.has_checkpoint_management
             ),
             "progress_monitoring": sum(
-                1
-                for r in self.audit_results.values()
-                if r.has_progress_monitoring
+                1 for r in self.audit_results.values() if r.has_progress_monitoring
             ),
             "parameter_optimization": sum(
-                1
-                for r in self.audit_results.values()
-                if r.has_parameter_optimization
+                1 for r in self.audit_results.values() if r.has_parameter_optimization
             ),
             "quality_tracking": sum(
-                1
-                for r in self.audit_results.values()
-                if r.has_quality_tracking
+                1 for r in self.audit_results.values() if r.has_quality_tracking
             ),
         }
 
         # Count issues
-        total_missing_features = sum(
-            len(r.missing_features) for r in self.audit_results.values()
-        )
+        total_missing_features = sum(len(r.missing_features) for r in self.audit_results.values())
         total_optimizations = sum(
-            len(r.optimization_opportunities)
-            for r in self.audit_results.values()
+            len(r.optimization_opportunities) for r in self.audit_results.values()
         )
         total_error_handling = sum(
             len(r.error_handling_issues) for r in self.audit_results.values()
         )
-        total_performance = sum(
-            len(r.performance_issues) for r in self.audit_results.values()
-        )
+        total_performance = sum(len(r.performance_issues) for r in self.audit_results.values())
 
         return {
             "total_modules": total_modules,
@@ -310,11 +280,7 @@ class TrainingModuleAuditor:
         Returns:
             List of modules needing attention
         """
-        return [
-            result
-            for result in self.audit_results.values()
-            if result.score < min_score
-        ]
+        return [result for result in self.audit_results.values() if result.score < min_score]
 
     def generate_enhancement_report(self) -> str:
         """
@@ -336,38 +302,24 @@ class TrainingModuleAuditor:
         lines.append("## Feature Coverage\n")
         for feature, count in summary["features"].items():
             percentage = (count / summary["total_modules"]) * 100
-            lines.append(
-                f"- {feature}: {count}/{summary['total_modules']} "
-                f"({percentage:.1f}%)"
-            )
+            lines.append(f"- {feature}: {count}/{summary['total_modules']} " f"({percentage:.1f}%)")
 
         # Modules needing attention
         lines.append("\n## Modules Needing Attention\n")
         needing_attention = self.get_modules_needing_attention()
         for result in sorted(needing_attention, key=lambda x: x.score):
-            lines.append(
-                f"\n### {result.module_name} (Score: {result.score:.1f})"
-            )
+            lines.append(f"\n### {result.module_name} (Score: {result.score:.1f})")
             if result.missing_features:
-                lines.append(
-                    f"- Missing Features: {', '.join(result.missing_features)}"
-                )
+                lines.append(f"- Missing Features: {', '.join(result.missing_features)}")
             if result.optimization_opportunities:
-                lines.append(
-                    f"- Optimizations: {', '.join(result.optimization_opportunities)}"
-                )
+                lines.append(f"- Optimizations: {', '.join(result.optimization_opportunities)}")
             if result.error_handling_issues:
-                lines.append(
-                    f"- Error Handling: {', '.join(result.error_handling_issues)}"
-                )
+                lines.append(f"- Error Handling: {', '.join(result.error_handling_issues)}")
             if result.performance_issues:
-                lines.append(
-                    f"- Performance: {', '.join(result.performance_issues)}"
-                )
+                lines.append(f"- Performance: {', '.join(result.performance_issues)}")
 
         return "\n".join(lines)
 
 
 # Export
 __all__ = ["TrainingModuleAuditResult", "TrainingModuleAuditor"]
-

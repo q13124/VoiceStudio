@@ -24,79 +24,47 @@ class VoiceBrowserPage(BasePage):
     # Locators - Root
     # ==========================================================================
 
-    ROOT = ElementLocator.by_automation_id(
-        "VoiceBrowserView_Root", "Voice Browser root element"
-    )
+    ROOT = ElementLocator.by_automation_id("VoiceBrowserView_Root", "Voice Browser root element")
 
     # ==========================================================================
     # Locators - Search/Filter
     # ==========================================================================
 
-    SEARCH_INPUT = ElementLocator.by_automation_id(
-        "SearchInput", "Voice search input"
-    )
-    FILTER_DROPDOWN = ElementLocator.by_automation_id(
-        "FilterDropdown", "Voice filter dropdown"
-    )
-    SORT_DROPDOWN = ElementLocator.by_automation_id(
-        "SortDropdown", "Voice sort dropdown"
-    )
+    SEARCH_INPUT = ElementLocator.by_automation_id("SearchInput", "Voice search input")
+    FILTER_DROPDOWN = ElementLocator.by_automation_id("FilterDropdown", "Voice filter dropdown")
+    SORT_DROPDOWN = ElementLocator.by_automation_id("SortDropdown", "Voice sort dropdown")
 
     # ==========================================================================
     # Locators - Voice List
     # ==========================================================================
 
-    VOICE_LIST = ElementLocator.by_automation_id(
-        "VoiceList", "Voice profiles list"
-    )
-    VOICE_LIST_ITEM = ElementLocator.by_automation_id(
-        "VoiceListItem", "Voice profile list item"
-    )
-    VOICE_CARD = ElementLocator.by_automation_id(
-        "VoiceCard", "Voice profile card"
-    )
-    EMPTY_STATE = ElementLocator.by_automation_id(
-        "EmptyState", "Empty state message"
-    )
+    VOICE_LIST = ElementLocator.by_automation_id("VoiceList", "Voice profiles list")
+    VOICE_LIST_ITEM = ElementLocator.by_automation_id("VoiceListItem", "Voice profile list item")
+    VOICE_CARD = ElementLocator.by_automation_id("VoiceCard", "Voice profile card")
+    EMPTY_STATE = ElementLocator.by_automation_id("EmptyState", "Empty state message")
 
     # ==========================================================================
     # Locators - Voice Item Details
     # ==========================================================================
 
-    VOICE_NAME = ElementLocator.by_automation_id(
-        "VoiceName", "Voice name text"
-    )
-    VOICE_ENGINE = ElementLocator.by_automation_id(
-        "VoiceEngine", "Voice engine badge"
-    )
-    VOICE_QUALITY = ElementLocator.by_automation_id(
-        "VoiceQuality", "Voice quality indicator"
-    )
+    VOICE_NAME = ElementLocator.by_automation_id("VoiceName", "Voice name text")
+    VOICE_ENGINE = ElementLocator.by_automation_id("VoiceEngine", "Voice engine badge")
+    VOICE_QUALITY = ElementLocator.by_automation_id("VoiceQuality", "Voice quality indicator")
 
     # ==========================================================================
     # Locators - Actions
     # ==========================================================================
 
-    PREVIEW_BUTTON = ElementLocator.by_automation_id(
-        "PreviewButton", "Preview voice button"
-    )
-    EDIT_BUTTON = ElementLocator.by_automation_id(
-        "EditButton", "Edit voice button"
-    )
-    DELETE_BUTTON = ElementLocator.by_automation_id(
-        "DeleteButton", "Delete voice button"
-    )
-    USE_BUTTON = ElementLocator.by_automation_id(
-        "UseVoiceButton", "Use voice for synthesis button"
-    )
+    PREVIEW_BUTTON = ElementLocator.by_automation_id("PreviewButton", "Preview voice button")
+    EDIT_BUTTON = ElementLocator.by_automation_id("EditButton", "Edit voice button")
+    DELETE_BUTTON = ElementLocator.by_automation_id("DeleteButton", "Delete voice button")
+    USE_BUTTON = ElementLocator.by_automation_id("UseVoiceButton", "Use voice for synthesis button")
 
     # ==========================================================================
     # Locators - Help
     # ==========================================================================
 
-    HELP_OVERLAY = ElementLocator.by_automation_id(
-        "HelpOverlay", "Help overlay"
-    )
+    HELP_OVERLAY = ElementLocator.by_automation_id("HelpOverlay", "Help overlay")
 
     # ==========================================================================
     # Validation

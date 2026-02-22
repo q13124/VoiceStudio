@@ -73,18 +73,8 @@ def event_loop():
 # Markers for different resilience test categories
 def pytest_configure(config):
     """Configure custom markers."""
-    config.addinivalue_line(
-        "markers", "crash: tests for crash recovery scenarios"
-    )
-    config.addinivalue_line(
-        "markers", "oom: tests for out-of-memory scenarios"
-    )
-    config.addinivalue_line(
-        "markers", "ipc_timeout: tests for IPC timeout scenarios"
-    )
-    config.addinivalue_line(
-        "markers", "concurrent: tests for concurrent load scenarios"
-    )
-    config.addinivalue_line(
-        "markers", "slow: tests that take longer to run"
-    )
+    config.addinivalue_line("markers", "crash: tests for crash recovery scenarios")
+    config.addinivalue_line("markers", "oom: tests for out-of-memory scenarios")
+    config.addinivalue_line("markers", "ipc_timeout: tests for IPC timeout scenarios")
+    config.addinivalue_line("markers", "concurrent: tests for concurrent load scenarios")
+    config.addinivalue_line("markers", "slow: tests that take longer to run")

@@ -64,10 +64,7 @@ class TestConcurrentAppends:
                 except Exception as e:
                     errors.append(e)
 
-        threads = [
-            threading.Thread(target=append_many, args=(t,))
-            for t in range(num_threads)
-        ]
+        threads = [threading.Thread(target=append_many, args=(t,)) for t in range(num_threads)]
         for t in threads:
             t.start()
         for t in threads:

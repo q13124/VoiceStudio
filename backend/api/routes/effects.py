@@ -989,7 +989,9 @@ async def delete_project_effect_chain(project_id: str, chain_id: str) -> dict[st
         raise HTTPException(status_code=500, detail=f"Failed to delete effect chain: {e!s}")
 
 
-@project_effects_router.post("/{project_id}/{chain_id}/process", response_model=EffectProcessResponse)
+@project_effects_router.post(
+    "/{project_id}/{chain_id}/process", response_model=EffectProcessResponse
+)
 async def process_project_effect_chain(
     project_id: str,
     chain_id: str,
@@ -1035,12 +1037,16 @@ async def process_project_effect_chain(
 
             audio_path = _audio_storage[audio_id]
             if not os.path.exists(audio_path):
-                raise HTTPException(status_code=404, detail=f"Audio file at '{audio_path}' does not exist")
+                raise HTTPException(
+                    status_code=404, detail=f"Audio file at '{audio_path}' does not exist"
+                )
 
             from app.core.audio.audio_utils import load_audio, save_audio
+
             audio, sample_rate = load_audio(audio_path)
 
             import time
+
             start_time = time.time()
 
             processed_audio = audio.copy()
@@ -1068,7 +1074,9 @@ async def process_project_effect_chain(
             output_id = _register_audio_file(output_path)
             processing_time = time.time() - start_time
 
-            logger.info(f"Processed audio with {len(sorted_effects)} effects in {processing_time:.2f}s")
+            logger.info(
+                f"Processed audio with {len(sorted_effects)} effects in {processing_time:.2f}s"
+            )
             return EffectProcessResponse(
                 success=True,
                 output_id=output_id,

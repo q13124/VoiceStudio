@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class PIIType(Enum):
     """Types of PII."""
+
     EMAIL = "email"
     PHONE = "phone"
     SSN = "ssn"
@@ -34,6 +35,7 @@ class PIIType(Enum):
 @dataclass
 class PIIMatch:
     """A detected PII match."""
+
     pii_type: PIIType
     value: str
     start: int
@@ -45,6 +47,7 @@ class PIIMatch:
 @dataclass
 class PIIDetectorConfig:
     """Configuration for PII detector."""
+
     enabled_types: set[PIIType] = field(default_factory=lambda: set(PIIType))
     redaction_char: str = "*"
     min_confidence: float = 0.7
@@ -66,23 +69,23 @@ class PIIDetector:
     # Regex patterns for PII detection
     PATTERNS = {
         PIIType.EMAIL: (
-            r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
+            r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
             0.95,
         ),
         PIIType.PHONE: (
-            r'\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b',
+            r"\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b",
             0.85,
         ),
         PIIType.SSN: (
-            r'\b\d{3}[-.\s]?\d{2}[-.\s]?\d{4}\b',
+            r"\b\d{3}[-.\s]?\d{2}[-.\s]?\d{4}\b",
             0.90,
         ),
         PIIType.CREDIT_CARD: (
-            r'\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b',
+            r"\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b",
             0.95,
         ),
         PIIType.IP_ADDRESS: (
-            r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b',
+            r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b",
             0.90,
         ),
         PIIType.API_KEY: (
@@ -90,7 +93,7 @@ class PIIDetector:
             0.85,
         ),
         PIIType.DATE_OF_BIRTH: (
-            r'\b(?:0[1-9]|1[0-2])[/\-](?:0[1-9]|[12][0-9]|3[01])[/\-](?:19|20)\d{2}\b',
+            r"\b(?:0[1-9]|1[0-2])[/\-](?:0[1-9]|[12][0-9]|3[01])[/\-](?:19|20)\d{2}\b",
             0.80,
         ),
     }
@@ -124,9 +127,7 @@ class PIIDetector:
 
         for pii_type, (pattern, base_confidence) in self._compiled_patterns.items():
             for match in pattern.finditer(text):
-                confidence = self._calculate_confidence(
-                    pii_type, match.group(), base_confidence
-                )
+                confidence = self._calculate_confidence(pii_type, match.group(), base_confidence)
 
                 if confidence >= self.config.min_confidence:
                     # Get context
@@ -134,14 +135,16 @@ class PIIDetector:
                     end = min(len(text), match.end() + self.config.max_context_chars)
                     context = text[start:end]
 
-                    matches.append(PIIMatch(
-                        pii_type=pii_type,
-                        value=match.group(),
-                        start=match.start(),
-                        end=match.end(),
-                        confidence=confidence,
-                        context=context,
-                    ))
+                    matches.append(
+                        PIIMatch(
+                            pii_type=pii_type,
+                            value=match.group(),
+                            start=match.start(),
+                            end=match.end(),
+                            confidence=confidence,
+                            context=context,
+                        )
+                    )
 
         # Sort by position
         matches.sort(key=lambda m: m.start)
@@ -172,7 +175,7 @@ class PIIDetector:
 
         elif pii_type == PIIType.PHONE:
             # Check for common non-phone patterns
-            clean = re.sub(r'\D', '', value)
+            clean = re.sub(r"\D", "", value)
             if clean.startswith("0000") or clean == "1234567890":
                 confidence = max(0.0, confidence - 0.5)
 
@@ -224,15 +227,11 @@ class PIIDetector:
             # Keep first and last char, redact middle
             value = match.value
             if len(value) > 4:
-                redacted = (
-                    value[0] +
-                    self.config.redaction_char * (len(value) - 2) +
-                    value[-1]
-                )
+                redacted = value[0] + self.config.redaction_char * (len(value) - 2) + value[-1]
             else:
                 redacted = self.config.redaction_char * len(value)
 
-            result = result[:match.start] + redacted + result[match.end:]
+            result = result[: match.start] + redacted + result[match.end :]
 
         return result
 
@@ -260,9 +259,11 @@ class PIIDetector:
                 result[key] = self.redact_dict(value, pii_types)
             elif isinstance(value, list):
                 result[key] = [
-                    self.redact_dict(item, pii_types) if isinstance(item, dict)
-                    else self.redact(item, pii_types) if isinstance(item, str)
-                    else item
+                    (
+                        self.redact_dict(item, pii_types)
+                        if isinstance(item, dict)
+                        else self.redact(item, pii_types) if isinstance(item, str) else item
+                    )
                     for item in value
                 ]
             else:

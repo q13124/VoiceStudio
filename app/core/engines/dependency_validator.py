@@ -186,20 +186,14 @@ class DependencyValidator:
         all_valid = len(missing_required) == 0
 
         if missing_required:
-            error_msg = (
-                f"Engine '{engine_name}' is missing required dependencies:\n"
-                + "\n".join(
-                    f"  - {name}: pip install {pkg}" for name, pkg in missing_required
-                )
+            error_msg = f"Engine '{engine_name}' is missing required dependencies:\n" + "\n".join(
+                f"  - {name}: pip install {pkg}" for name, pkg in missing_required
             )
             logger.error(error_msg)
 
         if missing_optional:
-            warning_msg = (
-                f"Engine '{engine_name}' is missing optional dependencies:\n"
-                + "\n".join(
-                    f"  - {name}: pip install {pkg}" for name, pkg in missing_optional
-                )
+            warning_msg = f"Engine '{engine_name}' is missing optional dependencies:\n" + "\n".join(
+                f"  - {name}: pip install {pkg}" for name, pkg in missing_optional
             )
             logger.warning(warning_msg)
 
@@ -271,4 +265,3 @@ class DependencyValidator:
             return any(list(model_path_obj.rglob(f"*{ext}")) for ext in model_extensions)
 
         return False
-

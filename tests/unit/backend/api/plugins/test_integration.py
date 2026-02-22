@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.plugins import integration
 except ImportError:
-    pytest.skip(
-        "Could not import integration", allow_module_level=True
-    )
+    pytest.skip("Could not import integration", allow_module_level=True)
 
 
 class TestPluginIntegrationImports:
@@ -25,9 +23,7 @@ class TestPluginIntegrationImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            integration is not None
-        ), "Failed to import integration module"
+        assert integration is not None, "Failed to import integration module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -41,11 +37,8 @@ class TestPluginIntegrationFunctions:
     def test_integrate_plugin_function_exists(self):
         """Test integrate_plugin function exists."""
         if hasattr(integration, "integrate_plugin"):
-            assert callable(
-                integration.integrate_plugin
-            ), "integrate_plugin should be callable"
+            assert callable(integration.integrate_plugin), "integrate_plugin should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

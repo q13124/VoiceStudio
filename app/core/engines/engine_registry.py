@@ -125,9 +125,7 @@ def get_engine_registry() -> EngineRegistry:
     return _global_registry
 
 
-def register_engine(
-    name: str, engine_class: type[EngineProtocol], metadata: dict | None = None
-):
+def register_engine(name: str, engine_class: type[EngineProtocol], metadata: dict | None = None):
     """Register an engine in the global registry."""
     _global_registry.register_engine(name, engine_class, metadata)
 
@@ -144,4 +142,3 @@ __all__ = [
     "list_all_engines",
     "register_engine",
 ]
-

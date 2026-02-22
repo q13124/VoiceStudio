@@ -39,30 +39,22 @@ class TestAudioUtilsFunctions:
     def test_normalize_lufs_function_exists(self):
         """Test normalize_lufs function exists."""
         if hasattr(audio_utils, "normalize_lufs"):
-            assert callable(
-                audio_utils.normalize_lufs
-            ), "normalize_lufs should be callable"
+            assert callable(audio_utils.normalize_lufs), "normalize_lufs should be callable"
 
     def test_detect_silence_function_exists(self):
         """Test detect_silence function exists."""
         if hasattr(audio_utils, "detect_silence"):
-            assert callable(
-                audio_utils.detect_silence
-            ), "detect_silence should be callable"
+            assert callable(audio_utils.detect_silence), "detect_silence should be callable"
 
     def test_resample_audio_function_exists(self):
         """Test resample_audio function exists."""
         if hasattr(audio_utils, "resample_audio"):
-            assert callable(
-                audio_utils.resample_audio
-            ), "resample_audio should be callable"
+            assert callable(audio_utils.resample_audio), "resample_audio should be callable"
 
     def test_convert_format_function_exists(self):
         """Test convert_format function exists."""
         if hasattr(audio_utils, "convert_format"):
-            assert callable(
-                audio_utils.convert_format
-            ), "convert_format should be callable"
+            assert callable(audio_utils.convert_format), "convert_format should be callable"
 
 
 class TestAudioUtilsFunctionality:
@@ -80,13 +72,9 @@ class TestAudioUtilsFunctionality:
         audio_data = np.random.randn(int(sample_rate * duration)).astype(np.float32)
 
         try:
-            result = audio_utils.normalize_lufs(
-                audio_data, sample_rate, target_lufs=-23.0
-            )
+            result = audio_utils.normalize_lufs(audio_data, sample_rate, target_lufs=-23.0)
             assert result is not None, "normalize_lufs should return audio data"
-            assert isinstance(
-                result, np.ndarray
-            ), "normalize_lufs should return numpy array"
+            assert isinstance(result, np.ndarray), "normalize_lufs should return numpy array"
         except Exception as e:
             pytest.skip(f"normalize_lufs test skipped: {e}")
 
@@ -102,9 +90,7 @@ class TestAudioUtilsFunctionality:
         audio_data = np.zeros(int(sample_rate * duration), dtype=np.float32)
 
         try:
-            result = audio_utils.detect_silence(
-                audio_data, sample_rate, threshold=-40.0
-            )
+            result = audio_utils.detect_silence(audio_data, sample_rate, threshold=-40.0)
             assert isinstance(
                 result, (bool, list, np.ndarray)
             ), "detect_silence should return boolean or array"

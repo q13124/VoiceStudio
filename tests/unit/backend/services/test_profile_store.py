@@ -23,17 +23,20 @@ class TestProfileStore:
     def test_import(self):
         """Test that ProfileStore can be imported."""
         from backend.services.profile_store import ProfileStore
+
         assert ProfileStore is not None
 
     def test_create_store(self, temp_dir):
         """Test creating a profile store."""
         from backend.services.profile_store import ProfileStore
+
         store = ProfileStore(base_dir=temp_dir)
         assert store is not None
 
     def test_save_profile(self, temp_dir):
         """Test saving a profile."""
         from backend.services.profile_store import ProfileStore
+
         store = ProfileStore(base_dir=temp_dir)
 
         profile = {
@@ -51,6 +54,7 @@ class TestProfileStore:
     def test_get_profile(self, temp_dir):
         """Test retrieving a saved profile."""
         from backend.services.profile_store import ProfileStore
+
         store = ProfileStore(base_dir=temp_dir)
 
         profile = {
@@ -68,6 +72,7 @@ class TestProfileStore:
     def test_get_nonexistent_profile(self, temp_dir):
         """Test getting a profile that doesn't exist."""
         from backend.services.profile_store import ProfileStore
+
         store = ProfileStore(base_dir=temp_dir)
 
         result = store.get("nonexistent-id")
@@ -77,6 +82,7 @@ class TestProfileStore:
     def test_delete_profile(self, temp_dir):
         """Test deleting a profile."""
         from backend.services.profile_store import ProfileStore
+
         store = ProfileStore(base_dir=temp_dir)
 
         profile = {"name": "To Delete", "language": "en"}
@@ -92,6 +98,7 @@ class TestProfileStore:
     def test_list_profiles(self, temp_dir):
         """Test listing profiles."""
         from backend.services.profile_store import ProfileStore
+
         store = ProfileStore(base_dir=temp_dir)
 
         # Save multiple profiles
@@ -105,6 +112,7 @@ class TestProfileStore:
     def test_list_profiles_with_filter(self, temp_dir):
         """Test listing profiles with language filter."""
         from backend.services.profile_store import ProfileStore
+
         store = ProfileStore(base_dir=temp_dir)
 
         store.save({"name": "English Voice", "language": "en"})
@@ -119,6 +127,7 @@ class TestProfileStore:
     def test_count(self, temp_dir):
         """Test counting profiles."""
         from backend.services.profile_store import ProfileStore
+
         store = ProfileStore(base_dir=temp_dir)
 
         assert store.count() == 0
@@ -156,17 +165,20 @@ class TestTrackStore:
     def test_import(self):
         """Test that TrackStore can be imported."""
         from backend.services.track_store import TrackStore
+
         assert TrackStore is not None
 
     def test_create_store(self, temp_dir):
         """Test creating a track store."""
         from backend.services.track_store import TrackStore
+
         store = TrackStore(projects_dir=temp_dir)
         assert store is not None
 
     def test_save_track(self, temp_dir):
         """Test saving a track."""
         from backend.services.track_store import TrackStore
+
         store = TrackStore(projects_dir=temp_dir)
 
         track = {
@@ -182,6 +194,7 @@ class TestTrackStore:
     def test_get_track(self, temp_dir):
         """Test retrieving a track."""
         from backend.services.track_store import TrackStore
+
         store = TrackStore(projects_dir=temp_dir)
 
         track = {"name": "Test Track", "type": "audio"}
@@ -195,6 +208,7 @@ class TestTrackStore:
     def test_list_tracks(self, temp_dir):
         """Test listing tracks for a project."""
         from backend.services.track_store import TrackStore
+
         store = TrackStore(projects_dir=temp_dir)
 
         store.save_track("project-1", {"name": "Track 1", "track_number": 1})
@@ -207,6 +221,7 @@ class TestTrackStore:
     def test_delete_track(self, temp_dir):
         """Test deleting a track."""
         from backend.services.track_store import TrackStore
+
         store = TrackStore(projects_dir=temp_dir)
 
         track_id = store.save_track("project-1", {"name": "To Delete"})
@@ -230,11 +245,13 @@ class TestArtifactRefCounter:
     def test_import(self):
         """Test that ArtifactRefCounter can be imported."""
         from backend.services.artifact_ref_counter import ArtifactRefCounter
+
         assert ArtifactRefCounter is not None
 
     def test_increment(self, temp_dir):
         """Test incrementing reference count."""
         from backend.services.artifact_ref_counter import ArtifactRefCounter
+
         counter = ArtifactRefCounter(data_dir=temp_dir)
 
         count = counter.increment("artifact-1", "clip-1")
@@ -244,6 +261,7 @@ class TestArtifactRefCounter:
     def test_decrement(self, temp_dir):
         """Test decrementing reference count."""
         from backend.services.artifact_ref_counter import ArtifactRefCounter
+
         counter = ArtifactRefCounter(data_dir=temp_dir)
 
         counter.increment("artifact-1", "clip-1")
@@ -256,6 +274,7 @@ class TestArtifactRefCounter:
     def test_get_count(self, temp_dir):
         """Test getting reference count."""
         from backend.services.artifact_ref_counter import ArtifactRefCounter
+
         counter = ArtifactRefCounter(data_dir=temp_dir)
 
         counter.increment("artifact-1", "clip-1")
@@ -268,6 +287,7 @@ class TestArtifactRefCounter:
     def test_get_zero_ref_artifacts(self, temp_dir):
         """Test getting artifacts with zero references."""
         from backend.services.artifact_ref_counter import ArtifactRefCounter
+
         counter = ArtifactRefCounter(data_dir=temp_dir)
 
         # Add and remove all references

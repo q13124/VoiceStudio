@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import img_sampler
 except ImportError:
-    pytest.skip(
-        "Could not import img_sampler route module", allow_module_level=True
-    )
+    pytest.skip("Could not import img_sampler route module", allow_module_level=True)
 
 
 class TestImgSamplerRouteImports:
@@ -25,12 +23,8 @@ class TestImgSamplerRouteImports:
 
     def test_img_sampler_module_imports(self):
         """Test img_sampler module can be imported."""
-        assert (
-            img_sampler is not None
-        ), "Failed to import img_sampler module"
-        assert hasattr(
-            img_sampler, "router"
-        ), "img_sampler module missing router"
+        assert img_sampler is not None, "Failed to import img_sampler module"
+        assert hasattr(img_sampler, "router"), "img_sampler module missing router"
 
 
 class TestImgSamplerRouteHandlers:
@@ -39,9 +33,7 @@ class TestImgSamplerRouteHandlers:
     def test_sample_image_handler_exists(self):
         """Test sample_image handler exists."""
         if hasattr(img_sampler, "sample_image"):
-            assert callable(
-                img_sampler.sample_image
-            ), "sample_image is not callable"
+            assert callable(img_sampler.sample_image), "sample_image is not callable"
 
 
 class TestImgSamplerRouter:
@@ -62,4 +54,3 @@ class TestImgSamplerRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

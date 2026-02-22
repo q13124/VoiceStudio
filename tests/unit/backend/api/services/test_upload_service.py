@@ -291,9 +291,7 @@ class TestUploadValidation:
         assert config.max_size_bytes > 0
 
         # Allowed types can be None (accept all) by default
-        assert config.allowed_mime_types is None or isinstance(
-            config.allowed_mime_types, list
-        )
+        assert config.allowed_mime_types is None or isinstance(config.allowed_mime_types, list)
 
     def test_validation_config_custom_constraints(self):
         """Test UploadValidationConfig with custom constraints."""
@@ -332,6 +330,7 @@ class TestUploadValidation:
             # process_upload should exist and be async
             assert hasattr(service, "process_upload")
             import asyncio
+
             assert asyncio.iscoroutinefunction(service.process_upload)
 
 

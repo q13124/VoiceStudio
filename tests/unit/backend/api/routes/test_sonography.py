@@ -33,9 +33,7 @@ class TestSonographyRouteHandlers:
     def test_generate_sonogram_handler_exists(self):
         """Test generate_sonogram handler exists."""
         if hasattr(sonography, "generate_sonogram"):
-            assert callable(
-                sonography.generate_sonogram
-            ), "generate_sonogram is not callable"
+            assert callable(sonography.generate_sonogram), "generate_sonogram is not callable"
 
 
 class TestSonographyRouter:
@@ -56,4 +54,3 @@ class TestSonographyRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

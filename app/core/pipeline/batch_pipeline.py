@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BatchResult:
     """Result from batch pipeline processing."""
+
     input_text: str
     transcription: str | None = None
     llm_response: str = ""
@@ -183,6 +184,7 @@ class BatchPipeline:
         """Full transcription using STT engine."""
         try:
             from backend.services.engine_service import get_engine_service
+
             service = get_engine_service()
             result = await service.transcribe(
                 audio_data=audio_data,
@@ -194,9 +196,7 @@ class BatchPipeline:
         except Exception as exc:
             raise RuntimeError(f"Transcription failed: {exc}") from exc
 
-    async def _generate(
-        self, text: str, context: list[dict[str, str]] | None = None
-    ) -> str:
+    async def _generate(self, text: str, context: list[dict[str, str]] | None = None) -> str:
         """Generate full LLM response."""
         if self._llm_provider is None:
             raise RuntimeError("No LLM provider available")
@@ -219,6 +219,7 @@ class BatchPipeline:
             return None
         try:
             from backend.services.engine_service import get_engine_service
+
             service = get_engine_service()
             result = await service.synthesize(
                 text=text,

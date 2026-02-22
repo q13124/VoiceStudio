@@ -99,16 +99,12 @@ class SpectrogramConfig(BaseModel):
             "grayscale",
         ]
         if v not in valid_schemes:
-            raise ValueError(
-                f"Invalid color scheme: {v}. " f"Must be one of {valid_schemes}"
-            )
+            raise ValueError(f"Invalid color scheme: {v}. " f"Must be one of {valid_schemes}")
         return v
 
     @field_validator("frequency_range", "time_range", "colormap_range")
     @classmethod
-    def validate_range(
-        cls, v: dict[str, float] | None
-    ) -> dict[str, float] | None:
+    def validate_range(cls, v: dict[str, float] | None) -> dict[str, float] | None:
         """Validate range dictionaries."""
         if v is None:
             return v
@@ -177,9 +173,7 @@ async def update_spectrogram_config(audio_id: str, config: SpectrogramConfig):
 
 
 @router.get("/data/{audio_id}", response_model=SpectrogramData)
-@cache_response(
-    ttl=300
-)  # Cache for 5 minutes (spectrogram data is static for a given audio file)
+@cache_response(ttl=300)  # Cache for 5 minutes (spectrogram data is static for a given audio file)
 async def get_spectrogram_data(
     audio_id: str,
     window_size: int = Query(2048, ge=256, le=8192),
@@ -221,9 +215,7 @@ async def get_spectrogram_data(
 
         audio_path = _get_audio_path(audio_id)
         if not audio_path or not os.path.exists(audio_path):
-            raise HTTPException(
-                status_code=404, detail=f"Audio file not found: {audio_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file not found: {audio_id}")
 
         # Try to load audio analysis libraries
         try:
@@ -395,8 +387,7 @@ async def compare_spectrograms(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    f"Too many audio IDs ({len(audio_id_list)}). "
-                    f"Maximum: {MAX_COMPARISONS}"
+                    f"Too many audio IDs ({len(audio_id_list)}). " f"Maximum: {MAX_COMPARISONS}"
                 ),
             )
 
@@ -470,9 +461,7 @@ async def compare_spectrograms(
             "compared_files": len(spectrograms),
             "differences": differences,
             "summary": {
-                "mean_similarity": float(
-                    np.mean([d["similarity"] for d in differences])
-                ),
+                "mean_similarity": float(np.mean([d["similarity"] for d in differences])),
                 "min_similarity": float(np.min([d["similarity"] for d in differences])),
                 "max_similarity": float(np.max([d["similarity"] for d in differences])),
             },
@@ -528,9 +517,7 @@ async def export_spectrogram(
 
         audio_path = _get_audio_path(audio_id)
         if not audio_path or not os.path.exists(audio_path):
-            raise HTTPException(
-                status_code=404, detail=f"Audio file not found: {audio_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file not found: {audio_id}")
 
         # Load audio
         audio, _sample_rate = sf.read(audio_path)

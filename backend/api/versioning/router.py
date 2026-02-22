@@ -16,6 +16,7 @@ from fastapi import APIRouter
 
 class ApiVersion(Enum):
     """Supported API versions."""
+
     V1 = "v1"
     V2 = "v2"
     V3 = "v3"  # Task 3.4.1: API versioning v3 with breaking changes
@@ -38,6 +39,7 @@ class ApiVersion(Enum):
 @dataclass
 class VersionedRoute:
     """A route with version information."""
+
     path: str
     method: str
     handler: Callable
@@ -71,9 +73,7 @@ class VersionedAPIRouter:
 
         # Create routers for each version
         for version in ApiVersion:
-            self._version_routers[version] = APIRouter(
-                prefix=f"{prefix}/{version.value}"
-            )
+            self._version_routers[version] = APIRouter(prefix=f"{prefix}/{version.value}")
 
     def route(
         self,
@@ -121,7 +121,8 @@ class VersionedAPIRouter:
                         path,
                         handler,
                         methods=[method],
-                        deprecated=deprecated_in is not None and version.value >= deprecated_in.value,
+                        deprecated=deprecated_in is not None
+                        and version.value >= deprecated_in.value,
                     )
 
             return handler

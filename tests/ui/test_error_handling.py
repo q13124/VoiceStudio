@@ -35,8 +35,14 @@ class TestErrorDialogDisplay:
         """Test that rapid navigation doesn't cause errors."""
         # Rapidly switch panels - should not show error dialogs
         nav_buttons = [
-            "NavStudio", "NavProfiles", "NavLibrary", "NavEffects",
-            "NavTrain", "NavAnalyze", "NavSettings", "NavLogs",
+            "NavStudio",
+            "NavProfiles",
+            "NavLibrary",
+            "NavEffects",
+            "NavTrain",
+            "NavAnalyze",
+            "NavSettings",
+            "NavLogs",
         ]
 
         for _ in range(3):
@@ -152,8 +158,14 @@ class TestPanelErrorRecovery:
         """Test that panel switches don't leave app in error state."""
         # Switch through all panels
         panels = [
-            "NavProfiles", "NavLibrary", "NavEffects",
-            "NavTrain", "NavAnalyze", "NavSettings", "NavLogs", "NavStudio",
+            "NavProfiles",
+            "NavLibrary",
+            "NavEffects",
+            "NavTrain",
+            "NavAnalyze",
+            "NavSettings",
+            "NavLogs",
+            "NavStudio",
         ]
 
         for panel_id in panels:
@@ -210,9 +222,7 @@ class TestSettingsErrorHandling:
         time.sleep(1)
 
         try:
-            save_button = driver.find_element(
-                "accessibility id", "SettingsView_SaveButton"
-            )
+            save_button = driver.find_element("accessibility id", "SettingsView_SaveButton")
             if save_button is not None:
                 assert save_button.is_enabled()
         except RuntimeError:

@@ -64,6 +64,7 @@ class TestModelCaching:
 
         # Set max cache size to 2
         from app.core.engines import xtts_engine
+
         original_max = xtts_engine._MAX_CACHE_SIZE
         xtts_engine._MAX_CACHE_SIZE = 2
 
@@ -210,7 +211,9 @@ class TestXTTSEngineOptimization:
         """Test batch synthesis optimizations."""
         mock_torch.cuda.is_available.return_value = True
         mock_torch.cuda.empty_cache = Mock()
-        mock_torch.inference_mode = Mock(return_value=Mock(__enter__=Mock(), __exit__=Mock(return_value=None)))
+        mock_torch.inference_mode = Mock(
+            return_value=Mock(__enter__=Mock(), __exit__=Mock(return_value=None))
+        )
 
         mock_tts_instance = Mock()
         mock_tts_instance.tts.return_value = [0.0] * 1000
@@ -221,11 +224,7 @@ class TestXTTSEngineOptimization:
         engine.set_batch_size(2)
 
         texts = ["Text 1", "Text 2", "Text 3"]
-        results = engine.batch_synthesize(
-            texts,
-            "speaker.wav",
-            batch_size=2
-        )
+        results = engine.batch_synthesize(texts, "speaker.wav", batch_size=2)
 
         assert len(results) == 3
         # Should have called empty_cache for batch processing
@@ -234,4 +233,3 @@ class TestXTTSEngineOptimization:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

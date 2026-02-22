@@ -78,16 +78,11 @@ async def read_pdf(request: PDFReadRequest):
     try:
         client = get_pdf_client()
         result = client.read_pdf(
-            file_path=request.file_path,
-            password=request.password,
-            pages=request.pages
+            file_path=request.file_path, password=request.password, pages=request.pages
         )
 
         if not result.get("success"):
-            raise HTTPException(
-                status_code=400,
-                detail=result.get("error", "Failed to read PDF")
-            )
+            raise HTTPException(status_code=400, detail=result.get("error", "Failed to read PDF"))
 
         return PDFReadResponse(
             success=result.get("success", False),
@@ -97,16 +92,13 @@ async def read_pdf(request: PDFReadRequest):
             metadata=result.get("metadata", {}),
             content=result.get("content", {}),
             error=result.get("error"),
-            password_required=result.get("password_required")
+            password_required=result.get("password_required"),
         )
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error reading PDF: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error reading PDF: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Error reading PDF: {e!s}") from e
 
 
 @router.post("/extract-text", response_model=PDFTextExtractResponse)
@@ -121,37 +113,25 @@ async def extract_text_for_tts(request: PDFTextExtractRequest):
         client = get_pdf_client()
 
         # Read the PDF
-        pdf_result = client.read_pdf(
-            file_path=request.file_path,
-            password=request.password
-        )
+        pdf_result = client.read_pdf(file_path=request.file_path, password=request.password)
 
         if not pdf_result.get("success"):
             return PDFTextExtractResponse(
                 success=False,
                 text="",
                 page_count=0,
-                error=pdf_result.get("error", "Failed to read PDF")
+                error=pdf_result.get("error", "Failed to read PDF"),
             )
 
         # Extract text for TTS
-        text = client.extract_text_for_tts(
-            pdf_result=pdf_result,
-            page_range=request.page_range
-        )
+        text = client.extract_text_for_tts(pdf_result=pdf_result, page_range=request.page_range)
 
         return PDFTextExtractResponse(
-            success=True,
-            text=text,
-            page_count=pdf_result.get("total_pages", 0),
-            error=None
+            success=True, text=text, page_count=pdf_result.get("total_pages", 0), error=None
         )
     except Exception as e:
         logger.error(f"Error extracting text from PDF: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error extracting text: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Error extracting text: {e!s}") from e
 
 
 @router.get("/page-count")
@@ -165,17 +145,10 @@ async def get_page_count(file_path: str):
         client = get_pdf_client()
         page_count = client.get_page_count(file_path)
 
-        return {
-            "success": True,
-            "file_path": file_path,
-            "page_count": page_count
-        }
+        return {"success": True, "file_path": file_path, "page_count": page_count}
     except Exception as e:
         logger.error(f"Error getting page count: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error getting page count: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Error getting page count: {e!s}") from e
 
 
 @router.get("/health")
@@ -188,13 +161,8 @@ async def pdf_health_check():
         return {
             "service": "pdf-unlocker",
             "available": available,
-            "server_path": str(client.server_path)
+            "server_path": str(client.server_path),
         }
     except Exception as e:
         logger.error(f"Error checking PDF service health: {e}")
-        return {
-            "service": "pdf-unlocker",
-            "available": False,
-            "error": str(e)
-        }
-
+        return {"service": "pdf-unlocker", "available": False, "error": str(e)}

@@ -44,9 +44,7 @@ class TestProfilesPanel:
 
         # Try to find the panel root if it has automation ID
         try:
-            profiles_panel = driver.find_element(
-                "accessibility id", "ProfilesView_Root"
-            )
+            profiles_panel = driver.find_element("accessibility id", "ProfilesView_Root")
             assert profiles_panel is not None
         except RuntimeError:
             # Panel root ID may not be set, but navigation worked
@@ -61,16 +59,12 @@ class TestProfilesPanel:
         # Try to find profile-specific elements
         try:
             # ProfilesView has these automation IDs according to XAML analysis
-            create_button = driver.find_element(
-                "accessibility id", "ProfilesView_CreateButton"
-            )
+            create_button = driver.find_element("accessibility id", "ProfilesView_CreateButton")
             assert create_button is not None
         except RuntimeError:
             # Check for search box as fallback
             try:
-                search_box = driver.find_element(
-                    "accessibility id", "ProfilesView_SearchBox"
-                )
+                search_box = driver.find_element("accessibility id", "ProfilesView_SearchBox")
                 assert search_box is not None
             except RuntimeError:
                 # Content elements may not have IDs set
@@ -97,9 +91,7 @@ class TestStudioPanel:
 
         # VoiceSynthesisView has comprehensive automation IDs
         try:
-            synthesis_view = driver.find_element(
-                "accessibility id", "VoiceSynthesisView_Root"
-            )
+            synthesis_view = driver.find_element("accessibility id", "VoiceSynthesisView_Root")
             assert synthesis_view is not None
         except RuntimeError:
             # May not be the active panel in Studio
@@ -119,9 +111,7 @@ class TestLibraryPanel:
         assert library_button_after is not None
 
         try:
-            library_panel = driver.find_element(
-                "accessibility id", "LibraryView_Root"
-            )
+            library_panel = driver.find_element("accessibility id", "LibraryView_Root")
             assert library_panel is not None
         except RuntimeError:
             pass
@@ -140,9 +130,7 @@ class TestEffectsMixerPanel:
         assert effects_button_after is not None
 
         try:
-            mixer_panel = driver.find_element(
-                "accessibility id", "EffectsMixerView_Root"
-            )
+            mixer_panel = driver.find_element("accessibility id", "EffectsMixerView_Root")
             assert mixer_panel is not None
         except RuntimeError:
             pass
@@ -187,9 +175,7 @@ class TestTrainingPanel:
         assert train_button_after is not None
 
         try:
-            training_panel = driver.find_element(
-                "accessibility id", "TrainingView_Root"
-            )
+            training_panel = driver.find_element("accessibility id", "TrainingView_Root")
             assert training_panel is not None
         except RuntimeError:
             pass
@@ -208,9 +194,7 @@ class TestAnalyzerPanel:
         assert analyze_button_after is not None
 
         try:
-            analyzer_panel = driver.find_element(
-                "accessibility id", "AnalyzerView_Root"
-            )
+            analyzer_panel = driver.find_element("accessibility id", "AnalyzerView_Root")
             assert analyzer_panel is not None
         except RuntimeError:
             pass
@@ -242,9 +226,7 @@ class TestSettingsPanel:
         assert settings_button_after is not None
 
         try:
-            settings_panel = driver.find_element(
-                "accessibility id", "SettingsView_Root"
-            )
+            settings_panel = driver.find_element("accessibility id", "SettingsView_Root")
             assert settings_panel is not None
         except RuntimeError:
             pass
@@ -263,9 +245,7 @@ class TestDiagnosticsPanel:
         assert logs_button_after is not None
 
         try:
-            diagnostics_panel = driver.find_element(
-                "accessibility id", "DiagnosticsView_Root"
-            )
+            diagnostics_panel = driver.find_element("accessibility id", "DiagnosticsView_Root")
             assert diagnostics_panel is not None
         except RuntimeError:
             pass
@@ -413,9 +393,7 @@ class TestStatusBar:
     def test_status_text_visible(self, driver, app_launched):
         """Test that status text is visible."""
         try:
-            status_text = driver.find_element(
-                "accessibility id", "StatusBar_StatusText"
-            )
+            status_text = driver.find_element("accessibility id", "StatusBar_StatusText")
             assert status_text is not None
             # Status text should have some content
             text = status_text.text

@@ -14,20 +14,16 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from backend.plugins.supply_chain.certification import (
-    # Main class
+from backend.plugins.supply_chain.certification import (  # Main class; Enums; Data classes; Convenience functions
     CertificationEngine,
-    # Enums
     CertificationLevel,
     CertificationMetrics,
     CertificationPolicy,
     CertificationRequirement,
     CertificationResult,
     GateStatus,
-    # Data classes
     QualityGate,
     certify_plugin,
-    # Convenience functions
     get_certification_engine,
 )
 
@@ -276,7 +272,9 @@ class TestCertificationResult:
         """Should include quality gate results."""
         gates = [
             QualityGate("manifest", "Manifest", "Check manifest", GateStatus.PASSED),
-            QualityGate("vuln", "Vulnerabilities", "Scan vulns", GateStatus.FAILED, "Critical found"),
+            QualityGate(
+                "vuln", "Vulnerabilities", "Scan vulns", GateStatus.FAILED, "Critical found"
+            ),
         ]
         result = CertificationResult(
             plugin_id="my-plugin",

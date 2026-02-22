@@ -2,6 +2,7 @@
 Unit Tests for Effects API Route
 Tests audio effects endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -253,9 +254,7 @@ class TestEffectChains:
     @patch("backend.api.routes.effects.HAS_POSTFX_PROCESSOR", True)
     @patch("backend.api.routes.effects.PostFXProcessor")
     @patch("backend.api.routes.effects.create_post_fx_processor")
-    def test_process_audio_with_postfxprocessor(
-        self, mock_create_processor, mock_processor_class
-    ):
+    def test_process_audio_with_postfxprocessor(self, mock_create_processor, mock_processor_class):
         """Test audio processing using PostFXProcessor (professional quality)."""
         app = FastAPI()
         app.include_router(effects.router)
@@ -289,9 +288,7 @@ class TestEffectChains:
                 mock_storage.__contains__ = lambda x: x == "test-audio"
                 mock_storage.__getitem__ = lambda x: "/path/to/audio.wav"
 
-                with patch(
-                    "backend.api.routes.effects._process_audio_with_chain"
-                ) as mock_process:
+                with patch("backend.api.routes.effects._process_audio_with_chain") as mock_process:
                     mock_process.return_value = {
                         "success": True,
                         "output_audio_id": "processed-audio",
@@ -331,9 +328,7 @@ class TestEffectChains:
                 mock_storage.__contains__ = lambda x: x == "test-audio"
                 mock_storage.__getitem__ = lambda x: "/path/to/audio.wav"
 
-                with patch(
-                    "backend.api.routes.effects._process_audio_with_chain"
-                ) as mock_process:
+                with patch("backend.api.routes.effects._process_audio_with_chain") as mock_process:
                     mock_process.return_value = {
                         "success": True,
                         "output_audio_id": "processed-audio",
@@ -372,9 +367,7 @@ class TestEffectChains:
                 mock_storage.__contains__ = lambda x: x == "test-audio"
                 mock_storage.__getitem__ = lambda x: "/path/to/audio.wav"
 
-                with patch(
-                    "backend.api.routes.effects._process_audio_with_chain"
-                ) as mock_process:
+                with patch("backend.api.routes.effects._process_audio_with_chain") as mock_process:
                     mock_process.return_value = {
                         "success": True,
                         "output_audio_id": "processed-audio",

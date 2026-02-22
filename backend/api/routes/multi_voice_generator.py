@@ -108,9 +108,7 @@ class MultiVoiceCompareResponse(BaseModel):
     best_score: float | None = None
 
 
-@router.post(
-    "/generate", response_model=MultiVoiceGenerateResponse, status_code=201
-)
+@router.post("/generate", response_model=MultiVoiceGenerateResponse, status_code=201)
 async def generate_multi_voice(request: MultiVoiceGenerateRequest):
     """Start multi-voice generation job."""
     try:
@@ -156,9 +154,7 @@ async def generate_multi_voice(request: MultiVoiceGenerateRequest):
 
         asyncio.create_task(process_multi_voice_job(job_id))
 
-        logger.info(
-            f"Started multi-voice generation: {job_id} - {len(items)} items"
-        )
+        logger.info(f"Started multi-voice generation: {job_id} - {len(items)} items")
 
         return MultiVoiceGenerateResponse(
             job_id=job_id,
@@ -236,9 +232,7 @@ async def get_multi_voice_status(job_id: str):
     """Get multi-voice job status."""
     try:
         if job_id not in _multi_voice_jobs:
-            raise HTTPException(
-                status_code=404, detail=f"Multi-voice job '{job_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Multi-voice job '{job_id}' not found")
 
         job = _multi_voice_jobs[job_id]
 
@@ -289,9 +283,7 @@ async def get_multi_voice_results(job_id: str):
     """Get multi-voice generation results."""
     try:
         if job_id not in _multi_voice_jobs:
-            raise HTTPException(
-                status_code=404, detail=f"Multi-voice job '{job_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Multi-voice job '{job_id}' not found")
 
         job = _multi_voice_jobs[job_id]
 
@@ -334,9 +326,7 @@ async def export_multi_voice(job_id: str = ""):
     """Export multi-voice results as CSV."""
     try:
         if job_id not in _multi_voice_jobs:
-            raise HTTPException(
-                status_code=404, detail=f"Multi-voice job '{job_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Multi-voice job '{job_id}' not found")
 
         job = _multi_voice_jobs[job_id]
 
@@ -471,9 +461,7 @@ async def import_multi_voice(request: CSVImportRequest):
         for row in reader:
             items.append(
                 {
-                    "profile_id": row.get(
-                        "Profile ID", ""
-                    ),
+                    "profile_id": row.get("Profile ID", ""),
                     "text": row.get("Text", ""),
                     "engine": row.get("Engine", "xtts"),
                     "quality_mode": row.get("Quality Mode", "standard"),

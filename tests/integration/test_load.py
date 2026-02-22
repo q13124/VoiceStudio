@@ -33,6 +33,7 @@ except ImportError:
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -61,6 +62,7 @@ pytestmark = [
 @dataclass
 class RequestResult:
     """Result of a single HTTP request."""
+
     endpoint: str
     method: str
     status_code: int
@@ -74,6 +76,7 @@ class RequestResult:
 @dataclass
 class LoadTestResult:
     """Result of a load test."""
+
     test_name: str
     config: dict
     start_time: datetime
@@ -117,8 +120,16 @@ class LoadTestResult:
             "max_ms": max(successful),
             "mean_ms": statistics.mean(successful),
             "median_ms": statistics.median(successful),
-            "p95_ms": sorted(successful)[int(len(successful) * 0.95)] if len(successful) > 1 else successful[0],
-            "p99_ms": sorted(successful)[int(len(successful) * 0.99)] if len(successful) > 1 else successful[0],
+            "p95_ms": (
+                sorted(successful)[int(len(successful) * 0.95)]
+                if len(successful) > 1
+                else successful[0]
+            ),
+            "p99_ms": (
+                sorted(successful)[int(len(successful) * 0.99)]
+                if len(successful) > 1
+                else successful[0]
+            ),
             "stdev_ms": statistics.stdev(successful) if len(successful) > 1 else 0,
         }
 
@@ -126,6 +137,7 @@ class LoadTestResult:
 @pytest.fixture
 def api_client():
     """Create API client."""
+
     class APIClient:
         def __init__(self, base_url: str):
             self.base_url = base_url
@@ -311,7 +323,9 @@ class TestLightLoad:
 
         print("\nLight Load - Multiple Endpoints:")
         for r in results:
-            print(f"  {r.config['endpoint']}: {r.success_rate*100:.0f}% success, {r.requests_per_second:.1f} RPS")
+            print(
+                f"  {r.config['endpoint']}: {r.success_rate*100:.0f}% success, {r.requests_per_second:.1f} RPS"
+            )
 
         # All should have high success rate
         for r in results:
@@ -341,7 +355,9 @@ class TestMediumLoad:
 
         stats = result.get_latency_stats()
         if stats["count"] > 0:
-            print(f"  Latency - Mean: {stats['mean_ms']:.0f}ms, P95: {stats['p95_ms']:.0f}ms, P99: {stats['p99_ms']:.0f}ms")
+            print(
+                f"  Latency - Mean: {stats['mean_ms']:.0f}ms, P95: {stats['p95_ms']:.0f}ms, P99: {stats['p99_ms']:.0f}ms"
+            )
 
         assert result.success_rate > 0.90, f"Success rate too low: {result.success_rate}"
 
@@ -404,8 +420,8 @@ class TestSustainedLoad:
             print(f"  Latency - Mean: {statistics.mean(durations):.0f}ms")
 
             # Check for degradation over time
-            first_half = durations[:len(durations)//2]
-            second_half = durations[len(durations)//2:]
+            first_half = durations[: len(durations) // 2]
+            second_half = durations[len(durations) // 2 :]
 
             if first_half and second_half:
                 degradation = statistics.mean(second_half) - statistics.mean(first_half)
@@ -465,11 +481,11 @@ class TestResourceUsageUnderLoad:
         """Test memory usage during load test."""
         # Find backend process
         backend_pid = None
-        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        for proc in psutil.process_iter(["pid", "name", "cmdline"]):
             try:
-                cmdline = ' '.join(proc.info['cmdline'] or [])
-                if 'uvicorn' in cmdline or 'fastapi' in cmdline.lower():
-                    backend_pid = proc.info['pid']
+                cmdline = " ".join(proc.info["cmdline"] or [])
+                if "uvicorn" in cmdline or "fastapi" in cmdline.lower():
+                    backend_pid = proc.info["pid"]
                     break
             except Exception:
                 continue
@@ -533,7 +549,9 @@ class TestLoadReport:
 
         for result in all_results:
             print(f"\n{result.test_name}:")
-            print(f"  Config: {result.config['concurrent_workers']} workers × {result.config['requests_per_worker']} requests")
+            print(
+                f"  Config: {result.config['concurrent_workers']} workers × {result.config['requests_per_worker']} requests"
+            )
             print(f"  Total: {result.total_requests} requests in {result.duration_seconds:.2f}s")
             print(f"  Success: {result.success_rate * 100:.1f}%")
             print(f"  RPS: {result.requests_per_second:.1f}")

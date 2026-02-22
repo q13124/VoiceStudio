@@ -22,18 +22,20 @@ logger = logging.getLogger(__name__)
 
 class RetentionPeriod(Enum):
     """Predefined retention periods."""
-    NONE = 0        # Delete immediately
-    DAY = 1         # 1 day
-    WEEK = 7        # 1 week
-    MONTH = 30      # 30 days
-    QUARTER = 90    # 90 days
-    YEAR = 365      # 1 year
-    FOREVER = -1    # Never delete
+
+    NONE = 0  # Delete immediately
+    DAY = 1  # 1 day
+    WEEK = 7  # 1 week
+    MONTH = 30  # 30 days
+    QUARTER = 90  # 90 days
+    YEAR = 365  # 1 year
+    FOREVER = -1  # Never delete
 
 
 @dataclass
 class RetentionPolicy:
     """A data retention policy."""
+
     name: str
     path_pattern: str
     retention_days: int
@@ -47,6 +49,7 @@ class RetentionPolicy:
 @dataclass
 class RetentionConfig:
     """Configuration for data retention."""
+
     check_interval_hours: int = 24
     dry_run: bool = False
     log_deletions: bool = True
@@ -171,12 +174,14 @@ class DataRetentionService:
 
                 # Log deletion
                 if self.config.log_deletions:
-                    self._deletion_log.append({
-                        "policy": policy.name,
-                        "path": str(path),
-                        "deleted_at": datetime.now().isoformat(),
-                        "age_days": (datetime.now() - mtime).days,
-                    })
+                    self._deletion_log.append(
+                        {
+                            "policy": policy.name,
+                            "path": str(path),
+                            "deleted_at": datetime.now().isoformat(),
+                            "age_days": (datetime.now() - mtime).days,
+                        }
+                    )
 
         if deleted > 0:
             logger.info(f"Policy {policy.name}: cleaned up {deleted} items")
@@ -189,9 +194,7 @@ class DataRetentionService:
         policy: RetentionPolicy,
     ) -> Path | None:
         """Archive a path before deletion."""
-        archive_base = Path(
-            policy.archive_path or self.config.default_archive_path
-        )
+        archive_base = Path(policy.archive_path or self.config.default_archive_path)
         archive_base.mkdir(parents=True, exist_ok=True)
 
         # Create unique archive name

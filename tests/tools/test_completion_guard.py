@@ -77,7 +77,9 @@ def test_staged_completion_marker_fails(temp_git_repo: Path) -> None:
     (temp_git_repo / "docs").mkdir(exist_ok=True)
     (temp_git_repo / "docs" / "tasks").mkdir(exist_ok=True)
     (temp_git_repo / "docs" / "tasks" / "task.md").write_text("- [x] Done\n")
-    subprocess.run(["git", "add", "docs/tasks/task.md"], cwd=temp_git_repo, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "add", "docs/tasks/task.md"], cwd=temp_git_repo, check=True, capture_output=True
+    )
     with patch.object(guard_module, "PROJECT_ROOT", temp_git_repo):
         passed, report = guard_module.run_guard()
     assert passed is False
@@ -91,8 +93,12 @@ def test_unstaged_completion_marker_fails(temp_git_repo: Path) -> None:
     (temp_git_repo / "docs").mkdir(exist_ok=True)
     (temp_git_repo / "docs" / "tasks").mkdir(exist_ok=True)
     (temp_git_repo / "docs" / "tasks" / "task.md").write_text("Initial line.\n")
-    subprocess.run(["git", "add", "docs/tasks/task.md"], cwd=temp_git_repo, check=True, capture_output=True)
-    subprocess.run(["git", "commit", "-m", "add task"], cwd=temp_git_repo, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "add", "docs/tasks/task.md"], cwd=temp_git_repo, check=True, capture_output=True
+    )
+    subprocess.run(
+        ["git", "commit", "-m", "add task"], cwd=temp_git_repo, check=True, capture_output=True
+    )
     (temp_git_repo / "docs" / "tasks" / "task.md").write_text("Initial line.\nstatus: complete\n")
     with patch.object(guard_module, "PROJECT_ROOT", temp_git_repo):
         passed, report = guard_module.run_guard()
@@ -101,7 +107,9 @@ def test_unstaged_completion_marker_fails(temp_git_repo: Path) -> None:
     assert any(h["source"] == "unstaged" for h in report.get("hits", []))
 
 
-@pytest.mark.skipif(os.name == "nt", reason="Untracked path handling in temp git repo differs on Windows")
+@pytest.mark.skipif(
+    os.name == "nt", reason="Untracked path handling in temp git repo differs on Windows"
+)
 def test_untracked_marker_in_guarded_path_fails(temp_git_repo: Path) -> None:
     """New file in guarded path with markers fails."""
     (temp_git_repo / ".cursor").mkdir(exist_ok=True)
@@ -110,7 +118,9 @@ def test_untracked_marker_in_guarded_path_fails(temp_git_repo: Path) -> None:
         passed, report = guard_module.run_guard()
     assert passed is False, f"Expected FAIL for untracked guarded file with [x]; got {report}"
     assert report.get("passed") is False
-    assert report.get("hits"), "Expected at least one hit for uncommitted completion marker in guarded path"
+    assert report.get(
+        "hits"
+    ), "Expected at least one hit for uncommitted completion marker in guarded path"
 
 
 def test_untracked_marker_outside_guard_passes(temp_git_repo: Path) -> None:

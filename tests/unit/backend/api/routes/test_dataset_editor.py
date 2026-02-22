@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import dataset_editor
 except ImportError:
-    pytest.skip(
-        "Could not import dataset_editor route module", allow_module_level=True
-    )
+    pytest.skip("Could not import dataset_editor route module", allow_module_level=True)
 
 
 class TestDatasetEditorRouteImports:
@@ -25,12 +23,8 @@ class TestDatasetEditorRouteImports:
 
     def test_dataset_editor_module_imports(self):
         """Test dataset_editor module can be imported."""
-        assert (
-            dataset_editor is not None
-        ), "Failed to import dataset_editor module"
-        assert hasattr(
-            dataset_editor, "router"
-        ), "dataset_editor module missing router"
+        assert dataset_editor is not None, "Failed to import dataset_editor module"
+        assert hasattr(dataset_editor, "router"), "dataset_editor module missing router"
 
 
 class TestDatasetEditorRouteHandlers:
@@ -39,9 +33,7 @@ class TestDatasetEditorRouteHandlers:
     def test_edit_dataset_handler_exists(self):
         """Test edit_dataset handler exists."""
         if hasattr(dataset_editor, "edit_dataset"):
-            assert callable(
-                dataset_editor.edit_dataset
-            ), "edit_dataset is not callable"
+            assert callable(dataset_editor.edit_dataset), "edit_dataset is not callable"
 
 
 class TestDatasetEditorRouter:
@@ -62,4 +54,3 @@ class TestDatasetEditorRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

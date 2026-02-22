@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.utils import huggingface_api
 except ImportError:
-    pytest.skip(
-        "Could not import huggingface_api", allow_module_level=True
-    )
+    pytest.skip("Could not import huggingface_api", allow_module_level=True)
 
 
 class TestHuggingFaceAPIImports:
@@ -25,9 +23,7 @@ class TestHuggingFaceAPIImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            huggingface_api is not None
-        ), "Failed to import huggingface_api module"
+        assert huggingface_api is not None, "Failed to import huggingface_api module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -41,11 +37,8 @@ class TestHuggingFaceAPIFunctions:
     def test_download_model_function_exists(self):
         """Test download_model function exists."""
         if hasattr(huggingface_api, "download_model"):
-            assert callable(
-                huggingface_api.download_model
-            ), "download_model should be callable"
+            assert callable(huggingface_api.download_model), "download_model should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

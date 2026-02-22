@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.cli import update_panel_registry
 except ImportError:
-    pytest.skip(
-        "Could not import update_panel_registry", allow_module_level=True
-    )
+    pytest.skip("Could not import update_panel_registry", allow_module_level=True)
 
 
 class TestUpdatePanelRegistryImports:
@@ -25,9 +23,7 @@ class TestUpdatePanelRegistryImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            update_panel_registry is not None
-        ), "Failed to import update_panel_registry module"
+        assert update_panel_registry is not None, "Failed to import update_panel_registry module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -37,4 +33,3 @@ class TestUpdatePanelRegistryImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

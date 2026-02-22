@@ -16,11 +16,13 @@ class TestCostTracker:
     def test_import(self):
         """Test that CostTracker can be imported."""
         from app.core.pipeline.cost_tracker import CostTracker
+
         assert CostTracker is not None
 
     def test_create_tracker(self):
         """Test creating a cost tracker."""
         from app.core.pipeline.cost_tracker import CostTracker
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tracker = CostTracker(data_dir=tmpdir)
             assert tracker is not None
@@ -28,6 +30,7 @@ class TestCostTracker:
     def test_record_session(self):
         """Test recording a session cost entry."""
         from app.core.pipeline.cost_tracker import CostTracker, SessionCostEntry
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tracker = CostTracker(data_dir=tmpdir)
 
@@ -50,6 +53,7 @@ class TestCostTracker:
     def test_multiple_sessions(self):
         """Test tracking multiple sessions."""
         from app.core.pipeline.cost_tracker import CostTracker, SessionCostEntry
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tracker = CostTracker(data_dir=tmpdir)
 
@@ -72,6 +76,7 @@ class TestCostTracker:
     def test_cost_summary(self):
         """Test cost summary calculation."""
         from app.core.pipeline.cost_tracker import CostTracker, SessionCostEntry
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tracker = CostTracker(data_dir=tmpdir)
 
@@ -95,6 +100,7 @@ class TestCostTracker:
     def test_empty_summary(self):
         """Test summary when no sessions recorded."""
         from app.core.pipeline.cost_tracker import CostTracker
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tracker = CostTracker(data_dir=tmpdir)
 
@@ -109,17 +115,20 @@ class TestTokenCeilingManager:
     def test_import(self):
         """Test that TokenCeilingManager can be imported."""
         from app.core.pipeline.token_ceiling import TokenCeilingManager
+
         assert TokenCeilingManager is not None
 
     def test_create_manager(self):
         """Test creating a token ceiling manager."""
         from app.core.pipeline.token_ceiling import TokenCeilingManager
+
         manager = TokenCeilingManager()
         assert manager is not None
 
     def test_start_session(self):
         """Test starting a session."""
         from app.core.pipeline.token_ceiling import TokenCeilingManager
+
         manager = TokenCeilingManager()
 
         session_id = "test-session"
@@ -132,6 +141,7 @@ class TestTokenCeilingManager:
     def test_record_usage(self):
         """Test recording token usage."""
         from app.core.pipeline.token_ceiling import TokenCeilingManager
+
         manager = TokenCeilingManager()
 
         session_id = "test-session"
@@ -144,6 +154,7 @@ class TestTokenCeilingManager:
     def test_ceiling_check(self):
         """Test checking if ceiling is reached."""
         from app.core.pipeline.token_ceiling import CeilingConfig, TokenCeilingManager
+
         config = CeilingConfig(hard_ceiling_tokens=100, soft_ceiling_tokens=50)
         manager = TokenCeilingManager(config=config)
 
@@ -161,6 +172,7 @@ class TestTokenCeilingManager:
     def test_no_ceiling_with_large_limit(self):
         """Test behavior with very high ceiling."""
         from app.core.pipeline.token_ceiling import CeilingConfig, TokenCeilingManager
+
         config = CeilingConfig(hard_ceiling_tokens=1000000000)  # Very high limit
         manager = TokenCeilingManager(config=config)
 
@@ -174,6 +186,7 @@ class TestTokenCeilingManager:
     def test_end_session(self):
         """Test ending a session."""
         from app.core.pipeline.token_ceiling import TokenCeilingManager
+
         manager = TokenCeilingManager()
 
         session_id = "test-session"

@@ -26,13 +26,13 @@ Dependencies:
 
 Usage:
     reviewer = CodeReviewer(ollama_enabled=True)
-    
+
     result = await reviewer.review_plugin(
         plugin_path=Path("plugins/my-plugin"),
         plugin_id="my-plugin",
         plugin_version="1.0.0",
     )
-    
+
     print(f"Quality Score: {result.quality_score}/100")
     for issue in result.issues:
         print(f"[{issue.severity}] {issue.message}")
@@ -55,13 +55,13 @@ logger = logging.getLogger(__name__)
 
 class IssueSeverity(Enum):
     """Severity levels for code issues."""
-    
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
     INFO = "info"
-    
+
     @property
     def score_penalty(self) -> int:
         """Score penalty for this severity."""
@@ -77,7 +77,7 @@ class IssueSeverity(Enum):
 
 class IssueCategory(Enum):
     """Categories for code issues."""
-    
+
     SECURITY = "security"
     PERFORMANCE = "performance"
     STYLE = "style"
@@ -90,7 +90,7 @@ class IssueCategory(Enum):
 class CodeIssue:
     """
     A code issue found during review.
-    
+
     Attributes:
         severity: Issue severity
         category: Issue category
@@ -102,7 +102,7 @@ class CodeIssue:
         tool: Tool that found the issue
         suggestion: Fix suggestion if available
     """
-    
+
     severity: IssueSeverity
     category: IssueCategory
     message: str
@@ -112,7 +112,7 @@ class CodeIssue:
     rule_id: str = ""
     tool: str = ""
     suggestion: Optional[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "severity": self.severity.value,
@@ -131,7 +131,7 @@ class CodeIssue:
 class ReviewResult:
     """
     Complete review result for a plugin.
-    
+
     Attributes:
         plugin_id: Plugin identifier
         plugin_version: Plugin version
@@ -142,7 +142,7 @@ class ReviewResult:
         reviewed_at: Review timestamp
         review_duration_ms: Time taken for review
     """
-    
+
     plugin_id: str
     plugin_version: str
     quality_score: int
@@ -152,20 +152,20 @@ class ReviewResult:
     reviewed_at: datetime = field(default_factory=datetime.utcnow)
     review_duration_ms: float = 0.0
     tools_used: List[str] = field(default_factory=list)
-    
+
     @property
     def critical_count(self) -> int:
         return sum(1 for i in self.issues if i.severity == IssueSeverity.CRITICAL)
-    
+
     @property
     def high_count(self) -> int:
         return sum(1 for i in self.issues if i.severity == IssueSeverity.HIGH)
-    
+
     @property
     def passed(self) -> bool:
         """Check if plugin passed review (no critical issues)."""
         return self.critical_count == 0
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "plugin_id": self.plugin_id,
@@ -187,10 +187,10 @@ class ReviewResult:
 class CodeReviewer:
     """
     AI-assisted code reviewer for plugin submissions.
-    
+
     Combines static analysis tools with local LLM for comprehensive
     code review. All operations run locally.
-    
+
     Example:
         reviewer = CodeReviewer(ollama_enabled=True)
         result = await reviewer.review_plugin(
@@ -198,13 +198,13 @@ class CodeReviewer:
             plugin_id="audio-fx",
             plugin_version="1.0.0",
         )
-        
+
         if result.passed:
             print("Plugin approved!")
         else:
             print(f"Found {result.critical_count} critical issues")
     """
-    
+
     def __init__(
         self,
         ollama_enabled: bool = True,
@@ -216,7 +216,7 @@ class CodeReviewer:
     ):
         """
         Initialize code reviewer.
-        
+
         Args:
             ollama_enabled: Enable Ollama AI review
             ollama_model: Ollama model to use
@@ -231,13 +231,13 @@ class CodeReviewer:
         self._semgrep_rules = semgrep_rules or ["p/python", "p/security-audit"]
         self._bandit_severity = bandit_severity
         self._ruff_select = ruff_select or ["E", "F", "W", "S", "B"]
-        
+
         # Check tool availability
         self._semgrep_available = self._check_tool("semgrep")
         self._bandit_available = self._check_tool("bandit")
         self._ruff_available = self._check_tool("ruff")
         self._ollama_available = self._check_tool("ollama")
-    
+
     def _check_tool(self, tool: str) -> bool:
         """Check if a tool is available."""
         try:
@@ -250,7 +250,7 @@ class CodeReviewer:
         except (subprocess.SubprocessError, FileNotFoundError):
             logger.debug(f"Tool not available: {tool}")
             return False
-    
+
     async def review_plugin(
         self,
         plugin_path: Path,
@@ -259,36 +259,37 @@ class CodeReviewer:
     ) -> ReviewResult:
         """
         Perform comprehensive code review of a plugin.
-        
+
         Args:
             plugin_path: Path to plugin directory
             plugin_id: Plugin identifier
             plugin_version: Plugin version
-            
+
         Returns:
             ReviewResult with issues and score
         """
         import time
+
         start_time = time.perf_counter()
-        
+
         issues: List[CodeIssue] = []
         tools_used: List[str] = []
-        
+
         # Run static analysis tools in parallel
         tasks = []
-        
+
         if self._semgrep_available:
             tasks.append(self._run_semgrep(plugin_path))
             tools_used.append("semgrep")
-        
+
         if self._bandit_available:
             tasks.append(self._run_bandit(plugin_path))
             tools_used.append("bandit")
-        
+
         if self._ruff_available:
             tasks.append(self._run_ruff(plugin_path))
             tools_used.append("ruff")
-        
+
         # Gather static analysis results
         if tasks:
             results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -297,11 +298,11 @@ class CodeReviewer:
                     issues.extend(result)
                 elif isinstance(result, Exception):
                     logger.error(f"Static analysis error: {result}")
-        
+
         # Run AI review if enabled
         ai_summary = ""
         recommendations = []
-        
+
         if self._ollama_enabled and self._ollama_available:
             try:
                 ai_result = await self._run_ollama_review(plugin_path)
@@ -310,12 +311,12 @@ class CodeReviewer:
                 tools_used.append("ollama")
             except Exception as e:
                 logger.error(f"Ollama review failed: {e}")
-        
+
         # Calculate quality score
         quality_score = self._calculate_score(issues)
-        
+
         duration_ms = (time.perf_counter() - start_time) * 1000
-        
+
         return ReviewResult(
             plugin_id=plugin_id,
             plugin_version=plugin_version,
@@ -326,20 +327,21 @@ class CodeReviewer:
             review_duration_ms=duration_ms,
             tools_used=tools_used,
         )
-    
+
     async def _run_semgrep(self, plugin_path: Path) -> List[CodeIssue]:
         """Run Semgrep security analysis."""
         issues = []
-        
+
         try:
             # Build command
             cmd = [
                 "semgrep",
                 "--json",
-                "--config", ",".join(self._semgrep_rules),
+                "--config",
+                ",".join(self._semgrep_rules),
                 str(plugin_path),
             ]
-            
+
             # Run semgrep
             proc = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -350,44 +352,47 @@ class CodeReviewer:
                 proc.communicate(),
                 timeout=60,
             )
-            
+
             if stdout:
                 data = json.loads(stdout.decode())
                 for result in data.get("results", []):
                     severity = self._map_semgrep_severity(
                         result.get("extra", {}).get("severity", "WARNING")
                     )
-                    issues.append(CodeIssue(
-                        severity=severity,
-                        category=IssueCategory.SECURITY,
-                        message=result.get("extra", {}).get("message", ""),
-                        file=result.get("path", ""),
-                        line=result.get("start", {}).get("line", 0),
-                        column=result.get("start", {}).get("col", 0),
-                        rule_id=result.get("check_id", ""),
-                        tool="semgrep",
-                    ))
-                    
+                    issues.append(
+                        CodeIssue(
+                            severity=severity,
+                            category=IssueCategory.SECURITY,
+                            message=result.get("extra", {}).get("message", ""),
+                            file=result.get("path", ""),
+                            line=result.get("start", {}).get("line", 0),
+                            column=result.get("start", {}).get("col", 0),
+                            rule_id=result.get("check_id", ""),
+                            tool="semgrep",
+                        )
+                    )
+
         except asyncio.TimeoutError:
             logger.warning("Semgrep timed out")
         except Exception as e:
             logger.error(f"Semgrep error: {e}")
-        
+
         return issues
-    
+
     async def _run_bandit(self, plugin_path: Path) -> List[CodeIssue]:
         """Run Bandit security analysis."""
         issues = []
-        
+
         try:
             cmd = [
                 "bandit",
                 "-r",
-                "-f", "json",
+                "-f",
+                "json",
                 "-ll" if self._bandit_severity == "low" else "-l",
                 str(plugin_path),
             ]
-            
+
             proc = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
@@ -397,43 +402,46 @@ class CodeReviewer:
                 proc.communicate(),
                 timeout=60,
             )
-            
+
             if stdout:
                 data = json.loads(stdout.decode())
                 for result in data.get("results", []):
-                    severity = self._map_bandit_severity(
-                        result.get("issue_severity", "MEDIUM")
+                    severity = self._map_bandit_severity(result.get("issue_severity", "MEDIUM"))
+                    issues.append(
+                        CodeIssue(
+                            severity=severity,
+                            category=IssueCategory.SECURITY,
+                            message=result.get("issue_text", ""),
+                            file=result.get("filename", ""),
+                            line=result.get("line_number", 0),
+                            rule_id=result.get("test_id", ""),
+                            tool="bandit",
+                        )
                     )
-                    issues.append(CodeIssue(
-                        severity=severity,
-                        category=IssueCategory.SECURITY,
-                        message=result.get("issue_text", ""),
-                        file=result.get("filename", ""),
-                        line=result.get("line_number", 0),
-                        rule_id=result.get("test_id", ""),
-                        tool="bandit",
-                    ))
-                    
+
         except asyncio.TimeoutError:
             logger.warning("Bandit timed out")
         except Exception as e:
             logger.error(f"Bandit error: {e}")
-        
+
         return issues
-    
+
     async def _run_ruff(self, plugin_path: Path) -> List[CodeIssue]:
         """Run Ruff linting."""
         issues = []
-        
+
         try:
             select_arg = ",".join(self._ruff_select)
             cmd = [
-                "ruff", "check",
-                "--output-format", "json",
-                "--select", select_arg,
+                "ruff",
+                "check",
+                "--output-format",
+                "json",
+                "--select",
+                select_arg,
                 str(plugin_path),
             ]
-            
+
             proc = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
@@ -443,32 +451,38 @@ class CodeReviewer:
                 proc.communicate(),
                 timeout=30,
             )
-            
+
             if stdout:
                 results = json.loads(stdout.decode())
                 for result in results:
                     severity = self._map_ruff_severity(result.get("code", ""))
-                    category = IssueCategory.SECURITY if result.get("code", "").startswith("S") else IssueCategory.STYLE
-                    
-                    issues.append(CodeIssue(
-                        severity=severity,
-                        category=category,
-                        message=result.get("message", ""),
-                        file=result.get("filename", ""),
-                        line=result.get("location", {}).get("row", 0),
-                        column=result.get("location", {}).get("column", 0),
-                        rule_id=result.get("code", ""),
-                        tool="ruff",
-                        suggestion=result.get("fix", {}).get("message"),
-                    ))
-                    
+                    category = (
+                        IssueCategory.SECURITY
+                        if result.get("code", "").startswith("S")
+                        else IssueCategory.STYLE
+                    )
+
+                    issues.append(
+                        CodeIssue(
+                            severity=severity,
+                            category=category,
+                            message=result.get("message", ""),
+                            file=result.get("filename", ""),
+                            line=result.get("location", {}).get("row", 0),
+                            column=result.get("location", {}).get("column", 0),
+                            rule_id=result.get("code", ""),
+                            tool="ruff",
+                            suggestion=result.get("fix", {}).get("message"),
+                        )
+                    )
+
         except asyncio.TimeoutError:
             logger.warning("Ruff timed out")
         except Exception as e:
             logger.error(f"Ruff error: {e}")
-        
+
         return issues
-    
+
     async def _run_ollama_review(self, plugin_path: Path) -> Dict[str, Any]:
         """Run Ollama AI code review."""
         # Collect Python files
@@ -481,10 +495,10 @@ class CodeReviewer:
             except (OSError, UnicodeDecodeError) as e:
                 # Specific exceptions for file reading failures - acceptable to skip
                 logger.warning(f"Skipping {py_file} for code review: {e}")
-        
+
         if not code_samples:
             return {"summary": "No Python files found", "recommendations": []}
-        
+
         # Build prompt
         code_context = "\n\n".join(code_samples[:5])  # Limit files
         prompt = f"""Review this VoiceStudio plugin code for quality, security, and best practices.
@@ -501,13 +515,15 @@ Provide:
 Format as JSON:
 {{"summary": "...", "recommendations": ["...", "...", "..."]}}
 """
-        
+
         try:
             cmd = [
-                "ollama", "run", self._ollama_model,
+                "ollama",
+                "run",
+                self._ollama_model,
                 prompt,
             ]
-            
+
             proc = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
@@ -517,9 +533,9 @@ Format as JSON:
                 proc.communicate(),
                 timeout=self._ollama_timeout,
             )
-            
+
             response = stdout.decode().strip()
-            
+
             # Try to parse JSON from response
             try:
                 # Find JSON in response
@@ -530,25 +546,25 @@ Format as JSON:
             except json.JSONDecodeError as e:
                 # GAP-PY-001: AI response wasn't valid JSON, fallback to raw
                 logger.debug(f"Failed to parse AI response as JSON: {e}")
-            
+
             return {"summary": response[:500], "recommendations": []}
-            
+
         except asyncio.TimeoutError:
             logger.warning("Ollama timed out")
             return {"summary": "AI review timed out", "recommendations": []}
         except Exception as e:
             logger.error(f"Ollama error: {e}")
             return {"summary": f"AI review failed: {e}", "recommendations": []}
-    
+
     def _calculate_score(self, issues: List[CodeIssue]) -> int:
         """Calculate quality score from issues."""
         score = 100
-        
+
         for issue in issues:
             score -= issue.severity.score_penalty
-        
+
         return max(0, min(100, score))
-    
+
     def _map_semgrep_severity(self, severity: str) -> IssueSeverity:
         """Map Semgrep severity to our severity."""
         mapping = {
@@ -557,7 +573,7 @@ Format as JSON:
             "INFO": IssueSeverity.INFO,
         }
         return mapping.get(severity.upper(), IssueSeverity.MEDIUM)
-    
+
     def _map_bandit_severity(self, severity: str) -> IssueSeverity:
         """Map Bandit severity to our severity."""
         mapping = {
@@ -566,7 +582,7 @@ Format as JSON:
             "LOW": IssueSeverity.LOW,
         }
         return mapping.get(severity.upper(), IssueSeverity.MEDIUM)
-    
+
     def _map_ruff_severity(self, code: str) -> IssueSeverity:
         """Map Ruff rule code to severity."""
         if code.startswith("S"):  # Security

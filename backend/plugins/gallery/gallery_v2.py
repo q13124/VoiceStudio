@@ -163,9 +163,7 @@ class PluginGalleryV2:
             True if refreshed successfully
         """
         try:
-            self._catalog = await self._catalog_service.get_merged_catalog(
-                force_refresh=force
-            )
+            self._catalog = await self._catalog_service.get_merged_catalog(force_refresh=force)
             self._search_engine.index_plugins(self._catalog.plugins)
             self._last_refresh = datetime.now(timezone.utc)
             logger.info(
@@ -247,8 +245,16 @@ class PluginGalleryV2:
         search_query = SearchQuery(
             query=query,
             filter=search_filter,
-            sort_by=SortField(sort_by) if sort_by in [e.value for e in SortField] else SortField.RELEVANCE,
-            sort_order=SortOrder(sort_order) if sort_order in [e.value for e in SortOrder] else SortOrder.DESC,
+            sort_by=(
+                SortField(sort_by)
+                if sort_by in [e.value for e in SortField]
+                else SortField.RELEVANCE
+            ),
+            sort_order=(
+                SortOrder(sort_order)
+                if sort_order in [e.value for e in SortOrder]
+                else SortOrder.DESC
+            ),
             offset=offset,
             limit=limit,
         )
@@ -329,9 +335,7 @@ class PluginGalleryV2:
         await self._ensure_catalog()
         return self._catalog.categories if self._catalog else []
 
-    async def get_by_category(
-        self, category: str, limit: int = 50
-    ) -> list[GalleryPlugin]:
+    async def get_by_category(self, category: str, limit: int = 50) -> list[GalleryPlugin]:
         """Get plugins by category."""
         await self._ensure_catalog()
 

@@ -31,11 +31,13 @@ logger = logging.getLogger(__name__)
 # Import EnhancedRuntimeEngine (preferred) or RuntimeEngine as fallback
 try:
     from .runtime_engine_enhanced import EnhancedRuntimeEngine
+
     HAS_RUNTIME_ENGINE = True
     RuntimeEngine = EnhancedRuntimeEngine  # Alias for compatibility
 except ImportError:
     try:
         from .runtime_engine import RuntimeEngine
+
         HAS_RUNTIME_ENGINE = True
     except ImportError:
         HAS_RUNTIME_ENGINE = False
@@ -149,7 +151,8 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
         """
         with self._read_lock:
             engines_to_check = [
-                engine for engine in list(self.engines.values())
+                engine
+                for engine in list(self.engines.values())
                 if engine.state in [EngineState.HEALTHY, EngineState.BUSY]
             ]
 
@@ -195,13 +198,12 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
 
                 # Check idle timeout
                 if engine.state == EngineState.HEALTHY and engine.is_idle():
-                    logger.info(
-                        f"Engine {engine_id} is idle, transitioning to draining"
-                    )
+                    logger.info(f"Engine {engine_id} is idle, transitioning to draining")
                     self._request_drain(engine_id)
 
     def _start_monitor(self):
         """Start optimized lifecycle monitoring thread."""
+
         def monitor_loop():
             while self.running:
                 try:
@@ -219,7 +221,8 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
                     sleep_time = 5.0  # Default
                     with self._read_lock:
                         active_engines = sum(
-                            1 for e in self.engines.values()
+                            1
+                            for e in self.engines.values()
                             if e.state in [EngineState.HEALTHY, EngineState.BUSY]
                         )
                         if active_engines == 0:
@@ -282,10 +285,12 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
             # Invalidate health cache
             self._health_cache.pop(engine.engine_id, None)
             # Queue health check event
-            self._event_queue.put({
-                "type": "health_check",
-                "engine_id": engine.engine_id,
-            })
+            self._event_queue.put(
+                {
+                    "type": "health_check",
+                    "engine_id": engine.engine_id,
+                }
+            )
 
         return result
 
@@ -355,9 +360,7 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
         """
         with self._read_lock:
             engine_counts = {
-                state.name: sum(
-                    1 for e in self.engines.values() if e.state == state
-                )
+                state.name: sum(1 for e in self.engines.values() if e.state == state)
                 for state in EngineState
             }
 
@@ -367,8 +370,8 @@ class OptimizedEngineLifecycleManager(EngineLifecycleManager):
             "health_cache_hits": self._stats["health_cache_hits"],
             "health_cache_misses": self._stats["health_cache_misses"],
             "health_cache_hit_rate": (
-                self._stats["health_cache_hits"] /
-                (self._stats["health_cache_hits"] + self._stats["health_cache_misses"])
+                self._stats["health_cache_hits"]
+                / (self._stats["health_cache_hits"] + self._stats["health_cache_misses"])
                 if (self._stats["health_cache_hits"] + self._stats["health_cache_misses"]) > 0
                 else 0.0
             ),
@@ -425,4 +428,3 @@ def create_optimized_lifecycle_manager(
 
 # Export
 __all__ = ["OptimizedEngineLifecycleManager", "create_optimized_lifecycle_manager"]
-

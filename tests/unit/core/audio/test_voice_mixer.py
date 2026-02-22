@@ -23,9 +23,7 @@ class TestVoiceMixerImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            voice_mixer is not None
-        ), "Failed to import voice_mixer module"
+        assert voice_mixer is not None, "Failed to import voice_mixer module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -39,11 +37,8 @@ class TestVoiceMixerFunctions:
     def test_mix_voices_function_exists(self):
         """Test mix_voices function exists."""
         if hasattr(voice_mixer, "mix_voices"):
-            assert callable(
-                voice_mixer.mix_voices
-            ), "mix_voices should be callable"
+            assert callable(voice_mixer.mix_voices), "mix_voices should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

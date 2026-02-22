@@ -19,14 +19,12 @@ logger = logging.getLogger(__name__)
 # Try to import ONNX Runtime
 try:
     import onnxruntime as ort
+
     HAS_ONNXRUNTIME = True
 except ImportError:
     HAS_ONNXRUNTIME = False
     ort = None
-    logger.warning(
-        "ONNX Runtime not installed. "
-        "Install with: pip install onnxruntime"
-    )
+    logger.warning("ONNX Runtime not installed. " "Install with: pip install onnxruntime")
 
 
 class ONNXInferenceEngine:
@@ -53,8 +51,7 @@ class ONNXInferenceEngine:
         """
         if not HAS_ONNXRUNTIME:
             raise ImportError(
-                "ONNX Runtime not installed. "
-                "Install with: pip install onnxruntime"
+                "ONNX Runtime not installed. " "Install with: pip install onnxruntime"
             )
 
         self.model_path = model_path
@@ -69,9 +66,7 @@ class ONNXInferenceEngine:
 
         # Create session options
         sess_options = ort.SessionOptions()
-        sess_options.graph_optimization_level = (
-            ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        )
+        sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
         # Create inference session
         try:
@@ -103,9 +98,7 @@ class ONNXInferenceEngine:
                     shape.append(dim)
             self.input_shapes[inp.name] = shape
 
-    def infer(
-        self, inputs: dict[str, np.ndarray]
-    ) -> dict[str, np.ndarray]:
+    def infer(self, inputs: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
         """
         Run inference.
 
@@ -118,9 +111,11 @@ class ONNXInferenceEngine:
         try:
             # Prepare inputs
             ort_inputs = {
-                name: inputs[name].astype(np.float32)
-                if inputs[name].dtype != np.float32
-                else inputs[name]
+                name: (
+                    inputs[name].astype(np.float32)
+                    if inputs[name].dtype != np.float32
+                    else inputs[name]
+                )
                 for name in self.input_names
                 if name in inputs
             }
@@ -186,7 +181,4 @@ def create_onnx_inference_engine(
     providers: list[str] | None = None,
 ) -> ONNXInferenceEngine:
     """Factory function to create an ONNX inference engine."""
-    return ONNXInferenceEngine(
-        model_path=model_path, device=device, providers=providers
-    )
-
+    return ONNXInferenceEngine(model_path=model_path, device=device, providers=providers)

@@ -2,7 +2,6 @@
 Tests for API v2 health routes.
 """
 
-
 import pytest
 from fastapi.testclient import TestClient
 
@@ -90,5 +89,6 @@ class TestV2HealthRoutes:
         assert timestamp.endswith("Z")
         # Should be parseable as ISO format
         from datetime import datetime
+
         # Remove Z suffix for parsing
         datetime.fromisoformat(timestamp.rstrip("Z"))

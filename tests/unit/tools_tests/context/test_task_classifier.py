@@ -3,18 +3,19 @@ Unit tests for TaskClassifier.
 """
 
 
-
 class TestTaskClassifierBasic:
     """Basic tests for TaskClassifier."""
 
     def test_import(self):
         """TaskClassifier should be importable."""
         from tools.context.classifier.task_classifier import TaskClassifier
+
         assert TaskClassifier is not None
 
     def test_init_default(self):
         """Should initialize with default config."""
         from tools.context.classifier.task_classifier import TaskClassifier
+
         classifier = TaskClassifier()
         assert len(classifier.get_all_roles()) > 0
 
@@ -88,6 +89,7 @@ class TestMCPSelector:
     def test_import(self):
         """MCPSelector should be importable."""
         from tools.context.mcp_selector import MCPSelector
+
         assert MCPSelector is not None
 
     def test_recommend_mcps_function(self):
@@ -138,6 +140,7 @@ class TestClassifyFromPrompt:
     def test_import(self):
         """classify_from_prompt should be importable."""
         from tools.context.sources.task_classifier import classify_from_prompt
+
         assert classify_from_prompt is not None
 
     def test_empty_prompt_returns_none(self):

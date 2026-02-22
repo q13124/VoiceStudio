@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.utils import engine_quality_pipelines
 except ImportError:
-    pytest.skip(
-        "Could not import engine_quality_pipelines", allow_module_level=True
-    )
+    pytest.skip("Could not import engine_quality_pipelines", allow_module_level=True)
 
 
 class TestEngineQualityPipelinesImports:
@@ -37,4 +35,3 @@ class TestEngineQualityPipelinesImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

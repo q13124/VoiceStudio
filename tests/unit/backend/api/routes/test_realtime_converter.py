@@ -18,7 +18,7 @@ def reset_converter_state():
     """Reset converter state and cache before each test."""
     from backend.api import optimization
     from backend.api.routes import realtime_converter
-    
+
     realtime_converter._converter_sessions = {}
     optimization._RESPONSE_CACHE.clear()  # Clear module-level cache
     yield

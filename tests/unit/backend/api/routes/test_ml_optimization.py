@@ -2,6 +2,7 @@
 Unit Tests for ML Optimization API Route
 Tests ML optimization endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -28,9 +29,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import ml_optimization
 except ImportError:
-    pytest.skip(
-        "Could not import ml_optimization route module", allow_module_level=True
-    )
+    pytest.skip("Could not import ml_optimization route module", allow_module_level=True)
 
 
 class TestMLOptimizationRouteImports:
@@ -39,9 +38,7 @@ class TestMLOptimizationRouteImports:
     def test_ml_optimization_module_imports(self):
         """Test ml_optimization module can be imported."""
         assert ml_optimization is not None, "Failed to import ml_optimization module"
-        assert hasattr(
-            ml_optimization, "router"
-        ), "ml_optimization module missing router"
+        assert hasattr(ml_optimization, "router"), "ml_optimization module missing router"
         assert hasattr(
             ml_optimization, "OptimizationRequest"
         ), "ml_optimization module missing OptimizationRequest model"
@@ -82,12 +79,8 @@ class TestMLOptimizationRouteHandlers:
 
     def test_explain_model_handler_exists(self):
         """Test explain_model handler exists."""
-        assert hasattr(
-            ml_optimization, "explain_model"
-        ), "explain_model handler should exist"
-        assert callable(
-            ml_optimization.explain_model
-        ), "explain_model should be callable"
+        assert hasattr(ml_optimization, "explain_model"), "explain_model handler should exist"
+        assert callable(ml_optimization.explain_model), "explain_model should be callable"
 
     def test_get_available_methods_handler_exists(self):
         """Test get_available_methods handler exists."""
@@ -304,9 +297,7 @@ class TestMLOptimizationRouteErrorHandling:
         )
 
         # Mock ImportError for sklearn
-        with patch(
-            "builtins.__import__", side_effect=ImportError("No module named 'sklearn'")
-        ):
+        with patch("builtins.__import__", side_effect=ImportError("No module named 'sklearn'")):
             # Test explain_model - should raise HTTPException
             with pytest.raises(Exception):  # Should raise HTTPException
                 ml_optimization.explain_model(request)

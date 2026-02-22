@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CacheEntry:
     """A cache entry with expiration."""
+
     value: Any
     expires_at: float
 
@@ -77,7 +78,9 @@ class CacheAdapter(Adapter):
             "max_size": self._max_size,
             "hits": self._hits,
             "misses": self._misses,
-            "hit_rate": self._hits / (self._hits + self._misses) if (self._hits + self._misses) > 0 else 0,
+            "hit_rate": (
+                self._hits / (self._hits + self._misses) if (self._hits + self._misses) > 0 else 0
+            ),
         }
 
     async def get(self, key: str) -> Any | None:
@@ -165,10 +168,7 @@ class CacheAdapter(Adapter):
         Returns:
             Number of entries removed
         """
-        expired_keys = [
-            k for k, v in self._cache.items()
-            if v.is_expired
-        ]
+        expired_keys = [k for k, v in self._cache.items() if v.is_expired]
 
         for key in expired_keys:
             del self._cache[key]
@@ -212,5 +212,7 @@ class CacheAdapter(Adapter):
             "entries": len(self._cache),
             "hits": self._hits,
             "misses": self._misses,
-            "hit_rate": self._hits / (self._hits + self._misses) if (self._hits + self._misses) > 0 else 0,
+            "hit_rate": (
+                self._hits / (self._hits + self._misses) if (self._hits + self._misses) > 0 else 0
+            ),
         }

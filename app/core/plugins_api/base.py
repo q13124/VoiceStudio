@@ -131,9 +131,7 @@ class BasePlugin(ABC):
         Args:
             app: FastAPI application instance
         """
-        raise RuntimeError(
-            "BasePlugin.register must be implemented by plugin subclasses."
-        )
+        raise RuntimeError("BasePlugin.register must be implemented by plugin subclasses.")
 
     def initialize(self):
         """

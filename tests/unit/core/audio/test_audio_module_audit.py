@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.audio import audio_module_audit
 except ImportError:
-    pytest.skip(
-        "Could not import audio_module_audit", allow_module_level=True
-    )
+    pytest.skip("Could not import audio_module_audit", allow_module_level=True)
 
 
 class TestAudioModuleAuditImports:
@@ -25,9 +23,7 @@ class TestAudioModuleAuditImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            audio_module_audit is not None
-        ), "Failed to import audio_module_audit module"
+        assert audio_module_audit is not None, "Failed to import audio_module_audit module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -48,4 +44,3 @@ class TestAudioModuleAuditFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -257,9 +257,7 @@ class TestStreamingEngineOptimization:
         """Test that engine has streaming capabilities."""
         # Check for streaming-related methods
         has_synthesize_stream = hasattr(streaming_engine, "synthesize_stream")
-        has_synthesize_stream_async = hasattr(
-            streaming_engine, "synthesize_stream_async"
-        )
+        has_synthesize_stream_async = hasattr(streaming_engine, "synthesize_stream_async")
         # At least one streaming method should exist
         assert has_synthesize_stream or has_synthesize_stream_async
 

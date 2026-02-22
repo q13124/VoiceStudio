@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def lip_sync_client():
     """Create test client for lip sync routes."""
     from backend.api.routes.lip_sync import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)

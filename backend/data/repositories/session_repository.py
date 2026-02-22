@@ -30,6 +30,7 @@ class SessionEntity(BaseEntity):
 
     Maps to sessions table.
     """
+
     user_id: str = ""
     token_hash: str = ""
     device_info: str | None = None
@@ -94,7 +95,11 @@ class SessionRepository(BaseRepository[SessionEntity]):
             "is_active": 1 if entity.is_active else 0,
             "last_activity": entity.last_activity,
             "expires_at": entity.expires_at,
-            "created_at": entity.created_at.isoformat() if isinstance(entity.created_at, datetime) else entity.created_at,
+            "created_at": (
+                entity.created_at.isoformat()
+                if isinstance(entity.created_at, datetime)
+                else entity.created_at
+            ),
             "deleted_at": entity.deleted_at.isoformat() if entity.deleted_at else None,
         }
 
@@ -110,8 +115,16 @@ class SessionRepository(BaseRepository[SessionEntity]):
             is_active=bool(row.get("is_active", 1)),
             last_activity=row.get("last_activity"),
             expires_at=row.get("expires_at", ""),
-            created_at=datetime.fromisoformat(row["created_at"]) if row.get("created_at") else datetime.now(),
-            updated_at=datetime.fromisoformat(row["updated_at"]) if row.get("updated_at") else datetime.now(),
+            created_at=(
+                datetime.fromisoformat(row["created_at"])
+                if row.get("created_at")
+                else datetime.now()
+            ),
+            updated_at=(
+                datetime.fromisoformat(row["updated_at"])
+                if row.get("updated_at")
+                else datetime.now()
+            ),
             deleted_at=datetime.fromisoformat(row["deleted_at"]) if row.get("deleted_at") else None,
         )
 
@@ -144,9 +157,12 @@ class SessionRepository(BaseRepository[SessionEntity]):
 
     async def touch(self, session_id: str) -> SessionEntity | None:
         """Update last activity time."""
-        return await self.update(session_id, {
-            "last_activity": datetime.now().isoformat(),
-        })
+        return await self.update(
+            session_id,
+            {
+                "last_activity": datetime.now().isoformat(),
+            },
+        )
 
     async def deactivate(self, session_id: str) -> SessionEntity | None:
         """Deactivate a session."""

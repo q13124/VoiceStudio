@@ -2,6 +2,7 @@
 Unit Tests for Emotion API Route
 Tests emotion control endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -87,9 +88,12 @@ class TestAnalyzeEmotion:
 
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             import soundfile as sf
+
             sample_rate = 44100
             duration = 1.0
-            samples = np.sin(2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration)))
+            samples = np.sin(
+                2 * np.pi * 440 * np.linspace(0, duration, int(sample_rate * duration))
+            )
             sf.write(tmp.name, samples, sample_rate)
             audio_id = Path(tmp.name).stem
 

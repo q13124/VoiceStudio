@@ -38,9 +38,11 @@ pytestmark = pytest.mark.contract
 # PACT-STYLE CONTRACT DEFINITIONS
 # =============================================================================
 
+
 @dataclass
 class Interaction:
     """Defines an expected interaction between consumer and provider."""
+
     description: str
     request: dict[str, Any]
     expected_response: dict[str, Any]
@@ -53,6 +55,7 @@ class Interaction:
 @dataclass
 class Contract:
     """A contract between a consumer and provider."""
+
     consumer: str
     provider: str
     interactions: list[Interaction] = field(default_factory=list)
@@ -66,7 +69,7 @@ class Contract:
             "consumer": {"name": self.consumer},
             "provider": {"name": self.provider},
             "interactions": [i.to_dict() for i in self.interactions],
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
 
@@ -82,11 +85,13 @@ class ContractMatcher:
     def regex_match(pattern: str) -> Callable[[Any], bool]:
         """Match by regex pattern."""
         import re
+
         return lambda value: bool(re.match(pattern, str(value)))
 
     @staticmethod
     def like(example: Any) -> Callable[[Any], bool]:
         """Match by structure (same type, keys if dict, same length if list)."""
+
         def matcher(value: Any) -> bool:
             if type(value) != type(example):
                 return False
@@ -95,17 +100,20 @@ class ContractMatcher:
             if isinstance(example, list):
                 return len(value) >= len(example)
             return True
+
         return matcher
 
     @staticmethod
     def each_like(example: Any) -> Callable[[Any], bool]:
         """Match array where each element matches the example."""
+
         def matcher(value: Any) -> bool:
             if not isinstance(value, list):
                 return False
             if len(value) == 0:
                 return True
             return all(ContractMatcher.like(example)(item) for item in value)
+
         return matcher
 
 
@@ -142,7 +150,10 @@ class ContractVerifier:
             # Verify status code
             expected_status = expected.get("status", 200)
             if response.status_code != expected_status:
-                return False, f"Status mismatch: expected {expected_status}, got {response.status_code}"
+                return (
+                    False,
+                    f"Status mismatch: expected {expected_status}, got {response.status_code}",
+                )
 
             # Verify response body structure
             if "body" in expected:
@@ -204,10 +215,7 @@ class ContractVerifier:
                 passed += 1
             else:
                 failed += 1
-                failures.append({
-                    "description": interaction.description,
-                    "error": message
-                })
+                failures.append({"description": interaction.description, "error": message})
 
         result = {
             "consumer": contract.consumer,
@@ -215,7 +223,7 @@ class ContractVerifier:
             "passed": passed,
             "failed": failed,
             "failures": failures,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         self.results.append(result)
@@ -226,71 +234,60 @@ class ContractVerifier:
 # FRONTEND-BACKEND CONTRACTS
 # =============================================================================
 
+
 def create_frontend_backend_contract() -> Contract:
     """Create contract defining frontend expectations of backend API."""
     contract = Contract(
         consumer="VoiceStudio.App.WinUI",
         provider="VoiceStudio.Backend.API",
-        metadata={"pactSpecification": {"version": "2.0.0"}}
+        metadata={"pactSpecification": {"version": "2.0.0"}},
     )
 
     # Health check interaction
-    contract.add_interaction(Interaction(
-        description="Health check returns status",
-        provider_state="Backend is running",
-        request={
-            "method": "GET",
-            "path": "/api/health"
-        },
-        expected_response={
-            "status": 200,
-            "body": {
-                "status": ContractMatcher.type_match(str)
-            }
-        }
-    ))
+    contract.add_interaction(
+        Interaction(
+            description="Health check returns status",
+            provider_state="Backend is running",
+            request={"method": "GET", "path": "/api/health"},
+            expected_response={"status": 200, "body": {"status": ContractMatcher.type_match(str)}},
+        )
+    )
 
     # Profiles list interaction
-    contract.add_interaction(Interaction(
-        description="List voice profiles",
-        provider_state="Backend has profiles",
-        request={
-            "method": "GET",
-            "path": "/api/profiles"
-        },
-        expected_response={
-            "status": 200,
-            "body": ContractMatcher.like([])  # Array of profiles
-        }
-    ))
+    contract.add_interaction(
+        Interaction(
+            description="List voice profiles",
+            provider_state="Backend has profiles",
+            request={"method": "GET", "path": "/api/profiles"},
+            expected_response={
+                "status": 200,
+                "body": ContractMatcher.like([]),  # Array of profiles
+            },
+        )
+    )
 
     # Engines list interaction
-    contract.add_interaction(Interaction(
-        description="List available engines",
-        provider_state="Engines are loaded",
-        request={
-            "method": "GET",
-            "path": "/api/engines"
-        },
-        expected_response={
-            "status": 200,
-            "body": ContractMatcher.like([])  # Array of engines
-        }
-    ))
+    contract.add_interaction(
+        Interaction(
+            description="List available engines",
+            provider_state="Engines are loaded",
+            request={"method": "GET", "path": "/api/engines"},
+            expected_response={"status": 200, "body": ContractMatcher.like([])},  # Array of engines
+        )
+    )
 
     # Projects list interaction
-    contract.add_interaction(Interaction(
-        description="List projects",
-        provider_state="Backend has projects",
-        request={
-            "method": "GET",
-            "path": "/api/projects"
-        },
-        expected_response={
-            "status": 200,
-            "body": ContractMatcher.like([])  # Array of projects
-        }
-    ))
+    contract.add_interaction(
+        Interaction(
+            description="List projects",
+            provider_state="Backend has projects",
+            request={"method": "GET", "path": "/api/projects"},
+            expected_response={
+                "status": 200,
+                "body": ContractMatcher.like([]),  # Array of projects
+            },
+        )
+    )
 
     return contract
 
@@ -300,28 +297,22 @@ def create_synthesis_contract() -> Contract:
     contract = Contract(
         consumer="VoiceStudio.App.WinUI",
         provider="VoiceStudio.Backend.Synthesis",
-        metadata={"pactSpecification": {"version": "2.0.0"}}
+        metadata={"pactSpecification": {"version": "2.0.0"}},
     )
 
     # Synthesis request
-    contract.add_interaction(Interaction(
-        description="Submit synthesis job",
-        provider_state="Engine is available",
-        request={
-            "method": "POST",
-            "path": "/api/voice/synthesize",
-            "body": {
-                "text": "Hello world",
-                "engine_id": "xtts"
-            }
-        },
-        expected_response={
-            "status": 200,
-            "body": {
-                "job_id": ContractMatcher.type_match(str)
-            }
-        }
-    ))
+    contract.add_interaction(
+        Interaction(
+            description="Submit synthesis job",
+            provider_state="Engine is available",
+            request={
+                "method": "POST",
+                "path": "/api/voice/synthesize",
+                "body": {"text": "Hello world", "engine_id": "xtts"},
+            },
+            expected_response={"status": 200, "body": {"job_id": ContractMatcher.type_match(str)}},
+        )
+    )
 
     return contract
 
@@ -330,33 +321,34 @@ def create_synthesis_contract() -> Contract:
 # ENGINE-BACKEND CONTRACTS
 # =============================================================================
 
+
 def create_engine_backend_contract() -> Contract:
     """Create contract defining engine expectations of backend services."""
     contract = Contract(
         consumer="VoiceStudio.Engines",
         provider="VoiceStudio.Backend.Services",
-        metadata={"pactSpecification": {"version": "2.0.0"}}
+        metadata={"pactSpecification": {"version": "2.0.0"}},
     )
 
     # Engine registration
-    contract.add_interaction(Interaction(
-        description="Engine registers with service",
-        provider_state="Service accepts registrations",
-        request={
-            "method": "POST",
-            "path": "/api/engines/register",
-            "body": {
-                "engine_id": "test_engine",
-                "capabilities": ["synthesis", "transcription"]
-            }
-        },
-        expected_response={
-            "status": 200,
-            "body": {
-                "registered": ContractMatcher.type_match(bool)
-            }
-        }
-    ))
+    contract.add_interaction(
+        Interaction(
+            description="Engine registers with service",
+            provider_state="Service accepts registrations",
+            request={
+                "method": "POST",
+                "path": "/api/engines/register",
+                "body": {
+                    "engine_id": "test_engine",
+                    "capabilities": ["synthesis", "transcription"],
+                },
+            },
+            expected_response={
+                "status": 200,
+                "body": {"registered": ContractMatcher.type_match(bool)},
+            },
+        )
+    )
 
     return contract
 
@@ -364,6 +356,7 @@ def create_engine_backend_contract() -> Contract:
 # =============================================================================
 # CONTRACT TESTS
 # =============================================================================
+
 
 @pytest.mark.contract
 class TestFrontendBackendContract:
@@ -391,13 +384,13 @@ class TestFrontendBackendContract:
             response.status_code = 200
             response.json.return_value = [
                 {"id": "p1", "name": "Profile 1"},
-                {"id": "p2", "name": "Profile 2"}
+                {"id": "p2", "name": "Profile 2"},
             ]
         elif "/engines" in path:
             response.status_code = 200
             response.json.return_value = [
                 {"id": "xtts", "name": "XTTS"},
-                {"id": "chatterbox", "name": "Chatterbox"}
+                {"id": "chatterbox", "name": "Chatterbox"},
             ]
         elif "/projects" in path:
             response.status_code = 200
@@ -457,15 +450,10 @@ class TestSynthesisContract:
                 body = kwargs.get("json", {})
                 if "text" in body:
                     response.status_code = 200
-                    response.json.return_value = {
-                        "job_id": "synth-job-001",
-                        "status": "queued"
-                    }
+                    response.json.return_value = {"job_id": "synth-job-001", "status": "queued"}
                 else:
                     response.status_code = 422
-                    response.json.return_value = {
-                        "detail": "text is required"
-                    }
+                    response.json.return_value = {"detail": "text is required"}
             else:
                 response.status_code = 404
                 response.json.return_value = {}
@@ -543,13 +531,13 @@ class TestContractPublishing:
                 {
                     "description": i.description,
                     "request": i.request,
-                    "provider_state": i.provider_state
+                    "provider_state": i.provider_state,
                 }
                 for i in contract.interactions
-            ]
+            ],
         }
 
-        with open(contract_file, 'w') as f:
+        with open(contract_file, "w") as f:
             json.dump(contract_data, f, indent=2)
 
         assert contract_file.exists()

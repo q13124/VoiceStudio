@@ -23,6 +23,7 @@ T = TypeVar("T")  # Engine type
 
 class EngineState(Enum):
     """State of a pooled engine."""
+
     UNLOADED = "unloaded"
     LOADING = "loading"
     READY = "ready"
@@ -34,6 +35,7 @@ class EngineState(Enum):
 @dataclass
 class EngineStats:
     """Statistics for a pooled engine."""
+
     load_count: int = 0
     use_count: int = 0
     error_count: int = 0
@@ -46,6 +48,7 @@ class EngineStats:
 @dataclass
 class PooledEngine(Generic[T]):
     """A pooled engine instance."""
+
     engine_type: str
     instance: T | None = None
     state: EngineState = EngineState.UNLOADED
@@ -62,6 +65,7 @@ class PooledEngine(Generic[T]):
 @dataclass
 class PoolConfig:
     """Configuration for the engine pool."""
+
     max_engines: int = 5
     preload_engines: list[str] = field(default_factory=list)
     idle_timeout_seconds: float = 300.0  # Unload after 5 min idle
@@ -356,11 +360,13 @@ class EnginePool(Generic[T]):
             "error_count": engine.stats.error_count,
             "avg_load_time_ms": (
                 round(engine.stats.total_load_time_ms / engine.stats.load_count, 1)
-                if engine.stats.load_count > 0 else 0
+                if engine.stats.load_count > 0
+                else 0
             ),
             "avg_use_time_ms": (
                 round(engine.stats.total_use_time_ms / engine.stats.use_count, 1)
-                if engine.stats.use_count > 0 else 0
+                if engine.stats.use_count > 0
+                else 0
             ),
             "last_used": engine.stats.last_used.isoformat() if engine.stats.last_used else None,
         }
@@ -373,10 +379,7 @@ class EnginePool(Generic[T]):
             "max_engines": self.config.max_engines,
             "total_memory_mb": round(self._total_memory / 1e6, 1),
             "preloaded": self.config.preload_engines,
-            "engines": {
-                k: self.get_engine_stats(k)
-                for k in self._engines
-            },
+            "engines": {k: self.get_engine_stats(k) for k in self._engines},
         }
 
 
@@ -402,6 +405,7 @@ async def get_engine_pool() -> EnginePool:
 
             class FallbackStubEngine:
                 """Fallback stub when engine pool is not configured."""
+
                 def __init__(self, name: str):
                     self.name = name
                     self.is_stub = True
@@ -441,7 +445,7 @@ async def get_engine_pool() -> EnginePool:
 
         async def default_unloader(instance: Any) -> None:
             """Default unloader that handles cleanup gracefully."""
-            if hasattr(instance, 'cleanup'):
+            if hasattr(instance, "cleanup"):
                 instance.cleanup()
 
         _engine_pool = EnginePool(

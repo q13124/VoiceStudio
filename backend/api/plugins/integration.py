@@ -92,10 +92,7 @@ def call_hook(hook_name: str, *args, **kwargs) -> list[Any]:
                 result = callback(*args, **kwargs)
                 results.append(result)
             except Exception as e:
-                logger.error(
-                    f"Error calling hook '{hook_name}': {e}",
-                    exc_info=True
-                )
+                logger.error(f"Error calling hook '{hook_name}': {e}", exc_info=True)
 
     return results
 
@@ -141,10 +138,7 @@ def emit_event(event_type: str, payload: dict[str, Any]) -> None:
             try:
                 callback(event_type, payload)
             except Exception as e:
-                logger.error(
-                    f"Error handling event '{event_type}': {e}",
-                    exc_info=True
-                )
+                logger.error(f"Error handling event '{event_type}': {e}", exc_info=True)
 
 
 def register_resource(plugin_id: str, resource_type: str, resource: Any) -> None:
@@ -204,9 +198,9 @@ def cleanup_plugin_resources(plugin_id: str) -> None:
         for resource_type, resource in _plugin_resources[plugin_id].items():
             try:
                 # If resource has cleanup method, call it
-                if hasattr(resource, 'cleanup'):
+                if hasattr(resource, "cleanup"):
                     resource.cleanup()
-                elif hasattr(resource, 'close'):
+                elif hasattr(resource, "close"):
                     resource.close()
             except Exception as e:
                 logger.warning(
@@ -248,4 +242,3 @@ def get_event_handler_count(event_type: str | None = None) -> int:
         return len(_plugin_events.get(event_type, []))
 
     return sum(len(handlers) for handlers in _plugin_events.values())
-

@@ -203,4 +203,3 @@ def test_batch_data():
     """Provide test batch data fixture."""
     manager = TestDataManager()
     return manager.create_test_batch_data()
-

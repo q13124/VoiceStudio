@@ -27,9 +27,11 @@ except ImportError:
 # ENGINE MOCK CONFIGURATIONS
 # =============================================================================
 
+
 @dataclass
 class MockEngineConfig:
     """Configuration for mock engine behavior."""
+
     engine_id: str
     name: str
     type: str = "audio"
@@ -68,7 +70,12 @@ ENGINE_CONFIGS = {
         name="Chatterbox TTS",
         subtype="tts",
         latency_ms=400.0,
-        capabilities=["voice_cloning", "zero_shot_cloning", "emotion_control", "high_quality_synthesis"],
+        capabilities=[
+            "voice_cloning",
+            "zero_shot_cloning",
+            "emotion_control",
+            "high_quality_synthesis",
+        ],
         supported_languages=["en", "es", "fr", "de", "it", "pt", "ja", "zh-cn", "ko"],
         sample_rate=22050,
     ),
@@ -134,6 +141,7 @@ ENGINE_CONFIGS = {
 # =============================================================================
 # MOCK ENGINE BASE
 # =============================================================================
+
 
 class MockEngine:
     """Base mock engine that simulates engine behavior."""
@@ -204,11 +212,7 @@ class MockTTSEngine(MockEngine):
     """Mock TTS engine for synthesis testing."""
 
     def synthesize(
-        self,
-        text: str,
-        profile_id: str | None = None,
-        language: str = "en",
-        **kwargs
+        self, text: str, profile_id: str | None = None, language: str = "en", **kwargs
     ) -> bytes:
         """Simulate text-to-speech synthesis."""
         self._record_call()
@@ -225,11 +229,7 @@ class MockTTSEngine(MockEngine):
         return AudioFactory.create_wav_bytes(spec)
 
     async def synthesize_async(
-        self,
-        text: str,
-        profile_id: str | None = None,
-        language: str = "en",
-        **kwargs
+        self, text: str, profile_id: str | None = None, language: str = "en", **kwargs
     ) -> bytes:
         """Async version of synthesize."""
         self._record_call()
@@ -244,12 +244,7 @@ class MockTTSEngine(MockEngine):
 
         return AudioFactory.create_wav_bytes(spec)
 
-    def clone_voice(
-        self,
-        reference_audio: bytes,
-        text: str,
-        **kwargs
-    ) -> bytes:
+    def clone_voice(self, reference_audio: bytes, text: str, **kwargs) -> bytes:
         """Simulate voice cloning."""
         self._record_call()
         self._check_should_fail()
@@ -277,12 +272,7 @@ class MockSTTEngine(MockEngine):
         "Testing one two three.",
     ]
 
-    def transcribe(
-        self,
-        audio: bytes,
-        language: str = "en",
-        **kwargs
-    ) -> dict[str, Any]:
+    def transcribe(self, audio: bytes, language: str = "en", **kwargs) -> dict[str, Any]:
         """Simulate audio transcription."""
         self._record_call()
         self._check_should_fail()
@@ -304,10 +294,7 @@ class MockSTTEngine(MockEngine):
         }
 
     async def transcribe_async(
-        self,
-        audio: bytes,
-        language: str = "en",
-        **kwargs
+        self, audio: bytes, language: str = "en", **kwargs
     ) -> dict[str, Any]:
         """Async version of transcribe."""
         self._record_call()
@@ -325,10 +312,7 @@ class MockQualityEngine(MockEngine):
     """Mock quality analysis engine."""
 
     def analyze(
-        self,
-        audio: bytes,
-        reference_audio: bytes | None = None,
-        **kwargs
+        self, audio: bytes, reference_audio: bytes | None = None, **kwargs
     ) -> dict[str, Any]:
         """Simulate quality analysis."""
         self._record_call()
@@ -353,6 +337,7 @@ class MockQualityEngine(MockEngine):
 # ENGINE FACTORY
 # =============================================================================
 
+
 class MockEngineFactory:
     """Factory for creating mock engine instances."""
 
@@ -362,9 +347,7 @@ class MockEngineFactory:
         if engine_id not in ENGINE_CONFIGS:
             # Create generic config
             config = MockEngineConfig(
-                engine_id=engine_id,
-                name=engine_id.replace("_", " ").title(),
-                **overrides
+                engine_id=engine_id, name=engine_id.replace("_", " ").title(), **overrides
             )
         else:
             config = ENGINE_CONFIGS[engine_id]
@@ -410,7 +393,7 @@ class MockEngineFactory:
             subtype="analysis",
             latency_ms=200.0,
             capabilities=["quality_analysis", "similarity_scoring"],
-            **overrides
+            **overrides,
         )
         return MockQualityEngine(config)
 
@@ -424,6 +407,7 @@ class MockEngineFactory:
 # =============================================================================
 # ENGINE SERVICE MOCK
 # =============================================================================
+
 
 class MockEngineService:
     """Mock engine service for testing engine management."""
@@ -457,12 +441,7 @@ class MockEngineService:
         engine = self._engines.get(engine_id)
         return engine is not None and engine.is_healthy
 
-    def synthesize(
-        self,
-        text: str,
-        engine_id: str | None = None,
-        **kwargs
-    ) -> bytes:
+    def synthesize(self, text: str, engine_id: str | None = None, **kwargs) -> bytes:
         """Synthesize using specified or default engine."""
         engine_id = engine_id or self._default_engine
         engine = self.get_engine(engine_id)
@@ -475,12 +454,7 @@ class MockEngineService:
 
         return engine.synthesize(text, **kwargs)
 
-    def transcribe(
-        self,
-        audio: bytes,
-        engine_id: str = "whisper",
-        **kwargs
-    ) -> dict[str, Any]:
+    def transcribe(self, audio: bytes, engine_id: str = "whisper", **kwargs) -> dict[str, Any]:
         """Transcribe using specified engine."""
         engine = self.get_engine(engine_id)
 
@@ -510,6 +484,7 @@ class MockEngineService:
 # =============================================================================
 # PYTEST FIXTURES
 # =============================================================================
+
 
 def pytest_fixture_mock_xtts():
     """Pytest fixture for XTTS mock engine."""

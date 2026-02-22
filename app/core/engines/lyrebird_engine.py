@@ -111,15 +111,11 @@ class LyrebirdEngine(EngineProtocol):
             use_local: If True, prefer local implementation over cloud
         """
         if not HAS_REQUESTS:
-            raise ImportError(
-                "requests not installed. Install with: pip install requests>=2.28.0"
-            )
+            raise ImportError("requests not installed. Install with: pip install requests>=2.28.0")
 
         super().__init__(device=device, gpu=gpu)
 
-        self.api_key = (
-            api_key or os.getenv("LYREBIRD_API_KEY") or os.getenv("DESCRIPT_API_KEY")
-        )
+        self.api_key = api_key or os.getenv("LYREBIRD_API_KEY") or os.getenv("DESCRIPT_API_KEY")
         self.api_url = api_url
         self.use_local = use_local
         self.local_model = None
@@ -160,9 +156,7 @@ class LyrebirdEngine(EngineProtocol):
             else:
                 # Check API key for cloud access
                 if not self.api_key:
-                    logger.warning(
-                        "No API key provided. Cloud features will be limited."
-                    )
+                    logger.warning("No API key provided. Cloud features will be limited.")
 
             self._initialized = True
             logger.info("Lyrebird engine initialized")
@@ -268,9 +262,7 @@ class LyrebirdEngine(EngineProtocol):
                     ):
                         return result_path
                     else:
-                        logger.info(
-                            "Local model result invalid, falling back to cloud API"
-                        )
+                        logger.info("Local model result invalid, falling back to cloud API")
                 except Exception as e:
                     logger.debug(f"Local model failed: {e}, falling back to cloud API")
 
@@ -319,9 +311,7 @@ class LyrebirdEngine(EngineProtocol):
                                     denoise=True,
                                     target_lufs=-23.0,
                                 )
-                                logger.debug(
-                                    "Applied quality enhancement to Lyrebird output"
-                                )
+                                logger.debug("Applied quality enhancement to Lyrebird output")
 
                             # Save enhanced audio
                             sf.write(result_path, audio, sample_rate)
@@ -393,18 +383,12 @@ class LyrebirdEngine(EngineProtocol):
                 else:
                     logger.info("Local model result invalid, using fallback engine")
             except Exception as e:
-                logger.debug(
-                    f"Local model synthesis failed: {e}, using fallback engine"
-                )
+                logger.debug(f"Local model synthesis failed: {e}, using fallback engine")
 
         # Use fallback voice cloning engine (XTTS) for reliable synthesis
         # This ensures high-quality results using proven engines
-        logger.info(
-            "Using XTTS engine for voice cloning (local model not available/usable)"
-        )
-        return self._clone_with_fallback_engine(
-            reference_audio_path, text, output_path, **kwargs
-        )
+        logger.info("Using XTTS engine for voice cloning (local model not available/usable)")
+        return self._clone_with_fallback_engine(reference_audio_path, text, output_path, **kwargs)
 
     def _load_local_model(self):
         """Load local voice cloning model."""
@@ -485,9 +469,7 @@ class LyrebirdEngine(EngineProtocol):
 
             # Convert text to tokens
             text_tokens = self._text_to_tokens(text)
-            text_tensor = torch.tensor(
-                text_tokens, dtype=torch.long, device=device
-            ).unsqueeze(0)
+            text_tensor = torch.tensor(text_tokens, dtype=torch.long, device=device).unsqueeze(0)
 
             # Prepare voice embedding tensor
             voice_embedding_tensor = torch.tensor(
@@ -540,24 +522,18 @@ class LyrebirdEngine(EngineProtocol):
 
                                     if np.max(np.abs(audio_output)) > 0:
                                         audio_output = (
-                                            audio_output
-                                            / np.max(np.abs(audio_output))
-                                            * 0.95
+                                            audio_output / np.max(np.abs(audio_output)) * 0.95
                                         )
 
                                     sf.write(str(output_path), audio_output, sr)
-                                    logger.info(
-                                        f"Local model synthesis successful: {output_path}"
-                                    )
+                                    logger.info(f"Local model synthesis successful: {output_path}")
                                     return str(output_path)
                             except Exception as e:
                                 logger.debug(f"Model synthesize method failed: {e}")
                         elif hasattr(model, "forward"):
                             try:
                                 # Try forward pass
-                                audio_output = model(
-                                    text_tensor, voice_embedding_tensor
-                                )
+                                audio_output = model(text_tensor, voice_embedding_tensor)
                                 if audio_output is not None and isinstance(
                                     audio_output, torch.Tensor
                                 ):
@@ -566,14 +542,10 @@ class LyrebirdEngine(EngineProtocol):
                                         audio_output = np.mean(audio_output, axis=1)
                                     if np.max(np.abs(audio_output)) > 0:
                                         audio_output = (
-                                            audio_output
-                                            / np.max(np.abs(audio_output))
-                                            * 0.95
+                                            audio_output / np.max(np.abs(audio_output)) * 0.95
                                         )
                                     sf.write(str(output_path), audio_output, sr)
-                                    logger.info(
-                                        f"Local model synthesis successful: {output_path}"
-                                    )
+                                    logger.info(f"Local model synthesis successful: {output_path}")
                                     return str(output_path)
                             except Exception as e:
                                 logger.debug(f"Model forward method failed: {e}")
@@ -582,9 +554,7 @@ class LyrebirdEngine(EngineProtocol):
 
             # Local model synthesis not possible (checkpoint dict without architecture, or model object failed)
             # Use fallback engine for reliable voice cloning
-            logger.debug(
-                "Local model cannot be used for synthesis, using fallback engine"
-            )
+            logger.debug("Local model cannot be used for synthesis, using fallback engine")
             raise RuntimeError(
                 "Local model synthesis failed - checkpoint requires model architecture"
             )
@@ -601,9 +571,7 @@ class LyrebirdEngine(EngineProtocol):
     # Instead, the engine now prefers using the fallback voice cloning engine (XTTS) for reliable,
     # high-quality synthesis when local model cannot be properly used.
 
-    def _extract_voice_embedding(
-        self, audio: np.ndarray, sample_rate: int
-    ) -> np.ndarray:
+    def _extract_voice_embedding(self, audio: np.ndarray, sample_rate: int) -> np.ndarray:
         """Extract voice embedding from audio."""
         try:
             import librosa
@@ -614,9 +582,7 @@ class LyrebirdEngine(EngineProtocol):
                 audio = librosa.resample(audio, orig_sr=sample_rate, target_sr=16000)
 
             # Extract mel spectrogram features
-            mel_spec = librosa.feature.melspectrogram(
-                y=audio, sr=16000, n_mels=80, hop_length=256
-            )
+            mel_spec = librosa.feature.melspectrogram(y=audio, sr=16000, n_mels=80, hop_length=256)
             mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
 
             # Average over time to get voice embedding
@@ -701,9 +667,7 @@ class LyrebirdEngine(EngineProtocol):
 
             # Last resort: create empty file (error case)
             output_path.touch()
-            logger.warning(
-                f"Fallback cloning failed, created empty file: {output_path}"
-            )
+            logger.warning(f"Fallback cloning failed, created empty file: {output_path}")
             return str(output_path)
 
         except Exception as e:
@@ -748,13 +712,9 @@ class LyrebirdEngine(EngineProtocol):
 
             # Use session for connection pooling if available
             if self._session is not None:
-                response = self._session.post(
-                    clone_url, headers=headers, files=files, data=data
-                )
+                response = self._session.post(clone_url, headers=headers, files=files, data=data)
             else:
-                response = requests.post(
-                    clone_url, headers=headers, files=files, data=data
-                )
+                response = requests.post(clone_url, headers=headers, files=files, data=data)
             response.raise_for_status()
 
         voice_data = response.json()

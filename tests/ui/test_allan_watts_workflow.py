@@ -73,6 +73,7 @@ pytestmark = [
 # Fixtures
 # =============================================================================
 
+
 @pytest.fixture(scope="module")
 def tracer():
     """Create a workflow tracer for the entire test module."""
@@ -102,6 +103,7 @@ def test_file_info():
 @pytest.fixture
 def navigate_to(driver, app_launched):
     """Factory fixture for navigating to panels."""
+
     def _navigate(panel_name: str, timeout: float = 10.0) -> bool:
         """Navigate to a panel by name."""
         if panel_name not in PANEL_NAVIGATION:
@@ -132,6 +134,7 @@ def navigate_to(driver, app_launched):
 # Phase 1: Prerequisites and Setup Tests
 # =============================================================================
 
+
 class TestPrerequisites:
     """Verify prerequisites before running workflow tests."""
 
@@ -140,7 +143,9 @@ class TestPrerequisites:
         tracer.step("Checking test audio file exists")
 
         assert test_file_info["exists"], f"Test file not found: {TEST_AUDIO_FILE}"
-        tracer.step(f"Test file found: {test_file_info['filename']}, size: {test_file_info['size_mb']} MB")
+        tracer.step(
+            f"Test file found: {test_file_info['filename']}, size: {test_file_info['size_mb']} MB"
+        )
         tracer.success("Test audio file exists")
 
     def test_backend_health(self, api_monitor, tracer):
@@ -168,6 +173,7 @@ class TestPrerequisites:
 # =============================================================================
 # Phase 2: File Import Tests
 # =============================================================================
+
 
 class TestFileImport:
     """Test file import workflows."""
@@ -256,6 +262,7 @@ class TestFileImport:
 # Phase 3: Library Panel Tests
 # =============================================================================
 
+
 class TestLibraryPanel:
     """Test Library panel workflows."""
 
@@ -321,6 +328,7 @@ class TestLibraryPanel:
 # Phase 4: Transcription Tests
 # =============================================================================
 
+
 class TestTranscription:
     """Test transcription workflow."""
 
@@ -370,7 +378,9 @@ class TestTranscription:
 
             if response.status_code == 200:
                 languages = response.json()
-                tracer.step(f"Available languages: {len(languages) if isinstance(languages, list) else languages}")
+                tracer.step(
+                    f"Available languages: {len(languages) if isinstance(languages, list) else languages}"
+                )
             tracer.success("Languages endpoint works")
         except requests.RequestException as e:
             tracer.error(e, "Languages endpoint failed")
@@ -379,6 +389,7 @@ class TestTranscription:
 # =============================================================================
 # Phase 5: Voice Cloning Tests
 # =============================================================================
+
 
 class TestVoiceCloning:
     """Test voice cloning workflow."""
@@ -419,6 +430,7 @@ class TestVoiceCloning:
 # =============================================================================
 # Phase 6: Voice Synthesis Tests
 # =============================================================================
+
 
 class TestVoiceSynthesis:
     """Test voice synthesis workflow."""
@@ -479,6 +491,7 @@ class TestVoiceSynthesis:
 # Phase 7: Audio Format Conversion Tests
 # =============================================================================
 
+
 class TestAudioConversion:
     """Test audio format conversion."""
 
@@ -511,6 +524,7 @@ class TestAudioConversion:
 # =============================================================================
 # Phase 8: Inter-Panel Communication Tests
 # =============================================================================
+
 
 class TestInterPanelCommunication:
     """Test inter-panel communication and events."""
@@ -553,6 +567,7 @@ class TestInterPanelCommunication:
 # Phase 9: Error Handling Tests
 # =============================================================================
 
+
 class TestErrorHandling:
     """Test error handling scenarios."""
 
@@ -584,6 +599,7 @@ class TestErrorHandling:
 # =============================================================================
 # Phase 10: Performance Tests
 # =============================================================================
+
 
 class TestPerformance:
     """Test performance metrics."""
@@ -630,11 +646,14 @@ class TestPerformance:
 # =============================================================================
 
 if __name__ == "__main__":
-    pytest.main([
-        __file__,
-        "-v",
-        "--tb=short",
-        "-m", "not slow",
-        "--html=.buildlogs/validation/reports/allan_watts_workflow_report.html",
-        "--self-contained-html",
-    ])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--tb=short",
+            "-m",
+            "not slow",
+            "--html=.buildlogs/validation/reports/allan_watts_workflow_report.html",
+            "--self-contained-html",
+        ]
+    )

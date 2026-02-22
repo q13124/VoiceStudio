@@ -386,4 +386,3 @@ async def delete_session(session_id: str):
             status_code=500,
             detail=f"Failed to delete session: {e!s}",
         ) from e
-

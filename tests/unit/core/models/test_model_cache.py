@@ -266,10 +266,7 @@ class TestModelCache:
     @patch("app.core.models.cache.psutil")
     def test_memory_pressure_detection(self, mock_psutil):
         """Test memory pressure detection."""
-        cache = ModelCache(
-            memory_pressure_threshold=0.85,
-            auto_eviction_enabled=True
-        )
+        cache = ModelCache(memory_pressure_threshold=0.85, auto_eviction_enabled=True)
 
         # Mock high memory usage (90%)
         mock_process = Mock()
@@ -290,7 +287,7 @@ class TestModelCache:
             max_models=10,
             max_memory_mb=1000.0,
             enable_dynamic_limits=True,
-            memory_pressure_threshold=0.85
+            memory_pressure_threshold=0.85,
         )
 
         # Mock high memory usage (90%)
@@ -320,10 +317,7 @@ class TestModelCache:
     @patch("app.core.models.cache.psutil")
     def test_auto_eviction_on_memory_pressure(self, mock_psutil):
         """Test automatic eviction when memory pressure is detected."""
-        cache = ModelCache(
-            memory_pressure_threshold=0.85,
-            auto_eviction_enabled=True
-        )
+        cache = ModelCache(memory_pressure_threshold=0.85, auto_eviction_enabled=True)
 
         # Add some models
         model1 = Mock()
@@ -374,11 +368,7 @@ class TestModelCache:
 
     def test_dynamic_limits_disabled(self):
         """Test that dynamic limits can be disabled."""
-        cache = ModelCache(
-            max_models=10,
-            max_memory_mb=1000.0,
-            enable_dynamic_limits=False
-        )
+        cache = ModelCache(max_models=10, max_memory_mb=1000.0, enable_dynamic_limits=False)
 
         original_max_models = cache.max_models
         original_max_memory = cache.max_memory_mb
@@ -391,9 +381,7 @@ class TestModelCache:
 
     def test_auto_eviction_disabled(self):
         """Test that auto eviction can be disabled."""
-        cache = ModelCache(
-            auto_eviction_enabled=False
-        )
+        cache = ModelCache(auto_eviction_enabled=False)
 
         # Add models
         model1 = Mock()
@@ -436,4 +424,3 @@ class TestGlobalModelCache:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

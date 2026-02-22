@@ -44,9 +44,7 @@ class TestEngineLifecycleOptimizedClasses:
         """Test OptimizedEngineLifecycleManager class exists."""
         if hasattr(engine_lifecycle_optimized, "OptimizedEngineLifecycleManager"):
             cls = engine_lifecycle_optimized.OptimizedEngineLifecycleManager
-            assert isinstance(
-                cls, type
-            ), "OptimizedEngineLifecycleManager should be a class"
+            assert isinstance(cls, type), "OptimizedEngineLifecycleManager should be a class"
 
 
 class TestEngineLifecycleOptimizedOptimization:
@@ -78,9 +76,7 @@ class TestEngineLifecycleOptimizedOptimization:
         if hasattr(engine_lifecycle_optimized, "OptimizedEngineLifecycleManager"):
             try:
                 manager = engine_lifecycle_optimized.OptimizedEngineLifecycleManager()
-                assert hasattr(
-                    manager, "_health_cache"
-                ), "Should have _health_cache attribute"
+                assert hasattr(manager, "_health_cache"), "Should have _health_cache attribute"
                 assert hasattr(
                     manager, "_check_health_cached"
                 ), "Should have _check_health_cached method"
@@ -122,9 +118,7 @@ class TestEngineLifecycleOptimizedOptimization:
                 assert isinstance(
                     manager.health_check_workers, int
                 ), "health_check_workers should be an integer"
-                assert (
-                    manager.health_check_workers > 0
-                ), "health_check_workers should be positive"
+                assert manager.health_check_workers > 0, "health_check_workers should be positive"
             except (ImportError, Exception):
                 pytest.skip("engine_lifecycle_optimized dependencies not installed")
 
@@ -136,9 +130,7 @@ class TestEngineLifecycleOptimizedOptimization:
                 assert hasattr(
                     manager, "clear_health_cache"
                 ), "Should have clear_health_cache method"
-                assert callable(
-                    manager.clear_health_cache
-                ), "clear_health_cache should be callable"
+                assert callable(manager.clear_health_cache), "clear_health_cache should be callable"
             except (ImportError, Exception):
                 pytest.skip("engine_lifecycle_optimized dependencies not installed")
 

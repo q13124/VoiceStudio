@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.audio import advanced_quality_enhancement
 except ImportError:
-    pytest.skip(
-        "Could not import advanced_quality_enhancement", allow_module_level=True
-    )
+    pytest.skip("Could not import advanced_quality_enhancement", allow_module_level=True)
 
 
 class TestAdvancedQualityEnhancementImports:

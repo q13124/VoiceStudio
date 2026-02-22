@@ -73,15 +73,10 @@ logger = logging.getLogger(__name__)
 # Environment-based configuration
 _env_tracing = os.environ.get("VOICESTUDIO_TRACING_ENABLED", "true")
 TRACING_ENABLED = _env_tracing.lower() == "true"
-TRACING_SERVICE_NAME = os.environ.get(
-    "VOICESTUDIO_SERVICE_NAME", "voicestudio.backend"
-)
+TRACING_SERVICE_NAME = os.environ.get("VOICESTUDIO_SERVICE_NAME", "voicestudio.backend")
 _env_rate = os.environ.get("VOICESTUDIO_TRACE_SAMPLE_RATE", "1.0")
 TRACING_SAMPLE_RATE = float(_env_rate)
-TRACING_EXPORT_DIR = os.environ.get(
-    "VOICESTUDIO_TRACE_EXPORT_DIR",
-    ".buildlogs/traces"
-)
+TRACING_EXPORT_DIR = os.environ.get("VOICESTUDIO_TRACE_EXPORT_DIR", ".buildlogs/traces")
 
 # Headers for trace propagation
 TRACE_PARENT_HEADER = "traceparent"
@@ -90,16 +85,18 @@ X_TRACE_ID_HEADER = "X-Trace-ID"
 X_SPAN_ID_HEADER = "X-Span-ID"
 
 # Paths to skip for tracing
-SKIP_PATHS = frozenset([
-    "/docs",
-    "/redoc",
-    "/openapi.json",
-    "/health",
-    "/healthz",
-    "/ready",
-    "/metrics",
-    "/favicon.ico",
-])
+SKIP_PATHS = frozenset(
+    [
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+        "/health",
+        "/healthz",
+        "/ready",
+        "/metrics",
+        "/favicon.ico",
+    ]
+)
 
 
 # =============================================================================
@@ -123,6 +120,7 @@ class LocalFileSpanExporter(_base_class):
     def _ensure_export_dir(self) -> None:
         """Create export directory if it doesn't exist."""
         from pathlib import Path
+
         Path(self.export_dir).mkdir(parents=True, exist_ok=True)
 
     def export(self, spans) -> SpanExportResult:
@@ -143,23 +141,21 @@ class LocalFileSpanExporter(_base_class):
                 parent_id = None
                 if span.parent:
                     parent_id = format(span.parent.span_id, "016x")
-                span_data.append({
-                    "trace_id": format(span.context.trace_id, "032x"),
-                    "span_id": format(span.context.span_id, "016x"),
-                    "parent_span_id": parent_id,
-                    "name": span.name,
-                    "start_time": span.start_time,
-                    "end_time": span.end_time,
-                    "status": span.status.status_code.name,
-                    "attributes": dict(span.attributes or {}),
-                })
+                span_data.append(
+                    {
+                        "trace_id": format(span.context.trace_id, "032x"),
+                        "span_id": format(span.context.span_id, "016x"),
+                        "parent_span_id": parent_id,
+                        "name": span.name,
+                        "start_time": span.start_time,
+                        "end_time": span.end_time,
+                        "status": span.status.status_code.name,
+                        "attributes": dict(span.attributes or {}),
+                    }
+                )
 
             with open(filepath, "w") as f:
-                json.dump(
-                    {"spans": span_data, "exported_at": timestamp},
-                    f,
-                    indent=2
-                )
+                json.dump({"spans": span_data, "exported_at": timestamp}, f, indent=2)
 
             return SpanExportResult.SUCCESS
 
@@ -226,25 +222,23 @@ def setup_tracing(
 
     # Create resource with service info
     env_name = os.environ.get("VOICESTUDIO_ENV", "development")
-    resource = Resource.create({
-        SERVICE_NAME: service_name,
-        "service.version": "1.0.1",
-        "deployment.environment": env_name,
-    })
+    resource = Resource.create(
+        {
+            SERVICE_NAME: service_name,
+            "service.version": "1.0.1",
+            "deployment.environment": env_name,
+        }
+    )
 
     # Create tracer provider
     _tracer_provider = TracerProvider(resource=resource)
 
     # Add exporters
     if export_to_console:
-        _tracer_provider.add_span_processor(
-            BatchSpanProcessor(ConsoleSpanExporter())
-        )
+        _tracer_provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
 
     if export_to_file:
-        _tracer_provider.add_span_processor(
-            BatchSpanProcessor(LocalFileSpanExporter())
-        )
+        _tracer_provider.add_span_processor(BatchSpanProcessor(LocalFileSpanExporter()))
 
     # Phase 7: Optional OTLP export when VOICESTUDIO_OTLP_ENDPOINT is set
     otlp_endpoint = os.environ.get("VOICESTUDIO_OTLP_ENDPOINT")
@@ -283,6 +277,7 @@ def shutdown_tracing() -> None:
 # Traced Decorator
 # =============================================================================
 
+
 def traced(
     name: str | None = None,
     attributes: dict[str, Any] | None = None,
@@ -298,6 +293,7 @@ def traced(
         async def synthesize(text: str) -> bytes:
             ...
     """
+
     def decorator(func: Callable):
         import asyncio
         import functools
@@ -365,6 +361,7 @@ def traced(
 # OpenTelemetry Tracing Middleware
 # =============================================================================
 
+
 class OpenTelemetryMiddleware(BaseHTTPMiddleware):
     """
     FastAPI middleware for OpenTelemetry distributed tracing.
@@ -404,11 +401,10 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
         if self.sample_rate >= 1.0:
             return True
         import random
+
         return random.random() < self.sample_rate
 
-    async def dispatch(
-        self, request: Request, call_next: Callable
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with OpenTelemetry tracing."""
         # Skip if disabled or path excluded
         if not self.enabled or self._should_skip(request.url.path):
@@ -458,16 +454,17 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
             # Store trace info for response headers
             trace_id = format(span.get_span_context().trace_id, "032x")
             span_id = format(span.get_span_context().span_id, "016x")
-            
+
             # GAP-I08: Set trace/span IDs on request state for dependencies
             request.state.trace_id = trace_id
             request.state.span_id = span_id
-            
+
             # GAP-I08: Set context vars for logging
             from backend.api.middleware.correlation_id import (
                 reset_trace_context,
                 set_trace_context,
             )
+
             trace_tokens = set_trace_context(trace_id, span_id)
 
             try:
@@ -503,6 +500,7 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
 # =============================================================================
 # Setup Helpers
 # =============================================================================
+
 
 def setup_opentelemetry_middleware(
     app: ASGIApp,

@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class DiagnosticStatus(Enum):
     """Status of a diagnostic check."""
+
     PASS = "pass"
     WARN = "warn"
     FAIL = "fail"
@@ -30,6 +31,7 @@ class DiagnosticStatus(Enum):
 
 class DiagnosticCategory(Enum):
     """Categories of diagnostic checks."""
+
     SYSTEM = "system"
     HARDWARE = "hardware"
     SOFTWARE = "software"
@@ -41,6 +43,7 @@ class DiagnosticCategory(Enum):
 @dataclass
 class DiagnosticResult:
     """Result of a diagnostic check."""
+
     name: str
     category: DiagnosticCategory
     status: DiagnosticStatus
@@ -52,6 +55,7 @@ class DiagnosticResult:
 @dataclass
 class SystemInfo:
     """System information."""
+
     os_name: str
     os_version: str
     os_build: str
@@ -71,6 +75,7 @@ class SystemInfo:
 @dataclass
 class DiagnosticsReport:
     """Complete diagnostics report."""
+
     timestamp: datetime
     system_info: SystemInfo
     results: list[DiagnosticResult]
@@ -142,6 +147,7 @@ class SystemDiagnostics:
 
         try:
             import torch
+
             if torch.cuda.is_available():
                 gpu_name = torch.cuda.get_device_name(0)
                 gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
@@ -173,39 +179,47 @@ class SystemDiagnostics:
         if platform.system() == "Windows":
             version = platform.release()
             if version in ("10", "11"):
-                results.append(DiagnosticResult(
-                    name="Windows Version",
-                    category=DiagnosticCategory.SYSTEM,
-                    status=DiagnosticStatus.PASS,
-                    message=f"Windows {version} detected",
-                    details={"version": version},
-                ))
+                results.append(
+                    DiagnosticResult(
+                        name="Windows Version",
+                        category=DiagnosticCategory.SYSTEM,
+                        status=DiagnosticStatus.PASS,
+                        message=f"Windows {version} detected",
+                        details={"version": version},
+                    )
+                )
             else:
-                results.append(DiagnosticResult(
-                    name="Windows Version",
-                    category=DiagnosticCategory.SYSTEM,
-                    status=DiagnosticStatus.WARN,
-                    message=f"Windows {version} may not be fully supported",
-                    recommendation="Consider upgrading to Windows 10 or 11",
-                ))
+                results.append(
+                    DiagnosticResult(
+                        name="Windows Version",
+                        category=DiagnosticCategory.SYSTEM,
+                        status=DiagnosticStatus.WARN,
+                        message=f"Windows {version} may not be fully supported",
+                        recommendation="Consider upgrading to Windows 10 or 11",
+                    )
+                )
 
         # Architecture check
         arch = platform.machine().lower()
-        if 'amd64' in arch or 'x86_64' in arch:
-            results.append(DiagnosticResult(
-                name="Architecture",
-                category=DiagnosticCategory.SYSTEM,
-                status=DiagnosticStatus.PASS,
-                message="64-bit system detected",
-            ))
+        if "amd64" in arch or "x86_64" in arch:
+            results.append(
+                DiagnosticResult(
+                    name="Architecture",
+                    category=DiagnosticCategory.SYSTEM,
+                    status=DiagnosticStatus.PASS,
+                    message="64-bit system detected",
+                )
+            )
         else:
-            results.append(DiagnosticResult(
-                name="Architecture",
-                category=DiagnosticCategory.SYSTEM,
-                status=DiagnosticStatus.FAIL,
-                message=f"32-bit system ({arch}) not supported",
-                recommendation="VoiceStudio requires a 64-bit system",
-            ))
+            results.append(
+                DiagnosticResult(
+                    name="Architecture",
+                    category=DiagnosticCategory.SYSTEM,
+                    status=DiagnosticStatus.FAIL,
+                    message=f"32-bit system ({arch}) not supported",
+                    recommendation="VoiceStudio requires a 64-bit system",
+                )
+            )
 
         return results
 
@@ -218,51 +232,62 @@ class SystemDiagnostics:
         ram_gb = ram.total / (1024**3)
 
         if ram_gb >= self.MIN_RAM_GB:
-            results.append(DiagnosticResult(
-                name="RAM",
-                category=DiagnosticCategory.HARDWARE,
-                status=DiagnosticStatus.PASS,
-                message=f"{ram_gb:.1f} GB RAM available",
-                details={"total_gb": ram_gb, "available_gb": ram.available / (1024**3)},
-            ))
+            results.append(
+                DiagnosticResult(
+                    name="RAM",
+                    category=DiagnosticCategory.HARDWARE,
+                    status=DiagnosticStatus.PASS,
+                    message=f"{ram_gb:.1f} GB RAM available",
+                    details={"total_gb": ram_gb, "available_gb": ram.available / (1024**3)},
+                )
+            )
         else:
-            results.append(DiagnosticResult(
-                name="RAM",
-                category=DiagnosticCategory.HARDWARE,
-                status=DiagnosticStatus.WARN,
-                message=f"Only {ram_gb:.1f} GB RAM (recommended: {self.MIN_RAM_GB} GB)",
-                recommendation=f"Consider upgrading to at least {self.MIN_RAM_GB} GB RAM",
-            ))
+            results.append(
+                DiagnosticResult(
+                    name="RAM",
+                    category=DiagnosticCategory.HARDWARE,
+                    status=DiagnosticStatus.WARN,
+                    message=f"Only {ram_gb:.1f} GB RAM (recommended: {self.MIN_RAM_GB} GB)",
+                    recommendation=f"Consider upgrading to at least {self.MIN_RAM_GB} GB RAM",
+                )
+            )
 
         # GPU check
         try:
             import torch
+
             if torch.cuda.is_available():
                 gpu_name = torch.cuda.get_device_name(0)
                 gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
 
-                results.append(DiagnosticResult(
-                    name="GPU (CUDA)",
-                    category=DiagnosticCategory.HARDWARE,
-                    status=DiagnosticStatus.PASS,
-                    message=f"{gpu_name} ({gpu_memory:.1f} GB VRAM)",
-                    details={"name": gpu_name, "vram_gb": gpu_memory},
-                ))
+                results.append(
+                    DiagnosticResult(
+                        name="GPU (CUDA)",
+                        category=DiagnosticCategory.HARDWARE,
+                        status=DiagnosticStatus.PASS,
+                        message=f"{gpu_name} ({gpu_memory:.1f} GB VRAM)",
+                        details={"name": gpu_name, "vram_gb": gpu_memory},
+                    )
+                )
             else:
-                results.append(DiagnosticResult(
+                results.append(
+                    DiagnosticResult(
+                        name="GPU (CUDA)",
+                        category=DiagnosticCategory.HARDWARE,
+                        status=DiagnosticStatus.WARN,
+                        message="No CUDA-compatible GPU detected",
+                        recommendation="GPU acceleration is recommended for faster synthesis",
+                    )
+                )
+        except ImportError:
+            results.append(
+                DiagnosticResult(
                     name="GPU (CUDA)",
                     category=DiagnosticCategory.HARDWARE,
-                    status=DiagnosticStatus.WARN,
-                    message="No CUDA-compatible GPU detected",
-                    recommendation="GPU acceleration is recommended for faster synthesis",
-                ))
-        except ImportError:
-            results.append(DiagnosticResult(
-                name="GPU (CUDA)",
-                category=DiagnosticCategory.HARDWARE,
-                status=DiagnosticStatus.SKIP,
-                message="PyTorch not installed, cannot check GPU",
-            ))
+                    status=DiagnosticStatus.SKIP,
+                    message="PyTorch not installed, cannot check GPU",
+                )
+            )
 
         return results
 
@@ -271,42 +296,50 @@ class SystemDiagnostics:
         results = []
 
         # Python version check
-        py_version = tuple(map(int, platform.python_version().split('.')[:2]))
+        py_version = tuple(map(int, platform.python_version().split(".")[:2]))
 
         if py_version >= self.MIN_PYTHON_VERSION:
-            results.append(DiagnosticResult(
-                name="Python Version",
-                category=DiagnosticCategory.SOFTWARE,
-                status=DiagnosticStatus.PASS,
-                message=f"Python {platform.python_version()}",
-            ))
+            results.append(
+                DiagnosticResult(
+                    name="Python Version",
+                    category=DiagnosticCategory.SOFTWARE,
+                    status=DiagnosticStatus.PASS,
+                    message=f"Python {platform.python_version()}",
+                )
+            )
         else:
-            results.append(DiagnosticResult(
-                name="Python Version",
-                category=DiagnosticCategory.SOFTWARE,
-                status=DiagnosticStatus.FAIL,
-                message=f"Python {platform.python_version()} is too old",
-                recommendation=f"Please upgrade to Python {'.'.join(map(str, self.MIN_PYTHON_VERSION))} or later",
-            ))
+            results.append(
+                DiagnosticResult(
+                    name="Python Version",
+                    category=DiagnosticCategory.SOFTWARE,
+                    status=DiagnosticStatus.FAIL,
+                    message=f"Python {platform.python_version()} is too old",
+                    recommendation=f"Please upgrade to Python {'.'.join(map(str, self.MIN_PYTHON_VERSION))} or later",
+                )
+            )
 
         # FFmpeg check
         ffmpeg_path = shutil.which("ffmpeg")
         if ffmpeg_path:
-            results.append(DiagnosticResult(
-                name="FFmpeg",
-                category=DiagnosticCategory.SOFTWARE,
-                status=DiagnosticStatus.PASS,
-                message="FFmpeg is installed",
-                details={"path": ffmpeg_path},
-            ))
+            results.append(
+                DiagnosticResult(
+                    name="FFmpeg",
+                    category=DiagnosticCategory.SOFTWARE,
+                    status=DiagnosticStatus.PASS,
+                    message="FFmpeg is installed",
+                    details={"path": ffmpeg_path},
+                )
+            )
         else:
-            results.append(DiagnosticResult(
-                name="FFmpeg",
-                category=DiagnosticCategory.SOFTWARE,
-                status=DiagnosticStatus.WARN,
-                message="FFmpeg not found in PATH",
-                recommendation="Install FFmpeg for audio format conversion",
-            ))
+            results.append(
+                DiagnosticResult(
+                    name="FFmpeg",
+                    category=DiagnosticCategory.SOFTWARE,
+                    status=DiagnosticStatus.WARN,
+                    message="FFmpeg not found in PATH",
+                    recommendation="Install FFmpeg for audio format conversion",
+                )
+            )
 
         return results
 
@@ -319,40 +352,48 @@ class SystemDiagnostics:
         free_gb = disk.free / (1024**3)
 
         if free_gb >= self.MIN_DISK_GB:
-            results.append(DiagnosticResult(
-                name="Disk Space",
-                category=DiagnosticCategory.STORAGE,
-                status=DiagnosticStatus.PASS,
-                message=f"{free_gb:.1f} GB free space",
-                details={"free_gb": free_gb, "total_gb": disk.total / (1024**3)},
-            ))
+            results.append(
+                DiagnosticResult(
+                    name="Disk Space",
+                    category=DiagnosticCategory.STORAGE,
+                    status=DiagnosticStatus.PASS,
+                    message=f"{free_gb:.1f} GB free space",
+                    details={"free_gb": free_gb, "total_gb": disk.total / (1024**3)},
+                )
+            )
         else:
-            results.append(DiagnosticResult(
-                name="Disk Space",
-                category=DiagnosticCategory.STORAGE,
-                status=DiagnosticStatus.WARN,
-                message=f"Only {free_gb:.1f} GB free (recommended: {self.MIN_DISK_GB} GB)",
-                recommendation="Free up disk space for models and projects",
-            ))
+            results.append(
+                DiagnosticResult(
+                    name="Disk Space",
+                    category=DiagnosticCategory.STORAGE,
+                    status=DiagnosticStatus.WARN,
+                    message=f"Only {free_gb:.1f} GB free (recommended: {self.MIN_DISK_GB} GB)",
+                    recommendation="Free up disk space for models and projects",
+                )
+            )
 
         # Models directory
         models_path = self._app_path / "models"
         if models_path.exists():
             model_count = len(list(models_path.glob("*")))
-            results.append(DiagnosticResult(
-                name="Models Directory",
-                category=DiagnosticCategory.STORAGE,
-                status=DiagnosticStatus.PASS,
-                message=f"Models directory exists ({model_count} items)",
-            ))
+            results.append(
+                DiagnosticResult(
+                    name="Models Directory",
+                    category=DiagnosticCategory.STORAGE,
+                    status=DiagnosticStatus.PASS,
+                    message=f"Models directory exists ({model_count} items)",
+                )
+            )
         else:
-            results.append(DiagnosticResult(
-                name="Models Directory",
-                category=DiagnosticCategory.STORAGE,
-                status=DiagnosticStatus.WARN,
-                message="Models directory not found",
-                recommendation="Models will be downloaded on first use",
-            ))
+            results.append(
+                DiagnosticResult(
+                    name="Models Directory",
+                    category=DiagnosticCategory.STORAGE,
+                    status=DiagnosticStatus.WARN,
+                    message="Models directory not found",
+                    recommendation="Models will be downloaded on first use",
+                )
+            )
 
         return results
 
@@ -363,20 +404,24 @@ class SystemDiagnostics:
         # Config file
         config_path = self._app_path / "config" / "settings.json"
         if config_path.exists():
-            results.append(DiagnosticResult(
-                name="Configuration",
-                category=DiagnosticCategory.APPLICATION,
-                status=DiagnosticStatus.PASS,
-                message="Configuration file exists",
-            ))
+            results.append(
+                DiagnosticResult(
+                    name="Configuration",
+                    category=DiagnosticCategory.APPLICATION,
+                    status=DiagnosticStatus.PASS,
+                    message="Configuration file exists",
+                )
+            )
         else:
-            results.append(DiagnosticResult(
-                name="Configuration",
-                category=DiagnosticCategory.APPLICATION,
-                status=DiagnosticStatus.WARN,
-                message="Configuration file not found",
-                recommendation="Default settings will be used",
-            ))
+            results.append(
+                DiagnosticResult(
+                    name="Configuration",
+                    category=DiagnosticCategory.APPLICATION,
+                    status=DiagnosticStatus.WARN,
+                    message="Configuration file not found",
+                    recommendation="Default settings will be used",
+                )
+            )
 
         return results
 

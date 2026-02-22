@@ -28,7 +28,9 @@ for module_name in ["torch", "torch.cuda"]:
         sys.modules[module_name] = mock_module
     elif module_name == "torch":
         # Ensure existing mock has __version__
-        if not hasattr(sys.modules[module_name], "__version__") or isinstance(sys.modules[module_name].__version__, MagicMock):
+        if not hasattr(sys.modules[module_name], "__version__") or isinstance(
+            sys.modules[module_name].__version__, MagicMock
+        ):
             sys.modules[module_name].__version__ = "2.0.0"
 
 # Import the auto trainer module
@@ -49,9 +51,7 @@ class TestAutoTrainerImports:
     def test_module_has_classes(self):
         """Test module has expected classes."""
         classes = [
-            name
-            for name in dir(auto_trainer)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(auto_trainer) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "module should have classes"
 
@@ -62,7 +62,9 @@ class TestAutoTrainerImports:
 
     def test_create_auto_trainer_function_exists(self):
         """Test create_auto_trainer function exists."""
-        assert hasattr(auto_trainer, "create_auto_trainer"), "create_auto_trainer function should exist"
+        assert hasattr(
+            auto_trainer, "create_auto_trainer"
+        ), "create_auto_trainer function should exist"
         assert callable(auto_trainer.create_auto_trainer), "create_auto_trainer should be callable"
 
 
@@ -160,9 +162,7 @@ class TestAutoTrainerRecommendedParams:
         trainer = AutoTrainer()
 
         params = trainer.get_recommended_params(
-            dataset_size=5,
-            audio_duration=10.0,
-            quality_target="standard"
+            dataset_size=5, audio_duration=10.0, quality_target="standard"
         )
         assert "epochs" in params
         assert "batch_size" in params
@@ -178,9 +178,7 @@ class TestAutoTrainerRecommendedParams:
         trainer = AutoTrainer()
 
         params = trainer.get_recommended_params(
-            dataset_size=100,
-            audio_duration=10.0,
-            quality_target="standard"
+            dataset_size=100, audio_duration=10.0, quality_target="standard"
         )
         assert params["epochs"] <= 100  # Fewer epochs for large datasets
         assert params["batch_size"] >= 4  # Larger batch size for large datasets
@@ -192,9 +190,7 @@ class TestAutoTrainerRecommendedParams:
         trainer = AutoTrainer()
 
         params = trainer.get_recommended_params(
-            dataset_size=50,
-            audio_duration=10.0,
-            quality_target="fast"
+            dataset_size=50, audio_duration=10.0, quality_target="fast"
         )
         assert params["quality_target"] == "fast"
         assert params["learning_rate"] > 0.0001  # Higher LR for faster training
@@ -206,9 +202,7 @@ class TestAutoTrainerRecommendedParams:
         trainer = AutoTrainer()
 
         params = trainer.get_recommended_params(
-            dataset_size=50,
-            audio_duration=10.0,
-            quality_target="high"
+            dataset_size=50, audio_duration=10.0, quality_target="high"
         )
         assert params["quality_target"] == "high"
         assert params["epochs"] >= 100  # More epochs for high quality
@@ -220,9 +214,7 @@ class TestAutoTrainerRecommendedParams:
         trainer = AutoTrainer()
 
         params = trainer.get_recommended_params(
-            dataset_size=50,
-            audio_duration=10.0,
-            quality_target="ultra"
+            dataset_size=50, audio_duration=10.0, quality_target="ultra"
         )
         assert params["quality_target"] == "ultra"
         # For dataset_size=50, base_epochs*0.8=80, then ultra doubles to 160
@@ -242,6 +234,7 @@ class TestAutoTrainerAutoTrain:
 
         with pytest.raises(RuntimeError, match="Unified trainer not available"):
             import asyncio
+
             asyncio.run(trainer.auto_train("metadata.json"))
 
     @patch("app.core.training.auto_trainer.Path")
@@ -264,9 +257,7 @@ class TestAutoTrainerAutoTrain:
                 mock_trainer_class.return_value = mock_trainer
 
                 result = await trainer.auto_train(
-                    str(metadata_path),
-                    optimize_params=False,
-                    max_runs=1
+                    str(metadata_path), optimize_params=False, max_runs=1
                 )
 
                 assert "best_model_path" in result
@@ -295,9 +286,7 @@ class TestAutoTrainerAutoTrain:
                 mock_trainer_class.return_value = mock_trainer
 
                 result = await trainer.auto_train(
-                    str(metadata_path),
-                    optimize_params=True,
-                    max_runs=2
+                    str(metadata_path), optimize_params=True, max_runs=2
                 )
 
                 assert result["total_runs"] == 2
@@ -331,7 +320,7 @@ class TestAutoTrainerAutoTrain:
                     str(metadata_path),
                     optimize_params=False,
                     max_runs=1,
-                    progress_callback=progress_callback
+                    progress_callback=progress_callback,
                 )
 
                 assert len(callback_calls) > 0
@@ -354,9 +343,7 @@ class TestAutoTrainerAutoTrain:
                 mock_trainer_class.return_value = mock_trainer
 
                 result = await trainer.auto_train(
-                    str(metadata_path),
-                    optimize_params=False,
-                    max_runs=1
+                    str(metadata_path), optimize_params=False, max_runs=1
                 )
 
                 assert result["successful_runs"] == 0
@@ -380,9 +367,7 @@ class TestAutoTrainerAutoTrain:
                 mock_trainer_class.return_value = mock_trainer
 
                 result = await trainer.auto_train(
-                    str(metadata_path),
-                    optimize_params=False,
-                    max_runs=1
+                    str(metadata_path), optimize_params=False, max_runs=1
                 )
 
                 assert result["successful_runs"] == 0
@@ -405,10 +390,7 @@ class TestCreateAutoTrainer:
         """Test create_auto_trainer with custom parameters."""
         with tempfile.TemporaryDirectory() as tmpdir:
             trainer = create_auto_trainer(
-                engine="tortoise",
-                device="cpu",
-                gpu=False,
-                output_dir=tmpdir
+                engine="tortoise", device="cpu", gpu=False, output_dir=tmpdir
             )
             assert isinstance(trainer, AutoTrainer)
             assert trainer.engine == "tortoise"

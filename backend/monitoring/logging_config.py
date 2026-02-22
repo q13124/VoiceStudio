@@ -18,6 +18,7 @@ from typing import Any
 
 class LogLevel(Enum):
     """Log levels."""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -28,6 +29,7 @@ class LogLevel(Enum):
 @dataclass
 class LogConfig:
     """Logging configuration."""
+
     level: LogLevel = LogLevel.INFO
     console_enabled: bool = True
     file_enabled: bool = True
@@ -81,11 +83,11 @@ class ConsoleFormatter(logging.Formatter):
     """Human-readable formatter for console output."""
 
     COLORS = {
-        "DEBUG": "\033[36m",    # Cyan
-        "INFO": "\033[32m",     # Green
+        "DEBUG": "\033[36m",  # Cyan
+        "INFO": "\033[32m",  # Green
         "WARNING": "\033[33m",  # Yellow
-        "ERROR": "\033[31m",    # Red
-        "CRITICAL": "\033[35m", # Magenta
+        "ERROR": "\033[31m",  # Red
+        "CRITICAL": "\033[35m",  # Magenta
     }
     RESET = "\033[0m"
 
@@ -96,7 +98,9 @@ class ConsoleFormatter(logging.Formatter):
 
         timestamp = datetime.now().strftime("%H:%M:%S")
 
-        message = f"{color}[{timestamp}] {record.levelname:8}{reset} {record.name}: {record.getMessage()}"
+        message = (
+            f"{color}[{timestamp}] {record.levelname:8}{reset} {record.name}: {record.getMessage()}"
+        )
 
         if record.exc_info:
             message += "\n" + "".join(traceback.format_exception(*record.exc_info))
@@ -186,9 +190,7 @@ def configure_logging(config: LogConfig | None = None) -> None:
         if config.json_format:
             formatter = StructuredFormatter(config.include_stacktrace)
         else:
-            formatter = logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
         file_handler = RotatingFileHandler(
             config.file_path,
@@ -207,13 +209,15 @@ def get_logger(name: str, **context: Any) -> ContextLogger:
 # Default configuration
 def setup_default_logging() -> None:
     """Set up default logging configuration."""
-    configure_logging(LogConfig(
-        level=LogLevel.INFO,
-        console_enabled=True,
-        file_enabled=True,
-        file_path=Path.home() / ".voicestudio" / "logs" / "voicestudio.log",
-        json_format=True,
-    ))
+    configure_logging(
+        LogConfig(
+            level=LogLevel.INFO,
+            console_enabled=True,
+            file_enabled=True,
+            file_path=Path.home() / ".voicestudio" / "logs" / "voicestudio.log",
+            json_format=True,
+        )
+    )
 
 
 def setup_buildlogs_logging() -> None:

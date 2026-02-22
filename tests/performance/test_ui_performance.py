@@ -76,23 +76,19 @@ VOICESTUDIO_PANELS = [
     {"name": "TimelinePanel", "category": "studio", "priority": "high"},
     {"name": "TranscriptionPanel", "category": "studio", "priority": "high"},
     {"name": "VoiceQuickClonePanel", "category": "studio", "priority": "high"},
-
     # Voice Management Panels
     {"name": "VoiceBrowserPanel", "category": "voices", "priority": "high"},
     {"name": "VoiceMorphingPanel", "category": "voices", "priority": "medium"},
     {"name": "VoiceProfilePanel", "category": "voices", "priority": "high"},
     {"name": "VoiceStylePanel", "category": "voices", "priority": "medium"},
-
     # Synthesis Panels
     {"name": "SynthesisPanel", "category": "synthesis", "priority": "high"},
     {"name": "ProsodyEditorPanel", "category": "synthesis", "priority": "medium"},
     {"name": "SSMLEditorPanel", "category": "synthesis", "priority": "medium"},
-
     # Training Panels
     {"name": "TrainingPanel", "category": "training", "priority": "medium"},
     {"name": "DatasetPanel", "category": "training", "priority": "medium"},
     {"name": "ModelPanel", "category": "training", "priority": "medium"},
-
     # Settings Panels
     {"name": "SettingsPanel", "category": "settings", "priority": "low"},
     {"name": "EngineSettingsPanel", "category": "settings", "priority": "low"},
@@ -119,7 +115,7 @@ class MockPanel:
             "simple": 0.010,  # 10ms
             "medium": 0.030,  # 30ms
             "complex": 0.080,  # 80ms
-            "heavy": 0.150,   # 150ms
+            "heavy": 0.150,  # 150ms
         }
 
     def load(self) -> float:
@@ -271,9 +267,7 @@ class TestPanelRenderingPerformance:
 
         record_performance("Simple Panel Render", metrics)
         benchmark.assert_performance(
-            metrics,
-            max_avg_time=SLO.PANEL_RENDER_AVG,
-            max_p95_time=SLO.PANEL_RENDER_P95
+            metrics, max_avg_time=SLO.PANEL_RENDER_AVG, max_p95_time=SLO.PANEL_RENDER_P95
         )
 
         logger.info(
@@ -290,9 +284,7 @@ class TestPanelRenderingPerformance:
 
         record_performance("Complex Panel Render", metrics)
         benchmark.assert_performance(
-            metrics,
-            max_avg_time=SLO.PANEL_RENDER_AVG,
-            max_p95_time=SLO.PANEL_RENDER_P95
+            metrics, max_avg_time=SLO.PANEL_RENDER_AVG, max_p95_time=SLO.PANEL_RENDER_P95
         )
 
         logger.info(
@@ -331,22 +323,23 @@ class TestPanelRenderingPerformance:
                     times.append(panel.render())
 
                 avg_time = sum(times) / len(times)
-                results.append({
-                    "name": panel_name,
-                    "category": panel_info["category"],
-                    "avg_ms": avg_time * 1000,
-                })
+                results.append(
+                    {
+                        "name": panel_name,
+                        "category": panel_info["category"],
+                        "avg_ms": avg_time * 1000,
+                    }
+                )
 
         # Log baseline
         for result in results:
-            logger.info(
-                f"Panel {result['name']}: avg={result['avg_ms']:.2f}ms"
-            )
+            logger.info(f"Panel {result['name']}: avg={result['avg_ms']:.2f}ms")
 
         # Assert average across all panels
         overall_avg = sum(r["avg_ms"] for r in results) / len(results)
-        assert overall_avg < SLO.PANEL_RENDER_AVG * 1000, \
-            f"Overall panel render average {overall_avg:.2f}ms exceeds SLO"
+        assert (
+            overall_avg < SLO.PANEL_RENDER_AVG * 1000
+        ), f"Overall panel render average {overall_avg:.2f}ms exceeds SLO"
 
 
 # =============================================================================
@@ -359,26 +352,18 @@ class TestPanelRenderingPerformance:
 class TestNavigationPerformance:
     """Tests for navigation performance."""
 
-    def test_single_navigation(
-        self, navigation_service, perf_benchmark, record_performance
-    ):
+    def test_single_navigation(self, navigation_service, perf_benchmark, record_performance):
         """Test single panel navigation meets SLO."""
         benchmark = perf_benchmark("Single Navigation")
 
         # Navigate to a medium complexity panel
         navigation_service.navigate_to("VoiceBrowserPanel")
 
-        metrics = benchmark.run(
-            navigation_service.navigate_to,
-            "SynthesisPanel",
-            iterations=10
-        )
+        metrics = benchmark.run(navigation_service.navigate_to, "SynthesisPanel", iterations=10)
 
         record_performance("Single Navigation", metrics)
         benchmark.assert_performance(
-            metrics,
-            max_avg_time=SLO.NAVIGATION_AVG,
-            max_p95_time=SLO.NAVIGATION_P95
+            metrics, max_avg_time=SLO.NAVIGATION_AVG, max_p95_time=SLO.NAVIGATION_P95
         )
 
         logger.info(
@@ -386,9 +371,7 @@ class TestNavigationPerformance:
             f"P95={metrics.p95_time*1000:.2f}ms"
         )
 
-    def test_rapid_navigation(
-        self, navigation_service, perf_benchmark, record_performance
-    ):
+    def test_rapid_navigation(self, navigation_service, perf_benchmark, record_performance):
         """Test rapid navigation between panels."""
         panel_names = [p["name"] for p in VOICESTUDIO_PANELS[:5]]
 
@@ -403,17 +386,16 @@ class TestNavigationPerformance:
 
         # Allow more time for rapid navigation
         avg_per_panel = metrics.avg_time / len(panel_names)
-        assert avg_per_panel < SLO.NAVIGATION_AVG * 1.5, \
-            f"Rapid navigation avg {avg_per_panel*1000:.2f}ms/panel exceeds SLO"
+        assert (
+            avg_per_panel < SLO.NAVIGATION_AVG * 1.5
+        ), f"Rapid navigation avg {avg_per_panel*1000:.2f}ms/panel exceeds SLO"
 
         logger.info(
             f"Rapid navigation: total_avg={metrics.avg_time*1000:.2f}ms, "
             f"per_panel_avg={avg_per_panel*1000:.2f}ms"
         )
 
-    def test_back_forward_navigation(
-        self, navigation_service, perf_benchmark, record_performance
-    ):
+    def test_back_forward_navigation(self, navigation_service, perf_benchmark, record_performance):
         """Test back/forward navigation pattern."""
         # Setup initial history
         navigation_service.navigate_to("Panel1")
@@ -430,9 +412,7 @@ class TestNavigationPerformance:
 
         record_performance("Back/Forward Navigation", metrics)
 
-        logger.info(
-            f"Back/forward navigation: avg={metrics.avg_time*1000:.2f}ms"
-        )
+        logger.info(f"Back/forward navigation: avg={metrics.avg_time*1000:.2f}ms")
 
     def test_navigation_with_heavy_panel(
         self, navigation_service, perf_benchmark, record_performance
@@ -443,17 +423,11 @@ class TestNavigationPerformance:
         navigation_service.navigate_to("SimplePanel")
 
         benchmark = perf_benchmark("Heavy Panel Navigation")
-        metrics = benchmark.run(
-            navigation_service.navigate_to,
-            "HeavyDataGrid",
-            iterations=5
-        )
+        metrics = benchmark.run(navigation_service.navigate_to, "HeavyDataGrid", iterations=5)
 
         record_performance("Heavy Panel Navigation", metrics)
 
-        logger.info(
-            f"Heavy panel navigation: avg={metrics.avg_time*1000:.2f}ms"
-        )
+        logger.info(f"Heavy panel navigation: avg={metrics.avg_time*1000:.2f}ms")
 
 
 # =============================================================================
@@ -466,88 +440,56 @@ class TestNavigationPerformance:
 class TestControlLoadPerformance:
     """Tests for control loading performance."""
 
-    def test_simple_controls(
-        self, control_renderer, perf_benchmark, record_performance
-    ):
+    def test_simple_controls(self, control_renderer, perf_benchmark, record_performance):
         """Test simple control rendering."""
         benchmark = perf_benchmark("Simple Controls")
 
         controls = {"Button": 10, "TextBox": 5}
-        metrics = benchmark.run(
-            control_renderer.render_control_batch,
-            controls,
-            iterations=20
-        )
+        metrics = benchmark.run(control_renderer.render_control_batch, controls, iterations=20)
 
         record_performance("Simple Controls", metrics)
-        benchmark.assert_performance(
-            metrics,
-            max_avg_time=SLO.CONTROL_LOAD_AVG
-        )
+        benchmark.assert_performance(metrics, max_avg_time=SLO.CONTROL_LOAD_AVG)
 
-    def test_complex_controls(
-        self, control_renderer, perf_benchmark, record_performance
-    ):
+    def test_complex_controls(self, control_renderer, perf_benchmark, record_performance):
         """Test complex control rendering."""
         benchmark = perf_benchmark("Complex Controls")
 
         controls = {"DataGrid": 1, "TreeView": 1, "ListBox": 2}
-        metrics = benchmark.run(
-            control_renderer.render_control_batch,
-            controls,
-            iterations=10
-        )
+        metrics = benchmark.run(control_renderer.render_control_batch, controls, iterations=10)
 
         record_performance("Complex Controls", metrics)
 
-        logger.info(
-            f"Complex controls: avg={metrics.avg_time*1000:.2f}ms"
-        )
+        logger.info(f"Complex controls: avg={metrics.avg_time*1000:.2f}ms")
 
-    def test_audio_controls(
-        self, control_renderer, perf_benchmark, record_performance
-    ):
+    def test_audio_controls(self, control_renderer, perf_benchmark, record_performance):
         """Test audio-specific control rendering."""
         benchmark = perf_benchmark("Audio Controls")
 
         controls = {"WaveformDisplay": 1, "Spectrogram": 1, "MediaPlayer": 1}
-        metrics = benchmark.run(
-            control_renderer.render_control_batch,
-            controls,
-            iterations=10
-        )
+        metrics = benchmark.run(control_renderer.render_control_batch, controls, iterations=10)
 
         record_performance("Audio Controls", metrics)
 
-        logger.info(
-            f"Audio controls: avg={metrics.avg_time*1000:.2f}ms"
-        )
+        logger.info(f"Audio controls: avg={metrics.avg_time*1000:.2f}ms")
 
-    def test_voice_profile_cards(
-        self, control_renderer, perf_benchmark, record_performance
-    ):
+    def test_voice_profile_cards(self, control_renderer, perf_benchmark, record_performance):
         """Test voice profile card rendering for browser view."""
         benchmark = perf_benchmark("Voice Profile Cards")
 
         # Simulate loading multiple voice profile cards
         controls = {"VoiceProfileCard": 20}  # 20 profile cards
-        metrics = benchmark.run(
-            control_renderer.render_control_batch,
-            controls,
-            iterations=10
-        )
+        metrics = benchmark.run(control_renderer.render_control_batch, controls, iterations=10)
 
         record_performance("Voice Profile Cards (20)", metrics)
 
         # 20 cards with batch rendering should complete in < 1 second
         # (real virtualized UI would be much faster)
         MAX_BATCH_TIME = 1.0  # 1 second for 20 cards
-        assert metrics.avg_time < MAX_BATCH_TIME, \
-            f"20 voice cards took {metrics.avg_time*1000:.2f}ms (max {MAX_BATCH_TIME*1000}ms)"
+        assert (
+            metrics.avg_time < MAX_BATCH_TIME
+        ), f"20 voice cards took {metrics.avg_time*1000:.2f}ms (max {MAX_BATCH_TIME*1000}ms)"
 
-        logger.info(
-            f"20 voice profile cards: avg={metrics.avg_time*1000:.2f}ms"
-        )
+        logger.info(f"20 voice profile cards: avg={metrics.avg_time*1000:.2f}ms")
 
 
 # =============================================================================
@@ -577,12 +519,11 @@ class TestUIThreadPerformance:
         avg_time = sum(times) / len(times)
         max_time = max(times)
 
-        assert avg_time < SLO.FRAME_TIME_AVG, \
-            f"Idle frame time {avg_time*1000:.2f}ms exceeds 16.67ms"
+        assert (
+            avg_time < SLO.FRAME_TIME_AVG
+        ), f"Idle frame time {avg_time*1000:.2f}ms exceeds 16.67ms"
 
-        logger.info(
-            f"Idle frame time: avg={avg_time*1000:.4f}ms, max={max_time*1000:.4f}ms"
-        )
+        logger.info(f"Idle frame time: avg={avg_time*1000:.4f}ms, max={max_time*1000:.4f}ms")
 
     def test_busy_frame_time(self, perf_benchmark, record_performance):
         """Test busy UI thread frame time (with simulated work)."""
@@ -601,8 +542,7 @@ class TestUIThreadPerformance:
         avg_time = sum(times) / len(times)
 
         # Busy frames should still aim for 60 FPS
-        assert avg_time < SLO.FRAME_TIME_P95, \
-            f"Busy frame time {avg_time*1000:.2f}ms exceeds 33ms"
+        assert avg_time < SLO.FRAME_TIME_P95, f"Busy frame time {avg_time*1000:.2f}ms exceeds 33ms"
 
         logger.info(f"Busy frame time: avg={avg_time*1000:.4f}ms")
 
@@ -629,8 +569,9 @@ class TestUIMemoryPerformance:
 
         stats = memory_monitor.get_stats()
 
-        assert stats["delta_mb"] < SLO.MEMORY_GROWTH_MAX, \
-            f"Memory growth {stats['delta_mb']:.2f}MB exceeds {SLO.MEMORY_GROWTH_MAX}MB"
+        assert (
+            stats["delta_mb"] < SLO.MEMORY_GROWTH_MAX
+        ), f"Memory growth {stats['delta_mb']:.2f}MB exceeds {SLO.MEMORY_GROWTH_MAX}MB"
 
         logger.info(
             f"Panel load memory: start={stats['start_mb']:.2f}MB, "
@@ -655,12 +596,12 @@ class TestUIMemoryPerformance:
         stats = memory_monitor.get_stats()
 
         # Check for memory leaks (growth should be minimal after warmup)
-        assert stats["delta_mb"] < SLO.MEMORY_GROWTH_MAX * 2, \
-            f"Possible memory leak: {stats['delta_mb']:.2f}MB growth"
+        assert (
+            stats["delta_mb"] < SLO.MEMORY_GROWTH_MAX * 2
+        ), f"Possible memory leak: {stats['delta_mb']:.2f}MB growth"
 
         logger.info(
-            f"Navigation memory: peak={stats['peak_mb']:.2f}MB, "
-            f"delta={stats['delta_mb']:.2f}MB"
+            f"Navigation memory: peak={stats['peak_mb']:.2f}MB, " f"delta={stats['delta_mb']:.2f}MB"
         )
 
 
@@ -674,9 +615,7 @@ class TestUIMemoryPerformance:
 class TestUIIntegrationPerformance:
     """Tests for integrated UI performance scenarios."""
 
-    def test_full_workflow_performance(
-        self, navigation_service, control_renderer, perf_timer
-    ):
+    def test_full_workflow_performance(self, navigation_service, control_renderer, perf_timer):
         """Test full workflow performance simulation."""
         with perf_timer("Full Workflow") as timer:
             # 1. Navigate to project browser
@@ -695,12 +634,14 @@ class TestUIIntegrationPerformance:
             navigation_service.navigate_to("SynthesisPanel")
 
             # 6. Render synthesis controls
-            control_renderer.render_control_batch({
-                "TextBox": 1,
-                "ComboBox": 3,
-                "Button": 5,
-                "WaveformDisplay": 1,
-            })
+            control_renderer.render_control_batch(
+                {
+                    "TextBox": 1,
+                    "ComboBox": 3,
+                    "Button": 5,
+                    "WaveformDisplay": 1,
+                }
+            )
 
         elapsed = timer.get_elapsed()
 
@@ -709,9 +650,7 @@ class TestUIIntegrationPerformance:
 
         logger.info(f"Full workflow completed in {elapsed*1000:.2f}ms")
 
-    def test_concurrent_operations_performance(
-        self, navigation_service, control_renderer
-    ):
+    def test_concurrent_operations_performance(self, navigation_service, control_renderer):
         """Test performance with concurrent UI operations."""
         import concurrent.futures
 
@@ -752,7 +691,7 @@ class TestUIPerformanceRegression:
         "simple_panel_render": 0.015,  # 15ms
         "medium_panel_render": 0.035,  # 35ms
         "complex_panel_render": 0.085,  # 85ms
-        "single_navigation": 0.080,   # 80ms
+        "single_navigation": 0.080,  # 80ms
     }
 
     # Regression threshold (10% slower = regression)
@@ -774,19 +713,16 @@ class TestUIPerformanceRegression:
                 f"{((metrics.avg_time / baseline) - 1) * 100:.1f}%"
             )
 
-        assert metrics.avg_time <= threshold, \
-            f"Performance regression detected: {metrics.avg_time*1000:.2f}ms vs baseline {baseline*1000:.2f}ms"
+        assert (
+            metrics.avg_time <= threshold
+        ), f"Performance regression detected: {metrics.avg_time*1000:.2f}ms vs baseline {baseline*1000:.2f}ms"
 
     def test_navigation_regression(self, navigation_service, perf_benchmark):
         """Check for navigation performance regression."""
         navigation_service.navigate_to("StartPanel")
 
         benchmark = perf_benchmark("Navigation Regression")
-        metrics = benchmark.run(
-            navigation_service.navigate_to,
-            "TargetPanel",
-            iterations=10
-        )
+        metrics = benchmark.run(navigation_service.navigate_to, "TargetPanel", iterations=10)
 
         baseline = self.BASELINES["single_navigation"]
         threshold = baseline * (1 + self.REGRESSION_THRESHOLD)
@@ -799,6 +735,5 @@ class TestUIPerformanceRegression:
 
         # This is a tracking test - we warn but don't fail immediately
         logger.info(
-            f"Navigation: {metrics.avg_time*1000:.2f}ms "
-            f"(baseline: {baseline*1000:.2f}ms)"
+            f"Navigation: {metrics.avg_time*1000:.2f}ms " f"(baseline: {baseline*1000:.2f}ms)"
         )

@@ -15,7 +15,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 # Add backend to path
-sys.path.insert(0, str(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "..", "backend")))
+sys.path.insert(
+    0, str(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "..", "backend"))
+)
 
 from backend.plugins.sandbox.host_api import (
     AudioAPIHandler,
@@ -60,11 +62,13 @@ class MockAudioService:
         audio_path: Optional[str] = None,
         device_id: Optional[str] = None,
     ) -> Dict[str, Any]:
-        self.play_calls.append({
-            "audio_data": audio_data,
-            "audio_path": audio_path,
-            "device_id": device_id,
-        })
+        self.play_calls.append(
+            {
+                "audio_data": audio_data,
+                "audio_path": audio_path,
+                "device_id": device_id,
+            }
+        )
         return {"status": "playing", "playback_id": "mock-playback-id"}
 
     async def stop_playback(self, playback_id: Optional[str] = None) -> Dict[str, Any]:
@@ -80,11 +84,13 @@ class MockAudioService:
         operation: str,
         params: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        self.process_calls.append({
-            "audio_data": audio_data,
-            "operation": operation,
-            "params": params,
-        })
+        self.process_calls.append(
+            {
+                "audio_data": audio_data,
+                "operation": operation,
+                "params": params,
+            }
+        )
         return {"status": "processed", "operation": operation}
 
 
@@ -104,12 +110,14 @@ class MockUIService:
         duration_ms: int = 3000,
         source_plugin: Optional[str] = None,
     ) -> Dict[str, Any]:
-        self.notifications.append({
-            "title": title,
-            "message": message,
-            "level": level,
-            "source_plugin": source_plugin,
-        })
+        self.notifications.append(
+            {
+                "title": title,
+                "message": message,
+                "level": level,
+                "source_plugin": source_plugin,
+            }
+        )
         return {"shown": True, "notification_id": "mock-notif-id"}
 
     async def show_dialog(
@@ -120,12 +128,14 @@ class MockUIService:
         buttons: Optional[List[str]] = None,
         source_plugin: Optional[str] = None,
     ) -> Dict[str, Any]:
-        self.dialogs.append({
-            "title": title,
-            "content": content,
-            "dialog_type": dialog_type,
-            "source_plugin": source_plugin,
-        })
+        self.dialogs.append(
+            {
+                "title": title,
+                "content": content,
+                "dialog_type": dialog_type,
+                "source_plugin": source_plugin,
+            }
+        )
         return {"shown": True, "dialog_id": "mock-dialog-id"}
 
     async def update_panel(
@@ -134,11 +144,13 @@ class MockUIService:
         updates: Dict[str, Any],
         source_plugin: Optional[str] = None,
     ) -> Dict[str, Any]:
-        self.panel_updates.append({
-            "panel_id": panel_id,
-            "updates": updates,
-            "source_plugin": source_plugin,
-        })
+        self.panel_updates.append(
+            {
+                "panel_id": panel_id,
+                "updates": updates,
+                "source_plugin": source_plugin,
+            }
+        )
         return {"updated": True}
 
 
@@ -181,11 +193,13 @@ class MockEngineService:
         method: str,
         params: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        self.invocations.append({
-            "engine_id": engine_id,
-            "method": method,
-            "params": params,
-        })
+        self.invocations.append(
+            {
+                "engine_id": engine_id,
+                "method": method,
+                "params": params,
+            }
+        )
         return {"result": f"{engine_id}.{method} completed"}
 
 

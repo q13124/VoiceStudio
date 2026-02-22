@@ -74,14 +74,51 @@ ENGINE_FILES = [
 
 
 FORBIDDEN_TERMS = [
-    "TODO", "FIXME", "NOTE", "HACK", "REMINDER", "XXX", "WARNING", "CAUTION",
-    "BUG", "ISSUE", "REFACTOR", "OPTIMIZE", "REVIEW", "CHECK", "VERIFY",
-    "TEST", "DEBUG", "DEPRECATED", "OBSOLETE",
-    "placeholder", "stub", "dummy", "mock", "fake", "sample", "temporary",
-    "NotImplementedError", "NotImplementedException", "pass",
-    "incomplete", "unfinished", "partial", "coming soon", "not yet",
-    "eventually", "later", "for now", "temporary", "needs", "requires",
-    "missing", "WIP", "tbd", "tba", "tbc"
+    "TODO",
+    "FIXME",
+    "NOTE",
+    "HACK",
+    "REMINDER",
+    "XXX",
+    "WARNING",
+    "CAUTION",
+    "BUG",
+    "ISSUE",
+    "REFACTOR",
+    "OPTIMIZE",
+    "REVIEW",
+    "CHECK",
+    "VERIFY",
+    "TEST",
+    "DEBUG",
+    "DEPRECATED",
+    "OBSOLETE",
+    "placeholder",
+    "stub",
+    "dummy",
+    "mock",
+    "fake",
+    "sample",
+    "temporary",
+    "NotImplementedError",
+    "NotImplementedException",
+    "pass",
+    "incomplete",
+    "unfinished",
+    "partial",
+    "coming soon",
+    "not yet",
+    "eventually",
+    "later",
+    "for now",
+    "temporary",
+    "needs",
+    "requires",
+    "missing",
+    "WIP",
+    "tbd",
+    "tba",
+    "tbc",
 ]
 
 
@@ -97,9 +134,9 @@ def check_for_forbidden_terms(file_path: Path) -> list[str]:
     """Check file for forbidden placeholder terms."""
     violations = []
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
-            lines = content.split('\n')
+            lines = content.split("\n")
 
             for line_num, line in enumerate(lines, 1):
                 line_lower = line.lower()
@@ -131,8 +168,11 @@ def load_engine_module(engine_name: str):
 
 def get_engine_class(module):
     """Get the main engine class from module."""
-    classes = [obj for name, obj in inspect.getmembers(module, inspect.isclass)
-               if name.endswith('Engine') and obj.__module__ == module.__name__]
+    classes = [
+        obj
+        for name, obj in inspect.getmembers(module, inspect.isclass)
+        if name.endswith("Engine") and obj.__module__ == module.__name__
+    ]
 
     if not classes:
         return None
@@ -194,13 +234,16 @@ class TestEngineInitialization:
 class TestEngineBasicFunctionality:
     """Test suite for basic engine functionality."""
 
-    @pytest.mark.parametrize("engine_name", [
-        "xtts_engine",
-        "chatterbox_engine",
-        "tortoise_engine",
-        "piper_engine",
-        "silero_engine",
-    ])
+    @pytest.mark.parametrize(
+        "engine_name",
+        [
+            "xtts_engine",
+            "chatterbox_engine",
+            "tortoise_engine",
+            "piper_engine",
+            "silero_engine",
+        ],
+    )
     def test_tts_engine_synthesis(self, engine_name, test_audio):
         """Test TTS engines can synthesize speech."""
         try:
@@ -210,28 +253,27 @@ class TestEngineBasicFunctionality:
             if engine_class is None:
                 pytest.skip(f"No engine class in {engine_name}")
 
-            engine = engine_class(
-                model_path=None,
-                device="cpu"
-            )
+            engine = engine_class(model_path=None, device="cpu")
 
-            if hasattr(engine, 'synthesize'):
+            if hasattr(engine, "synthesize"):
                 result = engine.synthesize(
-                    text="Hello, this is a test.",
-                    voice_profile_id="test",
-                    sample_rate=22050
+                    text="Hello, this is a test.", voice_profile_id="test", sample_rate=22050
                 )
 
                 assert result is not None, f"{engine_name} synthesis returned None"
-                assert hasattr(result, 'audio') or isinstance(result, (np.ndarray, list, dict)), \
-                    f"{engine_name} synthesis returned unexpected type"
+                assert hasattr(result, "audio") or isinstance(
+                    result, (np.ndarray, list, dict)
+                ), f"{engine_name} synthesis returned unexpected type"
         except Exception as e:
             pytest.skip(f"Could not test {engine_name} synthesis: {e}")
 
-    @pytest.mark.parametrize("engine_name", [
-        "whisper_engine",
-        "whisper_cpp_engine",
-    ])
+    @pytest.mark.parametrize(
+        "engine_name",
+        [
+            "whisper_engine",
+            "whisper_cpp_engine",
+        ],
+    )
     def test_transcription_engine(self, engine_name, test_audio):
         """Test transcription engines can transcribe audio."""
         try:
@@ -241,17 +283,15 @@ class TestEngineBasicFunctionality:
             if engine_class is None:
                 pytest.skip(f"No engine class in {engine_name}")
 
-            engine = engine_class(
-                model_path=None,
-                device="cpu"
-            )
+            engine = engine_class(model_path=None, device="cpu")
 
-            if hasattr(engine, 'transcribe'):
+            if hasattr(engine, "transcribe"):
                 result = engine.transcribe(test_audio, sample_rate=22050)
 
                 assert result is not None, f"{engine_name} transcription returned None"
-                assert isinstance(result, (str, dict)), \
-                    f"{engine_name} transcription returned unexpected type"
+                assert isinstance(
+                    result, (str, dict)
+                ), f"{engine_name} transcription returned unexpected type"
         except Exception as e:
             pytest.skip(f"Could not test {engine_name} transcription: {e}")
 
@@ -269,18 +309,11 @@ class TestEngineErrorHandling:
             if engine_class is None:
                 pytest.skip(f"No engine class in {engine_name}")
 
-            engine = engine_class(
-                model_path=None,
-                device="cpu"
-            )
+            engine = engine_class(model_path=None, device="cpu")
 
-            if hasattr(engine, 'synthesize'):
+            if hasattr(engine, "synthesize"):
                 try:
-                    engine.synthesize(
-                        text="",
-                        voice_profile_id="",
-                        sample_rate=22050
-                    )
+                    engine.synthesize(text="", voice_profile_id="", sample_rate=22050)
                 except (ValueError, TypeError, AttributeError):
                     ...
                 except Exception as e:
@@ -291,4 +324,3 @@ class TestEngineErrorHandling:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

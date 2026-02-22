@@ -87,7 +87,7 @@ class EngineHook:
             "text_to_image": "image_gen",
             "image_to_image": "image_gen",
             "image_to_video": "video_gen",
-            "video_generation": "video_gen"
+            "video_generation": "video_gen",
         }
         task_type = task_type_map.get(task, task)
 
@@ -114,6 +114,7 @@ class EngineHook:
             Engine instance or None
         """
         from app.core.engines.config import get_engine_config
+
         config = get_engine_config()
         engine_id = config.get_default_engine(task_type)
 
@@ -143,4 +144,3 @@ class EngineHook:
 
 # Global hook instance for easy access
 hook = EngineHook()
-

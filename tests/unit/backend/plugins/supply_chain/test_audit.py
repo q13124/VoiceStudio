@@ -114,10 +114,7 @@ class TestAuditCategory:
 
     def test_all_categories_defined(self):
         """Test all categories are defined."""
-        expected = [
-            "LIFECYCLE", "RUNTIME", "SECURITY",
-            "CONFIGURATION", "RESOURCE", "GENERAL"
-        ]
+        expected = ["LIFECYCLE", "RUNTIME", "SECURITY", "CONFIGURATION", "RESOURCE", "GENERAL"]
         for name in expected:
             assert hasattr(AuditCategory, name)
 
@@ -302,9 +299,7 @@ class TestAuditLogger:
         )
 
         # Query for plugin-a
-        events = audit_logger.query_events(
-            AuditQuery(plugin_id="plugin-a")
-        )
+        events = audit_logger.query_events(AuditQuery(plugin_id="plugin-a"))
 
         assert len(events) == 2
         assert all(e.plugin_id == "plugin-a" for e in events)
@@ -335,9 +330,7 @@ class TestAuditLogger:
             severity=AuditSeverity.ERROR,
         )
 
-        events = audit_logger.query_events(
-            AuditQuery(severities=[AuditSeverity.ERROR])
-        )
+        events = audit_logger.query_events(AuditQuery(severities=[AuditSeverity.ERROR]))
 
         assert len(events) == 1
         assert events[0].severity == AuditSeverity.ERROR
@@ -438,9 +431,7 @@ class TestAuditLogger:
         count = audit_logger.count_events(plugin_id="a")
         assert count == 2
 
-        count = audit_logger.count_events(
-            event_type=AuditEventType.PLUGIN_INSTALLED
-        )
+        count = audit_logger.count_events(event_type=AuditEventType.PLUGIN_INSTALLED)
         assert count == 2
 
     def test_delete_old_events(self, audit_logger):
@@ -628,6 +619,7 @@ class TestDefaultLogger:
         """Test getting default audit logger."""
         # Reset the module-level logger
         import backend.plugins.supply_chain.audit as audit_module
+
         audit_module._default_logger = None
 
         with patch.dict("os.environ", {"VOICESTUDIO_DATA_PATH": str(tmp_path)}):

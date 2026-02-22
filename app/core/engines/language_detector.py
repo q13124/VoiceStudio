@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class LanguageInfo:
     """Information about a detected language."""
+
     code: str
     name: str
     confidence: float
@@ -104,6 +105,7 @@ class LanguageDetector:
             # Load Whisper for audio detection
             try:
                 import whisper
+
                 self._whisper_model = whisper.load_model("base")
                 logger.info("Loaded Whisper for audio language detection")
             except ImportError:
@@ -112,11 +114,13 @@ class LanguageDetector:
             # Load text detector
             try:
                 import langdetect
+
                 self._text_detector = "langdetect"
                 logger.info("Using langdetect for text detection")
             except ImportError:
                 try:
                     from lingua import Language, LanguageDetectorBuilder
+
                     self._text_detector = LanguageDetectorBuilder.from_all_languages().build()
                     logger.info("Using lingua for text detection")
                 except ImportError:
@@ -157,6 +161,7 @@ class LanguageDetector:
                 if sample_rate != 16000:
                     try:
                         import librosa
+
                         audio = librosa.resample(audio, orig_sr=sample_rate, target_sr=16000)
                     except ImportError:
                         logger.debug("librosa not available for resampling in language detection")
@@ -174,12 +179,14 @@ class LanguageDetector:
                 results = []
                 for code, conf in sorted_langs[:top_k]:
                     name, script = LANGUAGE_DB.get(code, (code.upper(), "Unknown"))
-                    results.append(LanguageInfo(
-                        code=code,
-                        name=name,
-                        confidence=float(conf),
-                        script=script,
-                    ))
+                    results.append(
+                        LanguageInfo(
+                            code=code,
+                            name=name,
+                            confidence=float(conf),
+                            script=script,
+                        )
+                    )
 
                 return results
 
@@ -221,12 +228,14 @@ class LanguageDetector:
                 for det in detected[:top_k]:
                     code = det.lang
                     name, script = LANGUAGE_DB.get(code, (code.upper(), "Unknown"))
-                    results.append(LanguageInfo(
-                        code=code,
-                        name=name,
-                        confidence=det.prob,
-                        script=script,
-                    ))
+                    results.append(
+                        LanguageInfo(
+                            code=code,
+                            name=name,
+                            confidence=det.prob,
+                            script=script,
+                        )
+                    )
 
                 return results
 
@@ -242,12 +251,14 @@ class LanguageDetector:
                 for result in results_raw[:top_k]:
                     code = result.language.iso_code_639_1.name.lower()
                     name, script = LANGUAGE_DB.get(code, (code.upper(), "Unknown"))
-                    results.append(LanguageInfo(
-                        code=code,
-                        name=name,
-                        confidence=result.value,
-                        script=script,
-                    ))
+                    results.append(
+                        LanguageInfo(
+                            code=code,
+                            name=name,
+                            confidence=result.value,
+                            script=script,
+                        )
+                    )
 
                 return results
 
@@ -309,12 +320,14 @@ class LanguageDetector:
         results = []
         for code, conf in sorted_langs[:top_k]:
             name, script = LANGUAGE_DB.get(code, (code.upper(), "Unknown"))
-            results.append(LanguageInfo(
-                code=code,
-                name=name,
-                confidence=conf,
-                script=script,
-            ))
+            results.append(
+                LanguageInfo(
+                    code=code,
+                    name=name,
+                    confidence=conf,
+                    script=script,
+                )
+            )
 
         return results
 
@@ -358,8 +371,10 @@ class LanguageDetector:
                     return audio_result
                 return text_result
 
-        return audio_result or text_result or LanguageInfo(
-            code="en", name="English", confidence=0.5, script="Latin"
+        return (
+            audio_result
+            or text_result
+            or LanguageInfo(code="en", name="English", confidence=0.5, script="Latin")
         )
 
     @property

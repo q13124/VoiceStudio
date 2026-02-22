@@ -41,9 +41,7 @@ class VoiceQuickClonePage(BasePage):
     AUDIO_FILE_NAME = ElementLocator.by_automation_id(
         "AudioFileName", "Selected audio file name display"
     )
-    DROP_ZONE = ElementLocator.by_automation_id(
-        "AudioDropZone", "Audio file drop zone"
-    )
+    DROP_ZONE = ElementLocator.by_automation_id("AudioDropZone", "Audio file drop zone")
 
     # ==========================================================================
     # Locators - Auto-Detection
@@ -55,9 +53,7 @@ class VoiceQuickClonePage(BasePage):
     DETECTED_QUALITY = ElementLocator.by_automation_id(
         "DetectedQualityMode", "Auto-detected quality mode display"
     )
-    ENGINE_SELECTOR = ElementLocator.by_automation_id(
-        "EngineSelector", "Engine selection dropdown"
-    )
+    ENGINE_SELECTOR = ElementLocator.by_automation_id("EngineSelector", "Engine selection dropdown")
     QUALITY_SELECTOR = ElementLocator.by_automation_id(
         "QualitySelector", "Quality mode selection dropdown"
     )
@@ -77,9 +73,7 @@ class VoiceQuickClonePage(BasePage):
     QUICK_CLONE_BUTTON = ElementLocator.by_automation_id(
         "QuickCloneButton", "Start quick clone button"
     )
-    RESET_BUTTON = ElementLocator.by_automation_id(
-        "ResetButton", "Reset form button"
-    )
+    RESET_BUTTON = ElementLocator.by_automation_id("ResetButton", "Reset form button")
 
     # ==========================================================================
     # Locators - Progress/Status
@@ -91,9 +85,7 @@ class VoiceQuickClonePage(BasePage):
     PROCESSING_PROGRESS = ElementLocator.by_automation_id(
         "ProcessingProgress", "Processing progress bar"
     )
-    LOADING_INDICATOR = ElementLocator.by_automation_id(
-        "LoadingIndicator", "Loading spinner"
-    )
+    LOADING_INDICATOR = ElementLocator.by_automation_id("LoadingIndicator", "Loading spinner")
 
     # ==========================================================================
     # Locators - Results
@@ -102,26 +94,16 @@ class VoiceQuickClonePage(BasePage):
     CREATED_PROFILE_ID = ElementLocator.by_automation_id(
         "CreatedProfileId", "Created profile ID display"
     )
-    QUALITY_SCORE = ElementLocator.by_automation_id(
-        "QualityScore", "Voice quality score display"
-    )
-    SUCCESS_MESSAGE = ElementLocator.by_automation_id(
-        "SuccessMessage", "Success message display"
-    )
-    ERROR_MESSAGE = ElementLocator.by_automation_id(
-        "ErrorMessage", "Error message display"
-    )
+    QUALITY_SCORE = ElementLocator.by_automation_id("QualityScore", "Voice quality score display")
+    SUCCESS_MESSAGE = ElementLocator.by_automation_id("SuccessMessage", "Success message display")
+    ERROR_MESSAGE = ElementLocator.by_automation_id("ErrorMessage", "Error message display")
 
     # ==========================================================================
     # Locators - Help
     # ==========================================================================
 
-    HELP_OVERLAY = ElementLocator.by_automation_id(
-        "HelpOverlay", "Help overlay"
-    )
-    HELP_BUTTON = ElementLocator.by_automation_id(
-        "HelpButton", "Help button"
-    )
+    HELP_OVERLAY = ElementLocator.by_automation_id("HelpOverlay", "Help overlay")
+    HELP_BUTTON = ElementLocator.by_automation_id("HelpButton", "Help button")
 
     # ==========================================================================
     # Validation
@@ -225,9 +207,7 @@ class VoiceQuickClonePage(BasePage):
         """Select a specific quality mode from the dropdown."""
         self.click(self.QUALITY_SELECTOR)
         time.sleep(0.3)
-        quality_option = ElementLocator.by_name(
-            quality_mode, f"Quality option: {quality_mode}"
-        )
+        quality_option = ElementLocator.by_name(quality_mode, f"Quality option: {quality_mode}")
         self.click(quality_option)
         logger.info(f"Selected quality mode: {quality_mode}")
 
@@ -357,7 +337,7 @@ class VoiceQuickClonePage(BasePage):
         engine: str | None = None,
         quality_mode: str | None = None,
         wait_for_completion: bool = True,
-        timeout: float = 120.0
+        timeout: float = 120.0,
     ) -> str:
         """
         Complete the entire quick clone workflow.

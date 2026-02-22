@@ -88,7 +88,7 @@ class SupportedLanguages:
         codes = list(cls.LANGUAGES.keys())
         pairs = []
         for i, src in enumerate(codes):
-            for dst in codes[i+1:]:
+            for dst in codes[i + 1 :]:
                 pairs.append((src, dst))
                 pairs.append((dst, src))
         return pairs
@@ -146,6 +146,7 @@ class LanguageDetector:
             if sample_rate != 16000:
                 try:
                     import librosa
+
                     audio_data = librosa.resample(audio_data, orig_sr=sample_rate, target_sr=16000)
                 except ImportError:
                     logger.debug("librosa not available for resampling to 16kHz")
@@ -233,6 +234,7 @@ class LanguageDetector:
             if sample_rate != 16000:
                 try:
                     import librosa
+
                     audio_data = librosa.resample(audio_data, orig_sr=sample_rate, target_sr=16000)
                 except ImportError:
                     logger.debug("librosa not available for resampling to 16kHz")

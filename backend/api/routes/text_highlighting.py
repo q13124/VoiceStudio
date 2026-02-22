@@ -134,9 +134,7 @@ async def get_highlighting_session(session_id: str):
 
 
 @router.put("/{session_id}", response_model=HighlightingSession)
-async def update_highlighting_session(
-    session_id: str, request: HighlightingUpdateRequest
-):
+async def update_highlighting_session(session_id: str, request: HighlightingUpdateRequest):
     """Update a highlighting session."""
     if session_id not in _highlighting_sessions:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -250,9 +248,7 @@ class HighlightingPersistRequest(BaseModel):
 
 
 @router.post("/{session_id}/persist")
-async def persist_highlighting_session(
-    session_id: str, request: HighlightingPersistRequest
-):
+async def persist_highlighting_session(session_id: str, request: HighlightingPersistRequest):
     """Persist a highlighting session to storage."""
     if session_id not in _highlighting_sessions:
         raise HTTPException(status_code=404, detail="Session not found")

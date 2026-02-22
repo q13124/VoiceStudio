@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class DataCategory(Enum):
     """Categories of data for retention purposes."""
+
     AUDIO_UPLOADS = "audio_uploads"
     VOICE_CLONES = "voice_clones"
     SYNTHESIS_OUTPUT = "synthesis_output"
@@ -35,6 +36,7 @@ class DataCategory(Enum):
 @dataclass
 class RetentionPolicy:
     """Policy for a data category."""
+
     category: DataCategory
     retention_days: int
     auto_delete: bool = True
@@ -49,44 +51,43 @@ class RetentionPolicy:
 @dataclass
 class RetentionConfig:
     """Configuration for retention service."""
-    policies: dict[DataCategory, RetentionPolicy] = field(default_factory=lambda: {
-        DataCategory.AUDIO_UPLOADS: RetentionPolicy(
-            DataCategory.AUDIO_UPLOADS, retention_days=30
-        ),
-        DataCategory.VOICE_CLONES: RetentionPolicy(
-            DataCategory.VOICE_CLONES, retention_days=365
-        ),
-        DataCategory.SYNTHESIS_OUTPUT: RetentionPolicy(
-            DataCategory.SYNTHESIS_OUTPUT, retention_days=7
-        ),
-        DataCategory.PROJECT_FILES: RetentionPolicy(
-            DataCategory.PROJECT_FILES, retention_days=365, archive_before_delete=True
-        ),
-        DataCategory.SESSION_DATA: RetentionPolicy(
-            DataCategory.SESSION_DATA, retention_days=1
-        ),
-        DataCategory.AUDIT_LOGS: RetentionPolicy(
-            DataCategory.AUDIT_LOGS, retention_days=365, auto_delete=False
-        ),
-        DataCategory.TEMP_FILES: RetentionPolicy(
-            DataCategory.TEMP_FILES, retention_days=1
-        ),
-        DataCategory.CACHE: RetentionPolicy(
-            DataCategory.CACHE, retention_days=7
-        ),
-    })
+
+    policies: dict[DataCategory, RetentionPolicy] = field(
+        default_factory=lambda: {
+            DataCategory.AUDIO_UPLOADS: RetentionPolicy(
+                DataCategory.AUDIO_UPLOADS, retention_days=30
+            ),
+            DataCategory.VOICE_CLONES: RetentionPolicy(
+                DataCategory.VOICE_CLONES, retention_days=365
+            ),
+            DataCategory.SYNTHESIS_OUTPUT: RetentionPolicy(
+                DataCategory.SYNTHESIS_OUTPUT, retention_days=7
+            ),
+            DataCategory.PROJECT_FILES: RetentionPolicy(
+                DataCategory.PROJECT_FILES, retention_days=365, archive_before_delete=True
+            ),
+            DataCategory.SESSION_DATA: RetentionPolicy(DataCategory.SESSION_DATA, retention_days=1),
+            DataCategory.AUDIT_LOGS: RetentionPolicy(
+                DataCategory.AUDIT_LOGS, retention_days=365, auto_delete=False
+            ),
+            DataCategory.TEMP_FILES: RetentionPolicy(DataCategory.TEMP_FILES, retention_days=1),
+            DataCategory.CACHE: RetentionPolicy(DataCategory.CACHE, retention_days=7),
+        }
+    )
 
     # Directory mappings
-    category_paths: dict[DataCategory, str] = field(default_factory=lambda: {
-        DataCategory.AUDIO_UPLOADS: "data/audio_uploads",
-        DataCategory.VOICE_CLONES: "data/voice_clones",
-        DataCategory.SYNTHESIS_OUTPUT: "data/output",
-        DataCategory.PROJECT_FILES: "data/projects",
-        DataCategory.SESSION_DATA: "data/sessions",
-        DataCategory.AUDIT_LOGS: "data/audit",
-        DataCategory.TEMP_FILES: "data/temp",
-        DataCategory.CACHE: "data/cache",
-    })
+    category_paths: dict[DataCategory, str] = field(
+        default_factory=lambda: {
+            DataCategory.AUDIO_UPLOADS: "data/audio_uploads",
+            DataCategory.VOICE_CLONES: "data/voice_clones",
+            DataCategory.SYNTHESIS_OUTPUT: "data/output",
+            DataCategory.PROJECT_FILES: "data/projects",
+            DataCategory.SESSION_DATA: "data/sessions",
+            DataCategory.AUDIT_LOGS: "data/audit",
+            DataCategory.TEMP_FILES: "data/temp",
+            DataCategory.CACHE: "data/cache",
+        }
+    )
 
     archive_path: str = "data/archive"
     check_interval_hours: int = 24
@@ -95,6 +96,7 @@ class RetentionConfig:
 @dataclass
 class DeletionRecord:
     """Record of a deleted item."""
+
     category: DataCategory
     path: str
     size_bytes: int
@@ -149,9 +151,7 @@ class DataRetentionService:
                 await self.run_cleanup()
 
                 # Sleep until next check
-                await asyncio.sleep(
-                    self.config.check_interval_hours * 3600
-                )
+                await asyncio.sleep(self.config.check_interval_hours * 3600)
 
             except asyncio.CancelledError:
                 break

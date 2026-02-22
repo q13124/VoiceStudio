@@ -72,9 +72,7 @@ class ProfileEntry:
         self.total_memory_delta += memory_delta
         self.max_memory_delta = max(self.max_memory_delta, memory_delta)
         self.total_gpu_memory_delta += gpu_memory_delta
-        self.max_gpu_memory_delta = max(
-            self.max_gpu_memory_delta, gpu_memory_delta
-        )
+        self.max_gpu_memory_delta = max(self.max_gpu_memory_delta, gpu_memory_delta)
         self.last_called = datetime.now()
 
     def record_error(self):
@@ -171,34 +169,23 @@ class PerformanceProfiler:
                 self._call_stack.append(func_name)
                 start_time = time.perf_counter()
                 start_memory = self._get_memory_usage() if track_memory else 0.0
-                start_gpu_memory = (
-                    self._get_gpu_memory_usage() if track_gpu_memory else 0.0
-                )
+                start_gpu_memory = self._get_gpu_memory_usage() if track_gpu_memory else 0.0
 
                 try:
                     result = func(*args, **kwargs)
                     execution_time = time.perf_counter() - start_time
                     end_memory = self._get_memory_usage() if track_memory else 0.0
-                    end_gpu_memory = (
-                        self._get_gpu_memory_usage() if track_gpu_memory else 0.0
-                    )
+                    end_gpu_memory = self._get_gpu_memory_usage() if track_gpu_memory else 0.0
                     memory_delta = end_memory - start_memory
                     gpu_memory_delta = end_gpu_memory - start_gpu_memory
 
                     # Update profile
                     if func_name not in self._profiles:
-                        self._profiles[func_name] = ProfileEntry(
-                            function_name=func_name
-                        )
-                    self._profiles[func_name].update(
-                        execution_time, memory_delta, gpu_memory_delta
-                    )
+                        self._profiles[func_name] = ProfileEntry(function_name=func_name)
+                    self._profiles[func_name].update(execution_time, memory_delta, gpu_memory_delta)
 
                     # Warn on slow functions
-                    if (
-                        self.warn_on_slow
-                        and execution_time > self.slow_threshold_seconds
-                    ):
+                    if self.warn_on_slow and execution_time > self.slow_threshold_seconds:
                         logger.warning(
                             f"Slow function detected: {func_name} took "
                             f"{execution_time:.3f}s (threshold: "
@@ -209,9 +196,7 @@ class PerformanceProfiler:
                 except Exception:
                     execution_time = time.perf_counter() - start_time
                     if func_name not in self._profiles:
-                        self._profiles[func_name] = ProfileEntry(
-                            function_name=func_name
-                        )
+                        self._profiles[func_name] = ProfileEntry(function_name=func_name)
                     self._profiles[func_name].update(execution_time, 0.0, 0.0)
                     self._profiles[func_name].record_error()
                     raise
@@ -248,31 +233,22 @@ class PerformanceProfiler:
         self._call_stack.append(name)
         start_time = time.perf_counter()
         start_memory = self._get_memory_usage() if track_memory else 0.0
-        start_gpu_memory = (
-            self._get_gpu_memory_usage() if track_gpu_memory else 0.0
-        )
+        start_gpu_memory = self._get_gpu_memory_usage() if track_gpu_memory else 0.0
 
         try:
             yield
             execution_time = time.perf_counter() - start_time
             end_memory = self._get_memory_usage() if track_memory else 0.0
-            end_gpu_memory = (
-                self._get_gpu_memory_usage() if track_gpu_memory else 0.0
-            )
+            end_gpu_memory = self._get_gpu_memory_usage() if track_gpu_memory else 0.0
             memory_delta = end_memory - start_memory
             gpu_memory_delta = end_gpu_memory - start_gpu_memory
 
             if name not in self._profiles:
                 self._profiles[name] = ProfileEntry(function_name=name)
-            self._profiles[name].update(
-                execution_time, memory_delta, gpu_memory_delta
-            )
+            self._profiles[name].update(execution_time, memory_delta, gpu_memory_delta)
 
             # Warn on slow functions
-            if (
-                self.warn_on_slow
-                and execution_time > self.slow_threshold_seconds
-            ):
+            if self.warn_on_slow and execution_time > self.slow_threshold_seconds:
                 logger.warning(
                     f"Slow code block detected: {name} took "
                     f"{execution_time:.3f}s (threshold: "
@@ -386,14 +362,8 @@ class PerformanceProfiler:
                 "total_gpu_memory_delta_mb": entry.total_gpu_memory_delta,
                 "max_gpu_memory_delta_mb": entry.max_gpu_memory_delta,
                 "errors": entry.errors,
-                "error_rate": (
-                    entry.errors / entry.call_count
-                    if entry.call_count > 0
-                    else 0.0
-                ),
-                "last_called": (
-                    entry.last_called.isoformat() if entry.last_called else None
-                ),
+                "error_rate": (entry.errors / entry.call_count if entry.call_count > 0 else 0.0),
+                "last_called": (entry.last_called.isoformat() if entry.last_called else None),
             }
             for name, entry in self._profiles.items()
         }
@@ -426,4 +396,3 @@ def get_profiler() -> PerformanceProfiler:
     if _profiler is None:
         _profiler = PerformanceProfiler()
     return _profiler
-

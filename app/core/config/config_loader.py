@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 # Try importing optional parsers
 try:
     import yaml
+
     HAS_YAML = True
 except ImportError:
     HAS_YAML = False
@@ -24,6 +25,7 @@ except ImportError:
 
 try:
     import toml
+
     HAS_TOML = True
 except ImportError:
     HAS_TOML = False
@@ -31,6 +33,7 @@ except ImportError:
 
 try:
     from pydantic import BaseModel, ValidationError
+
     HAS_PYDANTIC = True
 except ImportError:
     HAS_PYDANTIC = False
@@ -38,6 +41,7 @@ except ImportError:
 
 try:
     from cerberus import Validator
+
     HAS_CERBERUS = True
 except ImportError:
     HAS_CERBERUS = False
@@ -68,14 +72,14 @@ class ConfigLoader:
             Format string: 'json', 'yaml', 'toml', or 'unknown'
         """
         suffix = self.config_path.suffix.lower()
-        if suffix == '.json':
-            return 'json'
-        elif suffix in ('.yaml', '.yml'):
-            return 'yaml'
-        elif suffix == '.toml':
-            return 'toml'
+        if suffix == ".json":
+            return "json"
+        elif suffix in (".yaml", ".yml"):
+            return "yaml"
+        elif suffix == ".toml":
+            return "toml"
         else:
-            return 'unknown'
+            return "unknown"
 
     def load(self, validate: bool = True, schema: dict | None = None) -> dict[str, Any]:
         """
@@ -98,13 +102,13 @@ class ConfigLoader:
         self.format = self.detect_format()
 
         # Load based on format
-        if self.format == 'json':
+        if self.format == "json":
             self.config = self._load_json()
-        elif self.format == 'yaml':
+        elif self.format == "yaml":
             if not HAS_YAML:
                 raise ValueError("YAML support requires pyyaml. Install with: pip install pyyaml")
             self.config = self._load_yaml()
-        elif self.format == 'toml':
+        elif self.format == "toml":
             if not HAS_TOML:
                 raise ValueError("TOML support requires toml. Install with: pip install toml")
             self.config = self._load_toml()
@@ -124,17 +128,17 @@ class ConfigLoader:
 
     def _load_json(self) -> dict[str, Any]:
         """Load JSON configuration."""
-        with open(self.config_path, encoding='utf-8') as f:
+        with open(self.config_path, encoding="utf-8") as f:
             return json.load(f)
 
     def _load_yaml(self) -> dict[str, Any]:
         """Load YAML configuration."""
-        with open(self.config_path, encoding='utf-8') as f:
+        with open(self.config_path, encoding="utf-8") as f:
             return yaml.safe_load(f) or {}
 
     def _load_toml(self) -> dict[str, Any]:
         """Load TOML configuration."""
-        with open(self.config_path, encoding='utf-8') as f:
+        with open(self.config_path, encoding="utf-8") as f:
             return toml.load(f)
 
     def _validate_cerberus(self, schema: dict) -> None:
@@ -163,15 +167,15 @@ class ConfigLoader:
         Args:
             format: Output format ('json', 'yaml', 'toml'). If None, uses detected format.
         """
-        save_format = format or self.format or 'json'
+        save_format = format or self.format or "json"
 
-        if save_format == 'json':
+        if save_format == "json":
             self._save_json()
-        elif save_format == 'yaml':
+        elif save_format == "yaml":
             if not HAS_YAML:
                 raise ValueError("YAML support requires pyyaml")
             self._save_yaml()
-        elif save_format == 'toml':
+        elif save_format == "toml":
             if not HAS_TOML:
                 raise ValueError("TOML support requires toml")
             self._save_toml()
@@ -184,7 +188,7 @@ class ConfigLoader:
         """Save as JSON atomically (tmp + replace)."""
         tmp_path = self.config_path.with_suffix(self.config_path.suffix + ".tmp")
         try:
-            with open(tmp_path, 'w', encoding='utf-8') as f:
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=2, ensure_ascii=False)
             os.replace(tmp_path, self.config_path)
         except Exception:
@@ -196,7 +200,7 @@ class ConfigLoader:
         """Save as YAML atomically (tmp + replace)."""
         tmp_path = self.config_path.with_suffix(self.config_path.suffix + ".tmp")
         try:
-            with open(tmp_path, 'w', encoding='utf-8') as f:
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 yaml.dump(self.config, f, default_flow_style=False, allow_unicode=True)
             os.replace(tmp_path, self.config_path)
         except Exception:
@@ -208,7 +212,7 @@ class ConfigLoader:
         """Save as TOML atomically (tmp + replace)."""
         tmp_path = self.config_path.with_suffix(self.config_path.suffix + ".tmp")
         try:
-            with open(tmp_path, 'w', encoding='utf-8') as f:
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 toml.dump(self.config, f)
             os.replace(tmp_path, self.config_path)
         except Exception:
@@ -218,7 +222,7 @@ class ConfigLoader:
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value by key (supports dot notation)."""
-        keys = key.split('.')
+        keys = key.split(".")
         value = self.config
         for k in keys:
             if isinstance(value, dict) and k in value:
@@ -229,7 +233,7 @@ class ConfigLoader:
 
     def set(self, key: str, value: Any) -> None:
         """Set configuration value by key (supports dot notation)."""
-        keys = key.split('.')
+        keys = key.split(".")
         config = self.config
         for k in keys[:-1]:
             if k not in config:
@@ -247,6 +251,7 @@ class PydanticConfigModel(BaseModel):
     Base Pydantic model for configuration validation.
     Extend this class for specific configuration schemas.
     """
+
     ...
 
 
@@ -254,7 +259,7 @@ def load_config(
     config_path: str | Path,
     format: str | None = None,
     validate: bool = True,
-    schema: dict | None = None
+    schema: dict | None = None,
 ) -> dict[str, Any]:
     """
     Convenience function to load configuration.
@@ -274,11 +279,7 @@ def load_config(
     return loader.load(validate=validate, schema=schema)
 
 
-def save_config(
-    config: dict[str, Any],
-    config_path: str | Path,
-    format: str = 'json'
-) -> None:
+def save_config(config: dict[str, Any], config_path: str | Path, format: str = "json") -> None:
     """
     Convenience function to save configuration.
 
@@ -291,4 +292,3 @@ def save_config(
     loader.config = config
     loader.format = format
     loader.save(format=format)
-

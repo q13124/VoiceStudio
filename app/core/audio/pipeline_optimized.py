@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import librosa
+
     HAS_LIBROSA = True
 except ImportError:
     HAS_LIBROSA = False
@@ -41,6 +42,7 @@ try:
     )
     from .enhanced_audio_enhancement import EnhancedAudioEnhancer
     from .enhanced_preprocessing import EnhancedPreprocessor
+
     HAS_AUDIO_MODULES = True
 except ImportError:
     HAS_AUDIO_MODULES = False
@@ -81,10 +83,14 @@ class OptimizedAudioPipeline:
         self.cache_size = cache_size
 
         # Initialize processors
-        self.preprocessor = EnhancedPreprocessor(
-            sample_rate=sample_rate, target_sample_rate=sample_rate
-        ) if HAS_AUDIO_MODULES else None
-        self.enhancer = EnhancedAudioEnhancer(sample_rate=sample_rate) if HAS_AUDIO_MODULES else None
+        self.preprocessor = (
+            EnhancedPreprocessor(sample_rate=sample_rate, target_sample_rate=sample_rate)
+            if HAS_AUDIO_MODULES
+            else None
+        )
+        self.enhancer = (
+            EnhancedAudioEnhancer(sample_rate=sample_rate) if HAS_AUDIO_MODULES else None
+        )
 
         # Cache for intermediate results
         self._cache: dict[str, np.ndarray] = {}
@@ -258,6 +264,7 @@ class OptimizedAudioPipeline:
 
             try:
                 import soundfile as sf
+
                 sf.write(str(output_path), processed.T, self.sample_rate)
             except ImportError:
                 logger.warning("soundfile not available, cannot save audio")
@@ -302,8 +309,7 @@ class OptimizedAudioPipeline:
         loaded_audio = []
         with executor_class(max_workers=max_workers) as executor:
             futures = {
-                executor.submit(load_file, Path(fp)): idx
-                for idx, fp in enumerate(file_paths)
+                executor.submit(load_file, Path(fp)): idx for idx, fp in enumerate(file_paths)
             }
 
             loaded_audio = [None] * len(file_paths)
@@ -325,6 +331,7 @@ class OptimizedAudioPipeline:
         if output_dir:
             try:
                 import soundfile as sf
+
                 for idx, (file_path, processed_audio) in enumerate(zip(file_paths, processed)):
                     if processed_audio is not None:
                         output_path = output_dir / Path(file_path).name
@@ -337,10 +344,10 @@ class OptimizedAudioPipeline:
     def optimize_memory(self):
         """Optimize memory usage by clearing caches."""
         self._cache.clear()
-        if hasattr(self, 'preprocessor') and self.preprocessor:
+        if hasattr(self, "preprocessor") and self.preprocessor:
             # Clear any caches in preprocessor
             ...
-        if hasattr(self, 'enhancer') and self.enhancer:
+        if hasattr(self, "enhancer") and self.enhancer:
             # Clear any caches in enhancer
             ...
         logger.debug("Memory optimization: caches cleared")
@@ -372,4 +379,3 @@ def create_optimized_pipeline(
 
 # Export
 __all__ = ["OptimizedAudioPipeline", "create_optimized_pipeline"]
-

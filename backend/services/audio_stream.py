@@ -24,18 +24,20 @@ logger = logging.getLogger(__name__)
 
 class StreamFormat(Enum):
     """Audio stream formats."""
+
     PCM_S16LE = "pcm_s16le"  # 16-bit signed little-endian
     PCM_F32LE = "pcm_f32le"  # 32-bit float little-endian
-    OPUS = "opus"            # Opus codec (requires opuslib)
+    OPUS = "opus"  # Opus codec (requires opuslib)
 
 
 @dataclass
 class StreamConfig:
     """Configuration for audio stream."""
+
     sample_rate: int = 16000
     channels: int = 1
-    chunk_size: int = 1024       # Samples per chunk
-    buffer_size: int = 4         # Number of chunks to buffer
+    chunk_size: int = 1024  # Samples per chunk
+    buffer_size: int = 4  # Number of chunks to buffer
     format: StreamFormat = StreamFormat.PCM_S16LE
     latency_target_ms: float = 50.0
 
@@ -43,6 +45,7 @@ class StreamConfig:
 @dataclass
 class StreamStats:
     """Statistics for audio stream."""
+
     chunks_received: int = 0
     chunks_sent: int = 0
     bytes_received: int = 0

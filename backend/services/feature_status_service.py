@@ -17,13 +17,17 @@ async def _check_rvc_status() -> dict[str, Any]:
     """Check voice conversion (RVC) feature status."""
     try:
         from backend.voice.rvc.engine import RVCEngine
+
         engine = RVCEngine()
         await engine.load()
         is_available = engine.rvc_available()
         return {
             "status": "fully_functional" if is_available else "placeholder",
-            "message": "Voice conversion ready" if is_available
-                       else "RVC model not loaded - using basic processing",
+            "message": (
+                "Voice conversion ready"
+                if is_available
+                else "RVC model not loaded - using basic processing"
+            ),
             "requires_model": True,
         }
     except Exception as e:
@@ -39,6 +43,7 @@ async def _check_emotion_status() -> tuple[dict[str, Any], dict[str, Any]]:
     """Check emotion detection/synthesis feature status."""
     try:
         from backend.voice.emotion.engine import EmotionEngine
+
         engine = EmotionEngine()
         await engine.load()
 
@@ -47,14 +52,20 @@ async def _check_emotion_status() -> tuple[dict[str, Any], dict[str, Any]]:
 
         detection = {
             "status": "fully_functional" if detection_available else "placeholder",
-            "message": "Emotion detection ready" if detection_available
-                       else "Using rule-based emotion detection",
+            "message": (
+                "Emotion detection ready"
+                if detection_available
+                else "Using rule-based emotion detection"
+            ),
             "requires_model": True,
         }
         synthesis = {
             "status": "fully_functional" if synthesis_available else "placeholder",
-            "message": "Emotion synthesis ready" if synthesis_available
-                       else "Using basic DSP for emotion effects",
+            "message": (
+                "Emotion synthesis ready"
+                if synthesis_available
+                else "Using basic DSP for emotion effects"
+            ),
             "requires_model": True,
         }
         return detection, synthesis
@@ -72,13 +83,17 @@ async def _check_translation_status() -> dict[str, Any]:
     """Check translation feature status."""
     try:
         from backend.voice.translation.engine import TranslationEngine
+
         engine = TranslationEngine()
         await engine.load()
         is_available = engine.translation_available()
         return {
             "status": "fully_functional" if is_available else "placeholder",
-            "message": "Translation ready" if is_available
-                       else "SeamlessM4T not loaded - limited translation",
+            "message": (
+                "Translation ready"
+                if is_available
+                else "SeamlessM4T not loaded - limited translation"
+            ),
             "requires_model": True,
         }
     except Exception as e:

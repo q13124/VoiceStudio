@@ -25,7 +25,8 @@ async def setup_library_tables(db_path: str) -> None:
     """Create library tables for testing."""
     async with aiosqlite.connect(db_path) as conn:
         # Library Folders Table
-        await conn.execute("""
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS library_folders (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -37,7 +38,8 @@ async def setup_library_tables(db_path: str) -> None:
                 modified_at TEXT,
                 FOREIGN KEY (parent_id) REFERENCES library_folders(id)
             )
-        """)
+        """
+        )
         await conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_library_folders_parent ON library_folders(parent_id)"
         )
@@ -46,7 +48,8 @@ async def setup_library_tables(db_path: str) -> None:
         )
 
         # Library Assets Table
-        await conn.execute("""
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS library_assets (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -64,7 +67,8 @@ async def setup_library_tables(db_path: str) -> None:
                 modified_at TEXT,
                 FOREIGN KEY (folder_id) REFERENCES library_folders(id)
             )
-        """)
+        """
+        )
         await conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_library_assets_folder ON library_assets(folder_id)"
         )
@@ -103,10 +107,7 @@ class TestLibraryFolderRepository(AsyncIntegrationTestBase):
         # Create tables first
         await setup_library_tables(temp_db_path)
 
-        config = ConnectionConfig(
-            database_type=DatabaseType.SQLITE,
-            sqlite_path=temp_db_path
-        )
+        config = ConnectionConfig(database_type=DatabaseType.SQLITE, sqlite_path=temp_db_path)
         repo = LibraryFolderRepository(config)
         return repo
 
@@ -284,10 +285,7 @@ class TestLibraryAssetRepository(AsyncIntegrationTestBase):
         # Create tables first
         await setup_library_tables(temp_db_path)
 
-        config = ConnectionConfig(
-            database_type=DatabaseType.SQLITE,
-            sqlite_path=temp_db_path
-        )
+        config = ConnectionConfig(database_type=DatabaseType.SQLITE, sqlite_path=temp_db_path)
         repo = LibraryAssetRepository(config)
         return repo
 
@@ -458,11 +456,13 @@ class TestLibraryAssetRepository(AsyncIntegrationTestBase):
             type=AssetType.AUDIO.value,
             path="/library/metadata_test.wav",
         )
-        entity.set_metadata({
-            "sample_rate": 44100,
-            "channels": 2,
-            "format": "wav",
-        })
+        entity.set_metadata(
+            {
+                "sample_rate": 44100,
+                "channels": 2,
+                "format": "wav",
+            }
+        )
         await asset_repo.create(entity)
 
         retrieved = await asset_repo.get_by_id(asset_id)
@@ -730,22 +730,26 @@ class TestInMemoryLibraryRepositories(AsyncIntegrationTestBase):
 
         # Create mixed assets
         for i in range(3):
-            await repo.create(LibraryAssetEntity(
-                id=str(uuid.uuid4()),
-                name=f"audio_{i}.wav",
-                type=AssetType.AUDIO.value,
-                path=f"/audio_{i}.wav",
-                size=1000 * (i + 1),
-            ))
+            await repo.create(
+                LibraryAssetEntity(
+                    id=str(uuid.uuid4()),
+                    name=f"audio_{i}.wav",
+                    type=AssetType.AUDIO.value,
+                    path=f"/audio_{i}.wav",
+                    size=1000 * (i + 1),
+                )
+            )
 
         for i in range(2):
-            await repo.create(LibraryAssetEntity(
-                id=str(uuid.uuid4()),
-                name=f"profile_{i}.json",
-                type=AssetType.VOICE_PROFILE.value,
-                path=f"/profile_{i}.json",
-                size=500,
-            ))
+            await repo.create(
+                LibraryAssetEntity(
+                    id=str(uuid.uuid4()),
+                    name=f"profile_{i}.json",
+                    type=AssetType.VOICE_PROFILE.value,
+                    path=f"/profile_{i}.json",
+                    size=500,
+                )
+            )
 
         summary = await repo.get_summary()
         assert summary["total"] == 5

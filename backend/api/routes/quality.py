@@ -184,9 +184,7 @@ class QualityTrendsResponse(BaseModel):
 
 
 # In-memory storage for quality history (replace with database in production)
-_quality_history: dict[str, list[QualityHistoryEntry]] = (
-    {}
-)  # profile_id -> list of entries
+_quality_history: dict[str, list[QualityHistoryEntry]] = {}  # profile_id -> list of entries
 _MAX_HISTORY_ENTRIES_PER_PROFILE = 1000  # Maximum entries per profile
 _MAX_TOTAL_ENTRIES = 10000  # Maximum total entries across all profiles
 
@@ -234,9 +232,7 @@ def _cleanup_old_history():
                     pass  # Entry already removed
 
         # Clean up empty profiles
-        _quality_history = {
-            pid: entries for pid, entries in _quality_history.items() if entries
-        }
+        _quality_history = {pid: entries for pid, entries in _quality_history.items() if entries}
 
         logger.debug(f"Cleaned up {removed} old quality history entries globally")
 
@@ -292,9 +288,7 @@ async def get_preset(preset_name: str):
     try:
         preset = get_quality_preset(preset_name)
         if not preset:
-            raise HTTPException(
-                status_code=404, detail=f"Preset '{preset_name}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Preset '{preset_name}' not found")
 
         params = get_synthesis_params_from_preset(preset_name)
 
@@ -324,9 +318,7 @@ async def analyze_quality(req: QualityAnalysisRequest):
         Analysis results with recommendations
     """
     if not HAS_QUALITY_OPTIMIZATION:
-        raise HTTPException(
-            status_code=503, detail="Quality optimization not available"
-        )
+        raise HTTPException(status_code=503, detail="Quality optimization not available")
 
     try:
         metrics = {
@@ -366,9 +358,7 @@ async def optimize_quality(req: QualityOptimizationRequest):
         Optimized parameters and analysis
     """
     if not HAS_QUALITY_OPTIMIZATION:
-        raise HTTPException(
-            status_code=503, detail="Quality optimization not available"
-        )
+        raise HTTPException(status_code=503, detail="Quality optimization not available")
 
     try:
         optimized_params, analysis = optimize_synthesis_for_quality(
@@ -488,9 +478,7 @@ async def get_engine_recommendation(
         Recommended engine name and reasoning
     """
     if not HAS_QUALITY_OPTIMIZATION:
-        raise HTTPException(
-            status_code=503, detail="Quality optimization not available"
-        )
+        raise HTTPException(status_code=503, detail="Quality optimization not available")
 
     try:
         optimizer = QualityOptimizer(target_tier=target_tier)
@@ -505,9 +493,7 @@ async def get_engine_recommendation(
             target_metrics["naturalness"] = min_naturalness
 
         # Get recommendation
-        recommended_engine = optimizer.suggest_engine(
-            target_metrics if target_metrics else None
-        )
+        recommended_engine = optimizer.suggest_engine(target_metrics if target_metrics else None)
 
         return {
             "recommended_engine": recommended_engine,
@@ -641,9 +627,7 @@ async def run_benchmark(request: BenchmarkRequest):
                 if not metrics or not isinstance(metrics, dict):
                     import soundfile as sf
 
-                    with tempfile.NamedTemporaryFile(
-                        suffix=".wav", delete=False
-                    ) as tmp:
+                    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
                         sf.write(tmp.name, audio, 22050)
                         tmp_path = tmp.name
 
@@ -695,9 +679,7 @@ async def run_benchmark(request: BenchmarkRequest):
 
 @router.get("/dashboard")
 @cache_response(ttl=30)  # Cache for 30 seconds (dashboard aggregates data)
-async def get_quality_dashboard(
-    project_id: str | None = None, days: int = 30
-) -> dict[str, Any]:
+async def get_quality_dashboard(project_id: str | None = None, days: int = 30) -> dict[str, Any]:
     """
     Get quality metrics dashboard data.
 
@@ -764,39 +746,27 @@ async def get_quality_dashboard(
 
         # Calculate overview metrics
         mos_scores = [
-            e.metrics.get("mos_score", 0)
-            for e in recent_entries
-            if e.metrics.get("mos_score")
+            e.metrics.get("mos_score", 0) for e in recent_entries if e.metrics.get("mos_score")
         ]
         similarity_scores = [
-            e.metrics.get("similarity", 0)
-            for e in recent_entries
-            if e.metrics.get("similarity")
+            e.metrics.get("similarity", 0) for e in recent_entries if e.metrics.get("similarity")
         ]
         naturalness_scores = [
-            e.metrics.get("naturalness", 0)
-            for e in recent_entries
-            if e.metrics.get("naturalness")
+            e.metrics.get("naturalness", 0) for e in recent_entries if e.metrics.get("naturalness")
         ]
 
         avg_mos = sum(mos_scores) / len(mos_scores) if mos_scores else 0.0
         avg_similarity = (
-            sum(similarity_scores) / len(similarity_scores)
-            if similarity_scores
-            else 0.0
+            sum(similarity_scores) / len(similarity_scores) if similarity_scores else 0.0
         )
         avg_naturalness = (
-            sum(naturalness_scores) / len(naturalness_scores)
-            if naturalness_scores
-            else 0.0
+            sum(naturalness_scores) / len(naturalness_scores) if naturalness_scores else 0.0
         )
 
         # Calculate trends (daily averages)
         daily_data = {}
         for entry in recent_entries:
-            entry_date = datetime.fromisoformat(
-                entry.timestamp.replace("Z", "+00:00")
-            ).date()
+            entry_date = datetime.fromisoformat(entry.timestamp.replace("Z", "+00:00")).date()
             if entry_date not in daily_data:
                 daily_data[entry_date] = {
                     "mos": [],
@@ -809,9 +779,7 @@ async def get_quality_dashboard(
             if entry.metrics.get("similarity"):
                 daily_data[entry_date]["similarity"].append(entry.metrics["similarity"])
             if entry.metrics.get("naturalness"):
-                daily_data[entry_date]["naturalness"].append(
-                    entry.metrics["naturalness"]
-                )
+                daily_data[entry_date]["naturalness"].append(entry.metrics["naturalness"])
 
         # Build trend data
         sorted_dates = sorted(daily_data.keys())
@@ -841,8 +809,7 @@ async def get_quality_dashboard(
             {
                 "date": str(d),
                 "value": (
-                    sum(daily_data[d]["naturalness"])
-                    / len(daily_data[d]["naturalness"])
+                    sum(daily_data[d]["naturalness"]) / len(daily_data[d]["naturalness"])
                     if daily_data[d]["naturalness"]
                     else 0.0
                 ),
@@ -924,9 +891,7 @@ async def get_quality_dashboard(
         }
     except Exception as e:
         logger.error(f"Failed to generate quality dashboard: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate dashboard: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to generate dashboard: {e!s}")
 
 
 # Quality History Endpoints (IDEA 30)
@@ -971,17 +936,13 @@ async def store_quality_history(request: QualityHistoryRequest):
         if len(_quality_history[request.profile_id]) % 100 == 0:
             _cleanup_old_history()
 
-        logger.debug(
-            f"Stored quality history entry {entry.id} for profile {request.profile_id}"
-        )
+        logger.debug(f"Stored quality history entry {entry.id} for profile {request.profile_id}")
 
         return entry
 
     except Exception as e:
         logger.error(f"Failed to store quality history: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to store quality history: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to store quality history: {e!s}")
 
 
 @router.get("/history/{profile_id}", response_model=QualityHistoryResponse)
@@ -1014,10 +975,14 @@ async def get_quality_history(
         # Apply project_id filter if provided (B.1 enhancement)
         if project_id:
             entries = [
-                e for e in entries
-                if (hasattr(e, "project_id") and e.project_id == project_id) or
-                   (hasattr(e, "metadata") and isinstance(e.metadata, dict) and
-                    e.metadata.get("project_id") == project_id)
+                e
+                for e in entries
+                if (hasattr(e, "project_id") and e.project_id == project_id)
+                or (
+                    hasattr(e, "metadata")
+                    and isinstance(e.metadata, dict)
+                    and e.metadata.get("project_id") == project_id
+                )
             ]
 
         # Apply date filters if provided
@@ -1043,9 +1008,7 @@ async def get_quality_history(
 
     except Exception as e:
         logger.error(f"Failed to get quality history: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get quality history: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get quality history: {e!s}")
 
 
 @router.get("/history/{profile_id}/trends", response_model=QualityTrendsResponse)
@@ -1078,17 +1041,13 @@ async def get_quality_trends(profile_id: str, time_range: str = "30d"):
             )
 
         # Calculate days from time range
-        days = {"7d": 7, "30d": 30, "90d": 90, "1y": 365, "all": 999999}.get(
-            time_range, 30
-        )
+        days = {"7d": 7, "30d": 30, "90d": 90, "1y": 365, "all": 999999}.get(time_range, 30)
 
         # Filter entries by time range
         from datetime import datetime, timedelta
 
         cutoff_date = (datetime.utcnow() - timedelta(days=days)).isoformat() + "Z"
-        filtered_entries = [
-            e for e in entries if e.timestamp >= cutoff_date or time_range == "all"
-        ]
+        filtered_entries = [e for e in entries if e.timestamp >= cutoff_date or time_range == "all"]
 
         if not filtered_entries:
             return QualityTrendsResponse(
@@ -1137,9 +1096,7 @@ async def get_quality_trends(profile_id: str, time_range: str = "30d"):
                 if len(values) > 1:
                     x_mean = (len(values) - 1) / 2.0
                     y_mean = avg
-                    numerator = sum(
-                        (i - x_mean) * (values[i] - y_mean) for i in range(len(values))
-                    )
+                    numerator = sum((i - x_mean) * (values[i] - y_mean) for i in range(len(values)))
                     denominator = sum((i - x_mean) ** 2 for i in range(len(values)))
                     if denominator != 0:
                         trend = numerator / denominator
@@ -1166,9 +1123,7 @@ async def get_quality_trends(profile_id: str, time_range: str = "30d"):
 
     except Exception as e:
         logger.error(f"Failed to get quality trends: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get quality trends: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get quality trends: {e!s}")
 
 
 # Text Analysis and Quality Recommendations (IDEA 53)
@@ -1279,9 +1234,7 @@ async def recommend_quality_endpoint(request: QualityRecommendationRequest):
 
     except Exception as e:
         logger.error(f"Failed to get quality recommendations: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get quality recommendations: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get quality recommendations: {e!s}")
 
 
 # Quality Degradation Detection (IDEA 56)
@@ -1386,9 +1339,7 @@ async def check_quality_degradation(
         )
 
         # Convert alerts to response format
-        alert_responses = [
-            QualityDegradationAlertResponse(**alert.to_dict()) for alert in alerts
-        ]
+        alert_responses = [QualityDegradationAlertResponse(**alert.to_dict()) for alert in alerts]
 
         return QualityDegradationResponse(
             profile_id=profile_id,
@@ -1399,9 +1350,7 @@ async def check_quality_degradation(
 
     except Exception as e:
         logger.error(f"Failed to check quality degradation: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to check quality degradation: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to check quality degradation: {e!s}")
 
 
 @router.get("/baseline/{profile_id}", response_model=Optional[QualityBaselineResponse])
@@ -1461,9 +1410,7 @@ async def get_quality_baseline(profile_id: str, time_period_days: int = 30):
 
     except Exception as e:
         logger.error(f"Failed to get quality baseline: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get quality baseline: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get quality baseline: {e!s}")
 
 
 # Quality Consistency Monitoring (IDEA 59)
@@ -1528,24 +1475,18 @@ async def set_quality_standard(request: QualityStandardRequest):
         from api.utils.quality_consistency import get_quality_consistency_monitor
 
         monitor = get_quality_consistency_monitor()
-        success = monitor.set_quality_standard(
-            request.project_id, request.standard_name
-        )
+        success = monitor.set_quality_standard(request.project_id, request.standard_name)
 
         if success:
             return {
                 "message": f"Quality standard '{request.standard_name}' set for project {request.project_id}"
             }
         else:
-            raise HTTPException(
-                status_code=400, detail="Failed to set quality standard"
-            )
+            raise HTTPException(status_code=400, detail="Failed to set quality standard")
 
     except Exception as e:
         logger.error(f"Failed to set quality standard: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to set quality standard: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to set quality standard: {e!s}")
 
 
 @router.post("/consistency/record")
@@ -1584,15 +1525,11 @@ async def record_quality_metrics(
         if success:
             return {"message": "Quality metrics recorded successfully"}
         else:
-            raise HTTPException(
-                status_code=400, detail="Failed to record quality metrics"
-            )
+            raise HTTPException(status_code=400, detail="Failed to record quality metrics")
 
     except Exception as e:
         logger.error(f"Failed to record quality metrics: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to record quality metrics: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to record quality metrics: {e!s}")
 
 
 @router.get("/consistency/{project_id}", response_model=QualityConsistencyReport)
@@ -1617,9 +1554,7 @@ async def check_project_consistency(project_id: str, time_period_days: int = 30)
 
     except Exception as e:
         logger.error(f"Failed to check project consistency: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to check project consistency: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to check project consistency: {e!s}")
 
 
 @router.get("/consistency/all", response_model=AllProjectsConsistencyResponse)
@@ -1685,9 +1620,7 @@ async def get_project_quality_trends(project_id: str, time_period_days: int = 30
 
     except Exception as e:
         logger.error(f"Failed to get project quality trends: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get project quality trends: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get project quality trends: {e!s}")
 
 
 # Advanced Quality Metrics Visualization (IDEA 60)
@@ -1789,9 +1722,7 @@ async def get_quality_heatmap(request: QualityHeatmapRequest):
 
     except Exception as e:
         logger.error(f"Failed to calculate quality heatmap: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to calculate quality heatmap: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to calculate quality heatmap: {e!s}")
 
 
 @router.post("/visualization/correlations", response_model=QualityCorrelationResponse)
@@ -1854,9 +1785,7 @@ async def detect_quality_anomalies_endpoint(
 
     except Exception as e:
         logger.error(f"Failed to detect quality anomalies: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to detect quality anomalies: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to detect quality anomalies: {e!s}")
 
 
 @router.post("/visualization/predict", response_model=QualityPredictionResponse)
@@ -1898,15 +1827,11 @@ async def predict_quality_endpoint(request: QualityPredictionRequest):
 
     except Exception as e:
         logger.error(f"Failed to predict quality: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to predict quality: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to predict quality: {e!s}")
 
 
 @router.post("/visualization/insights", response_model=QualityInsightsResponse)
-async def get_quality_insights(
-    quality_data: list[dict[str, Any]], time_period_days: int = 30
-):
+async def get_quality_insights(quality_data: list[dict[str, Any]], time_period_days: int = 30):
     """
     Get quality insights and recommendations (IDEA 60).
 
@@ -1932,9 +1857,7 @@ async def get_quality_insights(
 
     except Exception as e:
         logger.error(f"Failed to generate quality insights: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate quality insights: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to generate quality insights: {e!s}")
 
 
 @router.post("/visualization/export/heatmap")
@@ -2004,9 +1927,7 @@ async def export_quality_heatmap(
 
     except Exception as e:
         logger.error(f"Failed to export quality heatmap: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to export quality heatmap: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to export quality heatmap: {e!s}")
 
 
 @router.post("/visualization/export/correlations")
@@ -2044,9 +1965,7 @@ async def export_quality_correlations(
             for metric1 in correlations["metrics"]:
                 row = [metric1]
                 for metric2 in correlations["metrics"]:
-                    row.append(
-                        correlations["correlations"][metric1].get(metric2, 0.0)
-                    )
+                    row.append(correlations["correlations"][metric1].get(metric2, 0.0))
                 writer.writerow(row)
 
             from fastapi.responses import Response
@@ -2055,9 +1974,7 @@ async def export_quality_correlations(
                 content=output.getvalue(),
                 media_type="text/csv",
                 headers={
-                    "Content-Disposition": (
-                        'attachment; filename="quality_correlations.csv"'
-                    )
+                    "Content-Disposition": ('attachment; filename="quality_correlations.csv"')
                 },
             )
         else:
@@ -2065,9 +1982,7 @@ async def export_quality_correlations(
             return correlations
 
     except Exception as e:
-        logger.error(
-            f"Failed to export quality correlations: {e}", exc_info=True
-        )
+        logger.error(f"Failed to export quality correlations: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Failed to export quality correlations: {e!s}",
@@ -2158,9 +2073,7 @@ async def export_quality_anomalies(
 
     except Exception as e:
         logger.error(f"Failed to export quality anomalies: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to export quality anomalies: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to export quality anomalies: {e!s}")
 
 
 @router.post("/visualization/export/insights")
@@ -2194,9 +2107,7 @@ async def export_quality_insights(
             writer = csv.writer(output)
 
             # Header
-            writer.writerow(
-                ["type", "title", "message", "priority", "action"]
-            )
+            writer.writerow(["type", "title", "message", "priority", "action"])
 
             # Data rows
             for insight in insights_data:
@@ -2215,11 +2126,7 @@ async def export_quality_insights(
             return Response(
                 content=output.getvalue(),
                 media_type="text/csv",
-                headers={
-                    "Content-Disposition": (
-                        'attachment; filename="quality_insights.csv"'
-                    )
-                },
+                headers={"Content-Disposition": ('attachment; filename="quality_insights.csv"')},
             )
         else:
             # JSON format
@@ -2231,6 +2138,4 @@ async def export_quality_insights(
 
     except Exception as e:
         logger.error(f"Failed to export quality insights: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to export quality insights: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to export quality insights: {e!s}")

@@ -76,9 +76,7 @@ class VideoCreatorEngine(EngineProtocol):
             batch_size: Default batch size for parallel processing
         """
         if not HAS_MOVIEPY:
-            raise ImportError(
-                "moviepy not installed. " "Install with: pip install moviepy>=1.0.3"
-            )
+            raise ImportError("moviepy not installed. " "Install with: pip install moviepy>=1.0.3")
 
         super().__init__(device=device, gpu=gpu)
 
@@ -113,9 +111,7 @@ class VideoCreatorEngine(EngineProtocol):
                 self._temp_dir = temp_manager.create_temp_directory(
                     prefix="video_creator_", owner="video_creator_engine"
                 )
-                logger.debug(
-                    f"Created temp directory via manager: " f"{self._temp_dir}"
-                )
+                logger.debug(f"Created temp directory via manager: " f"{self._temp_dir}")
             except Exception as e:
                 logger.debug(f"Temp file manager not available, using tempfile: {e}")
                 self._temp_dir = tempfile.mkdtemp(prefix="video_creator_")
@@ -154,9 +150,7 @@ class VideoCreatorEngine(EngineProtocol):
 
                     temp_manager = get_temp_file_manager()
                     temp_manager.remove_temp_file(self._temp_dir, force=True)
-                    logger.debug(
-                        f"Removed temp directory via manager: {self._temp_dir}"
-                    )
+                    logger.debug(f"Removed temp directory via manager: {self._temp_dir}")
                 except Exception:
                     # Fallback to direct removal
                     if os.path.exists(self._temp_dir):
@@ -199,9 +193,7 @@ class VideoCreatorEngine(EngineProtocol):
             Path to created video
         """
         if not self._initialized and not self.initialize():
-            raise RuntimeError(
-                "Engine not initialized. " "Call initialize() first."
-            )
+            raise RuntimeError("Engine not initialized. " "Call initialize() first.")
 
         try:
             # Validate inputs
@@ -262,9 +254,7 @@ class VideoCreatorEngine(EngineProtocol):
                 elif audio.duration < video.duration:
                     # Loop audio if shorter
                     loops = int(video.duration / audio.duration) + 1
-                    audio = concatenate_audioclips([audio] * loops).subclip(
-                        0, video.duration
-                    )
+                    audio = concatenate_audioclips([audio] * loops).subclip(0, video.duration)
 
                 video = video.set_audio(audio)
 
@@ -336,9 +326,7 @@ class VideoCreatorEngine(EngineProtocol):
             Path to created slideshow video
         """
         if not self._initialized and not self.initialize():
-            raise RuntimeError(
-                "Engine not initialized. " "Call initialize() first."
-            )
+            raise RuntimeError("Engine not initialized. " "Call initialize() first.")
 
         try:
             # Load audio to get duration
@@ -350,8 +338,7 @@ class VideoCreatorEngine(EngineProtocol):
             duration_per_image = audio_duration / len(image_paths)
 
             logger.info(
-                f"Creating slideshow: {len(image_paths)} images, "
-                f"{audio_duration:.2f}s audio"
+                f"Creating slideshow: {len(image_paths)} images, " f"{audio_duration:.2f}s audio"
             )
 
             # Create video with synchronized timing
@@ -415,13 +402,9 @@ class VideoCreatorEngine(EngineProtocol):
                     from .performance_metrics import get_engine_metrics
 
                     metrics = get_engine_metrics()
-                    metrics.record_synthesis_time(
-                        "video_creator", duration, cached=False
-                    )
+                    metrics.record_synthesis_time("video_creator", duration, cached=False)
                 except Exception:
-                    logger.debug(
-                        "Performance metrics unavailable for video_creator batch create."
-                    )
+                    logger.debug("Performance metrics unavailable for video_creator batch create.")
                 return result
             except Exception as e:
                 logger.error(f"Batch video creation failed: {e}")
@@ -473,11 +456,7 @@ class VideoCreatorEngine(EngineProtocol):
     def get_cache_stats(self) -> dict[str, int | float | str]:
         """Get cache statistics (enhanced)."""
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
-        hit_rate = (
-            (self._cache_stats["hits"] / total_requests * 100)
-            if total_requests > 0
-            else 0.0
-        )
+        hit_rate = (self._cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0.0
         return {
             "cache_size": len(self._generation_cache),
             "max_cache_size": self.cache_size,

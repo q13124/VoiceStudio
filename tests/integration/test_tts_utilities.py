@@ -36,14 +36,12 @@ class TestGTTSWrapper:
         pytest.importorskip("gtts")
 
         wrapper = GTTSWrapper()
-        with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
             temp_path = Path(f.name)
 
         try:
             result = wrapper.synthesize(
-                "Hello, this is a test.",
-                language='en',
-                output_path=str(temp_path)
+                "Hello, this is a test.", language="en", output_path=str(temp_path)
             )
             assert result == str(temp_path)
             assert temp_path.exists()
@@ -58,15 +56,15 @@ class TestGTTSWrapper:
         wrapper = GTTSWrapper()
         languages = wrapper.get_available_languages()
         assert isinstance(languages, list)
-        assert 'en' in languages
+        assert "en" in languages
 
     def test_gtts_language_support(self):
         """Test language support check."""
         pytest.importorskip("gtts")
 
         wrapper = GTTSWrapper()
-        assert wrapper.is_language_supported('en') is True
-        assert wrapper.is_language_supported('es') is True
+        assert wrapper.is_language_supported("en") is True
+        assert wrapper.is_language_supported("es") is True
 
 
 class TestPyttsx3Wrapper:
@@ -85,14 +83,11 @@ class TestPyttsx3Wrapper:
         pytest.importorskip("pyttsx3")
 
         wrapper = Pyttsx3Wrapper()
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
             temp_path = Path(f.name)
 
         try:
-            result = wrapper.synthesize(
-                "Hello, this is a test.",
-                output_path=str(temp_path)
-            )
+            result = wrapper.synthesize("Hello, this is a test.", output_path=str(temp_path))
             assert result == str(temp_path)
             assert temp_path.exists()
         finally:
@@ -116,8 +111,8 @@ class TestPyttsx3Wrapper:
         wrapper = Pyttsx3Wrapper()
         properties = wrapper.get_properties()
         assert isinstance(properties, dict)
-        assert 'rate' in properties
-        assert 'volume' in properties
+        assert "rate" in properties
+        assert "volume" in properties
         wrapper.cleanup()
 
     def test_pyttsx3_cleanup(self):
@@ -154,15 +149,12 @@ class TestUtilityFunctions:
         """Test synthesize_with_utility using gTTS."""
         pytest.importorskip("gtts")
 
-        with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
             temp_path = Path(f.name)
 
         try:
             result = synthesize_with_utility(
-                "Test text",
-                utility='gtts',
-                language='en',
-                output_path=str(temp_path)
+                "Test text", utility="gtts", language="en", output_path=str(temp_path)
             )
             assert result == str(temp_path)
             assert temp_path.exists()
@@ -174,14 +166,12 @@ class TestUtilityFunctions:
         """Test synthesize_with_utility using pyttsx3."""
         pytest.importorskip("pyttsx3")
 
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
             temp_path = Path(f.name)
 
         try:
             result = synthesize_with_utility(
-                "Test text",
-                utility='pyttsx3',
-                output_path=str(temp_path)
+                "Test text", utility="pyttsx3", output_path=str(temp_path)
             )
             assert result == str(temp_path)
             assert temp_path.exists()
@@ -192,5 +182,4 @@ class TestUtilityFunctions:
     def test_synthesize_with_utility_invalid(self):
         """Test synthesize_with_utility with invalid utility."""
         with pytest.raises(ValueError):
-            synthesize_with_utility("Test", utility='invalid')
-
+            synthesize_with_utility("Test", utility="invalid")

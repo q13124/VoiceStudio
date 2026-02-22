@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class SyncEventType(Enum):
     """Real-time sync event types."""
+
     PROJECT_UPDATED = "project_updated"
     TRACK_ADDED = "track_added"
     TRACK_UPDATED = "track_updated"
@@ -43,6 +44,7 @@ class SyncEventType(Enum):
 
 class PermissionLevel(Enum):
     """Permission levels for shared projects."""
+
     VIEW = "view"  # Read-only access
     COMMENT = "comment"  # Can add comments
     EDIT = "edit"  # Can edit project
@@ -51,6 +53,7 @@ class PermissionLevel(Enum):
 
 class ExportFormat(Enum):
     """Project export formats."""
+
     VOICESTUDIO = "vstudio"  # Native format
     ZIP = "zip"  # ZIP archive with assets
     JSON = "json"  # JSON-only (no audio)
@@ -60,6 +63,7 @@ class ExportFormat(Enum):
 @dataclass
 class SyncEvent:
     """Real-time synchronization event."""
+
     event_id: str
     event_type: SyncEventType
     project_id: str
@@ -83,6 +87,7 @@ class SyncEvent:
 @dataclass
 class Collaborator:
     """Project collaborator."""
+
     user_id: str
     display_name: str
     permission: PermissionLevel
@@ -104,6 +109,7 @@ class Collaborator:
 @dataclass
 class SharedProject:
     """Shared project with collaboration state."""
+
     project_id: str
     name: str
     owner_id: str
@@ -119,9 +125,7 @@ class SharedProject:
             "project_id": self.project_id,
             "name": self.name,
             "owner_id": self.owner_id,
-            "collaborators": {
-                k: v.to_dict() for k, v in self.collaborators.items()
-            },
+            "collaborators": {k: v.to_dict() for k, v in self.collaborators.items()},
             "version": self.version,
             "created_at": self.created_at.isoformat(),
             "last_sync_at": self.last_sync_at.isoformat(),
@@ -133,6 +137,7 @@ class SharedProject:
 @dataclass
 class ExportResult:
     """Result of project export."""
+
     export_id: str
     project_id: str
     format: ExportFormat
@@ -550,9 +555,7 @@ class CollaborationService:
             raise ValueError(f"Project not found: {project_id}")
 
         # Generate unique share token
-        token = hashlib.sha256(
-            f"{project_id}:{uuid.uuid4()}".encode()
-        ).hexdigest()[:16]
+        token = hashlib.sha256(f"{project_id}:{uuid.uuid4()}".encode()).hexdigest()[:16]
 
         share_link = f"voicestudio://share/{token}"
         project.share_link = share_link

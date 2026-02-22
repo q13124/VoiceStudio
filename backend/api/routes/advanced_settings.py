@@ -108,10 +108,7 @@ async def get_advanced_settings():
         import time
 
         current_time = time.time()
-        if (
-            _settings_cache is not None
-            and (current_time - _cache_timestamp) < _cache_ttl
-        ):
+        if _settings_cache is not None and (current_time - _cache_timestamp) < _cache_ttl:
             return AdvancedSettingsData(**_settings_cache)
 
         # Load from file
@@ -211,9 +208,7 @@ async def get_settings_category(category: str):
         }
 
         if category not in category_map:
-            raise HTTPException(
-                status_code=404, detail=f"Category '{category}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Category '{category}' not found")
 
         return category_map[category]
     except HTTPException:

@@ -185,21 +185,15 @@ class EnhancedQualityMetrics:
 
         return metrics
 
-    def _calculate_lufs_metrics(
-        self, audio: np.ndarray, sample_rate: int
-    ) -> dict[str, float]:
+    def _calculate_lufs_metrics(self, audio: np.ndarray, sample_rate: int) -> dict[str, float]:
         """Calculate LUFS-based loudness metrics."""
         if not self.lufs_meter:
             return {}
 
         try:
-            integrated_lufs = self.lufs_meter.measure_integrated_lufs(
-                audio, sample_rate
-            )
+            integrated_lufs = self.lufs_meter.measure_integrated_lufs(audio, sample_rate)
             momentary_lufs = self.lufs_meter.measure_momentary_lufs(audio, sample_rate)
-            short_term_lufs = self.lufs_meter.measure_short_term_lufs(
-                audio, sample_rate
-            )
+            short_term_lufs = self.lufs_meter.measure_short_term_lufs(audio, sample_rate)
             peak_lufs = self.lufs_meter.measure_peak_lufs(audio, sample_rate)
 
             return {
@@ -212,9 +206,7 @@ class EnhancedQualityMetrics:
             logger.warning(f"LUFS metrics failed: {e}")
             return {}
 
-    def _calculate_spectral_metrics(
-        self, audio: np.ndarray, sample_rate: int
-    ) -> dict[str, float]:
+    def _calculate_spectral_metrics(self, audio: np.ndarray, sample_rate: int) -> dict[str, float]:
         """Calculate advanced spectral metrics."""
         if not HAS_LIBROSA:
             return {}
@@ -225,13 +217,9 @@ class EnhancedQualityMetrics:
                 audio = np.mean(audio, axis=1)
 
             # Spectral features
-            spectral_centroid = librosa.feature.spectral_centroid(
-                y=audio, sr=sample_rate
-            )
+            spectral_centroid = librosa.feature.spectral_centroid(y=audio, sr=sample_rate)
             spectral_rolloff = librosa.feature.spectral_rolloff(y=audio, sr=sample_rate)
-            spectral_bandwidth = librosa.feature.spectral_bandwidth(
-                y=audio, sr=sample_rate
-            )
+            spectral_bandwidth = librosa.feature.spectral_bandwidth(y=audio, sr=sample_rate)
             zero_crossing_rate = librosa.feature.zero_crossing_rate(audio)
 
             # MFCC
@@ -257,9 +245,7 @@ class EnhancedQualityMetrics:
             logger.warning(f"Spectral metrics failed: {e}")
             return {}
 
-    def _calculate_prosody_metrics(
-        self, audio: np.ndarray, sample_rate: int
-    ) -> dict[str, float]:
+    def _calculate_prosody_metrics(self, audio: np.ndarray, sample_rate: int) -> dict[str, float]:
         """Calculate prosody-related metrics."""
         if not HAS_LIBROSA:
             return {}
@@ -404,9 +390,7 @@ class EnhancedQualityMetrics:
 
         # Difference metrics
         if "mos_score" in metrics1 and "mos_score" in metrics2:
-            comparison["mos_difference"] = abs(
-                metrics1["mos_score"] - metrics2["mos_score"]
-            )
+            comparison["mos_difference"] = abs(metrics1["mos_score"] - metrics2["mos_score"])
 
         if "snr" in metrics1 and "snr" in metrics2:
             comparison["snr_difference"] = abs(metrics1["snr"] - metrics2["snr"])

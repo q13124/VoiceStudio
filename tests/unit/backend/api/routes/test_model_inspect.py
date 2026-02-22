@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import model_inspect
 except ImportError:
-    pytest.skip(
-        "Could not import model_inspect route module", allow_module_level=True
-    )
+    pytest.skip("Could not import model_inspect route module", allow_module_level=True)
 
 
 class TestModelInspectRouteImports:
@@ -25,12 +23,8 @@ class TestModelInspectRouteImports:
 
     def test_model_inspect_module_imports(self):
         """Test model_inspect module can be imported."""
-        assert (
-            model_inspect is not None
-        ), "Failed to import model_inspect module"
-        assert hasattr(
-            model_inspect, "router"
-        ), "model_inspect module missing router"
+        assert model_inspect is not None, "Failed to import model_inspect module"
+        assert hasattr(model_inspect, "router"), "model_inspect module missing router"
 
 
 class TestModelInspectRouteHandlers:
@@ -39,9 +33,7 @@ class TestModelInspectRouteHandlers:
     def test_inspect_model_handler_exists(self):
         """Test inspect_model handler exists."""
         if hasattr(model_inspect, "inspect_model"):
-            assert callable(
-                model_inspect.inspect_model
-            ), "inspect_model is not callable"
+            assert callable(model_inspect.inspect_model), "inspect_model is not callable"
 
 
 class TestModelInspectRouter:

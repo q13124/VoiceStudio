@@ -116,7 +116,7 @@ class ResponseCache:
         try:
             # Serialize to JSON to estimate size
             json_str = json.dumps(response_data)
-            return len(json_str.encode('utf-8'))
+            return len(json_str.encode("utf-8"))
         except Exception:
             # Fallback: rough estimate
             return 1024  # 1KB default estimate
@@ -352,9 +352,7 @@ class ResponseCache:
             "hit_rate": f"{hit_rate:.2f}%",
             "evictions": self._evictions,
             "memory_mb": f"{memory_mb:.2f}",
-            "max_memory_mb": (
-                f"{self.max_memory_mb:.2f}" if self.max_memory_mb else None
-            ),
+            "max_memory_mb": (f"{self.max_memory_mb:.2f}" if self.max_memory_mb else None),
             "tags": len(self._tag_index),
         }
 
@@ -546,11 +544,7 @@ def cache_response(ttl: int | None = None):
                 cache.set(
                     cache_key,
                     {
-                        "content": (
-                            response.body.decode()
-                            if hasattr(response, "body")
-                            else None
-                        ),
+                        "content": (response.body.decode() if hasattr(response, "body") else None),
                         "status_code": response.status_code,
                         "headers": dict(response.headers),
                     },

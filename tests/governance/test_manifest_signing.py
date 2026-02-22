@@ -3,7 +3,6 @@ Tests for manifest signing and release management.
 """
 
 
-
 class TestManifestSigning:
     """Test manifest signing functionality."""
 

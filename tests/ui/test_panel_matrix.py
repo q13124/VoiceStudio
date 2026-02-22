@@ -284,8 +284,11 @@ class TestPanelElements:
                 missing_elements.append(element_id)
                 tracer.step(f"  Missing: {element_id}")
 
-        tracer.step(f"{panel['name']}: {len(found_elements)}/{len(panel['expected_elements'])} elements found",
-                   driver, SCREENSHOTS_ENABLED)
+        tracer.step(
+            f"{panel['name']}: {len(found_elements)}/{len(panel['expected_elements'])} elements found",
+            driver,
+            SCREENSHOTS_ENABLED,
+        )
 
         if found_elements:
             tracer.success(f"{panel['name']} has {len(found_elements)} expected elements")

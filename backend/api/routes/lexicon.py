@@ -188,9 +188,7 @@ async def create_lexicon_entry(lexicon_id: str, request: LexiconEntryCreateReque
         _lexicon_entries[lexicon_id] = []
 
     # Check for duplicate
-    existing = [
-        e for e in _lexicon_entries[lexicon_id] if e.get("word") == request.word
-    ]
+    existing = [e for e in _lexicon_entries[lexicon_id] if e.get("word") == request.word]
     if existing:
         raise HTTPException(
             status_code=400,
@@ -231,9 +229,7 @@ async def list_lexicon_entries(
 
 
 @router.put("/lexicons/{lexicon_id}/entries/{word}", response_model=LexiconEntry)
-async def update_lexicon_entry(
-    lexicon_id: str, word: str, request: LexiconEntryCreateRequest
-):
+async def update_lexicon_entry(lexicon_id: str, word: str, request: LexiconEntryCreateRequest):
     """Update a lexicon entry."""
     if lexicon_id not in _lexicons:
         raise HTTPException(status_code=404, detail="Lexicon not found")
@@ -242,9 +238,7 @@ async def update_lexicon_entry(
         raise HTTPException(status_code=404, detail="Entry not found")
 
     entries = _lexicon_entries[lexicon_id]
-    entry_index = next(
-        (i for i, e in enumerate(entries) if e.get("word") == word), None
-    )
+    entry_index = next((i for i, e in enumerate(entries) if e.get("word") == word), None)
 
     if entry_index is None:
         raise HTTPException(status_code=404, detail="Entry not found")
@@ -278,9 +272,7 @@ async def delete_lexicon_entry(lexicon_id: str, word: str):
         raise HTTPException(status_code=404, detail="Entry not found")
 
     entries = _lexicon_entries[lexicon_id]
-    entry_index = next(
-        (i for i, e in enumerate(entries) if e.get("word") == word), None
-    )
+    entry_index = next((i for i, e in enumerate(entries) if e.get("word") == word), None)
 
     if entry_index is None:
         raise HTTPException(status_code=404, detail="Entry not found")
@@ -314,18 +306,12 @@ async def search_lexicon_entries(request: LexiconSearchRequest):
             entry = LexiconEntry(**entry_data)
 
             # Filter by part of speech if specified
-            if (
-                request.part_of_speech
-                and entry.part_of_speech != request.part_of_speech
-            ):
+            if request.part_of_speech and entry.part_of_speech != request.part_of_speech:
                 continue
 
             # Match word or pronunciation
             query_lower = request.query.lower()
-            if (
-                query_lower in entry.word.lower()
-                or query_lower in entry.pronunciation.lower()
-            ):
+            if query_lower in entry.word.lower() or query_lower in entry.pronunciation.lower():
                 results.append(
                     {
                         "lexicon_id": lexicon_id,
@@ -663,9 +649,7 @@ async def estimate_phonemes(request: PhonemeEstimateRequest):
                     engine = engine_service.get_whisper_engine()
                     if not engine:
                         raise Exception("Whisper engine not available")
-                    transcription = engine.transcribe(
-                        audio_path, language=request.language
-                    )
+                    transcription = engine.transcribe(audio_path, language=request.language)
 
                     if transcription and transcription.get("text"):
                         word = transcription["text"].strip()

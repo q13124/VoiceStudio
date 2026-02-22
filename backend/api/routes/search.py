@@ -38,16 +38,12 @@ class SearchResultItem(BaseModel):
     """Individual search result item."""
 
     id: str = Field(..., description="Item identifier")
-    type: str = Field(
-        ..., description="Item type (profile, project, audio, marker, script)"
-    )
+    type: str = Field(..., description="Item type (profile, project, audio, marker, script)")
     title: str = Field(..., description="Item title/name")
     description: str | None = Field(None, description="Item description")
     panel_id: str = Field(..., description="Panel ID to navigate to")
     preview: str | None = Field(None, description="Preview text snippet")
-    metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Additional metadata"
-    )
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
 
 class ParsedQuery(BaseModel):
@@ -55,9 +51,7 @@ class ParsedQuery(BaseModel):
 
     original_query: str = Field(..., description="Original query")
     search_terms: list[str] = Field(default_factory=list, description="Search terms")
-    filters: dict[str, Any] = Field(
-        default_factory=dict, description="Extracted filters"
-    )
+    filters: dict[str, Any] = Field(default_factory=dict, description="Extracted filters")
     types: list[str] | None = Field(None, description="Content types to search")
 
 
@@ -65,9 +59,7 @@ class SearchResponse(BaseModel):
     """Response from global search."""
 
     query: str = Field(..., description="Search query")
-    results: list[SearchResultItem] = Field(
-        default_factory=list, description="Search results"
-    )
+    results: list[SearchResultItem] = Field(default_factory=list, description="Search results")
     total_results: int = Field(..., description="Total number of results")
     results_by_type: dict[str, int] = Field(
         default_factory=dict, description="Result count by type"
@@ -315,9 +307,7 @@ def _parse_natural_language_query(query: str) -> ParsedQuery:
         parsed.filters["date_from"] = (datetime.now() - timedelta(days=7)).isoformat()
     elif "today" in query_lower or "created today" in query_lower:
         parsed.filters["date"] = "today"
-        parsed.filters["date_from"] = (
-            datetime.now().replace(hour=0, minute=0, second=0).isoformat()
-        )
+        parsed.filters["date_from"] = datetime.now().replace(hour=0, minute=0, second=0).isoformat()
     elif "recent" in query_lower:
         parsed.filters["date"] = "recent"
         parsed.filters["date_from"] = (datetime.now() - timedelta(days=7)).isoformat()
@@ -370,9 +360,7 @@ def _apply_quality_filter(
             # If no quality info, include it (don't filter out)
             filtered.append(result)
         else:
-            quality_value = (
-                float(quality) if isinstance(quality, (int, float, str)) else None
-            )
+            quality_value = float(quality) if isinstance(quality, (int, float, str)) else None
             if quality_value is not None:
                 if quality_min and quality_value < quality_min:
                     continue
@@ -391,9 +379,7 @@ async def search(
         None,
         description="Comma-separated list of types to search (profile,project,audio,marker,script)",
     ),
-    limit: int = Query(
-        50, description="Maximum number of results per type", ge=1, le=100
-    ),
+    limit: int = Query(50, description="Maximum number of results per type", ge=1, le=100),
 ) -> SearchResponse:
     """
     Global search across all panels and content types.
@@ -416,15 +402,13 @@ async def search(
         Search results grouped by type with preview snippets
     """
     if len(q) < 2:
-        raise HTTPException(
-            status_code=400, detail="Search query must be at least 2 characters"
-        )
+        raise HTTPException(status_code=400, detail="Search query must be at least 2 characters")
 
     # Check storage availability - return proper error instead of empty results
     if not STORAGE_AVAILABLE:
         raise HTTPException(
             status_code=503,
-            detail="Search service unavailable. Storage modules not loaded. Check backend configuration."
+            detail="Search service unavailable. Storage modules not loaded. Check backend configuration.",
         )
 
     try:
@@ -439,9 +423,7 @@ async def search(
             type_filter = parsed_query.types
 
         # Use parsed search terms or original query
-        search_query = (
-            " ".join(parsed_query.search_terms) if parsed_query.search_terms else q
-        )
+        search_query = " ".join(parsed_query.search_terms) if parsed_query.search_terms else q
 
         all_results = []
         results_by_type = {}
@@ -477,10 +459,7 @@ async def search(
             results_by_type["script"] = len(script_results)
 
         # Apply quality filters if present
-        if (
-            "quality_min" in parsed_query.filters
-            or "quality_max" in parsed_query.filters
-        ):
+        if "quality_min" in parsed_query.filters or "quality_max" in parsed_query.filters:
             all_results = _apply_quality_filter(
                 all_results,
                 quality_min=parsed_query.filters.get("quality_min"),

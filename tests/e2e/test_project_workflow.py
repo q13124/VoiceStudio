@@ -43,7 +43,7 @@ class TestProjectCreation:
                 "sample_rate": 44100,
                 "bit_depth": 16,
                 "channels": 2,
-            }
+            },
         }
 
         response = api_client.post("/api/projects/create", json=project_data, timeout=10)
@@ -106,6 +106,7 @@ class TestProjectWorkflowUI:
 
             # Press Escape to close menu
             from selenium.webdriver.common.keys import Keys
+
             driver.find_element(By.XPATH, "//*").send_keys(Keys.ESCAPE)
         else:
             state["record_step"]("File menu not found", success=False)
@@ -207,10 +208,14 @@ class TestFullProjectWorkflow:
 
         # Step 1: Create project
         project_name = f"E2E Workflow Test {datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        create_resp = api_client.post("/api/projects/create", json={
-            "name": project_name,
-            "description": "Complete workflow test",
-        }, timeout=10)
+        create_resp = api_client.post(
+            "/api/projects/create",
+            json={
+                "name": project_name,
+                "description": "Complete workflow test",
+            },
+            timeout=10,
+        )
 
         if create_resp.status_code == 200:
             project_id = create_resp.json().get("project_id") or create_resp.json().get("id")
@@ -219,30 +224,38 @@ class TestFullProjectWorkflow:
             state["record_step"]("Projects API not available", success=False)
             pytest.skip("Projects API not available")
         else:
-            state["record_step"]("Project creation failed", success=False, data={
-                "status": create_resp.status_code
-            })
+            state["record_step"](
+                "Project creation failed", success=False, data={"status": create_resp.status_code}
+            )
             project_id = None
 
         # Step 2: Configure settings
         if project_id:
-            settings_resp = api_client.put(f"/api/projects/{project_id}/settings", json={
-                "sample_rate": 48000,
-                "default_engine": "piper",
-            }, timeout=10)
+            settings_resp = api_client.put(
+                f"/api/projects/{project_id}/settings",
+                json={
+                    "sample_rate": 48000,
+                    "default_engine": "piper",
+                },
+                timeout=10,
+            )
 
             if settings_resp.status_code == 200:
                 state["record_step"]("Updated project settings")
             else:
-                state["record_step"]("Settings update response", data={
-                    "status": settings_resp.status_code
-                })
+                state["record_step"](
+                    "Settings update response", data={"status": settings_resp.status_code}
+                )
 
         # Step 3: Generate audio
-        synth_resp = api_client.post("/api/voice/synthesize", json={
-            "text": "This is a test of the project workflow.",
-            "engine": "piper",
-        }, timeout=60)
+        synth_resp = api_client.post(
+            "/api/voice/synthesize",
+            json={
+                "text": "This is a test of the project workflow.",
+                "engine": "piper",
+            },
+            timeout=60,
+        )
 
         if synth_resp.status_code == 200:
             state["record_step"]("Generated audio", data=synth_resp.json())

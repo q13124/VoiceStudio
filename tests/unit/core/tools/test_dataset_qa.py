@@ -37,11 +37,8 @@ class TestDatasetQAFunctions:
     def test_validate_dataset_function_exists(self):
         """Test validate_dataset function exists."""
         if hasattr(dataset_qa, "validate_dataset"):
-            assert callable(
-                dataset_qa.validate_dataset
-            ), "validate_dataset should be callable"
+            assert callable(dataset_qa.validate_dataset), "validate_dataset should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

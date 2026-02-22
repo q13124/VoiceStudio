@@ -2,7 +2,6 @@
 Pipeline Metrics Unit Tests (Phase 14.1.3)
 """
 
-
 from app.core.pipeline.metrics import (
     PipelineExecutionMetrics,
     PipelineMetricsCollector,
@@ -47,21 +46,25 @@ class TestPipelineMetricsCollector:
 
     def test_sla_check_passes(self):
         for _ in range(10):
-            self.collector.record(PipelineExecutionMetrics(
-                execution_id="t",
-                mode="streaming",
-                total_latency_ms=400.0,
-            ))
+            self.collector.record(
+                PipelineExecutionMetrics(
+                    execution_id="t",
+                    mode="streaming",
+                    total_latency_ms=400.0,
+                )
+            )
         sla = self.collector.check_sla(target_p90_ms=800.0)
         assert sla["meets_sla"] is True
 
     def test_sla_check_fails(self):
         for _ in range(10):
-            self.collector.record(PipelineExecutionMetrics(
-                execution_id="t",
-                mode="batch",
-                total_latency_ms=1200.0,
-            ))
+            self.collector.record(
+                PipelineExecutionMetrics(
+                    execution_id="t",
+                    mode="batch",
+                    total_latency_ms=1200.0,
+                )
+            )
         sla = self.collector.check_sla(target_p90_ms=800.0)
         assert sla["meets_sla"] is False
 

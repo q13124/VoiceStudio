@@ -67,24 +67,30 @@ class TestInterruptionFSM:
 
     def test_disfluency_ignored(self):
         from app.core.supervisor.interruption_fsm import InterruptionAction, InterruptionFSM
+
         fsm = InterruptionFSM()
         result = fsm.classify_interruption("um", ai_is_speaking=True)
         assert result["action"] == InterruptionAction.IGNORE.value
 
     def test_backchannel_buffered(self):
         from app.core.supervisor.interruption_fsm import InterruptionAction, InterruptionFSM
+
         fsm = InterruptionFSM()
         result = fsm.classify_interruption("yeah", ai_is_speaking=True)
         assert result["action"] == InterruptionAction.BUFFER.value
 
     def test_topic_change_stops(self):
         from app.core.supervisor.interruption_fsm import InterruptionAction, InterruptionFSM
+
         fsm = InterruptionFSM()
-        result = fsm.classify_interruption("wait actually I want something else", ai_is_speaking=True)
+        result = fsm.classify_interruption(
+            "wait actually I want something else", ai_is_speaking=True
+        )
         assert result["action"] == InterruptionAction.STOP_AND_LISTEN.value
 
     def test_no_ai_speech_always_listens(self):
         from app.core.supervisor.interruption_fsm import InterruptionAction, InterruptionFSM
+
         fsm = InterruptionFSM()
         result = fsm.classify_interruption("anything", ai_is_speaking=False)
         assert result["action"] == InterruptionAction.STOP_AND_LISTEN.value
@@ -95,11 +101,13 @@ class TestSupervisorStateMachine:
 
     def test_initial_state(self):
         from app.core.supervisor.state_machine import SupervisorState, SupervisorStateMachine
+
         fsm = SupervisorStateMachine()
         assert fsm.state == SupervisorState.IDLE
 
     def test_valid_transition(self):
         from app.core.supervisor.state_machine import SupervisorState, SupervisorStateMachine
+
         fsm = SupervisorStateMachine()
         result = fsm.transition(SupervisorState.ANALYZING, trigger="test")
         assert result is True
@@ -107,6 +115,7 @@ class TestSupervisorStateMachine:
 
     def test_invalid_transition(self):
         from app.core.supervisor.state_machine import SupervisorState, SupervisorStateMachine
+
         fsm = SupervisorStateMachine()
         # Can't go directly from IDLE to RESPONDING
         result = fsm.transition(SupervisorState.RESPONDING, trigger="test")
@@ -115,6 +124,7 @@ class TestSupervisorStateMachine:
 
     def test_mode_tracking(self):
         from app.core.supervisor.state_machine import SupervisorState, SupervisorStateMachine
+
         fsm = SupervisorStateMachine()
         fsm.transition(SupervisorState.ANALYZING, trigger="input")
         fsm.transition(SupervisorState.CASUAL_MODE, trigger="low_complexity")
@@ -122,6 +132,7 @@ class TestSupervisorStateMachine:
 
     def test_history_tracking(self):
         from app.core.supervisor.state_machine import SupervisorState, SupervisorStateMachine
+
         fsm = SupervisorStateMachine()
         fsm.transition(SupervisorState.ANALYZING, trigger="input")
         fsm.transition(SupervisorState.CASUAL_MODE, trigger="route")

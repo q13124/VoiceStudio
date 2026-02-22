@@ -17,9 +17,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 # Panel Configuration
 # =============================================================================
 
+
 @dataclass
 class PanelConfig:
     """Configuration for a panel."""
+
     name: str
     nav_button_id: str
     view_root_id: str
@@ -52,6 +54,7 @@ ALL_PANELS = CORE_PANELS + EXTENDED_PANELS
 # Element Helpers
 # =============================================================================
 
+
 class ElementHelper:
     """Helper class for element operations."""
 
@@ -62,9 +65,7 @@ class ElementHelper:
         """Find element by AutomationId."""
         try:
             wait = WebDriverWait(self.driver, timeout)
-            return wait.until(
-                EC.presence_of_element_located(("accessibility id", automation_id))
-            )
+            return wait.until(EC.presence_of_element_located(("accessibility id", automation_id)))
         except TimeoutException:
             return None
 
@@ -90,8 +91,9 @@ class ElementHelper:
         except Exception:
             return False
 
-    def wait_for_condition(self, condition_fn, timeout: int = 10,
-                           poll_interval: float = 0.5) -> bool:
+    def wait_for_condition(
+        self, condition_fn, timeout: int = 10, poll_interval: float = 0.5
+    ) -> bool:
         """Wait for a custom condition to be true."""
         start = time.time()
         while time.time() - start < timeout:
@@ -115,6 +117,7 @@ class ElementHelper:
 # =============================================================================
 # Navigation Helpers
 # =============================================================================
+
 
 class NavigationHelper:
     """Helper class for navigation operations."""
@@ -156,6 +159,7 @@ class NavigationHelper:
 # Form Helpers
 # =============================================================================
 
+
 class FormHelper:
     """Helper class for form interactions."""
 
@@ -163,8 +167,7 @@ class FormHelper:
         self.driver = driver
         self.element = ElementHelper(driver)
 
-    def fill_text_field(self, automation_id: str, text: str,
-                        clear_first: bool = True) -> bool:
+    def fill_text_field(self, automation_id: str, text: str, clear_first: bool = True) -> bool:
         """Fill a text field."""
         element = self.element.find_by_id(automation_id)
         if element:
@@ -194,37 +197,41 @@ class FormHelper:
 # Assertion Helpers
 # =============================================================================
 
+
 def assert_element_visible(driver, automation_id: str, message: str | None = None):
     """Assert that an element is visible."""
     helper = ElementHelper(driver)
-    assert helper.is_visible(automation_id), \
+    assert helper.is_visible(automation_id), (
         message or f"Element '{automation_id}' should be visible"
+    )
 
 
 def assert_element_not_visible(driver, automation_id: str, message: str | None = None):
     """Assert that an element is not visible."""
     helper = ElementHelper(driver)
-    assert not helper.is_visible(automation_id, timeout=2), \
+    assert not helper.is_visible(automation_id, timeout=2), (
         message or f"Element '{automation_id}' should not be visible"
+    )
 
 
 def assert_text_equals(driver, automation_id: str, expected: str, message: str | None = None):
     """Assert that element text equals expected value."""
     helper = ElementHelper(driver)
     actual = helper.get_text(automation_id)
-    assert actual == expected, \
-        message or f"Expected text '{expected}' but got '{actual}'"
+    assert actual == expected, message or f"Expected text '{expected}' but got '{actual}'"
 
 
 def assert_panel_loaded(driver, panel: PanelConfig, message: str | None = None):
     """Assert that a panel has loaded."""
-    assert_element_visible(driver, panel.view_root_id,
-        message or f"Panel '{panel.name}' should be loaded")
+    assert_element_visible(
+        driver, panel.view_root_id, message or f"Panel '{panel.name}' should be loaded"
+    )
 
 
 # =============================================================================
 # Test Data Generators
 # =============================================================================
+
 
 def generate_test_profile_name() -> str:
     """Generate a unique test profile name."""

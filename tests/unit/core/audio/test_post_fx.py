@@ -37,11 +37,8 @@ class TestPostFXFunctions:
     def test_apply_post_fx_function_exists(self):
         """Test apply_post_fx function exists."""
         if hasattr(post_fx, "apply_post_fx"):
-            assert callable(
-                post_fx.apply_post_fx
-            ), "apply_post_fx should be callable"
+            assert callable(post_fx.apply_post_fx), "apply_post_fx should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

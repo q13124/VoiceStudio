@@ -34,9 +34,7 @@ try:
     HAS_CV2 = True
 except ImportError:
     HAS_CV2 = False
-    logger.warning(
-        "opencv-python not installed. Install with: pip install opencv-python"
-    )
+    logger.warning("opencv-python not installed. Install with: pip install opencv-python")
 
 try:
     import face_alignment
@@ -44,9 +42,7 @@ try:
     HAS_FACE_ALIGNMENT = True
 except ImportError:
     HAS_FACE_ALIGNMENT = False
-    logger.warning(
-        "face-alignment not installed. " "Install with: pip install face-alignment"
-    )
+    logger.warning("face-alignment not installed. " "Install with: pip install face-alignment")
 
 
 class SadTalkerEngine(EngineProtocol):
@@ -75,9 +71,7 @@ class SadTalkerEngine(EngineProtocol):
             model_path: Path to SadTalker model checkpoint (optional)
         """
         if not HAS_CV2:
-            raise ImportError(
-                "opencv-python required. " "Install with: pip install opencv-python"
-            )
+            raise ImportError("opencv-python required. " "Install with: pip install opencv-python")
 
         super().__init__(device=device, gpu=gpu)
 
@@ -120,9 +114,7 @@ class SadTalkerEngine(EngineProtocol):
                     device=self.device,
                 )
             else:
-                logger.warning(
-                    "face-alignment not available, " "some features may be limited"
-                )
+                logger.warning("face-alignment not available, " "some features may be limited")
 
             # Load SadTalker model
             self.model = self._load_model(model_cache_dir)
@@ -223,8 +215,7 @@ class SadTalkerEngine(EngineProtocol):
             num_frames = int(audio_duration * fps)
 
             logger.info(
-                f"Generating talking head: {num_frames} frames "
-                f"from {audio_duration:.2f}s audio"
+                f"Generating talking head: {num_frames} frames " f"from {audio_duration:.2f}s audio"
             )
 
             # Extract face from source image (with caching)
@@ -248,9 +239,7 @@ class SadTalkerEngine(EngineProtocol):
                 logger.debug("Using cached audio features")
                 audio_features = self._audio_features_cache[audio_hash]
             else:
-                audio_features = self._extract_audio_features(
-                    audio_data, sample_rate, num_frames
-                )
+                audio_features = self._extract_audio_features(audio_data, sample_rate, num_frames)
                 if len(self._audio_features_cache) < 100:
                     self._audio_features_cache[audio_hash] = audio_features
 
@@ -258,9 +247,7 @@ class SadTalkerEngine(EngineProtocol):
             frames = []
             for frame_idx in range(num_frames):
                 # Get audio features for this frame
-                frame_audio_features = audio_features[
-                    min(frame_idx, len(audio_features) - 1)
-                ]
+                frame_audio_features = audio_features[min(frame_idx, len(audio_features) - 1)]
 
                 # Generate talking head frame
                 # In production, this would use the actual SadTalker model
@@ -319,9 +306,7 @@ class SadTalkerEngine(EngineProtocol):
             except ImportError:
                 raise ImportError("librosa or soundfile required for audio loading")
 
-    def _extract_face(
-        self, image: np.ndarray
-    ) -> tuple[np.ndarray | None, dict | None]:
+    def _extract_face(self, image: np.ndarray) -> tuple[np.ndarray | None, dict | None]:
         """Extract face from image."""
         if self.face_aligner is not None:
             try:
@@ -453,9 +438,7 @@ class SadTalkerEngine(EngineProtocol):
                 )
 
             # Fallback: apply lip-sync based on audio features
-            return self._generate_frame_fallback(
-                face_image, audio_features, frame_idx, still_mode
-            )
+            return self._generate_frame_fallback(face_image, audio_features, frame_idx, still_mode)
 
         except Exception as e:
             logger.warning(f"Frame generation failed: {e}, using fallback")
@@ -537,15 +520,9 @@ class SadTalkerEngine(EngineProtocol):
                 has_audio_encoder = any(
                     "audio_encoder" in k or "audio_net" in k for k in state_dict
                 )
-                has_face_encoder = any(
-                    "face_encoder" in k or "face_net" in k for k in state_dict
-                )
-                has_generator = any(
-                    "generator" in k or "renderer" in k for k in state_dict
-                )
-                any(
-                    "mapping" in k or "mapping_net" in k for k in state_dict
-                )
+                has_face_encoder = any("face_encoder" in k or "face_net" in k for k in state_dict)
+                has_generator = any("generator" in k or "renderer" in k for k in state_dict)
+                any("mapping" in k or "mapping_net" in k for k in state_dict)
 
                 # Try to reconstruct model architecture
                 if has_audio_encoder and has_generator:
@@ -579,9 +556,7 @@ class SadTalkerEngine(EngineProtocol):
 
         except Exception as e:
             logger.warning(f"Model frame generation failed: {e}")
-            return self._generate_frame_fallback(
-                face_image, audio_features, frame_idx, still_mode
-            )
+            return self._generate_frame_fallback(face_image, audio_features, frame_idx, still_mode)
 
     def _infer_sadtalker_architecture(
         self,
@@ -628,9 +603,7 @@ class SadTalkerEngine(EngineProtocol):
             )
 
             # Concatenate or add features
-            combined = torch.cat(
-                [face_encoded, audio_features_2d.expand(-1, -1, -1, -1)], dim=1
-            )
+            combined = torch.cat([face_encoded, audio_features_2d.expand(-1, -1, -1, -1)], dim=1)
 
             # Generate output (decoder)
             output = F.conv_transpose2d(
@@ -662,12 +635,8 @@ class SadTalkerEngine(EngineProtocol):
                             )
                             # Apply rotation if angle is significant
                             if abs(angle) > 0.0001:
-                                cos_a = torch.cos(
-                                    torch.tensor(angle, device=output.device)
-                                )
-                                sin_a = torch.sin(
-                                    torch.tensor(angle, device=output.device)
-                                )
+                                cos_a = torch.cos(torch.tensor(angle, device=output.device))
+                                sin_a = torch.sin(torch.tensor(angle, device=output.device))
                                 rotation = torch.tensor(
                                     [[[cos_a, -sin_a, 0.0], [sin_a, cos_a, 0.0]]],
                                     dtype=output.dtype,
@@ -676,9 +645,7 @@ class SadTalkerEngine(EngineProtocol):
                                 theta = torch.matmul(rotation, theta)
 
                             # Apply grid sample for transformation
-                            grid = F.affine_grid(
-                                theta, output.size(), align_corners=False
-                            )
+                            grid = F.affine_grid(theta, output.size(), align_corners=False)
                             output = F.grid_sample(
                                 output, grid, align_corners=False, padding_mode="border"
                             )
@@ -764,9 +731,7 @@ class SadTalkerEngine(EngineProtocol):
 
             # Apply vertical scaling to lip region (simulate mouth opening)
             if lip_height > 0 and not still_mode:
-                lip_region = face_tensor[
-                    :, :, lip_y_start:lip_y_end, lip_x_start:lip_x_end
-                ]
+                lip_region = face_tensor[:, :, lip_y_start:lip_y_end, lip_x_start:lip_x_end]
                 if lip_region.shape[2] > 0 and lip_region.shape[3] > 0:
                     # Scale vertically based on audio
                     scale_factor = lip_opening / 0.5  # Normalize to 0.5 baseline
@@ -786,9 +751,7 @@ class SadTalkerEngine(EngineProtocol):
                         mode="bilinear",
                         align_corners=False,
                     )
-                    output[:, :, lip_y_start:lip_y_end, lip_x_start:lip_x_end] = (
-                        lip_resized
-                    )
+                    output[:, :, lip_y_start:lip_y_end, lip_x_start:lip_x_end] = lip_resized
 
             # Apply color/brightness adjustment based on audio energy
             brightness_adjust = 1.0 + (normalized_energy - 0.5) * 0.1
@@ -859,31 +822,22 @@ class SadTalkerEngine(EngineProtocol):
 
                 # Draw elliptical lip shape
                 axes = (lip_width // 2, max(2, lip_height // 2))
-                cv2.ellipse(
-                    lip_mask, (lip_center_x, lip_center_y), axes, 0, 0, 360, 255, -1
-                )
+                cv2.ellipse(lip_mask, (lip_center_x, lip_center_y), axes, 0, 0, 360, 255, -1)
 
                 # Apply color transformation to lip region
-                lip_region_mask = (
-                    lip_mask[lip_y_start:lip_y_end, lip_x_start:lip_x_end] > 0
-                )
+                lip_region_mask = lip_mask[lip_y_start:lip_y_end, lip_x_start:lip_x_end] > 0
                 if np.any(lip_region_mask):
                     lip_region = frame[lip_y_start:lip_y_end, lip_x_start:lip_x_end]
 
                     # Adjust lip color based on audio (darker when open)
                     lip_color_factor = 0.7 + (1.0 - lip_opening) * 0.3
-                    lip_region_adjusted = (
-                        lip_region.astype(np.float32) * lip_color_factor
-                    )
-                    lip_region_adjusted = np.clip(lip_region_adjusted, 0, 255).astype(
-                        np.uint8
-                    )
+                    lip_region_adjusted = lip_region.astype(np.float32) * lip_color_factor
+                    lip_region_adjusted = np.clip(lip_region_adjusted, 0, 255).astype(np.uint8)
 
                     # Apply with smooth blending
                     blend_factor = 0.6
                     frame[lip_y_start:lip_y_end, lip_x_start:lip_x_end] = (
-                        lip_region * (1.0 - blend_factor)
-                        + lip_region_adjusted * blend_factor
+                        lip_region * (1.0 - blend_factor) + lip_region_adjusted * blend_factor
                     ).astype(np.uint8)
 
                 # Add subtle mouth opening effect

@@ -28,9 +28,7 @@ try:
     HAS_DIFFUSERS = True
 except ImportError:
     HAS_DIFFUSERS = False
-    logger.warning(
-        "diffusers not installed. Install with: pip install diffusers>=0.21.0"
-    )
+    logger.warning("diffusers not installed. Install with: pip install diffusers>=0.21.0")
 
 # Import base protocol from canonical source
 from .base import EngineProtocol
@@ -63,9 +61,7 @@ class OpenJourneyEngine(EngineProtocol):
         if gpu and torch.cuda.is_available() and self.device == "cpu":
             self.device = "cuda"
 
-        self.model_id = model_id or self.MODEL_VERSIONS.get(
-            version, "prompthero/openjourney-v4"
-        )
+        self.model_id = model_id or self.MODEL_VERSIONS.get(version, "prompthero/openjourney-v4")
         self.version = version
         self.pipe = None
 
@@ -75,9 +71,7 @@ class OpenJourneyEngine(EngineProtocol):
             if self._initialized:
                 return True
 
-            logger.info(
-                f"Loading OpenJourney model: {self.model_id} (device: {self.device})"
-            )
+            logger.info(f"Loading OpenJourney model: {self.model_id} (device: {self.device})")
 
             model_cache_dir = os.getenv("VOICESTUDIO_MODELS_PATH")
             if not model_cache_dir:
@@ -92,9 +86,7 @@ class OpenJourneyEngine(EngineProtocol):
             try:
                 self.pipe = StableDiffusionPipeline.from_pretrained(
                     self.model_id,
-                    torch_dtype=(
-                        torch.float16 if self.device == "cuda" else torch.float32
-                    ),
+                    torch_dtype=(torch.float16 if self.device == "cuda" else torch.float32),
                     cache_dir=model_cache_dir,
                 )
                 self.pipe = self.pipe.to(self.device)

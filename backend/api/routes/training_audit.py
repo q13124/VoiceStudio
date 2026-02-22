@@ -94,9 +94,7 @@ def get_audit_summary() -> dict[str, Any]:
         return auditor.get_audit_summary()
     except Exception as e:
         logger.error(f"Failed to get audit summary: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get audit summary: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get audit summary: {e!s}")
 
 
 @router.get("/needing-attention", summary="Get modules needing attention")
@@ -122,14 +120,16 @@ def get_modules_needing_attention(min_score: float = 70.0) -> dict[str, Any]:
         # Convert to dictionaries
         results = []
         for result in needing_attention:
-            results.append({
-                "module_name": result.module_name,
-                "score": result.score,
-                "missing_features": result.missing_features,
-                "optimization_opportunities": result.optimization_opportunities,
-                "error_handling_issues": result.error_handling_issues,
-                "performance_issues": result.performance_issues,
-            })
+            results.append(
+                {
+                    "module_name": result.module_name,
+                    "score": result.score,
+                    "missing_features": result.missing_features,
+                    "optimization_opportunities": result.optimization_opportunities,
+                    "error_handling_issues": result.error_handling_issues,
+                    "performance_issues": result.performance_issues,
+                }
+            )
 
         return {
             "modules": results,
@@ -137,9 +137,7 @@ def get_modules_needing_attention(min_score: float = 70.0) -> dict[str, Any]:
             "min_score": min_score,
         }
     except Exception as e:
-        logger.error(
-            f"Failed to get modules needing attention: {e}", exc_info=True
-        )
+        logger.error(f"Failed to get modules needing attention: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get modules needing attention: {e!s}",
@@ -166,7 +164,4 @@ def generate_enhancement_report() -> dict[str, str]:
         return {"report": report}
     except Exception as e:
         logger.error(f"Failed to generate report: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate report: {e!s}"
-        )
-
+        raise HTTPException(status_code=500, detail=f"Failed to generate report: {e!s}")

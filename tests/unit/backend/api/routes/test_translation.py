@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def translation_client():
     """Create test client for translation routes."""
     from backend.api.routes.translation import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)
@@ -33,8 +34,5 @@ class TestTranslationEndpoints:
 
     def test_detect_language(self, translation_client):
         """Test POST /detect detects language."""
-        response = translation_client.post(
-            "/api/translation/detect",
-            json={"text": "Hello world"}
-        )
+        response = translation_client.post("/api/translation/detect", json={"text": "Hello world"})
         assert response.status_code in [200, 404, 422]

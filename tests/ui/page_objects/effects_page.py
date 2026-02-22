@@ -181,10 +181,7 @@ class EffectsPage(BasePage):
     # =========================================================================
 
     def apply_preset(
-        self,
-        preset_name: str,
-        wait_for_completion: bool = True,
-        timeout: float = 30.0
+        self, preset_name: str, wait_for_completion: bool = True, timeout: float = 30.0
     ) -> bool:
         """
         Complete workflow to apply a preset.
@@ -244,10 +241,7 @@ class EffectsPage(BasePage):
             "master_volume": self.MASTER_VOLUME_SLIDER,
         }
 
-        return {
-            name: self.element_exists(auto_id)
-            for name, auto_id in elements.items()
-        }
+        return {name: self.element_exists(auto_id) for name, auto_id in elements.items()}
 
     def get_enabled_effects(self) -> list[str]:
         """

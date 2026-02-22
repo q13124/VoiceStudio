@@ -66,14 +66,10 @@ class QualityOptimizer:
             target_tier: Target quality tier ("fast", "standard", "high", "ultra")
         """
         self.target_tier = target_tier
-        self.target_metrics = QUALITY_TIERS.get(
-            target_tier, QUALITY_TIERS["standard"]
-        )
+        self.target_metrics = QUALITY_TIERS.get(target_tier, QUALITY_TIERS["standard"])
         self.optimization_history: list[dict[str, Any]] = []
 
-    def analyze_quality(
-        self, metrics: dict[str, Any]
-    ) -> dict[str, Any]:
+    def analyze_quality(self, metrics: dict[str, Any]) -> dict[str, Any]:
         """
         Analyze quality metrics and determine if optimization is needed.
 
@@ -143,15 +139,11 @@ class QualityOptimizer:
             analysis["quality_score"] = 0.0
 
         # Generate recommendations
-        analysis["recommendations"] = self._generate_recommendations(
-            analysis["deficiencies"]
-        )
+        analysis["recommendations"] = self._generate_recommendations(analysis["deficiencies"])
 
         return analysis
 
-    def _generate_recommendations(
-        self, deficiencies: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def _generate_recommendations(self, deficiencies: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Generate optimization recommendations based on deficiencies.
 
@@ -302,9 +294,7 @@ class QualityOptimizer:
 
         return optimized_params
 
-    def suggest_engine(
-        self, target_metrics: dict[str, Any] | None = None
-    ) -> str:
+    def suggest_engine(self, target_metrics: dict[str, Any] | None = None) -> str:
         """
         Suggest best engine based on target quality requirements.
 
@@ -378,10 +368,7 @@ class QualityOptimizer:
 
         total = len(self.optimization_history)
         avg_quality_score = np.mean(
-            [
-                opt["analysis"]["quality_score"]
-                for opt in self.optimization_history
-            ]
+            [opt["analysis"]["quality_score"] for opt in self.optimization_history]
         )
 
         return {
@@ -413,4 +400,3 @@ def optimize_synthesis_for_quality(
     optimized_params = optimizer.optimize_parameters(metrics, current_params)
 
     return optimized_params, analysis
-

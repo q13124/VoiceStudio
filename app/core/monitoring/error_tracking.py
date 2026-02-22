@@ -17,6 +17,7 @@ from typing import Any
 
 class ErrorSeverity(Enum):
     """Error severity levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -26,6 +27,7 @@ class ErrorSeverity(Enum):
 @dataclass
 class ErrorRecord:
     """Error record data structure."""
+
     error_type: str
     message: str
     severity: ErrorSeverity
@@ -94,11 +96,8 @@ class ErrorTracker:
             # Limit number of errors
             if len(self.errors) > self.max_errors:
                 # Remove oldest errors
-                sorted_errors = sorted(
-                    self.errors.items(),
-                    key=lambda x: x[1].last_occurrence
-                )
-                for key, _ in sorted_errors[:len(sorted_errors) - self.max_errors]:
+                sorted_errors = sorted(self.errors.items(), key=lambda x: x[1].last_occurrence)
+                for key, _ in sorted_errors[: len(sorted_errors) - self.max_errors]:
                     del self.errors[key]
 
     def get_error_summary(self) -> dict[str, Any]:
@@ -115,11 +114,7 @@ class ErrorTracker:
                 by_severity[record.severity.value] += record.count
 
             # Get top errors
-            top_errors = sorted(
-                self.errors.values(),
-                key=lambda x: x.count,
-                reverse=True
-            )[:10]
+            top_errors = sorted(self.errors.values(), key=lambda x: x.count, reverse=True)[:10]
 
             return {
                 "total_unique_errors": len(self.errors),
@@ -149,11 +144,7 @@ class ErrorTracker:
             List of error records
         """
         with self.lock:
-            return [
-                record
-                for record in self.errors.values()
-                if record.error_type == error_type
-            ]
+            return [record for record in self.errors.values() if record.error_type == error_type]
 
     def clear(self):
         """Clear all error records."""
@@ -179,4 +170,3 @@ def get_error_tracker() -> ErrorTracker:
         if _error_tracker is None:
             _error_tracker = ErrorTracker()
         return _error_tracker
-

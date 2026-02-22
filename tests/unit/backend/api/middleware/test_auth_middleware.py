@@ -17,9 +17,7 @@ try:
     from backend.api.auth import Permission, User, UserRole
     from backend.api.middleware import auth_middleware
 except ImportError:
-    pytest.skip(
-        "Could not import auth_middleware or auth dependencies", allow_module_level=True
-    )
+    pytest.skip("Could not import auth_middleware or auth dependencies", allow_module_level=True)
 
 
 class TestAuthMiddlewareImports:
@@ -27,16 +25,16 @@ class TestAuthMiddlewareImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            auth_middleware is not None
-        ), "Failed to import auth_middleware module"
+        assert auth_middleware is not None, "Failed to import auth_middleware module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
         functions = dir(auth_middleware)
         assert "get_current_user" in functions, "get_current_user should exist"
         assert "require_authentication" in functions, "require_authentication should exist"
-        assert "require_permission_middleware" in functions, "require_permission_middleware should exist"
+        assert (
+            "require_permission_middleware" in functions
+        ), "require_permission_middleware should exist"
         assert "require_role_middleware" in functions, "require_role_middleware should exist"
         assert "get_optional_user" in functions, "get_optional_user should exist"
 
@@ -56,7 +54,9 @@ class TestGetCurrentUser:
         mock_request = Mock()
         mock_request.headers = {"X-API-Key": "vs_test_api_key"}
 
-        with patch("backend.api.middleware.auth_middleware.get_current_user_from_api_key") as mock_auth:
+        with patch(
+            "backend.api.middleware.auth_middleware.get_current_user_from_api_key"
+        ) as mock_auth:
             mock_auth.return_value = mock_user
 
             user = await auth_middleware.get_current_user(mock_request)
@@ -84,7 +84,9 @@ class TestGetCurrentUser:
         # Patch security to return async mock
         mock_security_async = AsyncMock(return_value=mock_credentials)
         with patch.object(auth_middleware, "security", mock_security_async):
-            with patch("backend.api.middleware.auth_middleware.get_current_user_from_token") as mock_token_auth:
+            with patch(
+                "backend.api.middleware.auth_middleware.get_current_user_from_token"
+            ) as mock_token_auth:
                 mock_token_auth.return_value = mock_user
 
                 user = await auth_middleware.get_current_user(mock_request)
@@ -102,7 +104,9 @@ class TestGetCurrentUser:
         # Mock HTTPBearer to return None (async)
         mock_security_async = AsyncMock(return_value=None)
         with patch.object(auth_middleware, "security", mock_security_async):
-            with patch("backend.api.middleware.auth_middleware.get_current_user_from_api_key") as mock_api_key:
+            with patch(
+                "backend.api.middleware.auth_middleware.get_current_user_from_api_key"
+            ) as mock_api_key:
                 mock_api_key.return_value = None
 
                 user = await auth_middleware.get_current_user(mock_request)
@@ -125,7 +129,9 @@ class TestGetCurrentUser:
         mock_credentials = Mock()
         mock_credentials.credentials = "jwt_token"
 
-        with patch("backend.api.middleware.auth_middleware.get_current_user_from_api_key") as mock_api_key:
+        with patch(
+            "backend.api.middleware.auth_middleware.get_current_user_from_api_key"
+        ) as mock_api_key:
             mock_api_key.return_value = mock_user_api
             mock_security_async = AsyncMock(return_value=mock_credentials)
             with patch.object(auth_middleware, "security", mock_security_async):
@@ -141,7 +147,9 @@ class TestGetCurrentUser:
         mock_request = Mock()
         mock_request.headers = {"X-API-Key": "invalid_key"}
 
-        with patch("backend.api.middleware.auth_middleware.get_current_user_from_api_key") as mock_auth:
+        with patch(
+            "backend.api.middleware.auth_middleware.get_current_user_from_api_key"
+        ) as mock_auth:
             mock_auth.return_value = None
             mock_security_async = AsyncMock(return_value=None)
             with patch.object(auth_middleware, "security", mock_security_async):
@@ -160,7 +168,9 @@ class TestGetCurrentUser:
 
         mock_security_async = AsyncMock(return_value=mock_credentials)
         with patch.object(auth_middleware, "security", mock_security_async):
-            with patch("backend.api.middleware.auth_middleware.get_current_user_from_token") as mock_token_auth:
+            with patch(
+                "backend.api.middleware.auth_middleware.get_current_user_from_token"
+            ) as mock_token_auth:
                 mock_token_auth.return_value = None
 
                 user = await auth_middleware.get_current_user(mock_request)
@@ -246,7 +256,9 @@ class TestRequirePermissionMiddleware:
         mock_request.url.path = "/api/test"
         mock_request.method = "GET"
 
-        with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
+        with patch(
+            "backend.api.middleware.auth_middleware.require_authentication"
+        ) as mock_req_auth:
             mock_req_auth.return_value = mock_user
 
             user = await auth_middleware.require_permission_middleware(
@@ -270,7 +282,9 @@ class TestRequirePermissionMiddleware:
         mock_request.url.path = "/api/protected"
         mock_request.method = "POST"
 
-        with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
+        with patch(
+            "backend.api.middleware.auth_middleware.require_authentication"
+        ) as mock_req_auth:
             mock_req_auth.return_value = mock_user
 
             with pytest.raises(Exception) as exc_info:
@@ -295,7 +309,9 @@ class TestRequirePermissionMiddleware:
         mock_request.url.path = "/api/protected"
         mock_request.method = "DELETE"
 
-        with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
+        with patch(
+            "backend.api.middleware.auth_middleware.require_authentication"
+        ) as mock_req_auth:
             mock_req_auth.return_value = mock_user
             with patch("backend.api.middleware.auth_middleware.logger") as mock_logger:
                 try:
@@ -326,12 +342,12 @@ class TestRequireRoleMiddleware:
         mock_request.url.path = "/api/admin"
         mock_request.method = "GET"
 
-        with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
+        with patch(
+            "backend.api.middleware.auth_middleware.require_authentication"
+        ) as mock_req_auth:
             mock_req_auth.return_value = mock_user
 
-            user = await auth_middleware.require_role_middleware(
-                mock_request, UserRole.ADMIN
-            )
+            user = await auth_middleware.require_role_middleware(mock_request, UserRole.ADMIN)
 
             assert user is not None, "Should return user with required role"
 
@@ -349,13 +365,13 @@ class TestRequireRoleMiddleware:
         mock_request.url.path = "/api/user"
         mock_request.method = "GET"
 
-        with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
+        with patch(
+            "backend.api.middleware.auth_middleware.require_authentication"
+        ) as mock_req_auth:
             mock_req_auth.return_value = mock_user
 
             # Admin should have access to USER level endpoints
-            user = await auth_middleware.require_role_middleware(
-                mock_request, UserRole.USER
-            )
+            user = await auth_middleware.require_role_middleware(mock_request, UserRole.USER)
 
             assert user is not None, "Admin should have access to user-level endpoints"
 
@@ -373,13 +389,13 @@ class TestRequireRoleMiddleware:
         mock_request.url.path = "/api/admin"
         mock_request.method = "GET"
 
-        with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
+        with patch(
+            "backend.api.middleware.auth_middleware.require_authentication"
+        ) as mock_req_auth:
             mock_req_auth.return_value = mock_user
 
             with pytest.raises(Exception) as exc_info:
-                await auth_middleware.require_role_middleware(
-                    mock_request, UserRole.ADMIN
-                )
+                await auth_middleware.require_role_middleware(mock_request, UserRole.ADMIN)
 
             # Should raise HTTPException with 403 status
             assert exc_info.value.status_code == 403, "Should raise 403 Forbidden"
@@ -398,13 +414,13 @@ class TestRequireRoleMiddleware:
         mock_request.url.path = "/api/user"
         mock_request.method = "GET"
 
-        with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
+        with patch(
+            "backend.api.middleware.auth_middleware.require_authentication"
+        ) as mock_req_auth:
             mock_req_auth.return_value = mock_user
 
             with pytest.raises(Exception) as exc_info:
-                await auth_middleware.require_role_middleware(
-                    mock_request, UserRole.USER
-                )
+                await auth_middleware.require_role_middleware(mock_request, UserRole.USER)
 
             assert exc_info.value.status_code == 403, "Should raise 403 Forbidden"
 
@@ -422,13 +438,13 @@ class TestRequireRoleMiddleware:
         mock_request.url.path = "/api/admin"
         mock_request.method = "POST"
 
-        with patch("backend.api.middleware.auth_middleware.require_authentication") as mock_req_auth:
+        with patch(
+            "backend.api.middleware.auth_middleware.require_authentication"
+        ) as mock_req_auth:
             mock_req_auth.return_value = mock_user
             with patch("backend.api.middleware.auth_middleware.logger") as mock_logger:
                 try:
-                    await auth_middleware.require_role_middleware(
-                        mock_request, UserRole.ADMIN
-                    )
+                    await auth_middleware.require_role_middleware(mock_request, UserRole.ADMIN)
                 except Exception:
                     pass  # Expected exception
 
@@ -503,6 +519,7 @@ class TestGetOptionalUser:
                 # The code catches Exception and returns None
                 def raise_exception(*args, **kwargs):
                     raise Exception("Test exception")
+
                 mock_run.side_effect = raise_exception
 
                 # The function should catch the exception and return None
@@ -526,4 +543,3 @@ class TestSecurityScheme:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

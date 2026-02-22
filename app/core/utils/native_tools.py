@@ -29,6 +29,7 @@ def find_ffmpeg() -> str | None:
     # GAP-PY-002: Try centralized path_config first
     try:
         from backend.config.path_config import get_ffmpeg_path
+
         return str(get_ffmpeg_path())
     except (ImportError, RuntimeError):
         pass  # Fall through to legacy lookup
@@ -47,7 +48,10 @@ def find_ffmpeg() -> str | None:
     candidates = [
         Path(os.getenv("PROGRAMDATA", "C:\\ProgramData")) / "VoiceStudio" / "bin" / "ffmpeg.exe",
         Path(os.getenv("PROGRAMFILES", "C:\\Program Files")) / "ffmpeg" / "bin" / "ffmpeg.exe",
-        Path(os.getenv("PROGRAMFILES(X86)", "C:\\Program Files (x86)")) / "ffmpeg" / "bin" / "ffmpeg.exe",
+        Path(os.getenv("PROGRAMFILES(X86)", "C:\\Program Files (x86)"))
+        / "ffmpeg"
+        / "bin"
+        / "ffmpeg.exe",
     ]
 
     local_app_data = os.getenv("LOCALAPPDATA")
@@ -60,4 +64,3 @@ def find_ffmpeg() -> str | None:
             return str(c)
 
     return None
-

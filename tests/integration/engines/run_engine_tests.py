@@ -25,12 +25,14 @@ def run_tests():
         return 1
 
     cmd = [
-        sys.executable, "-m", "pytest",
+        sys.executable,
+        "-m",
+        "pytest",
         str(test_file),
         "-v",
         "--tb=short",
         "--json-report",
-        "--json-report-file=engine_test_report.json"
+        "--json-report-file=engine_test_report.json",
     ]
 
     print(f"Running: {' '.join(cmd)}\n")
@@ -55,4 +57,3 @@ def run_tests():
 
 if __name__ == "__main__":
     sys.exit(run_tests())
-

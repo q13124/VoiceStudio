@@ -25,14 +25,16 @@ router = APIRouter(prefix="/api/realtime-settings", tags=["Real-Time Settings"])
 
 class QualityMode(str, Enum):
     """Quality mode presets."""
+
     ULTRA_LOW_LATENCY = "ultra_low_latency"  # <20ms, lowest quality
-    LOW_LATENCY = "low_latency"              # <50ms, good quality
-    BALANCED = "balanced"                     # <100ms, better quality
-    HIGH_QUALITY = "high_quality"            # <200ms, best quality
+    LOW_LATENCY = "low_latency"  # <50ms, good quality
+    BALANCED = "balanced"  # <100ms, better quality
+    HIGH_QUALITY = "high_quality"  # <200ms, best quality
 
 
 class F0Method(str, Enum):
     """Pitch detection methods."""
+
     RMVPE = "rmvpe"
     CREPE = "crepe"
     HARVEST = "harvest"
@@ -47,6 +49,7 @@ class F0Method(str, Enum):
 
 class RealtimeSettings(BaseModel):
     """Current real-time processing settings."""
+
     quality_mode: QualityMode = Field(
         default=QualityMode.BALANCED,
         description="Quality/latency tradeoff preset",
@@ -111,6 +114,7 @@ class RealtimeSettings(BaseModel):
 
 class QualityModeInfo(BaseModel):
     """Information about a quality mode."""
+
     mode: QualityMode
     name: str
     description: str
@@ -121,6 +125,7 @@ class QualityModeInfo(BaseModel):
 
 class LatencyEstimate(BaseModel):
     """Estimated latency for current settings."""
+
     estimated_latency_ms: float
     breakdown: dict[str, float]
     meets_target: bool
@@ -129,6 +134,7 @@ class LatencyEstimate(BaseModel):
 
 class DeviceCapabilities(BaseModel):
     """GPU/Device capabilities."""
+
     has_gpu: bool
     gpu_name: str | None = None
     compute_capability: str | None = None
@@ -384,9 +390,7 @@ async def get_device_capabilities() -> DeviceCapabilities:
             compute_capability = f"{props.major}.{props.minor}"
             supports_fp16 = props.major >= 7
             supports_cuda_graphs = props.major >= 7
-            available_memory_gb = (
-                props.total_memory - torch.cuda.memory_allocated()
-            ) / (1024**3)
+            available_memory_gb = (props.total_memory - torch.cuda.memory_allocated()) / (1024**3)
     except ImportError:
         logger.debug("PyTorch not available for CUDA capability detection")
     except Exception as e:

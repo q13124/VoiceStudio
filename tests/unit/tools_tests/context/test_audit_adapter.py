@@ -24,6 +24,7 @@ try:
     from tools.context.core.models import AllocationContext, ContextLevel
     from tools.context.core.registry import build_default_registry
     from tools.context.sources.audit_adapter import AuditSourceAdapter
+
     TOOLS_AVAILABLE = True
 except ImportError:
     TOOLS_AVAILABLE = False

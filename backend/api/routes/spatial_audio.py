@@ -198,9 +198,7 @@ async def apply_spatial_audio(request: SpatialApplyRequest):
 
     config = SpatialConfig(**_spatial_configs[request.config_id])
 
-    logger.info(
-        f"Applying spatial audio to audio '{config.audio_id}' with config '{config.name}'"
-    )
+    logger.info(f"Applying spatial audio to audio '{config.audio_id}' with config '{config.name}'")
 
     # Implement real spatial audio processing
     try:
@@ -213,9 +211,7 @@ async def apply_spatial_audio(request: SpatialApplyRequest):
 
         # Get audio file path
         if config.audio_id not in _audio_storage:
-            raise HTTPException(
-                status_code=404, detail=f"Audio file '{config.audio_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file '{config.audio_id}' not found")
 
         audio_path = _audio_storage[config.audio_id]
         if not os.path.exists(audio_path):
@@ -261,9 +257,7 @@ async def apply_spatial_audio(request: SpatialApplyRequest):
         if config.reverb_amount > 0:
             try:
                 # Simple reverb using convolution with impulse response
-                reverb_length = int(
-                    sample_rate * config.room_size * config.reverb_amount
-                )
+                reverb_length = int(sample_rate * config.room_size * config.reverb_amount)
                 impulse = np.exp(-np.linspace(0, 5, reverb_length))
                 impulse = impulse / np.sum(impulse)
 
@@ -291,9 +285,7 @@ async def apply_spatial_audio(request: SpatialApplyRequest):
 
                 if len(processed_audio.shape) > 1:
                     for ch in range(processed_audio.shape[1]):
-                        processed_audio[:, ch] = signal.filtfilt(
-                            b, a, processed_audio[:, ch]
-                        )
+                        processed_audio[:, ch] = signal.filtfilt(b, a, processed_audio[:, ch])
                 else:
                     processed_audio = signal.filtfilt(b, a, processed_audio)
             except (ImportError, Exception) as e:
@@ -389,9 +381,7 @@ async def apply_spatial_audio(request: SpatialApplyRequest):
         raise
     except Exception as e:
         logger.error(f"Failed to apply spatial audio: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to apply spatial audio: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to apply spatial audio: {e!s}")
 
 
 @router.post("/preview")
@@ -417,9 +407,7 @@ async def preview_spatial_audio(
 
         # Get audio file path
         if audio_id not in _audio_storage:
-            raise HTTPException(
-                status_code=404, detail=f"Audio file '{audio_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file '{audio_id}' not found")
 
         audio_path = _audio_storage[audio_id]
         if not os.path.exists(audio_path):
@@ -472,9 +460,7 @@ async def preview_spatial_audio(
         raise
     except Exception as e:
         logger.error(f"Failed to preview spatial audio: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to preview spatial audio: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to preview spatial audio: {e!s}")
 
 
 # Simplified endpoints for Spatial Audio Panel (matching spec)
@@ -610,9 +596,7 @@ async def process_spatial_audio(request: SpatialProcessRequest):
                 z=request.position.z,
                 distance=request.position.distance,
                 room_size=request.environment.room_size if request.environment else 1.0,
-                reverb_amount=(
-                    request.environment.reverb_amount if request.environment else 0.0
-                ),
+                reverb_amount=(request.environment.reverb_amount if request.environment else 0.0),
                 doppler=request.environment.doppler if request.environment else False,
             )
             config = await create_spatial_config(create_request)
@@ -687,14 +671,10 @@ async def generate_binaural_audio(request: SpatialBinauralRequest):
 
             if itd_samples > 0:
                 # Source to the right, delay left ear
-                left_channel = np.pad(left_channel, (abs(itd_samples), 0))[
-                    : -abs(itd_samples)
-                ]
+                left_channel = np.pad(left_channel, (abs(itd_samples), 0))[: -abs(itd_samples)]
             elif itd_samples < 0:
                 # Source to the left, delay right ear
-                right_channel = np.pad(right_channel, (abs(itd_samples), 0))[
-                    : -abs(itd_samples)
-                ]
+                right_channel = np.pad(right_channel, (abs(itd_samples), 0))[: -abs(itd_samples)]
 
             # Apply ILD (Interaural Level Difference) - simple panning
             left_gain = max(0.0, min(1.0, (1.0 - request.x) / 2.0))
@@ -715,9 +695,7 @@ async def generate_binaural_audio(request: SpatialBinauralRequest):
             # No HRTF, just stereo panning
             left_gain = max(0.0, min(1.0, (1.0 - request.x) / 2.0))
             right_gain = max(0.0, min(1.0, (1.0 + request.x) / 2.0))
-            binaural_audio = np.array(
-                [processed_audio * left_gain, processed_audio * right_gain]
-            ).T
+            binaural_audio = np.array([processed_audio * left_gain, processed_audio * right_gain]).T
 
         # Save binaural audio
         output_path = tempfile.mktemp(suffix=".wav")
@@ -751,21 +729,15 @@ async def generate_binaural_audio(request: SpatialBinauralRequest):
 
             # Calculate HRTF-specific metrics
             if request.hrtf:
-                azimuth_rad = np.arctan2(
-                    request.x, np.sqrt(request.y**2 + request.z**2)
-                )
+                azimuth_rad = np.arctan2(request.x, np.sqrt(request.y**2 + request.z**2))
                 expected_itd = np.sin(azimuth_rad) * 0.0006
                 quality_metrics["hrtf_enabled"] = True
                 quality_metrics["expected_itd_ms"] = float(expected_itd * 1000)
-                quality_metrics["itd_samples"] = int(
-                    np.sin(azimuth_rad) * sample_rate * 0.0006
-                )
+                quality_metrics["itd_samples"] = int(np.sin(azimuth_rad) * sample_rate * 0.0006)
 
                 # Calculate interaural coherence (should be high for good binaural)
                 if len(binaural_audio.shape) > 1:
-                    correlation = np.corrcoef(
-                        binaural_audio[:, 0], binaural_audio[:, 1]
-                    )[0, 1]
+                    correlation = np.corrcoef(binaural_audio[:, 0], binaural_audio[:, 1])[0, 1]
                     quality_metrics["interaural_coherence"] = float(correlation)
             else:
                 quality_metrics["hrtf_enabled"] = False

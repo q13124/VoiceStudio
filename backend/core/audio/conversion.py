@@ -112,6 +112,7 @@ class AudioConversionService:
         # Use path_config for discovery
         try:
             from backend.config.path_config import get_ffmpeg_path
+
             self._ffmpeg_resolved = get_ffmpeg_path()
             return self._ffmpeg_resolved
         except ImportError:
@@ -121,14 +122,13 @@ class AudioConversionService:
 
         # Fallback to system PATH
         import shutil
+
         which = shutil.which("ffmpeg")
         if which:
             self._ffmpeg_resolved = Path(which)
             return self._ffmpeg_resolved
 
-        raise RuntimeError(
-            "FFmpeg not found. Install FFmpeg or set VOICESTUDIO_FFMPEG_PATH."
-        )
+        raise RuntimeError("FFmpeg not found. Install FFmpeg or set VOICESTUDIO_FFMPEG_PATH.")
 
     async def convert_to_wav(
         self,
@@ -397,6 +397,7 @@ class AudioConversionService:
             if not ffprobe.exists():
                 # Try system PATH
                 import shutil
+
                 probe_path = shutil.which("ffprobe")
                 if probe_path:
                     ffprobe = Path(probe_path)
@@ -405,8 +406,10 @@ class AudioConversionService:
 
             cmd = [
                 str(ffprobe),
-                "-v", "quiet",
-                "-print_format", "json",
+                "-v",
+                "quiet",
+                "-print_format",
+                "json",
                 "-show_format",
                 "-show_streams",
                 str(input_path),
@@ -422,6 +425,7 @@ class AudioConversionService:
 
             if process.returncode == 0 and stdout:
                 import json
+
                 data = json.loads(stdout.decode("utf-8"))
 
                 # Extract format info

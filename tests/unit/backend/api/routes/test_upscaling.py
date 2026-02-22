@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import upscaling
 except ImportError:
-    pytest.skip(
-        "Could not import upscaling route module", allow_module_level=True
-    )
+    pytest.skip("Could not import upscaling route module", allow_module_level=True)
 
 
 class TestUpscalingRouteImports:
@@ -25,12 +23,8 @@ class TestUpscalingRouteImports:
 
     def test_upscaling_module_imports(self):
         """Test upscaling module can be imported."""
-        assert (
-            upscaling is not None
-        ), "Failed to import upscaling module"
-        assert hasattr(
-            upscaling, "router"
-        ), "upscaling module missing router"
+        assert upscaling is not None, "Failed to import upscaling module"
+        assert hasattr(upscaling, "router"), "upscaling module missing router"
 
 
 class TestUpscalingRouteHandlers:
@@ -39,9 +33,7 @@ class TestUpscalingRouteHandlers:
     def test_upscale_audio_handler_exists(self):
         """Test upscale_audio handler exists."""
         if hasattr(upscaling, "upscale_audio"):
-            assert callable(
-                upscaling.upscale_audio
-            ), "upscale_audio is not callable"
+            assert callable(upscaling.upscale_audio), "upscale_audio is not callable"
 
 
 class TestUpscalingRouter:
@@ -62,4 +54,3 @@ class TestUpscalingRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -3,7 +3,6 @@ Tests for circuit breaker functionality.
 """
 
 
-
 class TestCircuitBreaker:
     """Test circuit breaker behavior."""
 

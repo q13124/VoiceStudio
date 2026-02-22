@@ -59,9 +59,7 @@ class TestPiperEngineClass:
                 engine = piper_engine.PiperEngine(device="cpu", gpu=False)
                 required_methods = ["initialize", "cleanup", "synthesize"]
                 for method in required_methods:
-                    assert hasattr(
-                        engine, method
-                    ), f"PiperEngine missing method: {method}"
+                    assert hasattr(engine, method), f"PiperEngine missing method: {method}"
             except (ImportError, Exception):
                 pytest.skip("piper dependencies not installed")
 
@@ -71,17 +69,13 @@ class TestPiperEngineClass:
             try:
                 engine = piper_engine.PiperEngine(device="cpu", gpu=False)
                 # Check for caching support
-                assert hasattr(
-                    engine, "enable_caching"
-                ), "PiperEngine should support caching"
+                assert hasattr(engine, "enable_caching"), "PiperEngine should support caching"
                 # Check for batch processing
                 assert hasattr(
                     engine, "batch_synthesize"
                 ), "PiperEngine should support batch processing"
                 # Check for batch_size attribute
-                assert hasattr(
-                    engine, "batch_size"
-                ), "PiperEngine should have batch_size attribute"
+                assert hasattr(engine, "batch_size"), "PiperEngine should have batch_size attribute"
             except (ImportError, Exception):
                 pytest.skip("piper dependencies not installed")
 
@@ -95,9 +89,7 @@ class TestPiperEngineCaching:
             try:
                 engine = piper_engine.PiperEngine(device="cpu", gpu=False)
                 # Check initial state (should be True by default)
-                assert (
-                    engine.enable_caching is True
-                ), "Caching should be enabled by default"
+                assert engine.enable_caching is True, "Caching should be enabled by default"
                 # Test that enable_caching method exists and can be called
                 assert hasattr(engine, "enable_caching"), "enable_caching should exist"
                 # The method sets self.enable_caching, so after calling it becomes a property
@@ -106,9 +98,7 @@ class TestPiperEngineCaching:
                     # Call the method to disable caching
                     enable_caching_method(False)
                     # After calling, enable_caching becomes a boolean property
-                    assert hasattr(
-                        engine, "enable_caching"
-                    ), "enable_caching should still exist"
+                    assert hasattr(engine, "enable_caching"), "enable_caching should still exist"
             except (ImportError, Exception):
                 pytest.skip("piper dependencies not installed")
 
@@ -150,9 +140,7 @@ class TestPiperEngineProtocol:
                 # Check for protocol methods
                 assert hasattr(engine, "initialize"), "Should implement initialize"
                 assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                assert hasattr(
-                    engine, "is_initialized"
-                ), "Should implement is_initialized"
+                assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                 assert hasattr(engine, "get_device"), "Should implement get_device"
             except (ImportError, Exception):
                 pytest.skip("piper dependencies not installed")
@@ -178,12 +166,8 @@ class TestPiperEngineConfiguration:
         if hasattr(piper_engine, "PiperEngine"):
             try:
                 engine = piper_engine.PiperEngine(device="cpu", gpu=False)
-                assert hasattr(
-                    engine, "sample_rate"
-                ), "Should have sample_rate attribute"
-                assert isinstance(
-                    engine.sample_rate, int
-                ), "sample_rate should be an integer"
+                assert hasattr(engine, "sample_rate"), "Should have sample_rate attribute"
+                assert isinstance(engine.sample_rate, int), "sample_rate should be an integer"
                 assert engine.sample_rate > 0, "sample_rate should be positive"
             except (ImportError, Exception):
                 pytest.skip("piper dependencies not installed")
@@ -193,9 +177,7 @@ class TestPiperEngineConfiguration:
         if hasattr(piper_engine, "PiperEngine"):
             try:
                 engine = piper_engine.PiperEngine(device="cpu", gpu=False)
-                assert hasattr(
-                    engine, "executable_path"
-                ), "Should have executable_path attribute"
+                assert hasattr(engine, "executable_path"), "Should have executable_path attribute"
             except (ImportError, Exception):
                 pytest.skip("piper dependencies not installed")
 
@@ -246,4 +228,3 @@ class TestPiperEngineModule:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

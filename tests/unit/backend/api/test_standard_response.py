@@ -27,6 +27,7 @@ class TestStandardResponseImports:
                 ResponseStatus,
                 StandardResponse,
             )
+
             assert StandardResponse is not None
             assert ResponseStatus is not None
             assert ErrorDetail is not None
@@ -42,6 +43,7 @@ class TestStandardResponseImports:
                 map_legacy_error_code,
                 to_v3_error_response,
             )
+
             assert to_v3_error_response is not None
             assert create_v3_error_json_response is not None
             assert map_legacy_error_code is not None
@@ -57,6 +59,7 @@ class TestStandardResponseEnvelope:
         """Get StandardResponse class."""
         try:
             from backend.api.v3.models import StandardResponse
+
             return StandardResponse
         except ImportError:
             pytest.skip("Could not import StandardResponse")
@@ -66,13 +69,12 @@ class TestStandardResponseEnvelope:
         """Get ResponseStatus class."""
         try:
             from backend.api.v3.models import ResponseStatus
+
             return ResponseStatus
         except ImportError:
             pytest.skip("Could not import ResponseStatus")
 
-    def test_success_response_structure(
-        self, standard_response_class, response_status_class
-    ):
+    def test_success_response_structure(self, standard_response_class, response_status_class):
         """Test success response has required fields."""
         response = standard_response_class(
             status=response_status_class.SUCCESS,
@@ -85,9 +87,7 @@ class TestStandardResponseEnvelope:
         assert response.data == {"key": "value"}
         assert response.message == "Operation successful"
 
-    def test_error_response_structure(
-        self, standard_response_class, response_status_class
-    ):
+    def test_error_response_structure(self, standard_response_class, response_status_class):
         """Test error response has required fields."""
         try:
             from backend.api.v3.models import ErrorCode, ErrorDetail
@@ -112,9 +112,7 @@ class TestStandardResponseEnvelope:
         assert response.errors[0].code == ErrorCode.INVALID_INPUT
         assert response.errors[0].field == "email"
 
-    def test_response_serialization(
-        self, standard_response_class, response_status_class
-    ):
+    def test_response_serialization(self, standard_response_class, response_status_class):
         """Test response can be serialized to JSON-compatible dict."""
         response = standard_response_class(
             status=response_status_class.SUCCESS,
@@ -250,6 +248,7 @@ class TestUploadService:
                 UploadValidationConfig,
                 get_upload_service,
             )
+
             assert UploadService is not None
             assert UploadResult is not None
             assert UploadValidationConfig is not None
@@ -308,6 +307,7 @@ class TestEngineResponseModels:
                 EngineListResponse,
                 EngineStatusResponse,
             )
+
             assert EngineListResponse is not None
             assert EngineInfo is not None
             assert EngineStatusResponse is not None

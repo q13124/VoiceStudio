@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.monitoring import structured_logging
 except ImportError:
-    pytest.skip(
-        "Could not import structured_logging", allow_module_level=True
-    )
+    pytest.skip("Could not import structured_logging", allow_module_level=True)
 
 
 class TestStructuredLoggingImports:
@@ -25,9 +23,7 @@ class TestStructuredLoggingImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            structured_logging is not None
-        ), "Failed to import structured_logging module"
+        assert structured_logging is not None, "Failed to import structured_logging module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -48,4 +44,3 @@ class TestStructuredLoggingFunctions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

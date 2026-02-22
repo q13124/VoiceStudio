@@ -131,11 +131,7 @@ class TestVoiceSynthesisWorkflow:
             pytest.skip("Synthesis not available (no engine configured)")
 
         # Attempt synthesis
-        studio_page.synthesize_text(
-            "Hello world",
-            wait_for_completion=True,
-            timeout=60.0
-        )
+        studio_page.synthesize_text("Hello world", wait_for_completion=True, timeout=60.0)
 
         # For smoke test, we mainly care that it doesn't crash
         # Success depends on engine availability
@@ -162,8 +158,8 @@ class TestVoiceCloningWorkflow:
         """Verify profile name input is accessible."""
         # Either quick clone or wizard mode should have profile input
         has_input = (
-            clone_page.element_exists(clone_page.PROFILE_NAME_INPUT) or
-            clone_page.is_quick_clone_mode()
+            clone_page.element_exists(clone_page.PROFILE_NAME_INPUT)
+            or clone_page.is_quick_clone_mode()
         )
         assert has_input, "No profile input found in clone panel"
 
@@ -172,9 +168,9 @@ class TestVoiceCloningWorkflow:
         """Verify navigation/action elements exist."""
         # Check for either wizard buttons or quick clone buttons
         has_action = (
-            clone_page.element_exists(clone_page.CREATE_PROFILE_BUTTON) or
-            clone_page.element_exists(clone_page.WIZARD_NEXT_BUTTON) or
-            clone_page.element_exists(clone_page.WIZARD_FINISH_BUTTON)
+            clone_page.element_exists(clone_page.CREATE_PROFILE_BUTTON)
+            or clone_page.element_exists(clone_page.WIZARD_NEXT_BUTTON)
+            or clone_page.element_exists(clone_page.WIZARD_FINISH_BUTTON)
         )
         assert has_action, "No action buttons found in clone panel"
 
@@ -203,14 +199,12 @@ class TestAudioAnalysisWorkflow:
     @pytest.mark.smoke
     def test_analyzer_has_browse_button(self, analyzer_page):
         """Verify browse button exists for file selection."""
-        assert analyzer_page.element_exists(analyzer_page.BROWSE_BUTTON), \
-            "Browse button not found"
+        assert analyzer_page.element_exists(analyzer_page.BROWSE_BUTTON), "Browse button not found"
 
     @pytest.mark.smoke
     def test_analyzer_has_tab_view(self, analyzer_page):
         """Verify tab view exists for different analysis views."""
-        assert analyzer_page.element_exists(analyzer_page.TAB_VIEW), \
-            "Tab view not found"
+        assert analyzer_page.element_exists(analyzer_page.TAB_VIEW), "Tab view not found"
 
     @pytest.mark.smoke
     def test_analyzer_help_accessible(self, analyzer_page):
@@ -241,14 +235,16 @@ class TestEffectsApplicationWorkflow:
     @pytest.mark.smoke
     def test_effects_has_presets(self, effects_page):
         """Verify presets combobox exists."""
-        assert effects_page.element_exists(effects_page.MIXER_PRESETS_COMBO), \
-            "Presets combobox not found"
+        assert effects_page.element_exists(
+            effects_page.MIXER_PRESETS_COMBO
+        ), "Presets combobox not found"
 
     @pytest.mark.smoke
     def test_effects_has_master_volume(self, effects_page):
         """Verify master volume slider exists."""
-        assert effects_page.element_exists(effects_page.MASTER_VOLUME_SLIDER), \
-            "Master volume slider not found"
+        assert effects_page.element_exists(
+            effects_page.MASTER_VOLUME_SLIDER
+        ), "Master volume slider not found"
 
     @pytest.mark.smoke
     def test_effects_reset_button(self, effects_page):

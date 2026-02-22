@@ -38,6 +38,7 @@ def _get_voice_browser_data():
     """Import voice browser data lazily to avoid circular imports."""
     try:
         from . import voice_browser
+
         return voice_browser
     except ImportError as e:
         logger.error(f"Failed to import voice_browser: {e}")
@@ -46,6 +47,7 @@ def _get_voice_browser_data():
 
 class VoiceInfoAlias(BaseModel):
     """Voice info model matching VoiceGateway expectations."""
+
     id: str
     name: str
     engine_id: str | None = None
@@ -58,6 +60,7 @@ class VoiceInfoAlias(BaseModel):
 
 class VoicesListResponse(BaseModel):
     """Response model for voices list."""
+
     voices: list[VoiceInfoAlias]
     total: int
 
@@ -76,31 +79,33 @@ async def get_available_voices(
         vb = _get_voice_browser_data()
 
         # Get all voices from the catalog
-        catalog = getattr(vb, '_voice_catalog', {})
+        catalog = getattr(vb, "_voice_catalog", {})
 
         if not catalog:
             # Try to load if empty
-            load_fn = getattr(vb, '_load_catalog', None)
+            load_fn = getattr(vb, "_load_catalog", None)
             if load_fn:
                 load_fn()
-            catalog = getattr(vb, '_voice_catalog', {})
+            catalog = getattr(vb, "_voice_catalog", {})
 
         voices = []
         for voice_id, voice_data in catalog.items():
             # Filter by engine if specified
-            if engine_id and voice_data.get('engine_id') != engine_id:
+            if engine_id and voice_data.get("engine_id") != engine_id:
                 continue
 
-            voices.append(VoiceInfoAlias(
-                id=voice_id,
-                name=voice_data.get('name', voice_id),
-                engine_id=voice_data.get('engine_id'),
-                language=voice_data.get('language'),
-                gender=voice_data.get('gender'),
-                description=voice_data.get('description'),
-                preview_url=voice_data.get('preview_url'),
-                tags=voice_data.get('tags', []),
-            ))
+            voices.append(
+                VoiceInfoAlias(
+                    id=voice_id,
+                    name=voice_data.get("name", voice_id),
+                    engine_id=voice_data.get("engine_id"),
+                    language=voice_data.get("language"),
+                    gender=voice_data.get("gender"),
+                    description=voice_data.get("description"),
+                    preview_url=voice_data.get("preview_url"),
+                    tags=voice_data.get("tags", []),
+                )
+            )
 
         logger.info(f"Returned {len(voices)} voices (engine_id filter: {engine_id})")
         return voices
@@ -123,6 +128,7 @@ timeline_alias_router = APIRouter(
 
 class TimelineDetailAlias(BaseModel):
     """Complete timeline detail matching TimelineGateway expectations."""
+
     project_id: str
     duration_seconds: float = 0.0
     tracks: list[dict] = []
@@ -131,6 +137,7 @@ class TimelineDetailAlias(BaseModel):
 
 class TrackInfoAlias(BaseModel):
     """Track info matching TimelineGateway.TrackInfo expectations."""
+
     id: str
     name: str
     project_id: str
@@ -141,12 +148,14 @@ class TrackInfoAlias(BaseModel):
 
 class TrackCreateRequestAlias(BaseModel):
     """Request to create a track."""
+
     name: str
     engine: str | None = None
 
 
 class ClipInfoAlias(BaseModel):
     """Clip info matching TimelineGateway.ClipInfo expectations."""
+
     id: str
     name: str
     profile_id: str
@@ -160,6 +169,7 @@ class ClipInfoAlias(BaseModel):
 
 class ClipCreateRequestAlias(BaseModel):
     """Request to create a clip."""
+
     name: str
     profile_id: str
     audio_id: str
@@ -172,12 +182,14 @@ class ClipCreateRequestAlias(BaseModel):
 
 class ClipUpdateRequestAlias(BaseModel):
     """Request to update a clip."""
+
     name: str | None = None
     start_time: float | None = None
 
 
 class MarkerInfoAlias(BaseModel):
     """Marker info matching TimelineGateway.MarkerInfo expectations."""
+
     id: str
     name: str
     time_seconds: float
@@ -187,6 +199,7 @@ class MarkerInfoAlias(BaseModel):
 
 class MarkerCreateRequestAlias(BaseModel):
     """Request to create a marker."""
+
     name: str
     time_seconds: float
     color: str | None = None
@@ -218,8 +231,8 @@ async def get_timeline(
         # Calculate duration from tracks and clips
         duration = 0.0
         for track in track_data_list:
-            for clip in track.get('clips', []):
-                clip_end = clip.get('start_time', 0.0) + clip.get('duration_seconds', 0.0)
+            for clip in track.get("clips", []):
+                clip_end = clip.get("start_time", 0.0) + clip.get("duration_seconds", 0.0)
                 duration = max(duration, clip_end)
 
         return TimelineDetailAlias(
@@ -293,7 +306,9 @@ async def remove_track(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error removing track {track_id} from project {project_id}: {e}", exc_info=True)
+        logger.error(
+            f"Error removing track {track_id} from project {project_id}: {e}", exc_info=True
+        )
         raise HTTPException(status_code=500, detail=f"Failed to remove track: {e!s}")
 
 
@@ -324,7 +339,9 @@ async def add_clip(
             quality_score=request.quality_score,
         )
 
-        result = tracks_module.create_clip(project_id, track_id, clip_request, track_store, ref_counter)
+        result = tracks_module.create_clip(
+            project_id, track_id, clip_request, track_store, ref_counter
+        )
 
         return ClipInfoAlias(
             id=result.id,

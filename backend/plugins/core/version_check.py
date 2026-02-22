@@ -79,9 +79,7 @@ def check_plugin_compatibility(
     min_version = manifest.get("min_app_version", "")
     if min_version and not version_satisfies(app_version, f">={min_version}"):
         result["compatible"] = False
-        result["errors"].append(
-            f"Requires app version >= {min_version}, current is {app_version}"
-        )
+        result["errors"].append(f"Requires app version >= {min_version}, current is {app_version}")
 
     # Check max_app_version
     max_version = manifest.get("max_app_version", "")

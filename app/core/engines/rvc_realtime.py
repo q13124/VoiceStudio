@@ -22,23 +22,25 @@ logger = logging.getLogger(__name__)
 
 class F0Method(Enum):
     """Pitch detection methods."""
-    RMVPE = "rmvpe"     # Best quality, moderate speed
-    CREPE = "crepe"     # High quality, slow
+
+    RMVPE = "rmvpe"  # Best quality, moderate speed
+    CREPE = "crepe"  # High quality, slow
     HARVEST = "harvest"  # Good quality, very slow
-    PM = "pm"           # Parselmouth, fast but lower quality
-    DIO = "dio"         # Fast, acceptable quality
+    PM = "pm"  # Parselmouth, fast but lower quality
+    DIO = "dio"  # Fast, acceptable quality
 
 
 @dataclass
 class RealtimeRVCConfig:
     """Configuration for real-time RVC."""
+
     # Model
     model_path: str | None = None
     index_path: str | None = None
 
     # Performance
-    chunk_size: int = 1024       # Samples per chunk (lower = lower latency)
-    lookahead_chunks: int = 2    # Chunks to buffer for context
+    chunk_size: int = 1024  # Samples per chunk (lower = lower latency)
+    lookahead_chunks: int = 2  # Chunks to buffer for context
     use_gpu: bool = True
     half_precision: bool = True  # Use FP16 for faster inference
 
@@ -60,6 +62,7 @@ class RealtimeRVCConfig:
 @dataclass
 class RealtimeStats:
     """Real-time processing statistics."""
+
     chunks_processed: int = 0
     total_latency_ms: float = 0.0
     min_latency_ms: float = float("inf")
@@ -102,6 +105,7 @@ class F0Extractor:
                 # Try to import RMVPE
                 try:
                     from app.core.engines.rmvpe import RMVPE
+
                     self._model = RMVPE()
                 except ImportError:
                     logger.warning("RMVPE not available, using fallback")
@@ -147,11 +151,11 @@ class F0Extractor:
 
             # Autocorrelation
             corr = np.correlate(frame, frame, mode="full")
-            corr = corr[len(corr) // 2:]
+            corr = corr[len(corr) // 2 :]
 
             # Find first peak after minimum
             min_lag = int(self._sample_rate / 500)  # Max 500 Hz
-            max_lag = int(self._sample_rate / 50)   # Min 50 Hz
+            max_lag = int(self._sample_rate / 50)  # Min 50 Hz
 
             if max_lag < len(corr):
                 search = corr[min_lag:max_lag]
@@ -228,6 +232,7 @@ class RealtimeRVCEngine:
                 # Load index if available
                 if index_path and Path(index_path).exists():
                     import faiss
+
                     self._index = faiss.read_index(index_path)
 
                 logger.info(f"RVC model loaded on {device}")
@@ -253,6 +258,7 @@ class RealtimeRVCEngine:
 
         try:
             import torch
+
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except ImportError:
@@ -308,7 +314,7 @@ class RealtimeRVCEngine:
 
         # Extract only the current chunk from result
         if len(converted) > len(audio_chunk):
-            converted = converted[-len(audio_chunk):]
+            converted = converted[-len(audio_chunk) :]
 
         # Update stats
         total_time = (time.time() - start_time) * 1000

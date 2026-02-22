@@ -58,11 +58,7 @@ class TestCircuitBreaker:
 
     def test_half_open_after_timeout(self):
         """Circuit transitions to HALF_OPEN after recovery timeout."""
-        breaker = CircuitBreaker(
-            name="test_engine",
-            failure_threshold=2,
-            recovery_timeout=0.1
-        )
+        breaker = CircuitBreaker(name="test_engine", failure_threshold=2, recovery_timeout=0.1)
 
         # Open the circuit
         breaker.record_failure()
@@ -79,10 +75,7 @@ class TestCircuitBreaker:
     def test_closes_after_success_in_half_open(self):
         """Circuit closes after successful calls in HALF_OPEN."""
         breaker = CircuitBreaker(
-            name="test_engine",
-            failure_threshold=2,
-            success_threshold=2,
-            recovery_timeout=0.1
+            name="test_engine", failure_threshold=2, success_threshold=2, recovery_timeout=0.1
         )
 
         # Open and wait for half-open
@@ -102,11 +95,7 @@ class TestCircuitBreaker:
 
     def test_reopens_on_failure_in_half_open(self):
         """Circuit reopens if failure occurs in HALF_OPEN."""
-        breaker = CircuitBreaker(
-            name="test_engine",
-            failure_threshold=2,
-            recovery_timeout=0.1
-        )
+        breaker = CircuitBreaker(name="test_engine", failure_threshold=2, recovery_timeout=0.1)
 
         # Open and wait for half-open
         breaker.record_failure()
@@ -136,11 +125,7 @@ class TestCircuitBreaker:
 
     def test_time_until_retry(self):
         """time_until_retry returns correct remaining time."""
-        breaker = CircuitBreaker(
-            name="test_engine",
-            failure_threshold=2,
-            recovery_timeout=1.0
-        )
+        breaker = CircuitBreaker(name="test_engine", failure_threshold=2, recovery_timeout=1.0)
 
         # When closed, should be 0
         assert breaker.time_until_retry() == 0.0
@@ -173,7 +158,7 @@ class TestCircuitBreaker:
             name="test_engine",
             failure_threshold=2,
             recovery_timeout=0.05,
-            half_open_max_calls=2  # Only allow 2 concurrent calls in half-open
+            half_open_max_calls=2,  # Only allow 2 concurrent calls in half-open
         )
 
         # Open the circuit

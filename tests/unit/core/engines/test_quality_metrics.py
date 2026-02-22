@@ -77,7 +77,9 @@ class TestQualityMetricsFunctionality:
             # Create mock audio data
             audio_data = np.random.randn(44100).astype(np.float32)
             result = quality_metrics.calculate_mos_score(audio_data, 44100)
-            assert isinstance(result, (float, dict)), "calculate_mos_score should return float or dict"
+            assert isinstance(
+                result, (float, dict)
+            ), "calculate_mos_score should return float or dict"
             if isinstance(result, float):
                 assert 0.0 <= result <= 5.0, "MOS score should be between 0 and 5"
         except Exception as e:
@@ -94,7 +96,9 @@ class TestQualityMetricsFunctionality:
             audio1 = np.random.randn(44100).astype(np.float32)
             audio2 = np.random.randn(44100).astype(np.float32)
             result = quality_metrics.calculate_similarity(audio1, audio2, 44100)
-            assert isinstance(result, (float, dict)), "calculate_similarity should return float or dict"
+            assert isinstance(
+                result, (float, dict)
+            ), "calculate_similarity should return float or dict"
             if isinstance(result, float):
                 assert 0.0 <= result <= 1.0, "Similarity should be between 0 and 1"
         except Exception as e:
@@ -119,4 +123,3 @@ class TestQualityMetricsErrorHandling:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

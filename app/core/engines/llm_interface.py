@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class MessageRole(str, Enum):
     """Role in a conversation message."""
+
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
@@ -36,6 +37,7 @@ class MessageRole(str, Enum):
 @dataclass
 class Message:
     """A single message in a conversation."""
+
     role: MessageRole
     content: str
     name: str | None = None
@@ -63,6 +65,7 @@ class Message:
 @dataclass
 class FunctionSpec:
     """Specification for a callable function the LLM can invoke."""
+
     name: str
     description: str
     parameters: dict[str, Any]  # JSON Schema for parameters
@@ -82,6 +85,7 @@ class FunctionSpec:
 @dataclass
 class LLMResponse:
     """Response from an LLM provider."""
+
     content: str
     finish_reason: str = "stop"
     function_call: dict[str, Any] | None = None
@@ -94,6 +98,7 @@ class LLMResponse:
 @dataclass
 class LLMConfig:
     """Configuration for LLM provider."""
+
     model: str = ""
     temperature: float = 0.7
     max_tokens: int = 1024
@@ -111,6 +116,7 @@ class LLMConfig:
 
 class IntentType(str, Enum):
     """Types of user intent detected from text."""
+
     CASUAL = "casual"
     COMPLEX_REASONING = "complex_reasoning"
     TOOL_CALL = "tool_call"
@@ -121,6 +127,7 @@ class IntentType(str, Enum):
 @dataclass
 class Intent:
     """Detected intent from user text."""
+
     intent_type: IntentType
     confidence: float  # 0.0 to 1.0
     entities: dict[str, Any] = field(default_factory=dict)
@@ -210,7 +217,9 @@ class BaseLLMProvider(EngineProtocol):
     engine router and lifecycle management.
     """
 
-    def __init__(self, config: LLMConfig | None = None, device: str | None = None, gpu: bool = False):
+    def __init__(
+        self, config: LLMConfig | None = None, device: str | None = None, gpu: bool = False
+    ):
         # LLM providers are typically cloud-based or use local servers (Ollama),
         # so default to cpu (no local GPU management needed at provider level)
         super().__init__(device=device, gpu=gpu)
@@ -284,13 +293,32 @@ class BaseLLMProvider(EngineProtocol):
 
         # Simple heuristic classification
         tool_keywords = [
-            "generate", "synthesize", "clone", "convert", "create",
-            "adjust", "change", "set", "apply", "export", "import",
-            "train", "process", "render",
+            "generate",
+            "synthesize",
+            "clone",
+            "convert",
+            "create",
+            "adjust",
+            "change",
+            "set",
+            "apply",
+            "export",
+            "import",
+            "train",
+            "process",
+            "render",
         ]
         complex_keywords = [
-            "explain", "analyze", "compare", "why", "how does",
-            "what if", "recommend", "optimize", "debug", "calculate",
+            "explain",
+            "analyze",
+            "compare",
+            "why",
+            "how does",
+            "what if",
+            "recommend",
+            "optimize",
+            "debug",
+            "calculate",
         ]
 
         for keyword in tool_keywords:
@@ -336,9 +364,7 @@ class BaseLLMProvider(EngineProtocol):
             extra={**self._config.extra, **override.extra},
         )
 
-    def _prepend_system_prompt(
-        self, messages: list[Message], config: LLMConfig
-    ) -> list[Message]:
+    def _prepend_system_prompt(self, messages: list[Message], config: LLMConfig) -> list[Message]:
         """Prepend system prompt if configured and not already present."""
         if not config.system_prompt:
             return messages

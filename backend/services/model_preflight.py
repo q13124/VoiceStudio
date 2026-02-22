@@ -51,6 +51,7 @@ class PreflightError(Exception):
     Routes should catch this and convert to HTTPException.
     This keeps the service layer independent of FastAPI.
     """
+
     def __init__(self, detail: object, status_code: int = 503):
         self.detail = detail
         self.status_code = status_code
@@ -104,18 +105,12 @@ def ensure_xtts(auto_download: bool = True) -> dict[str, object]:
     cfg = get_engine_config_service()
     engine_cfg = cfg.get_engine_config("xtts_v2")
     model_name_raw = engine_cfg.get("parameters", {}).get("model_name")
-    model_name = (
-        model_name_raw or "tts_models/multilingual/multi-dataset/xtts_v2"
-    ).strip()
+    model_name = (model_name_raw or "tts_models/multilingual/multi-dataset/xtts_v2").strip()
     base_dir = Path(
         engine_cfg.get("model_paths", {}).get("base")
-        or os.path.join(
-            str(get_models_path()), "xtts"
-        )
+        or os.path.join(str(get_models_path()), "xtts")
     )
-    cache_dir = Path(
-        engine_cfg.get("model_paths", {}).get("cache") or base_dir / "cache"
-    )
+    cache_dir = Path(engine_cfg.get("model_paths", {}).get("cache") or base_dir / "cache")
     _ensure_dir(base_dir)
     _ensure_dir(cache_dir)
 
@@ -196,9 +191,7 @@ def ensure_piper(auto_download: bool = True) -> dict[str, object]:
     engine_cfg = cfg.get_engine_config("piper")
     base_dir = Path(
         engine_cfg.get("model_paths", {}).get("base")
-        or os.path.join(
-            str(get_models_path()), "piper"
-        )
+        or os.path.join(str(get_models_path()), "piper")
     )
     voice = engine_cfg.get("parameters", {}).get("voice", "en_US-amy-medium")
     model_path = Path(
@@ -300,9 +293,7 @@ def ensure_sovits(auto_download: bool = False) -> dict[str, object]:
     Validate So-VITS-SVC checkpoint + config (no auto-download; manual).
     """
     cfg = get_engine_config_service()
-    engine_cfg = cfg.get_engine_config("sovits_svc") or cfg.get_engine_config(
-        "gpt_sovits"
-    )
+    engine_cfg = cfg.get_engine_config("sovits_svc") or cfg.get_engine_config("gpt_sovits")
     params = engine_cfg.get("parameters", {})
     model_path = Path(
         params.get("checkpoint_path")
@@ -327,8 +318,7 @@ def ensure_sovits(auto_download: bool = False) -> dict[str, object]:
 
     if missing:
         raise _fail(
-            "So-VITS checkpoints/config missing. Place files here: "
-            + "; ".join(missing),
+            "So-VITS checkpoints/config missing. Place files here: " + "; ".join(missing),
             status_code=424,
         )
 
@@ -363,7 +353,8 @@ def ensure_faster_whisper(auto_download: bool = True) -> dict[str, object]:
     if not models_root:
         models_root = os.path.join(
             os.environ.get("PROGRAMDATA", "C:\\ProgramData"),
-            "VoiceStudio", "models",
+            "VoiceStudio",
+            "models",
         )
     whisper_cache = os.path.join(models_root, "whisper")
     os.makedirs(whisper_cache, exist_ok=True)

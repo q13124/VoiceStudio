@@ -88,9 +88,7 @@ class FunctionRegistry:
             logger.error(f"Function '{name}' failed: {exc}")
             raise
 
-    async def process_tool_calls(
-        self, tool_calls: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    async def process_tool_calls(self, tool_calls: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Process tool calls from the LLM response.
 
@@ -114,17 +112,21 @@ class FunctionRegistry:
 
             try:
                 result = await self.execute(func_name, arguments)
-                results.append({
-                    "tool_call_id": call_id,
-                    "role": "tool",
-                    "content": json.dumps(result) if not isinstance(result, str) else result,
-                })
+                results.append(
+                    {
+                        "tool_call_id": call_id,
+                        "role": "tool",
+                        "content": json.dumps(result) if not isinstance(result, str) else result,
+                    }
+                )
             except Exception as exc:
-                results.append({
-                    "tool_call_id": call_id,
-                    "role": "tool",
-                    "content": json.dumps({"error": str(exc)}),
-                })
+                results.append(
+                    {
+                        "tool_call_id": call_id,
+                        "role": "tool",
+                        "content": json.dumps({"error": str(exc)}),
+                    }
+                )
 
         return results
 
@@ -145,13 +147,20 @@ def get_function_registry() -> FunctionRegistry:
 def _register_default_functions(registry: FunctionRegistry) -> None:
     """Register default VoiceStudio functions for the LLM."""
 
-    async def synthesize_voice(text: str, voice_id: str = "default", language: str = "en") -> dict[str, Any]:
+    async def synthesize_voice(
+        text: str, voice_id: str = "default", language: str = "en"
+    ) -> dict[str, Any]:
         """Synthesize speech from text."""
         try:
             from backend.services.engine_service import get_engine_service
+
             service = get_engine_service()
             result = await service.synthesize(text=text, voice_id=voice_id, language=language)
-            return {"status": "success", "audio_id": result.get("audio_id", ""), "message": f"Synthesized '{text[:50]}...'"}
+            return {
+                "status": "success",
+                "audio_id": result.get("audio_id", ""),
+                "message": f"Synthesized '{text[:50]}...'",
+            }
         except Exception as exc:
             return {"status": "error", "message": str(exc)}
 
@@ -159,6 +168,7 @@ def _register_default_functions(registry: FunctionRegistry) -> None:
         """List available voice profiles."""
         try:
             from backend.services.engine_service import get_engine_service
+
             service = get_engine_service()
             voices = service.list_voices()
             return {"voices": voices[:20], "total": len(voices)}
@@ -169,6 +179,7 @@ def _register_default_functions(registry: FunctionRegistry) -> None:
         """List available audio engines."""
         try:
             from backend.services.engine_service import get_engine_service
+
             service = get_engine_service()
             engines = service.list_engines()
             return {"engines": engines}
@@ -179,6 +190,7 @@ def _register_default_functions(registry: FunctionRegistry) -> None:
         """Get the status of a project."""
         try:
             from backend.services.ProjectStoreService import get_project_store_service
+
             store = get_project_store_service()
             projects = store.list_projects()
             return {"projects": len(projects), "status": "active"}
@@ -193,7 +205,11 @@ def _register_default_functions(registry: FunctionRegistry) -> None:
             "type": "object",
             "properties": {
                 "text": {"type": "string", "description": "Text to synthesize"},
-                "voice_id": {"type": "string", "description": "Voice profile ID", "default": "default"},
+                "voice_id": {
+                    "type": "string",
+                    "description": "Voice profile ID",
+                    "default": "default",
+                },
                 "language": {"type": "string", "description": "Language code", "default": "en"},
             },
             "required": ["text"],

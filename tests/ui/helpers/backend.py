@@ -51,9 +51,7 @@ class BackendHelper:
         except requests.RequestException:
             return False
 
-    def wait_for_backend(
-        self, timeout: float = 30, poll_interval: float = 1
-    ) -> bool:
+    def wait_for_backend(self, timeout: float = 30, poll_interval: float = 1) -> bool:
         """
         Wait for backend to become healthy.
 
@@ -173,9 +171,7 @@ class BackendHelper:
     # Voice Synthesis API
     # -------------------------------------------------------------------------
 
-    def synthesize_voice(
-        self, text: str, profile_id: str, **kwargs
-    ) -> dict | None:
+    def synthesize_voice(self, text: str, profile_id: str, **kwargs) -> dict | None:
         """
         Start a voice synthesis job.
 
@@ -546,9 +542,7 @@ def is_backend_healthy(base_url: str = BACKEND_URL) -> bool:
     return helper.is_healthy()
 
 
-def wait_for_backend(
-    base_url: str = BACKEND_URL, timeout: float = 30
-) -> bool:
+def wait_for_backend(base_url: str = BACKEND_URL, timeout: float = 30) -> bool:
     """
     Wait for backend to become healthy.
 

@@ -115,7 +115,9 @@ class TestPortableDirectoryStructure:
             assert dir_path.exists(), f"Directory {dir_name} should exist"
             assert dir_path.is_dir(), f"{dir_name} should be a directory"
 
-    def test_portable_structure_is_self_contained(self, temp_portable_dir: Path, portable_flag: Path):
+    def test_portable_structure_is_self_contained(
+        self, temp_portable_dir: Path, portable_flag: Path
+    ):
         """Test that portable installation is self-contained."""
         # Create structure
         data_dir = temp_portable_dir / "data"
@@ -242,11 +244,11 @@ class TestPortableDataIsolation:
         # Verify data_dir is a child of the portable root
         # (the test temp dir may be in LOCALAPPDATA/Temp, but that's OK for testing)
         assert data_dir.parent == temp_portable_dir
-        
+
         # The key property: data is relative to app root, not a fixed system path
         relative_path = data_dir.relative_to(temp_portable_dir)
         assert relative_path == Path("data")
-        
+
         # Verify the path doesn't contain user profile name patterns
         # (indicating it's not using user-specific resolution)
         path_str = str(data_dir.relative_to(temp_portable_dir))

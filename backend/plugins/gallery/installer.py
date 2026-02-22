@@ -91,13 +91,16 @@ class PluginInstallService:
         Returns:
             Installation result
         """
+
         def report(phase: InstallPhase, progress: float, message: str = ""):
             if progress_callback:
-                progress_callback(InstallProgress(
-                    phase=phase,
-                    progress=progress,
-                    message=message,
-                ))
+                progress_callback(
+                    InstallProgress(
+                        phase=phase,
+                        progress=progress,
+                        message=message,
+                    )
+                )
 
         try:
             report(InstallPhase.PREPARING, 0.0, "Fetching plugin information...")
@@ -116,10 +119,7 @@ class PluginInstallService:
 
             # Find version
             if version:
-                plugin_version = next(
-                    (v for v in plugin.versions if v.version == version),
-                    None
-                )
+                plugin_version = next((v for v in plugin.versions if v.version == version), None)
             else:
                 plugin_version = plugin.latest_version
 
@@ -150,14 +150,18 @@ class PluginInstallService:
             report(InstallPhase.DOWNLOADING, 0.2, "Downloading plugin...")
 
             # Download plugin
-            download_path = self._plugins_dir / "downloads" / f"{plugin_id}-{plugin_version.version}.zip"
+            download_path = (
+                self._plugins_dir / "downloads" / f"{plugin_id}-{plugin_version.version}.zip"
+            )
             download_path.parent.mkdir(parents=True, exist_ok=True)
 
             await self._download_file(
                 plugin_version.download_url,
                 download_path,
                 plugin_version.size_bytes,
-                lambda p: report(InstallPhase.DOWNLOADING, 0.2 + p * 0.4, f"Downloading... {int(p*100)}%"),
+                lambda p: report(
+                    InstallPhase.DOWNLOADING, 0.2 + p * 0.4, f"Downloading... {int(p*100)}%"
+                ),
             )
 
             report(InstallPhase.VERIFYING, 0.6, "Verifying checksum...")
@@ -294,12 +298,14 @@ class PluginInstallService:
                 continue
 
             if self._is_newer_version(plugin.latest_version.version, installed.version):
-                updates.append(UpdateInfo(
-                    plugin_id=plugin_id,
-                    current_version=installed.version,
-                    available_version=plugin.latest_version.version,
-                    changelog=plugin.latest_version.changelog,
-                ))
+                updates.append(
+                    UpdateInfo(
+                        plugin_id=plugin_id,
+                        current_version=installed.version,
+                        available_version=plugin.latest_version.version,
+                        changelog=plugin.latest_version.changelog,
+                    )
+                )
 
         return updates
 
@@ -387,12 +393,16 @@ class PluginInstallService:
             # Check common dependencies
             if dep_name == "python":
                 import sys
-                current = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+
+                current = (
+                    f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+                )
                 # Simplified version check
                 details[dep_name] = {"status": "satisfied", "version": current}
             elif dep_name == "pytorch":
                 try:
                     import torch
+
                     details[dep_name] = {"status": "satisfied", "version": torch.__version__}
                 except ImportError:
                     missing.append(dep_name)
@@ -412,6 +422,7 @@ class PluginInstallService:
         """Check if available version is newer than current."""
         try:
             from packaging import version
+
             return version.parse(available) > version.parse(current)
         except Exception:
             # Fallback to string comparison
@@ -429,7 +440,9 @@ class PluginInstallService:
                 self._installed[plugin_id] = InstalledPlugin(
                     id=plugin_id,
                     version=plugin_data.get("version", ""),
-                    installed_at=datetime.fromisoformat(plugin_data.get("installed_at", "2000-01-01")),
+                    installed_at=datetime.fromisoformat(
+                        plugin_data.get("installed_at", "2000-01-01")
+                    ),
                     install_path=plugin_data.get("install_path", ""),
                     state=plugin_data.get("state", "enabled"),
                     config=plugin_data.get("config", {}),
@@ -446,8 +459,7 @@ class PluginInstallService:
                 "version": "1.0.0",
                 "updated_at": datetime.now().isoformat(),
                 "plugins": {
-                    plugin_id: plugin.to_dict()
-                    for plugin_id, plugin in self._installed.items()
+                    plugin_id: plugin.to_dict() for plugin_id, plugin in self._installed.items()
                 },
             }
             self._registry_file.write_text(json.dumps(data, indent=2))

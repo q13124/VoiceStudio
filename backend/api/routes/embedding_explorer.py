@@ -25,6 +25,7 @@ _voice_encoder = None
 try:
     from resemblyzer import VoiceEncoder, preprocess_wav
     from resemblyzer.audio import sampling_rate as RESEMBLYZER_SR
+
     HAS_RESEMBLYZER = True
     logger.info("Resemblyzer available for speaker embedding extraction")
 except ImportError:
@@ -32,6 +33,7 @@ except ImportError:
 
 try:
     from speechbrain.inference.speaker import EncoderClassifier
+
     HAS_SPEECHBRAIN = True
     logger.info("SpeechBrain available for speaker embedding extraction")
 except ImportError:
@@ -40,6 +42,7 @@ except ImportError:
 # Try to import audio loading libraries
 try:
     import librosa
+
     HAS_LIBROSA = True
 except ImportError:
     HAS_LIBROSA = False
@@ -179,6 +182,7 @@ async def extract_embedding(request: EmbeddingExtractRequest):
 
             # Extract embedding (192-dimensional for ECAPA-TDNN)
             import torch
+
             audio_tensor = torch.tensor(audio).unsqueeze(0)
             embedding = classifier.encode_batch(audio_tensor)
             embedding_vector = embedding.squeeze().numpy().tolist()
@@ -206,9 +210,7 @@ async def extract_embedding(request: EmbeddingExtractRequest):
         # Store embedding
         _embeddings[embedding_id] = embedding_data
 
-        logger.info(
-            f"Extracted {len(embedding_vector)}-dim embedding for audio {request.audio_id}"
-        )
+        logger.info(f"Extracted {len(embedding_vector)}-dim embedding for audio {request.audio_id}")
 
         return EmbeddingVector(
             embedding_id=embedding_id,
@@ -234,9 +236,7 @@ async def list_embeddings(voice_profile_id: str | None = None):
     embeddings = list(_embeddings.values())
 
     if voice_profile_id:
-        embeddings = [
-            e for e in embeddings if e.get("voice_profile_id") == voice_profile_id
-        ]
+        embeddings = [e for e in embeddings if e.get("voice_profile_id") == voice_profile_id]
 
     return [EmbeddingVector(**e) for e in embeddings]
 
@@ -280,11 +280,7 @@ async def compare_embeddings(request: EmbeddingCompareRequest):
     magnitude1 = math.sqrt(sum(a * a for a in emb1.vector))
     magnitude2 = math.sqrt(sum(a * a for a in emb2.vector))
 
-    similarity = (
-        dot_product / (magnitude1 * magnitude2)
-        if (magnitude1 * magnitude2) > 0
-        else 0.0
-    )
+    similarity = dot_product / (magnitude1 * magnitude2) if (magnitude1 * magnitude2) > 0 else 0.0
 
     # Calculate Euclidean distance
     distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(emb1.vector, emb2.vector)))
@@ -439,10 +435,13 @@ async def cluster_embeddings(
         model = DBSCAN(eps=0.5, min_samples=2)
         labels = model.fit_predict(vectors)
         unique_labels = set(labels)
-        centroids = np.array([
-            vectors[labels == lbl].mean(axis=0)
-            for lbl in sorted(unique_labels) if lbl != -1
-        ]) if any(lbl != -1 for lbl in unique_labels) else np.empty((0, vectors.shape[1]))
+        centroids = (
+            np.array(
+                [vectors[labels == lbl].mean(axis=0) for lbl in sorted(unique_labels) if lbl != -1]
+            )
+            if any(lbl != -1 for lbl in unique_labels)
+            else np.empty((0, vectors.shape[1]))
+        )
     elif method == "hierarchical":
         try:
             from sklearn.cluster import AgglomerativeClustering
@@ -454,9 +453,7 @@ async def cluster_embeddings(
         k = min(num_clusters, len(vectors))
         model = AgglomerativeClustering(n_clusters=k)
         labels = model.fit_predict(vectors)
-        centroids = np.array([
-            vectors[labels == lbl].mean(axis=0) for lbl in range(k)
-        ])
+        centroids = np.array([vectors[labels == lbl].mean(axis=0) for lbl in range(k)])
     else:
         raise HTTPException(
             status_code=400,
@@ -465,6 +462,7 @@ async def cluster_embeddings(
 
     # Group embeddings by cluster
     from collections import defaultdict
+
     cluster_groups: dict[int, list[str]] = defaultdict(list)
     for i, emb in enumerate(embeddings_data):
         cluster_groups[int(labels[i])].append(emb.embedding_id)

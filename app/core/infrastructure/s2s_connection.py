@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import websockets
+
     _HAS_WEBSOCKETS = True
 except ImportError:
     _HAS_WEBSOCKETS = False
@@ -83,7 +84,7 @@ class S2SWebSocketConnection:
                 logger.info(f"S2S WebSocket connected to {self._url}")
                 return True
             except Exception as exc:
-                wait_time = 2 ** attempt
+                wait_time = 2**attempt
                 logger.warning(
                     f"S2S connection attempt {attempt + 1} failed: {exc}. "
                     f"Retrying in {wait_time}s..."

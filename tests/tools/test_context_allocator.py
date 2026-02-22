@@ -43,7 +43,10 @@ def test_allocator_truncates_memory_and_rules() -> None:
     long_text = "x" * 200
     sources = [
         _result("memory", {"memory": [MemoryItem(content=long_text, source="test")]}),
-        _result("rules", {"rules": [RuleContext(path="rule.mdc", description=long_text, always_apply=True)]}),
+        _result(
+            "rules",
+            {"rules": [RuleContext(path="rule.mdc", description=long_text, always_apply=True)]},
+        ),
     ]
     budget = BudgetConstraints(
         total_chars=500,

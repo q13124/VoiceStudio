@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import mix_scene
 except ImportError:
-    pytest.skip(
-        "Could not import mix_scene route module", allow_module_level=True
-    )
+    pytest.skip("Could not import mix_scene route module", allow_module_level=True)
 
 
 class TestMixSceneRouteImports:
@@ -35,9 +33,7 @@ class TestMixSceneRouteHandlers:
     def test_create_mix_scene_handler_exists(self):
         """Test create_mix_scene handler exists."""
         if hasattr(mix_scene, "create_mix_scene"):
-            assert callable(
-                mix_scene.create_mix_scene
-            ), "create_mix_scene is not callable"
+            assert callable(mix_scene.create_mix_scene), "create_mix_scene is not callable"
 
 
 class TestMixSceneRouter:
@@ -58,4 +54,3 @@ class TestMixSceneRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

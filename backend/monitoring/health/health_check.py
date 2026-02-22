@@ -38,6 +38,7 @@ def _get_server_url(default: str) -> str:
 
 class HealthStatus(Enum):
     """Health status levels."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -47,6 +48,7 @@ class HealthStatus(Enum):
 @dataclass
 class HealthCheckResult:
     """Result of a health check."""
+
     component: str
     status: HealthStatus
     message: str = ""
@@ -58,6 +60,7 @@ class HealthCheckResult:
 @dataclass
 class HealthReport:
     """Complete health report."""
+
     overall_status: HealthStatus
     timestamp: datetime
     checks: list[HealthCheckResult]
@@ -68,12 +71,7 @@ class HealthReport:
 class HealthCheck:
     """Base class for health checks."""
 
-    def __init__(
-        self,
-        name: str,
-        timeout: float = 5.0,
-        critical: bool = True
-    ):
+    def __init__(self, name: str, timeout: float = 5.0, critical: bool = True):
         self.name = name
         self.timeout = timeout
         self.critical = critical
@@ -83,10 +81,7 @@ class HealthCheck:
         start = time.perf_counter()
 
         try:
-            result = await asyncio.wait_for(
-                self._do_check(),
-                timeout=self.timeout
-            )
+            result = await asyncio.wait_for(self._do_check(), timeout=self.timeout)
             result.latency_ms = (time.perf_counter() - start) * 1000
             return result
 
@@ -199,6 +194,7 @@ class EngineHealthCheck(HealthCheck):
         try:
             # Try to get actual engine status from registry
             from backend.services.engine_service import get_engine_service
+
             engine_service = get_engine_service()
 
             if engine_service is None:
@@ -258,21 +254,21 @@ class DiskHealthCheck(HealthCheck):
         import psutil
 
         disk = psutil.disk_usage(self.path)
-        free_gb = disk.free / (1024 ** 3)
+        free_gb = disk.free / (1024**3)
 
         if free_gb < self.min_free_gb:
             return HealthCheckResult(
                 component=self.name,
                 status=HealthStatus.DEGRADED,
                 message=f"Low disk space: {free_gb:.1f} GB free",
-                details={"free_gb": free_gb, "total_gb": disk.total / (1024 ** 3)},
+                details={"free_gb": free_gb, "total_gb": disk.total / (1024**3)},
             )
 
         return HealthCheckResult(
             component=self.name,
             status=HealthStatus.HEALTHY,
             message=f"{free_gb:.1f} GB free",
-            details={"free_gb": free_gb, "total_gb": disk.total / (1024 ** 3)},
+            details={"free_gb": free_gb, "total_gb": disk.total / (1024**3)},
         )
 
 
@@ -298,8 +294,8 @@ class MemoryHealthCheck(HealthCheck):
                 message=f"High memory usage: {usage_percent:.1f}%",
                 details={
                     "usage_percent": usage_percent,
-                    "used_gb": memory.used / (1024 ** 3),
-                    "total_gb": memory.total / (1024 ** 3),
+                    "used_gb": memory.used / (1024**3),
+                    "total_gb": memory.total / (1024**3),
                 },
             )
 
@@ -309,8 +305,8 @@ class MemoryHealthCheck(HealthCheck):
             message=f"Memory usage: {usage_percent:.1f}%",
             details={
                 "usage_percent": usage_percent,
-                "used_gb": memory.used / (1024 ** 3),
-                "total_gb": memory.total / (1024 ** 3),
+                "used_gb": memory.used / (1024**3),
+                "total_gb": memory.total / (1024**3),
             },
         )
 
@@ -342,11 +338,13 @@ class HealthCheckService:
             if isinstance(result, HealthCheckResult):
                 check_results.append(result)
             elif isinstance(result, Exception):
-                check_results.append(HealthCheckResult(
-                    component="unknown",
-                    status=HealthStatus.UNHEALTHY,
-                    message=str(result),
-                ))
+                check_results.append(
+                    HealthCheckResult(
+                        component="unknown",
+                        status=HealthStatus.UNHEALTHY,
+                        message=str(result),
+                    )
+                )
 
         # Determine overall status
         overall = HealthStatus.HEALTHY

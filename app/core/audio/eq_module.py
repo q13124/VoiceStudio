@@ -175,9 +175,7 @@ class ParametricEQ:
 
         return result
 
-    def _apply_band(
-        self, audio: np.ndarray, band: EQBand, sample_rate: int
-    ) -> np.ndarray:
+    def _apply_band(self, audio: np.ndarray, band: EQBand, sample_rate: int) -> np.ndarray:
         """Apply a single EQ band to audio."""
         nyquist = sample_rate / 2.0
         normalized_freq = band.frequency / nyquist
@@ -192,9 +190,7 @@ class ParametricEQ:
         try:
             if band.band_type == "peaking":
                 # Parametric peaking filter
-                b, a = signal.iirpeak(
-                    normalized_freq, Q=band.q, fs=sample_rate
-                )
+                b, a = signal.iirpeak(normalized_freq, Q=band.q, fs=sample_rate)
                 filtered = signal.filtfilt(b, a, audio)
                 # Apply gain
                 processed = audio + (filtered - audio) * (gain_linear - 1.0)
@@ -225,16 +221,12 @@ class ParametricEQ:
 
             elif band.band_type == "lowpass":
                 # Lowpass filter
-                b, a = signal.iirfilter(
-                    4, normalized_freq, btype="lowpass", ftype="butter"
-                )
+                b, a = signal.iirfilter(4, normalized_freq, btype="lowpass", ftype="butter")
                 processed = signal.filtfilt(b, a, audio) * gain_linear
 
             elif band.band_type == "highpass":
                 # Highpass filter
-                b, a = signal.iirfilter(
-                    4, normalized_freq, btype="highpass", ftype="butter"
-                )
+                b, a = signal.iirfilter(4, normalized_freq, btype="highpass", ftype="butter")
                 processed = signal.filtfilt(b, a, audio) * gain_linear
 
             elif band.band_type == "bandpass":
@@ -242,9 +234,7 @@ class ParametricEQ:
                 bandwidth = normalized_freq / band.q
                 low = max(0.01, normalized_freq - bandwidth / 2)
                 high = min(0.99, normalized_freq + bandwidth / 2)
-                b, a = signal.iirfilter(
-                    4, [low, high], btype="bandpass", ftype="butter"
-                )
+                b, a = signal.iirfilter(4, [low, high], btype="bandpass", ftype="butter")
                 filtered = signal.filtfilt(b, a, audio)
                 processed = audio + (filtered - audio) * (gain_linear - 1.0)
 
@@ -253,9 +243,7 @@ class ParametricEQ:
                 bandwidth = normalized_freq / band.q
                 low = max(0.01, normalized_freq - bandwidth / 2)
                 high = min(0.99, normalized_freq + bandwidth / 2)
-                b, a = signal.iirfilter(
-                    4, [low, high], btype="bandstop", ftype="butter"
-                )
+                b, a = signal.iirfilter(4, [low, high], btype="bandstop", ftype="butter")
                 processed = signal.filtfilt(b, a, audio) * gain_linear
 
             else:
@@ -381,9 +369,7 @@ class ParametricEQ:
         return response_db
 
 
-def create_parametric_eq(
-    sample_rate: int = 24000, num_bands: int = 10
-) -> ParametricEQ:
+def create_parametric_eq(sample_rate: int = 24000, num_bands: int = 10) -> ParametricEQ:
     """
     Factory function to create a Parametric EQ instance.
 
@@ -430,4 +416,3 @@ def apply_eq(
             enabled=band_dict.get("enabled", True),
         )
     return eq.process(audio, sample_rate, **kwargs)
-

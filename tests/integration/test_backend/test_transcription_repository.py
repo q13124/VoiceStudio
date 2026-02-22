@@ -24,7 +24,8 @@ logger = logging.getLogger(__name__)
 async def setup_transcription_tables(db_path: str) -> None:
     """Create transcription tables for testing."""
     async with aiosqlite.connect(db_path) as conn:
-        await conn.execute("""
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS transcriptions (
                 id TEXT PRIMARY KEY,
                 audio_path TEXT NOT NULL,
@@ -41,7 +42,8 @@ async def setup_transcription_tables(db_path: str) -> None:
                 deleted_at TEXT,
                 expires_at TEXT
             )
-        """)
+        """
+        )
         await conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_transcriptions_audio ON transcriptions(audio_path)"
         )
@@ -80,10 +82,7 @@ class TestTranscriptionRepository(AsyncIntegrationTestBase):
         # Create tables first
         await setup_transcription_tables(temp_db_path)
 
-        config = ConnectionConfig(
-            database_type=DatabaseType.SQLITE,
-            sqlite_path=temp_db_path
-        )
+        config = ConnectionConfig(database_type=DatabaseType.SQLITE, sqlite_path=temp_db_path)
         repo = TranscriptionRepository(config)
         return repo
 
@@ -468,14 +467,18 @@ class TestTranscriptionRepository(AsyncIntegrationTestBase):
             user_id="user-full",
             project_id="proj-full",
         )
-        entity.set_segments([
-            {"start": 0.0, "end": 5.0, "text": "First half"},
-            {"start": 5.0, "end": 10.5, "text": "Second half"},
-        ])
-        entity.set_word_timestamps([
-            {"word": "Full", "start": 0.0, "end": 0.3},
-            {"word": "transcription", "start": 0.3, "end": 1.0},
-        ])
+        entity.set_segments(
+            [
+                {"start": 0.0, "end": 5.0, "text": "First half"},
+                {"start": 5.0, "end": 10.5, "text": "Second half"},
+            ]
+        )
+        entity.set_word_timestamps(
+            [
+                {"word": "Full", "start": 0.0, "end": 0.3},
+                {"word": "transcription", "start": 0.3, "end": 1.0},
+            ]
+        )
         await transcription_repo.create(entity)
 
         retrieved = await transcription_repo.get_by_id(trans_id)

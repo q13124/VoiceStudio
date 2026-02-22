@@ -16,11 +16,12 @@ from typing import TypeVar
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class RetryStrategy(Enum):
     """Retry strategies."""
+
     NONE = "none"
     IMMEDIATE = "immediate"
     EXPONENTIAL = "exponential"
@@ -30,11 +31,13 @@ class RetryStrategy(Enum):
 
 class RetryableError(Exception):
     """Base exception for retryable errors."""
+
     ...
 
 
 class NonRetryableError(Exception):
     """Base exception for non-retryable errors."""
+
     ...
 
 
@@ -53,14 +56,14 @@ def is_retryable_error(exception: Exception) -> bool:
         return True
 
     # HTTP errors that might be transient
-    if hasattr(exception, 'status_code'):
+    if hasattr(exception, "status_code"):
         status_code = exception.status_code
         # 429 (rate limit), 500, 502, 503, 504 are retryable
         if status_code in (429, 500, 502, 503, 504):
             return True
 
     # Check if exception has is_retryable attribute
-    if hasattr(exception, 'is_retryable'):
+    if hasattr(exception, "is_retryable"):
         return exception.is_retryable
 
     # RetryableError is always retryable
@@ -100,7 +103,7 @@ def calculate_delay(
     if strategy == RetryStrategy.NONE or strategy == RetryStrategy.IMMEDIATE:
         return 0.0
     elif strategy == RetryStrategy.EXPONENTIAL:
-        delay = initial_delay * (multiplier ** attempt)
+        delay = initial_delay * (multiplier**attempt)
         return min(delay, max_delay)
     elif strategy == RetryStrategy.FIXED:
         return fixed_delay
@@ -141,7 +144,7 @@ async def retry_with_backoff(
     retryable_exceptions: list[type] | None = None,
     on_retry: Callable[[int, Exception], None] | None = None,
     *args,
-    **kwargs
+    **kwargs,
 ) -> T:
     """
     Execute function with retry logic and exponential backoff.
@@ -186,20 +189,12 @@ async def retry_with_backoff(
 
             # Don't retry if not retryable or last attempt
             if not is_retryable or attempt == max_attempts - 1:
-                logger.error(
-                    f"Operation failed after {attempt + 1} attempts: {e!s}",
-                    exc_info=True
-                )
+                logger.error(f"Operation failed after {attempt + 1} attempts: {e!s}", exc_info=True)
                 raise
 
             # Calculate delay
             delay = calculate_delay(
-                attempt,
-                strategy,
-                initial_delay,
-                max_delay,
-                multiplier,
-                fixed_delay
+                attempt, strategy, initial_delay, max_delay, multiplier, fixed_delay
             )
 
             # Add jitter
@@ -254,6 +249,7 @@ def retry(
         retryable_exceptions: List of retryable exception types
         on_retry: Optional callback on retry (attempt, exception)
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
         async def async_wrapper(*args, **kwargs) -> T:
@@ -269,7 +265,7 @@ def retry(
                 retryable_exceptions=retryable_exceptions,
                 on_retry=on_retry,
                 *args,
-                **kwargs
+                **kwargs,
             )
 
         @wraps(func)
@@ -294,7 +290,7 @@ def retry(
                     retryable_exceptions=retryable_exceptions,
                     on_retry=on_retry,
                     *args,
-                    **kwargs
+                    **kwargs,
                 )
             )
 
@@ -304,4 +300,3 @@ def retry(
             return sync_wrapper
 
     return decorator
-

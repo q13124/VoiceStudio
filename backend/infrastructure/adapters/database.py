@@ -115,7 +115,7 @@ class DatabaseAdapter(Adapter):
                 # SQLite
                 await self._connection.close()
                 self._connection = None
-            elif self._pool is not None and hasattr(self._pool, 'close'):
+            elif self._pool is not None and hasattr(self._pool, "close"):
                 # PostgreSQL
                 await self._pool.close()
 
@@ -132,10 +132,7 @@ class DatabaseAdapter(Adapter):
     async def health_check(self) -> dict[str, Any]:
         """Check database health."""
         # Check if running in placeholder mode
-        is_placeholder = (
-            isinstance(self._pool, dict) and
-            self._pool.get("placeholder", False)
-        )
+        is_placeholder = isinstance(self._pool, dict) and self._pool.get("placeholder", False)
 
         status = {
             "connected": self._connected,

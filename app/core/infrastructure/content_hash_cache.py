@@ -159,9 +159,7 @@ class ContentHashCache:
 
         # Filter to only duplicates (more than one file per hash)
         duplicates = {
-            hash_value: files
-            for hash_value, files in hash_to_files.items()
-            if len(files) > 1
+            hash_value: files for hash_value, files in hash_to_files.items() if len(files) > 1
         }
 
         return duplicates
@@ -261,9 +259,7 @@ class ContentHashCache:
         Returns:
             Dictionary with cache statistics
         """
-        total_size = sum(
-            entry.get("size", 0) for entry in self._hash_cache.values()
-        )
+        total_size = sum(entry.get("size", 0) for entry in self._hash_cache.values())
 
         return {
             "total_entries": len(self._hash_cache),
@@ -299,4 +295,3 @@ def create_content_hash_cache(
         Initialized ContentHashCache instance
     """
     return ContentHashCache(cache_file=cache_file)
-

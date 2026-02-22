@@ -32,17 +32,14 @@ except ImportError:
         def update(self, n=1):
             self.n += n
 
-        def set_description(self, desc=None):
-            ...
+        def set_description(self, desc=None): ...
 
-        def close(self):
-            ...
+        def close(self): ...
 
         def __enter__(self):
             return self
 
-        def __exit__(self, *args):
-            ...
+        def __exit__(self, *args): ...
 
     class atqdm:
         def __init__(self, *args, **kwargs):
@@ -52,11 +49,9 @@ except ImportError:
         async def update(self, n=1):
             self.n += n
 
-        def set_description(self, desc=None):
-            ...
+        def set_description(self, desc=None): ...
 
-        async def close(self):
-            ...
+        async def close(self): ...
 
 
 def create_progress_bar(

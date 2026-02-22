@@ -6,6 +6,7 @@ Validates the full audio lifecycle:
 This is the Phase 1 exit gate test. All 7 steps must pass for Phase 1
 to be considered complete.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -37,10 +38,19 @@ def _generate_test_wav(duration_s: float = 2.0, sample_rate: int = 16000) -> byt
 
     header = struct.pack(
         "<4sI4s4sIHHIIHH4sI",
-        b"RIFF", file_size, b"WAVE",
-        b"fmt ", 16, 1, 1, sample_rate,
-        sample_rate * 2, 2, 16,
-        b"data", data_size,
+        b"RIFF",
+        file_size,
+        b"WAVE",
+        b"fmt ",
+        16,
+        1,
+        1,
+        sample_rate,
+        sample_rate * 2,
+        2,
+        16,
+        b"data",
+        data_size,
     )
     return header + audio_data
 
@@ -85,9 +95,7 @@ class TestGoldenPathE2E:
         """Step 1: Upload a WAV file to the asset library."""
         files = {"file": ("test_golden_path.wav", io.BytesIO(test_wav_bytes), "audio/wav")}
         resp = await client.post("/api/library/assets/upload", files=files)
-        assert resp.status_code in (200, 201), (
-            f"Import failed: {resp.status_code} - {resp.text}"
-        )
+        assert resp.status_code in (200, 201), f"Import failed: {resp.status_code} - {resp.text}"
 
     @pytest.mark.asyncio
     async def test_step3_library_list(self, client: AsyncClient):
@@ -111,9 +119,11 @@ class TestGoldenPathE2E:
             "/api/profiles",
             json={"name": "golden-path-test", "description": "Phase 1 E2E test profile"},
         )
-        assert resp.status_code in (200, 201, 422), (
-            f"Profile creation unexpected status: {resp.status_code}"
-        )
+        assert resp.status_code in (
+            200,
+            201,
+            422,
+        ), f"Profile creation unexpected status: {resp.status_code}"
 
     @pytest.mark.asyncio
     async def test_step6_synthesize(self, client: AsyncClient):
@@ -144,9 +154,9 @@ class TestGoldenPathE2E:
         schema = resp.json()
         assert "paths" in schema
         assert "info" in schema
-        assert len(schema["paths"]) > 20, (
-            f"Only {len(schema['paths'])} paths in schema -- expected 20+"
-        )
+        assert (
+            len(schema["paths"]) > 20
+        ), f"Only {len(schema['paths'])} paths in schema -- expected 20+"
 
 
 class TestGoldenPathIntegrity:

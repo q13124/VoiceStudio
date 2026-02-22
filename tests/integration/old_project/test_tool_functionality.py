@@ -44,9 +44,7 @@ class TestAudioQualityBenchmark:
         try:
             import importlib.util
 
-            spec = importlib.util.spec_from_file_location(
-                "audio_quality_benchmark", tool_path
-            )
+            spec = importlib.util.spec_from_file_location("audio_quality_benchmark", tool_path)
             if spec and spec.loader:
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
@@ -88,9 +86,7 @@ class TestQualityDashboard:
         """Test that quality_dashboard.py exists."""
         tool_path = tools_dir / "quality_dashboard.py"
         if not tool_path.exists():
-            pytest.skip(
-                "quality_dashboard.py not found - tool not yet copied from old project"
-            )
+            pytest.skip("quality_dashboard.py not found - tool not yet copied from old project")
         assert tool_path.exists()
         logger.info("quality_dashboard.py found")
 
@@ -103,9 +99,7 @@ class TestQualityDashboard:
         try:
             import importlib.util
 
-            spec = importlib.util.spec_from_file_location(
-                "quality_dashboard", tool_path
-            )
+            spec = importlib.util.spec_from_file_location("quality_dashboard", tool_path)
             if spec and spec.loader:
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
@@ -146,9 +140,7 @@ class TestDatasetQA:
         """Test that dataset_qa.py exists."""
         tool_path = tools_dir / "dataset_qa.py"
         if not tool_path.exists():
-            pytest.skip(
-                "dataset_qa.py not found - tool not yet copied from old project"
-            )
+            pytest.skip("dataset_qa.py not found - tool not yet copied from old project")
         assert tool_path.exists()
         logger.info("dataset_qa.py found")
 
@@ -202,9 +194,7 @@ class TestDatasetReport:
         """Test that dataset_report.py exists."""
         tool_path = tools_dir / "dataset_report.py"
         if not tool_path.exists():
-            pytest.skip(
-                "dataset_report.py not found - tool not yet copied from old project"
-            )
+            pytest.skip("dataset_report.py not found - tool not yet copied from old project")
         assert tool_path.exists()
         logger.info("dataset_report.py found")
 
@@ -258,9 +248,7 @@ class TestBenchmarkEngines:
         """Test that benchmark_engines.py exists."""
         tool_path = tools_dir / "benchmark_engines.py"
         if not tool_path.exists():
-            pytest.skip(
-                "benchmark_engines.py not found - tool not yet copied from old project"
-            )
+            pytest.skip("benchmark_engines.py not found - tool not yet copied from old project")
         assert tool_path.exists()
         logger.info("benchmark_engines.py found")
 
@@ -273,9 +261,7 @@ class TestBenchmarkEngines:
         try:
             import importlib.util
 
-            spec = importlib.util.spec_from_file_location(
-                "benchmark_engines", tool_path
-            )
+            spec = importlib.util.spec_from_file_location("benchmark_engines", tool_path)
             if spec and spec.loader:
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
@@ -326,9 +312,7 @@ class TestSystemMonitoringTools:
         """Test that system_monitor.py exists."""
         tool_path = tools_dir / "system_monitor.py"
         if not tool_path.exists():
-            pytest.skip(
-                "system_monitor.py not found - tool not yet copied from old project"
-            )
+            pytest.skip("system_monitor.py not found - tool not yet copied from old project")
         assert tool_path.exists()
         logger.info("system_monitor.py found")
 
@@ -336,9 +320,7 @@ class TestSystemMonitoringTools:
         """Test that performance_monitor.py exists."""
         tool_path = tools_dir / "performance_monitor.py"
         if not tool_path.exists():
-            pytest.skip(
-                "performance_monitor.py not found - tool not yet copied from old project"
-            )
+            pytest.skip("performance_monitor.py not found - tool not yet copied from old project")
         assert tool_path.exists()
         logger.info("performance_monitor.py found")
 
@@ -346,9 +328,7 @@ class TestSystemMonitoringTools:
         """Test that profile_engine_memory.py exists."""
         tool_path = tools_dir / "profile_engine_memory.py"
         if not tool_path.exists():
-            pytest.skip(
-                "profile_engine_memory.py not found - tool not yet copied from old project"
-            )
+            pytest.skip("profile_engine_memory.py not found - tool not yet copied from old project")
         assert tool_path.exists()
         logger.info("profile_engine_memory.py found")
 
@@ -360,9 +340,7 @@ class TestTrainingTools:
         """Test that train_ultimate.py exists."""
         tool_path = tools_dir / "train_ultimate.py"
         if not tool_path.exists():
-            pytest.skip(
-                "train_ultimate.py not found - tool not yet copied from old project"
-            )
+            pytest.skip("train_ultimate.py not found - tool not yet copied from old project")
         assert tool_path.exists()
         logger.info("train_ultimate.py found")
 
@@ -370,9 +348,7 @@ class TestTrainingTools:
         """Test that train_voice_quality.py exists."""
         tool_path = tools_dir / "train_voice_quality.py"
         if not tool_path.exists():
-            pytest.skip(
-                "train_voice_quality.py not found - tool not yet copied from old project"
-            )
+            pytest.skip("train_voice_quality.py not found - tool not yet copied from old project")
         assert tool_path.exists()
         logger.info("train_voice_quality.py found")
 
@@ -380,9 +356,7 @@ class TestTrainingTools:
         """Test that config_optimizer.py exists."""
         tool_path = tools_dir / "config_optimizer.py"
         if not tool_path.exists():
-            pytest.skip(
-                "config_optimizer.py not found - tool not yet copied from old project"
-            )
+            pytest.skip("config_optimizer.py not found - tool not yet copied from old project")
         assert tool_path.exists()
         logger.info("config_optimizer.py found")
 
@@ -394,9 +368,7 @@ class TestAudioProcessingUtilities:
         """Test that repair_wavs.py exists."""
         tool_path = tools_dir / "repair_wavs.py"
         if not tool_path.exists():
-            pytest.skip(
-                "repair_wavs.py not found - tool not yet copied from old project"
-            )
+            pytest.skip("repair_wavs.py not found - tool not yet copied from old project")
         assert tool_path.exists()
         logger.info("repair_wavs.py found")
 
@@ -404,9 +376,7 @@ class TestAudioProcessingUtilities:
         """Test that mark_bad_clips.py exists."""
         tool_path = tools_dir / "mark_bad_clips.py"
         if not tool_path.exists():
-            pytest.skip(
-                "mark_bad_clips.py not found - tool not yet copied from old project"
-            )
+            pytest.skip("mark_bad_clips.py not found - tool not yet copied from old project")
         assert tool_path.exists()
         logger.info("mark_bad_clips.py found")
 

@@ -146,9 +146,7 @@ class QueryDispatcher:
 
         if not handler:
             logger.error(f"No handler for query: {query_type.__name__}")
-            return QueryResult.fail(
-                f"No handler registered for {query_type.__name__}"
-            )
+            return QueryResult.fail(f"No handler registered for {query_type.__name__}")
 
         logger.debug(f"Dispatching query: {query_type.__name__}")
 

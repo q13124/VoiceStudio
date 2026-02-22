@@ -81,9 +81,7 @@ class EnhancedEnsembleRouter:
             engine_router: Engine router instance (uses global if None)
             sample_rate: Default sample rate for processing
         """
-        self.engine_router = engine_router or (
-            global_router if HAS_ENGINE_ROUTER else None
-        )
+        self.engine_router = engine_router or (global_router if HAS_ENGINE_ROUTER else None)
         self.sample_rate = sample_rate
         self.quality_metrics = None
 
@@ -241,13 +239,9 @@ class EnhancedEnsembleRouter:
         if selection_mode == "voting":
             return self._voting_mode(engine_outputs, engine_qualities)
         elif selection_mode == "hybrid":
-            return self._hybrid_mode(
-                engine_outputs, engine_qualities, segment_size
-            )
+            return self._hybrid_mode(engine_outputs, engine_qualities, segment_size)
         elif selection_mode == "fusion":
-            return self._fusion_mode(
-                engine_outputs, engine_qualities, fusion_strategy
-            )
+            return self._fusion_mode(engine_outputs, engine_qualities, fusion_strategy)
         else:
             logger.warning(f"Unknown selection mode: {selection_mode}, using voting")
             return self._voting_mode(engine_outputs, engine_qualities)
@@ -397,8 +391,7 @@ class EnhancedEnsembleRouter:
             engine_weights = {k: v / total_weight for k, v in engine_weights.items()}
         else:
             engine_weights = {
-                k: 1.0 / len(engine_audios_resampled)
-                for k in engine_audios_resampled
+                k: 1.0 / len(engine_audios_resampled) for k in engine_audios_resampled
             }
 
         # Find max length and fuse
@@ -443,4 +436,3 @@ def create_enhanced_ensemble_router(
         Initialized EnhancedEnsembleRouter instance
     """
     return EnhancedEnsembleRouter(engine_router=engine_router, sample_rate=sample_rate)
-

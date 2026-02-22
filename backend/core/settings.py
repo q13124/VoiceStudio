@@ -46,9 +46,9 @@ class VoiceStudioSettings(BaseSettings):
     models_path: str = Field(
         default_factory=lambda: os.environ.get(
             "VOICESTUDIO_MODELS_PATH",
-            str(Path(os.environ.get("PROGRAMDATA", "C:/ProgramData")) / "VoiceStudio" / "models")
+            str(Path(os.environ.get("PROGRAMDATA", "C:/ProgramData")) / "VoiceStudio" / "models"),
         ),
-        description="Root path for all model files"
+        description="Root path for all model files",
     )
 
     # Cache settings
@@ -57,8 +57,12 @@ class VoiceStudioSettings(BaseSettings):
 
     # Resource limits
     vram_limit_mb: int = Field(default=8192, description="Maximum VRAM usage in MB")
-    max_concurrent_engines: int = Field(default=3, description="Maximum concurrent engine instances")
-    engine_idle_timeout_seconds: int = Field(default=300, description="Idle timeout before engine cleanup")
+    max_concurrent_engines: int = Field(
+        default=3, description="Maximum concurrent engine instances"
+    )
+    engine_idle_timeout_seconds: int = Field(
+        default=300, description="Idle timeout before engine cleanup"
+    )
 
     # Rate limiting
     rate_limit_enabled: bool = Field(default=True, description="Enable API rate limiting")
@@ -68,7 +72,9 @@ class VoiceStudioSettings(BaseSettings):
     telemetry_enabled: bool = Field(default=False, description="Enable telemetry (opt-in)")
 
     # Feature flags
-    enable_experimental_engines: bool = Field(default=False, description="Enable experimental engines")
+    enable_experimental_engines: bool = Field(
+        default=False, description="Enable experimental engines"
+    )
     enable_gpu_acceleration: bool = Field(default=True, description="Enable GPU acceleration")
 
     # API settings
@@ -77,8 +83,7 @@ class VoiceStudioSettings(BaseSettings):
 
     # CORS settings
     cors_allowed_origins: str = Field(
-        default="*",
-        description="Comma-separated list of allowed CORS origins"
+        default="*", description="Comma-separated list of allowed CORS origins"
     )
 
     class Config:

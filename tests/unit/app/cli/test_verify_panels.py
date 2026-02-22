@@ -23,9 +23,7 @@ class TestVerifyPanelsImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            verify_panels is not None
-        ), "Failed to import verify_panels module"
+        assert verify_panels is not None, "Failed to import verify_panels module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -35,4 +33,3 @@ class TestVerifyPanelsImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

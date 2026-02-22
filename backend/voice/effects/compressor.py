@@ -79,7 +79,7 @@ class CompressorEffect(AudioEffect):
             if envelope > threshold:
                 # Above threshold - compress
                 overshoot = envelope / threshold
-                gain = (1 / overshoot) ** (1 - 1/ratio)
+                gain = (1 / overshoot) ** (1 - 1 / ratio)
             else:
                 gain = 1.0
 

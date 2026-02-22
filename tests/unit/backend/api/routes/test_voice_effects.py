@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def voice_effects_client():
     """Create test client for voice effects routes."""
     from backend.api.routes.voice_effects import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)

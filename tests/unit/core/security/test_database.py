@@ -37,9 +37,7 @@ class TestSecurityDatabaseFunctions:
     def test_get_security_logs_function_exists(self):
         """Test get_security_logs function exists."""
         if hasattr(database, "get_security_logs"):
-            assert callable(
-                database.get_security_logs
-            ), "get_security_logs should be callable"
+            assert callable(database.get_security_logs), "get_security_logs should be callable"
 
 
 if __name__ == "__main__":

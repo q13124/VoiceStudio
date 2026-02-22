@@ -13,6 +13,7 @@ import tempfile
 import uuid
 from io import BytesIO
 
+import numpy as np
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from PIL import Image
 
@@ -52,7 +53,6 @@ def _analyze_image_artifacts(img_array: np.ndarray) -> float:
     Returns artifact score (0.0 = no artifacts, 10.0 = severe artifacts).
     Lower is better.
     """
-    import numpy as np
 
     # Check for blockiness (compression artifacts)
     # Analyze local variance - compression creates uniform blocks
@@ -221,7 +221,9 @@ try:
     ENGINE_AVAILABLE = len(engines) > 0
     if ENGINE_AVAILABLE:
         engine_names = [e.get("id", e.get("name", "")) for e in engines]
-        logger.info(f"Image EngineService initialized with {len(engines)} engines: {', '.join(engine_names[:5])}...")
+        logger.info(
+            f"Image EngineService initialized with {len(engines)} engines: {', '.join(engine_names[:5])}..."
+        )
     else:
         logger.warning("No engines available for image generation")
 except Exception as e:

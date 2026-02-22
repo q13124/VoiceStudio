@@ -56,9 +56,7 @@ try:
 except ImportError:
     TTS = None
     ModelManager = None
-    logging.warning(
-        "Coqui TTS not installed. Install with: pip install coqui-tts==0.24.2"
-    )
+    logging.warning("Coqui TTS not installed. Install with: pip install coqui-tts==0.24.2")
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +105,7 @@ def _ensure_torchaudio_load_fallback() -> None:
 
     load_with_fallback._voicestudio_fallback = True
     torchaudio.load = load_with_fallback
+
 
 # Optional librosa import for prosody control
 try:
@@ -285,9 +284,7 @@ class XTTSEngine(EngineProtocol):
                     )
                     self.device = "cpu"
             except Exception as e:
-                logger.warning(
-                    f"Failed to verify CUDA arch compatibility for XTTS: {e}"
-                )
+                logger.warning(f"Failed to verify CUDA arch compatibility for XTTS: {e}")
         self.tts = None
         self._use_cache = True  # Enable model caching by default
         self._lazy_load = False  # Lazy loading flag
@@ -313,8 +310,7 @@ class XTTSEngine(EngineProtocol):
                 cached_model = _get_cached_model(self.model_name, self.device)
                 if cached_model is not None:
                     logger.info(
-                        f"Using cached XTTS model: {self.model_name} "
-                        f"(device: {self.device})"
+                        f"Using cached XTTS model: {self.model_name} " f"(device: {self.device})"
                     )
                     self.tts = cached_model
                     self._initialized = True
@@ -325,8 +321,7 @@ class XTTSEngine(EngineProtocol):
                 self._lazy_load = True
                 self._initialized = True
                 logger.info(
-                    f"XTTS engine initialized with lazy loading "
-                    f"(model: {self.model_name})"
+                    f"XTTS engine initialized with lazy loading " f"(model: {self.model_name})"
                 )
                 return True
 
@@ -558,9 +553,7 @@ class XTTSEngine(EngineProtocol):
             import soundfile as sf
 
             ref_audio, ref_sr = sf.read(str(reference_audio))
-            profile_match = match_voice_profile(
-                ref_audio, processed_audio, ref_sr, sample_rate
-            )
+            profile_match = match_voice_profile(ref_audio, processed_audio, ref_sr, sample_rate)
             return profile_match, None
         except ImportError:
             return None, "soundfile (pip install soundfile)"
@@ -771,9 +764,7 @@ class XTTSEngine(EngineProtocol):
         )
 
         if isinstance(reference_audio, list):
-            ref_for_metrics: str | Path | None = (
-                reference_audio[0] if reference_audio else None
-            )
+            ref_for_metrics: str | Path | None = reference_audio[0] if reference_audio else None
         else:
             ref_for_metrics = reference_audio
 
@@ -933,9 +924,7 @@ class XTTSEngine(EngineProtocol):
         if output_path:
             import soundfile as sf
 
-            sf.write(
-                str(output_path), audio, getattr(self.tts, "output_sample_rate", 22050)
-            )
+            sf.write(str(output_path), audio, getattr(self.tts, "output_sample_rate", 22050))
 
         return audio
 
@@ -979,9 +968,7 @@ class XTTSEngine(EngineProtocol):
             if "tempo" in prosody_params:
                 tempo = prosody_params["tempo"]
                 if abs(tempo - 1.0) > 0.01:  # Only if significant change
-                    modified_audio = librosa.effects.time_stretch(
-                        modified_audio, rate=tempo
-                    )
+                    modified_audio = librosa.effects.time_stretch(modified_audio, rate=tempo)
 
             # Formant shifting (spectral envelope modification)
             if "formant_shift" in prosody_params:
@@ -1067,9 +1054,7 @@ class XTTSEngine(EngineProtocol):
                 for i, text in enumerate(batch_texts):
                     output_path = None
                     if output_dir:
-                        output_path = (
-                            Path(output_dir) / f"output_{batch_start + i:04d}.wav"
-                        )
+                        output_path = Path(output_dir) / f"output_{batch_start + i:04d}.wav"
 
                     # Use inference mode for batch processing
                     try:
@@ -1083,9 +1068,7 @@ class XTTSEngine(EngineProtocol):
                             )
                         batch_results.append(audio)
                     except Exception as e:
-                        logger.error(
-                            f"Batch synthesis failed for text {batch_start + i}: {e}"
-                        )
+                        logger.error(f"Batch synthesis failed for text {batch_start + i}: {e}")
                         batch_results.append(None)
 
                 results.extend(batch_results)
@@ -1245,9 +1228,7 @@ if __name__ == "__main__":
     reference_audio = "path/to/reference.wav"
     text = "Hello, this is a test of voice cloning."
 
-    audio = engine.clone_voice(
-        reference_audio=reference_audio, text=text, language="en"
-    )
+    audio = engine.clone_voice(reference_audio=reference_audio, text=text, language="en")
 
     if audio is not None:
         print(f"Generated audio shape: {audio.shape}")

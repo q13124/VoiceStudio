@@ -28,7 +28,9 @@ for module_name in ["torch", "torch.cuda"]:
         sys.modules[module_name] = mock_module
     elif module_name == "torch":
         # Ensure existing mock has __version__
-        if not hasattr(sys.modules[module_name], "__version__") or isinstance(sys.modules[module_name].__version__, MagicMock):
+        if not hasattr(sys.modules[module_name], "__version__") or isinstance(
+            sys.modules[module_name].__version__, MagicMock
+        ):
             sys.modules[module_name].__version__ = "2.0.0"
 
 # Import the parameter optimizer module
@@ -47,9 +49,7 @@ class TestParameterOptimizerImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            parameter_optimizer is not None
-        ), "Failed to import parameter_optimizer module"
+        assert parameter_optimizer is not None, "Failed to import parameter_optimizer module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
@@ -264,23 +264,21 @@ class TestParameterOptimizerOptimizeParameters:
             metadata_path.write_text(json.dumps([]))
 
             with pytest.raises(RuntimeError, match="Unified trainer not available"):
-                optimizer.optimize_parameters(
-                    str(metadata_path), parameter_space=parameter_space
-                )
+                optimizer.optimize_parameters(str(metadata_path), parameter_space=parameter_space)
 
     @patch("app.core.training.parameter_optimizer.HAS_UNIFIED_TRAINER", True)
     def test_optimize_parameters_grid_search(self):
         """Test optimize_parameters with grid search."""
-        optimizer = ParameterOptimizer(
-            optimization_strategy="grid_search", max_iterations=2
-        )
+        optimizer = ParameterOptimizer(optimization_strategy="grid_search", max_iterations=2)
         parameter_space = {"epochs": [50, 100], "batch_size": [4]}
 
         with tempfile.TemporaryDirectory() as tmpdir:
             metadata_path = Path(tmpdir) / "metadata.json"
             metadata_path.write_text(json.dumps([]))
 
-            with patch("app.core.training.parameter_optimizer.UnifiedTrainer") as mock_trainer_class:
+            with patch(
+                "app.core.training.parameter_optimizer.UnifiedTrainer"
+            ) as mock_trainer_class:
                 mock_trainer = MagicMock()
                 mock_trainer.initialize_model.return_value = True
                 mock_trainer.train = AsyncMock(return_value={"final_loss": 0.5})
@@ -298,16 +296,16 @@ class TestParameterOptimizerOptimizeParameters:
     @patch("app.core.training.parameter_optimizer.HAS_UNIFIED_TRAINER", True)
     def test_optimize_parameters_random_search(self):
         """Test optimize_parameters with random search."""
-        optimizer = ParameterOptimizer(
-            optimization_strategy="random_search", max_iterations=3
-        )
+        optimizer = ParameterOptimizer(optimization_strategy="random_search", max_iterations=3)
         parameter_space = {"epochs": [50, 100], "batch_size": [4, 8]}
 
         with tempfile.TemporaryDirectory() as tmpdir:
             metadata_path = Path(tmpdir) / "metadata.json"
             metadata_path.write_text(json.dumps([]))
 
-            with patch("app.core.training.parameter_optimizer.UnifiedTrainer") as mock_trainer_class:
+            with patch(
+                "app.core.training.parameter_optimizer.UnifiedTrainer"
+            ) as mock_trainer_class:
                 mock_trainer = MagicMock()
                 mock_trainer.initialize_model.return_value = True
                 mock_trainer.train = AsyncMock(return_value={"final_loss": 0.5})
@@ -335,7 +333,9 @@ class TestParameterOptimizerOptimizeParameters:
             metadata_path = Path(tmpdir) / "metadata.json"
             metadata_path.write_text(json.dumps([]))
 
-            with patch("app.core.training.parameter_optimizer.UnifiedTrainer") as mock_trainer_class:
+            with patch(
+                "app.core.training.parameter_optimizer.UnifiedTrainer"
+            ) as mock_trainer_class:
                 mock_trainer = MagicMock()
                 mock_trainer.initialize_model.return_value = True
                 mock_trainer.train = AsyncMock(return_value={"final_loss": 0.5})
@@ -359,7 +359,9 @@ class TestParameterOptimizerOptimizeParameters:
             metadata_path = Path(tmpdir) / "metadata.json"
             metadata_path.write_text(json.dumps([]))
 
-            with patch("app.core.training.parameter_optimizer.UnifiedTrainer") as mock_trainer_class:
+            with patch(
+                "app.core.training.parameter_optimizer.UnifiedTrainer"
+            ) as mock_trainer_class:
                 mock_trainer = MagicMock()
                 mock_trainer.initialize_model.return_value = False
                 mock_trainer_class.return_value = mock_trainer

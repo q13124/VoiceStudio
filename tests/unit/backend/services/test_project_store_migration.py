@@ -1,6 +1,7 @@
 """
 Tests for ProjectStoreService migration logic.
 """
+
 import json
 
 import pytest
@@ -17,6 +18,7 @@ def store_service(tmp_path):
     """Create a ProjectStoreService backed by a temporary directory."""
     return ProjectStoreService(projects_dir=str(tmp_path))
 
+
 def test_load_legacy_project_v0_migrates_to_current(store_service, tmp_path):
     """Test that a legacy project (v0/missing version) is migrated to current version."""
     project_id = "legacy-project-1"
@@ -30,7 +32,7 @@ def test_load_legacy_project_v0_migrates_to_current(store_service, tmp_path):
         "name": "Legacy Project",
         "created_at": "2024-01-01T00:00:00",
         "updated_at": "2024-01-01T00:00:00",
-        "voice_profile_ids": []
+        "voice_profile_ids": [],
     }
 
     meta_path = project_dir / PROJECT_META_FILENAME
@@ -47,6 +49,7 @@ def test_load_legacy_project_v0_migrates_to_current(store_service, tmp_path):
     saved_meta = json.loads(meta_path.read_text())
     assert saved_meta["schema_version"] == CURRENT_PROJECT_SCHEMA_VERSION
 
+
 def test_migration_is_idempotent(store_service, tmp_path):
     """Test that loading an already migrated project does not change it."""
     project_id = "migrated-project-1"
@@ -61,7 +64,7 @@ def test_migration_is_idempotent(store_service, tmp_path):
         "name": "Migrated Project",
         "created_at": "2024-01-01T00:00:00",
         "updated_at": "2024-01-01T00:00:00",
-        "voice_profile_ids": []
+        "voice_profile_ids": [],
     }
 
     meta_path = project_dir / PROJECT_META_FILENAME
@@ -79,6 +82,7 @@ def test_migration_is_idempotent(store_service, tmp_path):
     saved_meta = json.loads(meta_path.read_text())
     assert saved_meta["schema_version"] == CURRENT_PROJECT_SCHEMA_VERSION
 
+
 def test_invalid_schema_version_raises_error(store_service, tmp_path):
     """Test that a project with invalid schema version raises an error."""
     project_id = "invalid-project-1"
@@ -91,7 +95,7 @@ def test_invalid_schema_version_raises_error(store_service, tmp_path):
         "id": project_id,
         "name": "Invalid Project",
         "created_at": "2024-01-01T00:00:00",
-        "updated_at": "2024-01-01T00:00:00"
+        "updated_at": "2024-01-01T00:00:00",
     }
 
     meta_path = project_dir / PROJECT_META_FILENAME

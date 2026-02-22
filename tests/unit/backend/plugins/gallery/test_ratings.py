@@ -272,12 +272,14 @@ class TestRatingsExportImport:
 
     def test_import_ratings(self, ratings_store):
         """Test importing ratings from JSON."""
-        json_data = json.dumps({
-            "ratings": [
-                {"plugin_id": "plugin-1", "version": "1.0.0", "rating": 4},
-                {"plugin_id": "plugin-2", "version": "1.0.0", "rating": 5},
-            ]
-        })
+        json_data = json.dumps(
+            {
+                "ratings": [
+                    {"plugin_id": "plugin-1", "version": "1.0.0", "rating": 4},
+                    {"plugin_id": "plugin-2", "version": "1.0.0", "rating": 5},
+                ]
+            }
+        )
 
         imported = ratings_store.import_ratings(json_data)
 
@@ -290,12 +292,14 @@ class TestRatingsExportImport:
         # Add existing rating
         ratings_store.add_rating("plugin-1", "1.0.0", 3, "Initial")
 
-        json_data = json.dumps({
-            "ratings": [
-                {"plugin_id": "plugin-1", "version": "2.0.0", "rating": 5},
-                {"plugin_id": "plugin-2", "version": "1.0.0", "rating": 4},
-            ]
-        })
+        json_data = json.dumps(
+            {
+                "ratings": [
+                    {"plugin_id": "plugin-1", "version": "2.0.0", "rating": 5},
+                    {"plugin_id": "plugin-2", "version": "1.0.0", "rating": 4},
+                ]
+            }
+        )
 
         imported = ratings_store.import_ratings(json_data, overwrite=False)
 
@@ -309,11 +313,13 @@ class TestRatingsExportImport:
         """Test import overwrites existing ratings."""
         ratings_store.add_rating("plugin-1", "1.0.0", 3, "Initial")
 
-        json_data = json.dumps({
-            "ratings": [
-                {"plugin_id": "plugin-1", "version": "2.0.0", "rating": 5},
-            ]
-        })
+        json_data = json.dumps(
+            {
+                "ratings": [
+                    {"plugin_id": "plugin-1", "version": "2.0.0", "rating": 5},
+                ]
+            }
+        )
 
         imported = ratings_store.import_ratings(json_data, overwrite=True)
 
@@ -347,9 +353,7 @@ class TestModuleFunctions:
     def test_rate_plugin_function(self, temp_db_path, monkeypatch):
         """Test module-level rate_plugin function."""
         store = PluginRatingsStore(db_path=temp_db_path)
-        monkeypatch.setattr(
-            "backend.plugins.gallery.ratings._ratings_store", store
-        )
+        monkeypatch.setattr("backend.plugins.gallery.ratings._ratings_store", store)
 
         rating = rate_plugin("test-plugin", "1.0.0", 4, "Good")
 
@@ -360,9 +364,7 @@ class TestModuleFunctions:
         """Test module-level get_my_rating function."""
         store = PluginRatingsStore(db_path=temp_db_path)
         store.add_rating("test-plugin", "1.0.0", 4)
-        monkeypatch.setattr(
-            "backend.plugins.gallery.ratings._ratings_store", store
-        )
+        monkeypatch.setattr("backend.plugins.gallery.ratings._ratings_store", store)
 
         rating = get_my_rating("test-plugin")
 
@@ -373,9 +375,7 @@ class TestModuleFunctions:
         """Test module-level remove_rating function."""
         store = PluginRatingsStore(db_path=temp_db_path)
         store.add_rating("test-plugin", "1.0.0", 4)
-        monkeypatch.setattr(
-            "backend.plugins.gallery.ratings._ratings_store", store
-        )
+        monkeypatch.setattr("backend.plugins.gallery.ratings._ratings_store", store)
 
         removed = remove_rating("test-plugin")
 

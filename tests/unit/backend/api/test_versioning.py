@@ -225,6 +225,7 @@ class TestDeprecatedDecorator:
 
     def test_decorator_adds_metadata(self):
         """Test decorator adds deprecation metadata."""
+
         @deprecated(
             sunset="2026-06-01",
             alternative="/api/v2/new",
@@ -240,6 +241,7 @@ class TestDeprecatedDecorator:
 
     def test_default_deprecation_message(self):
         """Test default deprecation message."""
+
         @deprecated()
         async def another_old_endpoint():
             return {}

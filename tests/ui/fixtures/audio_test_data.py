@@ -36,9 +36,7 @@ if str(_TESTS_DIR) not in sys.path:
 from fixtures.canonical import resolve_test_audio
 
 # Primary test audio file - resolved via canonical.py
-TEST_AUDIO_FILE = resolve_test_audio(
-    prefer_segment=True, allow_synthetic=True
-)
+TEST_AUDIO_FILE = resolve_test_audio(prefer_segment=True, allow_synthetic=True)
 
 # Output formats to test conversion
 OUTPUT_FORMATS = ["wav", "mp3", "flac", "ogg"]
@@ -160,10 +158,7 @@ def get_or_upload_asset(api_monitor, audio_path: Path) -> dict | None:
     try:
         with open(audio_path, "rb") as f:
             files = {"file": (audio_path.name, f, "audio/wav")}
-            response = api_monitor.post(
-                "/api/library/assets/upload",
-                files=files
-            )
+            response = api_monitor.post("/api/library/assets/upload", files=files)
 
         if response.status_code in (200, 201):
             data = response.json()
@@ -335,6 +330,7 @@ SYNTHESIS_TEST_TEXTS = {
 # =============================================================================
 # Validation Utilities
 # =============================================================================
+
 
 def compute_file_checksum(filepath: Path, algorithm: str = "md5") -> str:
     """

@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def dubbing_client():
     """Create test client for multi-speaker dubbing routes."""
     from backend.api.routes.multi_speaker_dubbing import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)

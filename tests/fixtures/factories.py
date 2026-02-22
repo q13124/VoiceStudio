@@ -25,6 +25,7 @@ from typing import Any
 # UTILITIES
 # =============================================================================
 
+
 def random_id() -> str:
     """Generate random UUID-like ID."""
     return str(uuid.uuid4())
@@ -33,7 +34,7 @@ def random_id() -> str:
 def random_string(length: int = 8, prefix: str = "") -> str:
     """Generate random alphanumeric string."""
     chars = string.ascii_lowercase + string.digits
-    suffix = ''.join(random.choices(chars, k=length))
+    suffix = "".join(random.choices(chars, k=length))
     return f"{prefix}{suffix}" if prefix else suffix
 
 
@@ -55,9 +56,11 @@ def random_timestamp(days_ago_max: int = 30) -> datetime:
 # AUDIO DATA FACTORIES
 # =============================================================================
 
+
 @dataclass
 class AudioSpec:
     """Specification for generated audio."""
+
     sample_rate: int = 22050
     channels: int = 1
     bit_depth: int = 16
@@ -111,10 +114,7 @@ class AudioFactory:
 
     @staticmethod
     def create_wav_header(
-        data_size: int,
-        sample_rate: int = 22050,
-        channels: int = 1,
-        bit_depth: int = 16
+        data_size: int, sample_rate: int = 22050, channels: int = 1, bit_depth: int = 16
     ) -> bytes:
         """Create WAV file header."""
         bytes_per_sample = bit_depth // 8
@@ -122,20 +122,20 @@ class AudioFactory:
         block_align = channels * bytes_per_sample
 
         header = struct.pack(
-            '<4sI4s4sIHHIIHH4sI',
-            b'RIFF',
+            "<4sI4s4sIHHIIHH4sI",
+            b"RIFF",
             36 + data_size,  # File size - 8
-            b'WAVE',
-            b'fmt ',
+            b"WAVE",
+            b"fmt ",
             16,  # Chunk size
-            1,   # Audio format (PCM)
+            1,  # Audio format (PCM)
             channels,
             sample_rate,
             byte_rate,
             block_align,
             bit_depth,
-            b'data',
-            data_size
+            b"data",
+            data_size,
         )
         return header
 
@@ -154,20 +154,14 @@ class AudioFactory:
             audio_data = cls.generate_sine_wave(spec)
 
         header = cls.create_wav_header(
-            len(audio_data),
-            spec.sample_rate,
-            spec.channels,
-            spec.bit_depth
+            len(audio_data), spec.sample_rate, spec.channels, spec.bit_depth
         )
 
         return header + audio_data
 
     @classmethod
     def create_wav_file(
-        cls,
-        path: str | Path,
-        spec: AudioSpec | None = None,
-        audio_type: str = "sine"
+        cls, path: str | Path, spec: AudioSpec | None = None, audio_type: str = "sine"
     ) -> Path:
         """Create WAV file on disk."""
         path = Path(path)
@@ -180,9 +174,7 @@ class AudioFactory:
 
     @staticmethod
     def create_audio_metadata(
-        file_id: str | None = None,
-        filename: str | None = None,
-        **kwargs
+        file_id: str | None = None, filename: str | None = None, **kwargs
     ) -> dict[str, Any]:
         """Create audio file metadata."""
         return {
@@ -203,9 +195,11 @@ class AudioFactory:
 # PROFILE DATA FACTORIES
 # =============================================================================
 
+
 @dataclass
 class VoiceProfile:
     """Voice profile data model."""
+
     id: str = field(default_factory=random_id)
     name: str = field(default_factory=lambda: random_name("Voice"))
     description: str = ""
@@ -245,11 +239,7 @@ class ProfileFactory:
         return [cls.create(**common_overrides) for _ in range(count)]
 
     @classmethod
-    def create_with_clips(
-        cls,
-        num_clips: int = 3,
-        **overrides
-    ) -> VoiceProfile:
+    def create_with_clips(cls, num_clips: int = 3, **overrides) -> VoiceProfile:
         """Create profile with reference clips."""
         clips = [random_id() for _ in range(num_clips)]
         return cls.create(reference_clips=clips, **overrides)
@@ -282,9 +272,11 @@ class ProfileFactory:
 # PROJECT DATA FACTORIES
 # =============================================================================
 
+
 @dataclass
 class ProjectSettings:
     """Project settings data model."""
+
     output_format: str = "wav"
     sample_rate: int = 22050
     channels: int = 1
@@ -299,6 +291,7 @@ class ProjectSettings:
 @dataclass
 class Project:
     """Project data model."""
+
     id: str = field(default_factory=random_id)
     name: str = field(default_factory=lambda: random_name("Project"))
     description: str = ""
@@ -312,7 +305,9 @@ class Project:
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
-        data["settings"] = self.settings.to_dict() if isinstance(self.settings, ProjectSettings) else self.settings
+        data["settings"] = (
+            self.settings.to_dict() if isinstance(self.settings, ProjectSettings) else self.settings
+        )
         return data
 
 
@@ -330,12 +325,7 @@ class ProjectFactory:
         return [cls.create(**common_overrides) for _ in range(count)]
 
     @classmethod
-    def create_with_content(
-        cls,
-        num_profiles: int = 2,
-        num_clips: int = 5,
-        **overrides
-    ) -> Project:
+    def create_with_content(cls, num_profiles: int = 2, num_clips: int = 5, **overrides) -> Project:
         """Create project with profiles and clips."""
         profiles = [random_id() for _ in range(num_profiles)]
         clips = [random_id() for _ in range(num_clips)]
@@ -350,16 +340,10 @@ class ProjectFactory:
 
     @classmethod
     def create_with_settings(
-        cls,
-        output_format: str = "wav",
-        sample_rate: int = 22050,
-        **overrides
+        cls, output_format: str = "wav", sample_rate: int = 22050, **overrides
     ) -> Project:
         """Create project with custom settings."""
-        settings = ProjectSettings(
-            output_format=output_format,
-            sample_rate=sample_rate
-        )
+        settings = ProjectSettings(output_format=output_format, sample_rate=sample_rate)
         return cls.create(settings=settings, **overrides)
 
 
@@ -367,9 +351,11 @@ class ProjectFactory:
 # SYNTHESIS JOB FACTORIES
 # =============================================================================
 
+
 @dataclass
 class SynthesisJob:
     """Synthesis job data model."""
+
     id: str = field(default_factory=random_id)
     profile_id: str = field(default_factory=random_id)
     text: str = "Hello, this is a test."
@@ -412,7 +398,7 @@ class SynthesisJobFactory:
             text=text or random.choice(cls.SAMPLE_TEXTS),
             status="pending",
             progress=0.0,
-            **overrides
+            **overrides,
         )
 
     @classmethod
@@ -422,7 +408,7 @@ class SynthesisJobFactory:
             status="processing",
             progress=progress,
             started_at=datetime.utcnow().isoformat(),
-            **overrides
+            **overrides,
         )
 
     @classmethod
@@ -435,7 +421,7 @@ class SynthesisJobFactory:
             started_at=(now - timedelta(seconds=10)).isoformat(),
             completed_at=now.isoformat(),
             output_path=output_path or f"/output/audio_{random_string(8)}.wav",
-            **overrides
+            **overrides,
         )
 
     @classmethod
@@ -448,15 +434,12 @@ class SynthesisJobFactory:
             started_at=(now - timedelta(seconds=5)).isoformat(),
             completed_at=now.isoformat(),
             error=error,
-            **overrides
+            **overrides,
         )
 
     @classmethod
     def create_request(
-        cls,
-        text: str | None = None,
-        profile_id: str | None = None,
-        engine_id: str = "xtts_v2"
+        cls, text: str | None = None, profile_id: str | None = None, engine_id: str = "xtts_v2"
     ) -> dict[str, Any]:
         """Create synthesis request dict for API testing."""
         return {
@@ -470,9 +453,11 @@ class SynthesisJobFactory:
 # ENGINE DATA FACTORIES
 # =============================================================================
 
+
 @dataclass
 class EngineInfo:
     """Engine information data model."""
+
     id: str
     name: str
     type: str = "audio"
@@ -509,7 +494,7 @@ class EngineFactory:
                         name=name,
                         capabilities=caps,
                         supported_languages=["en", "es", "fr"],
-                        **overrides
+                        **overrides,
                     )
 
         # Default to first engine
@@ -519,7 +504,11 @@ class EngineFactory:
             name=overrides.get("name", name),
             capabilities=overrides.get("capabilities", caps),
             supported_languages=overrides.get("supported_languages", ["en"]),
-            **{k: v for k, v in overrides.items() if k not in ["id", "name", "capabilities", "supported_languages"]}
+            **{
+                k: v
+                for k, v in overrides.items()
+                if k not in ["id", "name", "capabilities", "supported_languages"]
+            },
         )
 
     @classmethod
@@ -535,13 +524,14 @@ class EngineFactory:
             name="Offline Engine",
             status="unavailable",
             capabilities=[],
-            supported_languages=[]
+            supported_languages=[],
         )
 
 
 # =============================================================================
 # FIXTURE MANAGER
 # =============================================================================
+
 
 class FixtureManager:
     """Manages test fixtures and cleanup."""
@@ -550,11 +540,7 @@ class FixtureManager:
         self.base_path = base_path or Path(__file__).parent
         self.created_files: list[Path] = []
 
-    def create_temp_audio(
-        self,
-        name: str | None = None,
-        spec: AudioSpec | None = None
-    ) -> Path:
+    def create_temp_audio(self, name: str | None = None, spec: AudioSpec | None = None) -> Path:
         """Create temporary audio file."""
         name = name or f"temp_audio_{random_string(6)}.wav"
         path = self.base_path / "temp" / name
@@ -563,9 +549,7 @@ class FixtureManager:
         return path
 
     def create_temp_project(
-        self,
-        name: str | None = None,
-        **project_kwargs
+        self, name: str | None = None, **project_kwargs
     ) -> tuple[Path, Project]:
         """Create temporary project file."""
         project = ProjectFactory.create(**project_kwargs)
@@ -600,6 +584,7 @@ class FixtureManager:
 # =============================================================================
 # PYTEST FIXTURES
 # =============================================================================
+
 
 def pytest_fixture_profile():
     """Pytest fixture for a single voice profile."""

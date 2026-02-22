@@ -38,6 +38,7 @@ class TestPluginSandboxEscape:
             assert not perms.can_access_path(Path.home() / ".ssh" / "id_rsa")
         finally:
             import shutil
+
             shutil.rmtree(allowed, ignore_errors=True)
 
     def test_network_permission_default_denied(self):
@@ -72,4 +73,5 @@ class TestPluginSandboxEscape:
             assert not perms.can_access_path(resolved)
         finally:
             import shutil
+
             shutil.rmtree(workspace, ignore_errors=True)

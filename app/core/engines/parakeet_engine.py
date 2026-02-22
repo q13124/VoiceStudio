@@ -26,6 +26,7 @@ import torch
 # Try importing general model cache
 try:
     from app.core.models.cache import get_model_cache
+
     _model_cache = get_model_cache(max_models=2, max_memory_mb=1536.0)  # 1.5GB max
     HAS_MODEL_CACHE = True
 except ImportError:
@@ -89,6 +90,7 @@ def _cache_parakeet_model(model_name: str, device: str, tts_engine):
 
     logger.debug(f"Cached Parakeet model: {cache_key} (cache size: {len(_PARAKET_MODEL_CACHE)})")
 
+
 # Optional quality metrics import
 try:
     from .quality_metrics import (
@@ -97,6 +99,7 @@ try:
         calculate_naturalness,
         calculate_similarity,
     )
+
     HAS_QUALITY_METRICS = True
 except ImportError:
     HAS_QUALITY_METRICS = False
@@ -109,6 +112,7 @@ try:
         normalize_lufs,
         remove_artifacts,
     )
+
     HAS_AUDIO_UTILS = True
 except ImportError:
     HAS_AUDIO_UTILS = False
@@ -131,9 +135,7 @@ class ParakeetEngine(EngineProtocol):
     """
 
     # Supported languages
-    SUPPORTED_LANGUAGES = [
-        "zh", "en", "zh-cn", "zh-tw", "en-us", "en-gb"
-    ]
+    SUPPORTED_LANGUAGES = ["zh", "en", "zh-cn", "zh-tw", "en-us", "en-gb"]
 
     # Default sample rate
     DEFAULT_SAMPLE_RATE = 22050
@@ -143,7 +145,7 @@ class ParakeetEngine(EngineProtocol):
         model_name: str = "fastspeech2_cnndecoder_csmsc",
         language: str = "zh",
         device: str | None = None,
-        gpu: bool = True
+        gpu: bool = True,
     ):
         """
         Initialize Parakeet engine.
@@ -201,7 +203,9 @@ class ParakeetEngine(EngineProtocol):
             if self.enable_caching:
                 _cache_parakeet_model(self.model_name, self.device, self.tts_engine)
 
-            logger.info(f"Parakeet/PaddleSpeech model loaded successfully (sample_rate: {self.sample_rate})")
+            logger.info(
+                f"Parakeet/PaddleSpeech model loaded successfully (sample_rate: {self.sample_rate})"
+            )
             self._initialized = True
             return True
 
@@ -242,7 +246,7 @@ class ParakeetEngine(EngineProtocol):
         output_path: str | Path | None = None,
         enhance_quality: bool = False,
         calculate_quality: bool = False,
-        **kwargs
+        **kwargs,
     ) -> np.ndarray | None | tuple[np.ndarray | None, dict]:
         """
         Synthesize speech from text using Parakeet/PaddleSpeech.
@@ -288,7 +292,7 @@ class ParakeetEngine(EngineProtocol):
                     am=am,
                     voc=voc,
                     lang=lang,
-                    spk_id=0  # Default speaker
+                    spk_id=0,  # Default speaker
                 )
 
                 # Read generated audio
@@ -310,6 +314,7 @@ class ParakeetEngine(EngineProtocol):
                 if speed != 1.0:
                     try:
                         import librosa
+
                         audio = librosa.effects.time_stretch(audio, rate=speed)
                     except ImportError:
                         logger.warning("librosa not available for speed adjustment")
@@ -331,19 +336,13 @@ class ParakeetEngine(EngineProtocol):
             else:
                 # Synthesize to temporary file then read
                 import tempfile
-                with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp_file:
+
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_file:
                     tmp_path = tmp_file.name
 
                 try:
                     # Synthesize to temp file
-                    self.tts_engine(
-                        text=text,
-                        output=tmp_path,
-                        am=am,
-                        voc=voc,
-                        lang=lang,
-                        spk_id=0
-                    )
+                    self.tts_engine(text=text, output=tmp_path, am=am, voc=voc, lang=lang, spk_id=0)
 
                     # Read audio
                     audio, sample_rate = sf.read(tmp_path)
@@ -364,6 +363,7 @@ class ParakeetEngine(EngineProtocol):
                     if speed != 1.0:
                         try:
                             import librosa
+
                             audio = librosa.effects.time_stretch(audio, rate=speed)
                         except ImportError:
                             logger.warning("librosa not available for speed adjustment")
@@ -396,7 +396,7 @@ class ParakeetEngine(EngineProtocol):
         sample_rate: int,
         reference_audio: str | Path | None = None,
         enhance: bool = False,
-        calculate: bool = False
+        calculate: bool = False,
     ) -> np.ndarray | tuple[np.ndarray, dict]:
         """Process audio for quality enhancement and/or metrics calculation."""
         quality_metrics = {}
@@ -458,7 +458,7 @@ class ParakeetEngine(EngineProtocol):
         enhance_quality: bool = False,
         calculate_quality: bool = False,
         batch_size: int = 4,
-        **kwargs
+        **kwargs,
     ) -> list[np.ndarray | None | tuple[np.ndarray | None, dict]]:
         """
         Synthesize multiple texts in batch with optimized processing.
@@ -494,7 +494,7 @@ class ParakeetEngine(EngineProtocol):
                     voice=voice,
                     enhance_quality=enhance_quality,
                     calculate_quality=calculate_quality,
-                    **kwargs
+                    **kwargs,
                 )
             except Exception as e:
                 logger.error(f"Batch synthesis failed for text: {e}")
@@ -559,12 +559,14 @@ class ParakeetEngine(EngineProtocol):
     def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
-        info.update({
-            "model_name": self.model_name,
-            "default_language": self.default_language,
-            "sample_rate": self.sample_rate,
-            "supported_languages": len(self.SUPPORTED_LANGUAGES)
-        })
+        info.update(
+            {
+                "model_name": self.model_name,
+                "default_language": self.default_language,
+                "sample_rate": self.sample_rate,
+                "supported_languages": len(self.SUPPORTED_LANGUAGES),
+            }
+        )
         return info
 
 
@@ -572,8 +574,7 @@ def create_parakeet_engine(
     model_name: str = "fastspeech2_cnndecoder_csmsc",
     language: str = "zh",
     device: str | None = None,
-    gpu: bool = True
+    gpu: bool = True,
 ) -> ParakeetEngine:
     """Factory function to create a Parakeet TTS engine instance."""
     return ParakeetEngine(model_name=model_name, language=language, device=device, gpu=gpu)
-

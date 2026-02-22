@@ -56,6 +56,7 @@ pytestmark = [
 # Fixtures
 # =============================================================================
 
+
 @pytest.fixture(scope="module")
 def tracer():
     """Create a workflow tracer for cloning tests."""
@@ -76,6 +77,7 @@ def api_monitor():
 @pytest.fixture
 def navigate_to_cloning(driver, app_launched, tracer):
     """Navigate to Voice Cloning panel and return success status."""
+
     def _navigate():
         tracer.start_panel_transition("unknown", "VoiceCloningWizard")
 
@@ -105,6 +107,7 @@ def navigate_to_cloning(driver, app_launched, tracer):
 # =============================================================================
 # Panel Navigation Tests
 # =============================================================================
+
 
 class TestCloningNavigation:
     """Test Voice Cloning panel navigation."""
@@ -154,6 +157,7 @@ class TestCloningNavigation:
 # Panel Elements Tests
 # =============================================================================
 
+
 class TestCloningElements:
     """Test Voice Cloning panel UI elements."""
 
@@ -196,7 +200,10 @@ class TestCloningElements:
         if not found:
             # Try xpath
             try:
-                driver.find_element("xpath", "//*[contains(@AutomationId, 'Reference') or contains(@AutomationId, 'Audio')]")
+                driver.find_element(
+                    "xpath",
+                    "//*[contains(@AutomationId, 'Reference') or contains(@AutomationId, 'Audio')]",
+                )
                 tracer.step("Found reference selector with xpath")
                 found = True
             except RuntimeError:
@@ -230,7 +237,9 @@ class TestCloningElements:
 
         # Try by name
         try:
-            driver.find_element("xpath", "//*[contains(@Name, 'Clone') or contains(@Name, 'Create')]")
+            driver.find_element(
+                "xpath", "//*[contains(@Name, 'Clone') or contains(@Name, 'Create')]"
+            )
             tracer.step("Clone button found by name")
             tracer.success("Clone button exists (by name)")
         except RuntimeError:
@@ -248,7 +257,10 @@ class TestCloningElements:
             tracer.success("Profile name input exists")
         except RuntimeError:
             try:
-                driver.find_element("xpath", "//*[contains(@AutomationId, 'Name') and contains(@ClassName, 'TextBox')]")
+                driver.find_element(
+                    "xpath",
+                    "//*[contains(@AutomationId, 'Name') and contains(@ClassName, 'TextBox')]",
+                )
                 tracer.step("Profile name input found with xpath")
                 tracer.success("Profile name input exists (xpath)")
             except RuntimeError:
@@ -259,6 +271,7 @@ class TestCloningElements:
 # =============================================================================
 # Quick Clone Tests
 # =============================================================================
+
 
 class TestQuickClone:
     """Test Quick Clone workflow."""
@@ -318,6 +331,7 @@ class TestQuickClone:
 # =============================================================================
 # API Integration Tests
 # =============================================================================
+
 
 class TestCloningAPI:
     """Test voice cloning API endpoints."""
@@ -388,6 +402,7 @@ class TestCloningAPI:
 # Workflow Tests
 # =============================================================================
 
+
 class TestCloningWorkflow:
     """Test complete voice cloning workflow."""
 
@@ -412,14 +427,19 @@ class TestCloningWorkflow:
 
         # Check for any reference selector
         try:
-            driver.find_element("xpath", "//*[contains(@AutomationId, 'Reference') or contains(@AutomationId, 'Audio') or contains(@AutomationId, 'Drop')]")
+            driver.find_element(
+                "xpath",
+                "//*[contains(@AutomationId, 'Reference') or contains(@AutomationId, 'Audio') or contains(@AutomationId, 'Drop')]",
+            )
             workflow_elements["reference_selector"] = True
         except RuntimeError:
             pass
 
         # Check for clone action
         try:
-            driver.find_element("xpath", "//*[contains(@Name, 'Clone') or contains(@AutomationId, 'Clone')]")
+            driver.find_element(
+                "xpath", "//*[contains(@Name, 'Clone') or contains(@AutomationId, 'Clone')]"
+            )
             workflow_elements["clone_action"] = True
         except RuntimeError:
             pass
@@ -432,6 +452,7 @@ class TestCloningWorkflow:
 # =============================================================================
 # Integration Tests
 # =============================================================================
+
 
 class TestCloningIntegration:
     """Test cloning integration with other panels."""
@@ -448,15 +469,17 @@ class TestCloningIntegration:
             target_panel="VoiceCloningWizard",
             payload={
                 "action": "use_as_reference",
-                "expected_data": ["audio_path", "duration", "format"]
-            }
+                "expected_data": ["audio_path", "duration", "format"],
+            },
         )
 
         tracer.step("Library-to-cloning event documented")
         tracer.end_phase(success=True)
         tracer.success("Integration documented")
 
-    def test_cloned_voice_to_synthesis_event(self, driver, app_launched, navigate_to_cloning, tracer):
+    def test_cloned_voice_to_synthesis_event(
+        self, driver, app_launched, navigate_to_cloning, tracer
+    ):
         """Document cloned voice to synthesis integration."""
         tracer.step("Documenting cloning-to-synthesis workflow")
         navigate_to_cloning()
@@ -467,8 +490,8 @@ class TestCloningIntegration:
             target_panel="VoiceSynthesis",
             payload={
                 "action": "profile_available_for_synthesis",
-                "expected_data": ["profile_id", "profile_name", "engine"]
-            }
+                "expected_data": ["profile_id", "profile_name", "engine"],
+            },
         )
 
         tracer.step("Cloning-to-synthesis event documented")
@@ -479,6 +502,7 @@ class TestCloningIntegration:
 # Error Handling Tests
 # =============================================================================
 
+
 class TestCloningErrors:
     """Test voice cloning error handling."""
 
@@ -488,9 +512,7 @@ class TestCloningErrors:
         tracer.step("Testing clone without reference")
 
         try:
-            response = api_monitor.post("/api/cloning/create", json={
-                "name": "TestClone"
-            })
+            response = api_monitor.post("/api/cloning/create", json={"name": "TestClone"})
             tracer.api_call("POST", "/api/cloning/create (no audio)", response)
 
             if response.status_code in [400, 422]:
@@ -507,10 +529,10 @@ class TestCloningErrors:
         tracer.step("Testing clone with invalid audio")
 
         try:
-            response = api_monitor.post("/api/cloning/create", json={
-                "name": "TestClone",
-                "audio_path": "/nonexistent/path.wav"
-            })
+            response = api_monitor.post(
+                "/api/cloning/create",
+                json={"name": "TestClone", "audio_path": "/nonexistent/path.wav"},
+            )
             tracer.api_call("POST", "/api/cloning/create (invalid path)", response)
 
             if response.status_code in [400, 404, 422]:
@@ -526,11 +548,14 @@ class TestCloningErrors:
 # =============================================================================
 
 if __name__ == "__main__":
-    pytest.main([
-        __file__,
-        "-v",
-        "--tb=short",
-        "-m", "not slow",
-        "--html=.buildlogs/validation/reports/allan_watts_cloning_report.html",
-        "--self-contained-html",
-    ])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--tb=short",
+            "-m",
+            "not slow",
+            "--html=.buildlogs/validation/reports/allan_watts_cloning_report.html",
+            "--self-contained-html",
+        ]
+    )

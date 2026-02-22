@@ -18,8 +18,9 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ProsodyFeatures:
     """Extracted prosody features."""
+
     # Pitch contour
-    f0_contour: np.ndarray       # Pitch values per frame
+    f0_contour: np.ndarray  # Pitch values per frame
     f0_mean: float
     f0_std: float
     f0_range: tuple[float, float]
@@ -30,14 +31,14 @@ class ProsodyFeatures:
     energy_std: float
 
     # Timing
-    duration: float              # Total duration in seconds
-    speaking_rate: float         # Syllables per second (estimated)
+    duration: float  # Total duration in seconds
+    speaking_rate: float  # Syllables per second (estimated)
     pause_locations: list[tuple[float, float]]  # (start, end) in seconds
 
     # Voice quality
-    jitter: float               # Pitch perturbation
-    shimmer: float              # Amplitude perturbation
-    hnr: float                  # Harmonics-to-noise ratio
+    jitter: float  # Pitch perturbation
+    shimmer: float  # Amplitude perturbation
+    hnr: float  # Harmonics-to-noise ratio
 
 
 class ProsodyExtractor:
@@ -67,7 +68,11 @@ class ProsodyExtractor:
         f0_voiced = f0_contour[f0_contour > 0]
         f0_mean = float(np.mean(f0_voiced)) if len(f0_voiced) > 0 else 0.0
         f0_std = float(np.std(f0_voiced)) if len(f0_voiced) > 0 else 0.0
-        f0_range = (float(np.min(f0_voiced)), float(np.max(f0_voiced))) if len(f0_voiced) > 0 else (0.0, 0.0)
+        f0_range = (
+            (float(np.min(f0_voiced)), float(np.max(f0_voiced)))
+            if len(f0_voiced) > 0
+            else (0.0, 0.0)
+        )
 
         # Extract energy
         energy_contour = self._extract_energy(audio)
@@ -105,6 +110,7 @@ class ProsodyExtractor:
         """Extract fundamental frequency contour."""
         try:
             import librosa
+
             pitches, magnitudes = librosa.piptrack(
                 y=audio,
                 sr=self._sample_rate,
@@ -129,13 +135,13 @@ class ProsodyExtractor:
 
         for i in range(n_frames):
             start = i * self._hop_size
-            frame = audio[start:start + self._frame_size]
+            frame = audio[start : start + self._frame_size]
 
             if len(frame) < self._frame_size // 2:
                 continue
 
             corr = np.correlate(frame, frame, mode="full")
-            corr = corr[len(corr) // 2:]
+            corr = corr[len(corr) // 2 :]
 
             min_lag = int(self._sample_rate / 500)
             max_lag = int(self._sample_rate / 50)
@@ -153,13 +159,16 @@ class ProsodyExtractor:
         """Extract energy/RMS contour."""
         try:
             import librosa
+
             return librosa.feature.rms(
                 y=audio,
                 frame_length=self._frame_size,
                 hop_length=self._hop_size,
             )[0]
         except ImportError:
-            logger.debug("librosa not available for RMS extraction, using fallback manual calculation")
+            logger.debug(
+                "librosa not available for RMS extraction, using fallback manual calculation"
+            )
 
         # Manual RMS calculation
         n_frames = (len(audio) - self._frame_size) // self._hop_size + 1
@@ -167,8 +176,8 @@ class ProsodyExtractor:
 
         for i in range(n_frames):
             start = i * self._hop_size
-            frame = audio[start:start + self._frame_size]
-            energy[i] = np.sqrt(np.mean(frame ** 2))
+            frame = audio[start : start + self._frame_size]
+            energy[i] = np.sqrt(np.mean(frame**2))
 
         return energy
 
@@ -205,6 +214,7 @@ class ProsodyExtractor:
         """Estimate speaking rate in syllables/second."""
         try:
             import librosa
+
             onset_env = librosa.onset.onset_strength(y=audio, sr=self._sample_rate)
             onsets = librosa.onset.onset_detect(onset_envelope=onset_env, sr=self._sample_rate)
             return len(onsets) / duration if duration > 0 else 0.0
@@ -232,9 +242,10 @@ class ProsodyExtractor:
         """Calculate harmonics-to-noise ratio."""
         try:
             import librosa
+
             harmonic, percussive = librosa.effects.hpss(audio)
-            h_energy = np.sum(harmonic ** 2)
-            p_energy = np.sum(percussive ** 2)
+            h_energy = np.sum(harmonic**2)
+            p_energy = np.sum(percussive**2)
             if p_energy > 0:
                 return float(10 * np.log10(h_energy / p_energy))
             return 20.0
@@ -286,21 +297,15 @@ class ProsodyTransferEngine:
 
         # Transfer pitch
         if pitch_weight > 0:
-            output = self._transfer_pitch(
-                output, target_prosody, ref_prosody, pitch_weight
-            )
+            output = self._transfer_pitch(output, target_prosody, ref_prosody, pitch_weight)
 
         # Transfer energy
         if energy_weight > 0:
-            output = self._transfer_energy(
-                output, target_prosody, ref_prosody, energy_weight
-            )
+            output = self._transfer_energy(output, target_prosody, ref_prosody, energy_weight)
 
         # Transfer duration (time-stretch)
         if duration_weight > 0:
-            output = self._transfer_duration(
-                output, target_prosody, ref_prosody, duration_weight
-            )
+            output = self._transfer_duration(output, target_prosody, ref_prosody, duration_weight)
 
         return output
 
@@ -323,6 +328,7 @@ class ProsodyTransferEngine:
             # Apply pitch shift
             try:
                 import librosa
+
                 return librosa.effects.pitch_shift(audio, sr=self._sample_rate, n_steps=semitones)
             except ImportError:
                 # Simple resampling fallback
@@ -375,7 +381,8 @@ class ProsodyTransferEngine:
         # Time stretch
         try:
             import librosa
-            return librosa.effects.time_stretch(audio, rate=1/final_ratio)
+
+            return librosa.effects.time_stretch(audio, rate=1 / final_ratio)
         except ImportError:
             # Simple resampling (changes pitch too)
             new_len = int(len(audio) * final_ratio)

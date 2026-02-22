@@ -119,18 +119,14 @@ class StyleTransfer:
         if isinstance(source_audio, (str, Path)):
             source, src_sr = load_audio(str(source_audio))
             if sample_rate != src_sr and HAS_LIBROSA:
-                source = librosa.resample(
-                    source, orig_sr=src_sr, target_sr=sample_rate
-                )
+                source = librosa.resample(source, orig_sr=src_sr, target_sr=sample_rate)
         else:
             source = source_audio
 
         if isinstance(style_reference, (str, Path)):
             reference, ref_sr = load_audio(str(style_reference))
             if sample_rate != ref_sr and HAS_LIBROSA:
-                reference = librosa.resample(
-                    reference, orig_sr=ref_sr, target_sr=sample_rate
-                )
+                reference = librosa.resample(reference, orig_sr=ref_sr, target_sr=sample_rate)
         else:
             reference = style_reference
 
@@ -185,30 +181,22 @@ class StyleTransfer:
             if len(f0_voiced) > 0:
                 features["f0_mean"] = float(np.nanmean(f0_voiced))
                 features["f0_std"] = float(np.nanstd(f0_voiced))
-                features["f0_range"] = float(
-                    np.nanmax(f0_voiced) - np.nanmin(f0_voiced)
-                )
+                features["f0_range"] = float(np.nanmax(f0_voiced) - np.nanmin(f0_voiced))
 
             # Extract tempo (speaking rate)
-            tempo, _beats = librosa.beat.beat_track(
-                y=audio, sr=sample_rate, units="time"
-            )
+            tempo, _beats = librosa.beat.beat_track(y=audio, sr=sample_rate, units="time")
             features["tempo"] = float(tempo)
 
             # Extract energy envelope
             frame_length = 2048
             hop_length = 512
-            rms = librosa.feature.rms(
-                y=audio, frame_length=frame_length, hop_length=hop_length
-            )[0]
+            rms = librosa.feature.rms(y=audio, frame_length=frame_length, hop_length=hop_length)[0]
             features["energy_mean"] = float(np.mean(rms))
             features["energy_std"] = float(np.std(rms))
             features["energy_range"] = float(np.max(rms) - np.min(rms))
 
             # Extract spectral features
-            spectral_centroid = librosa.feature.spectral_centroid(
-                y=audio, sr=sample_rate
-            )[0]
+            spectral_centroid = librosa.feature.spectral_centroid(y=audio, sr=sample_rate)[0]
             features["spectral_centroid_mean"] = float(np.mean(spectral_centroid))
 
             # Extract zero-crossing rate (speech-like characteristics)
@@ -260,9 +248,7 @@ class StyleTransfer:
             source_f0 = source_features["f0_mean"]
 
             if source_f0 > 0 and target_f0 > 0:
-                pitch_shift_semitones = (
-                    np.log2(target_f0 / source_f0) * 12.0 * transfer_strength
-                )
+                pitch_shift_semitones = np.log2(target_f0 / source_f0) * 12.0 * transfer_strength
 
                 # Limit pitch shift range
                 pitch_shift_semitones = max(-12.0, min(12.0, pitch_shift_semitones))
@@ -292,9 +278,7 @@ class StyleTransfer:
 
                 if abs(tempo_ratio - 1.0) > 0.05:
                     try:
-                        transferred = librosa.effects.time_stretch(
-                            transferred, rate=tempo_ratio
-                        )
+                        transferred = librosa.effects.time_stretch(transferred, rate=tempo_ratio)
                     except Exception as e:
                         logger.warning(f"Tempo change failed: {e}")
 

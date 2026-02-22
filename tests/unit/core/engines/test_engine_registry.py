@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.engines import engine_registry
 except ImportError:
-    pytest.skip(
-        "Could not import engine_registry", allow_module_level=True
-    )
+    pytest.skip("Could not import engine_registry", allow_module_level=True)
 
 
 class TestEngineRegistryImports:
@@ -25,16 +23,12 @@ class TestEngineRegistryImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            engine_registry is not None
-        ), "Failed to import engine_registry module"
+        assert engine_registry is not None, "Failed to import engine_registry module"
 
     def test_module_has_classes(self):
         """Test module has expected classes."""
         classes = [
-            name
-            for name in dir(engine_registry)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(engine_registry) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "module should have classes or functions"
 
@@ -51,4 +45,3 @@ class TestEngineRegistryClasses:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

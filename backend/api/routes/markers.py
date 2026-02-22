@@ -403,9 +403,7 @@ async def get_project_marker(project_id: str, marker_id: str):
 
         marker = _markers[marker_id]
         if marker.get("project_id") != project_id:
-            raise HTTPException(
-                status_code=404, detail="Marker not found in this project"
-            )
+            raise HTTPException(status_code=404, detail="Marker not found in this project")
 
         return marker
     except HTTPException:

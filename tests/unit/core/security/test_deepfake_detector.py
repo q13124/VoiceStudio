@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.core.security import deepfake_detector
 except ImportError:
-    pytest.skip(
-        "Could not import deepfake_detector", allow_module_level=True
-    )
+    pytest.skip("Could not import deepfake_detector", allow_module_level=True)
 
 
 class TestDeepfakeDetectorImports:
@@ -25,9 +23,7 @@ class TestDeepfakeDetectorImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            deepfake_detector is not None
-        ), "Failed to import deepfake_detector module"
+        assert deepfake_detector is not None, "Failed to import deepfake_detector module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -41,11 +37,8 @@ class TestDeepfakeDetectorFunctions:
     def test_detect_deepfake_function_exists(self):
         """Test detect_deepfake function exists."""
         if hasattr(deepfake_detector, "detect_deepfake"):
-            assert callable(
-                deepfake_detector.detect_deepfake
-            ), "detect_deepfake should be callable"
+            assert callable(deepfake_detector.detect_deepfake), "detect_deepfake should be callable"
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

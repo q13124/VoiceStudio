@@ -52,9 +52,7 @@ class QualityConsistencyMonitor:
         self.quality_history: dict[str, list[dict[str, Any]]] = {}
         self.quality_standards: dict[str, dict[str, float]] = {}
 
-    def set_quality_standard(
-        self, project_id: str, standard_name: str = "professional"
-    ) -> bool:
+    def set_quality_standard(self, project_id: str, standard_name: str = "professional") -> bool:
         """
         Set quality standard for a project.
 
@@ -130,9 +128,7 @@ class QualityConsistencyMonitor:
             }
 
         # Get standard for project
-        standard = self.quality_standards.get(
-            project_id, QUALITY_STANDARDS["professional"]
-        )
+        standard = self.quality_standards.get(project_id, QUALITY_STANDARDS["professional"])
 
         # Filter records by time period
         cutoff_date = datetime.utcnow() - timedelta(days=time_period_days)
@@ -156,9 +152,7 @@ class QualityConsistencyMonitor:
         violations = self._check_violations(metrics_list, standard)
         trends = self._calculate_trends(recent_records)
 
-        consistency_score = self._calculate_consistency_score(
-            statistics, violations, standard
-        )
+        consistency_score = self._calculate_consistency_score(statistics, violations, standard)
 
         return {
             "project_id": project_id,
@@ -171,14 +165,10 @@ class QualityConsistencyMonitor:
             "violations": violations,
             "trends": trends,
             "is_consistent": consistency_score >= 0.8,
-            "recommendations": self._generate_recommendations(
-                statistics, violations, standard
-            ),
+            "recommendations": self._generate_recommendations(statistics, violations, standard),
         }
 
-    def check_all_projects_consistency(
-        self, time_period_days: int = 30
-    ) -> dict[str, Any]:
+    def check_all_projects_consistency(self, time_period_days: int = 30) -> dict[str, Any]:
         """
         Check quality consistency across all projects.
 
@@ -205,15 +195,11 @@ class QualityConsistencyMonitor:
                 if report.get("is_consistent", False):
                     consistent_projects += 1
 
-        overall_consistency = (
-            consistent_projects / len(all_reports) if all_reports else 0.0
-        )
+        overall_consistency = consistent_projects / len(all_reports) if all_reports else 0.0
 
         return {
             "total_projects": len(all_reports),
-            "projects_with_data": sum(
-                1 for r in all_reports.values() if r.get("has_data", False)
-            ),
+            "projects_with_data": sum(1 for r in all_reports.values() if r.get("has_data", False)),
             "consistent_projects": consistent_projects,
             "overall_consistency": overall_consistency,
             "total_samples": total_samples,
@@ -221,9 +207,7 @@ class QualityConsistencyMonitor:
             "projects": all_reports,
         }
 
-    def get_quality_trends(
-        self, project_id: str, time_period_days: int = 30
-    ) -> dict[str, Any]:
+    def get_quality_trends(self, project_id: str, time_period_days: int = 30) -> dict[str, Any]:
         """
         Get quality trends for a project.
 
@@ -313,7 +297,7 @@ class QualityConsistencyMonitor:
 
         mean = sum(values) / len(values)
         variance = sum((x - mean) ** 2 for x in values) / (len(values) - 1)
-        return variance ** 0.5
+        return variance**0.5
 
     def _check_violations(
         self, metrics_list: list[dict[str, Any]], standard: dict[str, float]
@@ -356,9 +340,7 @@ class QualityConsistencyMonitor:
 
         return violations
 
-    def _calculate_trends(
-        self, records: list[dict[str, Any]]
-    ) -> dict[str, str]:
+    def _calculate_trends(self, records: list[dict[str, Any]]) -> dict[str, str]:
         """Calculate trends (improving, declining, stable)."""
         if len(records) < 2:
             return {}
@@ -534,4 +516,3 @@ _quality_consistency_monitor = QualityConsistencyMonitor()
 def get_quality_consistency_monitor() -> QualityConsistencyMonitor:
     """Get the global quality consistency monitor instance."""
     return _quality_consistency_monitor
-

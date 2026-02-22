@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class ExportType(Enum):
     """Export types."""
+
     ARCHIVE = "archive"
     FOLDER = "folder"
     AUDIO_ONLY = "audio_only"
@@ -29,6 +30,7 @@ class ExportType(Enum):
 @dataclass
 class ProjectExportOptions:
     """Options for project export."""
+
     export_type: ExportType = ExportType.ARCHIVE
     include_sources: bool = True
     include_voices: bool = True
@@ -44,6 +46,7 @@ class ProjectExportOptions:
 @dataclass
 class ExportManifest:
     """Manifest for exported project."""
+
     name: str
     version: str
     created_at: str
@@ -55,6 +58,7 @@ class ExportManifest:
 @dataclass
 class ProjectExportResult:
     """Result of project export."""
+
     success: bool
     output_path: Path | None = None
     output_files: list[Path] = field(default_factory=list)
@@ -70,9 +74,7 @@ class ProjectExporter:
         self._voicestudio_version = voicestudio_version
 
     async def export_project(
-        self,
-        project_path: Path,
-        options: ProjectExportOptions | None = None
+        self, project_path: Path, options: ProjectExportOptions | None = None
     ) -> ProjectExportResult:
         """Export a project with specified options."""
         options = options or ProjectExportOptions()
@@ -81,8 +83,7 @@ class ProjectExporter:
         try:
             if not project_path.exists():
                 return ProjectExportResult(
-                    success=False,
-                    errors=[f"Project not found: {project_path}"]
+                    success=False, errors=[f"Project not found: {project_path}"]
                 )
 
             # Determine output path
@@ -98,8 +99,7 @@ class ProjectExporter:
                 return await self._export_stems(project_path, output_path, options)
             else:
                 return ProjectExportResult(
-                    success=False,
-                    errors=[f"Unknown export type: {options.export_type}"]
+                    success=False, errors=[f"Unknown export type: {options.export_type}"]
                 )
 
         except Exception as e:
@@ -107,30 +107,27 @@ class ProjectExporter:
             return ProjectExportResult(success=False, errors=[str(e)])
 
     async def _export_archive(
-        self,
-        project_path: Path,
-        output_path: Path,
-        options: ProjectExportOptions
+        self, project_path: Path, output_path: Path, options: ProjectExportOptions
     ) -> ProjectExportResult:
         """Export project as ZIP archive."""
         result = ProjectExportResult(success=True)
 
-        archive_path = output_path.with_suffix('.vsarc')
+        archive_path = output_path.with_suffix(".vsarc")
 
         # Create manifest
         manifest = self._create_manifest(project_path, options)
 
         with zipfile.ZipFile(
             archive_path,
-            'w',
+            "w",
             compression=zipfile.ZIP_DEFLATED if options.compress else zipfile.ZIP_STORED,
-            compresslevel=options.compression_level if options.compress else 0
+            compresslevel=options.compression_level if options.compress else 0,
         ) as zf:
             # Add manifest
-            zf.writestr('manifest.json', json.dumps(manifest.__dict__, indent=2, default=str))
+            zf.writestr("manifest.json", json.dumps(manifest.__dict__, indent=2, default=str))
 
             # Add project files
-            for file_path in project_path.rglob('*'):
+            for file_path in project_path.rglob("*"):
                 if file_path.is_file():
                     relative = file_path.relative_to(project_path)
 
@@ -148,10 +145,7 @@ class ProjectExporter:
         return result
 
     async def _export_folder(
-        self,
-        project_path: Path,
-        output_path: Path,
-        options: ProjectExportOptions
+        self, project_path: Path, output_path: Path, options: ProjectExportOptions
     ) -> ProjectExportResult:
         """Export project as folder."""
         result = ProjectExportResult(success=True)
@@ -160,11 +154,11 @@ class ProjectExporter:
 
         # Create manifest
         manifest = self._create_manifest(project_path, options)
-        manifest_path = output_path / 'manifest.json'
+        manifest_path = output_path / "manifest.json"
         manifest_path.write_text(json.dumps(manifest.__dict__, indent=2, default=str))
 
         # Copy files
-        for file_path in project_path.rglob('*'):
+        for file_path in project_path.rglob("*"):
             if file_path.is_file():
                 relative = file_path.relative_to(project_path)
 
@@ -178,24 +172,21 @@ class ProjectExporter:
                 result.output_files.append(dest)
 
         result.output_path = output_path
-        result.file_size = sum(f.stat().st_size for f in output_path.rglob('*') if f.is_file())
+        result.file_size = sum(f.stat().st_size for f in output_path.rglob("*") if f.is_file())
 
         return result
 
     async def _export_audio_only(
-        self,
-        project_path: Path,
-        output_path: Path,
-        options: ProjectExportOptions
+        self, project_path: Path, output_path: Path, options: ProjectExportOptions
     ) -> ProjectExportResult:
         """Export only audio files."""
         result = ProjectExportResult(success=True)
 
         output_path.mkdir(parents=True, exist_ok=True)
 
-        audio_extensions = {'.wav', '.mp3', '.flac', '.ogg', '.m4a', '.aac'}
+        audio_extensions = {".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac"}
 
-        for file_path in project_path.rglob('*'):
+        for file_path in project_path.rglob("*"):
             if file_path.is_file() and file_path.suffix.lower() in audio_extensions:
                 dest = output_path / file_path.name
                 shutil.copy2(file_path, dest)
@@ -208,10 +199,7 @@ class ProjectExporter:
         return result
 
     async def _export_stems(
-        self,
-        project_path: Path,
-        output_path: Path,
-        options: ProjectExportOptions
+        self, project_path: Path, output_path: Path, options: ProjectExportOptions
     ) -> ProjectExportResult:
         """Export audio stems by track."""
         result = ProjectExportResult(success=True)
@@ -219,21 +207,21 @@ class ProjectExporter:
         output_path.mkdir(parents=True, exist_ok=True)
 
         # Read project file to get track info
-        project_file = project_path / 'project.json'
+        project_file = project_path / "project.json"
         if project_file.exists():
             try:
                 project_data = json.loads(project_file.read_text())
-                tracks = project_data.get('tracks', [])
+                tracks = project_data.get("tracks", [])
 
                 for track in tracks:
-                    track_name = track.get('name', 'Unknown')
+                    track_name = track.get("name", "Unknown")
                     track_dir = output_path / track_name
                     track_dir.mkdir(exist_ok=True)
 
                     # Copy track audio files
-                    track_files = project_path / 'audio' / track_name
+                    track_files = project_path / "audio" / track_name
                     if track_files.exists():
-                        for audio_file in track_files.glob('*'):
+                        for audio_file in track_files.glob("*"):
                             if audio_file.is_file():
                                 dest = track_dir / audio_file.name
                                 shutil.copy2(audio_file, dest)
@@ -248,30 +236,28 @@ class ProjectExporter:
 
         return result
 
-    def _create_manifest(
-        self,
-        project_path: Path,
-        options: ProjectExportOptions
-    ) -> ExportManifest:
+    def _create_manifest(self, project_path: Path, options: ProjectExportOptions) -> ExportManifest:
         """Create export manifest."""
         files = []
 
-        for file_path in project_path.rglob('*'):
+        for file_path in project_path.rglob("*"):
             if file_path.is_file():
                 relative = file_path.relative_to(project_path)
 
                 if not self._should_include(relative, options):
                     continue
 
-                files.append({
-                    "path": str(relative),
-                    "size": file_path.stat().st_size,
-                    "modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
-                })
+                files.append(
+                    {
+                        "path": str(relative),
+                        "size": file_path.stat().st_size,
+                        "modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
+                    }
+                )
 
         # Read project metadata
         metadata: dict[str, Any] = {}
-        project_file = project_path / 'project.json'
+        project_file = project_path / "project.json"
         if project_file.exists():
             try:
                 metadata = json.loads(project_file.read_text())
@@ -291,17 +277,17 @@ class ProjectExporter:
         """Check if a file should be included in export."""
         path_str = str(relative_path)
 
-        if path_str.startswith('voices') and not options.include_voices:
+        if path_str.startswith("voices") and not options.include_voices:
             return False
 
-        if path_str.startswith('sources') and not options.include_sources:
+        if path_str.startswith("sources") and not options.include_sources:
             return False
 
-        if path_str.startswith('workflows') and not options.include_workflows:
+        if path_str.startswith("workflows") and not options.include_workflows:
             return False
 
-        if path_str.startswith('settings') and not options.include_settings:
+        if path_str.startswith("settings") and not options.include_settings:
             return False
 
         # Skip temp and cache files
-        return not any(part in path_str for part in ['__pycache__', '.cache', '.tmp'])
+        return not any(part in path_str for part in ["__pycache__", ".cache", ".tmp"])

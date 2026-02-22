@@ -135,11 +135,13 @@ class MetricsPersistence:
             cursor = conn.cursor()
 
             # Schema version table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS schema_version (
                     version INTEGER PRIMARY KEY
                 )
-            """)
+            """
+            )
 
             # Check current version
             cursor.execute("SELECT version FROM schema_version LIMIT 1")
@@ -157,7 +159,8 @@ class MetricsPersistence:
 
         if from_version < 1:
             # Initial schema
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS metrics (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     plugin_id TEXT NOT NULL,
@@ -168,28 +171,38 @@ class MetricsPersistence:
                     session_id TEXT,
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Indexes for common queries
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_metrics_plugin_id
                 ON metrics(plugin_id)
-            """)
-            cursor.execute("""
+            """
+            )
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_metrics_timestamp
                 ON metrics(timestamp)
-            """)
-            cursor.execute("""
+            """
+            )
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_metrics_type
                 ON metrics(metric_type)
-            """)
-            cursor.execute("""
+            """
+            )
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_metrics_plugin_timestamp
                 ON metrics(plugin_id, timestamp)
-            """)
+            """
+            )
 
             # Aggregated metrics table for faster historical queries
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS metrics_hourly (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     plugin_id TEXT NOT NULL,
@@ -201,12 +214,15 @@ class MetricsPersistence:
                     max_value REAL NOT NULL,
                     UNIQUE(plugin_id, metric_type, hour_start)
                 )
-            """)
+            """
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_hourly_plugin_hour
                 ON metrics_hourly(plugin_id, hour_start)
-            """)
+            """
+            )
 
             # Update schema version
             cursor.execute("DELETE FROM schema_version")
@@ -582,7 +598,7 @@ class MetricsPersistence:
         for m in metrics:
             labels_str = json.dumps(m.labels).replace('"', '""')
             lines.append(
-                f'{m.id},{m.plugin_id},{m.metric_type},{m.value},'
+                f"{m.id},{m.plugin_id},{m.metric_type},{m.value},"
                 f'{m.timestamp.isoformat()},{m.session_id or ""},"{labels_str}"'
             )
 
@@ -671,7 +687,9 @@ class MetricsPersistence:
                 deleted = cursor.rowcount
                 conn.commit()
 
-                logger.info(f"Retention policy applied: deleted {deleted} records older than {days} days")
+                logger.info(
+                    f"Retention policy applied: deleted {deleted} records older than {days} days"
+                )
                 return deleted
 
     def get_storage_stats(self) -> dict[str, Any]:
@@ -711,9 +729,7 @@ class MetricsPersistence:
             by_type = {row["metric_type"]: row["count"] for row in cursor.fetchall()}
 
             # Date range
-            cursor.execute(
-                "SELECT MIN(timestamp), MAX(timestamp) FROM metrics"
-            )
+            cursor.execute("SELECT MIN(timestamp), MAX(timestamp) FROM metrics")
             row = cursor.fetchone()
             min_date = row[0]
             max_date = row[1]

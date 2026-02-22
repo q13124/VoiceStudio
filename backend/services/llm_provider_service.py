@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ProviderInfo:
     """Information about an LLM provider."""
+
     name: str
     local: bool
     available: bool
@@ -80,6 +81,7 @@ class LLMProviderService:
         # Ollama (local)
         try:
             from app.core.engines.llm_local_adapter import OllamaLLMProvider
+
             provider = OllamaLLMProvider()
             providers["ollama"] = ProviderInfo(
                 name="ollama",
@@ -98,6 +100,7 @@ class LLMProviderService:
         # LocalAI (local)
         try:
             from app.core.engines.llm_local_adapter import LocalAILLMProvider
+
             provider = LocalAILLMProvider()
             providers["localai"] = ProviderInfo(
                 name="localai",
@@ -116,6 +119,7 @@ class LLMProviderService:
         # OpenAI (remote)
         try:
             from app.core.engines.llm_openai_adapter import OpenAILLMProvider
+
             provider = OpenAILLMProvider()
             providers["openai"] = ProviderInfo(
                 name="openai",
@@ -177,6 +181,7 @@ class LLMProviderService:
         # Try Ollama first (local, free)
         try:
             from app.core.engines.llm_local_adapter import OllamaLLMProvider
+
             provider = OllamaLLMProvider()
             if provider.is_available:
                 logger.info("Using Ollama LLM provider (local)")
@@ -190,6 +195,7 @@ class LLMProviderService:
         # Try LocalAI (local)
         try:
             from app.core.engines.llm_local_adapter import LocalAILLMProvider
+
             provider = LocalAILLMProvider()
             if provider.is_available:
                 logger.info("Using LocalAI LLM provider (local)")
@@ -203,6 +209,7 @@ class LLMProviderService:
         # Fallback to OpenAI (cloud, requires API key)
         try:
             from app.core.engines.llm_openai_adapter import OpenAILLMProvider
+
             provider = OpenAILLMProvider()
             if provider.is_available:
                 logger.info("Using OpenAI LLM provider (cloud)")
@@ -224,12 +231,15 @@ class LLMProviderService:
         try:
             if name == "ollama":
                 from app.core.engines.llm_local_adapter import OllamaLLMProvider
+
                 return OllamaLLMProvider()
             elif name == "localai":
                 from app.core.engines.llm_local_adapter import LocalAILLMProvider
+
                 return LocalAILLMProvider()
             elif name == "openai":
                 from app.core.engines.llm_openai_adapter import OpenAILLMProvider
+
                 return OpenAILLMProvider()
         except ImportError:
             logger.warning(f"Provider {name} not available (import error)")

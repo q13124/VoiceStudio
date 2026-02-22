@@ -70,6 +70,7 @@ def backend_app():
     """
     try:
         from backend.api.main import app
+
         return app
     except ImportError:
         # Return None if backend not available
@@ -116,7 +117,9 @@ def mock_backend_services():
 
     # Apply patches
     try:
-        patches.append(patch("backend.services.engine_service.EngineService", return_value=engine_mock))
+        patches.append(
+            patch("backend.services.engine_service.EngineService", return_value=engine_mock)
+        )
         for p in patches:
             p.start()
     except Exception:
@@ -142,6 +145,7 @@ def clean_test_state():
     """
     # Pre-test cleanup
     import gc
+
     gc.collect()
 
     yield

@@ -43,13 +43,12 @@ class TestAPIWorkflows:
                     "quality_mode": "standard",
                 }
 
-                create_response = await client.post(
-                    f"{API_BASE_URL}/profiles",
-                    json=profile_data
-                )
+                create_response = await client.post(f"{API_BASE_URL}/profiles", json=profile_data)
 
-                assert create_response.status_code in [200, 201], \
-                    f"Profile creation failed: {create_response.status_code}"
+                assert create_response.status_code in [
+                    200,
+                    201,
+                ], f"Profile creation failed: {create_response.status_code}"
 
                 profile = create_response.json()
                 assert "profile_id" in profile or "id" in profile, "Profile ID not returned"
@@ -61,8 +60,9 @@ class TestAPIWorkflows:
                 assert get_response.status_code == 200, "Profile retrieval failed"
 
                 retrieved_profile = get_response.json()
-                assert retrieved_profile.get("name") == profile_data["name"], \
-                    "Retrieved profile name mismatch"
+                assert (
+                    retrieved_profile.get("name") == profile_data["name"]
+                ), "Retrieved profile name mismatch"
 
         except ImportError:
             pytest.skip("httpx not available")
@@ -85,13 +85,12 @@ class TestAPIWorkflows:
                     "description": "Test project for integration testing",
                 }
 
-                create_response = await client.post(
-                    f"{API_BASE_URL}/projects",
-                    json=project_data
-                )
+                create_response = await client.post(f"{API_BASE_URL}/projects", json=project_data)
 
-                assert create_response.status_code in [200, 201], \
-                    f"Project creation failed: {create_response.status_code}"
+                assert create_response.status_code in [
+                    200,
+                    201,
+                ], f"Project creation failed: {create_response.status_code}"
 
                 project = create_response.json()
                 project_id = project.get("project_id") or project.get("id")
@@ -130,10 +129,7 @@ class TestAPIWorkflows:
                     "engine": "xtts_v2",
                 }
 
-                profile_response = await client.post(
-                    f"{API_BASE_URL}/profiles",
-                    json=profile_data
-                )
+                profile_response = await client.post(f"{API_BASE_URL}/profiles", json=profile_data)
 
                 if profile_response.status_code not in [200, 201]:
                     pytest.skip("Profile creation failed, skipping synthesis test")
@@ -150,19 +146,22 @@ class TestAPIWorkflows:
                 }
 
                 synthesis_response = await client.post(
-                    f"{API_BASE_URL}/voice/synthesize",
-                    json=synthesis_data,
-                    timeout=60.0
+                    f"{API_BASE_URL}/voice/synthesize", json=synthesis_data, timeout=60.0
                 )
 
                 # Synthesis may take time, check for timeout or success
-                assert synthesis_response.status_code in [200, 202, 408, 504], \
-                    f"Synthesis request failed: {synthesis_response.status_code}"
+                assert synthesis_response.status_code in [
+                    200,
+                    202,
+                    408,
+                    504,
+                ], f"Synthesis request failed: {synthesis_response.status_code}"
 
                 if synthesis_response.status_code == 200:
                     result = synthesis_response.json()
-                    assert "audio_url" in result or "audio_id" in result, \
-                        "Synthesis result missing audio"
+                    assert (
+                        "audio_url" in result or "audio_id" in result
+                    ), "Synthesis result missing audio"
 
         except ImportError:
             pytest.skip("httpx not available")
@@ -188,22 +187,20 @@ class TestAPIWorkflows:
                     ],
                 }
 
-                batch_response = await client.post(
-                    f"{API_BASE_URL}/batch/jobs",
-                    json=batch_data
-                )
+                batch_response = await client.post(f"{API_BASE_URL}/batch/jobs", json=batch_data)
 
-                assert batch_response.status_code in [200, 201, 400], \
-                    f"Batch job creation failed: {batch_response.status_code}"
+                assert batch_response.status_code in [
+                    200,
+                    201,
+                    400,
+                ], f"Batch job creation failed: {batch_response.status_code}"
 
                 if batch_response.status_code in [200, 201]:
                     job = batch_response.json()
                     job_id = job.get("job_id") or job.get("id")
 
                     # Get job status
-                    status_response = await client.get(
-                        f"{API_BASE_URL}/batch/jobs/{job_id}"
-                    )
+                    status_response = await client.get(f"{API_BASE_URL}/batch/jobs/{job_id}")
                     assert status_response.status_code == 200, "Job status retrieval failed"
 
         except ImportError:
@@ -223,17 +220,20 @@ class TestAPIWorkflows:
 
                 # Test invalid request
                 invalid_response = await client.post(
-                    f"{API_BASE_URL}/profiles",
-                    json={"invalid": "data"}
+                    f"{API_BASE_URL}/profiles", json={"invalid": "data"}
                 )
 
                 # Should return error (400 or 422)
-                assert invalid_response.status_code in [400, 422, 500], \
-                    f"Invalid request should return error: {invalid_response.status_code}"
+                assert invalid_response.status_code in [
+                    400,
+                    422,
+                    500,
+                ], f"Invalid request should return error: {invalid_response.status_code}"
 
                 error_data = invalid_response.json()
-                assert "error" in error_data or "detail" in error_data, \
-                    "Error response missing error information"
+                assert (
+                    "error" in error_data or "detail" in error_data
+                ), "Error response missing error information"
 
         except ImportError:
             pytest.skip("httpx not available")
@@ -259,9 +259,9 @@ class TestAPIWorkflows:
                 # Check for rate limiting (429)
                 any(status == 429 for status in responses)
                 # Rate limiting may or may not be active, so we just verify the workflow
-                assert all(status in [200, 429] for status in responses), \
-                    "Unexpected status codes in rate limiting test"
+                assert all(
+                    status in [200, 429] for status in responses
+                ), "Unexpected status codes in rate limiting test"
 
         except ImportError:
             pytest.skip("httpx not available")
-

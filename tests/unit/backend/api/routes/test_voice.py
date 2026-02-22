@@ -75,19 +75,13 @@ class TestVoiceRouteImports:
             assert any(
                 "/synthesize" in path for path in route_paths
             ), "Synthesize endpoint should exist"
-            assert any(
-                "/clone" in path for path in route_paths
-            ), "Clone endpoint should exist"
-            assert any(
-                "/audio" in path for path in route_paths
-            ), "Audio endpoint should exist"
+            assert any("/clone" in path for path in route_paths), "Clone endpoint should exist"
+            assert any("/audio" in path for path in route_paths), "Audio endpoint should exist"
 
     def test_audio_storage_exists(self):
         """Test audio storage dictionary exists."""
         assert hasattr(voice, "_audio_storage"), "Audio storage should exist"
-        assert isinstance(
-            voice._audio_storage, dict
-        ), "Audio storage should be a dictionary"
+        assert isinstance(voice._audio_storage, dict), "Audio storage should be a dictionary"
 
 
 class TestVoicePitchTrackerIntegration:
@@ -130,9 +124,7 @@ class TestVoicePitchTrackerIntegration:
 
     @patch("backend.api.routes.voice.PitchTracker")
     @patch("soundfile.read")
-    def test_quality_metrics_with_pitchtracker_pyin(
-        self, mock_sf_read, mock_pitchtracker_class
-    ):
+    def test_quality_metrics_with_pitchtracker_pyin(self, mock_sf_read, mock_pitchtracker_class):
         """Test quality metrics calculation using PitchTracker with pyin."""
         # Mock audio file
         audio_data = np.random.randn(44100).astype(np.float32)
@@ -151,9 +143,7 @@ class TestVoicePitchTrackerIntegration:
         assert mock_pitchtracker_class is not None
 
     @patch("backend.api.routes.voice.PitchTracker")
-    def test_quality_metrics_pitchtracker_fallback(
-        self, mock_pitchtracker_class
-    ):
+    def test_quality_metrics_pitchtracker_fallback(self, mock_pitchtracker_class):
         """Test quality metrics calculation with PitchTracker fallback."""
         # Mock PitchTracker with neither crepe nor pyin available
         mock_tracker = MagicMock()
@@ -179,9 +169,7 @@ class TestVoicePitchTrackerIntegration:
             ...
 
 
-def _write_silence_wav(
-    path: str, sample_rate: int = 22050, seconds: float = 0.25
-) -> None:
+def _write_silence_wav(path: str, sample_rate: int = 22050, seconds: float = 0.25) -> None:
     import wave
 
     frames = max(1, int(sample_rate * seconds))
@@ -195,9 +183,7 @@ def _write_silence_wav(
 class TestVoiceSynthesizeAndCloneFileOutputs:
     """Verify file-based engines (returning None) still return playable audio URLs."""
 
-    def test_synthesize_accepts_file_output_engine(
-        self, monkeypatch, tmp_path
-    ):
+    def test_synthesize_accepts_file_output_engine(self, monkeypatch, tmp_path):
         import os
 
         from backend.api.routes import profiles as profiles_route
@@ -249,12 +235,8 @@ class TestVoiceSynthesizeAndCloneFileOutputs:
         monkeypatch.setenv("VOICESTUDIO_CACHE_DIR", str(cache_dir))
         reset_audio_cache()
 
-        monkeypatch.setattr(
-            voice, "ENGINE_AVAILABLE", True, raising=False
-        )
-        monkeypatch.setattr(
-            voice, "engine_router", DummyEngineRouter(), raising=False
-        )
+        monkeypatch.setattr(voice, "ENGINE_AVAILABLE", True, raising=False)
+        monkeypatch.setattr(voice, "engine_router", DummyEngineRouter(), raising=False)
 
         app = FastAPI()
         app.include_router(voice.router)
@@ -287,9 +269,7 @@ class TestVoiceSynthesizeAndCloneFileOutputs:
         assert audio_resp.status_code == 200
         assert "audio/wav" in audio_resp.headers.get("content-type", "")
 
-    def test_clone_registers_audio_and_returns_playable_url(
-        self, monkeypatch, tmp_path
-    ):
+    def test_clone_registers_audio_and_returns_playable_url(self, monkeypatch, tmp_path):
         import os
 
         voice._audio_storage.clear()
@@ -328,12 +308,8 @@ class TestVoiceSynthesizeAndCloneFileOutputs:
         monkeypatch.setenv("VOICESTUDIO_CACHE_DIR", str(cache_dir))
         reset_audio_cache()
 
-        monkeypatch.setattr(
-            voice, "ENGINE_AVAILABLE", True, raising=False
-        )
-        monkeypatch.setattr(
-            voice, "engine_router", DummyEngineRouter(), raising=False
-        )
+        monkeypatch.setattr(voice, "ENGINE_AVAILABLE", True, raising=False)
+        monkeypatch.setattr(voice, "engine_router", DummyEngineRouter(), raising=False)
 
         app = FastAPI()
         app.include_router(voice.router)

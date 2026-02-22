@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class EngineStatus(Enum):
     """Engine status."""
+
     UNKNOWN = "unknown"
     AVAILABLE = "available"
     LOADING = "loading"
@@ -40,6 +41,7 @@ class EngineStatus(Enum):
 
 class EngineCapability(Enum):
     """Engine capabilities."""
+
     TTS = "tts"  # Text-to-speech
     STT = "stt"  # Speech-to-text
     VOICE_CLONING = "voice_cloning"
@@ -54,6 +56,7 @@ class EngineCapability(Enum):
 @dataclass
 class EngineInfo:
     """Engine information."""
+
     engine_id: str
     name: str
     version: str
@@ -79,7 +82,9 @@ class EngineInfo:
             "requires_gpu": self.requires_gpu,
             "model_path": self.model_path,
             "config": self.config,
-            "last_health_check": self.last_health_check.isoformat() if self.last_health_check else None,
+            "last_health_check": (
+                self.last_health_check.isoformat() if self.last_health_check else None
+            ),
             "error_message": self.error_message,
         }
 
@@ -87,6 +92,7 @@ class EngineInfo:
 @dataclass
 class ExternalTool:
     """External tool configuration."""
+
     tool_id: str
     name: str
     executable_path: str
@@ -170,7 +176,23 @@ class EngineIntegrationService:
                     EngineCapability.STREAMING,
                 },
                 status=EngineStatus.AVAILABLE,
-                languages=["en", "es", "fr", "de", "it", "pt", "pl", "tr", "ru", "nl", "cs", "ar", "zh", "ja", "ko"],
+                languages=[
+                    "en",
+                    "es",
+                    "fr",
+                    "de",
+                    "it",
+                    "pt",
+                    "pl",
+                    "tr",
+                    "ru",
+                    "nl",
+                    "cs",
+                    "ar",
+                    "zh",
+                    "ja",
+                    "ko",
+                ],
                 sample_rates=[22050, 24000],
                 requires_gpu=True,
                 model_path=None,
@@ -187,7 +209,21 @@ class EngineIntegrationService:
                     EngineCapability.MULTILINGUAL,
                 },
                 status=EngineStatus.AVAILABLE,
-                languages=["en", "de", "es", "fr", "hi", "it", "ja", "ko", "pl", "pt", "ru", "tr", "zh"],
+                languages=[
+                    "en",
+                    "de",
+                    "es",
+                    "fr",
+                    "hi",
+                    "it",
+                    "ja",
+                    "ko",
+                    "pl",
+                    "pt",
+                    "ru",
+                    "tr",
+                    "zh",
+                ],
                 sample_rates=[24000],
                 requires_gpu=True,
                 model_path=None,
@@ -408,7 +444,11 @@ class EngineIntegrationService:
     async def _discover_external_tools(self):
         """Discover external tools."""
         tools_to_check = [
-            ("ffmpeg", ["ffmpeg", "-version"], ["audio_processing", "video_processing", "format_conversion"]),
+            (
+                "ffmpeg",
+                ["ffmpeg", "-version"],
+                ["audio_processing", "video_processing", "format_conversion"],
+            ),
             ("ffprobe", ["ffprobe", "-version"], ["media_analysis"]),
             ("sox", ["sox", "--version"], ["audio_processing", "effects"]),
             ("imagemagick", ["magick", "-version"], ["image_processing"]),
@@ -440,8 +480,8 @@ class EngineIntegrationService:
             if is_available:
                 # Extract version from output
                 output = result.stdout + result.stderr
-                for line in output.split('\n'):
-                    if 'version' in line.lower():
+                for line in output.split("\n"):
+                    if "version" in line.lower():
                         version = line.strip()[:50]
                         break
 

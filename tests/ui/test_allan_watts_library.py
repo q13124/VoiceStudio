@@ -59,6 +59,7 @@ pytestmark = [
 # Fixtures
 # =============================================================================
 
+
 @pytest.fixture(scope="module")
 def tracer():
     """Create a workflow tracer for Library tests."""
@@ -85,6 +86,7 @@ def library_page(driver, app_launched):
 @pytest.fixture
 def navigate_to_library(driver, app_launched, tracer):
     """Navigate to Library panel and return success status."""
+
     def _navigate():
         tracer.start_panel_transition("unknown", "Library")
 
@@ -114,6 +116,7 @@ def navigate_to_library(driver, app_launched, tracer):
 # =============================================================================
 # Panel Navigation Tests
 # =============================================================================
+
 
 class TestLibraryNavigation:
     """Test Library panel navigation."""
@@ -163,6 +166,7 @@ class TestLibraryNavigation:
 # Panel Elements Tests
 # =============================================================================
 
+
 class TestLibraryElements:
     """Test Library panel UI elements."""
 
@@ -208,7 +212,10 @@ class TestLibraryElements:
         except RuntimeError:
             # Try alternative ID
             try:
-                files_list = driver.find_element("xpath", "//*[contains(@AutomationId, 'FilesList') or contains(@AutomationId, 'ItemsList')]")
+                files_list = driver.find_element(
+                    "xpath",
+                    "//*[contains(@AutomationId, 'FilesList') or contains(@AutomationId, 'ItemsList')]",
+                )
                 tracer.step("Files list found with alternative ID")
                 tracer.success("Library files list exists (alternative)")
             except RuntimeError as e:
@@ -219,6 +226,7 @@ class TestLibraryElements:
 # =============================================================================
 # Search Functionality Tests
 # =============================================================================
+
 
 class TestLibrarySearch:
     """Test Library search functionality."""
@@ -321,6 +329,7 @@ class TestLibrarySearch:
 # Selection Tests
 # =============================================================================
 
+
 class TestLibrarySelection:
     """Test Library file selection."""
 
@@ -356,6 +365,7 @@ class TestLibrarySelection:
 # Playback Tests
 # =============================================================================
 
+
 class TestLibraryPlayback:
     """Test Library playback controls."""
 
@@ -373,7 +383,9 @@ class TestLibraryPlayback:
         except RuntimeError:
             # Try alternative
             try:
-                play_button = driver.find_element("xpath", "//*[contains(@AutomationId, 'Play') or contains(@Name, 'Play')]")
+                play_button = driver.find_element(
+                    "xpath", "//*[contains(@AutomationId, 'Play') or contains(@Name, 'Play')]"
+                )
                 tracer.step("Play button found with alternative selector")
                 tracer.success("Play button exists (alternative)")
             except RuntimeError as e:
@@ -386,6 +398,7 @@ class TestLibraryPlayback:
 # =============================================================================
 # API Integration Tests
 # =============================================================================
+
 
 class TestLibraryAPI:
     """Test Library panel API integration."""
@@ -455,6 +468,7 @@ class TestLibraryAPI:
 # Existing Library Asset Tests
 # =============================================================================
 
+
 class TestExistingLibraryAsset:
     """Test operations using pre-uploaded Allan Watts audio files."""
 
@@ -507,7 +521,10 @@ class TestExistingLibraryAsset:
             # Check if results appear
             try:
                 files_list = driver.find_element("accessibility id", "LibraryView_AssetsListView")
-                items = files_list.find_elements("xpath", ".//ListItem | .//ListViewItem | .//*[@LocalizedControlType='list item']")
+                items = files_list.find_elements(
+                    "xpath",
+                    ".//ListItem | .//ListViewItem | .//*[@LocalizedControlType='list item']",
+                )
                 tracer.step(f"Found {len(items)} items matching search")
 
                 search_box.clear()
@@ -527,7 +544,9 @@ class TestExistingLibraryAsset:
 
         try:
             # Find list items in the assets list - use xpath with ClassName
-            items = driver.find_elements("xpath", "//List[@AutomationId='LibraryView_AssetsListView']//ListItem")
+            items = driver.find_elements(
+                "xpath", "//List[@AutomationId='LibraryView_AssetsListView']//ListItem"
+            )
             tracer.step(f"Found {len(items)} items in library (xpath)")
 
             if not items:
@@ -562,7 +581,9 @@ class TestExistingLibraryAsset:
 
         try:
             # Find list items
-            items = driver.find_elements("xpath", "//List[@AutomationId='LibraryView_AssetsListView']//ListItem")
+            items = driver.find_elements(
+                "xpath", "//List[@AutomationId='LibraryView_AssetsListView']//ListItem"
+            )
             tracer.step(f"Found {len(items)} items via LibraryView_AssetsListView")
 
             if not items:
@@ -596,7 +617,9 @@ class TestExistingLibraryAsset:
 
         try:
             # Try multiple selectors
-            items = driver.find_elements("xpath", "//List[@AutomationId='LibraryView_AssetsListView']//ListItem")
+            items = driver.find_elements(
+                "xpath", "//List[@AutomationId='LibraryView_AssetsListView']//ListItem"
+            )
             tracer.step(f"Found {len(items)} items via LibraryView_AssetsListView//ListItem")
 
             if not items:
@@ -606,7 +629,9 @@ class TestExistingLibraryAsset:
             if not items:
                 # Try to find the list itself and see if it has children
                 try:
-                    assets_list = driver.find_element("accessibility id", "LibraryView_AssetsListView")
+                    assets_list = driver.find_element(
+                        "accessibility id", "LibraryView_AssetsListView"
+                    )
                     tracer.step("Found AssetsListView, checking for children...")
                     children = assets_list.find_elements("xpath", ".//*")
                     tracer.step(f"  AssetsListView has {len(children)} child elements")
@@ -636,6 +661,7 @@ class TestExistingLibraryAsset:
 # Inter-Panel Communication Tests
 # =============================================================================
 
+
 class TestLibraryPanelCommunication:
     """Test Library communication with other panels."""
 
@@ -650,7 +676,7 @@ class TestLibraryPanelCommunication:
             "LibraryToSynthesis",
             source_panel="Library",
             target_panel="VoiceSynthesis",
-            payload={"action": "send_for_synthesis"}
+            payload={"action": "send_for_synthesis"},
         )
 
         tracer.step("Documented send-to-synthesis workflow")
@@ -666,7 +692,7 @@ class TestLibraryPanelCommunication:
             "LibraryToCloning",
             source_panel="Library",
             target_panel="VoiceCloningWizard",
-            payload={"action": "use_as_reference"}
+            payload={"action": "use_as_reference"},
         )
 
         tracer.step("Documented send-to-cloning workflow")
@@ -678,11 +704,14 @@ class TestLibraryPanelCommunication:
 # =============================================================================
 
 if __name__ == "__main__":
-    pytest.main([
-        __file__,
-        "-v",
-        "--tb=short",
-        "-m", "not slow",
-        "--html=.buildlogs/validation/reports/allan_watts_library_report.html",
-        "--self-contained-html",
-    ])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--tb=short",
+            "-m",
+            "not slow",
+            "--html=.buildlogs/validation/reports/allan_watts_library_report.html",
+            "--self-contained-html",
+        ]
+    )

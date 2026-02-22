@@ -265,9 +265,7 @@ class TempFileManager:
             logger.warning(f"Failed to remove temp file {path}: {e}")
             return False
 
-    def cleanup_old_files(
-        self, max_age_seconds: float | None = None
-    ) -> dict[str, int]:
+    def cleanup_old_files(self, max_age_seconds: float | None = None) -> dict[str, int]:
         """
         Clean up old temporary files.
 
@@ -335,9 +333,7 @@ class TempFileManager:
                 }
 
             # Aggressive cleanup - remove oldest files first
-            sorted_files = sorted(
-                self._temp_files.items(), key=lambda x: x[1].created_at
-            )
+            sorted_files = sorted(self._temp_files.items(), key=lambda x: x[1].created_at)
 
             removed_count = 0
             removed_size = 0
@@ -424,9 +420,7 @@ class TempFileManager:
         for info in self._temp_files.values():
             info.update_size()
 
-        self._total_size_bytes = sum(
-            info.size_bytes for info in self._temp_files.values()
-        )
+        self._total_size_bytes = sum(info.size_bytes for info in self._temp_files.values())
 
         # Group by owner
         by_owner: dict[str, int] = {}
@@ -445,9 +439,7 @@ class TempFileManager:
             "total_size_mb": self._total_size_bytes / (1024**2),
             "total_size_gb": self._total_size_bytes / (1024**3),
             "cleanup_count": self._cleanup_count,
-            "last_cleanup": (
-                self._last_cleanup.isoformat() if self._last_cleanup else None
-            ),
+            "last_cleanup": (self._last_cleanup.isoformat() if self._last_cleanup else None),
             "by_owner": by_owner,
             "by_tag": by_tag,
             "disk_space": self.get_disk_space_info(),

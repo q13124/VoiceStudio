@@ -26,9 +26,7 @@ from typing import Any
 from fastapi import Request
 
 # Context variable for correlation ID in async context
-_correlation_id: ContextVar[str | None] = ContextVar(
-    "correlation_id", default=None
-)
+_correlation_id: ContextVar[str | None] = ContextVar("correlation_id", default=None)
 
 # Header names (matching BackendClient.cs CorrelationIdHandler)
 CORRELATION_ID_HEADER = "X-Correlation-Id"
@@ -171,9 +169,7 @@ class CorrelationLoggerAdapter(logging.LoggerAdapter):
         adapter.info("Processing")  # Includes correlation_id
     """
 
-    def process(
-        self, msg: str, kwargs: dict[str, Any]
-    ) -> tuple[str, dict[str, Any]]:
+    def process(self, msg: str, kwargs: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         """Process log message to include correlation ID."""
         correlation_id = get_current_correlation_id()
 

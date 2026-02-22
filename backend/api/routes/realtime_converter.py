@@ -7,7 +7,9 @@ Endpoints for real-time voice conversion and streaming.
 from __future__ import annotations
 
 import logging
+import os
 
+import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
@@ -246,19 +248,13 @@ async def converter_stream(websocket: WebSocket, session_id: str):
                     audio_chunk = np.frombuffer(data, dtype=np.float32)
 
                     # Save chunk to temporary file for RVC processing
-                    with tempfile.NamedTemporaryFile(
-                        suffix=".wav", delete=False
-                    ) as tmp_input:
+                    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_input:
                         import soundfile as sf
 
-                        sf.write(
-                            tmp_input.name, audio_chunk, 40000
-                        )  # RVC typically uses 40kHz
+                        sf.write(tmp_input.name, audio_chunk, 40000)  # RVC typically uses 40kHz
 
                         # Convert using RVC
-                        with tempfile.NamedTemporaryFile(
-                            suffix=".wav", delete=False
-                        ) as tmp_output:
+                        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_output:
                             rvc_engine.convert_voice(
                                 source_audio=tmp_input.name,
                                 target_speaker_model=target_profile_audio_path,
@@ -272,9 +268,7 @@ async def converter_stream(websocket: WebSocket, session_id: str):
                             converted_audio, _ = sf.read(tmp_output.name)
 
                             # Send converted audio back
-                            await websocket.send_bytes(
-                                converted_audio.astype(np.float32).tobytes()
-                            )
+                            await websocket.send_bytes(converted_audio.astype(np.float32).tobytes())
 
                             # Clean up temp files
                             try:
@@ -296,8 +290,7 @@ async def converter_stream(websocket: WebSocket, session_id: str):
                 await websocket.close(
                     code=1003,  # Unsupported Data
                     reason=(
-                        "Realtime conversion not available. "
-                        "Engine or profile audio not found."
+                        "Realtime conversion not available. " "Engine or profile audio not found."
                     ),
                 )
                 return
@@ -309,6 +302,7 @@ async def converter_stream(websocket: WebSocket, session_id: str):
 
 
 # --- Latency monitoring (called by RealTimeVoiceConverterViewModel) ---
+
 
 @router.get("/{session_id}/latency")
 async def get_session_latency(session_id: str):

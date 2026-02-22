@@ -46,6 +46,7 @@ except ImportError:
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -54,12 +55,27 @@ try:
     from fixtures.automation_ids import CATEGORIES, PANELS_BY_CATEGORY, get_all_panels
 except ImportError:
     PANELS_BY_CATEGORY = {}
+
     def get_all_panels():
         return []
+
     CATEGORIES = []
 
 # Configuration
-APP_PATH = os.getenv("VOICESTUDIO_APP_PATH", str(PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "x64" / "Debug" / "net8.0-windows10.0.22621.0" / "win-x64" / "VoiceStudio.App.exe"))
+APP_PATH = os.getenv(
+    "VOICESTUDIO_APP_PATH",
+    str(
+        PROJECT_ROOT
+        / "src"
+        / "VoiceStudio.App"
+        / "bin"
+        / "x64"
+        / "Debug"
+        / "net8.0-windows10.0.22621.0"
+        / "win-x64"
+        / "VoiceStudio.App.exe"
+    ),
+)
 WINAPPDRIVER_URL = "http://127.0.0.1:4723"
 BACKEND_URL = os.getenv("VOICESTUDIO_BACKEND_URL", "http://127.0.0.1:8000")
 OUTPUT_DIR = Path(os.getenv("VOICESTUDIO_OUTPUT_DIR", ".buildlogs/performance"))
@@ -68,7 +84,7 @@ OUTPUT_DIR = Path(os.getenv("VOICESTUDIO_OUTPUT_DIR", ".buildlogs/performance"))
 THRESHOLDS = {
     "panel_load_max_ms": 2000,  # Max panel load time
     "api_response_max_ms": 500,  # Max API response time
-    "navigation_max_ms": 500,   # Max navigation time
+    "navigation_max_ms": 500,  # Max navigation time
     "memory_increase_max_mb": 100,  # Max memory increase per operation
 }
 
@@ -83,6 +99,7 @@ pytestmark = [
 @dataclass
 class PerformanceMeasurement:
     """A single performance measurement."""
+
     name: str
     duration_ms: float
     timestamp: datetime = field(default_factory=datetime.now)
@@ -94,6 +111,7 @@ class PerformanceMeasurement:
 @dataclass
 class PerformanceReport:
     """Performance test report."""
+
     measurements: list[PerformanceMeasurement] = field(default_factory=list)
     start_time: datetime = field(default_factory=datetime.now)
     end_time: datetime | None = None
@@ -101,12 +119,9 @@ class PerformanceReport:
     final_memory_mb: float = 0
 
     def add(self, name: str, duration_ms: float, category: str = "general", **kwargs):
-        self.measurements.append(PerformanceMeasurement(
-            name=name,
-            duration_ms=duration_ms,
-            category=category,
-            **kwargs
-        ))
+        self.measurements.append(
+            PerformanceMeasurement(name=name, duration_ms=duration_ms, category=category, **kwargs)
+        )
 
     def get_stats(self, category: str | None = None) -> dict:
         """Get statistics for measurements."""
@@ -182,6 +197,7 @@ def driver(winappdriver_process):
     # This bypasses Selenium 4.x W3C capabilities issue
     try:
         from conftest import WinAppDriverSession
+
         session = WinAppDriverSession(APP_PATH, WINAPPDRIVER_URL)
         session.implicitly_wait(10)
         time.sleep(3)
@@ -238,11 +254,13 @@ def api_client():
 
 def measure_time(func):
     """Decorator to measure function execution time."""
+
     def wrapper(*args, **kwargs):
         start = time.perf_counter()
         result = func(*args, **kwargs)
         duration_ms = (time.perf_counter() - start) * 1000
         return result, duration_ms
+
     return wrapper
 
 
@@ -287,8 +305,9 @@ class TestPanelLoadTimes:
         print(f"{panel_name}: {duration_ms:.0f}ms")
 
         if success:
-            assert duration_ms < THRESHOLDS["panel_load_max_ms"], \
-                f"{panel_name} load time ({duration_ms:.0f}ms) exceeds threshold ({THRESHOLDS['panel_load_max_ms']}ms)"
+            assert (
+                duration_ms < THRESHOLDS["panel_load_max_ms"]
+            ), f"{panel_name} load time ({duration_ms:.0f}ms) exceeds threshold ({THRESHOLDS['panel_load_max_ms']}ms)"
 
     def test_all_panels_load_time(self, driver, performance_report):
         """Test loading all panels in sequence."""
@@ -298,11 +317,13 @@ class TestPanelLoadTimes:
             panel_name = panel_config["name"]
             success, duration_ms = navigate_to_panel_timed(driver, panel_config)
 
-            results.append({
-                "panel": panel_name,
-                "duration_ms": duration_ms,
-                "success": success,
-            })
+            results.append(
+                {
+                    "panel": panel_name,
+                    "duration_ms": duration_ms,
+                    "success": success,
+                }
+            )
 
             performance_report.add(
                 name=f"sequential_{panel_name}",
@@ -345,8 +366,8 @@ class TestPanelLoadTimes:
             print(f"  Mean: {statistics.mean(all_times):.0f}ms")
 
             # Check for degradation
-            first_half = all_times[:len(all_times)//2]
-            second_half = all_times[len(all_times)//2:]
+            first_half = all_times[: len(all_times) // 2]
+            second_half = all_times[len(all_times) // 2 :]
 
             if first_half and second_half:
                 degradation = statistics.mean(second_half) - statistics.mean(first_half)
@@ -419,12 +440,14 @@ class TestAPIResponseTimes:
             try:
                 response, duration_ms = api_client.timed_get(path, timeout=10)
 
-                results.append({
-                    "endpoint": name,
-                    "path": path,
-                    "duration_ms": duration_ms,
-                    "status": response.status_code,
-                })
+                results.append(
+                    {
+                        "endpoint": name,
+                        "path": path,
+                        "duration_ms": duration_ms,
+                        "status": response.status_code,
+                    }
+                )
 
                 performance_report.add(
                     name=f"api_{name.lower().replace(' ', '_')}",
@@ -432,11 +455,13 @@ class TestAPIResponseTimes:
                     category="api",
                 )
             except Exception as e:
-                results.append({
-                    "endpoint": name,
-                    "path": path,
-                    "error": str(e),
-                })
+                results.append(
+                    {
+                        "endpoint": name,
+                        "path": path,
+                        "error": str(e),
+                    }
+                )
 
         # Report
         print("\nAPI Endpoint Performance:")
@@ -492,8 +517,9 @@ class TestMemoryUsage:
 
         print(f"Memory after navigation: {final_memory:.1f} MB (+{memory_increase:.1f} MB)")
 
-        assert memory_increase < THRESHOLDS["memory_increase_max_mb"], \
-            f"Memory increase ({memory_increase:.1f} MB) exceeds threshold"
+        assert (
+            memory_increase < THRESHOLDS["memory_increase_max_mb"]
+        ), f"Memory increase ({memory_increase:.1f} MB) exceeds threshold"
 
 
 class TestRenderPerformance:
@@ -539,7 +565,9 @@ class TestPerformanceReport:
         print(f"\nTotal measurements: {len(report.measurements)}")
 
         if report.initial_memory_mb > 0:
-            print(f"Memory - Initial: {report.initial_memory_mb:.1f} MB, Final: {report.final_memory_mb:.1f} MB")
+            print(
+                f"Memory - Initial: {report.initial_memory_mb:.1f} MB, Final: {report.final_memory_mb:.1f} MB"
+            )
 
         # Category breakdown
         categories = {m.category for m in report.measurements}
@@ -548,7 +576,7 @@ class TestPerformanceReport:
             stats = report.get_stats(category)
             print(f"\n{category.upper()}:")
             print(f"  Count: {stats['count']}")
-            if stats['count'] > 0:
+            if stats["count"] > 0:
                 print(f"  Min: {stats['min_ms']:.0f}ms")
                 print(f"  Max: {stats['max_ms']:.0f}ms")
                 print(f"  Mean: {stats['mean_ms']:.0f}ms")
@@ -559,16 +587,15 @@ class TestPerformanceReport:
 
         report_data = {
             "timestamp": datetime.now().isoformat(),
-            "duration_seconds": (report.end_time - report.start_time).total_seconds() if report.end_time else 0,
+            "duration_seconds": (
+                (report.end_time - report.start_time).total_seconds() if report.end_time else 0
+            ),
             "memory": {
                 "initial_mb": report.initial_memory_mb,
                 "final_mb": report.final_memory_mb,
             },
             "thresholds": THRESHOLDS,
-            "categories": {
-                cat: report.get_stats(cat)
-                for cat in categories
-            },
+            "categories": {cat: report.get_stats(cat) for cat in categories},
             "measurements": [
                 {
                     "name": m.name,

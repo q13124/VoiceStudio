@@ -24,6 +24,7 @@ router = APIRouter(prefix="/api/lip-sync", tags=["lip-sync"])
 
 class LipSyncRequest(BaseModel):
     """Request for lip sync generation."""
+
     video_id: str = Field(..., description="Video file ID")
     audio_id: str = Field(..., description="Audio file ID to sync")
     engine: str = Field("wav2lip", description="Engine: wav2lip, sadtalker, fomm")
@@ -32,6 +33,7 @@ class LipSyncRequest(BaseModel):
 
 class LipSyncResponse(BaseModel):
     """Response for lip sync generation."""
+
     output_video_id: str
     engine: str
     processing_time_seconds: float
@@ -40,6 +42,7 @@ class LipSyncResponse(BaseModel):
 
 class LipSyncPreviewRequest(BaseModel):
     """Request for lip sync preview on timeline."""
+
     video_id: str
     audio_id: str
     start_time: float = Field(0.0, description="Start time in seconds")
@@ -49,6 +52,7 @@ class LipSyncPreviewRequest(BaseModel):
 
 class LipSyncPreviewResponse(BaseModel):
     """Response for lip sync preview."""
+
     preview_video_id: str
     start_time: float
     end_time: float
@@ -57,17 +61,20 @@ class LipSyncPreviewResponse(BaseModel):
 
 class PhonemeExtractionRequest(BaseModel):
     """Request for phoneme extraction from audio."""
+
     audio_id: str
 
 
 class PhonemeExtractionResponse(BaseModel):
     """Response for phoneme extraction."""
+
     phonemes: list[dict[str, Any]]
     total_duration: float
 
 
 class LipSyncEngine(BaseModel):
     """Lip sync engine information."""
+
     id: str
     name: str
     description: str
@@ -108,8 +115,7 @@ async def generate_lip_sync(request: LipSyncRequest):
 
         if not result.get("success", False):
             raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "Lip sync generation failed")
+                status_code=500, detail=result.get("error", "Lip sync generation failed")
             )
 
         return LipSyncResponse(
@@ -129,10 +135,7 @@ async def generate_lip_sync(request: LipSyncRequest):
         ) from e
     except Exception as e:
         logger.error(f"Lip sync generation failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Lip sync generation failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Lip sync generation failed: {e!s}") from e
 
 
 @router.post("/preview", response_model=LipSyncPreviewResponse)
@@ -162,8 +165,7 @@ async def preview_lip_sync(request: LipSyncPreviewRequest):
 
         if not result.get("success", False):
             raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "Lip sync preview failed")
+                status_code=500, detail=result.get("error", "Lip sync preview failed")
             )
 
         return LipSyncPreviewResponse(
@@ -177,10 +179,7 @@ async def preview_lip_sync(request: LipSyncPreviewRequest):
         raise
     except Exception as e:
         logger.error(f"Lip sync preview failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Lip sync preview failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Lip sync preview failed: {e!s}") from e
 
 
 @router.post("/extract-phonemes", response_model=PhonemeExtractionResponse)
@@ -204,8 +203,7 @@ async def extract_phonemes(request: PhonemeExtractionRequest):
 
         if not result.get("success", False):
             raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "Phoneme extraction failed")
+                status_code=500, detail=result.get("error", "Phoneme extraction failed")
             )
 
         return PhonemeExtractionResponse(
@@ -217,10 +215,7 @@ async def extract_phonemes(request: PhonemeExtractionRequest):
         raise
     except Exception as e:
         logger.error(f"Phoneme extraction failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Phoneme extraction failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Phoneme extraction failed: {e!s}") from e
 
 
 @router.get("/engines", response_model=list[LipSyncEngine])
@@ -246,10 +241,7 @@ async def list_engines():
 
     except Exception as e:
         logger.error(f"Failed to list engines: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to list engines: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to list engines: {e!s}") from e
 
 
 @router.get("/engines/{engine_id}/status")
@@ -262,10 +254,7 @@ async def get_engine_status(engine_id: str):
         status = service.get_engine_status(engine_id)
 
         if not status:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Engine '{engine_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Engine '{engine_id}' not found")
 
         return status
 
@@ -273,10 +262,7 @@ async def get_engine_status(engine_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get engine status: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get engine status: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to get engine status: {e!s}") from e
 
 
 @router.get("/quality-settings")

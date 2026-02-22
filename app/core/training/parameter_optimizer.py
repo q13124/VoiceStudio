@@ -67,9 +67,7 @@ class ParameterOptimizer:
         # Validate strategy
         valid_strategies = ["grid_search", "random_search", "bayesian"]
         if self.optimization_strategy not in valid_strategies:
-            logger.warning(
-                f"Unknown strategy '{optimization_strategy}', using grid_search"
-            )
+            logger.warning(f"Unknown strategy '{optimization_strategy}', using grid_search")
             self.optimization_strategy = "grid_search"
 
     def optimize_parameters(
@@ -109,13 +107,9 @@ class ParameterOptimizer:
         if self.optimization_strategy == "grid_search":
             param_sets = self._generate_grid_search(parameter_space)
         elif self.optimization_strategy == "random_search":
-            param_sets = self._generate_random_search(
-                parameter_space, self.max_iterations
-            )
+            param_sets = self._generate_random_search(parameter_space, self.max_iterations)
         else:  # bayesian
-            param_sets = self._generate_bayesian_search(
-                parameter_space, self.max_iterations
-            )
+            param_sets = self._generate_bayesian_search(parameter_space, self.max_iterations)
 
         # Limit to max_iterations
         param_sets = param_sets[: self.max_iterations]
@@ -144,9 +138,7 @@ class ParameterOptimizer:
                     }
                 )
 
-            logger.info(
-                f"Optimization iteration {idx + 1}/{len(param_sets)}: {params}"
-            )
+            logger.info(f"Optimization iteration {idx + 1}/{len(param_sets)}: {params}")
 
             try:
                 # Create trainer
@@ -159,9 +151,7 @@ class ParameterOptimizer:
 
                 # Initialize model
                 if not trainer.initialize_model():
-                    logger.warning(
-                        f"Model initialization failed for iteration {idx + 1}"
-                    )
+                    logger.warning(f"Model initialization failed for iteration {idx + 1}")
                     continue
 
                 # Train with these parameters
@@ -250,9 +240,7 @@ class ParameterOptimizer:
             "total_iterations": len(param_sets),
         }
 
-    def _generate_grid_search(
-        self, parameter_space: dict[str, list[Any]]
-    ) -> list[dict[str, Any]]:
+    def _generate_grid_search(self, parameter_space: dict[str, list[Any]]) -> list[dict[str, Any]]:
         """
         Generate parameter sets for grid search.
 
@@ -369,9 +357,7 @@ class ParameterOptimizer:
         if not self.optimization_history:
             return {"message": "No optimization history"}
 
-        successful_runs = [
-            h for h in self.optimization_history if "error" not in h
-        ]
+        successful_runs = [h for h in self.optimization_history if "error" not in h]
 
         if not successful_runs:
             return {"message": "No successful optimization runs"}
@@ -408,4 +394,3 @@ def create_parameter_optimizer(
     return ParameterOptimizer(
         optimization_strategy=optimization_strategy, max_iterations=max_iterations
     )
-

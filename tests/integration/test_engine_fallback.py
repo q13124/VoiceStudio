@@ -3,6 +3,7 @@
 Validates that the EngineService correctly falls back to secondary engines
 when the primary engine fails, following the defined fallback chain.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -14,6 +15,7 @@ import pytest
 def engine_service():
     """Create a fresh EngineService instance for testing."""
     from backend.services.engine_service import EngineService
+
     svc = EngineService()
     return svc
 
@@ -37,9 +39,7 @@ class TestFallbackChain:
         """No engine should list itself as its own fallback."""
         chains = engine_service.ENGINE_FALLBACK_CHAIN
         for engine, fallbacks in chains.items():
-            assert engine not in fallbacks, (
-                f"Engine {engine} lists itself as a fallback"
-            )
+            assert engine not in fallbacks, f"Engine {engine} lists itself as a fallback"
 
     def test_circuit_breaker_exists_per_engine(self, engine_service):
         """Each engine in the fallback chain should have a circuit breaker."""

@@ -495,9 +495,7 @@ async def export_metrics(
                 start_time=start_time,
                 end_time=end_time,
             )
-            return PlainTextResponse(
-                content=content, media_type="text/plain; version=0.0.4"
-            )
+            return PlainTextResponse(content=content, media_type="text/plain; version=0.0.4")
 
     except Exception as e:
         logger.error(f"Failed to export metrics: {e}")
@@ -602,7 +600,9 @@ async def query_audit_events(
                 AuditEvent(
                     id=e.id,
                     timestamp=e.timestamp.isoformat(),
-                    event_type=e.event_type.value if hasattr(e.event_type, "value") else str(e.event_type),
+                    event_type=(
+                        e.event_type.value if hasattr(e.event_type, "value") else str(e.event_type)
+                    ),
                     plugin_id=e.plugin_id,
                     severity=e.severity.value if hasattr(e.severity, "value") else str(e.severity),
                     message=e.message,

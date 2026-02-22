@@ -13,7 +13,7 @@ FIXTURES_DIR = Path(__file__).parent
 
 # Audio test files
 TEST_AUDIO_SHORT = FIXTURES_DIR / "test_audio_short.wav"  # 5 seconds
-TEST_AUDIO_LONG = FIXTURES_DIR / "test_audio_long.wav"    # 30 seconds
+TEST_AUDIO_LONG = FIXTURES_DIR / "test_audio_long.wav"  # 30 seconds
 TEST_AUDIO_NOISY = FIXTURES_DIR / "test_audio_noisy.wav"  # 5 seconds with noise
 
 # Voice reference samples
@@ -39,7 +39,7 @@ The system should handle punctuation, numbers like 123, and special characters c
         "sad": "Unfortunately, things didn't go as planned today.",
         "angry": "This is completely unacceptable behavior!",
         "neutral": "The meeting has been scheduled for tomorrow at 3 PM.",
-    }
+    },
 }
 
 
@@ -63,7 +63,9 @@ def get_test_audio_path(audio_type: str = "short") -> Path:
     return mapping.get(audio_type, TEST_AUDIO_SHORT)
 
 
-def get_test_script(script_type: str = "short", language: str = "en", emotion: str | None = None) -> str:
+def get_test_script(
+    script_type: str = "short", language: str = "en", emotion: str | None = None
+) -> str:
     """
     Get test script text.
 

@@ -252,9 +252,7 @@ class TestPluginMetricsCollector:
         collector.record_memory_usage(1024)
 
         # Filter by type
-        exec_metrics = collector.get_metrics(
-            metric_type=MetricType.EXECUTION_DURATION
-        )
+        exec_metrics = collector.get_metrics(metric_type=MetricType.EXECUTION_DURATION)
         assert len(exec_metrics) == 1
 
     def test_get_errors(self, collector):

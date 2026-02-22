@@ -86,9 +86,7 @@ class TestProfilesBackendIntegration:
         profiles_button = driver.find_element("accessibility id", "NavProfiles")
         assert profiles_button is not None
 
-    @pytest.mark.skipif(
-        not is_backend_healthy(), reason="Backend not running"
-    )
+    @pytest.mark.skipif(not is_backend_healthy(), reason="Backend not running")
     def test_profiles_list_reflects_backend(self, driver, app_launched, nav, backend):
         """Test that profiles list reflects backend data."""
         # Get profiles from backend
@@ -101,9 +99,7 @@ class TestProfilesBackendIntegration:
         # The profiles list should be populated
         # (Actual verification depends on UI implementation)
         try:
-            profile_list = driver.find_element(
-                "accessibility id", "ProfilesView_ProfileList"
-            )
+            profile_list = driver.find_element("accessibility id", "ProfilesView_ProfileList")
             assert profile_list is not None
         except RuntimeError:
             # List element might have different ID or be empty
@@ -136,9 +132,7 @@ class TestTrainingBackendIntegration:
         train_button = driver.find_element("accessibility id", "NavTrain")
         assert train_button is not None
 
-    @pytest.mark.skipif(
-        not is_backend_healthy(), reason="Backend not running"
-    )
+    @pytest.mark.skipif(not is_backend_healthy(), reason="Backend not running")
     def test_training_datasets_list(self, driver, app_launched, nav, backend):
         """Test that training datasets are fetched from backend."""
         # Get datasets from backend
@@ -149,16 +143,12 @@ class TestTrainingBackendIntegration:
 
         # Try to find datasets list
         try:
-            datasets_list = driver.find_element(
-                "accessibility id", "TrainingView_DatasetsListView"
-            )
+            datasets_list = driver.find_element("accessibility id", "TrainingView_DatasetsListView")
             assert datasets_list is not None
         except RuntimeError:
             pass  # Acceptable if element not found
 
-    @pytest.mark.skipif(
-        not is_backend_healthy(), reason="Backend not running"
-    )
+    @pytest.mark.skipif(not is_backend_healthy(), reason="Backend not running")
     def test_training_jobs_list(self, driver, app_launched, nav, backend):
         """Test that training jobs are fetched from backend."""
         backend.get_training_jobs()
@@ -167,9 +157,7 @@ class TestTrainingBackendIntegration:
         time.sleep(1)
 
         try:
-            jobs_list = driver.find_element(
-                "accessibility id", "TrainingView_JobsListView"
-            )
+            jobs_list = driver.find_element("accessibility id", "TrainingView_JobsListView")
             assert jobs_list is not None
         except RuntimeError:
             pass
@@ -201,9 +189,7 @@ class TestSettingsBackendIntegration:
         settings_button = driver.find_element("accessibility id", "NavSettings")
         assert settings_button is not None
 
-    @pytest.mark.skipif(
-        not is_backend_healthy(), reason="Backend not running"
-    )
+    @pytest.mark.skipif(not is_backend_healthy(), reason="Backend not running")
     def test_settings_reflect_backend(self, driver, app_launched, nav, backend):
         """Test that settings values reflect backend state."""
         # Get settings from backend
@@ -214,9 +200,7 @@ class TestSettingsBackendIntegration:
 
         # Settings panel should show values
         try:
-            theme_combo = driver.find_element(
-                "accessibility id", "SettingsView_ThemeComboBox"
-            )
+            theme_combo = driver.find_element("accessibility id", "SettingsView_ThemeComboBox")
             assert theme_combo is not None
         except RuntimeError:
             pass
@@ -227,9 +211,7 @@ class TestSettingsBackendIntegration:
         time.sleep(1)
 
         try:
-            save_button = driver.find_element(
-                "accessibility id", "SettingsView_SaveButton"
-            )
+            save_button = driver.find_element("accessibility id", "SettingsView_SaveButton")
             assert save_button is not None
             assert save_button.is_enabled()
         except RuntimeError:
@@ -262,9 +244,7 @@ class TestLibraryBackendIntegration:
         library_button = driver.find_element("accessibility id", "NavLibrary")
         assert library_button is not None
 
-    @pytest.mark.skipif(
-        not is_backend_healthy(), reason="Backend not running"
-    )
+    @pytest.mark.skipif(not is_backend_healthy(), reason="Backend not running")
     def test_library_folders_list(self, driver, app_launched, nav, backend):
         """Test that library folders are fetched from backend."""
         backend.get_library_folders()
@@ -273,9 +253,7 @@ class TestLibraryBackendIntegration:
         time.sleep(1)
 
         try:
-            folders_list = driver.find_element(
-                "accessibility id", "LibraryView_FoldersListView"
-            )
+            folders_list = driver.find_element("accessibility id", "LibraryView_FoldersListView")
             assert folders_list is not None
         except RuntimeError:
             pass
@@ -294,9 +272,7 @@ class TestGpuStatusIntegration:
         """Create backend helper instance."""
         return BackendHelper()
 
-    @pytest.mark.skipif(
-        not is_backend_healthy(), reason="Backend not running"
-    )
+    @pytest.mark.skipif(not is_backend_healthy(), reason="Backend not running")
     def test_gpu_status_available(self, backend):
         """Test that GPU status is available from backend."""
         status = backend.get_gpu_status()
@@ -317,9 +293,7 @@ class TestJobsIntegration:
         """Create backend helper instance."""
         return BackendHelper()
 
-    @pytest.mark.skipif(
-        not is_backend_healthy(), reason="Backend not running"
-    )
+    @pytest.mark.skipif(not is_backend_healthy(), reason="Backend not running")
     def test_get_jobs_list(self, backend):
         """Test that jobs list is available from backend."""
         jobs = backend.get_jobs()
@@ -389,9 +363,7 @@ class TestEndToEndWorkflows:
         """Create navigation helper."""
         return NavigationHelper(driver)
 
-    def test_navigate_all_panels_with_backend_check(
-        self, driver, app_launched, nav, backend
-    ):
+    def test_navigate_all_panels_with_backend_check(self, driver, app_launched, nav, backend):
         """Test navigating all panels and verify backend is reachable."""
         # Check backend health
         backend.is_healthy()
@@ -407,9 +379,7 @@ class TestEndToEndWorkflows:
         studio_button = driver.find_element("accessibility id", "NavStudio")
         assert studio_button is not None
 
-    @pytest.mark.skipif(
-        not is_backend_healthy(), reason="Backend not running"
-    )
+    @pytest.mark.skipif(not is_backend_healthy(), reason="Backend not running")
     def test_profile_workflow(self, driver, app_launched, nav, backend):
         """Test basic profile workflow with backend verification."""
         # Navigate to profiles

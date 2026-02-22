@@ -54,10 +54,7 @@ class XTTSServiceClient:
     def is_service_running(self) -> bool:
         """Check if XTTS service is running."""
         try:
-            response = requests.get(
-                f"{self.service_url}/health",
-                timeout=5
-            )
+            response = requests.get(f"{self.service_url}/health", timeout=5)
             return response.status_code == 200
         except Exception:
             return False
@@ -72,9 +69,7 @@ class XTTSServiceClient:
 
         # Check if setup is complete
         if not setup_marker.exists():
-            logger.error(
-                "XTTS service not set up. Run: scripts\\setup_xtts_venv.ps1"
-            )
+            logger.error("XTTS service not set up. Run: scripts\\setup_xtts_venv.ps1")
             return False
 
         if not venv_python.exists():
@@ -154,7 +149,7 @@ class XTTSServiceClient:
         if not self.ensure_running():
             return {
                 "success": False,
-                "error": "XTTS service not available. Run: scripts\\setup_xtts_venv.ps1"
+                "error": "XTTS service not available. Run: scripts\\setup_xtts_venv.ps1",
             }
 
         try:
@@ -174,19 +169,13 @@ class XTTSServiceClient:
             else:
                 return {
                     "success": False,
-                    "error": f"Service returned status {response.status_code}: {response.text}"
+                    "error": f"Service returned status {response.status_code}: {response.text}",
                 }
 
         except requests.Timeout:
-            return {
-                "success": False,
-                "error": "XTTS synthesis timeout"
-            }
+            return {"success": False, "error": "XTTS synthesis timeout"}
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def synthesize_to_bytes(
         self,

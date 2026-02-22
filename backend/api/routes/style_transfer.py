@@ -137,7 +137,8 @@ async def delete_style_transfer_job(job_id: str):
 async def list_style_presets():
     """List available voice style presets (in-memory; created via POST /presets)."""
     presets = [
-        v for v in _style_transfer_jobs.values()
+        v
+        for v in _style_transfer_jobs.values()
         if isinstance(v, dict) and v.get("type") == "preset"
     ]
     return presets
@@ -321,10 +322,8 @@ async def extract_style(request: StyleExtractRequest):
                 emotion_tag=emotion_tag,
                 prosodic_features={
                     "pitch_range": [
-                        voice_chars.get("f0_mean", 150.0)
-                        - voice_chars.get("f0_std", 15.0),
-                        voice_chars.get("f0_mean", 150.0)
-                        + voice_chars.get("f0_std", 15.0),
+                        voice_chars.get("f0_mean", 150.0) - voice_chars.get("f0_std", 15.0),
+                        voice_chars.get("f0_mean", 150.0) + voice_chars.get("f0_std", 15.0),
                     ],
                     "energy_range": [
                         float(np.min(np.abs(audio))),
@@ -335,9 +334,7 @@ async def extract_style(request: StyleExtractRequest):
                 style_embedding=style_embedding,
             )
         except ImportError:
-            raise HTTPException(
-                status_code=503, detail="Audio processing libraries not available"
-            )
+            raise HTTPException(status_code=503, detail="Audio processing libraries not available")
     except Exception as e:
         logger.error(f"Failed to extract style: {e}")
         raise HTTPException(
@@ -410,9 +407,7 @@ async def analyze_style(request: StyleAnalyzeRequest):
             # Analyze energy contour
             frame_length = int(sample_rate * 0.025)  # 25ms frames
             hop_length = int(sample_rate * 0.010)  # 10ms hop
-            rms = librosa.feature.rms(
-                y=audio, frame_length=frame_length, hop_length=hop_length
-            )[0]
+            rms = librosa.feature.rms(y=audio, frame_length=frame_length, hop_length=hop_length)[0]
 
             # Resample to 100 points
             if len(rms) > 100:
@@ -423,9 +418,7 @@ async def analyze_style(request: StyleAnalyzeRequest):
 
                 x_old = np.linspace(0, 1, len(rms))
                 x_new = np.linspace(0, 1, 100)
-                f = interpolate.interp1d(
-                    x_old, rms, kind="linear", fill_value="extrapolate"
-                )
+                f = interpolate.interp1d(x_old, rms, kind="linear", fill_value="extrapolate")
                 energy_contour = f(x_new).tolist()
             else:
                 energy_contour = [float(e) for e in rms]
@@ -441,28 +434,20 @@ async def analyze_style(request: StyleAnalyzeRequest):
                 if energy < energy_threshold:
                     pauses.append(time_pos)
                 elif energy > emphasis_threshold:
-                    emphasis_points.append(
-                        {"position": time_pos, "intensity": float(energy)}
-                    )
+                    emphasis_points.append({"position": time_pos, "intensity": float(energy)})
 
             # Calculate average pause duration
             if pauses:
                 pause_durations = []
                 for i in range(len(pauses) - 1):
                     pause_durations.append(pauses[i + 1] - pauses[i])
-                avg_pause = (
-                    sum(pause_durations) / len(pause_durations)
-                    if pause_durations
-                    else 0.5
-                )
+                avg_pause = sum(pause_durations) / len(pause_durations) if pause_durations else 0.5
             else:
                 avg_pause = 0.5
 
             style_markers = []
             for pause_pos in pauses[:10]:  # Limit to 10 pauses
-                style_markers.append(
-                    {"type": "pause", "position": pause_pos, "duration": 0.3}
-                )
+                style_markers.append({"type": "pause", "position": pause_pos, "duration": 0.3})
             for emp in emphasis_points[:10]:  # Limit to 10 emphasis points
                 style_markers.append(
                     {
@@ -483,9 +468,7 @@ async def analyze_style(request: StyleAnalyzeRequest):
                 style_markers=style_markers,
             )
         except ImportError:
-            raise HTTPException(
-                status_code=503, detail="Audio processing libraries not available"
-            )
+            raise HTTPException(status_code=503, detail="Audio processing libraries not available")
     except Exception as e:
         logger.error(f"Failed to analyze style: {e}")
         raise HTTPException(
@@ -556,9 +539,7 @@ async def _process_style_transfer(job_id: str, request: StyleTransferRequest):
 
         source_audio_path = _audio_storage[request.source_audio_id]
         if not os.path.exists(source_audio_path):
-            raise ValueError(
-                f"Source audio file at '{source_audio_path}' does not exist"
-            )
+            raise ValueError(f"Source audio file at '{source_audio_path}' does not exist")
 
         job["progress"] = 0.3
         _style_transfer_jobs[job_id] = job
@@ -586,9 +567,7 @@ async def _process_style_transfer(job_id: str, request: StyleTransferRequest):
                 # Use RVC for voice conversion
                 rvc_engine = engine_service.get_rvc_engine()
                 if rvc_engine and rvc_engine.is_available():
-                    target_audio_path = _audio_storage.get(
-                        target_profile["reference_audio_id"]
-                    )
+                    target_audio_path = _audio_storage.get(target_profile["reference_audio_id"])
                     if target_audio_path and os.path.exists(target_audio_path):
                         job["progress"] = 0.5
                         _style_transfer_jobs[job_id] = job

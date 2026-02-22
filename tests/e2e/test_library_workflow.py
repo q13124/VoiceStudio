@@ -29,6 +29,7 @@ def api_client():
     from fastapi.testclient import TestClient
 
     from backend.api.main import app
+
     return TestClient(app)
 
 
@@ -153,10 +154,7 @@ class TestLibraryFolders:
         if not backend_available:
             pytest.skip("Backend not available")
 
-        response = api_client.post(
-            "/api/library/folders",
-            json={"name": "test_folder"}
-        )
+        response = api_client.post("/api/library/folders", json={"name": "test_folder"})
         assert response.status_code in (200, 201, 400, 404, 422, 429)
 
     def test_rename_folder(self, api_client, backend_available):
@@ -164,10 +162,7 @@ class TestLibraryFolders:
         if not backend_available:
             pytest.skip("Backend not available")
 
-        response = api_client.patch(
-            "/api/library/folders/test_id",
-            json={"name": "renamed_folder"}
-        )
+        response = api_client.patch("/api/library/folders/test_id", json={"name": "renamed_folder"})
         assert response.status_code in (200, 400, 404, 422, 429)
 
     def test_move_asset_to_folder(self, api_client, backend_available):
@@ -176,8 +171,7 @@ class TestLibraryFolders:
             pytest.skip("Backend not available")
 
         response = api_client.post(
-            "/api/library/assets/test_asset/move",
-            json={"folder_id": "test_folder_id"}
+            "/api/library/assets/test_asset/move", json={"folder_id": "test_folder_id"}
         )
         assert response.status_code in (200, 400, 404, 422, 429)
 
@@ -199,8 +193,7 @@ class TestLibraryDelete:
             pytest.skip("Backend not available")
 
         response = api_client.post(
-            "/api/library/assets/bulk-delete",
-            json={"asset_ids": ["id1", "id2"]}
+            "/api/library/assets/bulk-delete", json={"asset_ids": ["id1", "id2"]}
         )
         assert response.status_code in (200, 204, 400, 404, 422, 429)
 
@@ -231,7 +224,7 @@ class TestLibraryMetadata:
 
         response = api_client.patch(
             "/api/library/assets/test_id/metadata",
-            json={"tags": ["voice", "processed"], "description": "Test asset"}
+            json={"tags": ["voice", "processed"], "description": "Test asset"},
         )
         assert response.status_code in (200, 400, 404, 422, 429)
 

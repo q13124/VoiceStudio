@@ -468,11 +468,12 @@ class TestProvenanceGeneratorGitIntegration:
     @patch("backend.plugins.supply_chain.provenance.subprocess.run")
     def test_git_info_collected(self, mock_run, temp_plugin_dir):
         """Test that git info is collected when available."""
+
         # Mock git commands - check the exact command list
         def mock_git_command(*args, **kwargs):
             cmd = args[0]
             mock_result = MagicMock()
-            
+
             # Convert list to string for easier matching
             cmd_str = " ".join(cmd) if isinstance(cmd, list) else str(cmd)
 
@@ -513,6 +514,7 @@ class TestProvenanceGeneratorGitIntegration:
     @patch("backend.plugins.supply_chain.provenance.subprocess.run")
     def test_dirty_detection(self, mock_run, temp_plugin_dir):
         """Test dirty working tree detection."""
+
         def mock_git_command(*args, **kwargs):
             cmd = args[0]
             mock_result = MagicMock()
@@ -560,8 +562,14 @@ class TestProvenanceGeneratorCIDetection:
     def test_no_ci_detection(self, temp_plugin_dir):
         """Test when not in CI environment."""
         # Clear CI-related env vars
-        env = {k: v for k, v in os.environ.items()
-               if not any(ci in k.upper() for ci in ["CI", "GITHUB", "GITLAB", "JENKINS", "TRAVIS", "TF_BUILD", "CIRCLE"])}
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if not any(
+                ci in k.upper()
+                for ci in ["CI", "GITHUB", "GITLAB", "JENKINS", "TRAVIS", "TF_BUILD", "CIRCLE"]
+            )
+        }
 
         with patch.dict("os.environ", env, clear=True):
             generator = ProvenanceGenerator(temp_plugin_dir)
@@ -606,6 +614,7 @@ class TestConvenienceFunctions:
         """Test successful digest verification."""
         # Create provenance with correct digest
         import hashlib
+
         content = sample_package.read_bytes()
         digest = hashlib.sha256(content).hexdigest()
 

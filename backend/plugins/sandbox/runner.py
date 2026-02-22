@@ -96,7 +96,7 @@ class RunnerConfig:
     resource_check_interval_sec: float = 2.0
     memory_grace_period_sec: float = 5.0
     cpu_grace_period_sec: float = 10.0
-    
+
     # Enable/disable resource monitoring
     enable_resource_monitoring: bool = True
 
@@ -121,7 +121,7 @@ class PluginRunner:
 
     Handles the complete lifecycle from spawning to termination,
     including IPC bridge setup and health monitoring.
-    
+
     Phase 5A: Integrated resource monitoring via ResourceMonitor for
     enforcing CPU and memory limits with psutil.
     """
@@ -136,7 +136,7 @@ class PluginRunner:
     # Monitoring
     _heartbeat_task: Optional[asyncio.Task] = field(default=None, repr=False)
     _last_heartbeat: float = field(default=0.0, repr=False)
-    
+
     # Resource monitoring (Phase 5A)
     _resource_monitor: Optional[ResourceMonitor] = field(default=None, repr=False)
     _resource_violations: List[ViolationEvent] = field(default_factory=list, repr=False)
@@ -180,12 +180,12 @@ class PluginRunner:
             ProcessState.INITIALIZING,
             ProcessState.ACTIVE,
         )
-    
+
     @property
     def resource_monitor(self) -> Optional[ResourceMonitor]:
         """Get the resource monitor for this runner (Phase 5A)."""
         return self._resource_monitor
-    
+
     @property
     def resource_violations(self) -> List[ViolationEvent]:
         """Get list of resource violations that have occurred."""
@@ -219,9 +219,7 @@ class PluginRunner:
             "on_crash": RestartPolicy.ON_CRASH,
             "on_error": RestartPolicy.ON_ERROR,
         }
-        restart_policy = policy_map.get(
-            self.config.restart_policy, RestartPolicy.ON_CRASH
-        )
+        restart_policy = policy_map.get(self.config.restart_policy, RestartPolicy.ON_CRASH)
 
         recovery_config = RecoveryConfig(
             restart_policy=restart_policy,
@@ -275,7 +273,7 @@ class PluginRunner:
 
             self._set_state(ProcessState.ACTIVE)
             self._start_heartbeat()
-            
+
             # Start resource monitoring if enabled and limits are configured (Phase 5A)
             await self._start_resource_monitoring()
 
@@ -283,9 +281,7 @@ class PluginRunner:
             if restore_state and self._recovery_manager:
                 await self._restore_preserved_state()
 
-            logger.info(
-                f"Plugin subprocess started: {self.config.plugin_id} (PID: {self.pid})"
-            )
+            logger.info(f"Plugin subprocess started: {self.config.plugin_id} (PID: {self.pid})")
 
         except Exception as e:
             logger.error(f"Failed to start plugin subprocess: {e}")
@@ -350,7 +346,7 @@ class PluginRunner:
     def on_crash(self, callback) -> None:
         """Register a callback for crash events."""
         self._on_crash.append(callback)
-    
+
     def on_resource_violation(self, callback) -> None:
         """Register a callback for resource violation events (Phase 5A)."""
         self._on_resource_violation.append(callback)
@@ -392,9 +388,9 @@ class PluginRunner:
         """Build the Python script to run in the subprocess."""
         # Get the backend path for fallback import
         backend_root = Path(__file__).parent.parent.parent.parent
-        
+
         # This script bootstraps the plugin in the subprocess
-        return f'''
+        return f"""
 import sys
 import os
 import asyncio
@@ -420,7 +416,7 @@ except ImportError:
     
     from backend.plugins.sandbox.subprocess_bootstrap import run_plugin_subprocess
     asyncio.run(run_plugin_subprocess("{self.config.entry_module}"))
-'''
+"""
 
     async def _establish_bridge(self) -> None:
         """Establish IPC bridge with subprocess."""
@@ -455,9 +451,7 @@ except ImportError:
             logger.debug(f"Plugin initialized: {result}")
 
         except TimeoutError:
-            raise TimeoutError(
-                f"Plugin {self.config.plugin_id} initialization timed out"
-            )
+            raise TimeoutError(f"Plugin {self.config.plugin_id} initialization timed out")
 
     async def _graceful_shutdown(self) -> None:
         """Attempt graceful shutdown of the subprocess."""
@@ -477,9 +471,7 @@ except ImportError:
             self._set_state(ProcessState.STOPPED)
 
         except (TimeoutError, asyncio.TimeoutError):
-            logger.warning(
-                f"Graceful shutdown timed out for {self.config.plugin_id}, forcing"
-            )
+            logger.warning(f"Graceful shutdown timed out for {self.config.plugin_id}, forcing")
             await self._force_kill()
 
         finally:
@@ -503,7 +495,7 @@ except ImportError:
     async def _cleanup(self) -> None:
         """Clean up resources after subprocess ends."""
         self._stop_heartbeat()
-        
+
         # Stop resource monitoring (Phase 5A)
         await self._stop_resource_monitoring()
 
@@ -597,29 +589,28 @@ except ImportError:
                     error_message=f"Plugin {self.config.plugin_id} crashed",
                 )
             )
-    
+
     # Phase 5A: Resource Monitoring Methods
-    
+
     async def _start_resource_monitoring(self) -> None:
         """Start resource monitoring for the subprocess (Phase 5A)."""
         if not self.config.enable_resource_monitoring:
             logger.debug(f"Resource monitoring disabled for {self.config.plugin_id}")
             return
-        
+
         if not self.config.max_memory_mb and not self.config.max_cpu_percent:
             logger.debug(
                 f"No resource limits configured for {self.config.plugin_id}, "
                 "skipping resource monitoring"
             )
             return
-        
+
         if not self.pid:
             logger.warning(
-                f"Cannot start resource monitoring for {self.config.plugin_id}: "
-                "no PID available"
+                f"Cannot start resource monitoring for {self.config.plugin_id}: " "no PID available"
             )
             return
-        
+
         # Build resource limits from config
         limits = ResourceLimits(
             max_memory_mb=self.config.max_memory_mb,
@@ -628,7 +619,7 @@ except ImportError:
             memory_grace_period_sec=self.config.memory_grace_period_sec,
             cpu_grace_period_sec=self.config.cpu_grace_period_sec,
         )
-        
+
         # Create and start the monitor
         registry = get_resource_monitor_registry()
         self._resource_monitor = await registry.create_monitor(
@@ -637,31 +628,31 @@ except ImportError:
             limits=limits,
             auto_start=True,
         )
-        
+
         # Register violation callback
         self._resource_monitor.on_violation(self._handle_resource_violation)
         self._resource_monitor.on_terminate(self._handle_resource_termination)
-        
+
         logger.info(
             f"Started resource monitoring for {self.config.plugin_id}: "
             f"memory={self.config.max_memory_mb}MB, cpu={self.config.max_cpu_percent}%"
         )
-    
+
     async def _stop_resource_monitoring(self) -> None:
         """Stop resource monitoring for the subprocess (Phase 5A)."""
         if self._resource_monitor:
             await self._resource_monitor.stop()
-            
+
             # Also remove from global registry
             registry = get_resource_monitor_registry()
             await registry.stop_monitor(self.config.plugin_id)
-            
+
             self._resource_monitor = None
-    
+
     async def _handle_resource_violation(self, event: ViolationEvent) -> None:
         """Handle a resource violation event (Phase 5A)."""
         self._resource_violations.append(event)
-        
+
         # Fire callbacks
         for callback in self._on_resource_violation:
             try:
@@ -671,7 +662,7 @@ except ImportError:
                     callback(self.config.plugin_id, event)
             except Exception as e:
                 logger.error(f"Error in resource violation callback: {e}")
-        
+
         # If the monitor terminated the process, update our state
         if event.action == ViolationAction.TERMINATE:
             if event.violation_type == ViolationType.PROCESS_GONE:
@@ -685,19 +676,15 @@ except ImportError:
             else:
                 # We killed it due to resource limits
                 self._set_state(ProcessState.KILLED)
-    
-    async def _handle_resource_termination(
-        self, plugin_id: str, pid: int
-    ) -> None:
+
+    async def _handle_resource_termination(self, plugin_id: str, pid: int) -> None:
         """Handle process termination by resource monitor (Phase 5A)."""
-        logger.warning(
-            f"Plugin {plugin_id} (PID: {pid}) was terminated by resource monitor"
-        )
-        
+        logger.warning(f"Plugin {plugin_id} (PID: {pid}) was terminated by resource monitor")
+
         # Update state if we haven't already
         if self.state not in (ProcessState.STOPPED, ProcessState.KILLED, ProcessState.CRASHED):
             self._set_state(ProcessState.KILLED)
-            
+
             # Clean up
             await self._cleanup()
 
@@ -755,9 +742,7 @@ except ImportError:
 
         except Exception as e:
             # State restoration is best-effort
-            logger.warning(
-                f"Failed to restore state for {self.config.plugin_id}: {e}"
-            )
+            logger.warning(f"Failed to restore state for {self.config.plugin_id}: {e}")
 
     async def _do_restart(self) -> bool:
         """

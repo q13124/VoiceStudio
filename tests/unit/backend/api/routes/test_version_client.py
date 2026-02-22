@@ -44,10 +44,7 @@ class TestCompatibilityEndpoint:
 
     def test_compatibility_with_v2_header_is_compatible(self, client):
         """Test compatibility check with v2 header."""
-        response = client.get(
-            "/api/version/compatibility",
-            headers={VERSION_HEADER: "v2"}
-        )
+        response = client.get("/api/version/compatibility", headers={VERSION_HEADER: "v2"})
         assert response.status_code == 200
 
         data = response.json()
@@ -58,10 +55,7 @@ class TestCompatibilityEndpoint:
 
     def test_compatibility_with_v1_header_is_compatible(self, client):
         """Test compatibility check with v1 header."""
-        response = client.get(
-            "/api/version/compatibility",
-            headers={VERSION_HEADER: "v1"}
-        )
+        response = client.get("/api/version/compatibility", headers={VERSION_HEADER: "v1"})
         assert response.status_code == 200
 
         data = response.json()
@@ -69,10 +63,7 @@ class TestCompatibilityEndpoint:
 
     def test_compatibility_with_unsupported_version_returns_incompatible(self, client):
         """Test compatibility check with unsupported version."""
-        response = client.get(
-            "/api/version/compatibility",
-            headers={VERSION_HEADER: "v99"}
-        )
+        response = client.get("/api/version/compatibility", headers={VERSION_HEADER: "v99"})
         assert response.status_code == 200
 
         data = response.json()
@@ -146,10 +137,7 @@ class TestNegotiateEndpoint:
 
     def test_negotiate_with_v2_preferred(self, client):
         """Test version negotiation preferring v2."""
-        response = client.post(
-            "/api/version/negotiate",
-            json={"preferred_versions": ["v2", "v1"]}
-        )
+        response = client.post("/api/version/negotiate", json={"preferred_versions": ["v2", "v1"]})
         assert response.status_code == 200
 
         data = response.json()
@@ -158,10 +146,7 @@ class TestNegotiateEndpoint:
 
     def test_negotiate_with_only_v1(self, client):
         """Test version negotiation with only v1."""
-        response = client.post(
-            "/api/version/negotiate",
-            json={"preferred_versions": ["v1"]}
-        )
+        response = client.post("/api/version/negotiate", json={"preferred_versions": ["v1"]})
         assert response.status_code == 200
 
         data = response.json()
@@ -170,10 +155,7 @@ class TestNegotiateEndpoint:
 
     def test_negotiate_with_unsupported_version_falls_back(self, client):
         """Test version negotiation with unsupported version falls back."""
-        response = client.post(
-            "/api/version/negotiate",
-            json={"preferred_versions": ["v99", "v2"]}
-        )
+        response = client.post("/api/version/negotiate", json={"preferred_versions": ["v99", "v2"]})
         assert response.status_code == 200
 
         data = response.json()
@@ -184,8 +166,7 @@ class TestNegotiateEndpoint:
     def test_negotiate_with_no_match_falls_back_to_default(self, client):
         """Test version negotiation with no matching versions falls back to default."""
         response = client.post(
-            "/api/version/negotiate",
-            json={"preferred_versions": ["v99", "v100"]}
+            "/api/version/negotiate", json={"preferred_versions": ["v99", "v100"]}
         )
         assert response.status_code == 200
 

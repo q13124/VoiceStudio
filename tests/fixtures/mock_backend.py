@@ -42,9 +42,11 @@ except ImportError:
 # REQUEST/RESPONSE MODELS
 # =============================================================================
 
+
 @dataclass
 class MockRequest:
     """Represents a mock HTTP request."""
+
     method: str
     path: str
     headers: dict[str, str] = field(default_factory=dict)
@@ -62,6 +64,7 @@ class MockRequest:
 @dataclass
 class MockResponse:
     """Represents a mock HTTP response."""
+
     status_code: int = 200
     body: Any = None
     headers: dict[str, str] = field(default_factory=dict)
@@ -110,6 +113,7 @@ class MockResponse:
 # MOCK DATA STORE
 # =============================================================================
 
+
 class MockDataStore:
     """In-memory data store for mock backend."""
 
@@ -153,6 +157,7 @@ class MockDataStore:
 # ROUTE HANDLERS
 # =============================================================================
 
+
 class MockRouteHandler:
     """Handler for mock API routes."""
 
@@ -166,24 +171,28 @@ class MockRouteHandler:
 
     def health(self, request: MockRequest) -> MockResponse:
         """GET /health"""
-        return MockResponse.ok({
-            "status": "healthy",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "version": "1.0.0-test",
-        })
+        return MockResponse.ok(
+            {
+                "status": "healthy",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "version": "1.0.0-test",
+            }
+        )
 
     def diagnostics(self, request: MockRequest) -> MockResponse:
         """GET /diagnostics"""
-        return MockResponse.ok({
-            "status": "healthy",
-            "system": {
-                "cpu_percent": random.uniform(10, 50),
-                "memory_percent": random.uniform(30, 60),
-                "disk_percent": random.uniform(40, 70),
-            },
-            "engines": list(self.store.engines.values()),
-            "uptime_seconds": random.randint(1000, 100000),
-        })
+        return MockResponse.ok(
+            {
+                "status": "healthy",
+                "system": {
+                    "cpu_percent": random.uniform(10, 50),
+                    "memory_percent": random.uniform(30, 60),
+                    "disk_percent": random.uniform(40, 70),
+                },
+                "engines": list(self.store.engines.values()),
+                "uptime_seconds": random.randint(1000, 100000),
+            }
+        )
 
     # -------------------------------------------------------------------------
     # Profiles
@@ -191,10 +200,12 @@ class MockRouteHandler:
 
     def list_profiles(self, request: MockRequest) -> MockResponse:
         """GET /api/v1/profiles"""
-        return MockResponse.ok({
-            "profiles": list(self.store.profiles.values()),
-            "total": len(self.store.profiles),
-        })
+        return MockResponse.ok(
+            {
+                "profiles": list(self.store.profiles.values()),
+                "total": len(self.store.profiles),
+            }
+        )
 
     def get_profile(self, request: MockRequest, profile_id: str) -> MockResponse:
         """GET /api/v1/profiles/{profile_id}"""
@@ -225,10 +236,12 @@ class MockRouteHandler:
 
     def list_projects(self, request: MockRequest) -> MockResponse:
         """GET /api/v1/projects"""
-        return MockResponse.ok({
-            "projects": list(self.store.projects.values()),
-            "total": len(self.store.projects),
-        })
+        return MockResponse.ok(
+            {
+                "projects": list(self.store.projects.values()),
+                "total": len(self.store.projects),
+            }
+        )
 
     def get_project(self, request: MockRequest, project_id: str) -> MockResponse:
         """GET /api/v1/projects/{project_id}"""
@@ -279,11 +292,13 @@ class MockRouteHandler:
         job_dict = job.__dict__
         self.store.jobs[job.id] = job_dict
 
-        return MockResponse.accepted({
-            "job_id": job.id,
-            "status": job.status,
-            "message": "Synthesis job queued",
-        })
+        return MockResponse.accepted(
+            {
+                "job_id": job.id,
+                "status": job.status,
+                "message": "Synthesis job queued",
+            }
+        )
 
     def get_synthesis_job(self, request: MockRequest, job_id: str) -> MockResponse:
         """GET /api/v1/synthesis/{job_id}"""
@@ -314,10 +329,12 @@ class MockRouteHandler:
 
     def list_engines(self, request: MockRequest) -> MockResponse:
         """GET /api/v1/engines"""
-        return MockResponse.ok({
-            "engines": list(self.store.engines.values()),
-            "total": len(self.store.engines),
-        })
+        return MockResponse.ok(
+            {
+                "engines": list(self.store.engines.values()),
+                "total": len(self.store.engines),
+            }
+        )
 
     def get_engine(self, request: MockRequest, engine_id: str) -> MockResponse:
         """GET /api/v1/engines/{engine_id}"""
@@ -329,11 +346,13 @@ class MockRouteHandler:
         """GET /api/v1/engines/{engine_id}/health"""
         if engine_id not in self.store.engines:
             return MockResponse.not_found(f"Engine {engine_id} not found")
-        return MockResponse.ok({
-            "engine_id": engine_id,
-            "status": "healthy",
-            "last_check": datetime.now(timezone.utc).isoformat(),
-        })
+        return MockResponse.ok(
+            {
+                "engine_id": engine_id,
+                "status": "healthy",
+                "last_check": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
     # -------------------------------------------------------------------------
     # Transcription
@@ -341,19 +360,22 @@ class MockRouteHandler:
 
     def transcribe(self, request: MockRequest) -> MockResponse:
         """POST /api/v1/transcribe"""
-        return MockResponse.ok({
-            "text": "This is a mock transcription result.",
-            "language": "en",
-            "confidence": 0.95,
-            "segments": [
-                {"start": 0.0, "end": 2.5, "text": "This is a mock transcription result."}
-            ],
-        })
+        return MockResponse.ok(
+            {
+                "text": "This is a mock transcription result.",
+                "language": "en",
+                "confidence": 0.95,
+                "segments": [
+                    {"start": 0.0, "end": 2.5, "text": "This is a mock transcription result."}
+                ],
+            }
+        )
 
 
 # =============================================================================
 # MOCK BACKEND
 # =============================================================================
+
 
 class MockBackend:
     """Mock backend for frontend testing."""
@@ -380,9 +402,7 @@ class MockBackend:
             ("POST", "/api/v1/transcribe"): self.handler.transcribe,
         }
 
-    def _match_route(
-        self, method: str, path: str
-    ) -> tuple[Callable | None, dict[str, str]]:
+    def _match_route(self, method: str, path: str) -> tuple[Callable | None, dict[str, str]]:
         """Match request to route handler."""
         # Exact match first
         key = (method, path)
@@ -391,27 +411,45 @@ class MockBackend:
 
         # Pattern matching for parameterized routes
         patterns = [
-            ("/api/v1/profiles/{profile_id}", {
-                "GET": self.handler.get_profile,
-                "DELETE": self.handler.delete_profile,
-            }),
-            ("/api/v1/projects/{project_id}", {
-                "GET": self.handler.get_project,
-                "PUT": self.handler.save_project,
-                "DELETE": self.handler.delete_project,
-            }),
-            ("/api/v1/synthesis/{job_id}", {
-                "GET": self.handler.get_synthesis_job,
-            }),
-            ("/api/v1/synthesis/{job_id}/result", {
-                "GET": self.handler.get_synthesis_result,
-            }),
-            ("/api/v1/engines/{engine_id}", {
-                "GET": self.handler.get_engine,
-            }),
-            ("/api/v1/engines/{engine_id}/health", {
-                "GET": self.handler.engine_health,
-            }),
+            (
+                "/api/v1/profiles/{profile_id}",
+                {
+                    "GET": self.handler.get_profile,
+                    "DELETE": self.handler.delete_profile,
+                },
+            ),
+            (
+                "/api/v1/projects/{project_id}",
+                {
+                    "GET": self.handler.get_project,
+                    "PUT": self.handler.save_project,
+                    "DELETE": self.handler.delete_project,
+                },
+            ),
+            (
+                "/api/v1/synthesis/{job_id}",
+                {
+                    "GET": self.handler.get_synthesis_job,
+                },
+            ),
+            (
+                "/api/v1/synthesis/{job_id}/result",
+                {
+                    "GET": self.handler.get_synthesis_result,
+                },
+            ),
+            (
+                "/api/v1/engines/{engine_id}",
+                {
+                    "GET": self.handler.get_engine,
+                },
+            ),
+            (
+                "/api/v1/engines/{engine_id}/health",
+                {
+                    "GET": self.handler.engine_health,
+                },
+            ),
         ]
 
         for pattern, handlers in patterns:
@@ -541,10 +579,7 @@ class MockBackend:
         times: int = 1,
     ) -> None:
         """Assert a specific request was made."""
-        matching = [
-            r for r in self.request_log
-            if r.method == method and r.path == path
-        ]
+        matching = [r for r in self.request_log if r.method == method and r.path == path]
         assert len(matching) == times, (
             f"Expected {method} {path} to be called {times} times, "
             f"but was called {len(matching)} times"
@@ -567,6 +602,7 @@ class MockBackend:
 # =============================================================================
 # PYTEST FIXTURES
 # =============================================================================
+
 
 def pytest_fixture_mock_backend():
     """Pytest fixture for mock backend."""

@@ -175,9 +175,7 @@ async def get_upscaling_job(job_id: str):
     """Get status of an upscaling job."""
     try:
         if job_id not in _upscaling_jobs:
-            raise HTTPException(
-                status_code=404, detail=f"Upscaling job '{job_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Upscaling job '{job_id}' not found")
 
         job = _upscaling_jobs[job_id]
 
@@ -236,9 +234,7 @@ async def delete_upscaling_job(job_id: str):
     """Delete an upscaling job."""
     try:
         if job_id not in _upscaling_jobs:
-            raise HTTPException(
-                status_code=404, detail=f"Upscaling job '{job_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Upscaling job '{job_id}' not found")
 
         del _upscaling_jobs[job_id]
         logger.info(f"Deleted upscaling job: {job_id}")
@@ -267,9 +263,7 @@ async def export_upscaled_media(job_id: str):
     """
     try:
         if job_id not in _upscaling_jobs:
-            raise HTTPException(
-                status_code=404, detail=f"Upscaling job '{job_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Upscaling job '{job_id}' not found")
 
         job = _upscaling_jobs[job_id]
 
@@ -307,9 +301,7 @@ async def export_upscaled_media(job_id: str):
             job.output_file,
             media_type=content_type,
             filename=output_path.name,
-            headers={
-                "Content-Disposition": (f'attachment; filename="{output_path.name}"')
-            },
+            headers={"Content-Disposition": (f'attachment; filename="{output_path.name}"')},
         )
 
     except HTTPException:
@@ -362,9 +354,7 @@ async def list_upscaling_engines():
     ]
 
 
-async def _process_upscaling_job(
-    job_id: str, file: UploadFile, request: UpscalingRequest
-):
+async def _process_upscaling_job(job_id: str, file: UploadFile, request: UpscalingRequest):
     """Process upscaling job asynchronously."""
     import os
     import tempfile
@@ -386,8 +376,7 @@ async def _process_upscaling_job(
         temp_dir.mkdir(parents=True, exist_ok=True)
 
         input_file_path = temp_dir / (
-            file.filename
-            or f"input.{'png' if request.media_type == 'image' else 'mp4'}"
+            file.filename or f"input.{'png' if request.media_type == 'image' else 'mp4'}"
         )
         with open(input_file_path, "wb") as f:
             content = await file.read()
@@ -433,9 +422,7 @@ async def _process_upscaling_job(
 
             # Process upscaling
             if request.media_type == "image":
-                output_file_path = (
-                    temp_dir / f"upscaled_{job_id}.{request.output_format or 'png'}"
-                )
+                output_file_path = temp_dir / f"upscaled_{job_id}.{request.output_format or 'png'}"
 
                 # Upscale image
                 upscaled_image = engine.upscale(
@@ -462,9 +449,7 @@ async def _process_upscaling_job(
                     job.completed_at = datetime.utcnow().isoformat()
                     _upscaling_jobs[job_id] = job
 
-                    logger.info(
-                        f"Upscaling completed: {job_id}, " f"output: {output_file_path}"
-                    )
+                    logger.info(f"Upscaling completed: {job_id}, " f"output: {output_file_path}")
                     return
                 else:
                     raise Exception("Upscaling returned no output")
@@ -477,9 +462,7 @@ async def _process_upscaling_job(
                 width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
                 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-                output_file_path = (
-                    temp_dir / f"upscaled_{job_id}.{request.output_format or 'mp4'}"
-                )
+                output_file_path = temp_dir / f"upscaled_{job_id}.{request.output_format or 'mp4'}"
                 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
                 out = cv2.VideoWriter(
                     str(output_file_path),
@@ -516,9 +499,7 @@ async def _process_upscaling_job(
                 job.completed_at = datetime.utcnow().isoformat()
                 _upscaling_jobs[job_id] = job
 
-                logger.info(
-                    f"Video upscaling completed: {job_id}, output: {output_file_path}"
-                )
+                logger.info(f"Video upscaling completed: {job_id}, output: {output_file_path}")
                 return
 
         except (ImportError, AttributeError, Exception) as e:
@@ -543,8 +524,7 @@ async def _process_upscaling_job(
                         upscaled_img = img.resize(new_size, Image.Resampling.LANCZOS)
 
                         output_file_path = (
-                            temp_dir
-                            / f"upscaled_{job_id}.{request.output_format or 'png'}"
+                            temp_dir / f"upscaled_{job_id}.{request.output_format or 'png'}"
                         )
                         upscaled_img.save(output_file_path)
 

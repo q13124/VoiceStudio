@@ -605,10 +605,7 @@ class TestMessageBatching(AsyncIntegrationTestBase):
         )
 
         # Check message was added to batch queue
-        total_queued = sum(
-            len(queue)
-            for queue in _message_batches["meters"].values()
-        )
+        total_queued = sum(len(queue) for queue in _message_batches["meters"].values())
         assert total_queued >= 1
 
     @pytest.mark.asyncio
@@ -625,11 +622,13 @@ class TestMessageBatching(AsyncIntegrationTestBase):
         )
 
         # Add a message to batch
-        _message_batches["meters"][MessagePriority.NORMAL.value].append({
-            "topic": "meters",
-            "type": "update",
-            "payload": {"test": "data"},
-        })
+        _message_batches["meters"][MessagePriority.NORMAL.value].append(
+            {
+                "topic": "meters",
+                "type": "update",
+                "payload": {"test": "data"},
+            }
+        )
 
         # Create mock connection
         mock_ws = MockWebSocket()

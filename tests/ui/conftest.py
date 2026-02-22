@@ -29,8 +29,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 WINAPPDRIVER_URL = os.getenv("WINAPPDRIVER_URL", "http://127.0.0.1:4723")
 WINAPPDRIVER_PATH = os.getenv(
-    "WINAPPDRIVER_PATH",
-    r"C:\Program Files (x86)\Windows Application Driver\WinAppDriver.exe"
+    "WINAPPDRIVER_PATH", r"C:\Program Files (x86)\Windows Application Driver\WinAppDriver.exe"
 )
 IMPLICIT_WAIT = int(os.getenv("UI_TEST_IMPLICIT_WAIT", "10"))  # seconds
 EXPLICIT_WAIT = int(os.getenv("UI_TEST_EXPLICIT_WAIT", "30"))  # seconds
@@ -47,14 +46,37 @@ if APP_PATH_ENV:
 else:
     # Try multiple possible locations
     POSSIBLE_PATHS = [
-        PROJECT_ROOT / ".buildlogs" / "x64" / "Debug" / "net8.0-windows10.0.19041.0" / "VoiceStudio.App.exe",
+        PROJECT_ROOT
+        / ".buildlogs"
+        / "x64"
+        / "Debug"
+        / "net8.0-windows10.0.19041.0"
+        / "VoiceStudio.App.exe",
         PROJECT_ROOT / ".buildlogs" / "publish" / "VoiceStudio.App.exe",
-        PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "x64" / "Debug"
-        / "net8.0-windows10.0.19041.0" / "VoiceStudio.App.exe",
-        PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "Debug"
-        / "net8.0-windows10.0.19041.0" / "VoiceStudio.App.exe",
-        PROJECT_ROOT / "src" / "VoiceStudio.App" / "bin" / "Release"
-        / "net8.0-windows10.0.19041.0" / "win-x64" / "publish" / "VoiceStudio.App.exe",
+        PROJECT_ROOT
+        / "src"
+        / "VoiceStudio.App"
+        / "bin"
+        / "x64"
+        / "Debug"
+        / "net8.0-windows10.0.19041.0"
+        / "VoiceStudio.App.exe",
+        PROJECT_ROOT
+        / "src"
+        / "VoiceStudio.App"
+        / "bin"
+        / "Debug"
+        / "net8.0-windows10.0.19041.0"
+        / "VoiceStudio.App.exe",
+        PROJECT_ROOT
+        / "src"
+        / "VoiceStudio.App"
+        / "bin"
+        / "Release"
+        / "net8.0-windows10.0.19041.0"
+        / "win-x64"
+        / "publish"
+        / "VoiceStudio.App.exe",
     ]
     APP_PATH = next((p for p in POSSIBLE_PATHS if p.exists()), POSSIBLE_PATHS[0])
 
@@ -63,10 +85,13 @@ else:
 # Setup
 # =============================================================================
 
+
 def pytest_configure(config):
     """Configure pytest with custom markers and output directories."""
     # Register custom markers
-    config.addinivalue_line("markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')")
+    config.addinivalue_line(
+        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+    )
     config.addinivalue_line("markers", "flaky: marks tests as potentially flaky")
     config.addinivalue_line("markers", "smoke: marks tests as smoke tests")
     config.addinivalue_line("markers", "navigation: marks tests as navigation tests")
@@ -90,13 +115,13 @@ def pytest_addoption(parser):
         "--generate-audio",
         action="store_true",
         default=False,
-        help="Force regeneration of test audio files even if they exist"
+        help="Force regeneration of test audio files even if they exist",
     )
     parser.addoption(
         "--skip-audio-gen",
         action="store_true",
         default=False,
-        help="Skip automatic audio generation (fail fast if audio missing)"
+        help="Skip automatic audio generation (fail fast if audio missing)",
     )
 
 
@@ -104,10 +129,12 @@ def pytest_addoption(parser):
 # Utility Functions
 # =============================================================================
 
+
 def is_winappdriver_running() -> bool:
     """Check if WinAppDriver is running."""
     try:
         import requests
+
         response = requests.get(f"{WINAPPDRIVER_URL}/status", timeout=2)
         return response.status_code == 200
     except Exception:
@@ -151,8 +178,7 @@ def capture_screenshot(driver, name: str) -> Path | None:
         return None
 
 
-def find_element_with_retry(driver, by: str, value: str, retries: int = 3,
-                            delay: float = 1.0):
+def find_element_with_retry(driver, by: str, value: str, retries: int = 3, delay: float = 1.0):
     """Find an element with retry logic for flaky lookups."""
     last_exception = None
     for attempt in range(retries):
@@ -169,9 +195,7 @@ def wait_for_element(driver, automation_id: str, timeout: int = EXPLICIT_WAIT):
     """Wait for an element to be present and visible."""
     try:
         wait = WebDriverWait(driver, timeout)
-        element = wait.until(
-            EC.presence_of_element_located(("accessibility id", automation_id))
-        )
+        element = wait.until(EC.presence_of_element_located(("accessibility id", automation_id)))
         return element
     except TimeoutException:
         raise TimeoutException(f"Element '{automation_id}' not found within {timeout}s")
@@ -189,6 +213,7 @@ def wait_for_panel_load(driver, panel_id: str, timeout: int = EXPLICIT_WAIT):
 # Fixtures
 # =============================================================================
 
+
 @pytest.fixture(scope="session")
 def winappdriver_service():
     """Ensure WinAppDriver is running before tests."""
@@ -205,19 +230,19 @@ def winappdriver_service():
 def ensure_test_audio(request):
     """
     Session-scoped autouse fixture that ensures test audio files are available.
-    
+
     This fixture:
     1. Checks if canonical audio files exist
     2. If missing, generates synthetic fallback audio
     3. Sets VOICESTUDIO_TEST_AUDIO environment variable to the audio path
-    
+
     Can be controlled via pytest options:
     - --generate-audio: Force regeneration even if files exist
     - --skip-audio-gen: Skip generation entirely (fail fast if missing)
     """
     skip_gen = request.config.getoption("--skip-audio-gen", default=False)
     force_gen = request.config.getoption("--generate-audio", default=False)
-    
+
     if skip_gen:
         # Check if audio exists without generating
         canonical_dir = PROJECT_ROOT / "tests" / "assets" / "canonical" / "standard"
@@ -228,36 +253,36 @@ def ensure_test_audio(request):
             # Check UI fixtures
             fixtures_dir = Path(__file__).parent / "fixtures"
             audio_path = fixtures_dir / "test_audio_short.wav"
-        
+
         if audio_path.exists():
             os.environ.setdefault("VOICESTUDIO_TEST_AUDIO", str(audio_path))
         yield
         return
-    
+
     # Import and use the generator
     try:
         from tests.ui.fixtures.generate_test_audio import (
             ensure_test_audio_available,
             generate_canonical_audio,
         )
-        
+
         if force_gen:
             print("\n[conftest] Force-generating test audio files...")
             generate_canonical_audio(force=True)
-        
+
         audio_path = ensure_test_audio_available()
-        
+
         if audio_path:
             os.environ.setdefault("VOICESTUDIO_TEST_AUDIO", str(audio_path))
             print(f"\n[conftest] Test audio available: {audio_path}")
         else:
             print("\n[conftest] WARNING: Could not ensure test audio availability")
-    
+
     except ImportError as e:
         print(f"\n[conftest] WARNING: Could not import audio generator: {e}")
     except Exception as e:
         print(f"\n[conftest] WARNING: Error ensuring test audio: {e}")
-    
+
     yield
 
 
@@ -265,36 +290,38 @@ def ensure_test_audio(request):
 def canonical_audio_path(ensure_test_audio):
     """
     Provide the path to canonical test audio.
-    
+
     Depends on ensure_test_audio to guarantee files exist.
     Returns the path to the best available test audio file.
     """
     # Check for canonical audio
     canonical_dir = PROJECT_ROOT / "tests" / "assets" / "canonical" / "standard"
-    
+
     # Prefer the 15s segment for faster tests
     segment_path = canonical_dir / "allan_watts_15s.wav"
     if segment_path.exists():
         return segment_path
-    
+
     # Fall back to full audio
     full_path = canonical_dir / "allan_watts.wav"
     if full_path.exists():
         return full_path
-    
+
     # Fall back to UI fixtures
     fixtures_dir = Path(__file__).parent / "fixtures"
     for name in ["test_audio_short.wav", "test_audio_long.wav", "voice_reference_clean.wav"]:
         path = fixtures_dir / name
         if path.exists():
             return path
-    
+
     # Last resort: check environment variable
     env_path = os.getenv("VOICESTUDIO_TEST_AUDIO")
     if env_path and Path(env_path).exists():
         return Path(env_path)
-    
-    pytest.skip("No test audio available. Run with --generate-audio or provide VOICESTUDIO_TEST_AUDIO")
+
+    pytest.skip(
+        "No test audio available. Run with --generate-audio or provide VOICESTUDIO_TEST_AUDIO"
+    )
 
 
 class WinAppDriverSession:
@@ -313,10 +340,9 @@ class WinAppDriverSession:
         # Kill any existing VoiceStudio processes before starting
         try:
             import subprocess
+
             subprocess.run(
-                ["taskkill", "/F", "/IM", "VoiceStudio.App.exe"],
-                capture_output=True,
-                timeout=5
+                ["taskkill", "/F", "/IM", "VoiceStudio.App.exe"], capture_output=True, timeout=5
             )
             time.sleep(1)
         except Exception:
@@ -338,7 +364,7 @@ class WinAppDriverSession:
                     f"{base_url}/session",
                     json=payload,
                     headers={"Content-Type": "application/json"},
-                    timeout=60
+                    timeout=60,
                 )
 
                 if response.status_code == 200:
@@ -362,9 +388,7 @@ class WinAppDriverSession:
     def _request(self, method: str, path: str, data: dict | None = None) -> dict:
         url = self._session_url(path)
         response = requests.request(
-            method, url, json=data,
-            headers={"Content-Type": "application/json"},
-            timeout=30
+            method, url, json=data, headers={"Content-Type": "application/json"}, timeout=30
         )
         if response.status_code >= 400:
             raise RuntimeError(f"Request failed: {response.text}")
@@ -387,7 +411,9 @@ class WinAppDriverSession:
         }
         using = strategy_map.get(by, by)
         result = self._request("POST", "/element", {"using": using, "value": value})
-        element_id = result.get("value", {}).get("ELEMENT") or next(iter(result.get("value", {}).values()))
+        element_id = result.get("value", {}).get("ELEMENT") or next(
+            iter(result.get("value", {}).values())
+        )
         return WinAppDriverElement(self, element_id)
 
     def find_elements(self, by: str, value: str):
@@ -411,6 +437,7 @@ class WinAppDriverSession:
         try:
             result = self._request("GET", "/screenshot")
             import base64
+
             with open(filepath, "wb") as f:
                 f.write(base64.b64decode(result.get("value", "")))
             return True
@@ -434,10 +461,9 @@ class WinAppDriverSession:
         # Force kill any remaining VoiceStudio processes
         try:
             import subprocess
+
             subprocess.run(
-                ["taskkill", "/F", "/IM", "VoiceStudio.App.exe"],
-                capture_output=True,
-                timeout=5
+                ["taskkill", "/F", "/IM", "VoiceStudio.App.exe"], capture_output=True, timeout=5
             )
         except Exception:
             pass
@@ -689,6 +715,7 @@ class WinAppDriverElement:
     def double_click(self):
         """Double-click the element by clicking twice quickly."""
         import time
+
         # Simple double-click: click twice with minimal delay
         self._request("POST", "/click")
         time.sleep(0.05)  # 50ms between clicks for double-click
@@ -746,7 +773,9 @@ class WinAppDriverElement:
         strategy_map = {"accessibility id": "accessibility id", "name": "name", "xpath": "xpath"}
         using = strategy_map.get(by, by)
         result = self._request("POST", "/element", {"using": using, "value": value})
-        element_id = result.get("value", {}).get("ELEMENT") or next(iter(result.get("value", {}).values()))
+        element_id = result.get("value", {}).get("ELEMENT") or next(
+            iter(result.get("value", {}).values())
+        )
         return WinAppDriverElement(self._session, element_id)
 
     def find_elements(self, by: str, value: str):
@@ -810,6 +839,7 @@ def _attach_screenshot_to_html_report(request, screenshot_path: Path):
 
             # Add screenshot as embedded image
             from pytest_html import extras
+
             extra.append(extras.image(f"data:image/png;base64,{screenshot_data}"))
 
             request.node.extra = extra
@@ -881,19 +911,20 @@ def app_launched(driver):
 @pytest.fixture
 def screenshot(driver):
     """Fixture to capture screenshots on demand."""
+
     def _capture(name: str):
         return capture_screenshot(driver, name)
+
     return _capture
 
 
 @pytest.fixture
 def navigate_to_panel(driver, app_launched):
     """Fixture to navigate to a specific panel."""
+
     def _navigate(panel_button_id: str, panel_view_id: str, timeout: int = EXPLICIT_WAIT):
         try:
-            button = find_element_with_retry(
-                driver, "accessibility id", panel_button_id
-            )
+            button = find_element_with_retry(driver, "accessibility id", panel_button_id)
             button.click()
             time.sleep(0.5)
             return wait_for_panel_load(driver, panel_view_id, timeout)
@@ -902,12 +933,14 @@ def navigate_to_panel(driver, app_launched):
                 f"Failed to navigate to panel. Button: {panel_button_id}, "
                 f"View: {panel_view_id}. Error: {e}"
             )
+
     return _navigate
 
 
 @pytest.fixture
 def retry_action():
     """Fixture for retrying flaky actions."""
+
     def _retry(action, retries: int = 3, delay: float = 1.0, on_fail=None):
         last_exception = None
         for attempt in range(retries):
@@ -920,6 +953,7 @@ def retry_action():
                 if attempt < retries - 1:
                     time.sleep(delay)
         raise last_exception
+
     return _retry
 
 
@@ -1065,10 +1099,7 @@ def uploaded_asset(api_monitor, canonical_audio_path):
     try:
         with open(canonical_audio_path, "rb") as f:
             files = {"file": (canonical_audio_path.name, f, "audio/wav")}
-            response = api_monitor.post(
-                "/api/library/assets/upload",
-                files=files
-            )
+            response = api_monitor.post("/api/library/assets/upload", files=files)
 
         if response.status_code in (200, 201):
             data = response.json()
@@ -1119,10 +1150,7 @@ def session_uploaded_asset(session_api_monitor, ensure_test_audio):
     try:
         with open(audio_path, "rb") as f:
             files = {"file": (audio_path.name, f, "audio/wav")}
-            response = session_api_monitor.post(
-                "/api/library/assets/upload",
-                files=files
-            )
+            response = session_api_monitor.post("/api/library/assets/upload", files=files)
 
         if response.status_code in (200, 201):
             data = response.json()
@@ -1148,6 +1176,7 @@ def session_uploaded_asset(session_api_monitor, ensure_test_audio):
 # =============================================================================
 # Session Info
 # =============================================================================
+
 
 def pytest_report_header(config):
     """Add custom header info to test report."""

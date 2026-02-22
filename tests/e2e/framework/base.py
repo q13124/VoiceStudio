@@ -30,15 +30,19 @@ class E2EConfig:
     """Configuration for E2E tests."""
 
     # Application paths
-    app_path: Path = field(default_factory=lambda: Path(
-        r"src\VoiceStudio.App\bin\x64\Debug\net8.0-windows10.0.19041.0\VoiceStudio.App.exe"
-    ))
+    app_path: Path = field(
+        default_factory=lambda: Path(
+            r"src\VoiceStudio.App\bin\x64\Debug\net8.0-windows10.0.19041.0\VoiceStudio.App.exe"
+        )
+    )
     app_name: str = "VoiceStudio"
 
     # WinAppDriver configuration
-    winappdriver_path: Path = field(default_factory=lambda: Path(
-        r"C:\Program Files (x86)\Windows Application Driver\WinAppDriver.exe"
-    ))
+    winappdriver_path: Path = field(
+        default_factory=lambda: Path(
+            r"C:\Program Files (x86)\Windows Application Driver\WinAppDriver.exe"
+        )
+    )
     winappdriver_url: str = "http://127.0.0.1:4723"
 
     # Backend configuration
@@ -55,17 +59,11 @@ class E2EConfig:
     retry_delay: float = 1.0
 
     # Artifact paths
-    screenshot_dir: Path = field(default_factory=lambda: Path(
-        ".buildlogs/e2e/screenshots"
-    ))
-    logs_dir: Path = field(default_factory=lambda: Path(
-        ".buildlogs/e2e/logs"
-    ))
+    screenshot_dir: Path = field(default_factory=lambda: Path(".buildlogs/e2e/screenshots"))
+    logs_dir: Path = field(default_factory=lambda: Path(".buildlogs/e2e/logs"))
 
     # Test data paths
-    test_data_dir: Path = field(default_factory=lambda: Path(
-        "tests/fixtures"
-    ))
+    test_data_dir: Path = field(default_factory=lambda: Path("tests/fixtures"))
 
     def __post_init__(self):
         """Ensure directories exist."""
@@ -146,8 +144,7 @@ class E2ETestBase:
 
         try:
             response = requests.get(
-                f"{self.config.backend_url}/health",
-                timeout=self.config.backend_timeout
+                f"{self.config.backend_url}/health", timeout=self.config.backend_timeout
             )
             return response.status_code == 200
         except Exception as e:
@@ -198,10 +195,7 @@ class E2ETestBase:
     # -------------------------------------------------------------------------
 
     def wait_for_element(
-        self,
-        locator: str,
-        by: str = "automation_id",
-        timeout: float | None = None
+        self, locator: str, by: str = "automation_id", timeout: float | None = None
     ) -> Any:
         """Wait for an element to be present and visible."""
         timeout = timeout or self.config.element_wait_timeout
@@ -220,10 +214,7 @@ class E2ETestBase:
         raise TimeoutError(f"Element not found: {locator} (by={by})")
 
     def wait_for_element_gone(
-        self,
-        locator: str,
-        by: str = "automation_id",
-        timeout: float | None = None
+        self, locator: str, by: str = "automation_id", timeout: float | None = None
     ) -> bool:
         """Wait for an element to disappear."""
         timeout = timeout or self.config.element_wait_timeout
@@ -296,18 +287,12 @@ class E2ETestBase:
         assert element is not None, f"Element not visible: {locator}"
         assert element.is_displayed(), f"Element not displayed: {locator}"
 
-    def assert_element_text(
-        self,
-        locator: str,
-        expected_text: str,
-        by: str = "automation_id"
-    ):
+    def assert_element_text(self, locator: str, expected_text: str, by: str = "automation_id"):
         """Assert element has expected text."""
         element = self._find_element(locator, by)
         assert element is not None, f"Element not found: {locator}"
         actual_text = element.text
-        assert expected_text in actual_text, \
-            f"Expected '{expected_text}' but got '{actual_text}'"
+        assert expected_text in actual_text, f"Expected '{expected_text}' but got '{actual_text}'"
 
     def assert_element_enabled(self, locator: str, by: str = "automation_id"):
         """Assert element is enabled."""

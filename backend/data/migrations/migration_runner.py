@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class MigrationStatus(Enum):
     """Status of a migration."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -32,6 +33,7 @@ class MigrationStatus(Enum):
 @dataclass
 class MigrationRecord:
     """Record of a migration execution."""
+
     migration_id: str
     version: int
     name: str
@@ -48,7 +50,7 @@ class Migration(ABC):
     Base class for database migrations.
 
     Each migration should implement upgrade() and downgrade().
-    
+
     GAP-ARCH-004: This is an abstract base class. The `pass` statements in
     abstract methods are intentional Python pattern - concrete migration
     classes MUST override these methods. The @abstractmethod decorator
@@ -95,6 +97,7 @@ class Migration(ABC):
     def get_checksum(self) -> str:
         """Generate checksum for migration validation."""
         import inspect
+
         source = inspect.getsource(self.__class__)
         return hashlib.md5(source.encode()).hexdigest()
 
@@ -159,7 +162,9 @@ class MigrationRunner:
                 name=row["name"],
                 status=MigrationStatus(row["status"]),
                 applied_at=datetime.fromisoformat(row["applied_at"]) if row["applied_at"] else None,
-                rolled_back_at=datetime.fromisoformat(row["rolled_back_at"]) if row["rolled_back_at"] else None,
+                rolled_back_at=(
+                    datetime.fromisoformat(row["rolled_back_at"]) if row["rolled_back_at"] else None
+                ),
                 checksum=row["checksum"] or "",
                 execution_time_ms=row["execution_time_ms"] or 0,
                 error_message=row["error_message"],
@@ -211,7 +216,8 @@ class MigrationRunner:
     def get_applied_migrations(self) -> list[MigrationRecord]:
         """Get migrations that have been applied."""
         return [
-            record for record in self._history.values()
+            record
+            for record in self._history.values()
             if record.status == MigrationStatus.COMPLETED
         ]
 
@@ -383,16 +389,19 @@ class MigrationRunner:
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
 
-        await self._execute(sql, (
-            record.version,
-            record.name,
-            record.status.value,
-            record.applied_at.isoformat() if record.applied_at else None,
-            record.rolled_back_at.isoformat() if record.rolled_back_at else None,
-            record.checksum,
-            record.execution_time_ms,
-            record.error_message,
-        ))
+        await self._execute(
+            sql,
+            (
+                record.version,
+                record.name,
+                record.status.value,
+                record.applied_at.isoformat() if record.applied_at else None,
+                record.rolled_back_at.isoformat() if record.rolled_back_at else None,
+                record.checksum,
+                record.execution_time_ms,
+                record.error_message,
+            ),
+        )
 
     def get_status(self) -> dict[str, Any]:
         """Get migration status."""
@@ -405,8 +414,5 @@ class MigrationRunner:
             "pending_count": len(pending),
             "current_version": max((r.version for r in applied), default=0),
             "latest_version": max((m.version for m in self._migrations), default=0),
-            "pending_migrations": [
-                {"version": m.version, "name": m.name}
-                for m in pending
-            ],
+            "pending_migrations": [{"version": m.version, "name": m.name} for m in pending],
         }

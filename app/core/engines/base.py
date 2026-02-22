@@ -31,22 +31,21 @@ def _get_torch():
     if _torch is None:
         try:
             import torch
+
             _torch = torch
         except ImportError:
             _torch = False  # Mark as unavailable
     return _torch if _torch is not False else None
 
+
 # Type variable for generic function decorator
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 # Trace storage directory for local-first operation
 _TRACE_DIR = Path(".voicestudio/traces")
 
 
-def traced(
-    operation_name: str | None = None,
-    record_args: bool = False
-) -> Callable[[F], F]:
+def traced(operation_name: str | None = None, record_args: bool = False) -> Callable[[F], F]:
     """
     Decorator for distributed tracing of engine operations.
 
@@ -64,6 +63,7 @@ def traced(
         def synthesize(self, text: str) -> bytes:
             ...
     """
+
     def decorator(func: F) -> F:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -75,7 +75,7 @@ def traced(
 
             # Extract class name if method
             class_name = ""
-            if args and hasattr(args[0], '__class__'):
+            if args and hasattr(args[0], "__class__"):
                 class_name = args[0].__class__.__name__
 
             span_data = {
@@ -90,21 +90,14 @@ def traced(
             if record_args:
                 # Safely serialize args (skip self)
                 try:
-                    safe_args = [
-                        str(a)[:200] for a in args[1:]
-                    ] if len(args) > 1 else []
-                    safe_kwargs = {
-                        k: str(v)[:200] for k, v in kwargs.items()
-                    }
+                    safe_args = [str(a)[:200] for a in args[1:]] if len(args) > 1 else []
+                    safe_kwargs = {k: str(v)[:200] for k, v in kwargs.items()}
                     span_data["args"] = safe_args
                     span_data["kwargs"] = safe_kwargs
                 except Exception:
                     span_data["args_error"] = "Could not serialize arguments"
 
-            logger.debug(
-                "Trace started: %s.%s [trace_id=%s]",
-                class_name, op_name, trace_id
-            )
+            logger.debug("Trace started: %s.%s [trace_id=%s]", class_name, op_name, trace_id)
 
             error_info = None
             result = None
@@ -114,15 +107,15 @@ def traced(
                 return result
             except Exception as exc:
                 span_data["status"] = "ERROR"
-                error_info = {
-                    "type": type(exc).__name__,
-                    "message": str(exc)[:500]
-                }
+                error_info = {"type": type(exc).__name__, "message": str(exc)[:500]}
                 span_data["error"] = error_info
                 logger.error(
                     "Trace error: %s.%s [trace_id=%s] - %s: %s",
-                    class_name, op_name, trace_id,
-                    type(exc).__name__, str(exc)
+                    class_name,
+                    op_name,
+                    trace_id,
+                    type(exc).__name__,
+                    str(exc),
                 )
                 raise
             finally:
@@ -131,16 +124,19 @@ def traced(
                 span_data["end_time"] = datetime.utcnow().isoformat()
 
                 logger.debug(
-                    "Trace completed: %s.%s [trace_id=%s] "
-                    "duration=%.2fms status=%s",
-                    class_name, op_name, trace_id,
-                    duration_ms, span_data["status"]
+                    "Trace completed: %s.%s [trace_id=%s] " "duration=%.2fms status=%s",
+                    class_name,
+                    op_name,
+                    trace_id,
+                    duration_ms,
+                    span_data["status"],
                 )
 
                 # Write trace to local file for offline operation
                 _write_trace(span_data)
 
         return wrapper  # type: ignore[return-value]
+
     return decorator
 
 
@@ -195,6 +191,7 @@ class CancellationToken:
 
 class OperationCancelledError(Exception):
     """Raised when an operation is cancelled via CancellationToken."""
+
     pass
 
 
@@ -314,7 +311,7 @@ class EngineProtocol(ABC):
         return {
             "name": self.__class__.__name__,
             "device": self.device,
-            "initialized": self._initialized
+            "initialized": self._initialized,
         }
 
     def health_check(self) -> dict[str, Any]:
@@ -335,7 +332,7 @@ class EngineProtocol(ABC):
             "healthy": self._initialized,
             "initialized": self._initialized,
             "device": self.device,
-            "details": None
+            "details": None,
         }
 
     def get_resource_usage(self) -> dict[str, Any]:
@@ -350,10 +347,7 @@ class EngineProtocol(ABC):
                 - gpu_memory: GPU memory info (if available)
                 - model_loaded: whether a model is currently loaded
         """
-        return {
-            "gpu_memory": self.get_gpu_memory_info(),
-            "model_loaded": self._initialized
-        }
+        return {"gpu_memory": self.get_gpu_memory_info(), "model_loaded": self._initialized}
 
     def warm_up(self) -> bool:
         """

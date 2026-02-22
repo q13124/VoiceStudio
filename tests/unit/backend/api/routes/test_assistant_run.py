@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from backend.api.routes import assistant_run
 except ImportError:
-    pytest.skip(
-        "Could not import assistant_run route module", allow_module_level=True
-    )
+    pytest.skip("Could not import assistant_run route module", allow_module_level=True)
 
 
 class TestAssistantRunRouteImports:
@@ -25,12 +23,8 @@ class TestAssistantRunRouteImports:
 
     def test_assistant_run_module_imports(self):
         """Test assistant_run module can be imported."""
-        assert (
-            assistant_run is not None
-        ), "Failed to import assistant_run module"
-        assert hasattr(
-            assistant_run, "router"
-        ), "assistant_run module missing router"
+        assert assistant_run is not None, "Failed to import assistant_run module"
+        assert hasattr(assistant_run, "router"), "assistant_run module missing router"
 
 
 class TestAssistantRunRouteHandlers:
@@ -39,9 +33,7 @@ class TestAssistantRunRouteHandlers:
     def test_run_assistant_handler_exists(self):
         """Test run_assistant handler exists."""
         if hasattr(assistant_run, "run_assistant"):
-            assert callable(
-                assistant_run.run_assistant
-            ), "run_assistant is not callable"
+            assert callable(assistant_run.run_assistant), "run_assistant is not callable"
 
 
 class TestAssistantRunRouter:
@@ -62,4 +54,3 @@ class TestAssistantRunRouter:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

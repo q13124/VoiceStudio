@@ -30,9 +30,7 @@ try:
         validation_middleware,
     )
 except ImportError as e:
-    pytest.skip(
-        f"Could not import validation optimizer modules: {e}", allow_module_level=True
-    )
+    pytest.skip(f"Could not import validation optimizer modules: {e}", allow_module_level=True)
 
 
 # Test Pydantic models
@@ -128,9 +126,7 @@ class TestValidationOptimizer:
             {"name": "Test3", "age": 30},  # Valid
         ]
 
-        validated, errors = optimizer.validate_batch(
-            TestModel, items, stop_on_first_error=False
-        )
+        validated, errors = optimizer.validate_batch(TestModel, items, stop_on_first_error=False)
 
         assert len(validated) == 2
         assert len(errors) == 1
@@ -144,9 +140,7 @@ class TestValidationOptimizer:
             {"name": "Test3", "age": 30},  # Valid (won't be processed)
         ]
 
-        validated, errors = optimizer.validate_batch(
-            TestModel, items, stop_on_first_error=True
-        )
+        validated, errors = optimizer.validate_batch(TestModel, items, stop_on_first_error=True)
 
         assert len(validated) == 1
         assert len(errors) == 1

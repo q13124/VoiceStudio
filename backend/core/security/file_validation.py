@@ -157,12 +157,12 @@ EXTENSION_CATEGORIES: dict[str, FileCategory] = {
     "mp3": FileCategory.AUDIO,
     "flac": FileCategory.AUDIO,
     "ogg": FileCategory.AUDIO,
-    "oga": FileCategory.AUDIO,   # Alias for ogg
+    "oga": FileCategory.AUDIO,  # Alias for ogg
     "opus": FileCategory.AUDIO,
     "m4a": FileCategory.AUDIO,
     "aac": FileCategory.AUDIO,
     "aiff": FileCategory.AUDIO,
-    "aif": FileCategory.AUDIO,   # Alias for aiff
+    "aif": FileCategory.AUDIO,  # Alias for aiff
     "aifc": FileCategory.AUDIO,  # Alias for aiff
     "wma": FileCategory.AUDIO,
     "png": FileCategory.IMAGE,
@@ -192,7 +192,7 @@ EXTENSION_CATEGORIES: dict[str, FileCategory] = {
 # Default size limits per category (in bytes)
 DEFAULT_SIZE_LIMITS: dict[FileCategory, int] = {
     FileCategory.AUDIO: 500 * 1024 * 1024,  # 500 MB
-    FileCategory.IMAGE: 50 * 1024 * 1024,   # 50 MB
+    FileCategory.IMAGE: 50 * 1024 * 1024,  # 50 MB
     FileCategory.VIDEO: 2 * 1024 * 1024 * 1024,  # 2 GB
     FileCategory.DOCUMENT: 100 * 1024 * 1024,  # 100 MB
     FileCategory.ARCHIVE: 500 * 1024 * 1024,  # 500 MB for model/backup archives
@@ -263,7 +263,7 @@ def get_file_type_from_content(content: bytes | BinaryIO) -> FileTypeInfo | None
 
     for magic, offset, ext, mime, desc in ALL_SIGNATURES:
         if len(header) >= offset + len(magic):
-            if header[offset:offset + len(magic)] == magic:
+            if header[offset : offset + len(magic)] == magic:
                 # Check for secondary signatures
                 actual_ext = _check_secondary_signature(header, ext)
                 category = EXTENSION_CATEGORIES.get(actual_ext, FileCategory.UNKNOWN)
@@ -388,14 +388,19 @@ def validate_audio_file(
     if allowed_formats is None:
         # Standard audio format set per Audio Format Expansion Plan
         allowed_formats = {
-            "wav", "wave",           # WAV and alias
-            "mp3",                   # MP3
-            "flac",                  # FLAC
-            "ogg", "oga", "opus",    # OGG/Vorbis and Opus
-            "m4a",                   # M4A (AAC in MP4 container)
-            "aac",                   # Raw AAC (ADTS)
-            "wma",                   # Windows Media Audio
-            "aiff", "aif", "aifc",   # AIFF and aliases
+            "wav",
+            "wave",  # WAV and alias
+            "mp3",  # MP3
+            "flac",  # FLAC
+            "ogg",
+            "oga",
+            "opus",  # OGG/Vorbis and Opus
+            "m4a",  # M4A (AAC in MP4 container)
+            "aac",  # Raw AAC (ADTS)
+            "wma",  # Windows Media Audio
+            "aiff",
+            "aif",
+            "aifc",  # AIFF and aliases
         }
 
     if max_size is None:
@@ -444,14 +449,19 @@ def validate_media_for_audio_extraction(
         # Combined audio + video formats for audio extraction
         allowed_formats = {
             # Standard audio formats
-            "wav", "wave",
+            "wav",
+            "wave",
             "mp3",
             "flac",
-            "ogg", "oga", "opus",
+            "ogg",
+            "oga",
+            "opus",
             "m4a",
             "aac",
             "wma",
-            "aiff", "aif", "aifc",
+            "aiff",
+            "aif",
+            "aifc",
             # Video formats (contain audio tracks)
             "mp4",
             "mov",

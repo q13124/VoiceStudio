@@ -19,6 +19,7 @@ from fastapi.testclient import TestClient
 def reset_assistant_state():
     """Reset assistant state before each test."""
     from backend.api.routes import assistant
+
     assistant._conversations = {}
     yield
     assistant._conversations = {}
@@ -78,7 +79,9 @@ class TestChat:
     """Tests for chat endpoint."""
 
     @patch("backend.api.routes.assistant._get_llm_provider")
-    def test_chat_creates_conversation(self, mock_get_provider, assistant_client, mock_llm_provider):
+    def test_chat_creates_conversation(
+        self, mock_get_provider, assistant_client, mock_llm_provider
+    ):
         """Test POST /chat creates new conversation if none specified."""
         mock_get_provider.return_value = mock_llm_provider
 
@@ -95,7 +98,9 @@ class TestChat:
         assert "suggestions" in data
 
     @patch("backend.api.routes.assistant._get_llm_provider")
-    def test_chat_continues_conversation(self, mock_get_provider, assistant_client, mock_llm_provider):
+    def test_chat_continues_conversation(
+        self, mock_get_provider, assistant_client, mock_llm_provider
+    ):
         """Test POST /chat can continue existing conversation."""
         mock_get_provider.return_value = mock_llm_provider
 
@@ -132,7 +137,9 @@ class TestChat:
         assert "content" in data
 
     @patch("backend.api.routes.assistant._get_llm_provider")
-    def test_chat_validates_empty_message(self, mock_get_provider, assistant_client, mock_llm_provider):
+    def test_chat_validates_empty_message(
+        self, mock_get_provider, assistant_client, mock_llm_provider
+    ):
         """Test POST /chat validates message is not empty."""
         mock_get_provider.return_value = mock_llm_provider
 
@@ -145,7 +152,9 @@ class TestChat:
         assert response.status_code in [200, 422]
 
     @patch("backend.api.routes.assistant._get_llm_provider")
-    def test_chat_conversation_appears_in_list(self, mock_get_provider, assistant_client, mock_llm_provider):
+    def test_chat_conversation_appears_in_list(
+        self, mock_get_provider, assistant_client, mock_llm_provider
+    ):
         """Test that conversations created by chat appear in list."""
         mock_get_provider.return_value = mock_llm_provider
 
@@ -165,7 +174,9 @@ class TestChat:
         assert conversations[0]["conversation_id"] == conv_id
 
     @patch("backend.api.routes.assistant._get_llm_provider")
-    def test_chat_conversation_can_be_retrieved(self, mock_get_provider, assistant_client, mock_llm_provider):
+    def test_chat_conversation_can_be_retrieved(
+        self, mock_get_provider, assistant_client, mock_llm_provider
+    ):
         """Test that conversation can be retrieved after creation."""
         mock_get_provider.return_value = mock_llm_provider
 
@@ -185,7 +196,9 @@ class TestChat:
         assert len(conversation["messages"]) >= 2  # User message + assistant response
 
     @patch("backend.api.routes.assistant._get_llm_provider")
-    def test_delete_conversation_success(self, mock_get_provider, assistant_client, mock_llm_provider):
+    def test_delete_conversation_success(
+        self, mock_get_provider, assistant_client, mock_llm_provider
+    ):
         """Test DELETE /conversations/{id} successfully deletes."""
         mock_get_provider.return_value = mock_llm_provider
 

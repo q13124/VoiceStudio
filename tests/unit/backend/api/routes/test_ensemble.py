@@ -38,9 +38,7 @@ class TestEnsembleRouteHandlers:
     def test_synthesize_ensemble_handler_exists(self):
         """Test synthesize_ensemble handler exists."""
         if hasattr(ensemble, "synthesize_ensemble"):
-            assert callable(
-                ensemble.synthesize_ensemble
-            ), "synthesize_ensemble is not callable"
+            assert callable(ensemble.synthesize_ensemble), "synthesize_ensemble is not callable"
 
 
 class TestEnsembleRouter:

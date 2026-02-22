@@ -122,9 +122,7 @@ class AudioAnalysisResult(BaseModel):
 
 
 @router.get("/{audio_id}", response_model=AudioAnalysisResult)
-@cache_response(
-    ttl=300
-)  # Cache for 5 minutes (analysis results are static for a given audio file)
+@cache_response(ttl=300)  # Cache for 5 minutes (analysis results are static for a given audio file)
 async def get_audio_analysis(
     audio_id: str,
     include_spectral: bool = Query(True),
@@ -168,9 +166,7 @@ async def get_audio_analysis(
 
         audio_path = _get_audio_path(audio_id)
         if not audio_path or not os.path.exists(audio_path):
-            raise HTTPException(
-                status_code=404, detail=f"Audio file not found: {audio_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"Audio file not found: {audio_id}")
 
         # Try to load audio analysis libraries
         try:
@@ -238,9 +234,7 @@ async def get_audio_analysis(
                 spectral_flux = float(np.mean(np.diff(magnitude, axis=1)))
 
                 # Zero crossing rate (spectral)
-                zcr_spectral = float(
-                    np.mean(librosa.feature.zero_crossing_rate(audio_mono))
-                )
+                zcr_spectral = float(np.mean(librosa.feature.zero_crossing_rate(audio_mono)))
 
                 # Spectral bandwidth
                 spectral_bandwidth = float(
@@ -303,15 +297,11 @@ async def get_audio_analysis(
                 rms = float(np.mean(librosa.feature.rms(y=audio_mono)[0]))
 
                 # Zero crossing rate (temporal)
-                zcr_temporal = float(
-                    np.mean(librosa.feature.zero_crossing_rate(audio_mono)[0])
-                )
+                zcr_temporal = float(np.mean(librosa.feature.zero_crossing_rate(audio_mono)[0]))
 
                 # Envelope analysis for ADSR
                 envelope = np.abs(librosa.hilbert(audio_mono))
-                envelope_norm = (
-                    envelope / np.max(envelope) if np.max(envelope) > 0 else envelope
-                )
+                envelope_norm = envelope / np.max(envelope) if np.max(envelope) > 0 else envelope
 
                 # Simple ADSR estimation
                 attack_samples = int(0.01 * sample_rate)  # 10ms attack
@@ -319,30 +309,22 @@ async def get_audio_analysis(
                 release_samples = int(0.2 * sample_rate)  # 200ms release
 
                 attack_time = (
-                    attack_samples / sample_rate
-                    if attack_samples < len(envelope_norm)
-                    else None
+                    attack_samples / sample_rate if attack_samples < len(envelope_norm) else None
                 )
                 decay_time = (
-                    decay_samples / sample_rate
-                    if decay_samples < len(envelope_norm)
-                    else None
+                    decay_samples / sample_rate if decay_samples < len(envelope_norm) else None
                 )
                 sustain_level = (
                     float(
                         np.mean(
-                            envelope_norm[
-                                len(envelope_norm) // 4 : 3 * len(envelope_norm) // 4
-                            ]
+                            envelope_norm[len(envelope_norm) // 4 : 3 * len(envelope_norm) // 4]
                         )
                     )
                     if len(envelope_norm) > 0
                     else None
                 )
                 release_time = (
-                    release_samples / sample_rate
-                    if release_samples < len(envelope_norm)
-                    else None
+                    release_samples / sample_rate if release_samples < len(envelope_norm) else None
                 )
 
                 temporal_dict = {
@@ -522,8 +504,7 @@ async def compare_audio_analysis(audio_id: str, reference_audio_id: str):
     temporal_diff = {
         "rms": abs(analysis1.temporal.rms - analysis2.temporal.rms),
         "zero_crossing_rate": abs(
-            analysis1.temporal.zero_crossing_rate
-            - analysis2.temporal.zero_crossing_rate
+            analysis1.temporal.zero_crossing_rate - analysis2.temporal.zero_crossing_rate
         ),
     }
 
@@ -534,9 +515,7 @@ async def compare_audio_analysis(audio_id: str, reference_audio_id: str):
         "dynamic_range": abs(
             analysis1.perceptual.dynamic_range - analysis2.perceptual.dynamic_range
         ),
-        "crest_factor": abs(
-            analysis1.perceptual.crest_factor - analysis2.perceptual.crest_factor
-        ),
+        "crest_factor": abs(analysis1.perceptual.crest_factor - analysis2.perceptual.crest_factor),
     }
 
     # Calculate overall similarity (0.0 = identical, 1.0 = completely different)
@@ -545,9 +524,7 @@ async def compare_audio_analysis(audio_id: str, reference_audio_id: str):
         len(spectral_diff) * 1000.0
     )  # Rough normalization
     normalized_temporal = sum(temporal_diff.values()) / (len(temporal_diff) * 1.0)
-    normalized_perceptual = sum(perceptual_diff.values()) / (
-        len(perceptual_diff) * 20.0
-    )
+    normalized_perceptual = sum(perceptual_diff.values()) / (len(perceptual_diff) * 20.0)
 
     overall_similarity = 1.0 - min(
         1.0, (normalized_spectral + normalized_temporal + normalized_perceptual) / 3.0
@@ -629,9 +606,7 @@ async def get_pitch_analysis(
                 method="crepe",
             )
         elif method.lower() == "pyin" and pitch_tracker.pyin_available:
-            f0, voiced_flag, _voiced_prob = pitch_tracker.track_pitch_pyin(
-                audio, sample_rate
-            )
+            f0, voiced_flag, _voiced_prob = pitch_tracker.track_pitch_pyin(audio, sample_rate)
             # Convert to times array
             hop_length = 512
             times = np.arange(len(f0)) * hop_length / sample_rate
@@ -654,9 +629,7 @@ async def get_pitch_analysis(
             )
     except Exception as e:
         logger.error(f"Error in pitch analysis: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to analyze pitch: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to analyze pitch: {e!s}")
 
 
 @router.get("/{audio_id}/metadata")
@@ -675,9 +648,7 @@ async def get_audio_metadata(audio_id: str):
         return metadata
     except Exception as e:
         logger.error(f"Error extracting metadata: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to extract metadata: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to extract metadata: {e!s}")
 
 
 class WaveletAnalysisResult(BaseModel):
@@ -735,6 +706,4 @@ async def get_wavelet_analysis(
         raise
     except Exception as e:
         logger.error(f"Error in wavelet analysis: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to analyze wavelet: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to analyze wavelet: {e!s}")

@@ -99,9 +99,7 @@ class TestPreCommitConfiguration:
                 all_hooks.append(hook.get("id", ""))
 
         # Check for ruff or python lint hooks
-        has_python_lint = any(
-            "ruff" in h or "python" in h.lower() for h in all_hooks
-        )
+        has_python_lint = any("ruff" in h or "python" in h.lower() for h in all_hooks)
         assert has_python_lint, "No Python linting hook configured"
 
 
@@ -155,10 +153,7 @@ class TestCIWorkflowContent:
             with open(ci_path) as f:
                 content = yaml.safe_load(f)
                 jobs = content.get("jobs", {})
-                python_jobs = [
-                    k for k in jobs
-                    if "python" in k.lower() or "test" in k.lower()
-                ]
+                python_jobs = [k for k in jobs if "python" in k.lower() or "test" in k.lower()]
                 assert len(python_jobs) > 0, "No Python test job in CI"
 
     def test_ci_has_dotnet_job(self, workflows_dir: Path):
@@ -169,7 +164,8 @@ class TestCIWorkflowContent:
                 content = yaml.safe_load(f)
                 jobs = content.get("jobs", {})
                 dotnet_jobs = [
-                    k for k in jobs
+                    k
+                    for k in jobs
                     if "dotnet" in k.lower() or "build" in k.lower() or "csharp" in k.lower()
                 ]
                 assert len(dotnet_jobs) > 0, "No .NET build job in CI"

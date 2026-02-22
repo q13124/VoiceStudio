@@ -59,9 +59,7 @@ class TestOpenVoiceEngineClass:
                 engine = openvoice_engine.OpenVoiceEngine(device="cpu", gpu=False)
                 required_methods = ["initialize", "cleanup", "synthesize"]
                 for method in required_methods:
-                    assert hasattr(
-                        engine, method
-                    ), f"OpenVoiceEngine missing method: {method}"
+                    assert hasattr(engine, method), f"OpenVoiceEngine missing method: {method}"
             except (ImportError, Exception):
                 pytest.skip("openvoice dependencies not installed")
 
@@ -70,9 +68,7 @@ class TestOpenVoiceEngineClass:
         if hasattr(openvoice_engine, "OpenVoiceEngine"):
             try:
                 engine = openvoice_engine.OpenVoiceEngine(device="cpu", gpu=False)
-                assert hasattr(
-                    engine, "enable_caching"
-                ), "OpenVoiceEngine should support caching"
+                assert hasattr(engine, "enable_caching"), "OpenVoiceEngine should support caching"
                 assert hasattr(
                     engine, "batch_synthesize"
                 ), "OpenVoiceEngine should support batch processing"
@@ -102,12 +98,8 @@ class TestOpenVoiceEngineBatchProcessing:
         if hasattr(openvoice_engine, "OpenVoiceEngine"):
             try:
                 engine = openvoice_engine.OpenVoiceEngine(device="cpu", gpu=False)
-                assert hasattr(
-                    engine, "batch_size"
-                ), "OpenVoiceEngine should have batch_size"
-                assert isinstance(
-                    engine.batch_size, int
-                ), "batch_size should be an integer"
+                assert hasattr(engine, "batch_size"), "OpenVoiceEngine should have batch_size"
+                assert isinstance(engine.batch_size, int), "batch_size should be an integer"
                 assert engine.batch_size > 0, "batch_size should be positive"
             except (ImportError, Exception):
                 pytest.skip("openvoice dependencies not installed")
@@ -123,9 +115,7 @@ class TestOpenVoiceEngineProtocol:
                 engine = openvoice_engine.OpenVoiceEngine(device="cpu", gpu=False)
                 assert hasattr(engine, "initialize"), "Should implement initialize"
                 assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                assert hasattr(
-                    engine, "is_initialized"
-                ), "Should implement is_initialized"
+                assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                 assert hasattr(engine, "get_device"), "Should implement get_device"
             except (ImportError, Exception):
                 pytest.skip("openvoice dependencies not installed")

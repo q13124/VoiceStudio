@@ -164,8 +164,7 @@ class OpenAITTSEngine(EngineProtocol):
         # Validate voice
         if self.voice not in self.SUPPORTED_VOICES:
             logger.warning(
-                f"Voice '{self.voice}' not in supported voices. "
-                f"Using 'alloy' instead."
+                f"Voice '{self.voice}' not in supported voices. " f"Using 'alloy' instead."
             )
             self.voice = "alloy"
 
@@ -269,9 +268,7 @@ class OpenAITTSEngine(EngineProtocol):
             # Use provided voice or instance voice
             voice_to_use = (voice or self.voice).lower()
             if voice_to_use not in self.SUPPORTED_VOICES:
-                logger.warning(
-                    f"Voice '{voice_to_use}' not supported. Using '{self.voice}'"
-                )
+                logger.warning(f"Voice '{voice_to_use}' not supported. Using '{self.voice}'")
                 voice_to_use = self.voice
 
             # Use provided model or instance model
@@ -288,9 +285,7 @@ class OpenAITTSEngine(EngineProtocol):
             # Check cache (LRU)
             cache_key = None
             if self.enable_cache:
-                cache_key = self._get_cache_key(
-                    text, voice_to_use, model_to_use, format, speed
-                )
+                cache_key = self._get_cache_key(text, voice_to_use, model_to_use, format, speed)
                 if cache_key in self._response_cache:
                     logger.debug("Using cached OpenAI TTS response")
                     self._response_cache.move_to_end(cache_key)  # LRU update
@@ -406,17 +401,13 @@ class OpenAITTSEngine(EngineProtocol):
         except Exception as e:
             logger.error(f"OpenAI TTS stream synthesis failed: {e}")
 
-    def _convert_audio_to_numpy(
-        self, audio_data: bytes, format: str
-    ) -> np.ndarray | None:
+    def _convert_audio_to_numpy(self, audio_data: bytes, format: str) -> np.ndarray | None:
         """Convert audio bytes to numpy array."""
         try:
             import tempfile
 
             # Create temporary file
-            with tempfile.NamedTemporaryFile(
-                delete=False, suffix=f".{format}"
-            ) as tmp_file:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=f".{format}") as tmp_file:
                 tmp_file.write(audio_data)
                 tmp_path = tmp_file.name
 
@@ -427,9 +418,7 @@ class OpenAITTSEngine(EngineProtocol):
                 elif HAS_LIBROSA:
                     audio, _sample_rate = librosa.load(tmp_path, sr=None)
                 else:
-                    logger.error(
-                        "Neither soundfile nor librosa available for audio loading"
-                    )
+                    logger.error("Neither soundfile nor librosa available for audio loading")
                     return None
 
                 # Convert to mono if stereo
@@ -488,9 +477,7 @@ class OpenAITTSEngine(EngineProtocol):
                 if HAS_SOUNDFILE:
                     sf.write(str(output_path), audio, self.DEFAULT_SAMPLE_RATE)
                 elif HAS_LIBROSA:
-                    librosa.output.write_wav(
-                        str(output_path), audio, self.DEFAULT_SAMPLE_RATE
-                    )
+                    librosa.output.write_wav(str(output_path), audio, self.DEFAULT_SAMPLE_RATE)
                 else:
                     logger.error("Neither soundfile nor librosa available for saving")
                     return None
@@ -533,9 +520,7 @@ class OpenAITTSEngine(EngineProtocol):
 
         return chunks
 
-    def _get_cache_key(
-        self, text: str, voice: str, model: str, format: str, speed: float
-    ) -> str:
+    def _get_cache_key(self, text: str, voice: str, model: str, format: str, speed: float) -> str:
         """Generate cache key for request."""
         key_string = f"{text}_{voice}_{model}_{format}_{speed}"
         return hashlib.md5(key_string.encode()).hexdigest()

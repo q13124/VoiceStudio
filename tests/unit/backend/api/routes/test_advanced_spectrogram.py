@@ -2,6 +2,7 @@
 Unit Tests for Advanced Spectrogram API Route
 Tests advanced spectrogram endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -44,12 +45,8 @@ class TestAdvancedSpectrogramRouteImports:
 
     def test_advanced_spectrogram_module_imports(self):
         """Test advanced_spectrogram module can be imported."""
-        assert (
-            advanced_spectrogram is not None
-        ), "Failed to import advanced_spectrogram module"
-        assert hasattr(
-            advanced_spectrogram, "router"
-        ), "advanced_spectrogram module missing router"
+        assert advanced_spectrogram is not None, "Failed to import advanced_spectrogram module"
+        assert hasattr(advanced_spectrogram, "router"), "advanced_spectrogram module missing router"
 
     def test_router_exists(self):
         """Test router exists and is configured."""
@@ -84,29 +81,19 @@ class TestGenerateAdvancedSpectrogram:
             sf.write(tmp.name, samples, sample_rate)
             audio_id = Path(tmp.name).stem
 
-            with patch(
-                "backend.api.routes.voice._audio_storage"
-            ) as mock_storage:
+            with patch("backend.api.routes.voice._audio_storage") as mock_storage:
                 mock_storage.__contains__ = lambda x, y: y == audio_id
-                mock_storage.__getitem__ = lambda x, y: (
-                    tmp.name if y == audio_id else None
-                )
+                mock_storage.__getitem__ = lambda x, y: (tmp.name if y == audio_id else None)
 
-                with patch(
-                    "backend.api.routes.advanced_spectrogram.load_audio"
-                ) as mock_load:
+                with patch("backend.api.routes.advanced_spectrogram.load_audio") as mock_load:
                     mock_load.return_value = (samples, sample_rate)
 
-                    with patch(
-                        "backend.api.routes.advanced_spectrogram.librosa"
-                    ) as mock_librosa:
+                    with patch("backend.api.routes.advanced_spectrogram.librosa") as mock_librosa:
                         mock_stft = MagicMock()
                         mock_stft.return_value = np.random.rand(1025, 100)
                         mock_librosa.stft = mock_stft
 
-                        with patch(
-                            "backend.api.routes.advanced_spectrogram.plt"
-                        ) as mock_plt:
+                        with patch("backend.api.routes.advanced_spectrogram.plt") as mock_plt:
                             mock_fig = MagicMock()
                             mock_plt.figure.return_value = mock_fig
                             mock_plt.savefig = MagicMock()
@@ -133,9 +120,7 @@ class TestGenerateAdvancedSpectrogram:
         app.include_router(advanced_spectrogram.router)
         client = TestClient(app)
 
-        with patch(
-            "backend.api.routes.advanced_spectrogram._audio_storage"
-        ) as mock_storage:
+        with patch("backend.api.routes.advanced_spectrogram._audio_storage") as mock_storage:
             mock_storage.__contains__ = lambda x, y: False
 
             request_data = {
@@ -143,9 +128,7 @@ class TestGenerateAdvancedSpectrogram:
                 "view_type": "magnitude",
             }
 
-            response = client.post(
-                "/api/advanced-spectrogram/generate", json=request_data
-            )
+            response = client.post("/api/advanced-spectrogram/generate", json=request_data)
             assert response.status_code == 404
 
     def test_generate_spectrogram_phase_view(self):
@@ -165,29 +148,19 @@ class TestGenerateAdvancedSpectrogram:
             sf.write(tmp.name, samples, sample_rate)
             audio_id = Path(tmp.name).stem
 
-            with patch(
-                "backend.api.routes.voice._audio_storage"
-            ) as mock_storage:
+            with patch("backend.api.routes.voice._audio_storage") as mock_storage:
                 mock_storage.__contains__ = lambda x, y: y == audio_id
-                mock_storage.__getitem__ = lambda x, y: (
-                    tmp.name if y == audio_id else None
-                )
+                mock_storage.__getitem__ = lambda x, y: (tmp.name if y == audio_id else None)
 
-                with patch(
-                    "backend.api.routes.advanced_spectrogram.load_audio"
-                ) as mock_load:
+                with patch("backend.api.routes.advanced_spectrogram.load_audio") as mock_load:
                     mock_load.return_value = (samples, sample_rate)
 
-                    with patch(
-                        "backend.api.routes.advanced_spectrogram.librosa"
-                    ) as mock_librosa:
+                    with patch("backend.api.routes.advanced_spectrogram.librosa") as mock_librosa:
                         mock_stft = MagicMock()
                         mock_stft.return_value = np.random.rand(1025, 100)
                         mock_librosa.stft = mock_stft
 
-                        with patch(
-                            "backend.api.routes.advanced_spectrogram.plt"
-                        ) as mock_plt:
+                        with patch("backend.api.routes.advanced_spectrogram.plt") as mock_plt:
                             mock_fig = MagicMock()
                             mock_plt.figure.return_value = mock_fig
                             mock_plt.savefig = MagicMock()
@@ -219,29 +192,19 @@ class TestGenerateAdvancedSpectrogram:
             sf.write(tmp.name, samples, sample_rate)
             audio_id = Path(tmp.name).stem
 
-            with patch(
-                "backend.api.routes.voice._audio_storage"
-            ) as mock_storage:
+            with patch("backend.api.routes.voice._audio_storage") as mock_storage:
                 mock_storage.__contains__ = lambda x, y: y == audio_id
-                mock_storage.__getitem__ = lambda x, y: (
-                    tmp.name if y == audio_id else None
-                )
+                mock_storage.__getitem__ = lambda x, y: (tmp.name if y == audio_id else None)
 
-                with patch(
-                    "backend.api.routes.advanced_spectrogram.load_audio"
-                ) as mock_load:
+                with patch("backend.api.routes.advanced_spectrogram.load_audio") as mock_load:
                     mock_load.return_value = (samples, sample_rate)
 
-                    with patch(
-                        "backend.api.routes.advanced_spectrogram.librosa"
-                    ) as mock_librosa:
+                    with patch("backend.api.routes.advanced_spectrogram.librosa") as mock_librosa:
                         mock_mel = MagicMock()
                         mock_mel.return_value = np.random.rand(128, 100)
                         mock_librosa.feature.melspectrogram = mock_mel
 
-                        with patch(
-                            "backend.api.routes.advanced_spectrogram.plt"
-                        ) as mock_plt:
+                        with patch("backend.api.routes.advanced_spectrogram.plt") as mock_plt:
                             mock_fig = MagicMock()
                             mock_plt.figure.return_value = mock_fig
                             mock_plt.savefig = MagicMock()
@@ -273,29 +236,19 @@ class TestGenerateAdvancedSpectrogram:
             sf.write(tmp.name, samples, sample_rate)
             audio_id = Path(tmp.name).stem
 
-            with patch(
-                "backend.api.routes.voice._audio_storage"
-            ) as mock_storage:
+            with patch("backend.api.routes.voice._audio_storage") as mock_storage:
                 mock_storage.__contains__ = lambda x, y: y == audio_id
-                mock_storage.__getitem__ = lambda x, y: (
-                    tmp.name if y == audio_id else None
-                )
+                mock_storage.__getitem__ = lambda x, y: (tmp.name if y == audio_id else None)
 
-                with patch(
-                    "backend.api.routes.advanced_spectrogram.load_audio"
-                ) as mock_load:
+                with patch("backend.api.routes.advanced_spectrogram.load_audio") as mock_load:
                     mock_load.return_value = (samples, sample_rate)
 
-                    with patch(
-                        "backend.api.routes.advanced_spectrogram.librosa"
-                    ) as mock_librosa:
+                    with patch("backend.api.routes.advanced_spectrogram.librosa") as mock_librosa:
                         mock_stft = MagicMock()
                         mock_stft.return_value = np.random.rand(1025, 100)
                         mock_librosa.stft = mock_stft
 
-                        with patch(
-                            "backend.api.routes.advanced_spectrogram.plt"
-                        ) as mock_plt:
+                        with patch("backend.api.routes.advanced_spectrogram.plt") as mock_plt:
                             mock_fig = MagicMock()
                             mock_plt.figure.return_value = mock_fig
                             mock_plt.savefig = MagicMock()
@@ -360,9 +313,10 @@ class TestCompareSpectrograms:
         app.include_router(advanced_spectrogram.router)
         client = TestClient(app)
 
-        with tempfile.NamedTemporaryFile(
-            suffix=".wav", delete=False
-        ) as tmp1, tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp2:
+        with (
+            tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp1,
+            tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp2,
+        ):
             import soundfile as sf
 
             sample_rate = 44100
@@ -378,23 +332,17 @@ class TestCompareSpectrograms:
             audio_id1 = Path(tmp1.name).stem
             audio_id2 = Path(tmp2.name).stem
 
-            with patch(
-                "backend.api.routes.voice._audio_storage"
-            ) as mock_storage:
+            with patch("backend.api.routes.voice._audio_storage") as mock_storage:
 
                 def contains(key):
                     return key in [audio_id1, audio_id2]
 
                 mock_storage.__contains__ = lambda x, y: contains(y)
                 mock_storage.__getitem__ = lambda x, y: (
-                    tmp1.name
-                    if y == audio_id1
-                    else (tmp2.name if y == audio_id2 else None)
+                    tmp1.name if y == audio_id1 else (tmp2.name if y == audio_id2 else None)
                 )
 
-                with patch(
-                    "backend.api.routes.advanced_spectrogram.load_audio"
-                ) as mock_load:
+                with patch("backend.api.routes.advanced_spectrogram.load_audio") as mock_load:
 
                     def load_side_effect(path):
                         if path == tmp1.name:
@@ -403,9 +351,7 @@ class TestCompareSpectrograms:
 
                     mock_load.side_effect = load_side_effect
 
-                    with patch(
-                        "backend.api.routes.advanced_spectrogram.librosa"
-                    ) as mock_librosa:
+                    with patch("backend.api.routes.advanced_spectrogram.librosa") as mock_librosa:
                         mock_stft = MagicMock()
                         mock_stft.return_value = np.random.rand(1025, 100)
                         mock_librosa.stft = mock_stft
@@ -444,9 +390,7 @@ class TestCompareSpectrograms:
         app.include_router(advanced_spectrogram.router)
         client = TestClient(app)
 
-        with patch(
-            "backend.api.routes.advanced_spectrogram._audio_storage"
-        ) as mock_storage:
+        with patch("backend.api.routes.advanced_spectrogram._audio_storage") as mock_storage:
             mock_storage.__contains__ = lambda x, y: False
 
             request_data = {
@@ -454,9 +398,7 @@ class TestCompareSpectrograms:
                 "comparison_type": "difference",
             }
 
-            response = client.post(
-                "/api/advanced-spectrogram/compare", json=request_data
-            )
+            response = client.post("/api/advanced-spectrogram/compare", json=request_data)
             assert response.status_code == 404
 
     def test_compare_spectrograms_ratio(self):
@@ -465,9 +407,10 @@ class TestCompareSpectrograms:
         app.include_router(advanced_spectrogram.router)
         client = TestClient(app)
 
-        with tempfile.NamedTemporaryFile(
-            suffix=".wav", delete=False
-        ) as tmp1, tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp2:
+        with (
+            tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp1,
+            tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp2,
+        ):
             import soundfile as sf
 
             sample_rate = 44100
@@ -483,23 +426,17 @@ class TestCompareSpectrograms:
             audio_id1 = Path(tmp1.name).stem
             audio_id2 = Path(tmp2.name).stem
 
-            with patch(
-                "backend.api.routes.voice._audio_storage"
-            ) as mock_storage:
+            with patch("backend.api.routes.voice._audio_storage") as mock_storage:
 
                 def contains(key):
                     return key in [audio_id1, audio_id2]
 
                 mock_storage.__contains__ = lambda x, y: contains(y)
                 mock_storage.__getitem__ = lambda x, y: (
-                    tmp1.name
-                    if y == audio_id1
-                    else (tmp2.name if y == audio_id2 else None)
+                    tmp1.name if y == audio_id1 else (tmp2.name if y == audio_id2 else None)
                 )
 
-                with patch(
-                    "backend.api.routes.advanced_spectrogram.load_audio"
-                ) as mock_load:
+                with patch("backend.api.routes.advanced_spectrogram.load_audio") as mock_load:
 
                     def load_side_effect(path):
                         if path == tmp1.name:
@@ -508,9 +445,7 @@ class TestCompareSpectrograms:
 
                     mock_load.side_effect = load_side_effect
 
-                    with patch(
-                        "backend.api.routes.advanced_spectrogram.librosa"
-                    ) as mock_librosa:
+                    with patch("backend.api.routes.advanced_spectrogram.librosa") as mock_librosa:
                         mock_stft = MagicMock()
                         mock_stft.return_value = np.random.rand(1025, 100)
                         mock_librosa.stft = mock_stft
@@ -533,9 +468,10 @@ class TestCompareSpectrograms:
         app.include_router(advanced_spectrogram.router)
         client = TestClient(app)
 
-        with tempfile.NamedTemporaryFile(
-            suffix=".wav", delete=False
-        ) as tmp1, tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp2:
+        with (
+            tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp1,
+            tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp2,
+        ):
             import soundfile as sf
 
             sample_rate = 44100
@@ -551,23 +487,17 @@ class TestCompareSpectrograms:
             audio_id1 = Path(tmp1.name).stem
             audio_id2 = Path(tmp2.name).stem
 
-            with patch(
-                "backend.api.routes.voice._audio_storage"
-            ) as mock_storage:
+            with patch("backend.api.routes.voice._audio_storage") as mock_storage:
 
                 def contains(key):
                     return key in [audio_id1, audio_id2]
 
                 mock_storage.__contains__ = lambda x, y: contains(y)
                 mock_storage.__getitem__ = lambda x, y: (
-                    tmp1.name
-                    if y == audio_id1
-                    else (tmp2.name if y == audio_id2 else None)
+                    tmp1.name if y == audio_id1 else (tmp2.name if y == audio_id2 else None)
                 )
 
-                with patch(
-                    "backend.api.routes.advanced_spectrogram.load_audio"
-                ) as mock_load:
+                with patch("backend.api.routes.advanced_spectrogram.load_audio") as mock_load:
 
                     def load_side_effect(path):
                         if path == tmp1.name:
@@ -576,9 +506,7 @@ class TestCompareSpectrograms:
 
                     mock_load.side_effect = load_side_effect
 
-                    with patch(
-                        "backend.api.routes.advanced_spectrogram.librosa"
-                    ) as mock_librosa:
+                    with patch("backend.api.routes.advanced_spectrogram.librosa") as mock_librosa:
                         mock_stft = MagicMock()
                         mock_stft.return_value = np.random.rand(1025, 100)
                         mock_librosa.stft = mock_stft
@@ -677,17 +605,14 @@ class TestExportSpectrogram:
             "data_url": "data:image/png;base64,test",
         }
 
-        with patch(
-            "backend.api.routes.advanced_spectrogram.base64"
-        ) as mock_base64, patch(
-            "backend.api.routes.advanced_spectrogram.os.path.exists"
-        ) as mock_exists:
+        with (
+            patch("backend.api.routes.advanced_spectrogram.base64") as mock_base64,
+            patch("backend.api.routes.advanced_spectrogram.os.path.exists") as mock_exists,
+        ):
             mock_exists.return_value = True
             mock_base64.b64decode.return_value = b"test_image_data"
 
-            response = client.get(
-                f"/api/advanced-spectrogram/export/{view_id}?format=png"
-            )
+            response = client.get(f"/api/advanced-spectrogram/export/{view_id}?format=png")
             # May return 200 or 404 depending on file existence
             assert response.status_code in [200, 404]
 

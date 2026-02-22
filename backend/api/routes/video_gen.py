@@ -57,7 +57,9 @@ try:
     ENGINE_AVAILABLE = len(engines) > 0
     if ENGINE_AVAILABLE:
         engine_names = [e.get("id", e.get("name", "")) for e in engines]
-        logger.info(f"Video EngineService initialized with {len(engines)} engines: {', '.join(engine_names[:5])}...")
+        logger.info(
+            f"Video EngineService initialized with {len(engines)} engines: {', '.join(engine_names[:5])}..."
+        )
     else:
         logger.warning("No engines available for video generation")
 except Exception as e:
@@ -644,6 +646,7 @@ async def convert_voice(
 
 
 # --- Video quality metrics (called by VideoGenViewModel) ---
+
 
 @router.get("/{video_id}/quality")
 async def get_video_quality(video_id: str):

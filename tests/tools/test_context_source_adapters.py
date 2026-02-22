@@ -100,7 +100,7 @@ def test_rules_adapter_parses_frontmatter(tmp_path: Path) -> None:
         "\n".join(
             [
                 "---",
-                "description: \"Always apply\"",
+                'description: "Always apply"',
                 "alwaysApply: true",
                 "---",
                 "# Rule A",
@@ -112,7 +112,7 @@ def test_rules_adapter_parses_frontmatter(tmp_path: Path) -> None:
         "\n".join(
             [
                 "---",
-                "description: \"Optional\"",
+                'description: "Optional"',
                 "alwaysApply: false",
                 "---",
                 "# Rule B",

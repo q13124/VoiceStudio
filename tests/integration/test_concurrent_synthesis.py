@@ -3,6 +3,7 @@
 Validates that multiple simultaneous synthesis requests complete without
 error or data corruption.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -26,8 +27,7 @@ async def client():
 async def test_concurrent_synthesis_no_crash(client: AsyncClient):
     """3 concurrent synthesis requests should not crash the server."""
     requests = [
-        {"engine": "piper", "text": f"Test sentence number {i}", "language": "en"}
-        for i in range(3)
+        {"engine": "piper", "text": f"Test sentence number {i}", "language": "en"} for i in range(3)
     ]
 
     async def do_synth(req: dict):
@@ -69,6 +69,7 @@ async def test_concurrent_requests_distinct_responses(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_health_under_concurrent_load(client: AsyncClient):
     """Health endpoint should remain responsive during concurrent requests."""
+
     async def check_health():
         resp = await client.get("/api/health", timeout=5.0)
         return resp.status_code

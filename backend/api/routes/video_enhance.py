@@ -24,6 +24,7 @@ router = APIRouter(prefix="/api/video/enhance", tags=["video", "face-enhancement
 
 class EnhanceRequest(BaseModel):
     """Face enhancement request."""
+
     input_path: str
     output_path: str
     mode: str = "lip_sync"  # lip_sync, expression, restoration, deaging, composite
@@ -33,6 +34,7 @@ class EnhanceRequest(BaseModel):
 
 class EnhanceResponse(BaseModel):
     """Face enhancement response."""
+
     job_id: str
     status: str
     message: str
@@ -40,6 +42,7 @@ class EnhanceResponse(BaseModel):
 
 class JobStatusResponse(BaseModel):
     """Job status response."""
+
     job_id: str
     status: str
     progress: float
@@ -51,11 +54,13 @@ class JobStatusResponse(BaseModel):
 
 class FaceDetectionRequest(BaseModel):
     """Face detection request."""
+
     image_path: str
 
 
 class FaceRegionResponse(BaseModel):
     """Face region response."""
+
     x: int
     y: int
     width: int
@@ -111,6 +116,7 @@ async def start_enhancement(request: EnhanceRequest):
 
         # Start processing in background
         import asyncio
+
         asyncio.create_task(enhancer.process_job(job.job_id))
 
         return EnhanceResponse(
@@ -285,6 +291,7 @@ async def get_capabilities() -> dict[str, Any]:
 
     try:
         import cv2
+
         opencv_available = True
     except ImportError:
         # ALLOWED: OpenCV is optional - continue with opencv_available=False
@@ -292,6 +299,7 @@ async def get_capabilities() -> dict[str, Any]:
 
     try:
         import subprocess
+
         result = subprocess.run(["ffmpeg", "-version"], capture_output=True, timeout=5)
         ffmpeg_available = result.returncode == 0
     except Exception as e:
@@ -300,9 +308,17 @@ async def get_capabilities() -> dict[str, Any]:
 
     return {
         "modes": [
-            {"id": "lip_sync", "name": "Lip Sync", "description": "Enhance lip movements for dubbing"},
+            {
+                "id": "lip_sync",
+                "name": "Lip Sync",
+                "description": "Enhance lip movements for dubbing",
+            },
             {"id": "expression", "name": "Expression", "description": "Enhance facial expressions"},
-            {"id": "restoration", "name": "Restoration", "description": "Face restoration and upscaling"},
+            {
+                "id": "restoration",
+                "name": "Restoration",
+                "description": "Face restoration and upscaling",
+            },
             {"id": "deaging", "name": "De-aging", "description": "Age reduction effect"},
             {"id": "composite", "name": "Composite", "description": "Face compositing"},
         ],

@@ -15,11 +15,13 @@ class TestSupervisorRouter:
     def test_import(self):
         """Test that SupervisorRouter can be imported."""
         from app.core.supervisor import SupervisorRouter
+
         assert SupervisorRouter is not None
 
     def test_create_router(self):
         """Test creating a router with defaults."""
         from app.core.supervisor import SupervisorRouter
+
         router = SupervisorRouter()
         assert router is not None
         assert router.state is not None
@@ -51,10 +53,12 @@ class TestSupervisorRouter:
         from app.core.supervisor import SupervisorRouter
 
         mock_cascade = AsyncMock()
-        mock_cascade.process_text = AsyncMock(return_value={
-            "response": "Hello!",
-            "audio": None,
-        })
+        mock_cascade.process_text = AsyncMock(
+            return_value={
+                "response": "Hello!",
+                "audio": None,
+            }
+        )
 
         router = SupervisorRouter(
             cascade_pipeline=mock_cascade,
@@ -72,10 +76,12 @@ class TestSupervisorRouter:
 
         context_sync = ContextSync()
         mock_cascade = AsyncMock()
-        mock_cascade.process_text = AsyncMock(return_value={
-            "response": "Test response",
-            "audio": None,
-        })
+        mock_cascade.process_text = AsyncMock(
+            return_value={
+                "response": "Test response",
+                "audio": None,
+            }
+        )
 
         router = SupervisorRouter(
             cascade_pipeline=mock_cascade,
@@ -116,6 +122,7 @@ class TestFillerPhraseGenerator:
     def test_import(self):
         """Test import."""
         from app.core.supervisor import FillerPhraseGenerator
+
         assert FillerPhraseGenerator is not None
 
     def test_get_filler_thinking(self):
@@ -166,6 +173,7 @@ class TestContextSync:
     def test_import(self):
         """Test import."""
         from app.core.supervisor import ContextSync
+
         assert ContextSync is not None
 
     def test_add_turn(self):
@@ -221,6 +229,7 @@ class TestIntentBuffer:
     def test_import(self):
         """Test import."""
         from app.core.supervisor import IntentBuffer
+
         assert IntentBuffer is not None
 
     def test_add_and_flush(self):

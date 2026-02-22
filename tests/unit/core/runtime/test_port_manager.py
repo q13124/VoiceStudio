@@ -28,9 +28,7 @@ class TestPortManagerImports:
     def test_port_manager_has_classes(self):
         """Test port_manager has expected classes."""
         classes = [
-            name
-            for name in dir(port_manager)
-            if name[0].isupper() and not name.startswith("_")
+            name for name in dir(port_manager) if name[0].isupper() and not name.startswith("_")
         ]
         assert len(classes) > 0, "port_manager should have classes"
 
@@ -51,16 +49,12 @@ class TestPortManagerFunctions:
     def test_allocate_port_function_exists(self):
         """Test allocate_port function exists."""
         if hasattr(port_manager, "allocate_port"):
-            assert callable(
-                port_manager.allocate_port
-            ), "allocate_port should be callable"
+            assert callable(port_manager.allocate_port), "allocate_port should be callable"
 
     def test_release_port_function_exists(self):
         """Test release_port function exists."""
         if hasattr(port_manager, "release_port"):
-            assert callable(
-                port_manager.release_port
-            ), "release_port should be callable"
+            assert callable(port_manager.release_port), "release_port should be callable"
 
     def test_get_available_port_function_exists(self):
         """Test get_available_port function exists."""

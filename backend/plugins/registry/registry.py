@@ -224,7 +224,8 @@ class PluginRegistry:
             List of plugins with the capability
         """
         return [
-            p for p in self._plugins.values()
+            p
+            for p in self._plugins.values()
             if p.has_capability(capability) and p.state == PluginState.ACTIVE
         ]
 

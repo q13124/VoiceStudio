@@ -29,8 +29,6 @@ def breaker():
     )
 
 
-
-
 class TestCircuitBreakerUnderLoad:
     """Circuit breaker behavior under simulated load."""
 

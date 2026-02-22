@@ -239,10 +239,7 @@ class LibraryPage(BasePage):
             "refresh_button": self.REFRESH_BUTTON,
         }
 
-        return {
-            name: self.element_exists(auto_id)
-            for name, auto_id in elements.items()
-        }
+        return {name: self.element_exists(auto_id) for name, auto_id in elements.items()}
 
     def play_selected_file(self, wait_for_playback: bool = True) -> bool:
         """

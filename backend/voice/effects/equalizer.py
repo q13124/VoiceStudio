@@ -16,6 +16,7 @@ from backend.voice.effects.chain import AudioEffect, EffectConfig
 @dataclass
 class EQBand:
     """A single EQ band."""
+
     frequency: float  # Hz
     gain: float = 0.0  # dB (-12 to +12)
     q: float = 1.0  # Q factor
@@ -26,13 +27,15 @@ class EQBand:
 class EqualizerConfig(EffectConfig):
     """Equalizer configuration."""
 
-    bands: list[EQBand] = field(default_factory=lambda: [
-        EQBand(frequency=80, gain=0, band_type="lowshelf"),
-        EQBand(frequency=250, gain=0, band_type="peak"),
-        EQBand(frequency=1000, gain=0, band_type="peak"),
-        EQBand(frequency=4000, gain=0, band_type="peak"),
-        EQBand(frequency=12000, gain=0, band_type="highshelf"),
-    ])
+    bands: list[EQBand] = field(
+        default_factory=lambda: [
+            EQBand(frequency=80, gain=0, band_type="lowshelf"),
+            EQBand(frequency=250, gain=0, band_type="peak"),
+            EQBand(frequency=1000, gain=0, band_type="peak"),
+            EQBand(frequency=4000, gain=0, band_type="peak"),
+            EQBand(frequency=12000, gain=0, band_type="highshelf"),
+        ]
+    )
 
 
 # Voice-optimized presets

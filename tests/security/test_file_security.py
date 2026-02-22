@@ -27,6 +27,7 @@ def api_client():
     from fastapi.testclient import TestClient
 
     from backend.api.main import app
+
     return TestClient(app)
 
 
@@ -95,10 +96,10 @@ class TestErrorResponseSecurity:
         # Trigger a 404 error
         response = api_client.get("/api/nonexistent_endpoint_xyz")
         body = response.text.lower()
-        
+
         # Should not contain stack trace indicators
         assert "traceback" not in body
-        assert "file \"" not in body
+        assert 'file "' not in body
         assert "line " not in body or "not found" in body
 
     def test_no_internal_paths_in_errors(self, api_client, backend_available):
@@ -108,7 +109,7 @@ class TestErrorResponseSecurity:
 
         response = api_client.get("/api/this_does_not_exist")
         body = response.text
-        
+
         # Should not contain internal paths
         assert "C:\\" not in body
         assert "/home/" not in body
@@ -122,7 +123,7 @@ class TestErrorResponseSecurity:
 
         response = api_client.get("/api/missing_endpoint")
         body = response.text.lower()
-        
+
         # Should not expose Python or framework versions
         assert "python" not in body or "endpoint" in body
         assert "fastapi" not in body
@@ -133,7 +134,7 @@ class TestErrorResponseSecurity:
             pytest.skip("Backend not available")
 
         response = api_client.get("/api/does_not_exist")
-        
+
         # Should return JSON error
         assert response.status_code in (404, 422)
         content_type = response.headers.get("content-type", "")

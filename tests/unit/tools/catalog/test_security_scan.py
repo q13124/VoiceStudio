@@ -33,8 +33,9 @@ class TestSecurityRules:
         """Test that all rules have valid severity levels."""
         valid_severities = ["critical", "high", "medium", "low", "info"]
         for rule in SECURITY_RULES:
-            assert rule["severity"] in valid_severities, \
-                f"Rule {rule['id']} has invalid severity: {rule['severity']}"
+            assert (
+                rule["severity"] in valid_severities
+            ), f"Rule {rule['id']} has invalid severity: {rule['severity']}"
 
 
 class TestScanFile:
@@ -46,7 +47,7 @@ class TestScanFile:
             f.write("exec('print(1)')")
             f.flush()
             findings = scan_file(Path(f.name))
-        
+
         assert len(findings) > 0
         assert any(f["rule_id"] == "EXEC_DANGEROUS" for f in findings)
 
@@ -56,7 +57,7 @@ class TestScanFile:
             f.write("result = eval(user_input)")
             f.flush()
             findings = scan_file(Path(f.name))
-        
+
         assert len(findings) > 0
         assert any(f["rule_id"] == "EXEC_DANGEROUS" for f in findings)
 
@@ -66,7 +67,7 @@ class TestScanFile:
             f.write("import os\nos.system('rm -rf /')")
             f.flush()
             findings = scan_file(Path(f.name))
-        
+
         assert len(findings) > 0
         assert any(f["rule_id"] == "OS_COMMAND_INJECTION" for f in findings)
 
@@ -76,7 +77,7 @@ class TestScanFile:
             f.write("subprocess.run('cmd', shell=True)")
             f.flush()
             findings = scan_file(Path(f.name))
-        
+
         assert len(findings) > 0
         assert any(f["rule_id"] == "SHELL_TRUE" for f in findings)
 
@@ -86,7 +87,7 @@ class TestScanFile:
             f.write("import pickle\ndata = pickle.load(f)")
             f.flush()
             findings = scan_file(Path(f.name))
-        
+
         assert len(findings) > 0
         assert any(f["rule_id"] == "PICKLE_UNSAFE" for f in findings)
 
@@ -96,7 +97,7 @@ class TestScanFile:
             f.write("path = '../../../etc/passwd'")
             f.flush()
             findings = scan_file(Path(f.name))
-        
+
         assert len(findings) > 0
         assert any(f["rule_id"] == "FILE_TRAVERSAL" for f in findings)
 
@@ -106,7 +107,7 @@ class TestScanFile:
             f.write("api_key = 'sk-1234567890abcdef'")
             f.flush()
             findings = scan_file(Path(f.name))
-        
+
         assert len(findings) > 0
         assert any(f["rule_id"] == "HARDCODED_SECRETS" for f in findings)
 
@@ -116,24 +117,26 @@ class TestScanFile:
             f.write("# exec('this is a comment')\nprint('safe')")
             f.flush()
             findings = scan_file(Path(f.name))
-        
+
         # Should not detect exec in comment
         assert not any(f["rule_id"] == "EXEC_DANGEROUS" for f in findings)
 
     def test_clean_file(self):
         """Test that clean file has no findings."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write("""
+            f.write(
+                """
 def safe_function(x):
     return x * 2
 
 class SafeClass:
     def __init__(self):
         self.value = 0
-""")
+"""
+            )
             f.flush()
             findings = scan_file(Path(f.name))
-        
+
         # Should have no critical or high findings
         critical_high = [f for f in findings if f["severity"] in ("critical", "high")]
         assert len(critical_high) == 0
@@ -146,15 +149,15 @@ class TestScanDirectory:
         """Test scanning multiple files in directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmppath = Path(tmpdir)
-            
+
             # Create safe file
             (tmppath / "safe.py").write_text("print('hello')")
-            
+
             # Create unsafe file
             (tmppath / "unsafe.py").write_text("exec(user_input)")
-            
+
             findings = scan_directory(tmppath)
-            
+
             assert len(findings) > 0
             assert any("unsafe.py" in str(f["file"]) for f in findings)
 
@@ -162,14 +165,14 @@ class TestScanDirectory:
         """Test that __pycache__ is skipped."""
         with tempfile.TemporaryDirectory() as tmpdir:
             tmppath = Path(tmpdir)
-            
+
             # Create pycache directory with unsafe file
             pycache = tmppath / "__pycache__"
             pycache.mkdir()
             (pycache / "unsafe.py").write_text("exec(user_input)")
-            
+
             findings = scan_directory(tmppath)
-            
+
             # Should not find anything in pycache
             assert not any("__pycache__" in str(f["file"]) for f in findings)
 
@@ -213,5 +216,5 @@ class TestCalculateRiskScore:
         high = calculate_risk_score([{"severity": "high"}])
         medium = calculate_risk_score([{"severity": "medium"}])
         low = calculate_risk_score([{"severity": "low"}])
-        
+
         assert critical > high > medium > low

@@ -22,9 +22,7 @@ class ValidationOptimizationMiddleware(BaseHTTPMiddleware):
     Pre-warms schema cache and tracks validation performance.
     """
 
-    async def dispatch(
-        self, request: Request, call_next: Callable
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with validation optimization."""
         # Pre-warm schema cache for common models
         # This happens in the background and doesn't block the request
@@ -60,13 +58,10 @@ def setup_validation_optimization(app):
                 get_cached_schema(model)
                 logger.debug(f"Pre-warmed schema cache for {model.__name__}")
             except Exception as e:
-                logger.warning(
-                    f"Failed to pre-warm schema for {model.__name__}: {e}"
-                )
+                logger.warning(f"Failed to pre-warm schema for {model.__name__}: {e}")
 
     except ImportError:
         logger.warning("Could not import models for schema pre-warming")
 
     # Add middleware
     app.add_middleware(ValidationOptimizationMiddleware)
-

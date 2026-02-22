@@ -32,7 +32,7 @@ class TestWasmPluginConfig:
             plugin_id="test-plugin",
             wasm_path=Path("/tmp/test.wasm"),
         )
-        
+
         assert config.plugin_id == "test-plugin"
         assert config.wasm_path == Path("/tmp/test.wasm")
         assert config.fuel_limit > 0
@@ -46,7 +46,7 @@ class TestWasmPluginConfig:
             wasm_path=Path("/tmp/test.wasm"),
             fuel_limit=50_000_000,
         )
-        
+
         assert config.fuel_limit == 50_000_000
 
     def test_memory_pages_config(self) -> None:
@@ -99,26 +99,26 @@ class TestWasmRunner:
         """Test execution fails gracefully when wasmtime is not available."""
         if WASMTIME_AVAILABLE:
             pytest.skip("wasmtime is installed, skipping stub test")
-        
+
         runner = WasmRunner()
-        
+
         # Create a temporary wasm file for the config
         with tempfile.NamedTemporaryFile(suffix=".wasm", delete=False) as f:
             f.write(b"\x00asm\x01\x00\x00\x00")  # Minimal wasm header
             wasm_path = Path(f.name)
-        
+
         try:
             config = WasmPluginConfig(
                 plugin_id="test",
                 wasm_path=wasm_path,
             )
-            
+
             result = await runner.execute(
                 config=config,
                 function_name="main",
                 args={},
             )
-            
+
             assert not result.success
             assert "wasmtime not installed" in result.error
         finally:
@@ -129,30 +129,30 @@ class TestWasmRunner:
         """Test execution returns proper result structure."""
         if WASMTIME_AVAILABLE:
             pytest.skip("Need to test stub behavior - wasmtime installed")
-        
+
         runner = WasmRunner()
-        
+
         with tempfile.NamedTemporaryFile(suffix=".wasm", delete=False) as f:
             f.write(b"\x00asm\x01\x00\x00\x00")
             wasm_path = Path(f.name)
-        
+
         try:
             config = WasmPluginConfig(
                 plugin_id="test",
                 wasm_path=wasm_path,
             )
-            
+
             result = await runner.execute(
                 config=config,
                 function_name="main",
                 args={},
             )
-            
+
             assert isinstance(result, WasmExecutionResult)
-            assert hasattr(result, 'success')
-            assert hasattr(result, 'error')
-            assert hasattr(result, 'fuel_consumed')
-            assert hasattr(result, 'execution_time_ms')
+            assert hasattr(result, "success")
+            assert hasattr(result, "error")
+            assert hasattr(result, "fuel_consumed")
+            assert hasattr(result, "execution_time_ms")
         finally:
             wasm_path.unlink(missing_ok=True)
 
@@ -168,7 +168,7 @@ class TestWasmExecutionResult:
             fuel_consumed=100,
             execution_time_ms=5.0,
         )
-        
+
         assert result.success
         assert result.output == 42
         assert result.error is None
@@ -181,7 +181,7 @@ class TestWasmExecutionResult:
             fuel_consumed=10000,
             execution_time_ms=100.0,
         )
-        
+
         assert not result.success
         assert result.error == "Out of fuel"
         assert result.output is None
@@ -195,7 +195,7 @@ class TestWasmExecutionResult:
             execution_time_ms=10.5,
             memory_used_bytes=1024,
         )
-        
+
         d = result.to_dict()
         assert d["success"] is True
         assert d["output"] == {"data": "value"}
@@ -206,7 +206,7 @@ class TestWasmExecutionResult:
     def test_default_values(self) -> None:
         """Test WasmExecutionResult default values."""
         result = WasmExecutionResult(success=True)
-        
+
         assert result.output is None
         assert result.error is None
         assert result.fuel_consumed == 0
@@ -225,7 +225,7 @@ class TestWasmSecurityBoundaries:
             wasm_path=Path("/tmp/test.wasm"),
             memory_pages=16,  # 1MB limit
         )
-        
+
         assert config.memory_pages == 16
 
     def test_fuel_limit_prevents_infinite_loops(self) -> None:
@@ -235,7 +235,7 @@ class TestWasmSecurityBoundaries:
             wasm_path=Path("/tmp/test.wasm"),
             fuel_limit=1000,  # Very low limit
         )
-        
+
         assert config.fuel_limit == 1000
 
     def test_timeout_configured(self) -> None:
@@ -245,7 +245,7 @@ class TestWasmSecurityBoundaries:
             wasm_path=Path("/tmp/test.wasm"),
             timeout_seconds=5.0,
         )
-        
+
         assert config.timeout_seconds == 5.0
 
     def test_sandbox_isolation(self) -> None:
@@ -264,7 +264,7 @@ class TestWasmCapabilities:
             wasm_path=Path("/tmp/test.wasm"),
             capabilities=CapabilitySet.empty(),
         )
-        
+
         assert len(config.capabilities._tokens) == 0
 
     def test_custom_capabilities(self) -> None:
@@ -276,7 +276,7 @@ class TestWasmCapabilities:
             wasm_path=Path("/tmp/test.wasm"),
             capabilities=caps,
         )
-        
+
         assert config.capabilities is not None
 
 
@@ -287,13 +287,13 @@ class TestWasmModuleLoading:
         """Test that load_module raises when wasmtime is not available."""
         if WASMTIME_AVAILABLE:
             pytest.skip("wasmtime is installed")
-        
+
         runner = WasmRunner()
-        
+
         with tempfile.NamedTemporaryFile(suffix=".wasm", delete=False) as f:
             f.write(b"\x00asm\x01\x00\x00\x00")
             wasm_path = Path(f.name)
-        
+
         try:
             with pytest.raises(RuntimeError, match="wasmtime not installed"):
                 runner.load_module(wasm_path)
@@ -304,9 +304,9 @@ class TestWasmModuleLoading:
         """Test that load_module raises for missing files."""
         if not WASMTIME_AVAILABLE:
             pytest.skip("wasmtime not installed")
-        
+
         runner = WasmRunner()
-        
+
         with pytest.raises(FileNotFoundError):
             runner.load_module(Path("/nonexistent/path/module.wasm"))
 

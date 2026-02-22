@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ProjectVersion:
     """A version of a project file."""
+
     version_id: str
     project_id: str
     version_number: int
@@ -38,6 +39,7 @@ class ProjectVersion:
 @dataclass
 class VersionDiff:
     """Difference between two versions."""
+
     from_version: int
     to_version: int
     additions: list[str]
@@ -48,6 +50,7 @@ class VersionDiff:
 @dataclass
 class VersioningConfig:
     """Configuration for project versioning."""
+
     storage_path: str = "data/versions"
     max_versions_per_project: int = 50
     auto_cleanup: bool = True

@@ -275,9 +275,7 @@ class NavigationHelper:
 # =============================================================================
 
 
-def navigate_to_panel(
-    driver: WinAppDriverSession, panel_name: str, wait_time: float = 0.5
-) -> bool:
+def navigate_to_panel(driver: WinAppDriverSession, panel_name: str, wait_time: float = 0.5) -> bool:
     """
     Convenience function to navigate to a panel.
 

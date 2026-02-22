@@ -29,7 +29,9 @@ for module_name in ["torch", "torch.utils.tensorboard", "tensorboard", "wandb"]:
         sys.modules[module_name] = mock_module
     elif module_name == "torch":
         # Ensure existing mock has __version__
-        if not hasattr(sys.modules[module_name], "__version__") or isinstance(sys.modules[module_name].__version__, MagicMock):
+        if not hasattr(sys.modules[module_name], "__version__") or isinstance(
+            sys.modules[module_name].__version__, MagicMock
+        ):
             sys.modules[module_name].__version__ = "2.0.0"
 
 # Import the training progress monitor module
@@ -112,9 +114,7 @@ class TestTrainingProgressMonitorInitialization:
         """Test initialization with tensorboard enabled."""
         mock_summary_writer.return_value = MagicMock()
         with tempfile.TemporaryDirectory() as tmpdir:
-            monitor = TrainingProgressMonitor(
-                log_dir=tmpdir, enable_tensorboard=True
-            )
+            monitor = TrainingProgressMonitor(log_dir=tmpdir, enable_tensorboard=True)
             assert monitor.tensorboard_writer is not None
             mock_summary_writer.assert_called_once()
 
@@ -127,9 +127,7 @@ class TestTrainingProgressMonitorStartMonitoring:
     def test_start_monitoring_basic(self):
         """Test basic start_monitoring."""
         monitor = TrainingProgressMonitor()
-        monitor.start_monitoring(
-            training_id="test_training_1", total_epochs=100
-        )
+        monitor.start_monitoring(training_id="test_training_1", total_epochs=100)
 
         status = monitor.get_current_status()
         assert status["training_id"] == "test_training_1"
@@ -202,9 +200,7 @@ class TestTrainingProgressMonitorUpdateProgress:
         monitor = TrainingProgressMonitor()
         monitor.start_monitoring("test_training", total_epochs=10)
 
-        monitor.update_progress(
-            epoch=3, metrics={"loss": 0.5, "accuracy": 0.9, "f1": 0.85}
-        )
+        monitor.update_progress(epoch=3, metrics={"loss": 0.5, "accuracy": 0.9, "f1": 0.85})
 
         metrics = monitor.get_metrics()
         assert metrics["loss"] == 0.5
@@ -247,9 +243,7 @@ class TestTrainingProgressMonitorUpdateProgress:
         monitor.start_monitoring("test_training", total_epochs=10)
 
         additional_info = {"step": 100, "batch": 5}
-        monitor.update_progress(
-            epoch=1, metrics={"loss": 0.5}, additional_info=additional_info
-        )
+        monitor.update_progress(epoch=1, metrics={"loss": 0.5}, additional_info=additional_info)
 
         history = monitor.get_history()
         assert history[0]["additional_info"] == additional_info
@@ -276,9 +270,7 @@ class TestTrainingProgressMonitorCompleteTraining:
         """Test completing training with failure."""
         monitor = TrainingProgressMonitor()
         monitor.start_monitoring("test_training", total_epochs=10)
-        monitor.complete_training(
-            success=False, error_message="Training failed"
-        )
+        monitor.complete_training(success=False, error_message="Training failed")
 
         status = monitor.get_current_status()
         assert status["status"] == "failed"
@@ -538,9 +530,7 @@ class TestCreateTrainingProgressMonitor:
     @patch("app.core.training.training_progress_monitor.HAS_TENSORBOARD", False)
     def test_create_training_progress_monitor_custom(self):
         """Test create_training_progress_monitor with custom parameters."""
-        monitor = create_training_progress_monitor(
-            max_history=500, enable_tensorboard=False
-        )
+        monitor = create_training_progress_monitor(max_history=500, enable_tensorboard=False)
         assert isinstance(monitor, TrainingProgressMonitor)
         assert monitor.max_history == 500
 

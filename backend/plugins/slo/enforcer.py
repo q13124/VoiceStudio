@@ -185,18 +185,14 @@ class SLOPolicy:
             "name": self.name,
             "actions": {k: [a.value for a in v] for k, v in self.actions.items()},
             "cooldown_seconds": self.cooldown_seconds,
-            "consecutive_violations_before_escalate": (
-                self.consecutive_violations_before_escalate
-            ),
+            "consecutive_violations_before_escalate": (self.consecutive_violations_before_escalate),
             "auto_recovery": self.auto_recovery,
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> SLOPolicy:
         """Create from dictionary."""
-        actions = {
-            k: [PolicyAction(a) for a in v] for k, v in data.get("actions", {}).items()
-        }
+        actions = {k: [PolicyAction(a) for a in v] for k, v in data.get("actions", {}).items()}
         return cls(
             name=data["name"],
             actions=actions,
@@ -272,9 +268,7 @@ class SLOConfig:
         return cls(
             name=data["name"],
             budgets=[Budget.from_dict(b) for b in data.get("budgets", [])],
-            policy=SLOPolicy.from_dict(data["policy"])
-            if "policy" in data
-            else DEFAULT_POLICY,
+            policy=SLOPolicy.from_dict(data["policy"]) if "policy" in data else DEFAULT_POLICY,
             evaluation_window_seconds=data.get("evaluation_window_seconds", 60),
             minimum_samples=data.get("minimum_samples", 10),
         )
@@ -474,8 +468,7 @@ class SLOEnforcer:
         self,
         config: SLOConfig,
         plugin_id: str | None = None,
-        action_handlers: dict[PolicyAction, Callable[[SLOViolation], None]]
-        | None = None,
+        action_handlers: dict[PolicyAction, Callable[[SLOViolation], None]] | None = None,
     ):
         """
         Initialize SLO enforcer.
@@ -525,7 +518,7 @@ class SLOEnforcer:
 
         # Trim to max samples
         if len(samples) > self._max_samples:
-            self._samples[budget_type] = samples[-self._max_samples:]
+            self._samples[budget_type] = samples[-self._max_samples :]
 
     def record_batch(self, metrics: dict[BudgetType, float]) -> None:
         """
@@ -581,9 +574,7 @@ class SLOEnforcer:
                         BudgetType.CPU_PERCENT,
                     ):
                         # Resource metrics use max
-                        values_to_check[budget.budget_type] = max(
-                            s.value for s in window_samples
-                        )
+                        values_to_check[budget.budget_type] = max(s.value for s in window_samples)
                     else:
                         # Latency metrics use P95
                         sorted_values = sorted(s.value for s in window_samples)
@@ -693,9 +684,7 @@ class SLOEnforcer:
             # Check cooldown
             last_action = self._last_action_time.get(violation.budget_type, 0)
             if now - last_action < self.config.policy.cooldown_seconds:
-                logger.debug(
-                    f"Skipping action for {violation.budget_type} (cooldown)"
-                )
+                logger.debug(f"Skipping action for {violation.budget_type} (cooldown)")
                 continue
 
             # Check escalation threshold
@@ -737,21 +726,13 @@ class SLOEnforcer:
                 f"({violation.severity}): {violation.message}"
             )
         elif action == PolicyAction.THROTTLE:
-            logger.warning(
-                f"SLO throttle triggered for {violation.plugin_id or 'system'}"
-            )
+            logger.warning(f"SLO throttle triggered for {violation.plugin_id or 'system'}")
         elif action == PolicyAction.SUSPEND:
-            logger.warning(
-                f"SLO suspend triggered for {violation.plugin_id or 'system'}"
-            )
+            logger.warning(f"SLO suspend triggered for {violation.plugin_id or 'system'}")
         elif action == PolicyAction.TERMINATE:
-            logger.error(
-                f"SLO terminate triggered for {violation.plugin_id or 'system'}"
-            )
+            logger.error(f"SLO terminate triggered for {violation.plugin_id or 'system'}")
         elif action == PolicyAction.QUARANTINE:
-            logger.error(
-                f"SLO quarantine triggered for {violation.plugin_id or 'system'}"
-            )
+            logger.error(f"SLO quarantine triggered for {violation.plugin_id or 'system'}")
 
     def get_violation_history(
         self, since: datetime | None = None, limit: int = 100
@@ -771,9 +752,7 @@ class SLOEnforcer:
             history = [(t, s) for t, s in history if t >= since]
         return history[-limit:]
 
-    def get_uptime_percentage(
-        self, window: timedelta = timedelta(hours=24)
-    ) -> float:
+    def get_uptime_percentage(self, window: timedelta = timedelta(hours=24)) -> float:
         """Calculate uptime percentage over a time window."""
         if not self._status_history:
             return 100.0
@@ -785,9 +764,7 @@ class SLOEnforcer:
             return 100.0
 
         # Count healthy/degraded vs unhealthy/critical
-        healthy = sum(
-            1 for _, s in relevant if s in (SLOStatus.HEALTHY, SLOStatus.DEGRADED)
-        )
+        healthy = sum(1 for _, s in relevant if s in (SLOStatus.HEALTHY, SLOStatus.DEGRADED))
         return (healthy / len(relevant)) * 100
 
     def clear_violations(self) -> None:

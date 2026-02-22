@@ -40,15 +40,11 @@ def test_profile(backend_available):
     profile_data = {
         "name": f"Test Profile {int(time.time())}",
         "description": "Test profile for E2E workflow testing",
-        "language": "en"
+        "language": "en",
     }
 
     try:
-        response = requests.post(
-            f"{API_BASE_URL}/profiles",
-            json=profile_data,
-            timeout=5
-        )
+        response = requests.post(f"{API_BASE_URL}/profiles", json=profile_data, timeout=5)
 
         if response.status_code == 200:
             profile = response.json()
@@ -78,22 +74,22 @@ class TestVoiceSynthesisWorkflow:
             "profile_id": profile_id,
             "text": "Hello, this is a test of the voice synthesis workflow.",
             "sample_rate": 22050,
-            "quality_preset": "standard"
+            "quality_preset": "standard",
         }
 
         try:
             response = requests.post(
-                f"{API_BASE_URL}/voice/synthesize",
-                json=synthesis_request,
-                timeout=30
+                f"{API_BASE_URL}/voice/synthesize", json=synthesis_request, timeout=30
             )
 
-            assert response.status_code == 200, \
-                f"Synthesis request failed with status {response.status_code}"
+            assert (
+                response.status_code == 200
+            ), f"Synthesis request failed with status {response.status_code}"
 
             result = response.json()
-            assert "audio_id" in result or "audio_url" in result, \
-                "Synthesis result missing audio identifier"
+            assert (
+                "audio_id" in result or "audio_url" in result
+            ), "Synthesis result missing audio identifier"
 
             logger.info(f"Synthesis workflow completed successfully: {result}")
         except Exception as e:
@@ -110,42 +106,34 @@ class TestProjectWorkflow:
 
         project_data = {
             "name": f"Test Project {int(time.time())}",
-            "description": "Test project for E2E workflow testing"
+            "description": "Test project for E2E workflow testing",
         }
 
         try:
             create_response = requests.post(
-                f"{API_BASE_URL}/projects",
-                json=project_data,
-                timeout=5
+                f"{API_BASE_URL}/projects", json=project_data, timeout=5
             )
 
-            assert create_response.status_code == 200, \
-                f"Project creation failed with status {create_response.status_code}"
+            assert (
+                create_response.status_code == 200
+            ), f"Project creation failed with status {create_response.status_code}"
 
             project = create_response.json()
             project_id = project.get("id")
             assert project_id is not None, "Project ID is None"
 
-            get_response = requests.get(
-                f"{API_BASE_URL}/projects/{project_id}",
-                timeout=5
-            )
+            get_response = requests.get(f"{API_BASE_URL}/projects/{project_id}", timeout=5)
 
-            assert get_response.status_code == 200, \
-                "Failed to retrieve created project"
+            assert get_response.status_code == 200, "Failed to retrieve created project"
 
             retrieved_project = get_response.json()
-            assert retrieved_project.get("name") == project_data["name"], \
-                "Retrieved project name doesn't match"
+            assert (
+                retrieved_project.get("name") == project_data["name"]
+            ), "Retrieved project name doesn't match"
 
-            delete_response = requests.delete(
-                f"{API_BASE_URL}/projects/{project_id}",
-                timeout=5
-            )
+            delete_response = requests.delete(f"{API_BASE_URL}/projects/{project_id}", timeout=5)
 
-            assert delete_response.status_code in [200, 204], \
-                "Failed to delete project"
+            assert delete_response.status_code in [200, 204], "Failed to delete project"
 
             logger.info("Project workflow completed successfully")
         except Exception as e:
@@ -162,20 +150,19 @@ class TestQualityAnalysisWorkflow:
 
         analysis_request = {
             "audio_id": "test_audio_id",
-            "metrics": ["mos", "similarity", "naturalness", "snr"]
+            "metrics": ["mos", "similarity", "naturalness", "snr"],
         }
 
         try:
             response = requests.post(
-                f"{API_BASE_URL}/quality/analyze",
-                json=analysis_request,
-                timeout=10
+                f"{API_BASE_URL}/quality/analyze", json=analysis_request, timeout=10
             )
 
             if response.status_code == 200:
                 result = response.json()
-                assert "metrics" in result or "scores" in result, \
-                    "Quality analysis result missing metrics"
+                assert (
+                    "metrics" in result or "scores" in result
+                ), "Quality analysis result missing metrics"
                 logger.info("Quality analysis workflow completed successfully")
             else:
                 pytest.skip(f"Quality analysis endpoint returned {response.status_code}")
@@ -194,20 +181,19 @@ class TestEngineRecommendationWorkflow:
         recommendation_request = {
             "text": "Hello, this is a test.",
             "voice_profile_id": "test_profile",
-            "quality_preset": "standard"
+            "quality_preset": "standard",
         }
 
         try:
             response = requests.post(
-                f"{API_BASE_URL}/engines/recommend",
-                json=recommendation_request,
-                timeout=10
+                f"{API_BASE_URL}/engines/recommend", json=recommendation_request, timeout=10
             )
 
             if response.status_code == 200:
                 result = response.json()
-                assert "engine" in result or "recommended_engine" in result, \
-                    "Engine recommendation result missing engine"
+                assert (
+                    "engine" in result or "recommended_engine" in result
+                ), "Engine recommendation result missing engine"
                 logger.info("Engine recommendation workflow completed successfully")
             else:
                 pytest.skip(f"Engine recommendation endpoint returned {response.status_code}")
@@ -217,4 +203,3 @@ class TestEngineRecommendationWorkflow:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

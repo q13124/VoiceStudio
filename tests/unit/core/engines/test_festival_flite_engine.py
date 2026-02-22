@@ -22,6 +22,7 @@ try:
         FestivalFliteEngine,
         create_festival_flite_engine,
     )
+
     HAS_FESTIVAL = True
 except ImportError:
     HAS_FESTIVAL = False
@@ -48,6 +49,7 @@ class TestFestivalFliteEngineImports:
         if not HAS_FESTIVAL:
             pytest.skip("Festival/Flite engine not available")
         from app.core.engines.festival_flite_engine import FestivalFliteEngine
+
         assert FestivalFliteEngine is not None
 
     def test_import_create_function(self):
@@ -55,6 +57,7 @@ class TestFestivalFliteEngineImports:
         if not HAS_FESTIVAL:
             pytest.skip("Festival/Flite engine not available")
         from app.core.engines.festival_flite_engine import create_festival_flite_engine
+
         assert create_festival_flite_engine is not None
 
 
@@ -83,13 +86,12 @@ class TestFestivalFliteEngineStructure:
         """Test that engine has reusable temp directory."""
         assert hasattr(festival_engine, "_temp_dir")
         # Initially None until initialized
-        assert festival_engine._temp_dir is None or isinstance(
-            festival_engine._temp_dir, str
-        )
+        assert festival_engine._temp_dir is None or isinstance(festival_engine._temp_dir, str)
 
     def test_engine_protocol_compliance(self, festival_engine):
         """Test that engine implements EngineProtocol."""
         from app.core.engines.protocols import EngineProtocol
+
         assert isinstance(festival_engine, EngineProtocol)
         assert hasattr(festival_engine, "initialize")
         assert hasattr(festival_engine, "cleanup")
@@ -146,17 +148,13 @@ class TestFestivalFliteEngineCache:
 
         # Add entries up to max size
         for i in range(3):
-            festival_engine._synthesis_cache[f"key{i}"] = {
-                "data": f"value{i}"
-            }
+            festival_engine._synthesis_cache[f"key{i}"] = {"data": f"value{i}"}
 
         assert len(festival_engine._synthesis_cache) == 3
 
         # Add one more - manually evict oldest if needed
         # (simulating cache behavior)
-        if len(festival_engine._synthesis_cache) >= (
-            festival_engine._cache_max_size
-        ):
+        if len(festival_engine._synthesis_cache) >= (festival_engine._cache_max_size):
             oldest_key = next(iter(festival_engine._synthesis_cache))
             del festival_engine._synthesis_cache[oldest_key]
         festival_engine._synthesis_cache["key3"] = {"data": "value3"}
@@ -184,9 +182,7 @@ class TestFestivalFliteEngineBatchProcessing:
         assert callable(festival_engine.batch_synthesize)
 
     @patch("app.core.engines.festival_flite_engine.ThreadPoolExecutor")
-    def test_batch_synthesize_uses_thread_pool(
-        self, mock_executor, festival_engine
-    ):
+    def test_batch_synthesize_uses_thread_pool(self, mock_executor, festival_engine):
         """Test that batch_synthesize uses ThreadPoolExecutor."""
         # Mock the synthesize method to return success
         festival_engine.synthesize = Mock(return_value=b"fake audio data")
@@ -194,9 +190,7 @@ class TestFestivalFliteEngineBatchProcessing:
 
         # Mock ThreadPoolExecutor
         mock_executor_instance = MagicMock()
-        mock_executor.return_value.__enter__.return_value = (
-            mock_executor_instance
-        )
+        mock_executor.return_value.__enter__.return_value = mock_executor_instance
         mock_executor.return_value.__exit__.return_value = None
 
         # Create batch synthesis tasks
@@ -243,19 +237,18 @@ class TestFestivalFliteEngineOptimization:
     def test_reusable_temp_directory(self, festival_engine):
         """Test that engine uses reusable temp directory."""
         # Initialize to create temp directory
-        with patch(
-            "app.core.engines.festival_flite_engine.tempfile.mkdtemp"
-        ) as mock_mkdtemp:
+        with patch("app.core.engines.festival_flite_engine.tempfile.mkdtemp") as mock_mkdtemp:
             mock_mkdtemp.return_value = "/tmp/test_festival"
 
             # Mock initialization to succeed
-            with patch.object(
-                festival_engine,
-                "_find_executable",
-                return_value="/usr/bin/flite",
-            ), patch(
-                "app.core.engines.festival_flite_engine.subprocess.run"
-            ) as mock_run:
+            with (
+                patch.object(
+                    festival_engine,
+                    "_find_executable",
+                    return_value="/usr/bin/flite",
+                ),
+                patch("app.core.engines.festival_flite_engine.subprocess.run") as mock_run,
+            ):
                 mock_run.return_value.returncode = 0
                 mock_run.return_value.stdout = "Flite text-to-speech"
 
@@ -286,6 +279,7 @@ class TestFestivalFliteEngineCreateFunction:
         if not HAS_FESTIVAL:
             pytest.skip("Festival/Flite engine not available")
         from app.core.engines.festival_flite_engine import create_festival_flite_engine
+
         assert callable(create_festival_flite_engine)
 
     def test_create_function_returns_engine(self):
@@ -293,9 +287,9 @@ class TestFestivalFliteEngineCreateFunction:
         if not HAS_FESTIVAL:
             pytest.skip("Festival/Flite engine not available")
         from app.core.engines.festival_flite_engine import create_festival_flite_engine
+
         engine = create_festival_flite_engine(device="cpu", gpu=False)
         assert engine is not None
         assert isinstance(engine, FestivalFliteEngine)
         with contextlib.suppress(Exception):
             engine.cleanup()
-

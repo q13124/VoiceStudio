@@ -73,16 +73,12 @@ class LocalAIEngine(EngineProtocol):
                     self._initialized = True
                     return True
                 else:
-                    logger.error(
-                        f"LocalAI server returned status {response.status_code}"
-                    )
+                    logger.error(f"LocalAI server returned status {response.status_code}")
                     self._initialized = False
                     return False
             except requests.exceptions.RequestException as e:
                 logger.error(f"Failed to connect to LocalAI server: {e}")
-                logger.error(
-                    f"Make sure LocalAI server is running at {self.server_url}"
-                )
+                logger.error(f"Make sure LocalAI server is running at {self.server_url}")
                 logger.error("Install from: https://github.com/go-skynet/LocalAI")
                 self._initialized = False
                 return False
@@ -136,9 +132,7 @@ class LocalAIEngine(EngineProtocol):
 
             # Extract image from OpenAI-compatible response
             if "data" in result and len(result["data"]) > 0:
-                image_data = result["data"][0].get("url") or result["data"][0].get(
-                    "b64_json"
-                )
+                image_data = result["data"][0].get("url") or result["data"][0].get("b64_json")
                 if image_data:
                     if image_data.startswith("data:image"):
                         image_data = image_data.split(",")[1]
@@ -189,6 +183,4 @@ def create_localai_engine(
     gpu: bool = True,
 ) -> LocalAIEngine:
     """Factory function to create a LocalAI engine instance."""
-    return LocalAIEngine(
-        server_url=server_url, model_name=model_name, device=device, gpu=gpu
-    )
+    return LocalAIEngine(server_url=server_url, model_name=model_name, device=device, gpu=gpu)

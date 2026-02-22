@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SystemMetrics:
     """Current system metrics."""
+
     timestamp: datetime
     cpu_percent: float
     memory_percent: float
@@ -32,6 +33,7 @@ class SystemMetrics:
 @dataclass
 class ApplicationMetrics:
     """Application-specific metrics."""
+
     timestamp: datetime
     uptime_seconds: float
     active_sessions: int
@@ -45,6 +47,7 @@ class ApplicationMetrics:
 @dataclass
 class DashboardData:
     """Complete dashboard data."""
+
     system: SystemMetrics
     application: ApplicationMetrics
     active_alerts: int
@@ -76,7 +79,7 @@ class DashboardDataProvider:
         """Get current system metrics."""
         cpu_percent = psutil.cpu_percent(interval=0.1)
         memory = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage("/")
 
         metrics = SystemMetrics(
             timestamp=datetime.now(),
@@ -85,13 +88,14 @@ class DashboardDataProvider:
             memory_used_mb=memory.used / (1024 * 1024),
             memory_total_mb=memory.total / (1024 * 1024),
             disk_percent=disk.percent,
-            disk_used_gb=disk.used / (1024 ** 3),
-            disk_total_gb=disk.total / (1024 ** 3),
+            disk_used_gb=disk.used / (1024**3),
+            disk_total_gb=disk.total / (1024**3),
         )
 
         # Try to get GPU metrics
         try:
             import torch
+
             if torch.cuda.is_available():
                 metrics.gpu_memory_mb = torch.cuda.memory_allocated() / (1024 * 1024)
         except ImportError:
@@ -121,10 +125,7 @@ class DashboardDataProvider:
         )
 
     async def get_historical_metrics(
-        self,
-        metric_name: str,
-        period_hours: int = 24,
-        resolution_minutes: int = 5
+        self, metric_name: str, period_hours: int = 24, resolution_minutes: int = 5
     ) -> list[tuple[datetime, float]]:
         """Get historical metrics data."""
         # Placeholder - would query from metrics storage

@@ -141,13 +141,15 @@ def create_test_project(
 
     tracks = []
     for i in range(num_tracks):
-        tracks.append({
-            "id": f"track-{index:03d}-{i+1:02d}",
-            "name": f"Track {i+1}",
-            "project_id": generate_project_id(index),
-            "track_number": i + 1,
-            "clips": [],
-        })
+        tracks.append(
+            {
+                "id": f"track-{index:03d}-{i+1:02d}",
+                "name": f"Track {i+1}",
+                "project_id": generate_project_id(index),
+                "track_number": i + 1,
+                "clips": [],
+            }
+        )
 
     return {
         "id": generate_project_id(index),
@@ -211,31 +213,35 @@ def create_audio_metadata() -> list[dict[str, Any]]:
 
     # Reference audio files
     for i in range(1, 9):
-        metadata.append({
-            "id": f"audio-ref-{i:03d}",
-            "path": f"audio/reference/test_ref_{i:03d}.wav",
-            "format": "wav",
-            "category": "reference",
-            "duration": 5.0 + (i * 0.5),  # 5.5 to 9.0 seconds
-            "sample_rate": 44100,
-            "channels": 1,
-            "bit_depth": 16,
-            "size_bytes": 500000 + (i * 50000),  # Approximate
-        })
+        metadata.append(
+            {
+                "id": f"audio-ref-{i:03d}",
+                "path": f"audio/reference/test_ref_{i:03d}.wav",
+                "format": "wav",
+                "category": "reference",
+                "duration": 5.0 + (i * 0.5),  # 5.5 to 9.0 seconds
+                "sample_rate": 44100,
+                "channels": 1,
+                "bit_depth": 16,
+                "size_bytes": 500000 + (i * 50000),  # Approximate
+            }
+        )
 
     # Synthesized audio files
     for i in range(1, 6):
-        metadata.append({
-            "id": f"audio-synth-{i:03d}",
-            "path": f"audio/synthesized/test_synth_{i:03d}.wav",
-            "format": "wav",
-            "category": "synthesized",
-            "duration": 3.0 + (i * 0.3),
-            "sample_rate": 22050,
-            "channels": 1,
-            "bit_depth": 16,
-            "size_bytes": 200000 + (i * 20000),
-        })
+        metadata.append(
+            {
+                "id": f"audio-synth-{i:03d}",
+                "path": f"audio/synthesized/test_synth_{i:03d}.wav",
+                "format": "wav",
+                "category": "synthesized",
+                "duration": 3.0 + (i * 0.3),
+                "sample_rate": 22050,
+                "channels": 1,
+                "bit_depth": 16,
+                "size_bytes": 200000 + (i * 20000),
+            }
+        )
 
     return metadata
 
@@ -318,4 +324,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

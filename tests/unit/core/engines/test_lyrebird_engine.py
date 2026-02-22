@@ -63,9 +63,7 @@ class TestLyrebirdEngineClass:
                     engine = lyrebird_engine.LyrebirdEngine(device="cpu", gpu=False)
                     required_methods = ["initialize", "cleanup", "clone_voice"]
                     for method in required_methods:
-                        assert hasattr(
-                            engine, method
-                        ), f"LyrebirdEngine missing method: {method}"
+                        assert hasattr(engine, method), f"LyrebirdEngine missing method: {method}"
             except (ImportError, Exception):
                 pytest.skip("lyrebird dependencies not installed")
 
@@ -104,9 +102,7 @@ class TestLyrebirdEngineCaching:
                 with patch("lyrebird_engine.requests"):
                     engine = lyrebird_engine.LyrebirdEngine(device="cpu", gpu=False)
                     # Check for LRU cache (OrderedDict)
-                    assert hasattr(
-                        engine, "_synthesis_cache"
-                    ), "Should have synthesis cache"
+                    assert hasattr(engine, "_synthesis_cache"), "Should have synthesis cache"
                     from collections import OrderedDict
 
                     assert isinstance(
@@ -191,9 +187,7 @@ class TestLyrebirdEngineProtocol:
                     engine = lyrebird_engine.LyrebirdEngine(device="cpu", gpu=False)
                     assert hasattr(engine, "initialize"), "Should implement initialize"
                     assert hasattr(engine, "cleanup"), "Should implement cleanup"
-                    assert hasattr(
-                        engine, "is_initialized"
-                    ), "Should implement is_initialized"
+                    assert hasattr(engine, "is_initialized"), "Should implement is_initialized"
                     assert hasattr(engine, "get_device"), "Should implement get_device"
             except (ImportError, Exception):
                 pytest.skip("lyrebird dependencies not installed")
@@ -254,4 +248,3 @@ class TestLyrebirdEngineOptimization:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

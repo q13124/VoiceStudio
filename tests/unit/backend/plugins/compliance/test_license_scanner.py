@@ -27,7 +27,7 @@ try:
     )
 except ImportError:
     pytestmark = pytest.mark.skip(reason="Phase 6C license_scanner not implemented")
-    
+
     # Create stubs for syntax validation
     class LicenseType(Enum):
         MIT = "mit"
@@ -42,8 +42,12 @@ except ImportError:
 
         @property
         def is_permissive(self):
-            return self in [LicenseType.MIT, LicenseType.APACHE_2_0,
-                           LicenseType.BSD_3_CLAUSE, LicenseType.BSD_2_CLAUSE]
+            return self in [
+                LicenseType.MIT,
+                LicenseType.APACHE_2_0,
+                LicenseType.BSD_3_CLAUSE,
+                LicenseType.BSD_2_CLAUSE,
+            ]
 
         @property
         def is_copyleft(self):
@@ -81,14 +85,13 @@ except ImportError:
         def scan_directory(self, path: Path) -> Optional[LicenseInfo]:
             return LicenseInfo(LicenseType.MIT, 0.9, "LICENSE")
 
-        def check_compatibility(self, plugin_license: LicenseType,
-                               dependency_licenses: List[LicenseType]) -> CompatibilityResult:
+        def check_compatibility(
+            self, plugin_license: LicenseType, dependency_licenses: List[LicenseType]
+        ) -> CompatibilityResult:
             for dep in dependency_licenses:
                 if dep.is_copyleft and not plugin_license.is_copyleft:
                     return CompatibilityResult(
-                        is_compatible=False,
-                        issues=["GPL incompatible"],
-                        requires_copyleft=True
+                        is_compatible=False, issues=["GPL incompatible"], requires_copyleft=True
                     )
             return CompatibilityResult(is_compatible=True)
 
@@ -97,6 +100,7 @@ except ImportError:
             class ScanResult:
                 main_license: Optional[LicenseInfo] = None
                 dependency_licenses: List[LicenseInfo] = field(default_factory=list)
+
             return ScanResult(main_license=LicenseInfo(LicenseType.MIT, 0.9, "LICENSE"))
 
 
@@ -111,8 +115,8 @@ class TestLicenseScanner:
     def test_detect_mit_license(self) -> None:
         """Test detection of MIT license."""
         scanner = LicenseScanner()
-        
-        mit_text = '''
+
+        mit_text = """
 MIT License
 
 Copyright (c) 2024 Test Author
@@ -122,62 +126,62 @@ of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software...
-'''
-        
+"""
+
         result = scanner.detect_license(mit_text)
         assert result.license_type == LicenseType.MIT
 
     def test_detect_apache_license(self) -> None:
         """Test detection of Apache 2.0 license."""
         scanner = LicenseScanner()
-        
-        apache_text = '''
+
+        apache_text = """
 Apache License
 Version 2.0, January 2004
 http://www.apache.org/licenses/
 
 TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
-'''
-        
+"""
+
         result = scanner.detect_license(apache_text)
         assert result.license_type == LicenseType.APACHE_2_0
 
     def test_detect_gpl_license(self) -> None:
         """Test detection of GPL license."""
         scanner = LicenseScanner()
-        
-        gpl_text = '''
+
+        gpl_text = """
 GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 
 Copyright (C) 2007 Free Software Foundation, Inc.
-'''
-        
+"""
+
         result = scanner.detect_license(gpl_text)
         assert result.license_type in [LicenseType.GPL_3_0, LicenseType.GPL_2_0]
 
     def test_detect_unknown_license(self) -> None:
         """Test detection of unknown/custom license."""
         scanner = LicenseScanner()
-        
-        custom_text = '''
+
+        custom_text = """
 Custom License Agreement
 This software is licensed under proprietary terms.
 Contact sales@example.com for licensing options.
-'''
-        
+"""
+
         result = scanner.detect_license(custom_text)
         assert result.license_type == LicenseType.UNKNOWN
 
     def test_scan_directory(self) -> None:
         """Test scanning a directory for license files."""
         scanner = LicenseScanner()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create LICENSE file
             license_path = Path(tmpdir) / "LICENSE"
             license_path.write_text("MIT License\n...")
-            
+
             result = scanner.scan_directory(Path(tmpdir))
             assert result is not None
 
@@ -192,7 +196,7 @@ class TestLicenseInfo:
             confidence=0.95,
             source_file="LICENSE",
         )
-        
+
         assert info.license_type == LicenseType.MIT
         assert info.confidence == 0.95
 
@@ -203,7 +207,7 @@ class TestLicenseInfo:
             confidence=0.90,
             source_file="LICENSE.txt",
         )
-        
+
         data = info.to_dict()
         assert data["license_type"] == "apache-2.0"
         assert data["confidence"] == 0.90
@@ -219,7 +223,7 @@ class TestLicenseCompatibility:
             plugin_license=LicenseType.MIT,
             dependency_licenses=[LicenseType.MIT],
         )
-        
+
         assert result.is_compatible
 
     def test_mit_compatible_with_apache(self) -> None:
@@ -229,7 +233,7 @@ class TestLicenseCompatibility:
             plugin_license=LicenseType.MIT,
             dependency_licenses=[LicenseType.APACHE_2_0],
         )
-        
+
         assert result.is_compatible
 
     def test_gpl_copyleft_propagates(self) -> None:
@@ -239,7 +243,7 @@ class TestLicenseCompatibility:
             plugin_license=LicenseType.MIT,
             dependency_licenses=[LicenseType.GPL_3_0],
         )
-        
+
         # GPL dependency requires GPL-compatible output
         assert not result.is_compatible or result.requires_copyleft
 
@@ -250,7 +254,7 @@ class TestLicenseCompatibility:
             plugin_license=LicenseType.PROPRIETARY,
             dependency_licenses=[LicenseType.GPL_3_0],
         )
-        
+
         assert not result.is_compatible
 
 
@@ -264,7 +268,7 @@ class TestCompatibilityResult:
             issues=[],
             recommendations=[],
         )
-        
+
         assert result.is_compatible
         assert len(result.issues) == 0
 
@@ -275,7 +279,7 @@ class TestCompatibilityResult:
             issues=["GPL dependency requires GPL-compatible license"],
             recommendations=["Consider using LGPL or removing GPL dependency"],
         )
-        
+
         assert not result.is_compatible
         assert len(result.issues) == 1
 
@@ -315,17 +319,17 @@ class TestScannerIntegration:
     def test_scan_plugin_with_dependencies(self) -> None:
         """Test scanning plugin with multiple license files."""
         scanner = LicenseScanner()
-        
+
         with tempfile.TemporaryDirectory() as tmpdir:
             # Main plugin license
             (Path(tmpdir) / "LICENSE").write_text("MIT License...")
-            
+
             # Dependency licenses
             deps_dir = Path(tmpdir) / "node_modules" / "some-dep"
             deps_dir.mkdir(parents=True)
             (deps_dir / "LICENSE").write_text("Apache License 2.0...")
-            
+
             result = scanner.scan_plugin(Path(tmpdir))
-            
+
             assert result.main_license is not None
             assert len(result.dependency_licenses) >= 0

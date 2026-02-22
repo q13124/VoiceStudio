@@ -28,10 +28,7 @@ class TestSynthesisPerformance:
         for _ in range(10):
             start = time.perf_counter()
 
-            response = await test_client.post(
-                "/api/v1/synthesis",
-                json=request
-            )
+            response = await test_client.post("/api/v1/synthesis", json=request)
 
             end = time.perf_counter()
 
@@ -64,10 +61,7 @@ class TestSynthesisPerformance:
 
         async def make_request():
             start = time.perf_counter()
-            await test_client.post(
-                "/api/v1/synthesis",
-                json=request
-            )
+            await test_client.post("/api/v1/synthesis", json=request)
             return time.perf_counter() - start
 
         # Check endpoint exists
@@ -100,10 +94,7 @@ class TestSynthesisPerformance:
         }
 
         start = time.perf_counter()
-        response = await test_client.post(
-            "/api/v1/synthesis",
-            json=request
-        )
+        response = await test_client.post("/api/v1/synthesis", json=request)
         duration = time.perf_counter() - start
 
         if response.status_code == 404:

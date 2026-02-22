@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def reset_video_state():
     """Reset video state before each test."""
     from backend.api.routes import video_enhance
+
     video_enhance._enhancement_jobs = {}
     yield
     video_enhance._enhancement_jobs = {}
@@ -22,6 +23,7 @@ def reset_video_state():
 def video_client():
     """Create test client for video enhancement routes."""
     from backend.api.routes.video_enhance import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)

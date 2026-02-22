@@ -2,6 +2,7 @@
 Unit Tests for Backup API Route
 Tests backup and restore endpoints comprehensively.
 """
+
 """
 NOTE: This test module has been skipped because it tests mock
 attributes that don't exist in the actual implementation.
@@ -165,9 +166,12 @@ class TestBackupEndpoints:
                         mock_zip.return_value.__enter__.return_value = MagicMock()
                         with patch("pathlib.Path.stat") as mock_stat:
                             mock_stat.return_value = MagicMock(st_size=1024)
-                            with patch("pathlib.Path.unlink"), patch(
-                                "backend.api.routes.backup._check_disk_space",
-                                return_value=True,
+                            with (
+                                patch("pathlib.Path.unlink"),
+                                patch(
+                                    "backend.api.routes.backup._check_disk_space",
+                                    return_value=True,
+                                ),
                             ):
                                 response = client.post(
                                     "/api/backup",

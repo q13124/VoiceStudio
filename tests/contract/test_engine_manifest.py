@@ -55,28 +55,60 @@ VALID_SUBTYPES = {
 # Valid capability names
 VALID_CAPABILITIES = {
     # Audio capabilities
-    "voice_cloning", "zero_shot_cloning", "multi_language_tts", "emotion_control",
-    "style_transfer", "expressive_speech", "high_quality_synthesis", "streaming",
-    "transcription", "speaker_diarization", "voice_conversion", "singing_voice",
+    "voice_cloning",
+    "zero_shot_cloning",
+    "multi_language_tts",
+    "emotion_control",
+    "style_transfer",
+    "expressive_speech",
+    "high_quality_synthesis",
+    "streaming",
+    "transcription",
+    "speaker_diarization",
+    "voice_conversion",
+    "singing_voice",
     # Image capabilities
-    "text_to_image", "image_to_image", "inpainting", "outpainting",
-    "upscaling", "controlnet", "lora",
+    "text_to_image",
+    "image_to_image",
+    "inpainting",
+    "outpainting",
+    "upscaling",
+    "controlnet",
+    "lora",
     # Video capabilities
-    "face_swap", "lip_sync", "animation", "motion_transfer",
-    "video_generation", "video_editing", "deforum",
+    "face_swap",
+    "lip_sync",
+    "animation",
+    "motion_transfer",
+    "video_generation",
+    "video_editing",
+    "deforum",
 }
 
 # Valid license identifiers
 VALID_LICENSES = {
-    "MIT", "Apache-2.0", "GPL-3.0", "LGPL-3.0", "BSD-3-Clause", "BSD-2-Clause",
-    "MPL-2.0", "CC-BY-4.0", "CC-BY-NC-4.0", "CC0-1.0", "Unlicense",
-    "proprietary", "custom", "AGPL-3.0", "ISC",
+    "MIT",
+    "Apache-2.0",
+    "GPL-3.0",
+    "LGPL-3.0",
+    "BSD-3-Clause",
+    "BSD-2-Clause",
+    "MPL-2.0",
+    "CC-BY-4.0",
+    "CC-BY-NC-4.0",
+    "CC0-1.0",
+    "Unlicense",
+    "proprietary",
+    "custom",
+    "AGPL-3.0",
+    "ISC",
 }
 
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture(scope="module")
 def all_manifests() -> list[tuple[Path, dict[str, Any]]]:
@@ -120,6 +152,7 @@ def video_manifests(all_manifests) -> list[tuple[Path, dict[str, Any]]]:
 # BASIC VALIDATION TESTS
 # =============================================================================
 
+
 @pytest.mark.contract
 class TestManifestDiscovery:
     """Tests for manifest discovery."""
@@ -131,7 +164,9 @@ class TestManifestDiscovery:
     def test_minimum_manifest_count(self, all_manifests):
         """Verify expected number of manifests."""
         # We expect at least 40 manifests based on the directory listing
-        assert len(all_manifests) >= 40, f"Expected at least 40 manifests, found {len(all_manifests)}"
+        assert (
+            len(all_manifests) >= 40
+        ), f"Expected at least 40 manifests, found {len(all_manifests)}"
 
     def test_audio_manifests_exist(self, audio_manifests):
         """Verify audio engine manifests exist."""
@@ -169,7 +204,9 @@ class TestRequiredFields:
         for _path, manifest in all_manifests:
             engine_id = manifest.get("engine_id", "")
             if not re.match(pattern, engine_id):
-                errors.append(f"{engine_id}: invalid format (must be lowercase alphanumeric with underscores)")
+                errors.append(
+                    f"{engine_id}: invalid format (must be lowercase alphanumeric with underscores)"
+                )
 
         assert not errors, "Invalid engine_id format:\n" + "\n".join(errors[:20])
 
@@ -191,6 +228,7 @@ class TestRequiredFields:
         # Advisory: some mismatches may be intentional
         if len(mismatches) > 5:
             import warnings
+
             warnings.warn(f"Engine ID/directory mismatches: {mismatches[:5]}", stacklevel=2)
 
     def test_version_format(self, all_manifests):
@@ -207,6 +245,7 @@ class TestRequiredFields:
         # Allow some non-standard versions
         if len(errors) > 5:
             import warnings
+
             warnings.warn(f"Non-standard versions: {errors[:5]}", stacklevel=2)
 
 
@@ -237,6 +276,7 @@ class TestTypeValidation:
         # Advisory only - allow custom subtypes
         if invalid:
             import warnings
+
             warnings.warn(f"Non-standard audio subtypes: {invalid[:5]}", stacklevel=2)
 
 
@@ -267,6 +307,7 @@ class TestCapabilities:
         # Advisory - some engines may intentionally have no capabilities
         if len(empty) > 5:
             import warnings
+
             warnings.warn(f"Engines with empty capabilities: {empty[:5]}", stacklevel=2)
 
     def test_known_capabilities(self, all_manifests):
@@ -286,12 +327,14 @@ class TestCapabilities:
         # Advisory - allow custom capabilities
         if unknown:
             import warnings
+
             warnings.warn(f"Custom capabilities found: {list(unknown.keys())[:10]}", stacklevel=2)
 
 
 # =============================================================================
 # CONTRACT VALIDATION TESTS
 # =============================================================================
+
 
 @pytest.mark.contract
 class TestContractSchema:
@@ -336,6 +379,7 @@ class TestContractSchema:
         # Advisory only
         if len(errors) > 10:
             import warnings
+
             warnings.warn(f"Input contract issues: {errors[:5]}", stacklevel=2)
 
     def test_output_contract(self, all_manifests):
@@ -359,6 +403,7 @@ class TestContractSchema:
         # Advisory only
         if len(errors) > 10:
             import warnings
+
             warnings.warn(f"Output contract issues: {errors[:5]}", stacklevel=2)
 
     def test_resource_requirements(self, all_manifests):
@@ -462,6 +507,7 @@ class TestConfigSchema:
 # CROSS-MANIFEST CONSISTENCY TESTS
 # =============================================================================
 
+
 @pytest.mark.contract
 class TestCrossManifestConsistency:
     """Tests for consistency across manifests."""
@@ -492,6 +538,7 @@ class TestCrossManifestConsistency:
         # Advisory - allow custom licenses
         if len(non_standard) > 10:
             import warnings
+
             warnings.warn(f"Non-standard licenses: {non_standard[:5]}", stacklevel=2)
 
     def test_python_version_format(self, all_manifests):
@@ -508,6 +555,7 @@ class TestCrossManifestConsistency:
         # Advisory only
         if len(errors) > 5:
             import warnings
+
             warnings.warn(f"Non-standard python_version: {errors[:5]}", stacklevel=2)
 
     def test_audio_sample_rates_consistent(self, audio_manifests):
@@ -532,6 +580,7 @@ class TestCrossManifestConsistency:
 
             if non_standard:
                 import warnings
+
                 warnings.warn(f"Non-standard sample rates: {non_standard}", stacklevel=2)
 
 
@@ -578,12 +627,16 @@ class TestDependencyValidation:
         # Report if there are many different torch versions
         if len(torch_versions) > 5:
             import warnings
-            warnings.warn(f"Multiple torch version requirements: {list(torch_versions.keys())}", stacklevel=2)
+
+            warnings.warn(
+                f"Multiple torch version requirements: {list(torch_versions.keys())}", stacklevel=2
+            )
 
 
 # =============================================================================
 # ENTRY POINT VALIDATION
 # =============================================================================
+
 
 @pytest.mark.contract
 class TestEntryPointValidation:
@@ -602,6 +655,7 @@ class TestEntryPointValidation:
         # Advisory only - some may use different patterns
         if len(errors) > 10:
             import warnings
+
             warnings.warn(f"Non-standard entry points: {errors[:5]}", stacklevel=2)
 
     def test_entry_point_consistency(self, all_manifests):
@@ -625,6 +679,7 @@ class TestEntryPointValidation:
             total = sum(patterns.values())
             if dominant / total < 0.5:
                 import warnings
+
                 warnings.warn(f"Inconsistent entry point patterns: {patterns}", stacklevel=2)
 
 

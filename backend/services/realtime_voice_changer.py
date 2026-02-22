@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 class VoiceEffectType(Enum):
     """Types of voice effects."""
+
     PITCH_SHIFT = "pitch_shift"
     FORMANT_SHIFT = "formant_shift"
     REVERB = "reverb"
@@ -71,6 +72,7 @@ class VoiceEffectType(Enum):
 @dataclass
 class VoiceEffect:
     """A voice effect with parameters."""
+
     effect_id: str
     name: str
     effect_type: VoiceEffectType
@@ -94,6 +96,7 @@ class VoiceEffect:
 @dataclass
 class VoiceChangerSession:
     """Active voice changer session."""
+
     session_id: str
     active_effect: VoiceEffect | None = None
     input_device: str | None = None
@@ -119,6 +122,7 @@ class VoiceChangerSession:
 @dataclass
 class LatencyMetrics:
     """Latency measurement metrics."""
+
     current_ms: float
     average_ms: float
     min_ms: float
@@ -348,6 +352,7 @@ class RealtimeVoiceChangerService:
             # Try to initialize RVC engine for AI voice conversion
             try:
                 from app.core.engines.rvc_engine import RVCEngine
+
                 self._rvc_engine = RVCEngine()
                 self._rvc_engine.initialize()
                 logger.info("RVC engine initialized for real-time conversion")
@@ -605,6 +610,7 @@ class RealtimeVoiceChangerService:
         """Pitch shift audio by semitones."""
         try:
             import librosa
+
             return librosa.effects.pitch_shift(
                 audio,
                 sr=sample_rate,
@@ -627,6 +633,7 @@ class RealtimeVoiceChangerService:
 
             # Envelope follower
             from scipy.signal import hilbert
+
             envelope = np.abs(hilbert(audio))
 
             # Modulate carrier with envelope
@@ -647,7 +654,7 @@ class RealtimeVoiceChangerService:
             impulse = np.exp(-3 * np.arange(decay_time) / decay_time)
             impulse = impulse / np.sum(impulse)
 
-            reverb = np.convolve(audio, impulse, mode='same')
+            reverb = np.convolve(audio, impulse, mode="same")
 
             return (1 - amount) * audio + amount * reverb
         except Exception:
@@ -669,7 +676,7 @@ class RealtimeVoiceChangerService:
                 decay = feedback ** (i + 1)
                 offset = delay_samples * (i + 1)
                 if offset < len(output):
-                    output[offset:] += audio[:len(output) - offset] * decay
+                    output[offset:] += audio[: len(output) - offset] * decay
 
             # Normalize
             max_val = np.max(np.abs(output))
@@ -695,7 +702,7 @@ class RealtimeVoiceChangerService:
             low = low_freq / nyquist
             high = high_freq / nyquist
 
-            b, a = butter(4, [low, high], btype='band')
+            b, a = butter(4, [low, high], btype="band")
             return filtfilt(b, a, audio)
         except Exception:
             return audio
@@ -709,7 +716,8 @@ class RealtimeVoiceChangerService:
 
             # Reduce low frequencies
             from scipy.signal import butter, filtfilt
-            b, a = butter(2, 200 / 24000, btype='high')
+
+            b, a = butter(2, 200 / 24000, btype="high")
             whisper = filtfilt(b, a, whisper)
 
             return whisper
@@ -813,8 +821,13 @@ class RealtimeVoiceChangerService:
 
             # Known virtual audio driver patterns
             virtual_patterns = [
-                "cable", "vb-", "voicemeeter", "virtual",
-                "blackhole", "loopback", "soundflower"
+                "cable",
+                "vb-",
+                "voicemeeter",
+                "virtual",
+                "blackhole",
+                "loopback",
+                "soundflower",
             ]
 
             for device in all_devices:

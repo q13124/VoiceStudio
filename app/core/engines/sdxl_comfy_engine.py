@@ -148,23 +148,15 @@ class SDXLComfyEngine(EngineProtocol):
 
             # Test server connection
             try:
-                response = self.session.get(
-                    f"{self.server_url}/system_stats", timeout=5
-                )
+                response = self.session.get(f"{self.server_url}/system_stats", timeout=5)
                 if response.status_code == 200:
                     logger.info("ComfyUI server connection successful")
                 else:
-                    logger.warning(
-                        f"ComfyUI server returned status " f"{response.status_code}"
-                    )
+                    logger.warning(f"ComfyUI server returned status " f"{response.status_code}")
             except requests.exceptions.RequestException as e:
                 logger.error(f"Failed to connect to ComfyUI server: {e}")
-                logger.error(
-                    f"Make sure ComfyUI server is running at {self.server_url}"
-                )
-                logger.error(
-                    "Install ComfyUI from: " "https://github.com/comfyanonymous/ComfyUI"
-                )
+                logger.error(f"Make sure ComfyUI server is running at {self.server_url}")
+                logger.error("Install ComfyUI from: " "https://github.com/comfyanonymous/ComfyUI")
                 self._initialized = False
                 return False
 
@@ -305,9 +297,7 @@ class SDXLComfyEngine(EngineProtocol):
                 workflow_path = kwargs.get("workflow") or self.workflow_path
                 if workflow_path and os.path.exists(workflow_path):
                     # Check workflow cache
-                    workflow_cache_key = hashlib.sha256(
-                        workflow_path.encode()
-                    ).hexdigest()
+                    workflow_cache_key = hashlib.sha256(workflow_path.encode()).hexdigest()
                     if workflow_cache_key in self._workflow_cache:
                         workflow = self._workflow_cache[workflow_cache_key]
                         self._workflow_cache.move_to_end(workflow_cache_key)
@@ -351,9 +341,7 @@ class SDXLComfyEngine(EngineProtocol):
                 "prompt": workflow,
                 "client_id": self.client_id or "voice_studio",
             }
-            response = self.session.post(
-                f"{self.server_url}/prompt", json=prompt_data, timeout=10
-            )
+            response = self.session.post(f"{self.server_url}/prompt", json=prompt_data, timeout=10)
 
             if response.status_code != 200:
                 logger.error(f"Failed to queue prompt: {response.text}")
@@ -534,11 +522,7 @@ class SDXLComfyEngine(EngineProtocol):
             return {"enabled": False}
 
         total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
-        hit_rate = (
-            (self._cache_stats["hits"] / total_requests * 100)
-            if total_requests > 0
-            else 0.0
-        )
+        hit_rate = (self._cache_stats["hits"] / total_requests * 100) if total_requests > 0 else 0.0
 
         return {
             "enabled": True,
@@ -596,11 +580,7 @@ class SDXLComfyEngine(EngineProtocol):
             },
             ksampler: {
                 "inputs": {
-                    "seed": (
-                        seed
-                        if seed is not None
-                        else int.from_bytes(os.urandom(4), "big")
-                    ),
+                    "seed": (seed if seed is not None else int.from_bytes(os.urandom(4), "big")),
                     "steps": steps,
                     "cfg": cfg_scale,
                     "sampler_name": sampler,
@@ -631,9 +611,7 @@ class SDXLComfyEngine(EngineProtocol):
 
         return workflow
 
-    def _wait_for_completion(
-        self, prompt_id: str, timeout: int = 300
-    ) -> Image.Image | None:
+    def _wait_for_completion(self, prompt_id: str, timeout: int = 300) -> Image.Image | None:
         """Wait for prompt completion and retrieve image."""
         import time
 
@@ -642,9 +620,7 @@ class SDXLComfyEngine(EngineProtocol):
         while time.time() - start_time < timeout:
             # Check history for completed prompt
             try:
-                response = self.session.get(
-                    f"{self.server_url}/history/{prompt_id}", timeout=5
-                )
+                response = self.session.get(f"{self.server_url}/history/{prompt_id}", timeout=5)
                 if response.status_code == 200:
                     history = response.json()
                     if prompt_id in history:
@@ -668,9 +644,7 @@ class SDXLComfyEngine(EngineProtocol):
                                         image_url, params=params, timeout=10
                                     )
                                     if img_response.status_code == 200:
-                                        image = Image.open(
-                                            BytesIO(img_response.content)
-                                        )
+                                        image = Image.open(BytesIO(img_response.content))
                                         return image
 
                         # If we got here, prompt completed but no images found

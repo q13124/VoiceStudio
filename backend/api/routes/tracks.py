@@ -83,17 +83,19 @@ def _track_dict_to_model(track_data: dict) -> AudioTrack:
     """Convert track dict from store to AudioTrack model."""
     clips = []
     for clip_data in track_data.get("clips", []):
-        clips.append(AudioClip(
-            id=clip_data.get("id", ""),
-            name=clip_data.get("name", ""),
-            profile_id=clip_data.get("profile_id", ""),
-            audio_id=clip_data.get("audio_id", ""),
-            audio_url=clip_data.get("audio_url", ""),
-            duration_seconds=clip_data.get("duration_seconds", 0.0),
-            start_time=clip_data.get("start_time", 0.0),
-            engine=clip_data.get("engine"),
-            quality_score=clip_data.get("quality_score"),
-        ))
+        clips.append(
+            AudioClip(
+                id=clip_data.get("id", ""),
+                name=clip_data.get("name", ""),
+                profile_id=clip_data.get("profile_id", ""),
+                audio_id=clip_data.get("audio_id", ""),
+                audio_url=clip_data.get("audio_url", ""),
+                duration_seconds=clip_data.get("duration_seconds", 0.0),
+                start_time=clip_data.get("start_time", 0.0),
+                engine=clip_data.get("engine"),
+                quality_score=clip_data.get("quality_score"),
+            )
+        )
     return AudioTrack(
         id=track_data.get("id", ""),
         name=track_data.get("name", ""),
@@ -124,9 +126,7 @@ def list_tracks(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error listing tracks for project {project_id}: {e!s}", exc_info=True
-        )
+        logger.error(f"Error listing tracks for project {project_id}: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to list tracks: {e!s}")
 
 
@@ -203,9 +203,7 @@ def create_track(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            f"Error creating track in project {project_id}: {e!s}", exc_info=True
-        )
+        logger.error(f"Error creating track in project {project_id}: {e!s}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to create track: {e!s}")
 
 
@@ -227,9 +225,7 @@ def update_track(
 
         track_data = track_store.get_track(project_id, track_id)
         if track_data is None:
-            logger.warning(
-                f"Track not found for update: {track_id} in project: {project_id}"
-            )
+            logger.warning(f"Track not found for update: {track_id} in project: {project_id}")
             raise HTTPException(status_code=404, detail="Track not found")
 
         # Apply updates
@@ -269,9 +265,7 @@ def delete_track(
 
         track_data = track_store.get_track(project_id, track_id)
         if track_data is None:
-            logger.warning(
-                f"Track not found for deletion: {track_id} in project: {project_id}"
-            )
+            logger.warning(f"Track not found for deletion: {track_id} in project: {project_id}")
             raise HTTPException(status_code=404, detail="Track not found")
 
         clip_count = len(track_data.get("clips", []))
@@ -286,9 +280,7 @@ def delete_track(
         # Delete the track from persistent store
         track_store.delete_track(project_id, track_id)
 
-        logger.info(
-            f"Deleted track: {track_id} with {clip_count} clips from project: {project_id}"
-        )
+        logger.info(f"Deleted track: {track_id} with {clip_count} clips from project: {project_id}")
         return ApiOk()
     except HTTPException:
         raise
@@ -393,9 +385,7 @@ def update_clip(
 
         track_data = track_store.get_track(project_id, track_id)
         if track_data is None:
-            logger.warning(
-                f"Track not found for clip update: {track_id} in project: {project_id}"
-            )
+            logger.warning(f"Track not found for clip update: {track_id} in project: {project_id}")
             raise HTTPException(status_code=404, detail="Track not found")
 
         clips = track_data.get("clips", [])
@@ -414,9 +404,7 @@ def update_clip(
         # Save updated clips list
         track_store.update_track(project_id, track_id, {"clips": clips})
 
-        logger.info(
-            f"Updated clip: {clip_id} in track: {track_id} of project: {project_id}"
-        )
+        logger.info(f"Updated clip: {clip_id} in track: {track_id} of project: {project_id}")
         return AudioClip(**clip_data)
     except HTTPException:
         raise
@@ -456,9 +444,7 @@ def delete_clip(
         clip_data = next((c for c in clips if c.get("id") == clip_id), None)
 
         if not clip_data:
-            logger.warning(
-                f"Clip not found for deletion: {clip_id} in track: {track_id}"
-            )
+            logger.warning(f"Clip not found for deletion: {clip_id} in track: {track_id}")
             raise HTTPException(status_code=404, detail="Clip not found")
 
         # Decrement reference count for the audio artifact
@@ -470,9 +456,7 @@ def delete_clip(
         clips = [c for c in clips if c.get("id") != clip_id]
         track_store.update_track(project_id, track_id, {"clips": clips})
 
-        logger.info(
-            f"Deleted clip: {clip_id} from track: {track_id} in project: {project_id}"
-        )
+        logger.info(f"Deleted clip: {clip_id} from track: {track_id} in project: {project_id}")
         return ApiOk()
     except HTTPException:
         raise
@@ -487,6 +471,7 @@ def delete_clip(
 # Undo/Redo endpoints
 class UndoRedoResponse(BaseModel):
     """Response model for undo/redo operations."""
+
     success: bool
     description: str | None = None
     can_undo: bool = False
@@ -500,6 +485,7 @@ _project_histories: dict[str, EditHistoryDep] = {}
 def _get_project_history(project_id: str) -> EditHistoryDep:
     """Get or create EditHistory for a project."""
     from backend.services.edit_history import EditHistory
+
     if project_id not in _project_histories:
         _project_histories[project_id] = EditHistory()
     return _project_histories[project_id]

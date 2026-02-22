@@ -14,6 +14,7 @@ from typing import Any
 
 class InstallPhase(Enum):
     """Phases of plugin installation."""
+
     PREPARING = "preparing"
     DOWNLOADING = "downloading"
     VERIFYING = "verifying"
@@ -28,6 +29,7 @@ class InstallPhase(Enum):
 @dataclass
 class PluginDependency:
     """Plugin dependency specification."""
+
     name: str
     version_spec: str
     optional: bool = False
@@ -36,6 +38,7 @@ class PluginDependency:
 @dataclass
 class PluginVersion:
     """Version information for a plugin."""
+
     version: str
     release_date: str
     download_url: str
@@ -49,6 +52,7 @@ class PluginVersion:
 @dataclass
 class PluginStats:
     """Plugin statistics."""
+
     downloads: int = 0
     rating: float = 0.0
     reviews: int = 0
@@ -57,6 +61,7 @@ class PluginStats:
 @dataclass
 class CatalogPlugin:
     """Plugin entry in the catalog."""
+
     id: str
     name: str
     description: str
@@ -115,6 +120,7 @@ class CatalogPlugin:
 @dataclass
 class CatalogCategory:
     """Catalog category."""
+
     id: str
     name: str
     icon: str = ""
@@ -123,6 +129,7 @@ class CatalogCategory:
 @dataclass
 class PluginCatalog:
     """Full plugin catalog."""
+
     catalog_version: str
     last_updated: str
     plugins: list[CatalogPlugin] = field(default_factory=list)
@@ -140,9 +147,11 @@ class PluginCatalog:
         query_lower = query.lower()
         results = []
         for plugin in self.plugins:
-            if (query_lower in plugin.name.lower() or
-                query_lower in plugin.description.lower() or
-                any(query_lower in tag.lower() for tag in plugin.tags)):
+            if (
+                query_lower in plugin.name.lower()
+                or query_lower in plugin.description.lower()
+                or any(query_lower in tag.lower() for tag in plugin.tags)
+            ):
                 results.append(plugin)
         return results
 
@@ -158,6 +167,7 @@ class PluginCatalog:
 @dataclass
 class InstallProgress:
     """Installation progress information."""
+
     phase: InstallPhase
     progress: float  # 0.0 to 1.0
     current_file: str | None = None
@@ -169,6 +179,7 @@ class InstallProgress:
 @dataclass
 class InstalledPlugin:
     """Information about an installed plugin."""
+
     id: str
     version: str
     installed_at: datetime
@@ -192,6 +203,7 @@ class InstalledPlugin:
 @dataclass
 class DependencyCheckResult:
     """Result of dependency checking."""
+
     satisfied: bool
     missing: list[str] = field(default_factory=list)
     incompatible: list[str] = field(default_factory=list)
@@ -201,6 +213,7 @@ class DependencyCheckResult:
 @dataclass
 class InstallResult:
     """Result of plugin installation."""
+
     success: bool
     plugin_id: str
     version: str
@@ -211,6 +224,7 @@ class InstallResult:
 @dataclass
 class UpdateInfo:
     """Information about an available update."""
+
     plugin_id: str
     current_version: str
     available_version: str

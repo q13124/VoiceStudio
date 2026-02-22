@@ -26,12 +26,8 @@ class TestVoiceCloningWizardRouteImports:
 
     def test_voice_cloning_wizard_module_imports(self):
         """Test voice_cloning_wizard module can be imported."""
-        assert (
-            voice_cloning_wizard is not None
-        ), "Failed to import voice_cloning_wizard module"
-        assert hasattr(
-            voice_cloning_wizard, "router"
-        ), "voice_cloning_wizard module missing router"
+        assert voice_cloning_wizard is not None, "Failed to import voice_cloning_wizard module"
+        assert hasattr(voice_cloning_wizard, "router"), "voice_cloning_wizard module missing router"
 
 
 class TestVoiceCloningWizardRouteHandlers:
@@ -40,9 +36,7 @@ class TestVoiceCloningWizardRouteHandlers:
     def test_start_wizard_handler_exists(self):
         """Test start_wizard handler exists."""
         if hasattr(voice_cloning_wizard, "start_wizard"):
-            assert callable(
-                voice_cloning_wizard.start_wizard
-            ), "start_wizard is not callable"
+            assert callable(voice_cloning_wizard.start_wizard), "start_wizard is not callable"
 
 
 class TestVoiceCloningWizardRouter:
@@ -50,18 +44,14 @@ class TestVoiceCloningWizardRouter:
 
     def test_router_exists(self):
         """Test router exists and is configured."""
-        assert (
-            voice_cloning_wizard.router is not None
-        ), "Router should exist"
+        assert voice_cloning_wizard.router is not None, "Router should exist"
         if hasattr(voice_cloning_wizard.router, "prefix"):
             pass  # Router configuration is valid
 
     def test_router_has_routes(self):
         """Test router has registered routes."""
         if hasattr(voice_cloning_wizard.router, "routes"):
-            routes = [
-                route.path for route in voice_cloning_wizard.router.routes
-            ]
+            routes = [route.path for route in voice_cloning_wizard.router.routes]
             assert len(routes) > 0, "Router should have routes registered"
 
 

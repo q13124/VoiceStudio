@@ -28,16 +28,16 @@ class EngineLoader:
 
     # Engine memory estimates in bytes
     ENGINE_MEMORY_ESTIMATES: dict[str, int] = {
-        "xtts_v2": 4 * 1024 * 1024 * 1024,      # 4 GB
-        "chatterbox": 2 * 1024 * 1024 * 1024,   # 2 GB
-        "bark": 3 * 1024 * 1024 * 1024,         # 3 GB
-        "piper": 512 * 1024 * 1024,             # 512 MB
-        "whisper": 2 * 1024 * 1024 * 1024,      # 2 GB
+        "xtts_v2": 4 * 1024 * 1024 * 1024,  # 4 GB
+        "chatterbox": 2 * 1024 * 1024 * 1024,  # 2 GB
+        "bark": 3 * 1024 * 1024 * 1024,  # 3 GB
+        "piper": 512 * 1024 * 1024,  # 512 MB
+        "whisper": 2 * 1024 * 1024 * 1024,  # 2 GB
         "faster_whisper": 1 * 1024 * 1024 * 1024,  # 1 GB
-        "rvc": 2 * 1024 * 1024 * 1024,          # 2 GB
-        "aeneas": 256 * 1024 * 1024,            # 256 MB
-        "silero": 256 * 1024 * 1024,            # 256 MB
-        "default": 1 * 1024 * 1024 * 1024,      # 1 GB default
+        "rvc": 2 * 1024 * 1024 * 1024,  # 2 GB
+        "aeneas": 256 * 1024 * 1024,  # 256 MB
+        "silero": 256 * 1024 * 1024,  # 256 MB
+        "default": 1 * 1024 * 1024 * 1024,  # 1 GB default
     }
 
     def __init__(self):
@@ -127,8 +127,7 @@ class EngineLoader:
     def estimate_memory(self, engine_type: str) -> int:
         """Estimate memory usage for an engine type."""
         return self.ENGINE_MEMORY_ESTIMATES.get(
-            engine_type,
-            self.ENGINE_MEMORY_ESTIMATES["default"]
+            engine_type, self.ENGINE_MEMORY_ESTIMATES["default"]
         )
 
     # -------------------------------------------------------------------------
@@ -239,6 +238,7 @@ class EngineLoader:
             class_name = f"{engine_type.title().replace('_', '')}Engine"
 
             import importlib
+
             module = importlib.import_module(module_name)
             engine_class = getattr(module, class_name)
 
@@ -266,6 +266,7 @@ class EngineLoader:
             Returns graceful error responses instead of raising exceptions,
             allowing callers to handle engine unavailability gracefully.
             """
+
             def __init__(self, name: str):
                 self.name = name
                 self.is_stub = True

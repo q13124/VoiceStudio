@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 def experiments_client():
     """Create test client for experiments routes."""
     from backend.api.routes.experiments import router
+
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)

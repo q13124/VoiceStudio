@@ -21,7 +21,7 @@ from typing import Generic, TypeVar
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 # =============================================================================
@@ -32,6 +32,7 @@ T = TypeVar('T')
 @dataclass
 class WaitResult(Generic[T]):
     """Result of a wait operation."""
+
     success: bool
     value: T | None = None
     elapsed_seconds: float = 0.0
@@ -47,7 +48,7 @@ class WaitHelper:
         condition: Callable[[], bool],
         timeout: float = 10.0,
         poll_interval: float = 0.5,
-        message: str = "Condition not met"
+        message: str = "Condition not met",
     ) -> WaitResult[bool]:
         """
         Wait until a condition is true.
@@ -72,7 +73,7 @@ class WaitHelper:
                         success=True,
                         value=True,
                         elapsed_seconds=time.time() - start,
-                        attempts=attempts
+                        attempts=attempts,
                     )
             except Exception as e:
                 logger.debug(f"Wait condition check failed: {e}")
@@ -80,18 +81,12 @@ class WaitHelper:
             time.sleep(poll_interval)
 
         return WaitResult(
-            success=False,
-            elapsed_seconds=time.time() - start,
-            attempts=attempts,
-            error=message
+            success=False, elapsed_seconds=time.time() - start, attempts=attempts, error=message
         )
 
     @staticmethod
     def wait_for_value(
-        getter: Callable[[], T],
-        expected: T,
-        timeout: float = 10.0,
-        poll_interval: float = 0.5
+        getter: Callable[[], T], expected: T, timeout: float = 10.0, poll_interval: float = 0.5
     ) -> WaitResult[T]:
         """
         Wait until a getter returns an expected value.
@@ -118,7 +113,7 @@ class WaitHelper:
                         success=True,
                         value=last_value,
                         elapsed_seconds=time.time() - start,
-                        attempts=attempts
+                        attempts=attempts,
                     )
             except Exception as e:
                 logger.debug(f"Wait value check failed: {e}")
@@ -130,14 +125,12 @@ class WaitHelper:
             value=last_value,
             elapsed_seconds=time.time() - start,
             attempts=attempts,
-            error=f"Expected {expected}, got {last_value}"
+            error=f"Expected {expected}, got {last_value}",
         )
 
     @staticmethod
     def wait_for_not_none(
-        getter: Callable[[], T | None],
-        timeout: float = 10.0,
-        poll_interval: float = 0.5
+        getter: Callable[[], T | None], timeout: float = 10.0, poll_interval: float = 0.5
     ) -> WaitResult[T]:
         """Wait until a getter returns a non-None value."""
         start = time.time()
@@ -152,7 +145,7 @@ class WaitHelper:
                         success=True,
                         value=value,
                         elapsed_seconds=time.time() - start,
-                        attempts=attempts
+                        attempts=attempts,
                     )
             except Exception as e:
                 logger.debug(f"Wait check failed: {e}")
@@ -163,7 +156,7 @@ class WaitHelper:
             success=False,
             elapsed_seconds=time.time() - start,
             attempts=attempts,
-            error="Value remained None"
+            error="Value remained None",
         )
 
 
@@ -186,12 +179,7 @@ class ScreenshotHelper:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self._screenshot_count = 0
 
-    def capture(
-        self,
-        driver,
-        name: str,
-        include_timestamp: bool = True
-    ) -> Path | None:
+    def capture(self, driver, name: str, include_timestamp: bool = True) -> Path | None:
         """
         Capture a screenshot.
 
@@ -257,7 +245,7 @@ class RetryHelper:
         delay: float = 1.0,
         backoff: float = 2.0,
         exceptions: tuple = (Exception,),
-        on_retry: Callable[[int, Exception], None] | None = None
+        on_retry: Callable[[int, Exception], None] | None = None,
     ) -> T:
         """
         Retry a function until it succeeds or max attempts reached.
@@ -301,9 +289,10 @@ def retry_decorator(
     max_attempts: int = 3,
     delay: float = 1.0,
     backoff: float = 2.0,
-    exceptions: tuple = (Exception,)
+    exceptions: tuple = (Exception,),
 ):
     """Decorator for retry logic."""
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -312,9 +301,11 @@ def retry_decorator(
                 max_attempts=max_attempts,
                 delay=delay,
                 backoff=backoff,
-                exceptions=exceptions
+                exceptions=exceptions,
             )
+
         return wrapper
+
     return decorator
 
 
@@ -357,11 +348,7 @@ class TestDataHelper:
         return {
             "name": TestDataHelper.unique_name("Project"),
             "description": "Test project for E2E testing",
-            "settings": {
-                "language": "en",
-                "sample_rate": 22050,
-                "format": "wav"
-            }
+            "settings": {"language": "en", "sample_rate": 22050, "format": "wav"},
         }
 
     @staticmethod
@@ -372,7 +359,7 @@ class TestDataHelper:
             "description": "Test voice profile",
             "language": "en",
             "gender": "neutral",
-            "tags": ["test", "e2e"]
+            "tags": ["test", "e2e"],
         }
 
 

@@ -38,8 +38,10 @@ try:
     HAS_TQDM = True
 except ImportError:
     HAS_TQDM = False
+
     def tqdm(x, **kwargs):
         return x  # No-op if tqdm not available
+
     logger.debug("tqdm not available. Progress bars will be disabled.")
 
 
@@ -279,12 +281,8 @@ def calculate_quality_metrics_batch(
 
             if metrics_list:
                 df = pd.DataFrame(metrics_list)
-                summary["average_metrics"] = (
-                    df.select_dtypes(include=[np.number]).mean().to_dict()
-                )
-                summary["std_metrics"] = (
-                    df.select_dtypes(include=[np.number]).std().to_dict()
-                )
+                summary["average_metrics"] = df.select_dtypes(include=[np.number]).mean().to_dict()
+                summary["std_metrics"] = df.select_dtypes(include=[np.number]).std().to_dict()
     except ImportError:
         logger.debug("pandas not available for batch metric summaries")
 
@@ -347,9 +345,7 @@ def calculate_quality_metrics_batch_optimized(
 
     # Process with joblib
     results_list = Parallel(n_jobs=-1, batch_size=batch_size, verbose=0)(
-        delayed(_process_single_audio)(
-            audio_path, reference_path, sample_rate, use_cache
-        )
+        delayed(_process_single_audio)(audio_path, reference_path, sample_rate, use_cache)
         for audio_path, reference_path in tasks
     )
 

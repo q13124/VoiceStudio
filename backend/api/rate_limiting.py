@@ -58,7 +58,7 @@ class RateLimiter:
                 if count >= self.requests_per_minute:
                     raise HTTPException(
                         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                        detail=f"Rate limit exceeded: {self.requests_per_minute} requests per minute"
+                        detail=f"Rate limit exceeded: {self.requests_per_minute} requests per minute",
                     )
                 ip_data[minute_key] = (last_time, count + 1)
             else:
@@ -74,7 +74,7 @@ class RateLimiter:
                 if count >= self.requests_per_hour:
                     raise HTTPException(
                         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                        detail=f"Rate limit exceeded: {self.requests_per_hour} requests per hour"
+                        detail=f"Rate limit exceeded: {self.requests_per_hour} requests per hour",
                     )
                 ip_data[hour_key] = (last_time, count + 1)
             else:
@@ -104,20 +104,16 @@ class RateLimiter:
 
 
 # Default rate limiter instance
-default_rate_limiter = RateLimiter(
-    requests_per_minute=60,
-    requests_per_hour=1000
-)
+default_rate_limiter = RateLimiter(requests_per_minute=60, requests_per_hour=1000)
 
 # Rate limiters for specific endpoints
 synthesis_rate_limiter = RateLimiter(
     requests_per_minute=30,  # Lower limit for synthesis (more resource-intensive)
-    requests_per_hour=500
+    requests_per_hour=500,
 )
 
 training_rate_limiter = RateLimiter(
-    requests_per_minute=10,  # Very low limit for training
-    requests_per_hour=50
+    requests_per_minute=10, requests_per_hour=50  # Very low limit for training
 )
 
 
@@ -135,8 +131,8 @@ def rate_limit_middleware(request: Request, call_next):
 
     # Cleanup old entries periodically (every 100 requests, roughly)
     import random
+
     if random.random() < 0.01:  # 1% chance
         default_rate_limiter.cleanup_old_entries()
 
     return call_next(request)
-

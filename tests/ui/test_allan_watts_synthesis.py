@@ -51,6 +51,7 @@ pytestmark = [
 # Fixtures
 # =============================================================================
 
+
 @pytest.fixture(scope="module")
 def tracer():
     """Create a workflow tracer for synthesis tests."""
@@ -71,6 +72,7 @@ def api_monitor():
 @pytest.fixture
 def navigate_to_synthesis(driver, app_launched, tracer):
     """Navigate to Voice Synthesis panel and return success status."""
+
     def _navigate():
         tracer.start_panel_transition("unknown", "VoiceSynthesis")
 
@@ -100,6 +102,7 @@ def navigate_to_synthesis(driver, app_launched, tracer):
 # =============================================================================
 # Panel Navigation Tests
 # =============================================================================
+
 
 class TestSynthesisNavigation:
     """Test Voice Synthesis panel navigation."""
@@ -149,6 +152,7 @@ class TestSynthesisNavigation:
 # Panel Elements Tests
 # =============================================================================
 
+
 class TestSynthesisElements:
     """Test Voice Synthesis panel UI elements."""
 
@@ -180,7 +184,10 @@ class TestSynthesisElements:
             tracer.success("Text input exists")
         except RuntimeError:
             try:
-                text_input = driver.find_element("xpath", "//*[contains(@AutomationId, 'Text') and contains(@ClassName, 'TextBox')]")
+                text_input = driver.find_element(
+                    "xpath",
+                    "//*[contains(@AutomationId, 'Text') and contains(@ClassName, 'TextBox')]",
+                )
                 tracer.step("Text input found with xpath")
                 tracer.success("Text input exists (xpath)")
             except RuntimeError as e:
@@ -195,13 +202,17 @@ class TestSynthesisElements:
         navigate_to_synthesis()
 
         try:
-            synth_button = driver.find_element("accessibility id", "VoiceSynthesisView_SynthesizeButton")
+            synth_button = driver.find_element(
+                "accessibility id", "VoiceSynthesisView_SynthesizeButton"
+            )
             assert synth_button is not None
             tracer.step("Synthesize button found")
             tracer.success("Synthesize button exists")
         except RuntimeError:
             try:
-                synth_button = driver.find_element("xpath", "//*[contains(@Name, 'Synthesize') or contains(@Name, 'Generate')]")
+                synth_button = driver.find_element(
+                    "xpath", "//*[contains(@Name, 'Synthesize') or contains(@Name, 'Generate')]"
+                )
                 tracer.step("Synthesize button found with xpath")
                 tracer.success("Synthesize button exists (xpath)")
             except RuntimeError as e:
@@ -230,7 +241,10 @@ class TestSynthesisElements:
 
         # Try xpath
         try:
-            driver.find_element("xpath", "//*[contains(@AutomationId, 'Voice') and contains(@ClassName, 'ComboBox')]")
+            driver.find_element(
+                "xpath",
+                "//*[contains(@AutomationId, 'Voice') and contains(@ClassName, 'ComboBox')]",
+            )
             tracer.step("Voice selector found with xpath")
             tracer.success("Voice selector exists (xpath)")
         except RuntimeError:
@@ -248,7 +262,10 @@ class TestSynthesisElements:
             tracer.success("Engine selector exists")
         except RuntimeError:
             try:
-                driver.find_element("xpath", "//*[contains(@AutomationId, 'Engine') and contains(@ClassName, 'ComboBox')]")
+                driver.find_element(
+                    "xpath",
+                    "//*[contains(@AutomationId, 'Engine') and contains(@ClassName, 'ComboBox')]",
+                )
                 tracer.step("Engine selector found with xpath")
                 tracer.success("Engine selector exists (xpath)")
             except RuntimeError:
@@ -259,6 +276,7 @@ class TestSynthesisElements:
 # =============================================================================
 # Text Input Tests
 # =============================================================================
+
 
 class TestTextInput:
     """Test text input functionality."""
@@ -340,6 +358,7 @@ class TestTextInput:
 # API Integration Tests
 # =============================================================================
 
+
 class TestSynthesisAPI:
     """Test voice synthesis API endpoints."""
 
@@ -387,9 +406,12 @@ class TestSynthesisAPI:
 
         try:
             # Test with minimal payload to verify endpoint exists
-            response = api_monitor.post("/api/v3/synthesize", json={
-                "text": SYNTHESIS_TEST_TEXTS["simple"],
-            })
+            response = api_monitor.post(
+                "/api/v3/synthesize",
+                json={
+                    "text": SYNTHESIS_TEST_TEXTS["simple"],
+                },
+            )
             tracer.api_call("POST", "/api/v3/synthesize", response)
 
             if response.status_code in [400, 422]:
@@ -406,10 +428,13 @@ class TestSynthesisAPI:
         tracer.step("Testing synthesis with engine parameter")
 
         try:
-            response = api_monitor.post("/api/v3/synthesize", json={
-                "text": SYNTHESIS_TEST_TEXTS["simple"],
-                "engine": "piper",  # Common engine
-            })
+            response = api_monitor.post(
+                "/api/v3/synthesize",
+                json={
+                    "text": SYNTHESIS_TEST_TEXTS["simple"],
+                    "engine": "piper",  # Common engine
+                },
+            )
             tracer.api_call("POST", "/api/v3/synthesize (with engine)", response)
 
             tracer.step(f"Synthesis with engine: status {response.status_code}")
@@ -421,6 +446,7 @@ class TestSynthesisAPI:
 # =============================================================================
 # Workflow Tests
 # =============================================================================
+
 
 class TestSynthesisWorkflow:
     """Test complete synthesis workflow."""
@@ -447,21 +473,29 @@ class TestSynthesisWorkflow:
 
         # Check text input
         try:
-            driver.find_element("xpath", "//*[contains(@AutomationId, 'Text') and contains(@ClassName, 'TextBox')]")
+            driver.find_element(
+                "xpath", "//*[contains(@AutomationId, 'Text') and contains(@ClassName, 'TextBox')]"
+            )
             workflow_elements["text_input"] = True
         except RuntimeError:
             pass
 
         # Check voice selector
         try:
-            driver.find_element("xpath", "//*[contains(@AutomationId, 'Voice') and contains(@ClassName, 'ComboBox')]")
+            driver.find_element(
+                "xpath",
+                "//*[contains(@AutomationId, 'Voice') and contains(@ClassName, 'ComboBox')]",
+            )
             workflow_elements["voice_selector"] = True
         except RuntimeError:
             pass
 
         # Check synthesize button
         try:
-            driver.find_element("xpath", "//*[contains(@Name, 'Synthesize') or contains(@AutomationId, 'Synthesize')]")
+            driver.find_element(
+                "xpath",
+                "//*[contains(@Name, 'Synthesize') or contains(@AutomationId, 'Synthesize')]",
+            )
             workflow_elements["synthesize_button"] = True
         except RuntimeError:
             pass
@@ -479,6 +513,7 @@ class TestSynthesisWorkflow:
 # Integration Tests
 # =============================================================================
 
+
 class TestSynthesisIntegration:
     """Test synthesis integration with other panels."""
 
@@ -494,8 +529,8 @@ class TestSynthesisIntegration:
             target_panel="Library",
             payload={
                 "action": "add_to_library",
-                "expected_data": ["audio_path", "duration", "text_used", "voice_used"]
-            }
+                "expected_data": ["audio_path", "duration", "text_used", "voice_used"],
+            },
         )
 
         tracer.step("Synthesis-completed event documented")
@@ -513,8 +548,8 @@ class TestSynthesisIntegration:
             target_panel="Timeline",
             payload={
                 "action": "add_synthesis_to_timeline",
-                "expected_data": ["audio_path", "start_time", "track"]
-            }
+                "expected_data": ["audio_path", "start_time", "track"],
+            },
         )
 
         tracer.step("Synthesis-to-timeline event documented")
@@ -525,6 +560,7 @@ class TestSynthesisIntegration:
 # Error Handling Tests
 # =============================================================================
 
+
 class TestSynthesisErrors:
     """Test synthesis error handling."""
 
@@ -534,9 +570,12 @@ class TestSynthesisErrors:
         tracer.step("Testing synthesis with empty text")
 
         try:
-            response = api_monitor.post("/api/v3/synthesize", json={
-                "text": "",
-            })
+            response = api_monitor.post(
+                "/api/v3/synthesize",
+                json={
+                    "text": "",
+                },
+            )
             tracer.api_call("POST", "/api/v3/synthesize (empty)", response)
 
             if response.status_code in [400, 422]:
@@ -553,10 +592,13 @@ class TestSynthesisErrors:
         tracer.step("Testing synthesis with invalid voice")
 
         try:
-            response = api_monitor.post("/api/v3/synthesize", json={
-                "text": SYNTHESIS_TEST_TEXTS["simple"],
-                "voice": "nonexistent_voice_xyz",
-            })
+            response = api_monitor.post(
+                "/api/v3/synthesize",
+                json={
+                    "text": SYNTHESIS_TEST_TEXTS["simple"],
+                    "voice": "nonexistent_voice_xyz",
+                },
+            )
             tracer.api_call("POST", "/api/v3/synthesize (invalid voice)", response)
 
             if response.status_code in [400, 404, 422]:
@@ -574,9 +616,12 @@ class TestSynthesisErrors:
         tracer.step(f"Long text length: {len(long_text)} characters")
 
         try:
-            response = api_monitor.post("/api/v3/synthesize", json={
-                "text": long_text,
-            })
+            response = api_monitor.post(
+                "/api/v3/synthesize",
+                json={
+                    "text": long_text,
+                },
+            )
             tracer.api_call("POST", "/api/v3/synthesize (long)", response)
 
             tracer.step(f"Long text response: {response.status_code}")
@@ -590,11 +635,14 @@ class TestSynthesisErrors:
 # =============================================================================
 
 if __name__ == "__main__":
-    pytest.main([
-        __file__,
-        "-v",
-        "--tb=short",
-        "-m", "not slow",
-        "--html=.buildlogs/validation/reports/allan_watts_synthesis_report.html",
-        "--self-contained-html",
-    ])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--tb=short",
+            "-m",
+            "not slow",
+            "--html=.buildlogs/validation/reports/allan_watts_synthesis_report.html",
+            "--self-contained-html",
+        ]
+    )

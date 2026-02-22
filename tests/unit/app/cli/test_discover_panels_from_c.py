@@ -15,9 +15,7 @@ sys.path.insert(0, str(project_root))
 try:
     from app.cli import discover_panels_from_c
 except ImportError:
-    pytest.skip(
-        "Could not import discover_panels_from_c", allow_module_level=True
-    )
+    pytest.skip("Could not import discover_panels_from_c", allow_module_level=True)
 
 
 class TestDiscoverPanelsFromCImports:
@@ -25,9 +23,7 @@ class TestDiscoverPanelsFromCImports:
 
     def test_module_imports(self):
         """Test module can be imported."""
-        assert (
-            discover_panels_from_c is not None
-        ), "Failed to import discover_panels_from_c module"
+        assert discover_panels_from_c is not None, "Failed to import discover_panels_from_c module"
 
     def test_module_has_functions(self):
         """Test module has expected functions."""
@@ -37,4 +33,3 @@ class TestDiscoverPanelsFromCImports:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -39,9 +39,7 @@ def audit_all_engines(
         raise
     except Exception as e:
         logger.error(f"Failed to audit engines: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to audit engines: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to audit engines: {e!s}")
 
 
 @router.get("/summary", summary="Get audit summary")
@@ -63,9 +61,7 @@ def get_audit_summary(
         raise
     except Exception as e:
         logger.error(f"Failed to get audit summary: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get audit summary: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to get audit summary: {e!s}")
 
 
 @router.get("/needing-attention", summary="Get engines needing attention")
@@ -158,6 +154,4 @@ def generate_enhancement_report(
         raise
     except Exception as e:
         logger.error(f"Failed to generate report: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to generate report: {e!s}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to generate report: {e!s}")

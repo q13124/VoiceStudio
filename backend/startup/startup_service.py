@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class StartupPhase(Enum):
     """Startup phases."""
+
     INITIALIZING = "initializing"
     LOADING_CONFIG = "loading_config"
     CHECKING_PREREQUISITES = "checking_prerequisites"
@@ -31,6 +32,7 @@ class StartupPhase(Enum):
 @dataclass
 class StartupProgress:
     """Startup progress information."""
+
     phase: StartupPhase
     progress_percent: float = 0.0
     message: str = ""
@@ -42,6 +44,7 @@ class StartupProgress:
 @dataclass
 class StartupResult:
     """Result of startup process."""
+
     success: bool
     duration_seconds: float
     phases_completed: list[StartupPhase]
@@ -52,6 +55,7 @@ class StartupResult:
 @dataclass
 class StartupConfig:
     """Startup configuration."""
+
     skip_engine_loading: bool = False
     skip_backend_connection: bool = False
     skip_state_restore: bool = False
@@ -68,7 +72,7 @@ class StartupTask:
         phase: StartupPhase,
         func: Callable[[], Any],
         required: bool = True,
-        timeout: float = 30.0
+        timeout: float = 30.0,
     ):
         self.name = name
         self.phase = phase
@@ -152,7 +156,7 @@ class StartupService:
                         self._update_progress(
                             phase,
                             f"Completed {task.name}",
-                            progress=completed_tasks / total_tasks * 100
+                            progress=completed_tasks / total_tasks * 100,
                         )
 
                 # Check for errors
@@ -215,12 +219,7 @@ class StartupService:
 
         return bool(phase == StartupPhase.RESTORING_STATE and self._config.skip_state_restore)
 
-    def _update_progress(
-        self,
-        phase: StartupPhase,
-        message: str,
-        progress: float = 0.0
-    ) -> None:
+    def _update_progress(self, phase: StartupPhase, message: str, progress: float = 0.0) -> None:
         """Update startup progress."""
         self._progress.phase = phase
         self._progress.message = message
@@ -238,64 +237,80 @@ def create_default_startup_tasks() -> list[StartupTask]:
     tasks = []
 
     # Config loading
-    tasks.append(StartupTask(
-        name="Load configuration",
-        phase=StartupPhase.LOADING_CONFIG,
-        func=lambda: None,  # Placeholder
-        required=True,
-    ))
+    tasks.append(
+        StartupTask(
+            name="Load configuration",
+            phase=StartupPhase.LOADING_CONFIG,
+            func=lambda: None,  # Placeholder
+            required=True,
+        )
+    )
 
-    tasks.append(StartupTask(
-        name="Load user preferences",
-        phase=StartupPhase.LOADING_CONFIG,
-        func=lambda: None,
-        required=False,
-    ))
+    tasks.append(
+        StartupTask(
+            name="Load user preferences",
+            phase=StartupPhase.LOADING_CONFIG,
+            func=lambda: None,
+            required=False,
+        )
+    )
 
     # Prerequisites
-    tasks.append(StartupTask(
-        name="Check Python environment",
-        phase=StartupPhase.CHECKING_PREREQUISITES,
-        func=lambda: None,
-        required=True,
-    ))
+    tasks.append(
+        StartupTask(
+            name="Check Python environment",
+            phase=StartupPhase.CHECKING_PREREQUISITES,
+            func=lambda: None,
+            required=True,
+        )
+    )
 
-    tasks.append(StartupTask(
-        name="Check GPU availability",
-        phase=StartupPhase.CHECKING_PREREQUISITES,
-        func=lambda: None,
-        required=False,
-    ))
+    tasks.append(
+        StartupTask(
+            name="Check GPU availability",
+            phase=StartupPhase.CHECKING_PREREQUISITES,
+            func=lambda: None,
+            required=False,
+        )
+    )
 
     # Engines
-    tasks.append(StartupTask(
-        name="Initialize voice engines",
-        phase=StartupPhase.LOADING_ENGINES,
-        func=lambda: None,
-        required=True,
-    ))
+    tasks.append(
+        StartupTask(
+            name="Initialize voice engines",
+            phase=StartupPhase.LOADING_ENGINES,
+            func=lambda: None,
+            required=True,
+        )
+    )
 
-    tasks.append(StartupTask(
-        name="Load voice models",
-        phase=StartupPhase.LOADING_ENGINES,
-        func=lambda: None,
-        required=False,
-    ))
+    tasks.append(
+        StartupTask(
+            name="Load voice models",
+            phase=StartupPhase.LOADING_ENGINES,
+            func=lambda: None,
+            required=False,
+        )
+    )
 
     # Backend
-    tasks.append(StartupTask(
-        name="Start backend server",
-        phase=StartupPhase.CONNECTING_BACKEND,
-        func=lambda: None,
-        required=True,
-    ))
+    tasks.append(
+        StartupTask(
+            name="Start backend server",
+            phase=StartupPhase.CONNECTING_BACKEND,
+            func=lambda: None,
+            required=True,
+        )
+    )
 
     # State
-    tasks.append(StartupTask(
-        name="Restore last session",
-        phase=StartupPhase.RESTORING_STATE,
-        func=lambda: None,
-        required=False,
-    ))
+    tasks.append(
+        StartupTask(
+            name="Restore last session",
+            phase=StartupPhase.RESTORING_STATE,
+            func=lambda: None,
+            required=False,
+        )
+    )
 
     return tasks

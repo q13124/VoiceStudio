@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EffectConfig:
     """Base configuration for effects."""
+
     enabled: bool = True
     wet_mix: float = 1.0  # 0-1, wet/dry mix
 
@@ -199,8 +200,5 @@ class EffectsChain:
         """Get configuration for entire chain."""
         return {
             "bypassed": self._bypassed,
-            "effects": [
-                {"name": e.name, **e.get_config()}
-                for e in self._effects
-            ],
+            "effects": [{"name": e.name, **e.get_config()} for e in self._effects],
         }

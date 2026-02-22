@@ -319,7 +319,7 @@ class TestSBOM:
         basic_sbom.add_component(basic_component)
         xml_str = basic_sbom.to_xml()
 
-        assert '<?xml version' in xml_str
+        assert "<?xml version" in xml_str
         assert "cyclonedx.org" in xml_str
         assert "requests" in xml_str
 
@@ -427,6 +427,7 @@ class TestSBOMGenerator:
     @patch("backend.plugins.supply_chain.sbom.subprocess.run")
     def test_generate_with_transitive(self, mock_run, plugin_with_requirements):
         """Test generating SBOM with transitive dependencies."""
+
         # Mock pip freeze and pip show
         def run_side_effect(*args, **kwargs):
             cmd = args[0]
@@ -434,18 +435,10 @@ class TestSBOMGenerator:
 
             if "freeze" in cmd:
                 result.returncode = 0
-                result.stdout = (
-                    "requests==2.28.0\n"
-                    "urllib3==2.0.0\n"
-                    "certifi==2023.7.0\n"
-                )
+                result.stdout = "requests==2.28.0\n" "urllib3==2.0.0\n" "certifi==2023.7.0\n"
             elif "show" in cmd:
                 result.returncode = 0
-                result.stdout = (
-                    "Name: test\n"
-                    "Version: 1.0.0\n"
-                    "License: MIT\n"
-                )
+                result.stdout = "Name: test\n" "Version: 1.0.0\n" "License: MIT\n"
             else:
                 result.returncode = 1
                 result.stdout = ""
@@ -532,9 +525,7 @@ class TestConvenienceFunctions:
             "specVersion": "1.5",
             "version": 1,
             "serialNumber": "urn:uuid:12345",
-            "components": [
-                {"name": "test", "version": "1.0.0", "type": "library"}
-            ],
+            "components": [{"name": "test", "version": "1.0.0", "type": "library"}],
         }
 
         sbom_path = tmp_path / "test-sbom.json"

@@ -92,6 +92,7 @@ class AuditLogger:
         """Initialize the issue bridge for automatic issue creation."""
         try:
             from .issue_bridge import get_audit_issue_bridge
+
             self._issue_bridge = get_audit_issue_bridge()
         except ImportError:
             self._issue_bridge = None

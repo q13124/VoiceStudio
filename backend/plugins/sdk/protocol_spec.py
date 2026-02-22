@@ -176,8 +176,7 @@ class ProtocolSpec:
         if self._spec_path.suffix in (".yaml", ".yml"):
             if not YAML_AVAILABLE:
                 raise ImportError(
-                    "PyYAML is required to load YAML specs. "
-                    "Install with: pip install pyyaml"
+                    "PyYAML is required to load YAML specs. " "Install with: pip install pyyaml"
                 )
             self._spec = yaml.safe_load(content)
         else:
@@ -312,9 +311,7 @@ class ProtocolSpec:
     def get_notification_methods(self) -> dict[str, MethodSpec]:
         """Get notification methods (no response expected)."""
         self._ensure_loaded()
-        return {
-            name: spec for name, spec in self._methods.items() if spec.is_notification
-        }
+        return {name: spec for name, spec in self._methods.items() if spec.is_notification}
 
     def get_schemas(self) -> dict[str, SchemaSpec]:
         """Get all schema specifications."""

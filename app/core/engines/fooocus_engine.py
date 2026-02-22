@@ -77,16 +77,12 @@ class FooocusEngine(EngineProtocol):
                         self._initialized = True
                         return True
                     else:
-                        logger.error(
-                            f"Fooocus server returned status {response.status_code}"
-                        )
+                        logger.error(f"Fooocus server returned status {response.status_code}")
                         self._initialized = False
                         return False
             except requests.exceptions.RequestException as e:
                 logger.error(f"Failed to connect to Fooocus server: {e}")
-                logger.error(
-                    f"Make sure Fooocus server is running at {self.server_url}"
-                )
+                logger.error(f"Make sure Fooocus server is running at {self.server_url}")
                 logger.error("Install from: https://github.com/lllyasviel/Fooocus")
                 self._initialized = False
                 return False
@@ -148,9 +144,7 @@ class FooocusEngine(EngineProtocol):
             # Extract image from response (format may vary)
             image = None
             if "data" in result and len(result["data"]) > 0:
-                image_data = result["data"][0].get("url") or result["data"][0].get(
-                    "b64_json"
-                )
+                image_data = result["data"][0].get("url") or result["data"][0].get("b64_json")
                 if image_data:
                     if image_data.startswith("data:image"):
                         image_data = image_data.split(",")[1]
@@ -191,9 +185,7 @@ class FooocusEngine(EngineProtocol):
     def get_info(self) -> dict:
         """Get engine information."""
         info = super().get_info()
-        info.update(
-            {"server_url": self.server_url, "supported_formats": self.SUPPORTED_FORMATS}
-        )
+        info.update({"server_url": self.server_url, "supported_formats": self.SUPPORTED_FORMATS})
         return info
 
 

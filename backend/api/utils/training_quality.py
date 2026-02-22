@@ -12,7 +12,7 @@ def calculate_quality_score_from_loss(
     training_loss: float,
     validation_loss: float | None = None,
     min_loss: float = 0.0,
-    max_loss: float = 10.0
+    max_loss: float = 10.0,
 ) -> float:
     """
     Estimate quality score from training/validation loss.
@@ -43,9 +43,7 @@ def calculate_quality_score_from_loss(
 
 
 def detect_quality_degradation(
-    quality_history: list[dict],
-    current_epoch: int,
-    threshold: float = 0.05
+    quality_history: list[dict], current_epoch: int, threshold: float = 0.05
 ) -> dict | None:
     """
     Detect quality degradation in training.
@@ -87,7 +85,7 @@ def detect_quality_degradation(
             "severity": "warning",
             "message": f"Quality degraded by {((avg_recent_quality - current_quality) * 100):.1f}% at epoch {current_epoch}",
             "epoch": current_epoch,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     return None
@@ -97,7 +95,7 @@ def detect_quality_plateau(
     quality_history: list[dict],
     current_epoch: int,
     plateau_epochs: int = 10,
-    improvement_threshold: float = 0.01
+    improvement_threshold: float = 0.01,
 ) -> dict | None:
     """
     Detect quality plateau in training.
@@ -139,16 +137,14 @@ def detect_quality_plateau(
             "severity": "info",
             "message": f"Quality plateau detected - no significant improvement for {plateau_epochs} epochs",
             "epoch": current_epoch,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     return None
 
 
 def detect_overfitting(
-    quality_history: list[dict],
-    current_epoch: int,
-    check_epochs: int = 5
+    quality_history: list[dict], current_epoch: int, check_epochs: int = 5
 ) -> dict | None:
     """
     Detect overfitting in training.
@@ -170,24 +166,17 @@ def detect_overfitting(
     recent_metrics = quality_history[-check_epochs:]
 
     # Check if we have validation loss data
-    has_validation_loss = any(
-        m.get("validation_loss") is not None
-        for m in recent_metrics
-    )
+    has_validation_loss = any(m.get("validation_loss") is not None for m in recent_metrics)
 
     if not has_validation_loss:
         return None
 
     # Get training and validation losses
     training_losses = [
-        m.get("training_loss")
-        for m in recent_metrics
-        if m.get("training_loss") is not None
+        m.get("training_loss") for m in recent_metrics if m.get("training_loss") is not None
     ]
     validation_losses = [
-        m.get("validation_loss")
-        for m in recent_metrics
-        if m.get("validation_loss") is not None
+        m.get("validation_loss") for m in recent_metrics if m.get("validation_loss") is not None
     ]
 
     if len(training_losses) < check_epochs or len(validation_losses) < check_epochs:
@@ -203,7 +192,7 @@ def detect_overfitting(
             "severity": "warning",
             "message": f"Overfitting detected - training improving but validation worsening at epoch {current_epoch}",
             "epoch": current_epoch,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     return None
@@ -214,7 +203,7 @@ def recommend_early_stopping(
     current_epoch: int,
     total_epochs: int,
     plateau_epochs: int = 15,
-    improvement_threshold: float = 0.01
+    improvement_threshold: float = 0.01,
 ) -> dict:
     """
     Recommend early stopping based on quality metrics.
@@ -242,7 +231,7 @@ def recommend_early_stopping(
             "confidence": 0.0,
             "current_epoch": current_epoch,
             "best_epoch": None,
-            "best_metrics": None
+            "best_metrics": None,
         }
 
     # Find best quality epoch
@@ -285,6 +274,5 @@ def recommend_early_stopping(
         "confidence": confidence,
         "current_epoch": current_epoch,
         "best_epoch": best_epoch,
-        "best_metrics": best_metrics
+        "best_metrics": best_metrics,
     }
-

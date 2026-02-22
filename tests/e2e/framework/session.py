@@ -16,6 +16,7 @@ from typing import Any
 
 try:
     import psutil
+
     HAS_PSUTIL = True
 except ImportError:
     HAS_PSUTIL = False
@@ -23,6 +24,7 @@ except ImportError:
 
 try:
     from pywinauto import Application, findwindows
+
     HAS_PYWINAUTO = True
 except ImportError:
     HAS_PYWINAUTO = False
@@ -94,8 +96,7 @@ class SessionConfig:
         """
         if not HAS_PYWINAUTO:
             raise RuntimeError(
-                "Debug connection requires pywinauto. "
-                "Install with: pip install pywinauto"
+                "Debug connection requires pywinauto. " "Install with: pip install pywinauto"
             )
 
         try:
@@ -119,18 +120,14 @@ class SessionConfig:
 
             # Fallback: try to find by process name
             if HAS_PSUTIL:
-                for proc in psutil.process_iter(['name', 'pid']):
-                    if 'VoiceStudio' in proc.info['name']:
+                for proc in psutil.process_iter(["name", "pid"]):
+                    if "VoiceStudio" in proc.info["name"]:
                         try:
-                            app = Application(backend="uia").connect(
-                                process=proc.info['pid']
-                            )
+                            app = Application(backend="uia").connect(process=proc.info["pid"])
                             window = app.top_window()
                             handle = window.handle
                             hex_handle = hex(handle)
-                            logger.info(
-                                f"Found VoiceStudio by process: {hex_handle}"
-                            )
+                            logger.info(f"Found VoiceStudio by process: {hex_handle}")
                             return hex_handle
                         except Exception as e:
                             logger.warning(f"Failed to connect to process: {e}")
@@ -197,23 +194,24 @@ class SessionManager:
             # Fallback: try to connect
             try:
                 import requests
+
                 response = requests.get(
                     f"{self.config.winappdriver_url if self.config else 'http://127.0.0.1:4723'}/status",
-                    timeout=2
+                    timeout=2,
                 )
                 return response.status_code == 200
             except Exception:
                 return False
 
-        for proc in psutil.process_iter(['name']):
-            if proc.info['name'] == 'WinAppDriver.exe':
+        for proc in psutil.process_iter(["name"]):
+            if proc.info["name"] == "WinAppDriver.exe":
                 return True
         return False
 
     def start_winappdriver(
         self,
         path: str = r"C:\Program Files (x86)\Windows Application Driver\WinAppDriver.exe",
-        port: int = 4723
+        port: int = 4723,
     ) -> bool:
         """
         Start WinAppDriver if not already running.
@@ -238,7 +236,7 @@ class SessionManager:
                 [path, "127.0.0.1", str(port)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                creationflags=subprocess.CREATE_NEW_CONSOLE
+                creationflags=subprocess.CREATE_NEW_CONSOLE,
             )
 
             # Wait for it to start
@@ -289,8 +287,7 @@ class SessionManager:
                 options.set_capability(key, value)
 
             self._driver = webdriver.Remote(
-                command_executor=config.winappdriver_url,
-                options=options
+                command_executor=config.winappdriver_url, options=options
             )
 
             self._driver.implicitly_wait(config.implicit_wait)
@@ -305,6 +302,7 @@ class SessionManager:
 
             class WinAppDriverOptions(ArgOptions):
                 """Options class for WinAppDriver (Selenium fallback)."""
+
                 pass
 
             options = WinAppDriverOptions()
@@ -312,8 +310,7 @@ class SessionManager:
                 options.set_capability(key, value)
 
             self._driver = selenium_webdriver.Remote(
-                command_executor=config.winappdriver_url,
-                options=options
+                command_executor=config.winappdriver_url, options=options
             )
 
             self._driver.implicitly_wait(config.implicit_wait)
@@ -403,8 +400,7 @@ class SessionManager:
 
 
 def create_session_manager(
-    app_path: str,
-    winappdriver_url: str = "http://127.0.0.1:4723"
+    app_path: str, winappdriver_url: str = "http://127.0.0.1:4723"
 ) -> SessionManager:
     """
     Create a session manager with the given configuration.
@@ -416,10 +412,7 @@ def create_session_manager(
     Returns:
         Configured SessionManager
     """
-    config = SessionConfig(
-        app_path=app_path,
-        winappdriver_url=winappdriver_url
-    )
+    config = SessionConfig(app_path=app_path, winappdriver_url=winappdriver_url)
     return SessionManager(config)
 
 

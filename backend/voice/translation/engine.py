@@ -37,9 +37,10 @@ logger = logging.getLogger(__name__)
 
 class TranslationProvider(Enum):
     """Translation service provider."""
-    LOCAL = "local"          # Offline local model
-    SEAMLESS = "seamless"    # SeamlessM4T
-    WHISPER = "whisper"      # Whisper + translation
+
+    LOCAL = "local"  # Offline local model
+    SEAMLESS = "seamless"  # SeamlessM4T
+    WHISPER = "whisper"  # Whisper + translation
 
 
 @dataclass
@@ -159,7 +160,11 @@ class TranslationEngine:
 
             if self._model is None:
                 logger.warning("No translation model available, using placeholder")
-                self._model = {"provider": self._config.provider.value, "loaded": True, "placeholder": True}
+                self._model = {
+                    "provider": self._config.provider.value,
+                    "loaded": True,
+                    "placeholder": True,
+                }
 
             self._loaded = True
             logger.info("Translation engine loaded")
@@ -177,6 +182,7 @@ class TranslationEngine:
         # Clear GPU cache to free VRAM
         try:
             import torch
+
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 logger.debug("GPU cache cleared after translation engine unload")
@@ -210,6 +216,7 @@ class TranslationEngine:
             raise RuntimeError("Translation engine not loaded")
 
         import time
+
         start_time = time.time()
 
         target = target_language or self._config.target_language
@@ -289,6 +296,7 @@ class TranslationEngine:
 
         # Task 4.2.8: Full file translation pipeline
         import time
+
         start_time = time.time()
 
         try:
@@ -296,9 +304,7 @@ class TranslationEngine:
             audio_data, sample_rate = self._load_audio_file(input_path)
 
             # Translate
-            result = await self.translate(
-                audio_data, sample_rate, target_language=target_language
-            )
+            result = await self.translate(audio_data, sample_rate, target_language=target_language)
 
             # Save output
             self._save_audio_file(output_path, result.audio_data, result.sample_rate)
@@ -384,6 +390,7 @@ class TranslationEngine:
             )
 
             import torch
+
             audio_tensor = torch.from_numpy(audio_data).float().unsqueeze(0)
             embedding = classifier.encode_batch(audio_tensor)
 
@@ -574,11 +581,14 @@ class TranslationEngine:
         if sample_rate != 16000:
             try:
                 import librosa
+
                 audio_data = librosa.resample(audio_data, orig_sr=sample_rate, target_sr=16000)
             except ImportError:
                 logger.debug("librosa not available for resampling to 16kHz")
 
-        result = model.transcribe(audio_data, language=None if source_lang == "auto" else source_lang)
+        result = model.transcribe(
+            audio_data, language=None if source_lang == "auto" else source_lang
+        )
 
         return (result["text"], result.get("language", "en"), 0.85)
 
@@ -697,6 +707,7 @@ class TranslationEngine:
         """Load audio file."""
         try:
             import librosa
+
             audio, sr = librosa.load(path, sr=None, mono=True)
             return audio, sr
         except ImportError:
@@ -704,6 +715,7 @@ class TranslationEngine:
 
         try:
             import soundfile as sf
+
             audio, sr = sf.read(path)
             if len(audio.shape) > 1:
                 audio = audio.mean(axis=1)
@@ -717,6 +729,7 @@ class TranslationEngine:
         """Save audio file."""
         try:
             import soundfile as sf
+
             sf.write(path, audio, sample_rate)
             return
         except ImportError:
@@ -724,6 +737,7 @@ class TranslationEngine:
 
         try:
             from scipy.io import wavfile
+
             audio_int = (audio * 32767).astype(np.int16)
             wavfile.write(path, sample_rate, audio_int)
             return

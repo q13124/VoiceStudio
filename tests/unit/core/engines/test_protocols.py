@@ -30,21 +30,13 @@ class TestEngineProtocolImports:
 
     def test_protocol_has_required_methods(self):
         """Test EngineProtocol has required abstract methods."""
-        assert hasattr(
-            EngineProtocol, "initialize"
-        ), "EngineProtocol missing initialize method"
-        assert hasattr(
-            EngineProtocol, "cleanup"
-        ), "EngineProtocol missing cleanup method"
+        assert hasattr(EngineProtocol, "initialize"), "EngineProtocol missing initialize method"
+        assert hasattr(EngineProtocol, "cleanup"), "EngineProtocol missing cleanup method"
         assert hasattr(
             EngineProtocol, "is_initialized"
         ), "EngineProtocol missing is_initialized method"
-        assert hasattr(
-            EngineProtocol, "get_device"
-        ), "EngineProtocol missing get_device method"
-        assert hasattr(
-            EngineProtocol, "get_info"
-        ), "EngineProtocol missing get_info method"
+        assert hasattr(EngineProtocol, "get_device"), "EngineProtocol missing get_device method"
+        assert hasattr(EngineProtocol, "get_info"), "EngineProtocol missing get_info method"
 
 
 class TestEngineProtocolInitialization:
@@ -97,9 +89,7 @@ class TestEngineProtocolInitialization:
 
         with patch("torch.cuda.is_available", return_value=False):
             engine = TestEngine(gpu=False)
-            assert (
-                engine.device == "cpu"
-            ), "Device should default to cpu when gpu=False"
+            assert engine.device == "cpu", "Device should default to cpu when gpu=False"
 
 
 class TestEngineProtocolMethods:
@@ -117,14 +107,10 @@ class TestEngineProtocolMethods:
                 self._initialized = False
 
         engine = TestEngine(device="cpu")
-        assert (
-            not engine.is_initialized()
-        ), "Engine should not be initialized initially"
+        assert not engine.is_initialized(), "Engine should not be initialized initially"
 
         engine.initialize()
-        assert (
-            engine.is_initialized()
-        ), "Engine should be initialized after initialize()"
+        assert engine.is_initialized(), "Engine should be initialized after initialize()"
 
     def test_get_device_method(self):
         """Test get_device method."""
@@ -163,9 +149,7 @@ class TestEngineProtocolMethods:
         assert "initialized" in info, "get_info should include initialized"
         assert info["name"] == "TestEngine", "get_info name should be class name"
         assert info["device"] == "cpu", "get_info device should match engine device"
-        assert (
-            not info["initialized"]
-        ), "get_info initialized should match engine state"
+        assert not info["initialized"], "get_info initialized should match engine state"
 
 
 class TestEngineProtocolAbstractMethods:
@@ -175,8 +159,7 @@ class TestEngineProtocolAbstractMethods:
         """Test initialize method must be implemented."""
 
         class IncompleteEngine(EngineProtocol):
-            def cleanup(self):
-                ...
+            def cleanup(self): ...
 
         with pytest.raises(TypeError):
             IncompleteEngine()
@@ -208,9 +191,7 @@ class TestEngineProtocolAbstractMethods:
         assert engine.is_initialized(), "Engine should be initialized"
 
         engine.cleanup()
-        assert (
-            not engine.is_initialized()
-        ), "Engine should not be initialized after cleanup"
+        assert not engine.is_initialized(), "Engine should not be initialized after cleanup"
 
 
 class TestEngineProtocolErrorHandling:
@@ -223,8 +204,7 @@ class TestEngineProtocolErrorHandling:
             def initialize(self):
                 raise RuntimeError("Initialization failed")
 
-            def cleanup(self):
-                ...
+            def cleanup(self): ...
 
         engine = ErrorEngine(device="cpu")
         with pytest.raises(RuntimeError):

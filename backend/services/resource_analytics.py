@@ -34,12 +34,14 @@ def _check_imports() -> None:
 
     try:
         import psutil
+
         _psutil = psutil
     except ImportError:
         logger.debug("psutil not available for resource sampling")
 
     try:
         import torch
+
         _torch = torch
     except ImportError:
         logger.debug("PyTorch not available for GPU sampling")
@@ -47,6 +49,7 @@ def _check_imports() -> None:
 
 class ResourceType(Enum):
     """Types of tracked resources."""
+
     CPU = "cpu"
     MEMORY = "memory"
     GPU = "gpu"
@@ -58,6 +61,7 @@ class ResourceType(Enum):
 @dataclass
 class ResourceSample:
     """A single resource sample."""
+
     timestamp: datetime
     resource_type: ResourceType
     value: float
@@ -68,6 +72,7 @@ class ResourceSample:
 @dataclass
 class ResourceStats:
     """Statistics for a resource over a time period."""
+
     resource_type: ResourceType
     period_start: datetime
     period_end: datetime
@@ -85,6 +90,7 @@ class ResourceStats:
 @dataclass
 class AnalyticsConfig:
     """Configuration for resource analytics."""
+
     sample_interval_seconds: float = 10.0
     retention_hours: int = 24
     aggregation_periods: list[int] = field(default_factory=lambda: [60, 300, 3600])  # 1m, 5m, 1h
@@ -112,9 +118,9 @@ class ResourceAnalytics:
         self.config = config or AnalyticsConfig()
 
         # Calculate max samples based on retention and interval
-        max_samples = int(
-            (self.config.retention_hours * 3600) / self.config.sample_interval_seconds
-        ) + 100  # Buffer for safety
+        max_samples = (
+            int((self.config.retention_hours * 3600) / self.config.sample_interval_seconds) + 100
+        )  # Buffer for safety
 
         self._samples: dict[ResourceType, deque[ResourceSample]] = {
             rt: deque(maxlen=max_samples) for rt in ResourceType
@@ -163,21 +169,25 @@ class ResourceAnalytics:
             if _psutil is not None:
                 try:
                     cpu_percent = _psutil.cpu_percent()
-                    self._samples[ResourceType.CPU].append(ResourceSample(
-                        timestamp=now,
-                        resource_type=ResourceType.CPU,
-                        value=cpu_percent,
-                        unit="%",
-                    ))
+                    self._samples[ResourceType.CPU].append(
+                        ResourceSample(
+                            timestamp=now,
+                            resource_type=ResourceType.CPU,
+                            value=cpu_percent,
+                            unit="%",
+                        )
+                    )
 
                     mem = _psutil.virtual_memory()
-                    self._samples[ResourceType.MEMORY].append(ResourceSample(
-                        timestamp=now,
-                        resource_type=ResourceType.MEMORY,
-                        value=mem.percent,
-                        unit="%",
-                        metadata={"used_gb": mem.used / 1e9, "total_gb": mem.total / 1e9},
-                    ))
+                    self._samples[ResourceType.MEMORY].append(
+                        ResourceSample(
+                            timestamp=now,
+                            resource_type=ResourceType.MEMORY,
+                            value=mem.percent,
+                            unit="%",
+                            metadata={"used_gb": mem.used / 1e9, "total_gb": mem.total / 1e9},
+                        )
+                    )
                 except Exception as e:
                     logger.debug("psutil sampling error: %s", e)
 
@@ -190,13 +200,15 @@ class ResourceAnalytics:
                             total = _torch.cuda.get_device_properties(i).total_memory
                             percent = (allocated / total) * 100 if total > 0 else 0
 
-                            self._samples[ResourceType.GPU_MEMORY].append(ResourceSample(
-                                timestamp=now,
-                                resource_type=ResourceType.GPU_MEMORY,
-                                value=percent,
-                                unit="%",
-                                metadata={"device": i, "used_gb": allocated / 1e9},
-                            ))
+                            self._samples[ResourceType.GPU_MEMORY].append(
+                                ResourceSample(
+                                    timestamp=now,
+                                    resource_type=ResourceType.GPU_MEMORY,
+                                    value=percent,
+                                    unit="%",
+                                    metadata={"device": i, "used_gb": allocated / 1e9},
+                                )
+                            )
                 except Exception as e:
                     logger.debug("GPU sampling error: %s", e)
 
@@ -360,10 +372,7 @@ class ResourceAnalytics:
         if std == 0:
             return []
 
-        return [
-            s for s in samples
-            if abs(s.value - mean) > threshold_std * std
-        ]
+        return [s for s in samples if abs(s.value - mean) > threshold_std * std]
 
     def get_peak_usage_times(
         self,
@@ -439,18 +448,26 @@ class ResourceAnalytics:
             report["resources"][resource_type.value] = {
                 "sample_count": len(samples),
                 "current_value": samples[-1].value if samples else None,
-                "stats_1h": {
-                    "min": round(stats_1h.min_value, 2),
-                    "max": round(stats_1h.max_value, 2),
-                    "avg": round(stats_1h.avg_value, 2),
-                    "p95": round(stats_1h.percentile_95, 2),
-                } if stats_1h else None,
-                "stats_24h": {
-                    "min": round(stats_24h.min_value, 2),
-                    "max": round(stats_24h.max_value, 2),
-                    "avg": round(stats_24h.avg_value, 2),
-                    "p95": round(stats_24h.percentile_95, 2),
-                } if stats_24h else None,
+                "stats_1h": (
+                    {
+                        "min": round(stats_1h.min_value, 2),
+                        "max": round(stats_1h.max_value, 2),
+                        "avg": round(stats_1h.avg_value, 2),
+                        "p95": round(stats_1h.percentile_95, 2),
+                    }
+                    if stats_1h
+                    else None
+                ),
+                "stats_24h": (
+                    {
+                        "min": round(stats_24h.min_value, 2),
+                        "max": round(stats_24h.max_value, 2),
+                        "avg": round(stats_24h.avg_value, 2),
+                        "p95": round(stats_24h.percentile_95, 2),
+                    }
+                    if stats_24h
+                    else None
+                ),
                 "trend": trend,
                 "anomaly_count": len(anomalies),
                 "prediction_30m": round(prediction, 2) if prediction else None,

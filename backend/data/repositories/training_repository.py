@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class TrainingStatus(str, Enum):
     """Training job status."""
+
     PENDING = "pending"
     PREPARING = "preparing"
     RUNNING = "running"
@@ -41,6 +42,7 @@ class TrainingJobEntity(BaseEntity):
 
     Maps to training_jobs table.
     """
+
     dataset_id: str | None = None
     engine_id: str | None = None
     model_name: str | None = None
@@ -102,6 +104,7 @@ class TrainingJobEntity(BaseEntity):
 @dataclass
 class TrainingLogEntity:
     """Training log entry."""
+
     id: int | None = None
     job_id: str = ""
     level: str = "info"
@@ -120,6 +123,7 @@ class TrainingLogEntity:
 @dataclass
 class TrainingQualityEntry:
     """Training quality history entry."""
+
     id: int | None = None
     job_id: str = ""
     epoch: int = 0
@@ -169,8 +173,16 @@ class TrainingJobRepository(BaseRepository[TrainingJobEntity]):
             "error": entity.error,
             "output_path": entity.output_path,
             "user_id": entity.user_id,
-            "created_at": entity.created_at.isoformat() if isinstance(entity.created_at, datetime) else entity.created_at,
-            "updated_at": entity.updated_at.isoformat() if isinstance(entity.updated_at, datetime) else entity.updated_at,
+            "created_at": (
+                entity.created_at.isoformat()
+                if isinstance(entity.created_at, datetime)
+                else entity.created_at
+            ),
+            "updated_at": (
+                entity.updated_at.isoformat()
+                if isinstance(entity.updated_at, datetime)
+                else entity.updated_at
+            ),
             "started_at": entity.started_at,
             "completed_at": entity.completed_at,
             "deleted_at": entity.deleted_at.isoformat() if entity.deleted_at else None,
@@ -199,8 +211,16 @@ class TrainingJobRepository(BaseRepository[TrainingJobEntity]):
             error=row.get("error"),
             output_path=row.get("output_path"),
             user_id=row.get("user_id"),
-            created_at=datetime.fromisoformat(row["created_at"]) if row.get("created_at") else datetime.now(),
-            updated_at=datetime.fromisoformat(row["updated_at"]) if row.get("updated_at") else datetime.now(),
+            created_at=(
+                datetime.fromisoformat(row["created_at"])
+                if row.get("created_at")
+                else datetime.now()
+            ),
+            updated_at=(
+                datetime.fromisoformat(row["updated_at"])
+                if row.get("updated_at")
+                else datetime.now()
+            ),
             started_at=row.get("started_at"),
             completed_at=row.get("completed_at"),
             deleted_at=datetime.fromisoformat(row["deleted_at"]) if row.get("deleted_at") else None,
@@ -241,10 +261,13 @@ class TrainingJobRepository(BaseRepository[TrainingJobEntity]):
 
     async def mark_started(self, job_id: str) -> TrainingJobEntity | None:
         """Mark training job as started."""
-        return await self.update(job_id, {
-            "status": TrainingStatus.RUNNING.value,
-            "started_at": datetime.now().isoformat(),
-        })
+        return await self.update(
+            job_id,
+            {
+                "status": TrainingStatus.RUNNING.value,
+                "started_at": datetime.now().isoformat(),
+            },
+        )
 
     async def mark_completed(
         self,
@@ -263,11 +286,14 @@ class TrainingJobRepository(BaseRepository[TrainingJobEntity]):
 
     async def mark_failed(self, job_id: str, error: str) -> TrainingJobEntity | None:
         """Mark training job as failed."""
-        return await self.update(job_id, {
-            "status": TrainingStatus.FAILED.value,
-            "error": error,
-            "completed_at": datetime.now().isoformat(),
-        })
+        return await self.update(
+            job_id,
+            {
+                "status": TrainingStatus.FAILED.value,
+                "error": error,
+                "completed_at": datetime.now().isoformat(),
+            },
+        )
 
     async def add_log(
         self,
@@ -284,13 +310,16 @@ class TrainingJobRepository(BaseRepository[TrainingJobEntity]):
             VALUES (?, ?, ?, ?, ?)
         """
 
-        await self._connection.execute(query, (
-            job_id,
-            level,
-            message,
-            json.dumps(data) if data else "{}",
-            datetime.now().isoformat(),
-        ))
+        await self._connection.execute(
+            query,
+            (
+                job_id,
+                level,
+                message,
+                json.dumps(data) if data else "{}",
+                datetime.now().isoformat(),
+            ),
+        )
         await self._connection.commit()
 
     async def get_logs(
@@ -342,17 +371,20 @@ class TrainingJobRepository(BaseRepository[TrainingJobEntity]):
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
 
-        await self._connection.execute(query, (
-            job_id,
-            epoch,
-            step,
-            mos_score,
-            similarity_score,
-            naturalness_score,
-            intelligibility_score,
-            json.dumps(metrics) if metrics else "{}",
-            datetime.now().isoformat(),
-        ))
+        await self._connection.execute(
+            query,
+            (
+                job_id,
+                epoch,
+                step,
+                mos_score,
+                similarity_score,
+                naturalness_score,
+                intelligibility_score,
+                json.dumps(metrics) if metrics else "{}",
+                datetime.now().isoformat(),
+            ),
+        )
         await self._connection.commit()
 
     async def get_quality_history(

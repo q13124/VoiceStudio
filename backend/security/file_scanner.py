@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class ScanStatus(Enum):
     """Status of file scan."""
+
     CLEAN = "clean"
     INFECTED = "infected"
     SUSPICIOUS = "suspicious"
@@ -29,6 +30,7 @@ class ScanStatus(Enum):
 
 class ThreatType(Enum):
     """Types of detected threats."""
+
     MALWARE = "malware"
     EXECUTABLE = "executable"
     SCRIPT = "script"
@@ -42,6 +44,7 @@ class ThreatType(Enum):
 @dataclass
 class ScanResult:
     """Result of a file scan."""
+
     file_path: str
     file_hash: str
     status: ScanStatus
@@ -54,17 +57,39 @@ class ScanResult:
 @dataclass
 class ScannerConfig:
     """Configuration for file scanner."""
+
     max_file_size_mb: int = 100
-    allowed_extensions: set[str] = field(default_factory=lambda: {
-        ".wav", ".mp3", ".flac", ".ogg", ".m4a", ".aac",  # Audio
-        ".txt", ".json", ".csv",  # Text
-        ".vsproj",  # Project files
-    })
-    blocked_extensions: set[str] = field(default_factory=lambda: {
-        ".exe", ".bat", ".cmd", ".ps1", ".sh", ".vbs", ".js",
-        ".dll", ".so", ".dylib",
-        ".msi", ".deb", ".rpm",
-    })
+    allowed_extensions: set[str] = field(
+        default_factory=lambda: {
+            ".wav",
+            ".mp3",
+            ".flac",
+            ".ogg",
+            ".m4a",
+            ".aac",  # Audio
+            ".txt",
+            ".json",
+            ".csv",  # Text
+            ".vsproj",  # Project files
+        }
+    )
+    blocked_extensions: set[str] = field(
+        default_factory=lambda: {
+            ".exe",
+            ".bat",
+            ".cmd",
+            ".ps1",
+            ".sh",
+            ".vbs",
+            ".js",
+            ".dll",
+            ".so",
+            ".dylib",
+            ".msi",
+            ".deb",
+            ".rpm",
+        }
+    )
     scan_archives: bool = True
     quarantine_path: str = "data/quarantine"
 

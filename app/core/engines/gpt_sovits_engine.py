@@ -171,22 +171,12 @@ class GPTSovitsEngine(EngineProtocol):
             device: Device to use ('cuda', 'cpu', or None for auto)
         """
         models_root = os.getenv("VOICESTUDIO_MODELS_PATH", r"E:\VoiceStudio\models")
-        default_model_path = os.path.join(
-            models_root, "checkpoints", "MyVoiceProj", "model.pth"
-        )
-        default_config_path = os.path.join(
-            models_root, "checkpoints", "MyVoiceProj", "config.json"
-        )
+        default_model_path = os.path.join(models_root, "checkpoints", "MyVoiceProj", "model.pth")
+        default_config_path = os.path.join(models_root, "checkpoints", "MyVoiceProj", "config.json")
 
-        self.model_path = (
-            model_path or os.getenv("GPT_SOVITS_MODEL_PATH") or default_model_path
-        )
-        self.config_path = (
-            config_path or os.getenv("GPT_SOVITS_CONFIG_PATH") or default_config_path
-        )
-        self.device = device or (
-            "cuda" if (HAS_TORCH and torch.cuda.is_available()) else "cpu"
-        )
+        self.model_path = model_path or os.getenv("GPT_SOVITS_MODEL_PATH") or default_model_path
+        self.config_path = config_path or os.getenv("GPT_SOVITS_CONFIG_PATH") or default_config_path
+        self.device = device or ("cuda" if (HAS_TORCH and torch.cuda.is_available()) else "cpu")
 
         self._initialized = False
         self._model = None
@@ -329,9 +319,7 @@ class GPTSovitsEngine(EngineProtocol):
             # Check response cache
             import hashlib
 
-            cache_key = hashlib.md5(
-                f"{text}_{reference_audio}_{language}".encode()
-            ).hexdigest()
+            cache_key = hashlib.md5(f"{text}_{reference_audio}_{language}".encode()).hexdigest()
             if cache_key in self._response_cache:
                 logger.debug("Using cached GPT-SoVITS synthesis result")
                 self._response_cache.move_to_end(cache_key)  # LRU update
@@ -348,9 +336,7 @@ class GPTSovitsEngine(EngineProtocol):
                     if os.path.exists(reference_audio):
                         ref_audio_data, sr = sf.read(reference_audio)
                     else:
-                        logger.error(
-                            f"Reference audio file not found: {reference_audio}"
-                        )
+                        logger.error(f"Reference audio file not found: {reference_audio}")
                         return None
                 elif isinstance(reference_audio, bytes):
                     import io
@@ -361,9 +347,7 @@ class GPTSovitsEngine(EngineProtocol):
                     return None
 
             # Perform synthesis
-            audio_data = self._perform_synthesis(
-                text, ref_audio_data, language, **kwargs
-            )
+            audio_data = self._perform_synthesis(text, ref_audio_data, language, **kwargs)
 
             if audio_data is None:
                 return None
@@ -416,9 +400,7 @@ class GPTSovitsEngine(EngineProtocol):
 
             # Check cache first
             if self.enable_caching:
-                cached_model = _get_cached_gpt_sovits_model(
-                    self.model_path, self.device
-                )
+                cached_model = _get_cached_gpt_sovits_model(self.model_path, self.device)
                 if cached_model is not None:
                     logger.debug(f"Using cached GPT-SoVITS model: {self.model_path}")
                     self._model = cached_model
@@ -445,10 +427,7 @@ class GPTSovitsEngine(EngineProtocol):
                     if file.suffix in [".pth", ".pt", ".ckpt"]:
                         if "gpt" in file.name.lower() or "text" in file.name.lower():
                             gpt_model_path = str(file)
-                        elif (
-                            "sovits" in file.name.lower()
-                            or "vocoder" in file.name.lower()
-                        ):
+                        elif "sovits" in file.name.lower() or "vocoder" in file.name.lower():
                             sovits_model_path = str(file)
 
                 if gpt_model_path and sovits_model_path:
@@ -472,9 +451,7 @@ class GPTSovitsEngine(EngineProtocol):
                             # Try to load GPT model
                             try:
                                 if os.path.exists(gpt_model_path):
-                                    gpt_checkpoint = torch.load(
-                                        gpt_model_path, map_location=device
-                                    )
+                                    gpt_checkpoint = torch.load(gpt_model_path, map_location=device)
                                     gpt_model_obj = gpt_checkpoint
                                     logger.debug("Loaded GPT model checkpoint")
                             except Exception as e:
@@ -491,9 +468,7 @@ class GPTSovitsEngine(EngineProtocol):
                             except Exception as e:
                                 logger.debug(f"Could not load SoVITS model object: {e}")
                     except ImportError:
-                        logger.debug(
-                            "GPT-SoVITS package not available, storing paths only"
-                        )
+                        logger.debug("GPT-SoVITS package not available, storing paths only")
 
                     model_data = {
                         "loaded": True,
@@ -507,13 +482,9 @@ class GPTSovitsEngine(EngineProtocol):
 
                     # Cache model
                     if self.enable_caching:
-                        _cache_gpt_sovits_model(
-                            self.model_path, self.device, model_data
-                        )
+                        _cache_gpt_sovits_model(self.model_path, self.device, model_data)
                 else:
-                    logger.warning(
-                        "Model files not found in expected format, using fallback mode"
-                    )
+                    logger.warning("Model files not found in expected format, using fallback mode")
                     model_data = {
                         "loaded": True,
                         "path": self.model_path,
@@ -523,16 +494,12 @@ class GPTSovitsEngine(EngineProtocol):
 
                     # Cache model even in fallback mode
                     if self.enable_caching:
-                        _cache_gpt_sovits_model(
-                            self.model_path, self.device, model_data
-                        )
+                        _cache_gpt_sovits_model(self.model_path, self.device, model_data)
 
                 logger.info("GPT-SoVITS model loaded successfully")
                 return True
             except Exception as e:
-                logger.warning(
-                    f"Model loading encountered issues: {e}, using fallback mode"
-                )
+                logger.warning(f"Model loading encountered issues: {e}, using fallback mode")
                 self._model = {
                     "loaded": True,
                     "path": self.model_path,
@@ -555,9 +522,7 @@ class GPTSovitsEngine(EngineProtocol):
             # Try to use GPT-SoVITS API server if available
             api_url = kwargs.get("api_url") or os.getenv("GPT_SOVITS_API_URL")
             if api_url:
-                return self._synthesize_via_api(
-                    text, ref_audio, language, api_url, **kwargs
-                )
+                return self._synthesize_via_api(text, ref_audio, language, api_url, **kwargs)
 
             # Try to use local GPT-SoVITS model
             if self._model and not self._model.get("fallback", False):
@@ -663,9 +628,7 @@ class GPTSovitsEngine(EngineProtocol):
 
                     # Make API request
                     timeout = kwargs.get("timeout", 120)
-                    response = requests.post(
-                        api_endpoint, files=files, data=data, timeout=timeout
-                    )
+                    response = requests.post(api_endpoint, files=files, data=data, timeout=timeout)
 
                     if response.status_code == 200:
                         # Response contains audio data directly
@@ -929,11 +892,7 @@ class GPTSovitsEngine(EngineProtocol):
             results = batch_results
 
         # Clear GPU cache periodically
-        if (
-            HAS_TORCH
-            and torch.cuda.is_available()
-            and (len(texts) % (actual_batch_size * 2) == 0)
-        ):
+        if HAS_TORCH and torch.cuda.is_available() and (len(texts) % (actual_batch_size * 2) == 0):
             torch.cuda.empty_cache()
 
         return results
@@ -969,9 +928,7 @@ class GPTSovitsEngine(EngineProtocol):
                         preserve_prosody=True,
                         target_lufs=-23.0,
                     )
-                    logger.debug(
-                        "Applied advanced quality enhancement to GPT-SoVITS output"
-                    )
+                    logger.debug("Applied advanced quality enhancement to GPT-SoVITS output")
                 elif enhance_voice_quality is not None:
                     # Fallback to standard enhancement
                     audio = enhance_voice_quality(
@@ -1078,23 +1035,17 @@ class GPTSovitsEngine(EngineProtocol):
                         )
 
                         if response.status_code == 200:
-                            for chunk in response.iter_content(
-                                chunk_size=chunk_size * 2
-                            ):
+                            for chunk in response.iter_content(chunk_size=chunk_size * 2):
                                 if chunk:
                                     # Decode audio chunk
                                     audio_chunk, _sr = sf.read(io.BytesIO(chunk))
                                     yield audio_chunk.astype(np.float32)
                             return
                 except Exception as e:
-                    logger.debug(
-                        f"Streaming API failed: {e}, falling back to chunked synthesis"
-                    )
+                    logger.debug(f"Streaming API failed: {e}, falling back to chunked synthesis")
 
             # Fallback: synthesize full audio and chunk it
-            full_audio = self._perform_synthesis(
-                text, reference_audio, language, **kwargs
-            )
+            full_audio = self._perform_synthesis(text, reference_audio, language, **kwargs)
 
             if full_audio is not None:
                 # Yield audio in chunks

@@ -28,6 +28,7 @@ from typing import Any, Callable
 try:
     import websockets
     from websockets.client import WebSocketClientProtocol
+
     HAS_WEBSOCKETS = True
 except ImportError:
     HAS_WEBSOCKETS = False
@@ -192,9 +193,7 @@ class WebSocketMonitor:
 
         if self._active_url and self._active_url in self.connections:
             self.connections[self._active_url]["status"] = "disconnected"
-            self.connections[self._active_url]["disconnected_at"] = (
-                datetime.now().isoformat()
-            )
+            self.connections[self._active_url]["disconnected_at"] = datetime.now().isoformat()
 
         if self.tracer:
             self.tracer.step(f"WebSocket disconnected: {self._active_url}")
@@ -233,13 +232,15 @@ class WebSocketMonitor:
                 pass
 
         if self.tracer:
-            self.tracer.trace_log.append({
-                "event": "websocket_message",
-                "direction": msg.direction.value,
-                "url": self._active_url,
-                "data": msg.parsed or str(msg.data)[:500],
-                "timestamp": datetime.now().isoformat(),
-            })
+            self.tracer.trace_log.append(
+                {
+                    "event": "websocket_message",
+                    "direction": msg.direction.value,
+                    "url": self._active_url,
+                    "data": msg.parsed or str(msg.data)[:500],
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
     def _handle_synthesis_event(self, data: dict) -> None:
         """Handle synthesis-related events."""
@@ -250,9 +251,7 @@ class WebSocketMonitor:
             return
 
         if job_id not in self.synthesis_jobs:
-            self.synthesis_jobs[job_id] = SynthesisProgress(
-                job_id=job_id, started_at=time.time()
-            )
+            self.synthesis_jobs[job_id] = SynthesisProgress(job_id=job_id, started_at=time.time())
 
         job = self.synthesis_jobs[job_id]
         job.last_update = time.time()
@@ -304,12 +303,14 @@ class WebSocketMonitor:
             self.connections[self._active_url]["messages_sent"] += 1
 
         if self.tracer:
-            self.tracer.trace_log.append({
-                "event": "websocket_send",
-                "url": self._active_url,
-                "data": msg.parsed or str(payload)[:500],
-                "timestamp": datetime.now().isoformat(),
-            })
+            self.tracer.trace_log.append(
+                {
+                    "event": "websocket_send",
+                    "url": self._active_url,
+                    "data": msg.parsed or str(payload)[:500],
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
     async def wait_for(
         self,
@@ -421,9 +422,7 @@ class WebSocketMonitor:
             "total_jobs": len(jobs),
             "completed": sum(1 for j in jobs if j.status == "completed"),
             "failed": sum(1 for j in jobs if j.status == "failed"),
-            "in_progress": sum(
-                1 for j in jobs if j.status not in ("completed", "failed")
-            ),
+            "in_progress": sum(1 for j in jobs if j.status not in ("completed", "failed")),
             "total_chunks": sum(j.chunks_received for j in jobs),
             "total_bytes": sum(j.bytes_received for j in jobs),
             "jobs": {
@@ -502,9 +501,7 @@ class SyncWebSocketMonitor:
         """Send a message."""
         self._get_loop().run_until_complete(self._async_monitor.send(data))
 
-    def wait_for_synthesis(
-        self, job_id: str, timeout: float = 30.0
-    ) -> SynthesisProgress:
+    def wait_for_synthesis(self, job_id: str, timeout: float = 30.0) -> SynthesisProgress:
         """Wait for synthesis completion."""
         return self._get_loop().run_until_complete(
             self._async_monitor.wait_for_synthesis(job_id, timeout)

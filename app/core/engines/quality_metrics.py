@@ -24,9 +24,7 @@ logger = logging.getLogger(__name__)
 try:
     from .quality_metrics_cache import get_quality_metrics_cache
 
-    _quality_cache = get_quality_metrics_cache(
-        max_size=500, default_ttl=3600.0
-    )  # 1 hour TTL
+    _quality_cache = get_quality_metrics_cache(max_size=500, default_ttl=3600.0)  # 1 hour TTL
     HAS_ENHANCED_CACHE = True
 except ImportError:
     HAS_ENHANCED_CACHE = False
@@ -92,9 +90,7 @@ try:
 except ImportError:
     HAS_PYSTOI = False
     pystoi = None
-    logger.debug(
-        "pystoi not available. Speech intelligibility assessment will be limited."
-    )
+    logger.debug("pystoi not available. Speech intelligibility assessment will be limited.")
 
 # Try importing pandas for data analysis
 try:
@@ -113,8 +109,10 @@ try:
     HAS_NUMBA = True
 except ImportError:
     HAS_NUMBA = False
+
     def jit(*args, **kwargs):
         return lambda f: f  # No-op decorator
+
     prange = range
     logger.debug("numba not available. Performance optimizations will be limited.")
 
@@ -126,9 +124,7 @@ try:
 except ImportError:
     HAS_ESSENTIA = False
     es = None
-    logger.debug(
-        "essentia-tensorflow not available. Advanced audio analysis will be limited."
-    )
+    logger.debug("essentia-tensorflow not available. Advanced audio analysis will be limited.")
 
 # Try importing scikit-learn for ML utilities
 try:
@@ -152,18 +148,16 @@ try:
         calculate_artifact_score_cython,
         calculate_dynamic_range_cython,
         calculate_mos_components_cython,
-        calculate_zero_crossing_rate_cython,
     )
+    from .quality_metrics_cython import calculate_snr_cython as calculate_snr_cython_impl
     from .quality_metrics_cython import (
-        calculate_snr_cython as calculate_snr_cython_impl,
+        calculate_zero_crossing_rate_cython,
     )
 
     HAS_CYTHON_QUALITY = True
 except ImportError:
     HAS_CYTHON_QUALITY = False
-    logger.debug(
-        "Cython quality metrics not available. Using pure Python implementations."
-    )
+    logger.debug("Cython quality metrics not available. Using pure Python implementations.")
 
 
 def _get_audio_hash(audio: np.ndarray) -> str:
@@ -292,9 +286,7 @@ def calculate_snr(audio: np.ndarray) -> float | None:
             audio_double = audio.astype(np.float64)
             return float(calculate_snr_cython_impl(audio_double))
         except Exception as e:
-            logger.debug(
-                f"Cython SNR calculation failed, using Numba/Python fallback: {e}"
-            )
+            logger.debug(f"Cython SNR calculation failed, using Numba/Python fallback: {e}")
 
     # Use Numba-optimized version if available
     if HAS_NUMBA:
@@ -415,9 +407,7 @@ def calculate_mos_score(audio: np.ndarray) -> float | None:
                 )
                 mos = max(1.0, min(5.0, mos))
 
-                logger.debug(
-                    "MOS calculated using essentia-tensorflow advanced analysis"
-                )
+                logger.debug("MOS calculated using essentia-tensorflow advanced analysis")
                 return float(mos)
         except Exception as e:
             logger.debug(f"Essentia MOS calculation failed: {e}, using fallback method")
@@ -555,9 +545,7 @@ def calculate_similarity(
                 return float(similarity)
 
             except Exception as e:
-                logger.warning(
-                    f"Resemblyzer similarity failed: {e}, falling back to MFCC"
-                )
+                logger.warning(f"Resemblyzer similarity failed: {e}, falling back to MFCC")
                 method = "mfcc"
 
     if method == "mfcc" and HAS_LIBROSA:
@@ -594,9 +582,7 @@ def calculate_similarity(
     return None
 
 
-def calculate_naturalness(
-    audio: np.ndarray, sample_rate: int = 22050
-) -> float | None:
+def calculate_naturalness(audio: np.ndarray, sample_rate: int = 22050) -> float | None:
     """
     Calculate naturalness score of audio.
 
@@ -640,9 +626,7 @@ def calculate_naturalness(
             naturalness -= 0.1
 
         # Factor 3: Spectral centroid (brightness/timbre)
-        spectral_centroids = librosa.feature.spectral_centroid(y=audio, sr=sample_rate)[
-            0
-        ]
+        spectral_centroids = librosa.feature.spectral_centroid(y=audio, sr=sample_rate)[0]
         centroid_mean = np.mean(spectral_centroids)
 
         # Typical speech centroid is around 500-4000 Hz
@@ -745,8 +729,7 @@ def calculate_pesq_score(
     """
     if not HAS_PESQ:
         raise ImportError(
-            "pesq package is required for PESQ score calculation. "
-            "Install with: pip install pesq"
+            "pesq package is required for PESQ score calculation. " "Install with: pip install pesq"
         )
 
     try:
@@ -1118,9 +1101,7 @@ def calculate_silence_ratio(
         silent_frames = np.sum(frame_energy <= threshold_linear)
 
         # Calculate silence ratio
-        silence_ratio = (
-            silent_frames / len(frame_energy) if len(frame_energy) > 0 else 0.0
-        )
+        silence_ratio = silent_frames / len(frame_energy) if len(frame_energy) > 0 else 0.0
 
         return float(np.clip(silence_ratio, 0.0, 1.0))
     except Exception as e:
@@ -1128,9 +1109,7 @@ def calculate_silence_ratio(
         return 0.0
 
 
-def calculate_clipping_ratio(
-    audio: np.ndarray, clipping_threshold: float = 0.99
-) -> float | None:
+def calculate_clipping_ratio(audio: np.ndarray, clipping_threshold: float = 0.99) -> float | None:
     """
     Calculate clipping ratio metric.
 
@@ -1227,9 +1206,7 @@ def calculate_all_metrics(
     if use_cache and not include_ml_prediction and reference_audio is None:
         cache_key = _get_audio_hash(audio_array)
         if cache_key in _metrics_cache:
-            logger.debug(
-                f"Using cached quality metrics for audio hash: {cache_key[:8]}"
-            )
+            logger.debug(f"Using cached quality metrics for audio hash: {cache_key[:8]}")
             return _metrics_cache[cache_key].copy()
 
     # Calculate metrics
@@ -1284,12 +1261,12 @@ def calculate_all_metrics(
                 mos_score = metrics.get("mos_score")
                 snr_db = metrics.get("snr_db")
                 naturalness = metrics.get("naturalness")
-                similarity = (
-                    metrics.get("similarity") if reference_audio is not None else None
-                )
+                similarity = metrics.get("similarity") if reference_audio is not None else None
                 artifact_score = metrics.get("artifacts", {}).get("artifact_score")
 
-                if None in (mos_score, snr_db, naturalness, artifact_score) or (reference_audio is not None and similarity is None):
+                if None in (mos_score, snr_db, naturalness, artifact_score) or (
+                    reference_audio is not None and similarity is None
+                ):
                     metrics["ml_prediction"] = None
                 else:
                     feature_vector = np.array(
@@ -1419,9 +1396,7 @@ def analyze_quality_batch(
                 "snr_db": metrics.get("snr_db", 0.0),
                 "naturalness": metrics.get("naturalness", 0.0),
                 "similarity": metrics.get("similarity", 0.0),
-                "artifact_score": metrics.get("artifacts", {}).get(
-                    "artifact_score", 0.0
-                ),
+                "artifact_score": metrics.get("artifacts", {}).get("artifact_score", 0.0),
             }
 
             # Add PESQ and STOI if available
@@ -1566,9 +1541,7 @@ def predict_quality_with_ml(
         feature_weights = default_weights.copy()
 
     # Calculate weighted quality score (0-1 range)
-    weighted_score = np.dot(
-        normalized_features[: len(feature_weights)], feature_weights
-    )
+    weighted_score = np.dot(normalized_features[: len(feature_weights)], feature_weights)
 
     # Scale from 0-1 range to MOS range (1-5)
     # Linear mapping: 0 -> 1.0, 1 -> 5.0

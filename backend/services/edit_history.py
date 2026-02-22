@@ -45,6 +45,7 @@ class EditCommand(ABC):
 @dataclass
 class EditRecord:
     """Record of an executed edit command."""
+
     command: EditCommand
     timestamp: float
     result: Any = None
@@ -118,6 +119,7 @@ class EditHistory:
 
 
 # --- Concrete edit commands ---
+
 
 class AddClipCommand(EditCommand):
     """Add a clip to a track."""

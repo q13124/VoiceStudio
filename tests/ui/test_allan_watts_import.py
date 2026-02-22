@@ -63,6 +63,7 @@ pytestmark = [
 # Fixtures
 # =============================================================================
 
+
 @pytest.fixture(scope="module")
 def tracer():
     """Create a workflow tracer for import tests."""
@@ -93,6 +94,7 @@ def test_file():
 # Prerequisites
 # =============================================================================
 
+
 class TestImportPrerequisites:
     """Verify prerequisites for import testing."""
 
@@ -102,7 +104,9 @@ class TestImportPrerequisites:
         tracer.step("Checking Allan Watts.m4a file exists")
 
         assert test_file["exists"], f"Test file should exist: {TEST_AUDIO_FILE}"
-        tracer.step(f"Test file found: {test_file['filename']}, size: {test_file['size_mb']:.2f} MB")
+        tracer.step(
+            f"Test file found: {test_file['filename']}, size: {test_file['size_mb']:.2f} MB"
+        )
         tracer.end_phase(success=True, notes="Test file verified")
         tracer.success("Test file exists")
 
@@ -118,8 +122,9 @@ class TestImportPrerequisites:
         """Verify file metadata matches expected values."""
         tracer.step("Checking file metadata")
 
-        assert test_file["filename"] == ALLAN_WATTS_METADATA.filename, \
-            f"Filename mismatch: {test_file['filename']} != {ALLAN_WATTS_METADATA.filename}"
+        assert (
+            test_file["filename"] == ALLAN_WATTS_METADATA.filename
+        ), f"Filename mismatch: {test_file['filename']} != {ALLAN_WATTS_METADATA.filename}"
 
         tracer.step(f"Filename: {test_file['filename']}")
         tracer.step(f"Extension: {test_file['extension']}")
@@ -138,6 +143,7 @@ class TestImportPrerequisites:
 # =============================================================================
 # UI Import Tests
 # =============================================================================
+
 
 class TestUIImport:
     """Test import via UI interactions."""
@@ -219,7 +225,9 @@ class TestUIImport:
             tracer.record_timing("shortcut_dialog_open", elapsed_ms)
 
             assert dialog_found, "Ctrl+I should open import dialog"
-            tracer.step(f"Shortcut dialog opened in {elapsed_ms:.1f}ms", driver, SCREENSHOTS_ENABLED)
+            tracer.step(
+                f"Shortcut dialog opened in {elapsed_ms:.1f}ms", driver, SCREENSHOTS_ENABLED
+            )
 
             driver.press_escape()
             time.sleep(0.5)
@@ -268,6 +276,7 @@ class TestUIImport:
 # API Import Tests
 # =============================================================================
 
+
 class TestAPIImport:
     """Test import via direct API calls."""
 
@@ -289,7 +298,9 @@ class TestAPIImport:
                 elapsed_ms = (time.perf_counter() - start_time) * 1000
 
                 tracer.api_call("POST", "/api/library/assets/upload", response)
-                tracer.record_timing("api_upload", elapsed_ms, f"{test_file['size_mb']:.2f} MB file")
+                tracer.record_timing(
+                    "api_upload", elapsed_ms, f"{test_file['size_mb']:.2f} MB file"
+                )
 
                 if response.status_code in [200, 201]:
                     data = response.json()
@@ -389,6 +400,7 @@ class TestAPIImport:
 # Post-Import Verification
 # =============================================================================
 
+
 class TestPostImportVerification:
     """Verify state after import."""
 
@@ -452,6 +464,7 @@ class TestPostImportVerification:
 # Import Error Handling
 # =============================================================================
 
+
 class TestImportErrorHandling:
     """Test error handling during import."""
 
@@ -464,8 +477,10 @@ class TestImportErrorHandling:
             response = api_monitor.post("/api/library/assets/upload", files={})
             tracer.api_call("POST", "/api/library/assets/upload (empty)", response)
 
-            assert response.status_code in [400, 422], \
-                f"Empty upload should fail with validation error, got {response.status_code}"
+            assert response.status_code in [
+                400,
+                422,
+            ], f"Empty upload should fail with validation error, got {response.status_code}"
             tracer.step(f"Empty upload correctly rejected: {response.status_code}")
             tracer.success("Empty upload handling works")
         except requests.RequestException as e:
@@ -525,11 +540,14 @@ class TestImportErrorHandling:
 # =============================================================================
 
 if __name__ == "__main__":
-    pytest.main([
-        __file__,
-        "-v",
-        "--tb=short",
-        "-m", "not slow",
-        "--html=.buildlogs/validation/reports/allan_watts_import_report.html",
-        "--self-contained-html",
-    ])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--tb=short",
+            "-m",
+            "not slow",
+            "--html=.buildlogs/validation/reports/allan_watts_import_report.html",
+            "--self-contained-html",
+        ]
+    )

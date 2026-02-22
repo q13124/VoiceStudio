@@ -26,7 +26,7 @@ def discover_all_panels(workspace_root):
         "app/ui/VoiceStudio.App/Views",
         "Views/Panels",
         "Views",
-        "Panels"
+        "Panels",
     ]
 
     print("Searching for panels...")
@@ -70,9 +70,12 @@ def discover_all_panels(workspace_root):
         rel_str = str(rel_path).replace("\\", "/")
 
         # Only include if it looks like a panel/view
-        if (rel_str not in all_panels and
-            ("View" in xaml_file.name or "Panel" in xaml_file.name or
-             "View" in rel_str or "Panel" in rel_str)):
+        if rel_str not in all_panels and (
+            "View" in xaml_file.name
+            or "Panel" in xaml_file.name
+            or "View" in rel_str
+            or "Panel" in rel_str
+        ):
             all_panels.add(rel_str)
             print(f"    Found: {rel_str}")
 
@@ -85,6 +88,7 @@ def discover_all_panels(workspace_root):
     print()
 
     return sorted_panels
+
 
 def generate_registry(panels, output_file):
     """Generate PanelRegistry.Auto.cs"""
@@ -106,9 +110,10 @@ namespace VoiceStudio.Core {{
 """
 
     output_file.parent.mkdir(parents=True, exist_ok=True)
-    output_file.write_text(code, encoding='utf-8')
+    output_file.write_text(code, encoding="utf-8")
     print(f"Generated: {output_file}")
     print(f"  Contains {len(panels)} panels")
+
 
 if __name__ == "__main__":
     workspace = Path("E:/VoiceStudio")
@@ -121,10 +126,9 @@ if __name__ == "__main__":
 
         # Also create text list
         text_file = output_file.with_suffix(".txt")
-        text_file.write_text("\n".join(panels), encoding='utf-8')
+        text_file.write_text("\n".join(panels), encoding="utf-8")
         print(f"Panel list saved to: {text_file}")
         print()
         print("Discovery complete!")
     else:
         print("No panels found!")
-

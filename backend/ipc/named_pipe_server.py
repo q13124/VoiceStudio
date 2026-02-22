@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class MessageType(Enum):
     """Types of IPC messages."""
+
     REQUEST = 0
     RESPONSE = 1
     EVENT = 2
@@ -34,6 +35,7 @@ class MessageType(Enum):
 @dataclass
 class IPCMessage:
     """An IPC message."""
+
     msg_type: MessageType
     msg_id: str
     payload: dict[str, Any]
@@ -43,6 +45,7 @@ class IPCMessage:
 @dataclass
 class PipeConfig:
     """Configuration for named pipe server."""
+
     pipe_name: str = "voicestudio_ipc"
     max_connections: int = 10
     buffer_size: int = 65536
@@ -87,9 +90,11 @@ class NamedPipeServer:
         method: str,
     ) -> Callable[[Callable], Callable]:
         """Decorator to register a handler."""
+
         def decorator(func: Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]) -> Callable:
             self.register_handler(method, func)
             return func
+
         return decorator
 
     async def start(self) -> None:
@@ -133,7 +138,9 @@ class NamedPipeServer:
                     pipe = win32pipe.CreateNamedPipe(
                         self._pipe_path,
                         win32pipe.PIPE_ACCESS_DUPLEX,
-                        win32pipe.PIPE_TYPE_MESSAGE | win32pipe.PIPE_READMODE_MESSAGE | win32pipe.PIPE_WAIT,
+                        win32pipe.PIPE_TYPE_MESSAGE
+                        | win32pipe.PIPE_READMODE_MESSAGE
+                        | win32pipe.PIPE_WAIT,
                         self.config.max_connections,
                         self.config.buffer_size,
                         self.config.buffer_size,
@@ -201,7 +208,9 @@ class NamedPipeServer:
                     break
 
         except ImportError:
-            logger.debug("win32file not available - Windows named pipes not supported on this platform")
+            logger.debug(
+                "win32file not available - Windows named pipes not supported on this platform"
+            )
         finally:
             await self._close_client(client_id)
 
@@ -240,6 +249,7 @@ class NamedPipeServer:
         if pipe:
             try:
                 import win32file
+
                 win32file.CloseHandle(pipe)
             except Exception as close_err:
                 logger.debug(f"Failed to close pipe handle for client {client_id}: {close_err}")

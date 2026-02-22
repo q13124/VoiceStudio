@@ -67,7 +67,7 @@ class EndpointMetrics:
         # Store timing for percentile calculations
         self._timing_history.append(execution_time)
         if len(self._timing_history) > self._max_history_size:
-            self._timing_history = self._timing_history[-self._max_history_size:]
+            self._timing_history = self._timing_history[-self._max_history_size :]
 
         # Update error rate
         if status_code >= 400:
@@ -188,9 +188,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Skip monitoring for certain paths
-        if request.url.path.startswith("/docs") or request.url.path.startswith(
-            "/redoc"
-        ):
+        if request.url.path.startswith("/docs") or request.url.path.startswith("/redoc"):
             return await call_next(request)
 
         start_time = time.perf_counter()
@@ -231,10 +229,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
             response.headers["X-Endpoint"] = endpoint_key
 
             # Warn on slow endpoints
-            if (
-                self.warn_on_slow
-                and execution_time > self.slow_threshold_seconds
-            ):
+            if self.warn_on_slow and execution_time > self.slow_threshold_seconds:
                 logger.warning(
                     f"Slow endpoint detected: {endpoint_key} took "
                     f"{execution_time:.3f}s (threshold: "
@@ -285,9 +280,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
         if endpoint_key not in self._metrics:
             self._metrics[endpoint_key] = EndpointMetrics(path=path, method=method)
 
-        self._metrics[endpoint_key].update(
-            execution_time, request_size, response_size, status_code
-        )
+        self._metrics[endpoint_key].update(execution_time, request_size, response_size, status_code)
 
     def get_metrics(self, endpoint: str | None = None) -> dict[str, Any]:
         """
@@ -305,10 +298,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
             return {}
 
         # Return all metrics
-        return {
-            key: self._serialize_metrics(metrics)
-            for key, metrics in self._metrics.items()
-        }
+        return {key: self._serialize_metrics(metrics) for key, metrics in self._metrics.items()}
 
     def get_stats(self) -> dict[str, Any]:
         """Get overall statistics."""
@@ -425,9 +415,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
             "errors": metrics.errors,
             "error_rate": metrics.error_rate,
             "status_codes": dict(metrics.status_codes),
-            "last_called": (
-                metrics.last_called.isoformat() if metrics.last_called else None
-            ),
+            "last_called": (metrics.last_called.isoformat() if metrics.last_called else None),
         }
 
     def reset(self):

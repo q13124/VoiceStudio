@@ -98,8 +98,7 @@ class IntegrationTestBase:
         """Configure logging for test execution."""
         if self.ENABLE_LOGGING:
             logging.basicConfig(
-                level=logging.INFO,
-                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+                level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             )
         yield
 
@@ -142,7 +141,7 @@ class IntegrationTestBase:
         try:
             yield db
         finally:
-            if hasattr(db, 'rollback'):
+            if hasattr(db, "rollback"):
                 if asyncio.iscoroutinefunction(db.rollback):
                     await db.rollback()
                 else:
@@ -176,16 +175,18 @@ class IntegrationTestBase:
 
     def assert_success(self, response: TestResponse, msg: str = "") -> None:
         """Assert response is successful (2xx status code)."""
-        assert response.is_success, (
-            f"Expected success, got {response.status_code}: {response.body}"
-            + (f" - {msg}" if msg else "")
+        assert (
+            response.is_success
+        ), f"Expected success, got {response.status_code}: {response.body}" + (
+            f" - {msg}" if msg else ""
         )
 
     def assert_status(self, response: TestResponse, expected: int, msg: str = "") -> None:
         """Assert response has expected status code."""
-        assert response.status_code == expected, (
-            f"Expected {expected}, got {response.status_code}: {response.body}"
-            + (f" - {msg}" if msg else "")
+        assert (
+            response.status_code == expected
+        ), f"Expected {expected}, got {response.status_code}: {response.body}" + (
+            f" - {msg}" if msg else ""
         )
 
     def assert_error(self, response: TestResponse, expected_status: int | None = None) -> None:
@@ -200,16 +201,12 @@ class IntegrationTestBase:
         """Assert response body contains required fields."""
         validate_response_schema(response, required_fields)
 
-    def assert_latency(
-        self,
-        response: TestResponse,
-        max_ms: float,
-        msg: str = ""
-    ) -> None:
+    def assert_latency(self, response: TestResponse, max_ms: float, msg: str = "") -> None:
         """Assert response latency is within acceptable range."""
-        assert response.elapsed_ms <= max_ms, (
-            f"Response took {response.elapsed_ms:.2f}ms, max allowed: {max_ms}ms"
-            + (f" - {msg}" if msg else "")
+        assert (
+            response.elapsed_ms <= max_ms
+        ), f"Response took {response.elapsed_ms:.2f}ms, max allowed: {max_ms}ms" + (
+            f" - {msg}" if msg else ""
         )
 
     def assert_api_version(self, response: TestResponse, expected: str | None = None) -> None:
@@ -238,6 +235,7 @@ class IntegrationTestBase:
     def skip_if_no_backend(self) -> None:
         """Skip test if backend is not available."""
         import requests
+
         try:
             response = requests.get("http://localhost:8000/api/health", timeout=2)
             if response.status_code != 200:
@@ -258,7 +256,7 @@ class IntegrationTestBase:
                 logger.warning(f"Failed to remove artifact {artifact}: {e}")
 
         # Remove temp directory
-        if hasattr(self, '_temp_dir') and os.path.exists(self._temp_dir):
+        if hasattr(self, "_temp_dir") and os.path.exists(self._temp_dir):
             try:
                 shutil.rmtree(self._temp_dir)
             except Exception as e:
@@ -287,11 +285,14 @@ class AsyncIntegrationTestBase(IntegrationTestBase):
     async def async_skip_if_no_backend(self) -> None:
         """Async version of skip_if_no_backend."""
         import aiohttp
+
         try:
-            async with aiohttp.ClientSession() as session, session.get(
-                "http://localhost:8000/api/health",
-                timeout=aiohttp.ClientTimeout(total=2)
-            ) as response:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.get(
+                    "http://localhost:8000/api/health", timeout=aiohttp.ClientTimeout(total=2)
+                ) as response,
+            ):
                 if response.status != 200:
                     pytest.skip("Backend not healthy")
         except Exception:

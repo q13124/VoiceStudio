@@ -23,14 +23,18 @@ router = APIRouter(prefix="/api/translation", tags=["translation"])
 
 class TranscriptionRequest(BaseModel):
     """Request for audio transcription."""
+
     audio_id: str = Field(..., description="Audio file ID")
-    model: str = Field("base", description="Whisper model: tiny, base, small, medium, large, large-v3")
+    model: str = Field(
+        "base", description="Whisper model: tiny, base, small, medium, large, large-v3"
+    )
     language: str | None = Field(None, description="Source language (auto-detect if not specified)")
     word_timestamps: bool = Field(True, description="Include word-level timestamps")
 
 
 class TranscriptionSegment(BaseModel):
     """A transcription segment."""
+
     segment_id: str
     start_time: float
     end_time: float
@@ -41,6 +45,7 @@ class TranscriptionSegment(BaseModel):
 
 class TranscriptionResponse(BaseModel):
     """Response for transcription."""
+
     project_id: str
     segments: list[TranscriptionSegment]
     detected_language: str
@@ -49,6 +54,7 @@ class TranscriptionResponse(BaseModel):
 
 class TranslationRequest(BaseModel):
     """Request for text translation."""
+
     project_id: str = Field(..., description="Translation project ID")
     target_language: str = Field(..., description="Target language code")
     preserve_timing: bool = Field(True, description="Adjust translations for timing")
@@ -56,6 +62,7 @@ class TranslationRequest(BaseModel):
 
 class TranslatedSegment(BaseModel):
     """A translated segment."""
+
     segment_id: str
     original_text: str
     translated_text: str
@@ -66,6 +73,7 @@ class TranslatedSegment(BaseModel):
 
 class TranslationResponse(BaseModel):
     """Response for translation."""
+
     project_id: str
     source_language: str
     target_language: str
@@ -74,6 +82,7 @@ class TranslationResponse(BaseModel):
 
 class ProjectCreateRequest(BaseModel):
     """Request to create a translation project."""
+
     name: str = Field(..., description="Project name")
     audio_id: str = Field(..., description="Source audio file ID")
     target_language: str = Field(..., description="Target language code")
@@ -84,6 +93,7 @@ class ProjectCreateRequest(BaseModel):
 
 class ProjectInfo(BaseModel):
     """Translation project information."""
+
     project_id: str
     name: str
     source_language: str | None
@@ -95,6 +105,7 @@ class ProjectInfo(BaseModel):
 
 class SubtitleExportRequest(BaseModel):
     """Request for subtitle export."""
+
     project_id: str
     format: str = Field("srt", description="Subtitle format: srt, vtt, ass")
     use_translation: bool = Field(True, description="Use translated text if available")
@@ -102,6 +113,7 @@ class SubtitleExportRequest(BaseModel):
 
 class SubtitleExportResponse(BaseModel):
     """Response for subtitle export."""
+
     file_path: str
     format: str
     segment_count: int
@@ -109,6 +121,7 @@ class SubtitleExportResponse(BaseModel):
 
 class LanguageInfo(BaseModel):
     """Language information."""
+
     code: str
     name: str
 
@@ -180,10 +193,7 @@ async def create_project(request: ProjectCreateRequest):
 
     except Exception as e:
         logger.error(f"Failed to create translation project: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to create project: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to create project: {e!s}") from e
 
 
 @router.post("/projects/{project_id}/transcribe", response_model=TranscriptionResponse)
@@ -209,15 +219,9 @@ async def transcribe_project(project_id: str, word_timestamps: bool = True):
         if not segments:
             project = service.get_project(project_id)
             if not project:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Project '{project_id}' not found"
-                )
+                raise HTTPException(status_code=404, detail=f"Project '{project_id}' not found")
             if project.status == "failed":
-                raise HTTPException(
-                    status_code=500,
-                    detail="Transcription failed"
-                )
+                raise HTTPException(status_code=500, detail="Transcription failed")
 
         project = service.get_project(project_id)
 
@@ -242,10 +246,7 @@ async def transcribe_project(project_id: str, word_timestamps: bool = True):
         raise
     except Exception as e:
         logger.error(f"Transcription failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Transcription failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {e!s}") from e
 
 
 @router.post("/projects/{project_id}/translate", response_model=TranslationResponse)
@@ -271,16 +272,10 @@ async def translate_project(project_id: str, preserve_timing: bool = True):
 
         project = service.get_project(project_id)
         if not project:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Project '{project_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Project '{project_id}' not found")
 
         if not segments and project.status == "failed":
-            raise HTTPException(
-                status_code=500,
-                detail="Translation failed"
-            )
+            raise HTTPException(status_code=500, detail="Translation failed")
 
         return TranslationResponse(
             project_id=project_id,
@@ -303,10 +298,7 @@ async def translate_project(project_id: str, preserve_timing: bool = True):
         raise
     except Exception as e:
         logger.error(f"Translation failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Translation failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Translation failed: {e!s}") from e
 
 
 @router.post("/projects/{project_id}/export-subtitles", response_model=SubtitleExportResponse)
@@ -327,10 +319,7 @@ async def export_subtitles(project_id: str, request: SubtitleExportRequest):
         service = get_translation_service()
 
         if request.project_id != project_id:
-            raise HTTPException(
-                status_code=400,
-                detail="Project ID mismatch"
-            )
+            raise HTTPException(status_code=400, detail="Project ID mismatch")
 
         file_path = await service.export_subtitles(
             project_id=project_id,
@@ -339,13 +328,12 @@ async def export_subtitles(project_id: str, request: SubtitleExportRequest):
         )
 
         if not file_path:
-            raise HTTPException(
-                status_code=500,
-                detail="Subtitle export failed"
-            )
+            raise HTTPException(status_code=500, detail="Subtitle export failed")
 
         project = service.get_project(project_id)
-        segment_count = len(project.translated_segments if request.use_translation else project.transcribed_segments)
+        segment_count = len(
+            project.translated_segments if request.use_translation else project.transcribed_segments
+        )
 
         return SubtitleExportResponse(
             file_path=file_path,
@@ -357,10 +345,7 @@ async def export_subtitles(project_id: str, request: SubtitleExportRequest):
         raise
     except Exception as e:
         logger.error(f"Subtitle export failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Subtitle export failed: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Subtitle export failed: {e!s}") from e
 
 
 @router.get("/projects", response_model=list[ProjectInfo])
@@ -387,10 +372,7 @@ async def list_projects():
 
     except Exception as e:
         logger.error(f"Failed to list projects: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to list projects: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to list projects: {e!s}") from e
 
 
 @router.get("/projects/{project_id}", response_model=ProjectInfo)
@@ -403,10 +385,7 @@ async def get_project(project_id: str):
         project = service.get_project(project_id)
 
         if not project:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Project '{project_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Project '{project_id}' not found")
 
         return ProjectInfo(
             project_id=project.project_id,
@@ -422,10 +401,7 @@ async def get_project(project_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to get project: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get project: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to get project: {e!s}") from e
 
 
 @router.delete("/projects/{project_id}")
@@ -438,10 +414,7 @@ async def delete_project(project_id: str):
         success = service.delete_project(project_id)
 
         if not success:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Project '{project_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Project '{project_id}' not found")
 
         return {"success": True, "message": f"Project '{project_id}' deleted"}
 
@@ -449,10 +422,7 @@ async def delete_project(project_id: str):
         raise
     except Exception as e:
         logger.error(f"Failed to delete project: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to delete project: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to delete project: {e!s}") from e
 
 
 @router.get("/languages", response_model=list[LanguageInfo])
@@ -464,17 +434,11 @@ async def list_languages():
         service = get_translation_service()
         languages = service.get_supported_languages()
 
-        return [
-            LanguageInfo(code=code, name=name)
-            for code, name in languages.items()
-        ]
+        return [LanguageInfo(code=code, name=name) for code, name in languages.items()]
 
     except Exception as e:
         logger.error(f"Failed to list languages: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to list languages: {e!s}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Failed to list languages: {e!s}") from e
 
 
 @router.get("/models")

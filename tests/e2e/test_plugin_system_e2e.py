@@ -57,24 +57,20 @@ def temp_plugin_dir(tmp_path: Path) -> Path:
     """Create a temporary plugin directory with valid manifest."""
     plugin_dir = tmp_path / "test_plugin"
     plugin_dir.mkdir()
-    
+
     manifest = {
         "name": "temp_test_plugin",
         "version": "1.0.0",
         "description": "Temporary test plugin",
         "author": "Test",
         "plugin_type": "tool",
-        "entry_points": {
-            "backend": "main.py"
-        },
-        "security": {
-            "isolation_mode": "in_process"
-        }
+        "entry_points": {"backend": "main.py"},
+        "security": {"isolation_mode": "in_process"},
     }
-    
+
     manifest_path = plugin_dir / "manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2))
-    
+
     return plugin_dir
 
 
@@ -172,6 +168,7 @@ class TestWasmIntegrationE2E:
         """Test that Wasm runner module can be imported."""
         try:
             from backend.plugins.wasm.wasm_runner import WasmRunner
+
             assert WasmRunner is not None
         except ImportError:
             pytest.skip("WasmRunner not installed")
@@ -185,13 +182,9 @@ class TestWasmIntegrationE2E:
         assert hasattr(plugin_service, "list_wasm_plugins")
 
     @pytest.mark.asyncio
-    async def test_execute_wasm_plugin_returns_result(
-        self, plugin_service: PluginService
-    ) -> None:
+    async def test_execute_wasm_plugin_returns_result(self, plugin_service: PluginService) -> None:
         """Test that execute_wasm_plugin returns a result object."""
-        result = await plugin_service.execute_wasm_plugin(
-            plugin_id="nonexistent_wasm_plugin"
-        )
+        result = await plugin_service.execute_wasm_plugin(plugin_id="nonexistent_wasm_plugin")
         assert result is not None
         assert isinstance(result, dict)
 
@@ -207,11 +200,10 @@ class TestSignatureVerificationE2E:
     def test_signing_module_constants_available(self) -> None:
         """Test that signing availability constant is defined."""
         from backend.services import plugin_service as ps_module
+
         assert hasattr(ps_module, "SIGNING_AVAILABLE")
 
-    def test_verify_plugin_signature_method_exists(
-        self, plugin_service: PluginService
-    ) -> None:
+    def test_verify_plugin_signature_method_exists(self, plugin_service: PluginService) -> None:
         """Test verify_plugin_signature method exists."""
         assert hasattr(plugin_service, "verify_plugin_signature")
 
@@ -221,9 +213,7 @@ class TestSignatureVerificationE2E:
         """Test load_plugin_with_verification method exists."""
         assert hasattr(plugin_service, "load_plugin_with_verification")
 
-    def test_verify_plugin_signature_returns_dict(
-        self, plugin_service: PluginService
-    ) -> None:
+    def test_verify_plugin_signature_returns_dict(self, plugin_service: PluginService) -> None:
         """Test verify_plugin_signature returns verification result dict."""
         result = plugin_service.verify_plugin_signature("nonexistent_plugin")
         assert isinstance(result, dict)
@@ -240,16 +230,19 @@ class TestPhase6IntegrationE2E:
     def test_ai_quality_integration_function_exists(self) -> None:
         """Test get_phase6_ai_quality function for Phase 6.1 integration."""
         from backend.services.plugin_service import get_phase6_ai_quality
+
         assert callable(get_phase6_ai_quality)
 
     def test_compliance_integration_function_exists(self) -> None:
         """Test get_phase6_compliance function for Phase 6.3 integration."""
         from backend.services.plugin_service import get_phase6_compliance
+
         assert callable(get_phase6_compliance)
 
     def test_ecosystem_integration_function_exists(self) -> None:
         """Test get_phase6_ecosystem function for Phase 6.5 integration."""
         from backend.services.plugin_service import get_phase6_ecosystem
+
         assert callable(get_phase6_ecosystem)
 
 
@@ -264,11 +257,10 @@ class TestExtensionPointsE2E:
     def test_register_extension_function_importable(self) -> None:
         """Test register_extension decorator can be imported."""
         from backend.services.plugin_service import register_extension
+
         assert callable(register_extension)
 
-    def test_call_extension_point_method_exists(
-        self, plugin_service: PluginService
-    ) -> None:
+    def test_call_extension_point_method_exists(self, plugin_service: PluginService) -> None:
         """Test call_extension_point method exists."""
         assert hasattr(plugin_service, "call_extension_point")
 
@@ -281,17 +273,13 @@ class TestExtensionPointsE2E:
 class TestErrorHandlingE2E:
     """E2E tests for error handling."""
 
-    def test_get_nonexistent_plugin_returns_none(
-        self, plugin_service: PluginService
-    ) -> None:
+    def test_get_nonexistent_plugin_returns_none(self, plugin_service: PluginService) -> None:
         """Test get_plugin returns None for nonexistent plugin."""
         result = plugin_service.get_plugin("definitely_not_a_real_plugin_xyz")
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_load_invalid_plugin_handles_error(
-        self, plugin_service: PluginService
-    ) -> None:
+    async def test_load_invalid_plugin_handles_error(self, plugin_service: PluginService) -> None:
         """Test load_plugin handles invalid plugin gracefully."""
         result = await plugin_service.load_plugin("/nonexistent/path/plugin")
         # May return None, False, or PluginInfo depending on implementation
@@ -310,6 +298,7 @@ class TestBackendAPIIntegrationE2E:
         """Test plugin routes module can be imported."""
         try:
             from backend.api.routes import plugins
+
             assert plugins is not None
         except ImportError:
             pytest.skip("Plugin routes not yet implemented")
@@ -318,6 +307,7 @@ class TestBackendAPIIntegrationE2E:
         """Test Wasm routes module can be imported."""
         try:
             from backend.api.routes import wasm
+
             assert wasm is not None
         except ImportError:
             pytest.skip("Wasm routes not yet implemented")
@@ -336,7 +326,7 @@ class TestFullPluginLifecycleE2E:
         self, plugin_service: PluginService, temp_plugin_dir: Path
     ) -> None:
         """Test complete plugin lifecycle from discovery to cleanup.
-        
+
         This test verifies:
         1. Service initialization
         2. Discovery capabilities

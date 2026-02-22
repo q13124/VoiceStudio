@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DeprecationNotice:
     """A deprecation notice for an endpoint."""
+
     path: str
     method: str
     deprecated_in: ApiVersion
@@ -32,6 +33,7 @@ class DeprecationNotice:
 @dataclass
 class VersionSunset:
     """Sunset information for an API version."""
+
     version: ApiVersion
     sunset_date: datetime
     announcement_date: datetime
@@ -158,9 +160,7 @@ class DeprecationManager:
             headers["Deprecation"] = "true"
 
             if notice.sunset_date:
-                headers["Sunset"] = notice.sunset_date.strftime(
-                    "%a, %d %b %Y %H:%M:%S GMT"
-                )
+                headers["Sunset"] = notice.sunset_date.strftime("%a, %d %b %Y %H:%M:%S GMT")
 
             if notice.replacement:
                 headers["Link"] = f'<{notice.replacement}>; rel="successor-version"'
@@ -189,7 +189,8 @@ class DeprecationManager:
         cutoff = datetime.now() + timedelta(days=days)
 
         return [
-            notice for notice in self._deprecations.values()
+            notice
+            for notice in self._deprecations.values()
             if notice.sunset_date and notice.sunset_date <= cutoff
         ]
 

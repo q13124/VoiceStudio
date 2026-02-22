@@ -1,4 +1,5 @@
 """Tests for cross-role protocol module."""
+
 from __future__ import annotations
 
 from tools.context.core.cross_role_protocol import (
