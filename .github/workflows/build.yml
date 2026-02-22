@@ -58,14 +58,12 @@ jobs:
         continue-on-error: true
 
       - name: Restore dependencies
-        run: |
-          dotnet restore VoiceStudio.sln -p:Platform=x64
-          dotnet restore src/VoiceStudio.App/VoiceStudio.App.csproj -r win-x64 -p:Platform=x64
+        run: dotnet restore VoiceStudio.sln -r win-x64 -p:Platform=x64
 
       - name: Proactive XAML health check
         run: |
           powershell -ExecutionPolicy Bypass -File scripts/proactive-xaml-check.ps1 -OutputFile .buildlogs/xaml-health.json
-        continue-on-error: true
+        continue-on-error: false
 
       - name: Validate XAML bindings (x:Bind and x:DataType)
         run: |
@@ -109,21 +107,15 @@ jobs:
           
           Write-Host "XAML binding validation passed" -ForegroundColor Green
 
-      - name: Build Core library
-        run: dotnet build src/VoiceStudio.Core/VoiceStudio.Core.csproj -c Release --no-restore
-        id: build-core
-
       - name: Build solution (Debug, x64) with binlog
         run: |
-          dotnet build --configuration Debug -p:Platform=x64 /bl:.buildlogs/build_debug.binlog
+          dotnet build --configuration Debug --no-restore -p:Platform=x64 -p:BaseOutputPath="$env:GITHUB_WORKSPACE\.buildlogs\" /bl:.buildlogs/build_debug.binlog
         id: build-debug
-        continue-on-error: true
 
       - name: Build solution (Release, x64) with binlog
         run: |
-          dotnet build --configuration Release -p:Platform=x64 /bl:.buildlogs/build_release.binlog
+          dotnet build --configuration Release --no-restore -p:Platform=x64 -p:BaseOutputPath="$env:GITHUB_WORKSPACE\.buildlogs\" /bl:.buildlogs/build_release.binlog
         id: build-release
-        continue-on-error: true
 
       - name: Extract binlog metrics (proactive analysis)
         if: always()
@@ -241,11 +233,9 @@ jobs:
 
       - name: RuleGuard (no stubs/placeholders)
         run: python tools/verify_no_stubs_placeholders.py
-        continue-on-error: true
 
       - name: Gate C publish check (no launch)
         run: powershell -ExecutionPolicy Bypass -File scripts/gatec-publish-launch.ps1 -Configuration Release -RuntimeIdentifier win-x64 -NoLaunch
-        continue-on-error: true
 
       - name: Log Build Results to Audit System
         if: always()
@@ -257,7 +247,6 @@ jobs:
         run: |
           powershell -ExecutionPolicy Bypass -File installer/verify-installer-build.ps1 -InstallerType InnoSetup -Version 0.0.0
           powershell -ExecutionPolicy Bypass -File installer/verify-installer-build.ps1 -InstallerType WiX -Version 0.0.0
-        continue-on-error: true
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

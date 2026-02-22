@@ -40,18 +40,16 @@ jobs:
       - name: Run linting
         run: |
           pip install ruff
-          ruff check backend app --exit-zero
+          ruff check .
       
       - name: Run type checking
         run: |
           pip install mypy
-          mypy backend app --ignore-missing-imports || echo "::warning::Type checking found issues (non-blocking)"
-        continue-on-error: true
+          mypy backend app --ignore-missing-imports
       
       - name: Run tests
         run: |
-          python -m pytest tests/ -v --cov=backend --cov=app --cov-report=xml || echo "::warning::Some tests failed"
-        continue-on-error: true
+          python -m pytest tests/ -v --cov=backend --cov=app --cov-report=xml
       
       - name: Upload coverage
         uses: codecov/codecov-action@v4
@@ -75,19 +73,12 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       
       - name: Restore dependencies
-        run: |
-          dotnet restore VoiceStudio.sln -p:Platform=x64
-          dotnet restore src/VoiceStudio.App/VoiceStudio.App.csproj -r win-x64 -p:Platform=x64
+        run: dotnet restore VoiceStudio.sln -r win-x64 -p:Platform=x64
       
-      - name: Build Core library
-        run: dotnet build src/VoiceStudio.Core/VoiceStudio.Core.csproj -c Release --no-restore
-
-      - name: Build WinUI application
-        continue-on-error: true
+      - name: Build
         run: dotnet build VoiceStudio.sln -c Release -p:Platform=x64
       
       - name: Run tests
-        continue-on-error: true
         run: dotnet test src/VoiceStudio.App.Tests/VoiceStudio.App.Tests.csproj -c Release -p:Platform=x64 --verbosity normal
       
       - name: Upload build artifacts
@@ -147,7 +138,7 @@ jobs:
           safety check --full-report || true
       
       - name: Run Bandit security scanner
-        run: bandit -r backend app -ll -ii --exit-zero
+        run: bandit -r backend app -ll -ii
 
   # ============================================================================
   # Code Quality
@@ -169,13 +160,13 @@ jobs:
           pip install ruff black isort
       
       - name: Check formatting with Black
-        run: black --check backend app tests || echo "Formatting differences found (non-blocking)"
+        run: black --check backend app tests
       
       - name: Check imports with isort
-        run: isort --check-only backend app tests || echo "Import order differences found (non-blocking)"
+        run: isort --check-only backend app tests
       
       - name: Lint with Ruff
-        run: ruff check backend app tests --exit-zero
+        run: ruff check backend app tests
 
   # ============================================================================
   # C.3 Enhancement: Installer Build
@@ -184,7 +175,7 @@ jobs:
     name: Build Installer
     runs-on: windows-latest
     needs: [dotnet-build]
-    if: false  # Disabled until WinUI build is stable on CI runners
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
     
     steps:
       - uses: actions/checkout@v4
@@ -217,7 +208,6 @@ jobs:
     name: E2E UI Tests
     runs-on: windows-latest
     needs: [dotnet-build]
-    if: false  # Disabled until WinUI build is stable on CI runners
     
     steps:
       - uses: actions/checkout@v4
@@ -263,7 +253,6 @@ jobs:
     name: Python WinAppDriver UI Tests
     runs-on: windows-latest
     needs: [dotnet-build]
-    if: false  # Disabled until WinUI build is stable on CI runners
     
     steps:
       - uses: actions/checkout@v4
@@ -499,12 +488,10 @@ jobs:
           echo "Security Scan: ${{ needs.security-scan.result }}"
           echo "Code Quality: ${{ needs.code-quality.result }}"
           
-          if [[ "${{ needs.dotnet-build.result }}" == "failure" ]]; then
-            echo "::warning::.NET build failed"
+          if [[ "${{ needs.python-tests.result }}" == "failure" ]] || \
+             [[ "${{ needs.dotnet-build.result }}" == "failure" ]]; then
+            echo "Critical jobs failed!"
+            exit 1
           fi
           
-          if [[ "${{ needs.python-tests.result }}" == "failure" ]]; then
-            echo "::warning::Python tests had failures"
-          fi
-          
-          echo "CI summary complete"
+          echo "CI completed successfully!"
