@@ -369,12 +369,26 @@ def synthesize(text: str, profile_id: str) -> VoiceSynthesizeResponse:
 
 See [SETUP.md](docs/developer/SETUP.md) and [QUICK_START.md](docs/developer/QUICK_START.md) for complete development environment setup instructions.
 
+**Standard virtual environment:** `.venv` at repository root (Arch Review Task 1.2).
+
 **Quick Start:**
 1. Clone repository
-2. Install prerequisites (.NET 8, Python 3.10+)
-3. Install dependencies
+2. Install prerequisites (.NET 8, Python 3.11+)
+3. Create venv and install: `python -m venv .venv && .venv\Scripts\activate && pip install -e ".[dev,extras]"`
 4. Run backend: `python -m uvicorn backend.api.main:app`
 5. Run frontend: Open in Visual Studio and run
+
+**Dependencies:** `pyproject.toml` is the single source of truth. Use `pip install -e ".[dev]"` for development; `pip install -e ".[dev,extras]"` includes observability and optional packages.
+
+### Root Directory Policy (Arch Review Task 1.3)
+
+The repository root must remain clean and minimal. **Root contains ONLY:**
+
+- **Project config:** `.gitignore`, `pyproject.toml`, `VoiceStudio.sln`, `global.json`, `.editorconfig`, `.pre-commit-config.yaml`
+- **Documentation:** `README.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE`, `AGENTS.md`
+- **Essential build files:** `Directory.Build.targets`, `requirements.txt`, `requirements_engines.txt`
+
+**All generated files, test outputs, and temporary files** go to `.local/` (gitignored). **Scripts** go to `scripts/` or `tools/`. No `.log`, `.binlog`, `.txt` (except requirements), or `.wav` files at root.
 
 ---
 

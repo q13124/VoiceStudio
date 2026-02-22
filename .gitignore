@@ -52,6 +52,10 @@ xaml_debug_include_*.txt
 # Audit logs (local only, not committed)
 .audit/
 
+# Bewaker/Guardlock (tool artifacts, root policy 1.3)
+.bewaker-audit.jsonl
+.guardlock
+
 # Local diagnostic captures (repo root)
 _build_output.txt
 _corecompile_errors.txt
@@ -93,6 +97,24 @@ errors_check.txt
 unit_errors.txt
 build_cs*.txt
 
+# Root-level build artifacts and diagnostics (arch review 4.3, 4.8)
+/api_test_output.txt
+/build_warnings.txt
+/build_errors.txt
+/contract_test_output.txt
+/test_health_output.txt
+/rcs1163_warnings.txt
+/rcs1163_files.txt
+/warnings_full.txt
+/temp_openapi.json
+/xaml_stderr.txt
+/xaml_stdout.txt
+/final_test.wav
+/test_output.wav
+proof_runs/
+_xaml_test/
+.local/
+
 # Installer build output (distribute separately)
 installer/Output/
 
@@ -109,5 +131,4 @@ installer/runtime/
 models/
 
 # OpenMemory - IDE/Assistant specific rules
-.cursor\rules\openmemory.mdc
-AGENTS.md
+.cursor/rules/openmemory.mdc
