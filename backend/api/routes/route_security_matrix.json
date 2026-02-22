@@ -1,0 +1,36 @@
+{
+  "_comment": "Arch Review Task 1.5 - Machine-readable route security classification",
+  "version": "1.0",
+  "public": [
+    "/",
+    "/health",
+    "/api/health",
+    "/api/version",
+    "/api/voice-browser/voices",
+    "/api/engines",
+    "/docs",
+    "/openapi.json",
+    "/redoc",
+    "/metrics"
+  ],
+  "protected": [
+    "/api/voice/synthesize",
+    "/api/voice/clone",
+    "/api/profiles",
+    "/api/projects",
+    "/api/training",
+    "/api/jobs",
+    "/api/batch",
+    "/api/timeline",
+    "/api/tracks",
+    "/api/backup",
+    "/api/settings",
+    "/api/models",
+    "/api/api-key-manager",
+    "/api/macros",
+    "/api/workflows",
+    "/api/effects",
+    "/api/transcribe"
+  ],
+  "admin": []
+}

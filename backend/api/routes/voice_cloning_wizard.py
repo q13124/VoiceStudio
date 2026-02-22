@@ -104,6 +104,10 @@ class WizardStartRequest(BaseModel):
     quality_mode: str = "standard"
     profile_name: str
     profile_description: str | None = None
+    consent_acknowledged: bool = False
+    consent_type: str | None = None
+    consent_timestamp: str | None = None
+    consent_source: str | None = None
 
 
 class WizardStartResponse(BaseModel):
@@ -344,7 +348,18 @@ async def validate_audio(request: AudioValidationRequest):
 
 @router.post("/start", response_model=WizardStartResponse, status_code=201)
 async def start_wizard(request: WizardStartRequest):
-    """Start a new voice cloning wizard job."""
+    """Start a new voice cloning wizard job. Requires consent_acknowledged."""
+    if not request.consent_acknowledged:
+        raise HTTPException(
+            status_code=400,
+            detail="Consent is required for voice cloning. Set consent_acknowledged=true.",
+        )
+    consent_meta = {
+        "consent_type": request.consent_type or "voice_clone_wizard",
+        "consent_timestamp": request.consent_timestamp or "",
+        "consent_source": request.consent_source or "api",
+    }
+    logger.info("voice_clone_wizard_consent %s", consent_meta)
     try:
         job_id = f"wizard-{uuid.uuid4().hex[:8]}"
         now = datetime.utcnow().isoformat()

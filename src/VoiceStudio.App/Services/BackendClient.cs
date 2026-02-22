@@ -713,6 +713,8 @@ namespace VoiceStudio.App.Services
           content.Add(new StringContent(request.ProfileName), "profile_name");
         }
 
+        content.Add(new StringContent(request.ConsentAcknowledged.ToString().ToLower()), "consent_acknowledged");
+
         var response = await _httpClient.PostAsync("/api/voice/clone", content, cancellationToken);
 
         if (!response.IsSuccessStatusCode)

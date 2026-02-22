@@ -36,6 +36,7 @@ namespace VoiceStudio.Core.Models
   {
     public string? Text { get; set; }
     public string Engine { get; set; } = "xtts";
+    public bool ConsentAcknowledged { get; set; } = true;  // Arch Review 1.5: Required for clone
     public string QualityMode { get; set; } = "standard"; // fast, standard, high, ultra
     public bool EnhanceQuality { get; set; }  // Apply advanced quality enhancement pipeline
     public bool UseMultiReference { get; set; }  // Use ensemble approach when multiple references provided

@@ -499,7 +499,8 @@ namespace VoiceStudio.App.ViewModels
           Engine = SelectedEngine ?? "xtts",
           QualityMode = SelectedQualityMode ?? "standard",
           ProfileName = profileNameValue,
-          ProfileDescription = ProfileDescription
+          ProfileDescription = ProfileDescription,
+          ConsentAcknowledged = true
         };
 
         var response = await _backendClient.SendRequestAsync<WizardStartRequest, WizardStartResponse>(
@@ -880,6 +881,8 @@ namespace VoiceStudio.App.ViewModels
     private class WizardStartRequest
     {
       public string ReferenceAudioId { get; set; } = string.Empty;
+      [System.Text.Json.Serialization.JsonPropertyName("consent_acknowledged")]
+      public bool ConsentAcknowledged { get; set; }
       public string Engine { get; set; } = "xtts";
       public string QualityMode { get; set; } = "standard";
       public string ProfileName { get; set; } = string.Empty;

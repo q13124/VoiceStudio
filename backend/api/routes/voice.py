@@ -2991,6 +2991,10 @@ async def clone(
     prosody_params: str | None = Form(None),
     project_id: str | None = Form(None),
     profile_name: str | None = Form(None),
+    consent_acknowledged: bool = Form(False),
+    consent_type: str | None = Form(None),
+    consent_timestamp: str | None = Form(None),
+    consent_source: str | None = Form(None),
 ) -> VoiceCloneResponse:
     """
     Clone voice from reference audio and optionally synthesize text with advanced features.
@@ -3007,6 +3011,22 @@ async def clone(
     - use_rvc_postprocessing: Apply RVC post-processing for enhanced voice similarity
     - prosody_params: JSON string with prosody control parameters (pitch, tempo, formant_shift, energy)
     """
+    if not consent_acknowledged:
+        raise HTTPException(
+            status_code=400,
+            detail="Consent is required for voice cloning. Set consent_acknowledged=true.",
+        )
+    consent_metadata = {
+        "consent_type": consent_type or "voice_clone",
+        "consent_timestamp": consent_timestamp or "",
+        "consent_source": consent_source or "api",
+    }
+    if consent_timestamp or consent_source:
+        logger.info(
+            "voice_clone_consent %s",
+            consent_metadata,
+            extra=_log_context(operation="clone", consent=consent_metadata),
+        )
     try:
         requested_engine = engine
         engine_id = _normalize_engine_id(engine)
