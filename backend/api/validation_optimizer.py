@@ -14,7 +14,7 @@ import hashlib
 import logging
 import time
 from collections import OrderedDict
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from pydantic import BaseModel, ValidationError
 
@@ -163,7 +163,7 @@ def validate_optimized(model: type[T], data: dict[str, Any], use_cache: bool = T
             validation_time = time.perf_counter() - start_time
             stats["total_time"] += validation_time
             stats["avg_time"] = stats["total_time"] / stats["total_validations"]
-            return _validation_cache[cache_key]
+            return cast(T, _validation_cache[cache_key])
 
         stats["cache_misses"] += 1
 
@@ -175,7 +175,7 @@ def validate_optimized(model: type[T], data: dict[str, Any], use_cache: bool = T
         stats["total_time"] += validation_time
         stats["avg_time"] = stats["total_time"] / stats["total_validations"]
         raise ValidationError.from_exception_data(
-            model.__name__, [{"type": "value_error", "loc": (), "msg": early_error}]
+            model.__name__, [{"type": "value_error", "loc": (), "input": data}]
         )
 
     # Full Pydantic validation

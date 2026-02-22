@@ -562,7 +562,7 @@ class DependencyResolver:
                 # No constraints - use latest
                 available = self.get_available_versions(plugin_id)
                 if available:
-                    version = available[0]
+                    latest_version = available[0]
                 else:
                     # Check if it's in the graph (a root plugin)
                     if plugin_id in target_plugins:
@@ -600,7 +600,7 @@ class DependencyResolver:
                     )
                     continue
 
-                version = self._find_satisfying_version(plugin_id, constraints)
+                version: Version | None = self._find_satisfying_version(plugin_id, constraints)
 
                 if version is None:
                     # Version conflict - versions exist but none satisfy constraints
@@ -640,6 +640,8 @@ class DependencyResolver:
                 )
                 continue
 
+            if version is None:
+                continue
             self._resolved[plugin_id] = version
 
             # Find if it's optional (all requesters mark it optional)

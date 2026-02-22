@@ -95,7 +95,7 @@ def test_synthesis(reference_audio: str | None = None):
         if isinstance(result, tuple):
             audio, metrics = result
             logger.info("✓ Synthesis successful with quality metrics")
-            logger.info(f"  Audio shape: {audio.shape}")
+            logger.info(f"  Audio shape: {audio.shape if audio is not None else 'N/A'}")
             logger.info(f"  MOS Score: {metrics.get('mos_score', 'N/A'):.2f}/5.0")
             logger.info(f"  Naturalness: {metrics.get('naturalness', 'N/A'):.2f}/1.0")
             if "similarity" in metrics:

@@ -42,6 +42,7 @@ class WatermarkDatabase:
         self.db_path = str(db_path)
 
         # Initialize query optimizer if available
+        self.optimizer: DatabaseQueryOptimizer | None
         if HAS_QUERY_OPTIMIZER:
             self.optimizer = DatabaseQueryOptimizer(
                 db_path=self.db_path,

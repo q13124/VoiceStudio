@@ -24,7 +24,7 @@ _MCP_SEARCH_TIMEOUT = 15.0
 # MCP server configurations
 # OpenMemory (local HSG) uses openmemory_query
 # Mem0 (cloud) uses search-memory
-_MCP_TOOL_CONFIGS = {
+_MCP_TOOL_CONFIGS: dict[str, dict[str, Any]] = {
     "openmemory": {
         "command": "npx",
         "args": ["-y", "openmemory-mcp"],
@@ -436,7 +436,7 @@ class MemorySourceAdapter(BaseSourceAdapter):
         """Parse openmemory.md into named sections."""
         sections = {}
         current_section = "root"
-        current_content = []
+        current_content: list[str] = []
 
         for line in content.split("\n"):
             if line.startswith("## "):

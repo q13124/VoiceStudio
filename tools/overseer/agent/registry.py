@@ -252,8 +252,8 @@ class AgentRegistry:
     def get_stats(self) -> dict:
         """Get registry statistics."""
         with self._lock:
-            by_state = {}
-            by_role = {}
+            by_state: dict[str, int] = {}
+            by_role: dict[str, int] = {}
 
             for agent in self._agents.values():
                 by_state[agent.state.value] = by_state.get(agent.state.value, 0) + 1

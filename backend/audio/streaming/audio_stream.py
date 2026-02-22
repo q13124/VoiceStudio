@@ -77,7 +77,7 @@ class AudioBuffer:
     def __init__(self, max_chunks: int = 16, chunk_size: int = 1024):
         self._max_chunks = max_chunks
         self._chunk_size = chunk_size
-        self._buffer: deque = deque(maxlen=max_chunks)
+        self._buffer: deque[np.ndarray] = deque(maxlen=max_chunks)
         self._lock = asyncio.Lock()
 
     async def push(self, audio_chunk: np.ndarray) -> bool:

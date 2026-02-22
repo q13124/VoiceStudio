@@ -6,6 +6,7 @@ Supports CRUD operations and conflict detection.
 """
 
 from __future__ import annotations
+from typing import Any
 
 import logging
 
@@ -285,7 +286,7 @@ async def update_shortcut(shortcut_id: str, request: ShortcutUpdateRequest):
         )
 
         # Check for conflicts
-        conflict_id = _check_conflict(new_key_code, new_modifiers, exclude_id=shortcut_id)
+        conflict_id = _check_conflict(str(new_key_code) if new_key_code else "", new_modifiers, exclude_id=shortcut_id)
         if conflict_id:
             conflict_desc = _shortcuts[conflict_id].get("description", "unknown")
             raise HTTPException(
@@ -302,7 +303,7 @@ async def update_shortcut(shortcut_id: str, request: ShortcutUpdateRequest):
         else:
             # Generate display key from modifiers and key_code
             parts = new_modifiers.copy()
-            parts.append(new_key_code)
+            parts.append(str(new_key_code) if new_key_code else "")
             shortcut["key"] = "+".join(parts)
 
     if request.description is not None:

@@ -267,7 +267,7 @@ class AuthAuditLogger:
         limit: int = 100,
     ) -> list[AuthEvent]:
         """Query auth events."""
-        results = []
+        results: list[AuthEvent] = []
 
         files = sorted(self._storage_path.glob("auth_*.jsonl"), reverse=True)
 

@@ -700,12 +700,12 @@ def _execute_conditional_node(node: MacroNode, inputs: dict[str, Any]) -> dict[s
         result = str(input_value) != str(expected_value)
     elif condition_type == "greater_than":
         try:
-            result = float(input_value) > float(expected_value)
+            result = float(str(input_value)) > float(str(expected_value))
         except (ValueError, TypeError):
             result = False
     elif condition_type == "less_than":
         try:
-            result = float(input_value) < float(expected_value)
+            result = float(str(input_value)) < float(str(expected_value))
         except (ValueError, TypeError):
             result = False
     elif condition_type == "contains":
@@ -797,7 +797,8 @@ def get_macro_execution_status_alias(macro_id: str) -> MacroExecutionStatus:
 
     This is an alias route for UI compatibility.
     """
-    return get_macro_execution_status(macro_id)
+    status: MacroExecutionStatus = get_macro_execution_status(macro_id)
+    return status
 
 
 class MacroScheduleRequest(BaseModel):

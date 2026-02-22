@@ -399,7 +399,8 @@ class ContextDistributor:
         try:
             with open(self._config_path, encoding="utf-8") as f:
                 data = json.load(f)
-            return data.get("plan", {})
+            result: dict[str, Any] = data.get("plan", {})
+            return result
         except Exception as e:
             # GAP-PY-001: Config file may not exist yet
             logger.debug(f"Failed to load plan context: {e}")
@@ -411,7 +412,8 @@ class ContextDistributor:
             with open(self._config_path, encoding="utf-8") as f:
                 data = json.load(f)
             ownership = data.get("phase_ownership", {})
-            return ownership.get(str(phase), {})
+            result: dict[str, Any] = ownership.get(str(phase), {})
+            return result
         except Exception as e:
             # GAP-PY-001: Config file may not exist yet
             logger.debug(f"Failed to load phase ownership: {e}")
@@ -564,7 +566,8 @@ class ContextDistributor:
                     or role_data.get("short_name") == role_id
                 )
                 if is_match:
-                    return role_data.get("auto_context", {})
+                    ctx: dict[str, bool] = role_data.get("auto_context", {})
+                    return ctx
 
             return {}
         except Exception:

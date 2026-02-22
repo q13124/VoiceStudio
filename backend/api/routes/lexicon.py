@@ -387,7 +387,7 @@ async def add_lexicon_entry(request: LexiconEntryCreateRequest):
 
 
 @router.put("/update")
-async def update_lexicon_entry(request: LexiconEntryCreateRequest):
+async def update_lexicon_entry_simple(request: LexiconEntryCreateRequest):
     """Update a lexicon entry (simplified endpoint for panel)."""
     from datetime import datetime
 
@@ -499,7 +499,7 @@ async def remove_lexicon_entry(word: str):
 
 
 @router.get("/list")
-async def list_lexicon_entries(language: str | None = None):
+async def list_lexicon_entries_simple(language: str | None = None):
     """List all lexicon entries (simplified endpoint for panel)."""
     try:
         default_lexicon_id = "default-lexicon"

@@ -338,13 +338,15 @@ class RVCModelManager:
 
             logger.info(f"Downloaded model to: {output_path}")
 
-            # Register the model
-            return await self.register_model(
-                model_id=model_id,
-                path=str(output_path),
+            model_info = RVCModelInfo(
+                id=model_id,
                 name=model_id.replace("_", " ").title(),
+                version="1.0",
+                model_path=str(output_path),
                 description=f"Downloaded from {parsed.netloc}",
             )
+            self.register_model(model_info)
+            return model_info
 
         except ImportError:
             logger.error("aiohttp required for model download: pip install aiohttp")

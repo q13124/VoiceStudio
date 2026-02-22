@@ -281,7 +281,8 @@ class BaseLLMProvider(EngineProtocol):
         functions: list[FunctionSpec] | None = None,
     ) -> AsyncIterator[str]:
         """Stream tokens from the LLM."""
-        ...
+        yield ""
+        return
 
     async def classify_intent(self, text: str) -> Intent:
         """

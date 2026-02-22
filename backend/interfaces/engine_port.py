@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from collections.abc import AsyncIterator
 from typing import Any, Protocol, runtime_checkable
 
 import numpy as np
@@ -341,5 +342,3 @@ class ITranslationEngine(Protocol):
         ...
 
 
-# Type aliases for convenience
-AsyncIterator = Any  # Placeholder for typing.AsyncIterator

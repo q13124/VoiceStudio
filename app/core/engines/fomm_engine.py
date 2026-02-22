@@ -330,7 +330,7 @@ class FOMMEngine(EngineProtocol):
             gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
             # Use ORB detector as fallback
             orb = cv2.ORB.create()
-            keypoints, descriptors = orb.detectAndCompute(gray, None)
+            keypoints, descriptors = orb.detectAndCompute(gray, np.array([]))
             return {"keypoints": keypoints, "descriptors": descriptors, "type": "orb"}
 
         return {"type": "none"}

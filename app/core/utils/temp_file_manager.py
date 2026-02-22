@@ -101,7 +101,7 @@ class TempFileManager:
         self._temp_files: dict[Path, TempFileInfo] = {}
         self._total_size_bytes = 0
         self._cleanup_count = 0
-        self._last_cleanup = None
+        self._last_cleanup: datetime | None = None
 
         # Background cleanup thread
         self._cleanup_thread: threading.Thread | None = None

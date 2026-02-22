@@ -38,7 +38,7 @@ def load_api_keys() -> dict[str, dict[str, Any]]:
 
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        return data.get("keys", {})
+        return dict(data.get("keys", {}))
     except (json.JSONDecodeError, OSError) as e:
         logger.warning("Failed to load API keys from %s: %s", path, e)
         return {}

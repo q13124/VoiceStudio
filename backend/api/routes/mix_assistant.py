@@ -5,6 +5,7 @@ Endpoints for AI-powered mixing and mastering assistance.
 """
 
 from __future__ import annotations
+from typing import Any
 
 import logging
 
@@ -255,7 +256,8 @@ async def generate_preset(
     }
 
     effective_genre = (genre or "voiceover").lower()
-    settings = genre_presets.get(effective_genre, genre_presets["voiceover"])
+    settings_val = genre_presets.get(effective_genre, genre_presets["voiceover"])
+    settings: dict[str, Any] = dict(settings_val) if isinstance(settings_val, dict) else {}
 
     preset_id = str(uuid.uuid4())[:8]
     return MixPreset(

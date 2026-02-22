@@ -156,7 +156,7 @@ class AuditLogger:
         if not data:
             return data
 
-        masked = {}
+        masked: dict[str, Any] = {}
         for key, value in data.items():
             if any(s in key.lower() for s in self.config.sensitive_fields):
                 masked[key] = "***MASKED***"
@@ -352,7 +352,7 @@ class AuditLogger:
         Returns:
             List of matching audit entries
         """
-        results = []
+        results: list[AuditEntry] = []
 
         # Find relevant files
         files = sorted(self._storage_path.glob("audit_*.jsonl"), reverse=True)

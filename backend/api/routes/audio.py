@@ -210,7 +210,7 @@ def _downsample_waveform(
     if not HAS_AUDIO_LIBS:
         # Fallback: simple downsampling
         if len(audio) <= target_width:
-            return audio.tolist()
+            return np.asarray(audio.tolist())
 
         step = len(audio) // target_width
         if mode == "peak":
@@ -246,7 +246,7 @@ def _downsample_waveform(
         hop_length = max(1, len(audio) // target_width)
         frames = librosa.util.frame(audio, frame_length=hop_length, hop_length=hop_length, axis=0)
         rms = np.sqrt(np.mean(frames**2, axis=0))
-        return rms[:target_width]
+        return np.asarray(rms[:target_width])
 
 
 @router.get("/waveform", response_model=WaveformData)

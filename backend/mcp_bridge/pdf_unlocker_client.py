@@ -180,5 +180,5 @@ class PDFUnlockerClient:
         """
         result = self.read_pdf(file_path, pages=[1])  # Just read first page for metadata
         if result.get("success"):
-            return result.get("total_pages", 0)
+            return int(result.get("total_pages", 0))
         return 0

@@ -132,7 +132,7 @@ ENGINE_PIPELINE_PRESETS = {
 }
 
 
-def get_engine_pipeline(engine_id: str, preset_name: str = "default") -> dict[str, Any]:
+def get_engine_pipeline(engine_id: str, preset_name: str | None = "default") -> dict[str, Any]:
     """
     Get pipeline configuration for an engine and preset.
 
@@ -146,9 +146,9 @@ def get_engine_pipeline(engine_id: str, preset_name: str = "default") -> dict[st
     engine_presets = ENGINE_PIPELINE_PRESETS.get(engine_id, {})
     if not engine_presets:
         logger.warning(f"No presets found for engine {engine_id}, using generic")
-        return _get_generic_pipeline(preset_name)
+        return _get_generic_pipeline(preset_name or "default")
 
-    pipeline = engine_presets.get(preset_name)
+    pipeline = engine_presets.get(preset_name or "default")
     if not pipeline:
         logger.warning(f"Preset {preset_name} not found for {engine_id}, using default")
         pipeline = engine_presets.get("default", {})
@@ -175,7 +175,7 @@ def apply_engine_pipeline(
     sample_rate: int,
     engine_id: str,
     pipeline_config: dict[str, Any] | None = None,
-    preset_name: str = "default",
+    preset_name: str | None = "default",
     reference_audio: str | None = None,
 ) -> tuple[np.ndarray, dict[str, Any]]:
     """
@@ -256,7 +256,7 @@ def preview_engine_pipeline(
     sample_rate: int,
     engine_id: str,
     pipeline_config: dict[str, Any] | None = None,
-    preset_name: str = "default",
+    preset_name: str | None = "default",
     reference_audio: str | None = None,
 ) -> tuple[np.ndarray, dict[str, Any], dict[str, Any]]:
     """
@@ -301,7 +301,7 @@ def compare_enhancement(
     sample_rate: int,
     engine_id: str,
     pipeline_config: dict[str, Any] | None = None,
-    preset_name: str = "default",
+    preset_name: str | None = "default",
     reference_audio: str | None = None,
 ) -> dict[str, Any]:
     """
@@ -379,4 +379,4 @@ def get_pipeline_description(engine_id: str, preset_name: str = "default") -> st
         Description string
     """
     pipeline = get_engine_pipeline(engine_id, preset_name)
-    return pipeline.get("description", "Quality enhancement pipeline")
+    return str(pipeline.get("description", "Quality enhancement pipeline"))

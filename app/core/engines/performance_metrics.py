@@ -14,17 +14,19 @@ import time
 from collections import defaultdict
 from contextlib import contextmanager
 from threading import Lock, RLock
+from collections.abc import Callable
 from typing import Any
 
-try:
-    from app.core.monitoring.metrics import MetricsCollector, Timer, get_metrics_collector
+_get_metrics_collector: Callable[..., Any] | None = None
+HAS_METRICS = False
 
+try:
+    from app.core.monitoring.metrics import get_metrics_collector
+
+    _get_metrics_collector = get_metrics_collector
     HAS_METRICS = True
 except ImportError:
-    HAS_METRICS = False
-    MetricsCollector = None
-    Timer = None
-    get_metrics_collector = None
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +61,7 @@ class EnginePerformanceMetrics:
         self._metrics_collector = None
         if HAS_METRICS:
             try:
-                self._metrics_collector = get_metrics_collector()
+                self._metrics_collector = _get_metrics_collector() if _get_metrics_collector is not None else None
             except Exception as e:
                 logger.warning(f"Failed to get metrics collector: {e}")
 
@@ -212,7 +214,7 @@ class EnginePerformanceMetrics:
             Dictionary with statistics for all engines
         """
         with self._lock:
-            all_engines = set()
+            all_engines: set[str] = set()
             all_engines.update(self._synthesis_times.keys())
             all_engines.update(self._cache_hits.keys())
             all_engines.update(self._cache_misses.keys())

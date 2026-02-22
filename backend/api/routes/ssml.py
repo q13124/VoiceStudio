@@ -234,8 +234,8 @@ async def validate_ssml(request: SSMLCreateRequest):
     import re
     import xml.etree.ElementTree as ET
 
-    errors = []
-    warnings = []
+    errors: list[str] = []
+    warnings: list[str] = []
 
     if not request.content.strip():
         errors.append("SSML content cannot be empty")
@@ -318,7 +318,7 @@ async def validate_ssml(request: SSMLCreateRequest):
     # Unclosed tags
     open_tags = re.findall(r"<([^/>]+)>", request.content)
     close_tags = re.findall(r"</([^>]+)>", request.content)
-    tag_counts = {}
+    tag_counts: dict[str, int] = {}
     for tag in open_tags:
         tag_name = tag.split()[0] if " " in tag else tag
         tag_counts[tag_name] = tag_counts.get(tag_name, 0) + 1

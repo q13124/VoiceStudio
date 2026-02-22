@@ -132,7 +132,7 @@ class AIGovernor:
         )
 
         logger.info(f"Selected engine '{selected_engine}' for task '{task_type}'")
-        return selected_engine
+        return str(selected_engine)
 
     def run_ab_test(
         self,
@@ -273,7 +273,7 @@ class AIGovernor:
             reward = reward + quality_adjustment + latency_adjustment
             reward = max(0.0, min(1.0, reward))  # Clamp to [0, 1]
 
-        return reward
+        return float(reward)
 
     def _score_engine(
         self,

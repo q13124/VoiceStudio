@@ -312,16 +312,17 @@ async def _generate_voice_sample(voice_id: str, output_path: Path) -> Path | Non
         # Import synthesis service
         from backend.ml.models.engine_service import get_engine_service
 
-        engine_service = await get_engine_service()
+        engine_service = get_engine_service()
 
         # Generate sample audio
-        result = await engine_service.synthesize(
+        result = engine_service.synthesize(
+            engine_id="default",
             text=SAMPLE_TEXT,
             voice_id=voice_id,
             output_path=str(output_path),
         )
 
-        if result.get("success") and output_path.exists():
+        if getattr(result, "success", False) and output_path.exists():
             logger.info(f"Generated voice sample for {voice_id}")
             return output_path
 

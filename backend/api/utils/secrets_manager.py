@@ -3,6 +3,7 @@ Secrets Manager
 Centralizes secrets management using environment variables and secure storage.
 """
 
+from typing import Any
 from __future__ import annotations
 
 import logging
@@ -19,13 +20,15 @@ except ImportError:
     HAS_KEYRING = False
     keyring = None
 
+Fernet: Any = None
+HAS_CRYPTOGRAPHY = False
 try:
-    from cryptography.fernet import Fernet
+    from cryptography.fernet import Fernet as _Fernet
 
+    Fernet = _Fernet
     HAS_CRYPTOGRAPHY = True
 except ImportError:
-    HAS_CRYPTOGRAPHY = False
-    Fernet = None
+    pass
 
 
 class SecretsManager:

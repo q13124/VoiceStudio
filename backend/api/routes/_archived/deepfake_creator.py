@@ -7,6 +7,7 @@ Endpoints for face swapping and face replacement (with consent/watermark require
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
@@ -381,10 +382,10 @@ async def _process_deepfake_job(job_id: str):
                         draw = ImageDraw.Draw(img)
                         # Add watermark text
                         watermark_text = "DEEPFAKE"
+                        font: Any = None
                         try:
                             font = ImageFont.truetype("arial.ttf", 24)
                         except OSError:
-                            # Arial not available, use default font
                             font = ImageFont.load_default()
                         draw.text((10, 10), watermark_text, fill=(255, 0, 0, 128), font=font)
                         img.save(output_path)

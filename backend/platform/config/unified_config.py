@@ -25,10 +25,13 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, TypeVar
 
+yaml: Any = None
 try:
-    import yaml
+    import yaml as _yaml
+
+    yaml = _yaml
 except ImportError:
-    yaml = None  # type: ignore
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -266,7 +269,7 @@ class ConfigLoader:
                 config_dir = Path("config")
 
         self.config_dir = Path(config_dir)
-        self._cache: dict[str, Any] = {}
+        self._cache: dict[str, dict[str, Any]] = {}
         self._lock = threading.Lock()
 
     def _load_yaml(self, filename: str) -> dict[str, Any]:
@@ -288,8 +291,8 @@ class ConfigLoader:
             if content is None:
                 return {}
 
-            # Expand environment variables
-            return expand_env_vars_recursive(content)
+            result: dict[str, Any] = expand_env_vars_recursive(content)
+            return result
 
         except yaml.YAMLError as e:
             logger.error(f"Error parsing YAML file {filepath}: {e}")
@@ -305,7 +308,8 @@ class ConfigLoader:
             with open(filepath, encoding="utf-8") as f:
                 content = json.load(f)
 
-            return expand_env_vars_recursive(content)
+            result: dict[str, Any] = expand_env_vars_recursive(content)
+            return result
 
         except json.JSONDecodeError as e:
             logger.error(f"Error parsing JSON file {filepath}: {e}")
@@ -597,7 +601,7 @@ class UnifiedConfigService:
     def is_engine_enabled(self, engine_id: str) -> bool:
         """Check if an engine is enabled."""
         override = self.get_engine_override(engine_id)
-        return override.get("enabled", True)
+        return bool(override.get("enabled", True))
 
     def get_active_ab_experiments(self) -> list[ABExperiment]:
         """Get all active A/B testing experiments."""

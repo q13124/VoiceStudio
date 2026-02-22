@@ -42,7 +42,7 @@ def benchmark_engine(
     logger.info(f"Benchmarking: {engine_name}")
     logger.info(f"{'='*60}")
 
-    results = {
+    results: dict[str, Any] = {
         "engine": engine_name,
         "success": False,
         "error": None,

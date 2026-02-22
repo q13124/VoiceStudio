@@ -574,7 +574,7 @@ async def _process_multi_engine_ensemble_job(job_id: str, request: MultiEngineEn
                 # Load all engine outputs
                 engine_audios = {}
                 sample_rates = {}
-                max_duration = 0
+                max_duration: float = 0.0
 
                 for engine in successful_engines:
                     audio_id = job["engine_outputs"][engine]

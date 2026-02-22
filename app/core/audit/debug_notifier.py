@@ -8,9 +8,12 @@ escalation.
 
 from __future__ import annotations
 
+import logging
 import threading
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Callable
+
+logger = logging.getLogger(__name__)
 
 
 class DebugRoleNotifier:
@@ -46,14 +49,14 @@ class DebugRoleNotifier:
         self._rate_limit = rate_limit_per_hour
         self._notification_times: list[datetime] = []
         self._lock = threading.Lock()
-        self._handoff_queue = None
-        self._callbacks: list[callable] = []
+        self._handoff_queue: Any = None
+        self._callbacks: list[Callable[..., Any]] = []
 
-    def set_handoff_queue(self, queue) -> None:
+    def set_handoff_queue(self, queue: Any) -> None:
         """Set the HandoffQueue for cross-role escalation."""
         self._handoff_queue = queue
 
-    def add_callback(self, callback: callable) -> None:
+    def add_callback(self, callback: Callable[..., Any]) -> None:
         """Add a callback to be invoked on notifications."""
         self._callbacks.append(callback)
 

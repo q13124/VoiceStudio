@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from .json_file_store import JsonFileStore
+from .json_file_store import JsonFileStore  # returns Any from get/list/etc.
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,8 @@ class EffectChainStore:
 
     def get(self, chain_id: str) -> dict[str, Any] | None:
         """Get an effect chain by ID."""
-        return self._store.get(chain_id)
+        result: dict[str, Any] | None = self._store.get(chain_id)
+        return result
 
     def save(self, chain: dict[str, Any]) -> str:
         """
@@ -61,7 +62,7 @@ class EffectChainStore:
         Returns:
             Chain ID.
         """
-        chain_id = chain.get("id", "")
+        chain_id: str = chain.get("id", "")
         if not chain_id:
             import uuid
 
@@ -92,7 +93,7 @@ class EffectChainStore:
         project_id = chain.get("project_id", "")
 
         # Remove from store
-        result = self._store.delete(chain_id)
+        result: bool = self._store.delete(chain_id)
 
         # Update project index
         if project_id and project_id in self._project_index:
@@ -116,11 +117,13 @@ class EffectChainStore:
 
     def list_all(self) -> list[dict[str, Any]]:
         """List all effect chains."""
-        return self._store.list()
+        items: list[dict[str, Any]] = self._store.list()
+        return items
 
     def count(self) -> int:
         """Get total number of chains."""
-        return self._store.count()
+        n: int = self._store.count()
+        return n
 
     def count_by_project(self, project_id: str) -> int:
         """Get number of chains for a project."""
@@ -128,7 +131,8 @@ class EffectChainStore:
 
     def exists(self, chain_id: str) -> bool:
         """Check if a chain exists."""
-        return self._store.exists(chain_id)
+        result: bool = self._store.exists(chain_id)
+        return result
 
 
 class EffectPresetStore:
@@ -165,7 +169,8 @@ class EffectPresetStore:
 
     def get(self, preset_id: str) -> dict[str, Any] | None:
         """Get an effect preset by ID."""
-        return self._store.get(preset_id)
+        result: dict[str, Any] | None = self._store.get(preset_id)
+        return result
 
     def save(self, preset: dict[str, Any]) -> str:
         """
@@ -177,7 +182,7 @@ class EffectPresetStore:
         Returns:
             Preset ID.
         """
-        preset_id = preset.get("id", "")
+        preset_id: str = preset.get("id", "")
         if not preset_id:
             import uuid
 
@@ -208,7 +213,7 @@ class EffectPresetStore:
         effect_type = preset.get("effect_type", "")
 
         # Remove from store
-        result = self._store.delete(preset_id)
+        result: bool = self._store.delete(preset_id)
 
         # Update type index
         if effect_type and effect_type in self._type_index:
@@ -232,15 +237,18 @@ class EffectPresetStore:
 
     def list_all(self) -> list[dict[str, Any]]:
         """List all effect presets."""
-        return self._store.list()
+        items: list[dict[str, Any]] = self._store.list()
+        return items
 
     def count(self) -> int:
         """Get total number of presets."""
-        return self._store.count()
+        n: int = self._store.count()
+        return n
 
     def exists(self, preset_id: str) -> bool:
         """Check if a preset exists."""
-        return self._store.exists(preset_id)
+        result: bool = self._store.exists(preset_id)
+        return result
 
 
 # Singletons

@@ -81,7 +81,7 @@ class MoviePyEngine(EngineProtocol):
         self.cache_size = max(cache_size, 200)  # Increased default cache size
         self.batch_size = max(batch_size, 8)  # Increased default batch size
         self._processing_cache: OrderedDict[str, str] = OrderedDict()
-        self._temp_dir = None  # Reusable temp directory
+        self._temp_dir: Path | str | None = None
         self._cache_stats = {
             "hits": 0,
             "misses": 0,
@@ -155,7 +155,7 @@ class MoviePyEngine(EngineProtocol):
                             logger.debug(f"Removed temp directory: {self._temp_dir}")
                         except Exception as e:
                             logger.warning(f"Failed to remove temp directory: {e}")
-                self._temp_dir = None
+                self._temp_dir: Path | None = None
 
             # MoviePy clips should be closed explicitly
             # This is handled by the context managers in methods

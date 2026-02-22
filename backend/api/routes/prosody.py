@@ -186,7 +186,7 @@ async def analyze_phonemes(text: str, language: str = "en"):
     if HAS_PHONEMIZER:
         try:
             phonemizer = Phonemizer()
-            phonemes = phonemizer.phonemize(text, language=language)
+            phonemes = phonemizer.phonemize_with_phonemizer(text, language=language)
             if phonemes:
                 return {
                     "text": text,
@@ -220,8 +220,7 @@ async def analyze_phonemes(text: str, language: str = "en"):
 
     # Fallback: Use lexicon route for phoneme estimation
     try:
-        from ..models_additional import PhonemeEstimateRequest
-        from .lexicon import estimate_phonemes
+        from .lexicon import PhonemeEstimateRequest, estimate_phonemes
 
         # Split text into words and estimate phonemes for each
         words = text.split()
@@ -273,7 +272,6 @@ async def apply_prosody(request: ProsodyApplyRequest):
             profile_id=request.voice_profile_id,
             engine=request.engine or "xtts",
             language=request.language or "en",
-            speed=speed,
             emotion=emotion,
         )
 

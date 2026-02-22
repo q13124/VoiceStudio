@@ -11,6 +11,7 @@ Compatible with:
 - HTTP API for workflow execution
 """
 
+from typing import Any
 from __future__ import annotations
 
 import hashlib
@@ -25,15 +26,18 @@ from pathlib import Path
 import requests
 from PIL import Image
 
+HTTPAdapter: Any = None
+Retry: Any = None
+HAS_RETRY = False
 try:
-    from requests.adapters import HTTPAdapter
-    from urllib3.util.retry import Retry
+    from requests.adapters import HTTPAdapter as _HTTPAdapter
+    from urllib3.util.retry import Retry as _Retry
 
+    HTTPAdapter = _HTTPAdapter
+    Retry = _Retry
     HAS_RETRY = True
 except ImportError:
-    HAS_RETRY = False
-    HTTPAdapter = None
-    Retry = None
+    pass
 
 import logging
 
@@ -114,7 +118,7 @@ class SDXLComfyEngine(EngineProtocol):
 
         # Setup session with connection pooling and retries
         self.session = requests.Session()
-        self.session.timeout = 300  # 5 minutes for image generation
+        self._request_timeout = 300  # 5 minutes for image generation
 
         if HAS_RETRY:
             retries = Retry(
@@ -131,7 +135,7 @@ class SDXLComfyEngine(EngineProtocol):
             self.session.mount("http://", adapter)
             self.session.mount("https://", adapter)
 
-        self.client_id = None
+        self.client_id: str | None = None
 
     def initialize(self) -> bool:
         """

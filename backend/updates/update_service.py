@@ -196,7 +196,10 @@ class UpdateService:
             await self._create_backup(backup_path)
 
             # Extract and install update
-            update_file = self._update_path / f"update_{self._current_update.version}.zip"
+            current_update = self._current_update
+            if current_update is None:
+                return False
+            update_file = self._update_path / f"update_{current_update.version}.zip"
             await self._extract_update(update_file)
 
             # Update version file
@@ -204,7 +207,7 @@ class UpdateService:
             version_file.write_text(
                 json.dumps(
                     {
-                        "version": self._current_update.version,
+                        "version": current_update.version,
                         "installed_at": datetime.now().isoformat(),
                     }
                 )
@@ -301,7 +304,10 @@ class UpdateService:
             for chunk in iter(lambda: f.read(8192), b""):
                 hasher.update(chunk)
 
-        return hasher.hexdigest() == self._current_update.checksum
+        current_update = self._current_update
+        if current_update is None:
+            return False
+        return hasher.hexdigest() == current_update.checksum
 
     async def _create_backup(self, backup_path: Path) -> None:
         """Create a backup of the current installation."""

@@ -208,7 +208,7 @@ class JobRepository(BaseRepository[JobEntity]):
         current_step_index: int | None = None,
     ) -> JobEntity | None:
         """Update job progress efficiently."""
-        data = {"progress": progress}
+        data: dict[str, Any] = {"progress": progress}
         if current_step is not None:
             data["current_step"] = current_step
         if current_step_index is not None:
@@ -232,7 +232,7 @@ class JobRepository(BaseRepository[JobEntity]):
         result_id: str | None = None,
     ) -> JobEntity | None:
         """Mark job as completed."""
-        data = {
+        data: dict[str, Any] = {
             "status": JobStatus.COMPLETED.value,
             "progress": 1.0,
             "completed_at": datetime.now().isoformat(),
@@ -329,7 +329,7 @@ class JobRepository(BaseRepository[JobEntity]):
         await self._connection.commit()
 
         # Get count of affected rows
-        return self._connection.total_changes
+        return int(self._connection.total_changes)
 
 
 # In-memory fallback repository for graceful degradation
@@ -352,7 +352,7 @@ class InMemoryJobRepository:
         if options:
             if options.order_by:
                 reverse = options.order_desc if options.order_desc else False
-                jobs.sort(key=lambda j: getattr(j, options.order_by, ""), reverse=reverse)
+                jobs.sort(key=lambda j: getattr(j, options.order_by or "", ""), reverse=reverse)
             if options.limit:
                 jobs = jobs[: options.limit]
         return jobs
@@ -433,7 +433,7 @@ class InMemoryJobRepository:
         current_step_index: int | None = None,
     ) -> JobEntity | None:
         """Update job progress."""
-        data = {"progress": progress}
+        data: dict[str, Any] = {"progress": progress}
         if current_step is not None:
             data["current_step"] = current_step
         if current_step_index is not None:

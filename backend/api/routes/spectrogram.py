@@ -23,6 +23,7 @@ See also: docs/api/ROUTE_MAPPING.md for complete route documentation.
 """
 
 from __future__ import annotations
+from typing import Any
 
 import logging
 import os
@@ -229,7 +230,6 @@ async def get_spectrogram_data(
             logger.error(
                 "librosa/soundfile not available. Spectrogram generation requires these libraries."
             )
-            np = None
 
         if not HAS_AUDIO_LIBS:
             raise HTTPException(

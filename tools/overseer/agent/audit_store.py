@@ -13,6 +13,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 
 @dataclass
@@ -157,9 +158,9 @@ class AuditStore:
 
             index += 1
 
-    def _redact_secrets(self, params: dict) -> dict:
+    def _redact_secrets(self, params: dict[str, Any]) -> dict[str, Any]:
         """Redact sensitive values from parameters."""
-        redacted = {}
+        redacted: dict[str, Any] = {}
         for key, value in params.items():
             key_lower = key.lower()
             if any(pattern in key_lower for pattern in self.SECRET_PATTERNS):
@@ -342,30 +343,36 @@ class AuditStore:
         self,
         start_time: datetime | None = None,
         end_time: datetime | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Get statistics for the time range."""
-        stats = {
-            "total": 0,
-            "success": 0,
-            "failure": 0,
-            "denied": 0,
-            "by_tool": {},
-            "by_agent": {},
-            "by_risk_tier": {},
-        }
+        total = 0
+        success = 0
+        failure = 0
+        denied = 0
+        by_tool: dict[str, int] = {}
+        by_agent: dict[str, int] = {}
+        by_risk_tier: dict[str, int] = {}
 
         for entry in self._iter_entries(start_time, end_time):
-            stats["total"] += 1
+            total += 1
 
             if entry.result == "success":
-                stats["success"] += 1
+                success += 1
             elif entry.result == "failure":
-                stats["failure"] += 1
+                failure += 1
             elif entry.result == "denied":
-                stats["denied"] += 1
+                denied += 1
 
-            stats["by_tool"][entry.tool_name] = stats["by_tool"].get(entry.tool_name, 0) + 1
-            stats["by_agent"][entry.agent_id] = stats["by_agent"].get(entry.agent_id, 0) + 1
-            stats["by_risk_tier"][entry.risk_tier] = stats["by_risk_tier"].get(entry.risk_tier, 0) + 1
+            by_tool[entry.tool_name] = by_tool.get(entry.tool_name, 0) + 1
+            by_agent[entry.agent_id] = by_agent.get(entry.agent_id, 0) + 1
+            by_risk_tier[entry.risk_tier] = by_risk_tier.get(entry.risk_tier, 0) + 1
 
-        return stats
+        return {
+            "total": total,
+            "success": success,
+            "failure": failure,
+            "denied": denied,
+            "by_tool": by_tool,
+            "by_agent": by_agent,
+            "by_risk_tier": by_risk_tier,
+        }

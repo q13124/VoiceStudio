@@ -542,12 +542,12 @@ class EngineMetricsCollector:
             stats["total_count"] = count.value if count else 0
             stats["error_count"] = errors.value if errors else 0
 
-            hist = self._transcription_latency.get(engine)
-            if hist:
-                stats["latency_p50_ms"] = hist.get_percentile(50)
-                stats["latency_p95_ms"] = hist.get_percentile(95)
-                stats["latency_p99_ms"] = hist.get_percentile(99)
-                stats["latency_mean_ms"] = hist.mean
+            trans_hist: Histogram | None = self._transcription_latency.get(engine)
+            if trans_hist:
+                stats["latency_p50_ms"] = trans_hist.get_percentile(50)
+                stats["latency_p95_ms"] = trans_hist.get_percentile(95)
+                stats["latency_p99_ms"] = trans_hist.get_percentile(99)
+                stats["latency_mean_ms"] = trans_hist.mean
 
             # Get RTF percentiles
             rtf_hist = self._transcription_rtf.get(engine)

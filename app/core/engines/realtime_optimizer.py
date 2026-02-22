@@ -112,7 +112,7 @@ class GPUProfiler:
 
     @property
     def cuda_available(self) -> bool:
-        return self._cuda_available
+        return bool(self._cuda_available)
 
     def profile_operation(
         self,
@@ -286,7 +286,7 @@ class CUDAGraphOptimizer:
 
     @property
     def enabled(self) -> bool:
-        return self._enabled
+        return bool(self._enabled)
 
 
 class RealtimeOptimizer:
@@ -390,7 +390,7 @@ class RealtimeOptimizer:
                 )
                 times.append(elapsed)
 
-            return np.mean(times)
+            return float(np.mean(times))
 
         except Exception as e:
             logger.debug(f"Benchmark error: {e}")

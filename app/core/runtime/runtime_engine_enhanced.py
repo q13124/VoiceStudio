@@ -364,7 +364,7 @@ class EnhancedRuntimeEngine:
                 url = url.replace("{port}", str(self.port))
                 try:
                     response = requests.get(url, timeout=2)
-                    return response.status_code == 200
+                    return bool(response.status_code == 200)
                 except Exception as e:
                     logger.debug(f"Health check failed for {self.engine_id}: {e}")
                     return False
@@ -455,7 +455,7 @@ class EnhancedRuntimeEngineManager:
 
     def find_manifests(self, engines_root: str = "engines") -> dict[str, str]:
         """Find all engine manifest files (both v1.0 and v1.1)."""
-        manifests = {}
+        manifests: dict[str, str] = {}
         engines_dir = Path(engines_root)
 
         if not engines_dir.exists():

@@ -10,6 +10,7 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass
+from collections.abc import Callable
 from typing import Any
 
 from backend.infrastructure.adapters.base import Adapter
@@ -178,7 +179,7 @@ class CacheAdapter(Adapter):
     async def get_or_set(
         self,
         key: str,
-        factory: callable,
+        factory: Callable[..., Any],
         ttl: int | None = None,
     ) -> Any:
         """

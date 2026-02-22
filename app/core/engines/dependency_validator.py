@@ -149,7 +149,7 @@ class DependencyValidator:
     @staticmethod
     def validate_engine_dependencies(
         engine_name: str, raise_on_error: bool = True
-    ) -> tuple[bool, list[str], list[str]]:
+    ) -> tuple[bool, list[tuple[str, str]], list[tuple[str, str]]]:
         """
         Validate all dependencies for an engine.
 

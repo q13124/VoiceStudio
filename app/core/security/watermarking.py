@@ -9,6 +9,7 @@ See: docs/governance/SECURITY_FEATURES_IMPLEMENTATION_PLAN.md
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import numpy as np
 
@@ -60,7 +61,7 @@ class AudioWatermarker:
         self,
         audio: np.ndarray,
         sample_rate: int,
-        watermark_data: dict[str, any],
+        watermark_data: dict[str, Any],
         method: str | None = None,
         strength: float | None = None,
         key: str | None = None,
@@ -92,7 +93,7 @@ class AudioWatermarker:
         watermark_id: str | None = None,
         method: str | None = None,
         key: str | None = None,
-    ) -> dict[str, any]:
+    ) -> dict[str, Any]:
         """
         Extract watermark from audio.
 
@@ -116,8 +117,8 @@ class AudioWatermarker:
         audio: np.ndarray,
         sample_rate: int,
         original_watermark_id: str,
-        original_watermark_data: dict[str, any],
-    ) -> dict[str, any]:
+        original_watermark_data: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Detect if watermark has been tampered with or removed.
 

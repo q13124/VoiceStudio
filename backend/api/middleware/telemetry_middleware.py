@@ -76,7 +76,8 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Process request with tracing."""
         if not self.enabled or self._should_skip(request.url.path):
-            return await call_next(request)
+            resp: Response = await call_next(request)
+            return resp
 
         # Extract or generate trace ID
         trace_id = request.headers.get(TRACE_ID_HEADER, uuid.uuid4().hex[:16])
@@ -97,7 +98,7 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
                 },
             ) as span:
                 # Process request
-                response = await call_next(request)
+                response: Response = await call_next(request)
                 status_code = response.status_code
 
                 # Set span attributes

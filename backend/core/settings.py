@@ -19,13 +19,19 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
+from pydantic import Field
+
+BaseSettings: Any = None
 try:
-    from pydantic import Field
-    from pydantic_settings import BaseSettings
+    from pydantic_settings import BaseSettings as _BS
+
+    BaseSettings = _BS
 except ImportError:
-    # Fallback for environments without pydantic-settings
-    from pydantic import BaseSettings, Field
+    from pydantic import BaseSettings as _BS2
+
+    BaseSettings = _BS2
 
 
 class VoiceStudioSettings(BaseSettings):

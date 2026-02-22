@@ -25,7 +25,7 @@ class PluginMetadata:
     def __init__(self, manifest_path: Path):
         """Load plugin metadata from manifest.json"""
         self.manifest_path = manifest_path
-        self.manifest_data = {}
+        self.manifest_data: dict[str, Any] = {}
         self.load_manifest()
 
     def load_manifest(self):
@@ -40,37 +40,44 @@ class PluginMetadata:
     @property
     def name(self) -> str:
         """Plugin name"""
-        return self.manifest_data.get("name", "unknown")
+        val: str = self.manifest_data.get("name", "unknown")
+        return val
 
     @property
     def version(self) -> str:
         """Plugin version"""
-        return self.manifest_data.get("version", "1.0.0")
+        val: str = self.manifest_data.get("version", "1.0.0")
+        return val
 
     @property
     def author(self) -> str:
         """Plugin author"""
-        return self.manifest_data.get("author", "Unknown")
+        val: str = self.manifest_data.get("author", "Unknown")
+        return val
 
     @property
     def description(self) -> str:
         """Plugin description"""
-        return self.manifest_data.get("description", "")
+        val: str = self.manifest_data.get("description", "")
+        return val
 
     @property
     def capabilities(self) -> dict[str, Any]:
         """Plugin capabilities"""
-        return self.manifest_data.get("capabilities", {})
+        val: dict[str, Any] = self.manifest_data.get("capabilities", {})
+        return val
 
     @property
     def dependencies(self) -> list[str]:
         """Plugin dependencies"""
-        return self.manifest_data.get("dependencies", [])
+        val: list[str] = self.manifest_data.get("dependencies", [])
+        return val
 
     @property
     def entry_points(self) -> dict[str, str]:
         """Plugin entry points"""
-        return self.manifest_data.get("entry_points", {})
+        val: dict[str, str] = self.manifest_data.get("entry_points", {})
+        return val
 
 
 class BasePlugin(ABC):

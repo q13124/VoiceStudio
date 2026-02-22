@@ -466,8 +466,8 @@ class BackgroundTaskScheduler:
 
     def get_stats(self) -> dict[str, Any]:
         """Get scheduler statistics (enhanced)."""
-        status_counts = {}
-        priority_counts = {}
+        status_counts: dict[str, int] = {}
+        priority_counts: dict[str, int] = {}
         for task in self._tasks.values():
             status = task.status.value
             status_counts[status] = status_counts.get(status, 0) + 1

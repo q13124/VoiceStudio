@@ -20,17 +20,25 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/search", tags=["search"])
 
 # In-memory storage references (replace with database in production)
+_markers: Any = None
+_profiles: Any = None
+_projects: Any = None
+_scripts: Any = None
+_tracks: Any = None
+_audio_storage: Any = None
+STORAGE_AVAILABLE = False
 try:
-    from ..routes.markers import _markers
-    from ..routes.profiles import _profiles
-    from ..routes.projects import _projects
-    from ..routes.script_editor import _scripts
-    from ..routes.tracks import _tracks
-    from ..routes.voice import _audio_storage
+    from ..routes.markers import _markers as _m
+    from ..routes.profiles import _profiles as _p
+    from ..routes.script_editor import _scripts as _sc
+    from ..routes.voice import _audio_storage as _as
 
+    _markers = _m
+    _profiles = _p
+    _scripts = _sc
+    _audio_storage = _as
     STORAGE_AVAILABLE = True
-except ImportError:
-    STORAGE_AVAILABLE = False
+except (ImportError, AttributeError):
     logger.warning("Storage modules not available for search")
 
 
@@ -265,7 +273,7 @@ def _parse_natural_language_query(query: str) -> ParsedQuery:
     - Emotion filters: "sad", "happy", "angry", etc.
     - Date filters: "created today", "from last week"
     """
-    parsed = ParsedQuery(original_query=query)
+    parsed = ParsedQuery(original_query=query, types=None)
     query_lower = query.lower()
 
     # Extract search terms (remove filter keywords)

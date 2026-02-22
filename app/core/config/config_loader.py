@@ -129,7 +129,7 @@ class ConfigLoader:
     def _load_json(self) -> dict[str, Any]:
         """Load JSON configuration."""
         with open(self.config_path, encoding="utf-8") as f:
-            return json.load(f)
+            return dict(json.load(f))
 
     def _load_yaml(self) -> dict[str, Any]:
         """Load YAML configuration."""
@@ -139,7 +139,7 @@ class ConfigLoader:
     def _load_toml(self) -> dict[str, Any]:
         """Load TOML configuration."""
         with open(self.config_path, encoding="utf-8") as f:
-            return toml.load(f)
+            return dict(toml.load(f))
 
     def _validate_cerberus(self, schema: dict) -> None:
         """Validate configuration using Cerberus schema."""

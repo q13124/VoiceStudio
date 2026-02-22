@@ -13,7 +13,42 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-# Try importing tqdm
+
+class _TqdmFallback:
+    """Fallback tqdm when the real tqdm is not installed."""
+
+    def __init__(self, *args: Any, **kwargs: Any):
+        self.total = kwargs.get("total")
+        self.n = 0
+
+    def update(self, n: int = 1) -> None:
+        self.n += n
+
+    def set_description(self, desc: str | None = None) -> None: ...
+
+    def close(self) -> None: ...
+
+    def __enter__(self) -> _TqdmFallback:
+        return self
+
+    def __exit__(self, *args: Any) -> None: ...
+
+
+class _AtqdmFallback:
+    """Fallback async tqdm when the real tqdm is not installed."""
+
+    def __init__(self, *args: Any, **kwargs: Any):
+        self.total = kwargs.get("total")
+        self.n = 0
+
+    async def update(self, n: int = 1) -> None:
+        self.n += n
+
+    def set_description(self, desc: str | None = None) -> None: ...
+
+    async def close(self) -> None: ...
+
+
 try:
     from tqdm import tqdm
     from tqdm.asyncio import tqdm as atqdm
@@ -22,36 +57,8 @@ try:
 except ImportError:
     HAS_TQDM = False
     logger.warning("tqdm not installed, progress bars will be disabled")
-
-    # Create dummy tqdm class for fallback
-    class tqdm:
-        def __init__(self, *args, **kwargs):
-            self.total = kwargs.get("total")
-            self.n = 0
-
-        def update(self, n=1):
-            self.n += n
-
-        def set_description(self, desc=None): ...
-
-        def close(self): ...
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args): ...
-
-    class atqdm:
-        def __init__(self, *args, **kwargs):
-            self.total = kwargs.get("total")
-            self.n = 0
-
-        async def update(self, n=1):
-            self.n += n
-
-        def set_description(self, desc=None): ...
-
-        async def close(self): ...
+    tqdm = _TqdmFallback
+    atqdm = _AtqdmFallback
 
 
 def create_progress_bar(
@@ -59,8 +66,8 @@ def create_progress_bar(
     desc: str | None = None,
     unit: str = "it",
     disable: bool = False,
-    **kwargs,
-) -> tqdm | Any:
+    **kwargs: Any,
+) -> Any:
     """
     Create a progress bar using tqdm.
 
@@ -85,8 +92,8 @@ def create_async_progress_bar(
     desc: str | None = None,
     unit: str = "it",
     disable: bool = False,
-    **kwargs,
-) -> atqdm | Any:
+    **kwargs: Any,
+) -> Any:
     """
     Create an async progress bar using tqdm.
 
@@ -107,12 +114,12 @@ def create_async_progress_bar(
 
 
 def wrap_iterable(
-    iterable: Iterator,
+    iterable: Iterator[Any],
     desc: str | None = None,
     total: int | None = None,
     disable: bool = False,
-    **kwargs,
-) -> Iterator:
+    **kwargs: Any,
+) -> Iterator[Any]:
     """
     Wrap an iterable with a progress bar.
 
@@ -129,10 +136,11 @@ def wrap_iterable(
     if not HAS_TQDM or disable:
         return iterable
 
-    return tqdm(iterable, desc=desc, total=total, disable=disable, **kwargs)
+    wrapped: Iterator[Any] = tqdm(iterable, desc=desc, total=total, disable=disable, **kwargs)
+    return wrapped
 
 
-def update_progress(progress_bar: Any, n: int = 1, desc: str | None = None):
+def update_progress(progress_bar: Any, n: int = 1, desc: str | None = None) -> None:
     """
     Update a progress bar.
 
@@ -152,7 +160,7 @@ def update_progress(progress_bar: Any, n: int = 1, desc: str | None = None):
         logger.debug(f"Failed to update progress bar: {e}")
 
 
-def close_progress(progress_bar: Any):
+def close_progress(progress_bar: Any) -> None:
     """
     Close a progress bar.
 

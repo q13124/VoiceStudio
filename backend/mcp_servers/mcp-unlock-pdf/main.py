@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Any
 
 import os
 
@@ -37,7 +38,7 @@ def read_pdf(file_path: str, password: str | None = None, pages: list[int] | Non
             is_encrypted = pdf_reader.is_encrypted
 
             # Try to decrypt if necessary
-            decrypt_success = True
+            decrypt_success: Any = True
             if is_encrypted:
                 if password is None:
                     return {

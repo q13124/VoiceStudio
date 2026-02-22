@@ -20,12 +20,16 @@ import logging
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from .issue_bridge import AuditIssueBridge
+
+
+class ContextEnricher(Protocol):
+    def enrich(self, entry: AuditEntry) -> AuditEntry: ...
 
 from .schema import (
     AuditActor,
@@ -215,7 +219,7 @@ class AuditLogger:
         index_path = self._audit_dir / "index.json"
 
         # Load existing index or create new
-        index = {"last_updated": "", "files": {}, "tasks": {}, "recent_entries": []}
+        index: dict[str, Any] = {"last_updated": "", "files": {}, "tasks": {}, "recent_entries": []}
         if index_path.exists():
             try:
                 with open(index_path, encoding="utf-8") as f:
@@ -251,7 +255,7 @@ class AuditLogger:
                 index["tasks"][entry.task_id]["errors_fixed"] += 1
 
         # Keep last 50 recent entries
-        recent = index.get("recent_entries", [])
+        recent: list[Any] = index.get("recent_entries", [])
         recent.insert(0, {"id": entry.entry_id, "type": entry.event_type, "time": entry.timestamp})
         index["recent_entries"] = recent[:50]
 

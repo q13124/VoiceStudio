@@ -14,6 +14,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -295,10 +296,13 @@ class GracefulShutdownOrchestrator:
 
         for sig in (signal.SIGTERM, signal.SIGINT):
             try:
-                loop.add_signal_handler(sig, lambda s=sig: signal_handler(s))
+                def _make_sig_handler(s: signal.Signals = sig) -> None:
+                    signal_handler(s)
+                loop.add_signal_handler(sig, _make_sig_handler)
             except NotImplementedError:
-                # Windows doesn't support add_signal_handler
-                signal.signal(sig, lambda s, f, sig=sig: signal_handler(sig))
+                def _sig_cb(_s: int, _f: Any, captured_sig: signal.Signals = sig) -> None:
+                    signal_handler(captured_sig)
+                signal.signal(sig, _sig_cb)
 
     def get_status(self) -> dict:
         """Get current shutdown status."""

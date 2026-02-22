@@ -230,7 +230,7 @@ class PluginVerificationService:
 
             self._signer_available = check_signing_available()
             if self._signer_available and keystore_path and keystore_path.exists():
-                self._keystore = load_keystore(keystore_path)
+                self._keystore = load_keystore(keystore_path, "")
         except ImportError:
             logger.debug("Signer module not available")
 
@@ -445,7 +445,8 @@ class PluginVerificationService:
                 for name in manifest_names:
                     try:
                         content = zf.read(name)
-                        return json.loads(content.decode("utf-8"))
+                        result: dict[str, Any] | None = json.loads(content.decode("utf-8"))
+                        return result
                     except KeyError:
                         continue
             return None
@@ -515,7 +516,7 @@ class PluginVerificationService:
                 sig_data = json.loads(sig_path.read_text())
 
             # Import signer
-            from backend.plugins.supply_chain.signer import Signature, verify_package
+            from backend.plugins.supply_chain.signer import PackageSigner, Signature
 
             # Reconstruct signature
             signature = Signature(
@@ -535,9 +536,9 @@ class PluginVerificationService:
                     details={"key_id": signature.key_id},
                 )
 
-            # Verify signature
             if self._keystore:
-                is_valid = verify_package(package_path, signature, keystore=self._keystore)
+                signer = PackageSigner(self._keystore)
+                is_valid = signer.verify(package_path, signature)
             else:
                 # Can't verify without keystore
                 return VerificationCheck(
@@ -750,16 +751,19 @@ class PluginVerificationService:
 
             try:
                 scanner = VulnerabilityScanner()
-                scan_result = await scanner.scan_sbom(sbom_path)
+                scan_result = scanner.scan_sbom(sbom_path)
             finally:
                 sbom_path.unlink(missing_ok=True)
 
-            # Count by severity
-            counts = scan_result.severity_counts()
-            critical = counts.get("CRITICAL", 0)
-            high = counts.get("HIGH", 0)
+            critical = scan_result.critical_count
+            high = scan_result.high_count
+            counts = {
+                "CRITICAL": critical,
+                "HIGH": high,
+                "MEDIUM": scan_result.medium_count,
+                "LOW": scan_result.low_count,
+            }
 
-            # Check against policy
             if critical > policy.max_critical_vulns:
                 return VerificationCheck(
                     name="vulnerability",
@@ -883,6 +887,7 @@ class PluginVerificationService:
         """Log verification to audit system."""
         try:
             from backend.plugins.supply_chain.audit import (
+                AuditLogger,
                 log_signature_verification,
             )
 
@@ -891,18 +896,25 @@ class PluginVerificationService:
                 for c in result.checks
             )
 
+            audit_db = Path(".audit") / "plugins.db"
+            audit_db.parent.mkdir(parents=True, exist_ok=True)
+            audit_logger = AuditLogger(db_path=audit_db)
+
+            checks_passed = len(
+                [c for c in result.checks if c.status == VerificationStatus.PASSED]
+            )
+            reason = (
+                f"level={result.level.value} passed={checks_passed} "
+                f"failed={len(result.failed_checks)} warnings={len(result.warnings)}"
+            )
+
             log_signature_verification(
+                audit_logger=audit_logger,
                 plugin_id=result.plugin_id or "unknown",
+                plugin_version=result.version or "unknown",
                 success=sig_valid,
                 key_id=result.signature.get("key_id") if result.signature else None,
-                details={
-                    "verification_level": result.level.value,
-                    "checks_passed": len(
-                        [c for c in result.checks if c.status == VerificationStatus.PASSED]
-                    ),
-                    "checks_failed": len(result.failed_checks),
-                    "warnings": len(result.warnings),
-                },
+                reason=reason,
             )
 
         except ImportError:

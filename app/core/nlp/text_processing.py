@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import re
 import unicodedata
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -46,14 +47,14 @@ except ImportError:
     FestivalBackend = None
     logger.debug("phonemizer not installed. Phoneme conversion will be limited.")
 
-# Try importing gruut for phoneme conversion
+# Check availability of gruut for phoneme conversion
+HAS_GRUUT: bool
 try:
     import gruut
 
     HAS_GRUUT = True
 except ImportError:
     HAS_GRUUT = False
-    gruut = None
     logger.debug("gruut not installed. Phoneme conversion will be limited.")
 
 
@@ -117,7 +118,8 @@ class TextPreprocessor:
         """
         if HAS_NLTK:
             try:
-                return sent_tokenize(text, language=language)
+                result: list[str] = sent_tokenize(text, language=language)
+                return result
             except LookupError:
                 logger.warning(f"NLTK data for language {language} not available")
                 # Fallback to simple segmentation
@@ -143,7 +145,8 @@ class TextPreprocessor:
         """
         if HAS_NLTK:
             try:
-                return word_tokenize(text, language=language)
+                tokens: list[str] = word_tokenize(text, language=language)
+                return tokens
             except LookupError:
                 logger.warning(f"NLTK data for language {language} not available")
                 return text.split()
@@ -221,7 +224,8 @@ class TextPreprocessor:
         """
         if HAS_NLTK:
             try:
-                return pos_tag(words)
+                tagged: list[tuple[str, str]] = pos_tag(words)
+                return tagged
             except Exception as e:
                 logger.warning(f"POS tagging failed: {e}")
                 return [(w, "UNKNOWN") for w in words]
@@ -279,7 +283,7 @@ class TextPreprocessor:
         language: str = "en",
         normalize: bool = True,
         segment_sentences: bool = True,
-    ) -> dict[str, any]:
+    ) -> dict[str, Any]:
         """
         Preprocess text for TTS synthesis.
 
@@ -292,29 +296,30 @@ class TextPreprocessor:
         Returns:
             Dictionary with preprocessed text and metadata
         """
-        result = {
+        normalized_text = text
+        # Normalize
+        if normalize:
+            normalized_text = self.normalize_text(text)
+
+        result: dict[str, Any] = {
             "original": text,
-            "normalized": text,
+            "normalized": normalized_text,
             "sentences": [],
             "word_count": 0,
             "sentiment": None,
         }
 
-        # Normalize
-        if normalize:
-            result["normalized"] = self.normalize_text(text)
-
         # Sentence segmentation
         if segment_sentences:
-            result["sentences"] = self.sentence_segmentation(result["normalized"], language)
+            result["sentences"] = self.sentence_segmentation(normalized_text, language)
 
         # Word count
-        words = self.word_tokenization(result["normalized"], language)
+        words = self.word_tokenization(normalized_text, language)
         result["word_count"] = len(words)
 
         # Sentiment analysis
         if HAS_TEXTBLOB:
-            result["sentiment"] = self.sentiment_analysis(result["normalized"])
+            result["sentiment"] = self.sentiment_analysis(normalized_text)
 
         return result
 
@@ -364,13 +369,12 @@ class TextPreprocessor:
         """
         if backend == "gruut" and HAS_GRUUT:
             try:
-                # Use gruut for phoneme conversion
-                lang_model = gruut.get_lang_model(language)
-                sentences = lang_model.preprocess(text)
+                import gruut as _gruut
+
                 phonemes = []
-                for sentence in sentences:
-                    for word in sentence.words:
-                        if word.phonemes:
+                for sentence in _gruut.sentences(text, lang=language):
+                    for word in sentence:
+                        if hasattr(word, "phonemes") and word.phonemes:
                             phonemes.extend(word.phonemes)
                 return " ".join(phonemes)
             except Exception as e:
@@ -386,14 +390,14 @@ class TextPreprocessor:
                 else:
                     backend_obj = EspeakBackend(language)
 
-                phonemes = phonemize(
+                result_phonemes: str = phonemize(
                     text,
                     backend=backend_obj,
                     language=language,
                     separator=" ",
                     strip=True,
                 )
-                return phonemes
+                return result_phonemes
             except Exception as e:
                 logger.warning(f"Phonemizer conversion failed: {e}")
                 return text

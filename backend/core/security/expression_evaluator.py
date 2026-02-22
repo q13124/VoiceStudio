@@ -30,7 +30,7 @@ class ExpressionError(Exception):
 
 
 # Safe operators for condition evaluation
-SAFE_OPERATORS: dict[type, Callable[..., Any]] = {
+SAFE_OPERATORS: dict[type[ast.AST], Callable[..., Any]] = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
     ast.Mult: operator.mul,
@@ -151,7 +151,7 @@ class SafeExpressionEvaluator:
 
         # Binary operations
         if isinstance(node, ast.BinOp):
-            op_type = type(node.op)
+            op_type: type[ast.AST] = type(node.op)
             if op_type not in SAFE_OPERATORS:
                 raise ExpressionError(f"Unsupported operator: {op_type.__name__}", "")
             left = self._eval_node(node.left, variables)
@@ -228,10 +228,10 @@ class SafeExpressionEvaluator:
         if isinstance(node, ast.Subscript):
             value = self._eval_node(node.value, variables)
             # Python 3.9+ uses slice directly, earlier uses Index wrapper
-            if isinstance(node.slice, ast.Index):
-                index = self._eval_node(node.slice.value, variables)
-            else:
-                index = self._eval_node(node.slice, variables)
+            slice_node = node.slice
+            if isinstance(slice_node, ast.Index):
+                slice_node = getattr(slice_node, "value", slice_node)
+            index = self._eval_node(slice_node, variables)
             return value[index]
 
         # IfExp (ternary)

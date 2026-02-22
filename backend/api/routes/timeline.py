@@ -340,7 +340,7 @@ async def _load_audio_file(path: str, target_sample_rate: int) -> np.ndarray | N
                 num_samples = int(len(audio) * target_sample_rate / sr)
                 audio = scipy.signal.resample(audio, num_samples).astype(np.float32)
 
-        return audio
+        return np.asarray(audio)
 
     except ImportError:
         logger.warning("soundfile not available, audio loading disabled")
@@ -412,11 +412,10 @@ async def _convert_to_format(input_path: str, output_path: str, format: str) -> 
     import shutil
 
     # Find ffmpeg
-    ffmpeg_path = os.environ.get("VOICESTUDIO_FFMPEG_PATH", "ffmpeg")
-    if not shutil.which(ffmpeg_path):
-        ffmpeg_path = shutil.which("ffmpeg")
+    ffmpeg_env = os.environ.get("VOICESTUDIO_FFMPEG_PATH", "ffmpeg")
+    ffmpeg_path: str | None = ffmpeg_env if shutil.which(ffmpeg_env) else shutil.which("ffmpeg")
 
-    if not ffmpeg_path:
+    if ffmpeg_path is None:
         raise RuntimeError("ffmpeg not found for format conversion")
 
     cmd = [ffmpeg_path, "-y", "-i", input_path, output_path]

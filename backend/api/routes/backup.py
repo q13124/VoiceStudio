@@ -36,8 +36,9 @@ from ..auth import require_auth_if_enabled
 try:
     from ..optimization import cache_response
 except ImportError:
+    from typing import Callable
 
-    def cache_response(ttl: int = 300):
+    def cache_response(ttl: int = 300, key_func: Callable | None = None):
         def decorator(func):
             return func
 
@@ -109,7 +110,7 @@ def _check_disk_space(required_bytes: float) -> bool:
     try:
         disk_usage = psutil.disk_usage(BACKUP_DIR)
         free_space = disk_usage.free
-        return free_space > int(required_bytes * 1.1)  # 10% buffer
+        return bool(free_space > int(required_bytes * 1.1))  # 10% buffer
     except Exception as e:
         logger.warning(f"Could not check disk space: {e}")
         return True  # Assume enough space if check fails

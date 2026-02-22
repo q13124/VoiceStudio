@@ -82,7 +82,7 @@ class SadTalkerEngine(EngineProtocol):
 
         # Caching for performance
         self._video_cache: dict[str, str] = {}
-        self._face_cache: dict[str, tuple[np.ndarray, dict]] = {}
+        self._face_cache: dict[str, tuple[np.ndarray | None, dict[Any, Any] | None]] = {}
         self._audio_features_cache: dict[str, list[dict]] = {}
         self._cache_max_size = 50  # Maximum number of cached videos
 
@@ -827,7 +827,7 @@ class SadTalkerEngine(EngineProtocol):
 
                 # Draw elliptical lip shape
                 axes = (lip_width // 2, max(2, lip_height // 2))
-                cv2.ellipse(lip_mask, (lip_center_x, lip_center_y), axes, 0, 0, 360, 255, -1)
+                cv2.ellipse(lip_mask, (lip_center_x, lip_center_y), axes, 0, 0, 360, (255,), -1)
 
                 # Apply color transformation to lip region
                 lip_region_mask = lip_mask[lip_y_start:lip_y_end, lip_x_start:lip_x_end] > 0
@@ -867,7 +867,7 @@ class SadTalkerEngine(EngineProtocol):
             return face_image.copy()
 
     def _composite_frame(
-        self, background: np.ndarray, face_frame: np.ndarray, bbox: dict
+        self, background: np.ndarray, face_frame: np.ndarray, bbox: dict[Any, Any] | None
     ) -> np.ndarray:
         """Composite face frame back onto background."""
         result = background.copy()

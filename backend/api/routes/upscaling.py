@@ -463,7 +463,8 @@ async def _process_upscaling_job(job_id: str, file: UploadFile, request: Upscali
                 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
                 output_file_path = temp_dir / f"upscaled_{job_id}.{request.output_format or 'mp4'}"
-                fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+                _fourcc_fn = getattr(cv2, "VideoWriter_fourcc", None)
+                fourcc = _fourcc_fn(*"mp4v") if _fourcc_fn else 0
                 out = cv2.VideoWriter(
                     str(output_file_path),
                     fourcc,

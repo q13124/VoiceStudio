@@ -14,6 +14,7 @@ Features:
 Local-first: All data stored locally, no external dependencies.
 """
 
+from typing import Any
 from __future__ import annotations
 
 import json
@@ -552,7 +553,7 @@ class DiagnosticsService:
             "PYTHONPATH",
         ]
 
-        env_info = {}
+        env_info: dict[str, Any] = {}
         for var in env_vars:
             value = os.environ.get(var)
             if value:

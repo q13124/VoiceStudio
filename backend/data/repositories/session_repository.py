@@ -181,7 +181,7 @@ class SessionRepository(BaseRepository[SessionEntity]):
         await self._connection.execute(query, (datetime.now().isoformat(), user_id))
         await self._connection.commit()
 
-        return self._connection.total_changes
+        return int(self._connection.total_changes)
 
     async def cleanup_expired(self) -> int:
         """Clean up expired sessions (soft delete)."""
@@ -197,7 +197,7 @@ class SessionRepository(BaseRepository[SessionEntity]):
         await self._connection.execute(query, (datetime.now().isoformat(),))
         await self._connection.commit()
 
-        return self._connection.total_changes
+        return int(self._connection.total_changes)
 
     async def get_session_count_by_user(self, user_id: str) -> int:
         """Get count of active sessions for a user."""

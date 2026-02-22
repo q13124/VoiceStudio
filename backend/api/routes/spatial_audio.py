@@ -316,7 +316,7 @@ async def apply_spatial_audio(request: SpatialApplyRequest):
         _register_audio_file(output_audio_id, output_path)
 
         # Calculate quality metrics (ADR-008 compliant)
-        quality_metrics = {}
+        quality_metrics: dict[str, Any] = {}
         try:
             engine_service = get_engine_service()
 

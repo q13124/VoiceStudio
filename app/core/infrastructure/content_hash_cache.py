@@ -71,7 +71,7 @@ class ContentHashCache:
 
             if cached_mtime == current_mtime:
                 logger.debug(f"Using cached hash for {file_path}")
-                return cached_entry["hash"]
+                return str(cached_entry["hash"])
 
         # Compute hash
         hash_obj = hashlib.new(algorithm)
@@ -122,7 +122,7 @@ class ContentHashCache:
             del self._hash_cache[cache_key]
             return None
 
-        return cached_entry["hash"]
+        return str(cached_entry["hash"])
 
     def find_duplicates(
         self, file_paths: list[Path], algorithm: str = "sha256"

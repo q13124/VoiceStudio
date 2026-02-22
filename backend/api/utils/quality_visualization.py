@@ -51,7 +51,7 @@ def calculate_quality_heatmap(
             heatmap_data[key].append(float(metric_val))
 
     # Calculate averages for each cell
-    heatmap_matrix = {}
+    heatmap_matrix: dict[str, dict[str, Any]] = {}
     for x_val in sorted(x_values):
         for y_val in sorted(y_values):
             key = (x_val, y_val)
@@ -71,8 +71,8 @@ def calculate_quality_heatmap(
         "x_values": sorted(x_values),
         "y_values": sorted(y_values),
         "matrix": heatmap_matrix,
-        "min_value": min((cell["value"] for cell in heatmap_matrix.values()), default=0.0),
-        "max_value": max((cell["value"] for cell in heatmap_matrix.values()), default=1.0),
+        "min_value": min((float(cell["value"]) for cell in heatmap_matrix.values()), default=0.0),
+        "max_value": max((float(cell["value"]) for cell in heatmap_matrix.values()), default=1.0),
     }
 
 
@@ -252,7 +252,7 @@ def generate_quality_insights(
     Returns:
         List of insights
     """
-    insights = []
+    insights: list[dict[str, Any]] = []
 
     if not quality_data:
         return insights
@@ -331,8 +331,8 @@ def generate_quality_insights(
         engine_averages = {
             engine: sum(values) / len(values) for engine, values in engine_stats.items()
         }
-        best_engine = max(engine_averages, key=engine_averages.get)
-        worst_engine = min(engine_averages, key=engine_averages.get)
+        best_engine = max(engine_averages, key=lambda e: engine_averages[e])
+        worst_engine = min(engine_averages, key=lambda e: engine_averages[e])
 
         if engine_averages[best_engine] - engine_averages[worst_engine] > 0.5:
             insights.append(
@@ -408,4 +408,4 @@ def _calculate_pearson_correlation(x: list[float], y: list[float]) -> float:
     if denominator == 0:
         return 0.0
 
-    return numerator / denominator
+    return float(numerator / denominator)

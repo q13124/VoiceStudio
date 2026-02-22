@@ -73,7 +73,7 @@ class ApprovalRequest:
     @property
     def is_expired(self) -> bool:
         """Check if the request has expired."""
-        return datetime.now() > self.expires_at
+        return self.expires_at is not None and datetime.now() > self.expires_at
 
     @property
     def is_pending(self) -> bool:
@@ -391,7 +391,7 @@ class ApprovalManager:
                     break
 
                 # Calculate remaining time
-                remaining = timeout_seconds or (request.expires_at - datetime.now()).total_seconds()
+                remaining = timeout_seconds or ((request.expires_at - datetime.now()).total_seconds() if request.expires_at else 0)
 
                 if remaining <= 0:
                     request.status = ApprovalStatus.EXPIRED

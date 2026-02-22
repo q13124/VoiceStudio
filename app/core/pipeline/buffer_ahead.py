@@ -56,7 +56,7 @@ class SentenceDetector:
         for ending in self.SENTENCE_ENDINGS:
             if self._buffer.rstrip().endswith(ending):
                 if len(self._buffer.strip()) >= self.MIN_SENTENCE_LENGTH:
-                    sentence = self._buffer.strip()
+                    sentence: str = self._buffer.strip()
                     self._buffer = ""
                     return sentence
 
@@ -65,7 +65,7 @@ class SentenceDetector:
     def flush(self) -> str | None:
         """Flush any remaining text in the buffer."""
         if self._buffer.strip():
-            sentence = self._buffer.strip()
+            sentence: str = self._buffer.strip()
             self._buffer = ""
             return sentence
         return None

@@ -10,6 +10,7 @@ Unified endpoint for managing all types of presets:
 """
 
 from __future__ import annotations
+from typing import Any
 
 import logging
 import uuid
@@ -233,8 +234,8 @@ async def create_preset(request: PresetCreateRequest):
         description=request.description,
         data=request.data or {},
         tags=request.tags or [],
-        created=now.isoformat(),
-        modified=now.isoformat(),
+        created=now,
+        modified=now,
         author=request.author,
         version="1.0",
         is_public=request.is_public,

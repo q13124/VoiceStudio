@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from queue import PriorityQueue
-from typing import Any
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -194,7 +194,7 @@ class GPUMonitor:
             self._update_gpu_info()
             self._last_check = now
 
-        return self._available_vram_gb
+        return float(self._available_vram_gb)
 
     def has_sufficient_vram(self, required_gb: float, headroom_gb: float = 1.0) -> bool:
         """
@@ -441,7 +441,7 @@ class ResourceManager:
                         if self.gpu_monitor.has_sufficient_vram(
                             job.requirements.vram_gb, self.vram_headroom_gb
                         ):
-                            return job
+                            return cast(Job, job)
                         else:
                             # Put job back if insufficient resources
                             queue.put((priority.value, time.time(), job))

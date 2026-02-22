@@ -41,8 +41,8 @@ class NoiseReductionEffect(AudioEffect):
         self._config: NoiseReductionConfig = self._config
 
         # Noise profile
-        self._noise_profile = None
-        self._noise_floor = None
+        self._noise_profile: np.ndarray | None = None
+        self._noise_floor: float | None = None
 
     def process(
         self,

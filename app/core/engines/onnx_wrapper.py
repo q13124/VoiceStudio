@@ -164,7 +164,7 @@ class ONNXInferenceEngine:
 
     def get_providers(self) -> list[str]:
         """Get available execution providers."""
-        return self.session.get_providers()
+        return list(self.session.get_providers())
 
     def cleanup(self):
         """Clean up resources."""

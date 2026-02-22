@@ -40,8 +40,8 @@ class ReverbEffect(AudioEffect):
         self._config: ReverbConfig = self._config
 
         # Delay lines for Schroeder reverb
-        self._delays = []
-        self._allpass = []
+        self._delays: list[int] = []
+        self._allpass: list[np.ndarray] = []
 
     def process(
         self,

@@ -105,7 +105,7 @@ class SupervisorStateMachine:
 
     @property
     def state(self) -> SupervisorState:
-        return self._state
+        return SupervisorState(self._state)
 
     @property
     def active_mode(self) -> str | None:

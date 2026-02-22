@@ -150,7 +150,7 @@ class EffectsChain:
     @property
     def bypassed(self) -> bool:
         """Check if chain is bypassed."""
-        return self._bypassed
+        return bool(self._bypassed)
 
     @bypassed.setter
     def bypassed(self, value: bool) -> None:

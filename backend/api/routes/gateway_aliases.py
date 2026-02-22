@@ -13,6 +13,7 @@ Aliases provided:
 """
 
 from __future__ import annotations
+from typing import Any
 
 import logging
 
@@ -439,7 +440,7 @@ async def add_marker(
     try:
         import uuid
 
-        marker = {
+        marker: dict[str, Any] = {
             "id": str(uuid.uuid4()),
             "name": request.name,
             "time_seconds": request.time_seconds,

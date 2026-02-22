@@ -12,6 +12,7 @@ import logging
 from pathlib import Path
 
 import numpy as np
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ class DeepfakeDetector:
 
     def detect(
         self, audio: np.ndarray, sample_rate: int, methods: list[str] | None = None
-    ) -> dict[str, any]:
+    ) -> dict[str, Any]:
         """
         Detect if audio is a deepfake.
 
@@ -61,7 +62,7 @@ class DeepfakeDetector:
         audio_files: list[str | Path],
         methods: list[str] | None = None,
         parallel: bool = True,
-    ) -> list[dict[str, any]]:
+    ) -> list[dict[str, Any]]:
         """
         Detect deepfakes in multiple audio files.
 

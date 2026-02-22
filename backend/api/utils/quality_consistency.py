@@ -268,7 +268,7 @@ class QualityConsistencyMonitor:
             return {}
 
         # Extract all metric values
-        metric_names = set()
+        metric_names: set[str] = set()
         for metrics in metrics_list:
             metric_names.update(metrics.keys())
 
@@ -297,7 +297,8 @@ class QualityConsistencyMonitor:
 
         mean = sum(values) / len(values)
         variance = sum((x - mean) ** 2 for x in values) / (len(values) - 1)
-        return variance**0.5
+        std: float = variance**0.5
+        return std
 
     def _check_violations(
         self, metrics_list: list[dict[str, Any]], standard: dict[str, float]
@@ -306,7 +307,7 @@ class QualityConsistencyMonitor:
         violations = []
 
         for idx, metrics in enumerate(metrics_list):
-            violation = {
+            violation: dict[str, Any] = {
                 "sample_index": idx,
                 "violated_metrics": [],
             }
@@ -389,9 +390,14 @@ class QualityConsistencyMonitor:
             return 0.0
 
         # Base score from violation rate
-        total_samples = len(violations) + max(
-            (len(stat.get("mean", [])) for stat in statistics.values()), default=1
-        )
+        sample_counts = []
+        for stat in statistics.values():
+            val = stat.get("mean")
+            if isinstance(val, (list, tuple)):
+                sample_counts.append(len(val))
+            else:
+                sample_counts.append(1)
+        total_samples = len(violations) + max(sample_counts, default=1)
         violation_rate = len(violations) / max(total_samples, 1)
         base_score = 1.0 - violation_rate
 
@@ -456,7 +462,7 @@ class QualityConsistencyMonitor:
         standard: dict[str, float],
     ) -> list[dict[str, Any]]:
         """Generate recommendations for maintaining quality."""
-        recommendations = []
+        recommendations: list[dict[str, Any]] = []
 
         if not statistics:
             return recommendations

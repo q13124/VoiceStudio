@@ -53,7 +53,7 @@ class GTTSWrapper:
         slow: bool = False,
         output_path: str | Path | None = None,
         **kwargs,
-    ) -> np.ndarray | str | None:
+    ) -> np.ndarray | str | tuple[Any, Any] | None:
         """
         Synthesize speech using Google TTS.
 
@@ -65,7 +65,7 @@ class GTTSWrapper:
             **kwargs: Additional parameters
 
         Returns:
-            Audio array (if output_path not provided) or output path
+            Audio array, (audio, sample_rate) tuple, or output path string
         """
         if not self.available:
             raise RuntimeError("gTTS not available")
@@ -146,7 +146,7 @@ class Pyttsx3Wrapper:
         volume: float | None = None,
         voice_id: str | None = None,
         **kwargs,
-    ) -> np.ndarray | str | None:
+    ) -> np.ndarray | str | tuple[Any, Any] | None:
         """
         Synthesize speech using system TTS.
 
@@ -159,7 +159,7 @@ class Pyttsx3Wrapper:
             **kwargs: Additional parameters
 
         Returns:
-            Audio array (if output_path not provided) or output path
+            Audio array, (audio, sample_rate) tuple, or output path string
         """
         if not self.available or self.engine is None:
             raise RuntimeError("pyttsx3 not available")
@@ -282,7 +282,7 @@ def synthesize_with_utility(
     language: str = "en",
     output_path: str | Path | None = None,
     **kwargs,
-) -> np.ndarray | str | None:
+) -> np.ndarray | str | tuple[Any, Any] | None:
     """
     Synthesize text using a TTS utility library.
 
@@ -297,14 +297,14 @@ def synthesize_with_utility(
         Audio array or output path
     """
     if utility == "gtts":
-        wrapper = get_gtts()
-        if wrapper is None:
+        gtts_wrapper = get_gtts()
+        if gtts_wrapper is None:
             raise RuntimeError("gTTS not available")
-        return wrapper.synthesize(text, language=language, output_path=output_path, **kwargs)
+        return gtts_wrapper.synthesize(text, language=language, output_path=output_path, **kwargs)
     elif utility == "pyttsx3":
-        wrapper = get_pyttsx3()
-        if wrapper is None:
+        pyttsx3_wrapper = get_pyttsx3()
+        if pyttsx3_wrapper is None:
             raise RuntimeError("pyttsx3 not available")
-        return wrapper.synthesize(text, output_path=output_path, **kwargs)
+        return pyttsx3_wrapper.synthesize(text, output_path=output_path, **kwargs)
     else:
         raise ValueError(f"Unknown utility: {utility}. Use 'gtts' or 'pyttsx3'")

@@ -63,14 +63,14 @@ class ValidationOptimizerMiddleware(BaseHTTPMiddleware):
         request.state.cache_stats = get_cache_stats()
 
         # Process request
-        response = await call_next(request)
+        response: Response = await call_next(request)
 
         return response
 
 
 def get_validation_optimizer_middleware(
     enable_cache: bool = True, cache_max_size: int = 1000
-) -> ValidationOptimizerMiddleware:
+) -> type[ValidationOptimizerMiddleware]:
     """
     Get validation optimizer middleware instance.
 

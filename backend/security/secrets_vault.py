@@ -27,7 +27,7 @@ class SecretEntry:
     created_at: datetime
     updated_at: datetime
     description: str = ""
-    tags: list[str] = None
+    tags: list[str] | None = None
 
     def __post_init__(self):
         if self.tags is None:
@@ -255,7 +255,7 @@ class SecretsVault:
         self._ensure_loaded()
 
         if tag:
-            return [k for k, v in self._cache.items() if tag in v.tags]
+            return [k for k, v in self._cache.items() if v.tags is not None and tag in v.tags]
 
         return list(self._cache.keys())
 

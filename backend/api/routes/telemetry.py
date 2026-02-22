@@ -168,7 +168,7 @@ async def get_recent_spans(
 
         # Filter by operation if specified
         if operation:
-            spans = [s for s in spans if s.get("name", "").startswith(operation)]
+            spans = [s for s in spans if s.name.startswith(operation)]
 
         return {"spans": spans, "count": len(spans)}
 

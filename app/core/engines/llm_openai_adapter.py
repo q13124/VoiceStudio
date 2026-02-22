@@ -78,7 +78,7 @@ class OpenAILLMProvider(BaseLLMProvider):
             import httpx as hx
 
             self._client = hx.AsyncClient(
-                base_url=self._config.base_url,
+                base_url=self._config.base_url or "https://api.openai.com/v1",
                 headers={
                     "Authorization": f"Bearer {self._config.api_key}",
                     "Content-Type": "application/json",

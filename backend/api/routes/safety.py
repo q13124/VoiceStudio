@@ -6,6 +6,7 @@ like inappropriate content, hate speech, or policy violations.
 """
 
 from __future__ import annotations
+from typing import Any
 
 import logging
 import re
@@ -99,7 +100,7 @@ async def scan(req: SafetyScanRequest) -> SafetyScanResponse:
         text_lower = text.lower()
 
         # Scan for safety issues
-        flags = []
+        flags: list[dict[str, Any]] = []
         severity_scores = {
             "hate_speech": 0.0,
             "violence": 0.0,

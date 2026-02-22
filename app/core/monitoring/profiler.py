@@ -28,13 +28,15 @@ except ImportError:
     psutil = None
 
 # Try importing torch for GPU memory tracking
+torch: Any = None
+HAS_TORCH = False
 try:
-    import torch
+    import torch as _torch
 
+    torch = _torch
     HAS_TORCH = True
 except ImportError:
-    HAS_TORCH = False
-    torch = None
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +128,7 @@ class PerformanceProfiler:
         if not HAS_PSUTIL or not self._process:
             return 0.0
         try:
-            return self._process.memory_info().rss / (1024**2)
+            return float(self._process.memory_info().rss / (1024**2))
         except Exception:
             return 0.0
 
@@ -135,7 +137,7 @@ class PerformanceProfiler:
         if not HAS_TORCH or not torch.cuda.is_available():
             return 0.0
         try:
-            return torch.cuda.memory_allocated(0) / (1024**2)
+            return float(torch.cuda.memory_allocated(0) / (1024**2))
         except Exception:
             return 0.0
 

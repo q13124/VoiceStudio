@@ -9,6 +9,7 @@ explicit consent from all parties. All invocations are logged for audit.
 """
 
 from __future__ import annotations
+from typing import Any
 
 import logging
 from datetime import datetime
@@ -194,7 +195,7 @@ async def create_face_swap(
             status="pending",
             progress=0.0,
             consent_given=request.consent_given,
-            consent_acknowledged=request.consent_acknowledged,
+            consent_acknowledged=bool(request.consent_acknowledged),
             watermark_applied=request.apply_watermark,
             created_at=now,
         )
@@ -375,6 +376,7 @@ async def _process_job(job_id: str):
 
                     img = Image.open(output_path)
                     draw = ImageDraw.Draw(img)
+                    font: Any = None
                     try:
                         font = ImageFont.truetype("arial.ttf", 24)
                     except OSError:

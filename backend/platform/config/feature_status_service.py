@@ -19,8 +19,7 @@ async def _check_rvc_status() -> dict[str, Any]:
         from backend.voice.rvc.engine import RVCEngine
 
         engine = RVCEngine()
-        await engine.load()
-        is_available = engine.rvc_available()
+        is_available = hasattr(engine, "rvc_available") and engine.rvc_available()
         return {
             "status": "fully_functional" if is_available else "placeholder",
             "message": (

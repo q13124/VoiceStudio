@@ -869,7 +869,7 @@ class AuditLogger:
 
         with self._get_connection() as conn:
             row = conn.execute(sql, params).fetchone()
-            return row["cnt"]
+            return int(row["cnt"])
 
     def delete_old_events(
         self,
@@ -1022,7 +1022,7 @@ def log_installation(
     signature_verified: Optional[bool] = None,
 ) -> AuditEvent:
     """Log a plugin installation event."""
-    details = {"source": source}
+    details: dict[str, Any] = {"source": source}
     if signature_verified is not None:
         details["signature_verified"] = signature_verified
 

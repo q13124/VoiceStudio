@@ -119,8 +119,8 @@ class VideoFaceEnhancer:
         self._work_dir.mkdir(parents=True, exist_ok=True)
 
         self._jobs: dict[str, EnhancementJob] = {}
-        self._face_detector = None
-        self._enhancement_model = None
+        self._face_detector: Any = None
+        self._enhancement_model: Any = None
 
         # Quality settings
         self._quality_settings = {
@@ -216,7 +216,7 @@ class VideoFaceEnhancer:
             enhanced_dir.mkdir(parents=True, exist_ok=True)
 
             settings = self._quality_settings[job.quality]
-            batch_size = settings["batch_size"]
+            batch_size: int = int(settings["batch_size"])
 
             for i in range(0, len(frame_files), batch_size):
                 batch = frame_files[i : i + batch_size]
@@ -292,7 +292,9 @@ class VideoFaceEnhancer:
 
             # Load cascade if needed
             if self._face_detector is None:
-                cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+                cascade_data = getattr(cv2, "data", None)
+                haarcascades_dir: str = getattr(cascade_data, "haarcascades", "") if cascade_data else ""
+                cascade_path = haarcascades_dir + "haarcascade_frontalface_default.xml"
                 self._face_detector = cv2.CascadeClassifier(cascade_path)
 
             # Convert to grayscale

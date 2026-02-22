@@ -72,7 +72,7 @@ def get_request_context(request: Request) -> RequestContext:
     span_id = getattr(request.state, "span_id", None)
 
     return RequestContext(
-        correlation_id=correlation_id,
+        correlation_id=str(correlation_id or ""),
         trace_id=trace_id,
         span_id=span_id,
     )
@@ -87,4 +87,4 @@ def get_correlation_id_header(request: Request) -> str:
         async def get_status(correlation_id: str = Depends(get_correlation_id_header)):
             return {"correlation_id": correlation_id}
     """
-    return get_correlation_id() or getattr(request.state, "correlation_id", "unknown")
+    return str(get_correlation_id() or getattr(request.state, "correlation_id", "unknown"))

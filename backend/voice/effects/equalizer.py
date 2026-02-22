@@ -90,7 +90,7 @@ class EqualizerEffect(AudioEffect):
         self._config: EqualizerConfig = self._config
 
         # Filter states
-        self._filter_states = []
+        self._filter_states: list[dict[str, float]] = []
 
     def process(
         self,

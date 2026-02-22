@@ -55,7 +55,7 @@ class XTTSServiceClient:
         """Check if XTTS service is running."""
         try:
             response = requests.get(f"{self.service_url}/health", timeout=5)
-            return response.status_code == 200
+            return bool(response.status_code == 200)
         except Exception:
             return False
 
@@ -165,7 +165,7 @@ class XTTSServiceClient:
             )
 
             if response.status_code == 200:
-                return response.json()
+                return dict(response.json())
             else:
                 return {
                     "success": False,
@@ -210,7 +210,7 @@ class XTTSServiceClient:
             )
 
             if response.status_code == 200:
-                return response.content
+                return bytes(response.content)
             else:
                 logger.error(f"XTTS synthesis failed: {response.text}")
                 return None

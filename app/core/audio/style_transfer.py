@@ -163,7 +163,7 @@ class StyleTransfer:
         Returns:
             Dictionary of style features
         """
-        features = {}
+        features: dict[str, float] = {}
 
         if not HAS_LIBROSA:
             logger.warning("librosa required for style feature extraction")
@@ -173,8 +173,8 @@ class StyleTransfer:
             # Extract fundamental frequency (F0)
             f0, voiced_flag, _voiced_probs = librosa.pyin(
                 audio,
-                fmin=librosa.note_to_hz("C2"),
-                fmax=librosa.note_to_hz("C7"),
+                fmin=float(librosa.note_to_hz("C2")),
+                fmax=float(librosa.note_to_hz("C7")),
             )
 
             f0_voiced = f0[voiced_flag]

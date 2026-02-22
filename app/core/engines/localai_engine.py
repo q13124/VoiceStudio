@@ -55,7 +55,7 @@ class LocalAIEngine(EngineProtocol):
         self.model_name = model_name
         self.api_url = f"{self.server_url}/v1"
         self.session = requests.Session()
-        self.session.timeout = 300
+        self._request_timeout = 300
 
     def initialize(self) -> bool:
         """Initialize the LocalAI engine by connecting to server."""

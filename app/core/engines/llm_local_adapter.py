@@ -86,7 +86,7 @@ class OllamaLLMProvider(BaseLLMProvider):
             import httpx as hx
 
             self._client = hx.AsyncClient(
-                base_url=self._config.base_url,
+                base_url=self._config.base_url or "http://localhost:11434",
                 timeout=hx.Timeout(self._config.timeout_seconds),
             )
         return self._client
@@ -291,7 +291,7 @@ class LocalAILLMProvider(BaseLLMProvider):
             import httpx as hx
 
             self._client = hx.AsyncClient(
-                base_url=self._config.base_url,
+                base_url=self._config.base_url or "http://localhost:11434",
                 timeout=hx.Timeout(self._config.timeout_seconds),
             )
         return self._client

@@ -54,7 +54,10 @@ def get_cached_schema(model: type[BaseModel]) -> dict[str, Any]:
         except AttributeError:
             # Fallback: create instance and get schema
             try:
-                schema = model.__pydantic_model__.schema()
+                pydantic_model = getattr(model, "__pydantic_model__", None)
+                if pydantic_model is None:
+                    raise AttributeError("no pydantic model")
+                schema = dict(pydantic_model.schema())
             except AttributeError:
                 # Last resort: empty schema
                 logger.warning(f"Could not generate schema for {model.__name__}")
@@ -64,7 +67,12 @@ def get_cached_schema(model: type[BaseModel]) -> dict[str, Any]:
 
     # Evict oldest if cache is full
     if len(_schema_cache) > _max_cache_size:
-        _schema_cache.popitem(last=False)
+        # OrderedDict.popitem(last=False) evicts oldest entry
+        if isinstance(_schema_cache, OrderedDict):
+            _schema_cache.popitem(last=False)
+        else:
+            oldest = next(iter(_schema_cache))
+            _schema_cache.pop(oldest)
 
     return schema
 
@@ -112,7 +120,6 @@ def validate_early(
                         {
                             "type": "missing",
                             "loc": (field,),
-                            "msg": "Field required",
                             "input": data,
                         }
                     ],

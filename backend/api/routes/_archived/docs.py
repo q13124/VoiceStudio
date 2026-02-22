@@ -39,7 +39,7 @@ def get_openapi_schema() -> dict:
     """
     try:
         schema = generate_api_documentation(app)
-        return schema
+        return dict(schema)
     except Exception as e:
         logger.error(f"Failed to generate OpenAPI schema: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate API documentation")

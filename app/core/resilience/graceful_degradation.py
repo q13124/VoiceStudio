@@ -11,7 +11,7 @@ import logging
 from collections.abc import Callable
 from enum import Enum
 from functools import wraps
-from typing import TypeVar
+from typing import Any, TypeVar, cast
 
 logger = logging.getLogger(__name__)
 
@@ -89,9 +89,11 @@ class GracefulDegradation:
         # Try primary function first
         try:
             if asyncio.iscoroutinefunction(primary_func):
-                return await primary_func(*args, **kwargs)
+                result: T = await primary_func(*args, **kwargs)
+                return result
             else:
-                return primary_func(*args, **kwargs)
+                result = primary_func(*args, **kwargs)
+                return cast(T, result)
         except Exception as e:
             logger.warning(
                 f"Primary function failed in '{self.name}': {e}. "
@@ -103,9 +105,10 @@ class GracefulDegradation:
             if fallback:
                 try:
                     if asyncio.iscoroutinefunction(fallback):
-                        return await fallback(*args, **kwargs)
+                        fb_result: T = await fallback(*args, **kwargs)
+                        return fb_result
                     else:
-                        return fallback(*args, **kwargs)
+                        return cast(T, fallback(*args, **kwargs))
                 except Exception as fallback_error:
                     logger.error(
                         f"Fallback also failed in '{self.name}': {fallback_error}",
@@ -134,14 +137,13 @@ def graceful_degradation(
     if fallback_func:
         handler.register_fallback(level, fallback_func)
 
-    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
-        async def async_wrapper(*args, **kwargs) -> T:
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             return await handler.execute(func, *args, **kwargs)
 
         @wraps(func)
-        def sync_wrapper(*args, **kwargs) -> T:
-            # For sync functions, run in event loop
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:

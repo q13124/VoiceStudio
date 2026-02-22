@@ -5,6 +5,7 @@ Task 2.4.4: Auto-detect and protect PII.
 Detects and redacts personally identifiable information.
 """
 
+from typing import Any
 from __future__ import annotations
 
 import logging
@@ -250,7 +251,7 @@ class PIIDetector:
         Returns:
             Redacted dictionary
         """
-        result = {}
+        result: dict[str, Any] = {}
 
         for key, value in data.items():
             if isinstance(value, str):

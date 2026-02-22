@@ -46,7 +46,7 @@ class IssuesSourceAdapter(BaseSourceAdapter):
             issues = store.query(severity=severity, start_time=start, end_time=end, limit=self._max_issues)
             out = []
             for issue in issues:
-                record = {
+                record: dict[str, Any] = {
                     "id": issue.id,
                     "timestamp": issue.timestamp.isoformat(),
                     "instance_type": issue.instance_type.value,

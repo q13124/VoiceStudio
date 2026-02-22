@@ -6,6 +6,7 @@ Integrates pywavelets library for wavelet transforms and analysis.
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import numpy as np
 
@@ -87,7 +88,7 @@ class WaveletAnalyzer:
         try:
             # Combine approximation and details
             all_coeffs = [approximation, *coeffs]
-            reconstructed = pywt.waverec(all_coeffs, wavelet, mode=mode)
+            reconstructed: np.ndarray = np.asarray(pywt.waverec(all_coeffs, wavelet, mode=mode))
             return reconstructed
         except Exception as e:
             logger.error(f"Error in wavelet reconstruction: {e}", exc_info=True)
@@ -116,19 +117,17 @@ class WaveletAnalyzer:
         try:
             coeffs, approx = self.decompose(signal, wavelet, level=level)
 
-            features = {
-                "num_levels": len(coeffs),
-                "energy_approximation": float(np.sum(approx**2)),
-                "energy_details": [float(np.sum(c**2)) for c in coeffs],
-                "total_energy": float(np.sum(signal**2)),
-            }
+            energy_approx = float(np.sum(approx**2))
+            total_energy = float(np.sum(signal**2))
 
-            # Calculate energy distribution
-            sum(features["energy_details"])
+            features: dict[str, Any] = {
+                "num_levels": len(coeffs),
+                "energy_approximation": energy_approx,
+                "energy_details": [float(np.sum(c**2)) for c in coeffs],
+                "total_energy": total_energy,
+            }
             features["energy_ratio"] = (
-                features["energy_approximation"] / features["total_energy"]
-                if features["total_energy"] > 0
-                else 0.0
+                energy_approx / total_energy if total_energy > 0 else 0.0
             )
 
             return features
@@ -147,6 +146,6 @@ class WaveletAnalyzer:
             return []
 
         try:
-            return pywt.wavelist()
+            return list(pywt.wavelist())
         except Exception:
             return []

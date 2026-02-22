@@ -189,7 +189,7 @@ class DatabaseAdapter(Adapter):
             if self._db_type == "sqlite" and self._connection:
                 async with self._connection.execute(query, params or ()) as cursor:
                     await self._connection.commit()
-                    return cursor.rowcount
+                    return int(cursor.rowcount)
 
             elif self._db_type == "postgres" and self._pool:
                 async with self._pool.acquire() as conn:

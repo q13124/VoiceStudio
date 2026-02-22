@@ -154,7 +154,7 @@ class CorrelationIdMiddleware(BaseHTTPMiddleware):
             )
 
             # Process request
-            response = await call_next(request)
+            response: Response = await call_next(request)
 
             # Add correlation ID to response headers
             response.headers[CORRELATION_ID_HEADER] = correlation_id

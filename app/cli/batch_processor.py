@@ -13,18 +13,21 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from app.engines.router import EngineRouter
 
 logger = logging.getLogger(__name__)
 
 # Import batch processing components
+HAS_ENGINE_ROUTER: bool
 try:
     from app.engines.router import EngineRouter
 
     HAS_ENGINE_ROUTER = True
 except ImportError:
     HAS_ENGINE_ROUTER = False
-    EngineRouter = None  # type: ignore[misc,assignment]
     logger.warning("Engine router not available")
 
 
@@ -94,7 +97,7 @@ class BatchProcessorCLI:
         logger.info(f"Processing {len(texts)} texts from {input_file}")
 
         # Process each text
-        results = {
+        results: dict[str, Any] = {
             "total": len(texts),
             "successful": 0,
             "failed": 0,
@@ -221,7 +224,7 @@ class BatchProcessorCLI:
         logger.info(f"Processing {len(rows)} rows from {input_file}")
 
         # Process each row
-        results = {
+        results: dict[str, Any] = {
             "total": len(rows),
             "successful": 0,
             "failed": 0,

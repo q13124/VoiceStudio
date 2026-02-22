@@ -68,7 +68,7 @@ class HighQualityResampler:
                     quality=quality,
                     num_channels=num_channels,
                 )
-                return resampled
+                return np.asarray(resampled)
             except Exception as e:
                 logger.warning(f"soxr resampling failed, falling back to librosa: {e}")
                 # Fall through to librosa fallback

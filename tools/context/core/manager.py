@@ -116,8 +116,8 @@ class ContextManager:
         self._validate_agent_if_enabled(ctx)
 
         cache_key = f"{ctx.task_id}:{ctx.phase}:{ctx.role}:{ctx.include_git}:{ctx.budget_chars}:{ctx.max_level.value}"
-        cached = self.cache.get(cache_key)
-        if cached:
+        cached: ContextBundle | None = self.cache.get(cache_key)
+        if cached is not None:
             return cached
 
         results: list[SourceResult] = []
@@ -209,7 +209,7 @@ def _load_config(path: Path) -> dict:
     if not path.exists():
         return {}
     with path.open("r", encoding="utf-8") as handle:
-        config = json.load(handle)
+        config: dict[Any, Any] = json.load(handle)
     roles_dir = path.parent / "roles"
     if roles_dir.exists():
         config["roles"] = config.get("roles") or {}

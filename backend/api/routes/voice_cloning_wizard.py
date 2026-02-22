@@ -251,7 +251,9 @@ async def validate_audio(request: AudioValidationRequest):
 
                 # Check SNR (if available)
                 try:
-                    snr = audio_utils.calculate_snr(audio_mono, sample_rate)
+                    signal_power = float(np.mean(audio_mono**2))
+                    noise_floor = float(np.mean(np.sort(np.abs(audio_mono))[: len(audio_mono) // 10] ** 2))
+                    snr = 10 * np.log10(signal_power / noise_floor) if noise_floor > 0 else 60.0
                     if snr < 20:
                         issues.append(f"Low signal-to-noise ratio ({snr:.1f}dB)")
                         recommendations.append("Record in a quieter environment")
@@ -298,7 +300,9 @@ async def validate_audio(request: AudioValidationRequest):
 
                 # SNR scoring (0-0.1 points)
                 try:
-                    snr = audio_utils.calculate_snr(audio_mono, sample_rate)
+                    signal_power = float(np.mean(audio_mono**2))
+                    noise_floor = float(np.mean(np.sort(np.abs(audio_mono))[: len(audio_mono) // 10] ** 2))
+                    snr = 10 * np.log10(signal_power / noise_floor) if noise_floor > 0 else 60.0
                     if snr >= 30:
                         quality_score += 0.1
                     elif snr >= 25:

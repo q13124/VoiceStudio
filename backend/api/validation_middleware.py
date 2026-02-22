@@ -27,7 +27,7 @@ class ValidationOptimizationMiddleware(BaseHTTPMiddleware):
         # Pre-warm schema cache for common models
         # This happens in the background and doesn't block the request
 
-        response = await call_next(request)
+        response: Response = await call_next(request)
 
         return response
 

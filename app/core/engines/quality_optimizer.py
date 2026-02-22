@@ -79,7 +79,7 @@ class QualityOptimizer:
         Returns:
             Analysis results with recommendations
         """
-        analysis = {
+        analysis: dict[str, Any] = {
             "meets_target": True,
             "deficiencies": [],
             "recommendations": [],
@@ -343,11 +343,12 @@ class QualityOptimizer:
             for metric_name, target_value in target_metrics.items():
                 if metric_name in profile:
                     engine_value = profile[metric_name]
+                    if not isinstance(engine_value, (int, float)):
+                        continue
                     if engine_value >= target_value:
                         score += 1.0
                     else:
                         meets_all = False
-                        # Partial credit for being close
                         score += max(0.0, engine_value / target_value)
 
             if meets_all and score > best_score:

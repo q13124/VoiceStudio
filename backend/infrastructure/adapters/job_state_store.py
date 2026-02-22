@@ -70,7 +70,7 @@ class JobStateStore:
             if not path.exists():
                 return None
             try:
-                return json.loads(path.read_text(encoding="utf-8"))
+                return dict(json.loads(path.read_text(encoding="utf-8")))
             except (json.JSONDecodeError, OSError) as e:
                 # Job file is corrupted or unreadable - treat as missing
                 logger.debug(f"Failed to read job state {job_id}: {e}")

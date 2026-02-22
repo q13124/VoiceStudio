@@ -160,6 +160,7 @@ class StructuredLogger:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(level)
 
+        formatter: logging.Formatter
         if use_json:
             formatter = StructuredFormatter(extra_fields=extra_fields)
         else:

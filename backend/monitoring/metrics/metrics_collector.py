@@ -52,7 +52,7 @@ class Counter:
         self.name = name
         self.description = description
         self.tags = tags or {}
-        self._value = 0
+        self._value: float = 0.0
         self._lock = threading.Lock()
 
     def inc(self, amount: float = 1, tags: dict[str, str] | None = None) -> None:

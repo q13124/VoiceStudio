@@ -8,6 +8,7 @@ Supports CRUD operations, tag usage tracking, and categorization.
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, field_validator
@@ -445,9 +446,9 @@ async def get_tag_usage(tag_id: str):
             )
 
     # Query projects that might use this tag (via profiles)
-    from .projects import _projects
+    _projects_ref: Any = getattr(__import__("backend.api.routes.projects", fromlist=["_projects"]), "_projects", {})
 
-    for project_id, project in _projects.items():
+    for project_id, project in _projects_ref.items():
         # Check if any profile in the project uses this tag
         for profile_id in project.voice_profile_ids:
             if profile_id in _profiles:

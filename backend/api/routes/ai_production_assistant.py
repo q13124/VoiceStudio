@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -130,7 +131,7 @@ async def process_query(request: AssistantQueryRequest):
 
         # Simple pattern matching for demo (in production, use LLM)
         response_text = ""
-        action_data = None
+        action_data: dict[str, Any] | None = None
         suggestions = []
 
         if "reduce echo" in query_lower or "echo" in query_lower:

@@ -1633,11 +1633,11 @@ def api_health():
 
     try:
         # Get system metrics
-        import psutil  # type: ignore
+        import psutil
 
-        process = psutil.Process(os.getpid())  # type: ignore
-        memory_info = process.memory_info()  # type: ignore
-        cpu_percent = process.cpu_percent(interval=0.1)  # type: ignore
+        process = psutil.Process(os.getpid())
+        memory_info = process.memory_info()
+        cpu_percent = process.cpu_percent(interval=0.1)
 
         middleware = _get_performance_middleware()
         version_info = get_version_info()

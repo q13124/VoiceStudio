@@ -85,14 +85,14 @@ class ToolGateway:
         from .tools.network_tools import HttpRequestTool
         from .tools.process_tools import RunProcessTool
 
-        for tool_class in [
-            ReadFileTool,
-            WriteFileTool,
-            DeleteFileTool,
-            RunProcessTool,
-            HttpRequestTool,
-        ]:
-            tool = tool_class()
+        tools: list[BaseTool] = [
+            ReadFileTool(),
+            WriteFileTool(),
+            DeleteFileTool(),
+            RunProcessTool(),
+            HttpRequestTool(),
+        ]
+        for tool in tools:
             self._tools[tool.name] = tool
 
     def register_tool(self, tool: BaseTool) -> None:

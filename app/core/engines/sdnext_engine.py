@@ -61,7 +61,7 @@ class SDNextEngine(EngineProtocol):
         self.default_steps = steps
         self.default_cfg_scale = cfg_scale
         self.session = requests.Session()
-        self.session.timeout = 300
+        self._request_timeout = 300
 
     def initialize(self) -> bool:
         """Initialize the SD.Next engine by connecting to server."""

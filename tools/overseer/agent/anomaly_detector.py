@@ -207,7 +207,7 @@ class AnomalyDetector:
     def _check_rapid_fire(self, agent_id: str) -> list[AnomalyEvent]:
         """Check for rapid-fire action pattern."""
         anomalies = []
-        history = self._history.get(agent_id, [])
+        history: deque[ActionRecord] | list[ActionRecord] = self._history.get(agent_id, [])
 
         # Count actions in the last minute
         one_min_ago = datetime.now() - timedelta(minutes=1)
@@ -229,7 +229,7 @@ class AnomalyDetector:
     def _check_repeated_denial(self, agent_id: str) -> list[AnomalyEvent]:
         """Check for repeated denial of same action."""
         anomalies = []
-        history = self._history.get(agent_id, [])
+        history: deque[ActionRecord] | list[ActionRecord] = self._history.get(agent_id, [])
 
         # Group denials by tool+params
         denial_counts: dict[str, int] = {}
@@ -256,7 +256,7 @@ class AnomalyDetector:
     def _check_safe_zone_probing(self, agent_id: str) -> list[AnomalyEvent]:
         """Check for attempts to access safe zones."""
         anomalies = []
-        history = self._history.get(agent_id, [])
+        history: deque[ActionRecord] | list[ActionRecord] = self._history.get(agent_id, [])
 
         # Count safe zone violations
         safe_zone_attempts = sum(
@@ -280,7 +280,7 @@ class AnomalyDetector:
     def _check_escalation(self, agent_id: str) -> list[AnomalyEvent]:
         """Check for privilege escalation attempts."""
         anomalies = []
-        history = self._history.get(agent_id, [])
+        history: deque[ActionRecord] | list[ActionRecord] = self._history.get(agent_id, [])
 
         # Look for pattern of increasing risk tiers
         risk_order = {"low": 0, "medium": 1, "high": 2, "critical": 3}
@@ -309,7 +309,7 @@ class AnomalyDetector:
     def _check_parameter_fuzzing(self, agent_id: str) -> list[AnomalyEvent]:
         """Check for systematic parameter variation (potential fuzzing)."""
         anomalies = []
-        history = self._history.get(agent_id, [])
+        history: deque[ActionRecord] | list[ActionRecord] = self._history.get(agent_id, [])
 
         # Group by tool and count unique parameter hashes
         tool_params: dict[str, set[str]] = {}
@@ -388,8 +388,8 @@ class AnomalyDetector:
                 if a.timestamp >= one_hour_ago
             ]
 
-            by_type = {}
-            by_severity = {}
+            by_type: dict[str, int] = {}
+            by_severity: dict[str, int] = {}
 
             for anomaly in recent:
                 by_type[anomaly.anomaly_type.value] = (

@@ -249,8 +249,8 @@ class LUFSMeter:
         if hop_size is None:
             hop_size = window_size / 4.0  # 75% overlap
 
-        times = []
-        lufs_values = []
+        times: list[float] = []
+        lufs_values: list[float] = []
 
         # Convert to mono if stereo
         if len(audio.shape) > 1:

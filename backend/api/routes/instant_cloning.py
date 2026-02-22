@@ -70,7 +70,7 @@ def calculate_embedding_quality(
             if 0.5 < norm < 2.0:  # Typical range for normalized embeddings
                 norm_score = 1.0
             else:
-                norm_score = max(0.5, 1.0 - abs(1.0 - norm) * 0.3)
+                norm_score = max(0.5, 1.0 - abs(1.0 - float(norm)) * 0.3)
 
             # Entropy score - measure information content
             # Higher entropy = more information preserved

@@ -397,7 +397,8 @@ async def response_cache_middleware(request: Request, call_next: Callable) -> Re
     """
     # Only cache GET requests
     if request.method != "GET":
-        return await call_next(request)
+        resp: Response = await call_next(request)
+        return resp
 
     # Skip caching for certain paths
     skip_paths = [
@@ -408,7 +409,8 @@ async def response_cache_middleware(request: Request, call_next: Callable) -> Re
         "/redoc",
     ]
     if any(request.url.path.startswith(path) for path in skip_paths):
-        return await call_next(request)
+        resp2: Response = await call_next(request)
+        return resp2
 
     cache = get_response_cache()
     cache_key = cache._generate_cache_key(request)
@@ -431,13 +433,16 @@ async def response_cache_middleware(request: Request, call_next: Callable) -> Re
 
     # Cache miss, process request
     logger.debug(f"Cache miss for {request.url.path}")
-    response = await call_next(request)
+    response: Response = await call_next(request)
 
     # Only cache successful responses
     if response.status_code == 200:
         # Get response body
         response_body = b""
-        async for chunk in response.body_iterator:
+        body_iter = getattr(response, "body_iterator", None)
+        if body_iter is None:
+            return response
+        async for chunk in body_iter:
             response_body += chunk
 
         # Parse JSON if possible

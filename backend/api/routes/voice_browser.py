@@ -16,8 +16,9 @@ from pydantic import BaseModel
 try:
     from ..optimization import cache_response
 except ImportError:
+    from typing import Callable
 
-    def cache_response(ttl: int = 300):
+    def cache_response(ttl: int = 300, key_func: Callable | None = None):
         def decorator(func):
             return func
 

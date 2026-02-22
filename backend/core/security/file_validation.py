@@ -18,7 +18,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import BinaryIO
+from typing import BinaryIO, cast
 
 logger = logging.getLogger(__name__)
 
@@ -251,10 +251,11 @@ def get_file_type_from_content(content: bytes | BinaryIO) -> FileTypeInfo | None
     """
     if hasattr(content, "read"):
         # File-like object - always read from start for magic bytes
-        original_pos = content.tell()
-        content.seek(0)
-        header = content.read(32)
-        content.seek(original_pos)
+        stream = cast(BinaryIO, content)
+        original_pos = stream.tell()
+        stream.seek(0)
+        header = stream.read(32)
+        stream.seek(original_pos)
     else:
         header = content[:32] if len(content) >= 32 else content
 
@@ -266,10 +267,10 @@ def get_file_type_from_content(content: bytes | BinaryIO) -> FileTypeInfo | None
             if header[offset : offset + len(magic)] == magic:
                 # Check for secondary signatures
                 actual_ext = _check_secondary_signature(header, ext)
-                category = EXTENSION_CATEGORIES.get(actual_ext, FileCategory.UNKNOWN)
+                category = EXTENSION_CATEGORIES.get(actual_ext or ext, FileCategory.UNKNOWN)
 
                 return FileTypeInfo(
-                    extension=actual_ext,
+                    extension=actual_ext or ext,
                     mime_type=mime,
                     category=category,
                     description=desc,
@@ -301,10 +302,11 @@ def validate_file_type(
     """
     # Get content as bytes for size check
     if hasattr(content, "read"):
-        pos = content.tell()
-        content.seek(0, 2)  # Seek to end
-        size = content.tell()
-        content.seek(pos)
+        stream = cast(BinaryIO, content)
+        pos = stream.tell()
+        stream.seek(0, 2)  # Seek to end
+        size = stream.tell()
+        stream.seek(pos)
     else:
         size = len(content)
 

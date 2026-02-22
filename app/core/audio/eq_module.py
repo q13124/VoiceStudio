@@ -85,7 +85,7 @@ class ParametricEQ:
         q: float = 1.0,
         band_type: str = "peaking",
         enabled: bool = True,
-    ) -> EQBand:
+    ) -> EQBand | None:
         """
         Add an EQ band.
 
@@ -254,7 +254,7 @@ class ParametricEQ:
             logger.warning(f"EQ band processing failed: {e}")
             processed = audio
 
-        return processed
+        return np.asarray(processed)
 
     def get_preset(self, preset_name: str) -> list[EQBand]:
         """Get EQ preset bands."""
@@ -366,7 +366,7 @@ class ParametricEQ:
         # Convert to dB
         response_db = 20.0 * np.log10(np.maximum(response, 1e-10))
 
-        return response_db
+        return np.asarray(response_db)
 
 
 def create_parametric_eq(sample_rate: int = 24000, num_bands: int = 10) -> ParametricEQ:

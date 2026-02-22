@@ -16,6 +16,7 @@ from enum import Enum
 from pathlib import Path
 
 import numpy as np
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -184,8 +185,8 @@ class RealtimeRVCEngine:
             method=self.config.f0_method,
             sample_rate=self.config.sample_rate,
         )
-        self._model = None
-        self._index = None
+        self._model: dict[str, Any] | None = None
+        self._index: Any | None = None
         self._loaded = False
         self._stats = RealtimeStats()
 
@@ -345,7 +346,7 @@ class RealtimeRVCEngine:
                 # In production: output = self._model["net_g"](audio_tensor, f0_tensor)
                 output = audio_tensor  # Placeholder
 
-            return output.squeeze(0).cpu().numpy()
+            return np.asarray(output.squeeze(0).cpu().numpy())
 
         except Exception as e:
             logger.debug(f"Conversion error: {e}")
@@ -446,7 +447,7 @@ class RealtimeVoiceConverter:
     async def process(self, audio_chunk: np.ndarray) -> np.ndarray:
         """Process a single chunk."""
         await self._input_queue.put(audio_chunk)
-        return await self._output_queue.get()
+        return np.asarray(await self._output_queue.get())
 
     def process_sync(self, audio_chunk: np.ndarray) -> np.ndarray:
         """Synchronous processing (for use in non-async context)."""

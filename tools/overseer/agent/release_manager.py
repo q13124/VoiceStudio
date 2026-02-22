@@ -460,8 +460,8 @@ class ReleaseManager:
 
     def get_stats(self) -> dict:
         """Get release manager statistics."""
-        by_type = {}
-        by_channel = {}
+        by_type: dict[str, int] = {}
+        by_channel: dict[str, int] = {}
         total_bundles = 0
         active_bundles = 0
 

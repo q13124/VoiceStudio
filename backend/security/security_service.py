@@ -152,7 +152,7 @@ class EncryptionService:
 
     def _generate_key_stream(self, length: int, nonce: bytes) -> bytes:
         """Generate key stream from key and nonce."""
-        stream = []
+        stream: list[int] = []
         counter = 0
         while len(stream) < length:
             block = hashlib.sha256(self._key + nonce + counter.to_bytes(4, "big")).digest()
@@ -575,9 +575,9 @@ class SecurityService:
     """
 
     def __init__(self):
-        self._encryption = EncryptionService()
-        self._consent = ConsentManager()
-        self._watermarking = WatermarkingService()
+        self._encryption: EncryptionService = EncryptionService()
+        self._consent: ConsentManager = ConsentManager()
+        self._watermarking: WatermarkingService = WatermarkingService()
         self._initialized = False
 
     async def initialize(self) -> bool:

@@ -90,7 +90,7 @@ class QualityComparison:
         if not self.comparisons:
             return {"error": "No samples to compare"}
 
-        results = {
+        results: dict[str, Any] = {
             "total_samples": len(self.comparisons),
             "rankings": {},
             "statistics": {},
@@ -210,7 +210,7 @@ class QualityComparison:
             # Find best overall (highest ranking)
             comparison = self.compare()
             if comparison.get("rankings"):
-                return comparison["rankings"][1]["name"]
+                return str(comparison["rankings"][1]["name"])
             return None
 
     def get_summary(self) -> dict[str, Any]:

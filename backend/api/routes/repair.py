@@ -5,6 +5,7 @@ Endpoints for repairing audio issues like clipping, distortion, and artifacts.
 """
 
 import logging
+from typing import Any
 import os
 import tempfile
 import uuid
@@ -94,12 +95,13 @@ async def clipping(req: RepairClippingRequest) -> RepairClippingResponse:
         if not np.any(clipped_mask):
             # No clipping detected, return original
             logger.info(f"No clipping detected in {audio_id}")
-            return {
-                "audio_id": audio_id,
-                "repaired_audio_id": audio_id,
-                "clipped_samples": 0,
-                "method": "none_needed",
-            }
+            return RepairClippingResponse(
+                audio_id=audio_id,
+                repaired_audio_id=audio_id,
+                clipped_samples=0,
+                clipped_percentage=0.0,
+                method="none_needed",
+            )
 
         # Count clipped samples
         num_clipped = np.sum(clipped_mask)

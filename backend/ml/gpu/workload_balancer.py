@@ -132,7 +132,7 @@ class WorkloadBalancer:
         try:
             import psutil
 
-            return psutil.virtual_memory().total
+            return int(psutil.virtual_memory().total)
         except ImportError:
             return 16 * 1024 * 1024 * 1024  # Default 16GB
 

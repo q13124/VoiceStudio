@@ -325,7 +325,7 @@ class SelfOptimizer:
         """
         logger.info("Starting continuous optimization cycle")
 
-        results = {
+        results: dict[str, Any] = {
             "engine_selections": {},
             "parameters": {},
             "performance": {},
@@ -394,7 +394,7 @@ class SelfOptimizer:
         quality_contribution = quality_score * quality_priority
         speed_contribution = (1.0 - min(latency_ms / 2000.0, 1.0)) * speed_priority
 
-        return quality_contribution + speed_contribution
+        return float(quality_contribution + speed_contribution)
 
     def _load_optimization_data(self):
         """Load optimization data from file."""

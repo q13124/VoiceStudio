@@ -12,6 +12,7 @@ import contextlib
 import logging
 import shutil
 from collections.abc import Callable
+from typing import Any
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
@@ -339,7 +340,7 @@ class DataRetentionService:
 
             policy = self.config.policies.get(category)
 
-            usage[category.value] = {
+            entry: dict[str, Any] = {
                 "exists": True,
                 "size_bytes": size,
                 "size_mb": round(size / (1024 * 1024), 2),
@@ -347,6 +348,7 @@ class DataRetentionService:
                 "retention_days": policy.retention_days if policy else None,
                 "auto_delete": policy.auto_delete if policy else None,
             }
+            usage[category.value] = entry
 
         return usage
 

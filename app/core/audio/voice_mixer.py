@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 
 import numpy as np
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -286,7 +287,7 @@ class VoiceMixer:
                 try:
                     post_fx = PostFXProcessor(sample_rate=sample_rate)
                     # Apply effects to each channel
-                    effects = []  # Would be loaded from effect chain
+                    effects: list[Any] = []  # Would be loaded from effect chain
                     return_audio[0] = post_fx.process(return_audio[0], sample_rate, effects)
                     return_audio[1] = post_fx.process(return_audio[1], sample_rate, effects)
                 except Exception as e:
@@ -358,7 +359,7 @@ class VoiceMixer:
             if effect_chain_id and HAS_POST_FX:
                 try:
                     post_fx = PostFXProcessor(sample_rate=sample_rate)
-                    effects = []  # Would be loaded from effect chain
+                    effects: list[Any] = []  # Would be loaded from effect chain
                     subgroup_audio[0] = post_fx.process(subgroup_audio[0], sample_rate, effects)
                     subgroup_audio[1] = post_fx.process(subgroup_audio[1], sample_rate, effects)
                 except Exception as e:
@@ -452,7 +453,7 @@ class VoiceMixer:
         if effect_chain_id and HAS_POST_FX:
             try:
                 post_fx = PostFXProcessor(sample_rate=sample_rate)
-                effects = []  # Would be loaded from effect chain
+                effects: list[Any] = []  # Would be loaded from effect chain
                 master_audio[0] = post_fx.process(master_audio[0], sample_rate, effects)
                 master_audio[1] = post_fx.process(master_audio[1], sample_rate, effects)
             except Exception as e:

@@ -15,7 +15,7 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import wraps
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, cast
 
 logger = logging.getLogger(__name__)
 
@@ -131,8 +131,8 @@ async def try_execute_async(
     try:
         result = action()
         if asyncio.iscoroutine(result):
-            return await result
-        return result
+            return cast(T, await result)
+        return cast(T, result)
     except Exception as e:
         message = f"{context} failed: {e}" if context else f"Operation failed: {e}"
         logger.log(
@@ -267,7 +267,7 @@ def async_error_boundary(
         async def wrapper(*args: Any, **kwargs: Any) -> T:
             ctx = context or f"{func.__module__}.{func.__name__}"
             try:
-                return await func(*args, **kwargs)
+                return cast(T, await func(*args, **kwargs))
             except Exception as e:
                 message = f"{ctx} failed: {e}"
                 logger.log(

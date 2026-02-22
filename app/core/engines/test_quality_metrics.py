@@ -16,21 +16,25 @@ import importlib.util
 import warnings
 
 # Suppress warnings and errors during import
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
         spec = importlib.util.spec_from_file_location("quality_metrics", quality_metrics_path)
+        if spec is None:
+            raise ImportError(f"Cannot create module spec from {quality_metrics_path}")
         quality_metrics = importlib.util.module_from_spec(spec)
         # Catch AttributeError from speechbrain/torchaudio compatibility issues
         try:
-            spec.loader.exec_module(quality_metrics)
+            if spec.loader is not None:
+                spec.loader.exec_module(quality_metrics)
         except AttributeError as e:
             if "list_audio_backends" in str(e):
                 logger.warning(
                     "Speechbrain/torchaudio compatibility issue detected. Some features may be limited."
                 )
-                # Try to continue anyway - most functions don't need speechbrain
-                ...
             else:
                 raise
     except Exception as e:
@@ -46,8 +50,6 @@ detect_artifacts = quality_metrics.detect_artifacts
 calculate_all_metrics = quality_metrics.calculate_all_metrics
 load_audio = quality_metrics.load_audio
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 def generate_test_audio(
@@ -68,7 +70,8 @@ def generate_test_audio(
     audio = np.sin(2 * np.pi * frequency * t)
     # Normalize to prevent clipping
     audio = audio * 0.5
-    return audio.astype(np.float32)
+    result: np.ndarray = audio.astype(np.float32)
+    return result
 
 
 def generate_noisy_audio(
@@ -92,7 +95,8 @@ def generate_noisy_audio(
     max_val = np.max(np.abs(noisy_audio))
     if max_val > 1.0:
         noisy_audio = noisy_audio / max_val
-    return noisy_audio.astype(np.float32)
+    result: np.ndarray = noisy_audio.astype(np.float32)
+    return result
 
 
 def test_mos_score():

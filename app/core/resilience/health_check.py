@@ -55,7 +55,7 @@ class HealthChecker:
         """
         self.name = name
         self.timeout = timeout
-        self.checks: dict[str, Callable] = {}
+        self.checks: dict[str, dict[str, Any]] = {}
         self.last_results: dict[str, HealthCheckResult] = {}
 
     def register_check(
@@ -187,16 +187,16 @@ class HealthChecker:
 
         check_results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        for name, result in zip(self.checks.keys(), check_results):
-            if isinstance(result, Exception):
+        for name, check_result in zip(self.checks.keys(), check_results):
+            if isinstance(check_result, BaseException):
                 results[name] = HealthCheckResult(
                     name=name,
                     status=HealthStatus.UNHEALTHY,
-                    message=f"Check failed with exception: {result!s}",
-                    error=str(result),
+                    message=f"Check failed with exception: {check_result!s}",
+                    error=str(check_result),
                 )
             else:
-                results[name] = result
+                results[name] = check_result
 
         return results
 
@@ -281,15 +281,14 @@ def create_simple_check(
         else:
             result = check_func()
 
-        if isinstance(result, bool):
-            status = HealthStatus.HEALTHY if result else HealthStatus.UNHEALTHY
-            return HealthCheckResult(
-                name=name,
-                status=status,
-                message="Check completed",
-            )
-        else:
+        if isinstance(result, HealthCheckResult):
             return result
+        status = HealthStatus.HEALTHY if result else HealthStatus.UNHEALTHY
+        return HealthCheckResult(
+            name=name,
+            status=status,
+            message="Check completed",
+        )
 
     except Exception as e:
         status = HealthStatus.UNHEALTHY if critical else HealthStatus.DEGRADED

@@ -109,7 +109,7 @@ class ErrorTracker:
         """
         with self.lock:
             # Group by severity
-            by_severity = defaultdict(int)
+            by_severity: dict[str, int] = defaultdict(int)
             for record in self.errors.values():
                 by_severity[record.severity.value] += record.count
 

@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import MutableMapping
 from contextvars import ContextVar
 from typing import Any
 
@@ -169,7 +170,7 @@ class CorrelationLoggerAdapter(logging.LoggerAdapter):
         adapter.info("Processing")  # Includes correlation_id
     """
 
-    def process(self, msg: str, kwargs: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    def process(self, msg: str, kwargs: MutableMapping[str, Any]) -> tuple[str, MutableMapping[str, Any]]:
         """Process log message to include correlation ID."""
         correlation_id = get_current_correlation_id()
 

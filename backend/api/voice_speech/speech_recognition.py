@@ -6,6 +6,7 @@ Integrates vosk library for offline speech recognition.
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import numpy as np
 
@@ -67,7 +68,7 @@ class SpeechRecognizer:
         self,
         audio: np.ndarray,
         sample_rate: int = 16000,
-    ) -> dict[str, any]:
+    ) -> dict[str, Any]:
         """
         Recognize speech in audio.
 

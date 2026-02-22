@@ -181,7 +181,7 @@ class VoiceProfileManager:
         if HAS_LIBROSA:
             # Extract comprehensive features
             mfcc = librosa.feature.mfcc(y=audio, sr=sample_rate, n_mfcc=13)
-            chroma = librosa.feature.chroma(y=audio, sr=sample_rate)
+            chroma = librosa.feature.chroma_stft(y=audio, sr=sample_rate)
             spectral_centroid = librosa.feature.spectral_centroid(y=audio, sr=sample_rate)
             spectral_rolloff = librosa.feature.spectral_rolloff(y=audio, sr=sample_rate)
             zero_crossing_rate = librosa.feature.zero_crossing_rate(audio)
@@ -210,7 +210,7 @@ class VoiceProfileManager:
             # Normalize
             features = (features - features.mean()) / (features.std() + 1e-8)
 
-            return features.astype(np.float32)
+            return np.asarray(features.astype(np.float32))
         else:
             # Fallback: random embedding
             return np.random.randn(self.embedding_dim).astype(np.float32)

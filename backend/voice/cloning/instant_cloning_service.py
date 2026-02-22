@@ -601,6 +601,14 @@ class InstantCloningService:
         self._quality_cache.clear()
         logger.info("Instant cloning caches cleared")
 
+    def delete_embedding(self, embedding_id: str) -> bool:
+        """Delete a stored speaker embedding by ID."""
+        if embedding_id in self._embedding_cache:
+            del self._embedding_cache[embedding_id]
+            logger.info(f"Deleted embedding: {embedding_id}")
+            return True
+        return False
+
 
 # Singleton instance
 _instant_cloning_service: InstantCloningService | None = None

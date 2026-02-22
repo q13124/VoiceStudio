@@ -89,11 +89,12 @@ class EngineConfig:
         # Check overrides first
         overrides = self.config.get("overrides", {})
         if task_type in overrides:
-            return overrides[task_type]
+            return str(overrides[task_type])
 
         # Check defaults
         defaults = self.config.get("defaults", {})
-        return defaults.get(task_type)
+        val = defaults.get(task_type)
+        return str(val) if val is not None else None
 
     def set_default_engine(self, task_type: str, engine_id: str):
         """
@@ -140,7 +141,7 @@ class EngineConfig:
         Returns:
             List of engine IDs
         """
-        return self.config.get("installed", [])
+        return list(self.config.get("installed", []))
 
     def add_installed_engine(self, engine_id: str):
         """

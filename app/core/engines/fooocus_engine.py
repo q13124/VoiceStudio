@@ -52,7 +52,7 @@ class FooocusEngine(EngineProtocol):
         self.server_url = server_url.rstrip("/")
         self.api_url = f"{self.server_url}/v1"
         self.session = requests.Session()
-        self.session.timeout = 300
+        self._request_timeout = 300
 
     def initialize(self) -> bool:
         """Initialize the Fooocus engine by connecting to server."""

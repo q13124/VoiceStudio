@@ -494,7 +494,7 @@ class MetricsPersistence:
                 (plugin_id, since.isoformat()),
             )
 
-            summary = {
+            summary: dict[str, Any] = {
                 "plugin_id": plugin_id,
                 "since": since.isoformat(),
                 "metrics": {},

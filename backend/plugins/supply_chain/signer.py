@@ -43,8 +43,6 @@ try:
     HAS_CRYPTOGRAPHY = True
 except ImportError:
     HAS_CRYPTOGRAPHY = False
-    Ed25519PrivateKey = None
-    Ed25519PublicKey = None
 
 logger = logging.getLogger(__name__)
 

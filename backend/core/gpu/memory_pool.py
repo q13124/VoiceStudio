@@ -332,8 +332,8 @@ class GPUMemoryPool:
 
     def get_stats(self) -> dict:
         """Get memory pool statistics."""
-        by_owner = {}
-        by_priority = {}
+        by_owner: dict[str, int] = {}
+        by_priority: dict[str, int] = {}
 
         for block in self._allocations.values():
             by_owner[block.owner] = by_owner.get(block.owner, 0) + block.size_bytes

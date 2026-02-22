@@ -154,7 +154,7 @@ class QualityMetricsCache:
         combined = np.concatenate(samples) if len(samples) > 1 else samples[0]
 
         # Create hash from sample, length, and dtype
-        hash_data = f"{combined.tobytes()}{len(audio)}{audio.dtype}"
+        hash_data = f"{combined.tobytes().hex()}{len(audio)}{audio.dtype}"
         return hashlib.md5(hash_data.encode()).hexdigest()
 
     def _is_expired(self, entry: CacheEntry) -> bool:

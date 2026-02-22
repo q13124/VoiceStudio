@@ -246,7 +246,7 @@ def create_permission_dependency(permission: Permission):
                 user_id="local",
                 username="local_user",
                 role=UserRole.ADMIN,  # Local user has full access
-                permissions=list(Permission),
+                permissions=set(Permission),
             )
         return await require_permission_middleware(request, permission)
 

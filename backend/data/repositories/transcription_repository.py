@@ -304,7 +304,7 @@ class TranscriptionRepository(BaseRepository[TranscriptionEntity]):
         await self._connection.execute(query, (datetime.now().isoformat(), max_age_seconds))
         await self._connection.commit()
 
-        return self._connection.total_changes
+        return int(self._connection.total_changes)
 
     def _entity_to_api_dict(self, entity: TranscriptionEntity) -> dict[str, Any]:
         """

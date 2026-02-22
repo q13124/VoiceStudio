@@ -271,7 +271,7 @@ class ModelStorage:
     def get_storage_stats(self) -> dict:
         """Get storage statistics."""
         total_size = sum(m.size for m in self._registry.values())
-        engine_counts = {}
+        engine_counts: dict[str, int] = {}
         for model in self._registry.values():
             engine_counts[model.engine] = engine_counts.get(model.engine, 0) + 1
 

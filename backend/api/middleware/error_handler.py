@@ -17,14 +17,17 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 logger = logging.getLogger(__name__)
 
 # Import EngineError and EngineErrorCode from the engine layer
+EngineError: Any = None
+EngineErrorCode: Any = None
+HAS_ENGINE_ERROR = False
 try:
-    from app.core.engines.base import EngineError, EngineErrorCode
+    import importlib
 
-    HAS_ENGINE_ERROR = True
-except ImportError:
-    HAS_ENGINE_ERROR = False
-    EngineError = None
-    EngineErrorCode = None
+    _base_mod = importlib.import_module("app.core.engines.base")
+    EngineError = getattr(_base_mod, "EngineError", None)
+    EngineErrorCode = getattr(_base_mod, "EngineErrorCode", None)
+    HAS_ENGINE_ERROR = EngineError is not None
+except (ImportError, ModuleNotFoundError):
     logger.warning("EngineError not available; error handler middleware will be limited")
 
 

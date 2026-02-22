@@ -47,7 +47,7 @@ class PluginLoader:
             plugin_dirs: Directories to scan for plugins
         """
         self._plugin_dirs = plugin_dirs or []
-        self._loaded_modules: dict[str, any] = {}
+        self._loaded_modules: dict[str, Any] = {}
 
     def add_plugin_directory(self, path: Path) -> None:
         """Add a directory to scan for plugins."""
@@ -178,7 +178,7 @@ class PluginLoader:
                 return candidate
         return None
 
-    def _load_module(self, plugin_dir: Path, plugin_id: str) -> any | None:
+    def _load_module(self, plugin_dir: Path, plugin_id: str) -> Any | None:
         """Load the plugin Python module."""
         module_path = plugin_dir / "__init__.py"
 
@@ -208,7 +208,7 @@ class PluginLoader:
 
         return None
 
-    def _find_plugin_class(self, module: any) -> type[UnifiedPlugin] | type[LegacyPlugin] | None:
+    def _find_plugin_class(self, module: Any) -> type[UnifiedPlugin] | type[LegacyPlugin] | None:
         """Find the Plugin subclass in a module.
 
         Supports both unified Plugin (Phase 4+) and legacy Plugin (deprecated).

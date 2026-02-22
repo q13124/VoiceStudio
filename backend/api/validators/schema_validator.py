@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional, TypeVar
+from typing import Any, Callable, Any, Optional, TypeVar
 
 from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
@@ -59,12 +59,12 @@ class SchemaValidator:
     """
 
     def __init__(self):
-        self._custom_validators: dict[str, callable] = {}
+        self._custom_validators: dict[str, Callable[..., Any]] = {}
 
     def register_validator(
         self,
         name: str,
-        validator: callable,
+        validator: Callable[..., Any],
     ) -> None:
         """Register a custom validator function."""
         self._custom_validators[name] = validator

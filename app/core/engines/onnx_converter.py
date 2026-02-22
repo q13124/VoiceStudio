@@ -32,7 +32,7 @@ except ImportError:
 
 
 def convert_pytorch_to_onnx(
-    model: torch.nn.Module,
+    model: torch.nn.Module | None,
     input_shape: tuple[int, ...],
     output_path: str,
     opset_version: int = 17,
@@ -59,6 +59,10 @@ def convert_pytorch_to_onnx(
         return False
 
     try:
+        if model is None:
+            logger.error("No model provided for ONNX conversion")
+            return False
+
         # Set model to evaluation mode
         model.eval()
 

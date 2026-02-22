@@ -14,10 +14,11 @@ from enum import Enum
 from typing import Any
 
 # Import configuration
+app_config: Any = None
 try:
     from backend.settings import config as app_config
 except ImportError:
-    app_config = None
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ def _get_timeout(config_attr: str, default: float) -> float:
 def _get_server_url(default: str) -> str:
     """Get server URL from configuration."""
     if app_config is not None:
-        return app_config.server.base_url
+        return str(app_config.server.base_url)
     return default
 
 

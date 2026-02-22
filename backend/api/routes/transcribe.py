@@ -595,4 +595,4 @@ async def delete_transcription(transcription_id: str):
     deleted = await repo.delete_transcription(transcription_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Transcription not found")
-    return ApiOk(message="Transcription deleted")
+    return ApiOk()

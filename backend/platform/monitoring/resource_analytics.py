@@ -424,11 +424,11 @@ class ResourceAnalytics:
         predicted_change = trend["slope"] * samples_per_minute * minutes_ahead
 
         predicted = trend["current_value"] + predicted_change
-        return max(0, min(100, predicted))  # Clamp to 0-100
+        return float(max(0, min(100, predicted)))  # Clamp to 0-100
 
     def get_report(self) -> dict[str, Any]:
         """Generate a comprehensive analytics report."""
-        report = {
+        report: dict[str, Any] = {
             "generated_at": datetime.now().isoformat(),
             "retention_hours": self.config.retention_hours,
             "resources": {},

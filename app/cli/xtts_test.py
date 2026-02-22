@@ -81,8 +81,9 @@ def test_synthesis(reference_audio: str | None = None):
 
         audio = engine.clone_voice(reference_audio=reference_audio, text=text, language="en")
 
-        if audio is not None:
-            logger.info(f"✓ Synthesis successful - audio shape: {audio.shape}")
+        audio_arr = audio[0] if isinstance(audio, tuple) else audio
+        if audio_arr is not None and hasattr(audio_arr, "shape"):
+            logger.info(f"✓ Synthesis successful - audio shape: {audio_arr.shape}")
             return True
         else:
             logger.error("✗ Synthesis returned None")

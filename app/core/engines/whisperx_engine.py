@@ -16,13 +16,15 @@ from .base import EngineProtocol
 
 logger = logging.getLogger(__name__)
 
+np: Any = None
+HAS_NUMPY = False
 try:
-    import numpy as np
+    import numpy
 
+    np = numpy
     HAS_NUMPY = True
 except ImportError:
-    HAS_NUMPY = False
-    np = None
+    pass
 
 try:
     import whisperx
@@ -159,7 +161,7 @@ class WhisperXEngine(EngineProtocol):
                 self.compute_type = "int8"
         self.lazy_load = lazy_load
         self.batch_size = batch_size
-        self._model = None
+        self._model: Any = None
         self._align_model = None
         self._align_metadata = None
         self._diarize_model = None

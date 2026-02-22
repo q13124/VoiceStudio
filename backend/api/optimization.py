@@ -82,7 +82,8 @@ class ResponseCache:
 
         # Move to end (most recently used)
         self.cache.move_to_end(key)
-        return self.cache[key]
+        entry: tuple[Any, dict[str, str]] = self.cache[key]
+        return entry
 
     def set(
         self,

@@ -8,8 +8,11 @@ audit entries are logged. Enables automatic routing to Debug Role.
 from __future__ import annotations
 
 import hashlib
+import logging
 from datetime import datetime, timezone
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from .schema import AuditEntry, AuditEventType
 

@@ -272,7 +272,8 @@ class HandoffQueue:
                     return None
 
                 to_role = entry_data.get("to_role")
-                return distributor.get_active_distribution(to_role)
+                result: ContextBundle | None = distributor.get_active_distribution(to_role)
+                return result
 
         return None
 

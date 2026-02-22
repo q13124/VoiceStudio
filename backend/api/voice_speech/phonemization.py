@@ -4,6 +4,7 @@ Integrates phonemizer and gruut libraries for text-to-phoneme conversion.
 """
 
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -18,10 +19,12 @@ except ImportError:
     logger.warning("phonemizer not available.")
 
 # Try importing gruut
+gruut: Any = None
 HAS_GRUUT = False
 try:
-    import gruut
+    import gruut as _gruut
 
+    gruut = _gruut
     HAS_GRUUT = True
 except ImportError:
     logger.warning("gruut not available.")
@@ -77,7 +80,7 @@ class Phonemizer:
                 strip=strip,
             )
 
-            return phonemes
+            return str(phonemes)
         except Exception as e:
             logger.error(f"Error in phonemization: {e}", exc_info=True)
             raise

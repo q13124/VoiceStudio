@@ -534,12 +534,12 @@ class CollaborationService:
             # Extract audio files to temp directory
             # (In production, extract to proper location)
 
-            return project_data
+            return dict(project_data)
 
     async def _import_json(self, file_path: Path) -> dict[str, Any]:
         """Import from JSON."""
         with open(file_path) as f:
-            return json.load(f)
+            return dict(json.load(f))
 
     # ===== Phase 14.3: Sharing =====
 

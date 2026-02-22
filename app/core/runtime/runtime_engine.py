@@ -157,7 +157,7 @@ class RuntimeEngine:
             if url:
                 try:
                     response = requests.get(url, timeout=2)
-                    return response.status_code == 200
+                    return bool(response.status_code == 200)
                 except Exception as e:
                     logger.debug(f"Health check failed for {self.engine_id}: {e}")
                     return False
@@ -232,7 +232,7 @@ class RuntimeEngineManager:
         Returns:
             Dictionary mapping engine_id to manifest file path
         """
-        manifests = {}
+        manifests: dict[str, Any] = {}
         engines_dir = Path(engines_root)
 
         if not engines_dir.exists():

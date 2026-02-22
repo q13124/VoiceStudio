@@ -153,7 +153,7 @@ class QueryDispatcher:
         try:
             # Check cache if available
             if self._cache:
-                cached = await self._cache.get(query)
+                cached: QueryResult[Any] | None = await self._cache.get(query)
                 if cached is not None:
                     return cached
 

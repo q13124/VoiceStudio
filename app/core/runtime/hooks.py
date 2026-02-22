@@ -305,12 +305,14 @@ class HookRegistry:
                     import cv2
 
                     cap = cv2.VideoCapture(str(video_path))
-                    ret, frame = cap.read()
+                    cv_ret: bool
+                    cv_frame: Any
+                    cv_ret, cv_frame = cap.read()
                     cap.release()
 
-                    if ret:
+                    if cv_ret and cv_frame is not None:
                         # Convert BGR to RGB
-                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        frame_rgb = cv2.cvtColor(cv_frame, cv2.COLOR_BGR2RGB)
 
                         # Resize
                         height, width = frame_rgb.shape[:2]
@@ -332,6 +334,7 @@ class HookRegistry:
 
                         logger.debug(f"Generated video thumbnail: {thumbnail_path}")
                         return True
+                    return False
 
                 except ImportError:
                     logger.debug("No video library available for thumbnail generation")

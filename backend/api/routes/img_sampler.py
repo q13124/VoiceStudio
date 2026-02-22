@@ -82,12 +82,12 @@ async def render(req: ImgSamplerRequest) -> dict:
             # Create image generation request
             gen_req = ImageGenerateRequest(
                 prompt=prompt,
-                engine="sdxl_comfy",  # Default to SDXL ComfyUI
+                engine="sdxl_comfy",
                 width=512,
                 height=512,
-                num_inference_steps=20,
-                guidance_scale=7.5,
-                sampler=sampler,  # Pass sampler to generation
+                steps=20,
+                cfg_scale=7.5,
+                sampler=sampler,
             )
 
             # Generate image
@@ -95,7 +95,7 @@ async def render(req: ImgSamplerRequest) -> dict:
 
             # Get image path from result
             image_id = gen_result.image_id
-            image_path = gen_result.image_path
+            image_path = gen_result.image_url
 
             if not image_path:
                 raise HTTPException(

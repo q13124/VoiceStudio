@@ -169,7 +169,7 @@ class PluginLoader:
                 register_func = getattr(module, entry_parts[0], None)
             else:
                 # Module.function format
-                obj = module
+                obj: Any = module
                 for part in entry_parts:
                     obj = getattr(obj, part, None)
                     if obj is None:

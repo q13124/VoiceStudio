@@ -522,8 +522,8 @@ async def synthesize_script(script_id: str):
 
             # Combine all segments into final audio
             combined_audio = None
-            for segment_file in segment_audio_files:
-                segment_audio_data = audio_utils.load_audio(segment_file)
+            for seg_path in segment_audio_files:
+                segment_audio_data = audio_utils.load_audio(seg_path)
 
                 if combined_audio is None:
                     combined_audio = segment_audio_data
@@ -538,9 +538,9 @@ async def synthesize_script(script_id: str):
 
                 # Clean up segment file
                 try:
-                    os.unlink(segment_file)
+                    os.unlink(seg_path)
                 except OSError as cleanup_err:
-                    logger.debug(f"Failed to cleanup segment file {segment_file}: {cleanup_err}")
+                    logger.debug(f"Failed to cleanup segment file {seg_path}: {cleanup_err}")
 
             # Save combined audio
             audio_id = f"script-{uuid.uuid4().hex[:8]}"

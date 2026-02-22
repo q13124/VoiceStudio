@@ -9,6 +9,7 @@ import json
 import logging
 import sys
 import traceback
+from collections.abc import MutableMapping
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -111,7 +112,7 @@ class ConsoleFormatter(logging.Formatter):
 class LoggerAdapter(logging.LoggerAdapter):
     """Logger adapter with context support."""
 
-    def process(self, msg: str, kwargs: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    def process(self, msg: str, kwargs: MutableMapping[str, Any]) -> tuple[str, MutableMapping[str, Any]]:
         """Process the message and kwargs."""
         extra = kwargs.get("extra", {})
         extra.update(self.extra)
@@ -187,6 +188,7 @@ def configure_logging(config: LogConfig | None = None) -> None:
 
         config.file_path.parent.mkdir(parents=True, exist_ok=True)
 
+        formatter: logging.Formatter
         if config.json_format:
             formatter = StructuredFormatter(config.include_stacktrace)
         else:

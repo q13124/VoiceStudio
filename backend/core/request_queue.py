@@ -180,7 +180,7 @@ class RequestQueue(Generic[T]):
 
             # Acquire semaphores
             async with self._semaphore:
-                engine_sem = self._engine_semaphores.get(request.engine_type)
+                engine_sem = self._engine_semaphores.get(str(request.engine_type))
                 if engine_sem:
                     await engine_sem.acquire()
 

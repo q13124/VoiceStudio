@@ -26,26 +26,31 @@ PII_PATTERNS = [
 ]
 
 # Common secret patterns
-SECRET_PATTERNS = [
+SECRET_PATTERNS: list[tuple[str, str, int]] = [
     (
         r'password["\']?\s*[:=]\s*["\']?([^"\'\s]+)',
         r'password["\']?\s*[:=]\s*["\']?[REDACTED]',
+        0,
     ),
     (
         r'api[_-]?key["\']?\s*[:=]\s*["\']?([^"\'\s]+)',
         r'api[_-]?key["\']?\s*[:=]\s*["\']?[REDACTED]',
+        0,
     ),
     (
         r'secret["\']?\s*[:=]\s*["\']?([^"\'\s]+)',
         r'secret["\']?\s*[:=]\s*["\']?[REDACTED]',
+        0,
     ),
     (
         r'token["\']?\s*[:=]\s*["\']?([^"\'\s]+)',
         r'token["\']?\s*[:=]\s*["\']?[REDACTED]',
+        0,
     ),
     (
         r'authorization["\']?\s*[:=]\s*["\']?([^"\'\s]+)',
         r'authorization["\']?\s*[:=]\s*["\']?[REDACTED]',
+        0,
     ),
     (r"bearer\s+([A-Za-z0-9._-]+)", r"bearer [REDACTED]", re.IGNORECASE),
     (
@@ -97,11 +102,8 @@ class Redactor:
 
         # Redact secrets
         if self.redact_secrets:
-            for pattern in SECRET_PATTERNS:
-                if len(pattern) == 2:
-                    result = re.sub(pattern[0], pattern[1], result)
-                elif len(pattern) == 3:
-                    result = re.sub(pattern[0], pattern[1], result, flags=pattern[2])
+            for pat, repl, flags in SECRET_PATTERNS:
+                result = re.sub(pat, repl, result, flags=flags)
 
         return result
 
@@ -133,7 +135,7 @@ class Redactor:
         keys_to_redact = keys_to_redact or []
         keys_to_redact = list(set(default_keys + keys_to_redact))
 
-        result = {}
+        result: dict[str, Any] = {}
         for key, value in data.items():
             # Always redact specific keys
             if any(redact_key.lower() in key.lower() for redact_key in keys_to_redact):

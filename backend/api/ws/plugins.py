@@ -267,7 +267,7 @@ async def _check_plugin_health(plugin_service: Any, plugin_id: str) -> str:
     """Check plugin health status."""
     try:
         if hasattr(plugin_service, "check_plugin_health"):
-            return await plugin_service.check_plugin_health(plugin_id)
+            return str(await plugin_service.check_plugin_health(plugin_id))
         return "unknown"
     except Exception as e:
         logger.error(f"Health check failed for plugin {plugin_id}: {e}")
@@ -306,11 +306,11 @@ async def send_full_sync(websocket: WebSocket, request_id: str | None = None) ->
 
     try:
         plugin_service = get_plugin_service()
-        plugins = plugin_service.get_all_plugins()
+        plugins = plugin_service.list_plugins()
 
         all_statuses = []
-        for plugin_id, manifest in plugins.items():
-            status = _create_plugin_status(plugin_id, manifest, plugin_service)
+        for plugin_info in plugins:
+            status = _create_plugin_status(plugin_info.manifest.plugin_id, plugin_info.manifest, plugin_service)
             all_statuses.append(status)
 
         message = create_plugin_sync_message(

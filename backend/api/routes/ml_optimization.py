@@ -195,6 +195,7 @@ async def explain_model(request: ExplainabilityRequest):
                 result = explainer.explain_with_lime(
                     model=demo_model,
                     X=X,
+                    instance=X[0],
                     feature_names=request.feature_names,
                 )
             except Exception as e:

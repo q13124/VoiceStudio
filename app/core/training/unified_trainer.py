@@ -25,13 +25,11 @@ except ImportError:
     HAS_XTTS_TRAINER = False
     logger.warning("XTTS trainer not available")
 
-# Import RVC trainer
+RVCTrainer: Any = None
+HAS_RVC_TRAINER = False
 try:
     from .rvc_trainer import HAS_RVC_TRAINER, RVCTrainer
-
 except ImportError:
-    HAS_RVC_TRAINER = False
-    RVCTrainer = None
     logger.warning("RVC trainer not available")
 
 # Try to import torch

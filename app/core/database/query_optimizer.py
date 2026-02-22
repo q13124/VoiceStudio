@@ -611,7 +611,7 @@ class DatabaseQueryOptimizer:
             cached_result = self.cache.get(cache_key)
             if cached_result is not None:
                 self._record_query_stats(query, 0.0, cached=True)
-                return cached_result
+                return list(cached_result)
 
         # Execute query
         start_time = time.time()

@@ -66,7 +66,7 @@ class Tacotron2Engine(EngineProtocol):
             model_name: Coqui TTS model identifier (default: English LJSpeech).
         """
         super().__init__(device=device, gpu=gpu)
-        self._tts = None
+        self._tts: Any = None
         self._model_name = model_name or AVAILABLE_MODELS["en"]
         self._current_language = "en"
         self._sample_rate = 22050  # Tacotron 2 default
@@ -191,7 +191,7 @@ class Tacotron2Engine(EngineProtocol):
                 token.raise_if_cancelled()
 
             logger.debug("Synthesis complete (samples=%d)", len(audio))
-            return audio
+            return np.asarray(audio)
 
         except Exception as e:
             logger.error("Synthesis failed: %s", e)
@@ -306,14 +306,15 @@ class Tacotron2Engine(EngineProtocol):
         )
         return base_info
 
-    def health_check(self) -> bool:
+    def health_check(self) -> dict[str, Any]:
         """
         Check if engine is healthy and ready for synthesis.
 
         Returns:
-            True if engine is ready, False otherwise.
+            Health check result dict with 'healthy' key.
         """
-        return not (not self._initialized or self._tts is None)
+        healthy = self._initialized and self._tts is not None
+        return {"healthy": healthy, "engine": "tacotron2"}
 
     def get_health_details(self) -> dict[str, Any]:
         """

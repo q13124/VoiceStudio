@@ -11,6 +11,7 @@ import os
 import socket
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ class PortManager:
         }
 
         # Active port assignments
-        self.active_ports: dict[str, dict[str, any]] = {}
+        self.active_ports: dict[str, dict[str, Any]] = {}
 
         # Load existing port registry
         self._load_registry()
@@ -102,7 +103,7 @@ class PortManager:
             if os.name == "nt":  # Windows
                 import psutil
 
-                return psutil.pid_exists(pid)
+                return bool(psutil.pid_exists(pid))
             else:  # Unix-like
                 os.kill(pid, 0)
                 return True
@@ -150,8 +151,8 @@ class PortManager:
         """
         # Check if engine already has a port
         if engine_id in self.active_ports:
-            existing_port = self.active_ports[engine_id].get("port")
-            if self._is_port_available(existing_port):
+            existing_port: int | None = self.active_ports[engine_id].get("port")
+            if existing_port is not None and self._is_port_available(existing_port):
                 logger.debug(f"Engine {engine_id} already has port {existing_port}")
                 return existing_port
             else:
@@ -210,7 +211,11 @@ class PortManager:
 
     def list_active_ports(self) -> dict[str, int]:
         """List all active port assignments."""
-        return {engine_id: info.get("port") for engine_id, info in self.active_ports.items()}
+        return {
+            engine_id: info["port"]
+            for engine_id, info in self.active_ports.items()
+            if "port" in info and isinstance(info["port"], int)
+        }
 
 
 # Global port manager instance

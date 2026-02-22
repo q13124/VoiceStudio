@@ -7,6 +7,7 @@ and timing-preserving subtitle generation.
 """
 
 from __future__ import annotations
+from typing import Any
 
 import logging
 
@@ -224,6 +225,8 @@ async def transcribe_project(project_id: str, word_timestamps: bool = True):
                 raise HTTPException(status_code=500, detail="Transcription failed")
 
         project = service.get_project(project_id)
+        if project is None:
+            raise HTTPException(status_code=404, detail="Project not found")
 
         return TranscriptionResponse(
             project_id=project_id,
@@ -331,6 +334,8 @@ async def export_subtitles(project_id: str, request: SubtitleExportRequest):
             raise HTTPException(status_code=500, detail="Subtitle export failed")
 
         project = service.get_project(project_id)
+        if project is None:
+            raise HTTPException(status_code=404, detail="Project not found")
         segment_count = len(
             project.translated_segments if request.use_translation else project.transcribed_segments
         )

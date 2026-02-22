@@ -36,7 +36,7 @@ from collections.abc import Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import TypeVar
+from typing import TypeVar, cast
 
 logger = logging.getLogger(__name__)
 
@@ -362,9 +362,9 @@ class CircuitBreaker:
         """
         async with self():
             if asyncio.iscoroutinefunction(func):
-                return await func(*args, **kwargs)
+                return cast(T, await func(*args, **kwargs))
             else:
-                return func(*args, **kwargs)
+                return cast(T, func(*args, **kwargs))
 
 
 class CircuitBreakerRegistry:

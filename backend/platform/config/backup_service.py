@@ -330,9 +330,9 @@ class BackupService:
                 for chunk in iter(lambda: f.read(8192), b""):
                     sha256.update(chunk)
         else:
-            for f in sorted(file_path.rglob("*")):
-                if f.is_file():
-                    with open(f, "rb") as fp:
+            for child in sorted(file_path.rglob("*")):
+                if child.is_file():
+                    with open(child, "rb") as fp:
                         for chunk in iter(lambda: fp.read(8192), b""):
                             sha256.update(chunk)
 

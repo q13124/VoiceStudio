@@ -26,7 +26,7 @@ try:
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
-    psutil = None  # type: ignore
+    psutil = None  # psutil unavailable
 
 logger = logging.getLogger(__name__)
 
@@ -324,23 +324,25 @@ class ResourceMonitor:
         """Check memory usage against limits."""
         current_mb = snapshot.memory_mb
         now = time.time()
+        max_mem = self.limits.max_memory_mb or 0
+        soft_mem = self.limits.soft_memory_mb or 0
 
         # Check soft limit (warning)
         if (
-            self.limits.soft_memory_mb
-            and current_mb > self.limits.soft_memory_mb
-            and current_mb <= self.limits.max_memory_mb
+            soft_mem
+            and current_mb > soft_mem
+            and current_mb <= max_mem
         ):
             await self._handle_violation(
                 ViolationType.MEMORY_SOFT,
                 ViolationAction.WARN,
                 current_mb,
-                self.limits.soft_memory_mb,
+                float(soft_mem),
                 0,
             )
 
         # Check hard limit
-        if current_mb > self.limits.max_memory_mb:
+        if current_mb > max_mem:
             if self._memory_violation_start is None:
                 self._memory_violation_start = now
                 grace_remaining = self.limits.memory_grace_period_sec
@@ -354,7 +356,7 @@ class ResourceMonitor:
                     ViolationType.MEMORY_HARD,
                     ViolationAction.TERMINATE,
                     current_mb,
-                    self.limits.max_memory_mb,
+                    float(max_mem),
                     grace_remaining,
                 )
                 await self._terminate_process("memory limit exceeded")
@@ -364,7 +366,7 @@ class ResourceMonitor:
                     ViolationType.MEMORY_HARD,
                     ViolationAction.WARN,
                     current_mb,
-                    self.limits.max_memory_mb,
+                    float(max_mem),
                     grace_remaining,
                 )
         else:
@@ -378,23 +380,25 @@ class ResourceMonitor:
             self.average_cpu_percent if len(self._snapshots) >= 3 else snapshot.cpu_percent
         )
         now = time.time()
+        max_cpu = self.limits.max_cpu_percent or 0
+        soft_cpu = self.limits.soft_cpu_percent or 0
 
         # Check soft limit (warning)
         if (
-            self.limits.soft_cpu_percent
-            and current_cpu > self.limits.soft_cpu_percent
-            and current_cpu <= self.limits.max_cpu_percent
+            soft_cpu
+            and current_cpu > soft_cpu
+            and current_cpu <= max_cpu
         ):
             await self._handle_violation(
                 ViolationType.CPU_SOFT,
                 ViolationAction.WARN,
                 current_cpu,
-                self.limits.soft_cpu_percent,
+                float(soft_cpu),
                 0,
             )
 
         # Check hard limit
-        if current_cpu > self.limits.max_cpu_percent:
+        if current_cpu > max_cpu:
             if self._cpu_violation_start is None:
                 self._cpu_violation_start = now
                 grace_remaining = self.limits.cpu_grace_period_sec
@@ -408,7 +412,7 @@ class ResourceMonitor:
                     ViolationType.CPU_HARD,
                     ViolationAction.TERMINATE,
                     current_cpu,
-                    self.limits.max_cpu_percent,
+                    float(max_cpu),
                     grace_remaining,
                 )
                 await self._terminate_process("CPU limit exceeded")
@@ -418,7 +422,7 @@ class ResourceMonitor:
                     ViolationType.CPU_HARD,
                     ViolationAction.WARN,
                     current_cpu,
-                    self.limits.max_cpu_percent,
+                    float(max_cpu),
                     grace_remaining,
                 )
         else:

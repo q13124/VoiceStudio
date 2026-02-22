@@ -145,10 +145,11 @@ def get_engine_preset(engine_name: str, quality_preset: str) -> str | None:
         Engine-specific preset name or None
     """
     engine_mappings = ENGINE_PRESET_MAPPINGS.get(engine_name.lower())
-    if not engine_mappings:
+    if not engine_mappings or not isinstance(engine_mappings, dict):
         return None
 
-    return engine_mappings.get(quality_preset.lower())
+    result: str | None = engine_mappings.get(quality_preset.lower())
+    return result
 
 
 def get_synthesis_params_from_preset(
@@ -216,7 +217,7 @@ def get_preset_description(preset_name: str) -> str:
     """
     preset = get_quality_preset(preset_name)
     if preset:
-        return preset.get("description", "")
+        return str(preset.get("description", ""))
     return ""
 
 
@@ -232,5 +233,6 @@ def get_preset_target_metrics(preset_name: str) -> dict[str, float]:
     """
     preset = get_quality_preset(preset_name)
     if preset:
-        return preset.get("target_metrics", {}).copy()
+        metrics: dict[str, float] = preset.get("target_metrics", {})
+        return metrics.copy()
     return {}

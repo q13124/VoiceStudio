@@ -226,8 +226,8 @@ class SandboxSession:
 
     def _detect_file_changes(self) -> tuple[List[str], List[str]]:
         """Detect files created or modified during session."""
-        created = []
-        modified = []
+        created: list[str] = []
+        modified: list[str] = []
 
         if not self.workspace.exists():
             return created, modified

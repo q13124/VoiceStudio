@@ -5,6 +5,7 @@ Endpoints for analyzing speech articulation patterns and identifying issues.
 """
 
 from __future__ import annotations
+from typing import Any
 
 import logging
 import os
@@ -87,7 +88,7 @@ async def analyze(req: ArticulationAnalyzeRequest) -> ArticulationAnalyzeRespons
             audio = audio / np.max(np.abs(audio))
 
         # Analyze articulation patterns
-        issues = []
+        issues: list[dict[str, Any]] = []
 
         # 1. Detect clipping/distortion (samples at or near maximum)
         clipped_samples = np.sum(np.abs(audio) > 0.95)

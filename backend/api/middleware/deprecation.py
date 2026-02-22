@@ -124,7 +124,7 @@ class DeprecationMiddleware(BaseHTTPMiddleware):
         deprecated = self._find_deprecated_endpoint(path)
 
         # Call the actual endpoint
-        response = await call_next(request)
+        response: Response = await call_next(request)
 
         # Add deprecation headers if endpoint is deprecated
         if deprecated:

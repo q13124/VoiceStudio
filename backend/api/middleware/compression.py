@@ -63,7 +63,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
         accept_encoding = request.headers.get("accept-encoding", "")
 
         # Get response
-        response = await call_next(request)
+        response: Response = await call_next(request)
 
         # Skip if streaming response
         if isinstance(response, StreamingResponse):
@@ -78,9 +78,12 @@ class CompressionMiddleware(BaseHTTPMiddleware):
         if content_type not in self.compressible_types:
             return response
 
-        # Get body
+        # Get body (call_next returns a response with body_iterator)
+        body_iter = getattr(response, "body_iterator", None)
+        if body_iter is None:
+            return response
         body = b""
-        async for chunk in response.body_iterator:
+        async for chunk in body_iter:
             body += chunk
 
         # Check minimum size
