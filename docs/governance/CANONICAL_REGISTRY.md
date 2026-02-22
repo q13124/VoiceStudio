@@ -85,6 +85,8 @@ Before creating a new document, check this registry to ensure the topic isn't al
 | **Phase 6 Strategic Maturity ADR** | `docs/architecture/decisions/ADR-039-phase6-strategic-maturity.md` | 2026-02-18 | Wasm runtime (wasmtime), AI quality, compliance, ecosystem, PQC research |
 | **Dual Plugin Loader ADR** | `docs/architecture/decisions/ADR-040-dual-plugin-loader.md` | 2026-02-18 | Documents dual loader architecture (PluginLoader vs PluginService) and usage guidelines |
 | **Model Lifecycle Strategy ADR** | `docs/architecture/decisions/ADR-043-model-lifecycle-strategy.md` | 2026-02-21 | Model registry, baselines, rollback, A/B testing integration |
+| **Supply-Chain Integrity ADR** | `docs/architecture/decisions/ADR-044-supply-chain-integrity.md` | 2026-02-21 | Full-app SBOM, dependency hashes, installer provenance (Phase 12 WS2) |
+| **MCP Integration Strategy ADR** | `docs/architecture/decisions/ADR-045-mcp-integration-strategy.md` | 2026-02-21 | MCP POC status, planned capabilities, roadmap (Arch Review 1.6) |
 
 ## Planning and Roadmaps
 

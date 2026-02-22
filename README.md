@@ -1,6 +1,6 @@
 # VoiceStudio
 
-Professional voice cloning and audio production software built with WinUI 3, Python/Node backend, and MCP integration.
+Professional voice cloning and audio production software built with WinUI 3, Python/Node backend. MCP integration planned (proof-of-concept: PDF unlocker).
 
 **🎙️ Quality Focus:** State-of-the-art voice cloning with comprehensive quality metrics. Professional DAW-grade studio for voice synthesis, cloning, and audio production.
 

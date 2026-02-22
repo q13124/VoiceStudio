@@ -98,6 +98,7 @@ What becomes easier or more difficult to do because of this change?
 | [ADR-040](ADR-040-dual-plugin-loader.md) | Dual Plugin Loader | Accepted | 2026-02 |
 | [ADR-041](ADR-041-python-311-runtime.md) | Python 3.11 Runtime | Accepted | 2026-02 |
 | [ADR-042](ADR-042-plugin-installer-consolidation.md) | Plugin Installer Consolidation | Accepted | 2026-02 |
+| [ADR-043](ADR-043-model-lifecycle-strategy.md) | Model Lifecycle Strategy | Accepted | 2026-02-21 |
 
 ## Status Legend
 

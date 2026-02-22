@@ -123,7 +123,9 @@ These endpoints have been resolved as of 2026-02-13 (Production Completion Plan 
 
 ### MCP Integration Roadmap (Future)
 
-**Current State**: `backend/mcp_bridge/` contains only `pdf_unlocker_client.py` for PDF unlock functionality.
+**Status**: Proof-of-concept only. See ADR-045.
+
+**Current State**: `backend/mcp_bridge/` contains only `pdf_unlocker_client.py` for PDF unlock functionality. No MCP dashboard, no full orchestration.
 
 **Target State**: Full MCP integration for design tokens, AI model calls, and engine orchestration.
 
