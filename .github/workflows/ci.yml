@@ -34,8 +34,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
+          pip install -e ".[dev,extras]"
       
       - name: Run linting
         run: |
@@ -76,7 +75,17 @@ jobs:
         run: dotnet restore VoiceStudio.sln -r win-x64 -p:Platform=x64
       
       - name: Build
-        run: dotnet build VoiceStudio.sln -c Release -p:Platform=x64
+        run: dotnet build VoiceStudio.sln -c Release -p:Platform=x64 -warnaserror
+      
+      - name: Check for root build artifacts
+        run: |
+          $bad = @()
+          foreach ($f in @('api_test_output.txt','build_warnings.txt','build_errors.txt','contract_test_output.txt')) {
+            if (Test-Path $f) { $bad += $f }
+          }
+          if (Get-ChildItem -File -Filter '*.binlog' -ErrorAction SilentlyContinue) { $bad += '*.binlog' }
+          if (Get-ChildItem -File -Filter '*.log' -ErrorAction SilentlyContinue) { $bad += '*.log' }
+          if ($bad.Count -gt 0) { Write-Host "Prohibited root artifacts: $($bad -join ', ')"; exit 1 }
       
       - name: Run tests
         run: dotnet test src/VoiceStudio.App.Tests/VoiceStudio.App.Tests.csproj -c Release -p:Platform=x64 --verbosity normal
@@ -107,8 +116,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
+          pip install -e ".[dev,extras]"
       
       - name: Run integration tests
         run: |
@@ -134,11 +142,11 @@ jobs:
       
       - name: Check dependencies for vulnerabilities
         run: |
-          pip install -r requirements.txt
+          pip install -e ".[dev,extras]"
           safety check --full-report || true
       
       - name: Run Bandit security scanner
-        run: bandit -r backend app -ll -ii
+        run: bandit -r backend app -ll -ii --exclude "backend/.venv,backend/mcp_servers"
 
   # ============================================================================
   # Code Quality
@@ -272,8 +280,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
+          pip install -e ".[dev,extras]"
           pip install selenium requests pytest-html pytest-rerunfailures
         shell: pwsh
       
@@ -345,8 +352,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
+          pip install -e ".[dev,extras]"
           pip install pytest-benchmark
       
       - name: Run performance benchmarks

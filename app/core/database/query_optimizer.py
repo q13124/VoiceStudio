@@ -12,6 +12,7 @@ Provides:
 from __future__ import annotations
 
 import logging
+import re
 import sqlite3
 import threading
 import time
@@ -705,19 +706,36 @@ class DatabaseQueryOptimizer:
         Returns:
             Analysis results
         """
+        if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", table):
+            raise ValueError(f"Invalid table name: {table!r}")
         try:
             # Get table info
             with self.pool.get_connection() as conn:
                 cursor = conn.cursor()
 
-                # Get row count
-                cursor.execute(f"SELECT COUNT(*) FROM {table}")
+                # Whitelist: only use table names from schema (avoids SQL injection)
+                cursor.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                    (table,),
+                )
+                row = cursor.fetchone()
+                if row is None:
+                    raise ValueError(f"Table not found: {table!r}")
+                schema_table = row[0]
+
+                # Get row count: schema_table validated via sqlite_master whitelist.
+                # SQLite does not support ? for identifiers; validate and quote per SQLite rules.
+                if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", schema_table):
+                    raise ValueError(f"Invalid table name from schema: {schema_table!r}")
+                _parts = ("SELECT COUNT(*) FROM ", '"' + schema_table.replace('"', '""') + '"')
+                cursor.execute("".join(_parts))
                 row_count = cursor.fetchone()[0]
 
-                # Get index info
+                # Get index info (tbl_name is a value; use parameterized query)
                 cursor.execute(
-                    f"SELECT name, sql FROM sqlite_master "
-                    f"WHERE type='index' AND tbl_name='{table}'"
+                    "SELECT name, sql FROM sqlite_master "
+                    "WHERE type='index' AND tbl_name=?",
+                    (table,),
                 )
                 indexes = cursor.fetchall()
 

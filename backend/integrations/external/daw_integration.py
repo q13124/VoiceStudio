@@ -445,24 +445,31 @@ def _parse_aup3_tracks(project_path: Path) -> tuple[list[dict[str, Any]], int]:
         conn = sqlite3.connect(str(project_path))
         cursor = conn.cursor()
 
-        # AUP3 stores project XML in the 'project' or 'autosave' table
+        # AUP3 stores project XML in the 'project' or 'autosave' table.
+        # Use literal queries (fixed table names) to satisfy Bandit B608.
         project_xml: str | None = None
-        for table in ("autosave", "project"):
+        for _table in ("autosave", "project"):
             try:
-                cursor.execute(f"SELECT dict || doc FROM {table} LIMIT 1")
+                if _table == "autosave":
+                    cursor.execute("SELECT dict || doc FROM autosave LIMIT 1")
+                else:
+                    cursor.execute("SELECT dict || doc FROM project LIMIT 1")
                 row = cursor.fetchone()
                 if row and row[0]:
                     project_xml = row[0]
                     break
             except sqlite3.OperationalError as e:
                 # GAP-PY-001: Table structure varies by Audacity version
-                logger.debug(f"Failed to query {table} with dict||doc: {e}")
+                logger.debug(f"Failed to query {_table} with dict||doc: {e}")
 
         # Fallback: try reading raw XML column
         if not project_xml:
-            for table in ("autosave", "project"):
+            for _table in ("autosave", "project"):
                 try:
-                    cursor.execute(f"SELECT doc FROM {table} LIMIT 1")
+                    if _table == "autosave":
+                        cursor.execute("SELECT doc FROM autosave LIMIT 1")
+                    else:
+                        cursor.execute("SELECT doc FROM project LIMIT 1")
                     row = cursor.fetchone()
                     if row and row[0]:
                         project_xml = (
@@ -473,7 +480,7 @@ def _parse_aup3_tracks(project_path: Path) -> tuple[list[dict[str, Any]], int]:
                         break
                 except (sqlite3.OperationalError, UnicodeDecodeError) as e:
                     # GAP-PY-001: Table structure varies by Audacity version
-                    logger.debug(f"Failed to query {table} for doc: {e}")
+                    logger.debug(f"Failed to query {_table} for doc: {e}")
 
         conn.close()
 

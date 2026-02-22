@@ -16,6 +16,7 @@ Compatible with:
 import json
 import logging
 import os
+import string
 import subprocess
 import tempfile
 from pathlib import Path
@@ -25,6 +26,23 @@ import numpy as np
 
 # Initialize logger early
 logger = logging.getLogger(__name__)
+
+
+def _format_template_to_args(template: str, **kwargs: str | int) -> list[str]:
+    """Build subprocess args list from format template without shell parsing.
+
+    Parses {placeholder} template and produces [executable, arg1, arg2, ...]
+    with each value as a single argument. Avoids shell=True and shlex.split.
+    """
+    formatter = string.Formatter()
+    args: list[str] = []
+    for literal, field_name, _format_spec, _conversion in formatter.parse(template):
+        if literal:
+            args.extend(literal.split())
+        if field_name is not None:
+            val = kwargs.get(field_name, "")
+            args.append(str(val) if val is not None else "")
+    return args
 
 # Try importing PyTorch
 try:
@@ -264,18 +282,19 @@ class SoVITSSVCEngine(EngineProtocol):
 
         checkpoint = checkpoint_path or self.checkpoint_path
         config = config_path or self.config_path
-        command = self.infer_command.format(
-            input=input_path,
-            output=output_path,
-            checkpoint=str(checkpoint) if checkpoint else "",
-            config=str(config) if config else "",
-            pitch_shift=pitch_shift,
-            device=self.device,
-            sample_rate=self.sample_rate,
-        )
+        kwargs = {
+            "input": input_path,
+            "output": output_path,
+            "checkpoint": str(checkpoint) if checkpoint else "",
+            "config": str(config) if config else "",
+            "pitch_shift": pitch_shift,
+            "device": self.device,
+            "sample_rate": self.sample_rate,
+        }
+        args = _format_template_to_args(self.infer_command, **kwargs)
         result = subprocess.run(
-            command,
-            shell=True,
+            args,
+            shell=False,
             cwd=self.infer_workdir or None,
             capture_output=True,
             text=True,
