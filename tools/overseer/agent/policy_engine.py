@@ -44,7 +44,7 @@ class PolicyResult:
     risk_tier: str
     reason: str
     requires_approval: bool = False
-    violations: list[str] = None
+    violations: list[str] | None = None
 
     def __post_init__(self):
         if self.violations is None:
@@ -206,7 +206,7 @@ class PolicyEngine:
     ) -> dict[str, Any] | None:
         """Get tool configuration with role overrides applied."""
         # Base tool config
-        base_config = self._policy.get("tool_restrictions", {}).get(tool_name)
+        base_config: dict[str, Any] | None = self._policy.get("tool_restrictions", {}).get(tool_name)
 
         if base_config is None:
             return None
@@ -217,7 +217,7 @@ class PolicyEngine:
 
         if role_tool_config:
             # Merge role override with base
-            merged = base_config.copy()
+            merged: dict[str, Any] = base_config.copy()
             merged.update(role_tool_config)
             return merged
 
@@ -254,7 +254,7 @@ class PolicyEngine:
         parameters: dict[str, Any],
     ) -> list[str]:
         """Check path parameters against allowed/denied lists."""
-        violations = []
+        violations: list[str] = []
 
         # Get path parameter (could be 'path', 'file', 'target', etc.)
         path = None
@@ -296,7 +296,7 @@ class PolicyEngine:
         parameters: dict[str, Any],
     ) -> list[str]:
         """Check executable against allowed/denied lists."""
-        violations = []
+        violations: list[str] = []
 
         # Get executable parameter
         exe = parameters.get("exe") or parameters.get("executable") or parameters.get("command")
@@ -338,7 +338,7 @@ class PolicyEngine:
         parameters: dict[str, Any],
     ) -> list[str]:
         """Check domain/URL against allowed/denied lists."""
-        violations = []
+        violations: list[str] = []
 
         # Get URL or domain
         url = parameters.get("url") or parameters.get("domain") or parameters.get("host")
@@ -383,7 +383,7 @@ class PolicyEngine:
         parameters: dict[str, Any],
     ) -> list[str]:
         """Check parameters for denied patterns (e.g., SQL injection)."""
-        violations = []
+        violations: list[str] = []
 
         denied_patterns = tool_config.get("denied_patterns", [])
         if not denied_patterns:
@@ -442,19 +442,21 @@ class PolicyEngine:
         """Get the risk tier for a tool."""
         tool_config = self._get_tool_config(tool_name, role)
         if tool_config:
-            return tool_config.get("risk_tier", "medium")
-        return self._policy.get("default_risk_tier", "medium")
+            return str(tool_config.get("risk_tier", "medium"))
+        return str(self._policy.get("default_risk_tier", "medium"))
 
     def requires_approval(self, tool_name: str, role: AgentRole) -> bool:
         """Check if a tool requires approval."""
         risk_tier = self.get_risk_tier(tool_name, role)
         tier_config = self._policy.get("risk_tiers", {}).get(risk_tier, {})
-        return tier_config.get("requires_approval", False)
+        return bool(tier_config.get("requires_approval", False))
 
     def get_circuit_breaker_config(self) -> dict[str, Any]:
         """Get circuit breaker configuration."""
-        return self._policy.get("circuit_breaker", {})
+        config: dict[str, Any] = self._policy.get("circuit_breaker", {})
+        return config
 
     def get_audit_config(self) -> dict[str, Any]:
         """Get audit configuration."""
-        return self._policy.get("audit", {})
+        config: dict[str, Any] = self._policy.get("audit", {})
+        return config

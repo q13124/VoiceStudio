@@ -26,7 +26,7 @@ except ImportError:
     HAS_QUESTIONARY = False
 
 try:
-    from backend.services.plugin_schema_validator import PluginSchemaValidator
+    from backend.plugins.gallery.plugin_schema_validator import PluginSchemaValidator
     HAS_SCHEMA_VALIDATOR = True
 except ImportError:
     HAS_SCHEMA_VALIDATOR = False

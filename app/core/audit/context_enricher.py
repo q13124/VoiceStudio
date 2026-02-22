@@ -77,7 +77,8 @@ class ContextEnricher:
         try:
             with open(registry_path, encoding="utf-8") as f:
                 data = json.load(f)
-                return data.get("patterns", self._get_default_patterns())
+                patterns: list[dict[str, str]] = data.get("patterns", self._get_default_patterns())
+                return patterns
         except (OSError, json.JSONDecodeError):
             return self._get_default_patterns()
 

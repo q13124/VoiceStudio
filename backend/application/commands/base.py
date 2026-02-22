@@ -61,7 +61,7 @@ class CommandResult(Generic[T]):
     error_code: str | None = None
 
     @classmethod
-    def ok(cls, data: T = None) -> CommandResult[T]:
+    def ok(cls, data: T | None = None) -> CommandResult[T]:
         """Create a successful result."""
         return cls(success=True, data=data)
 

@@ -164,7 +164,7 @@ class Request(Message):
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
-        result = {
+        result: Dict[str, Any] = {
             "jsonrpc": self.jsonrpc,
             "id": self.id,
             "method": self.method,
@@ -196,16 +196,16 @@ class Response(Message):
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
-        result = {
+        out: Dict[str, Any] = {
             "jsonrpc": self.jsonrpc,
             "id": self.id,
         }
         if self.error is not None:
-            result["error"] = self.error.to_dict()
+            out["error"] = self.error.to_dict()
         else:
-            result["result"] = self.result
-        result["_timestamp"] = self.timestamp
-        return result
+            out["result"] = self.result
+        out["_timestamp"] = self.timestamp
+        return out
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Response":
@@ -241,14 +241,14 @@ class Notification(Message):
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
-        result = {
+        out: Dict[str, Any] = {
             "jsonrpc": self.jsonrpc,
             "method": self.method,
         }
         if self.params is not None:
-            result["params"] = self.params
-        result["_timestamp"] = self.timestamp
-        return result
+            out["params"] = self.params
+        out["_timestamp"] = self.timestamp
+        return out
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Notification":

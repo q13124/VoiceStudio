@@ -251,7 +251,8 @@ class VersionManifestStore:
             return None
 
         try:
-            return json.loads(content_path.read_text(encoding="utf-8"))
+            parsed: dict = json.loads(content_path.read_text(encoding="utf-8"))
+            return parsed
         except (OSError, json.JSONDecodeError):
             return None
 
@@ -269,7 +270,8 @@ class VersionManifestStore:
             content_path = self._get_content_path(manifest_type, content_hash)
             if content_path.exists():
                 try:
-                    return json.loads(content_path.read_text(encoding="utf-8"))
+                    parsed: dict = json.loads(content_path.read_text(encoding="utf-8"))
+                    return parsed
                 except (OSError, json.JSONDecodeError):
                     continue
         return None

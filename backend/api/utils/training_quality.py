@@ -172,11 +172,11 @@ def detect_overfitting(
         return None
 
     # Get training and validation losses
-    training_losses = [
-        m.get("training_loss") for m in recent_metrics if m.get("training_loss") is not None
+    training_losses: list[float] = [
+        float(m["training_loss"]) for m in recent_metrics if m.get("training_loss") is not None
     ]
-    validation_losses = [
-        m.get("validation_loss") for m in recent_metrics if m.get("validation_loss") is not None
+    validation_losses: list[float] = [
+        float(m["validation_loss"]) for m in recent_metrics if m.get("validation_loss") is not None
     ]
 
     if len(training_losses) < check_epochs or len(validation_losses) < check_epochs:

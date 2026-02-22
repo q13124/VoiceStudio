@@ -206,7 +206,7 @@ class ContextAllocator(AllocatorProtocol):
                     acc.append(item)
                     remaining -= len(item.content)
                 else:
-                    acc.append(MemoryItem(content=_truncate_text(item.content, remaining), source=item.source))
+                    acc.append(MemoryItem(content=_truncate_text(item.content, remaining) or "", source=item.source))
                     break
             bundle.memory = acc
 

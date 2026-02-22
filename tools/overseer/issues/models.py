@@ -133,7 +133,7 @@ class Issue:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
-        out = {
+        out: dict[str, Any] = {
             "id": self.id,
             "timestamp": self.timestamp.isoformat(),
             "instance_type": self.instance_type.value,

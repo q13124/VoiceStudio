@@ -65,6 +65,24 @@ if "!XC_EXIT!"=="1" (
       exit /b 0
     )
   )
+  rem Phase 12 WS3: Retry once after 5s when output.json absent (common failure mode)
+  if not exist "!OUTPUT_JSON!" (
+    echo [xaml-wrapper] No output.json. Retrying in 5 seconds...
+    ping 127.0.0.1 -n 6 >nul
+    "!COMPILER!" "!INPUT_JSON!" "!OUTPUT_JSON!"
+    set "XC_EXIT=!ERRORLEVEL!"
+    if "!XC_EXIT!"=="0" (
+      echo [xaml-wrapper] Retry succeeded.
+      exit /b 0
+    )
+    if exist "!OUTPUT_JSON!" (
+      findstr /c:"GeneratedCodeFiles" "!OUTPUT_JSON!" >nul 2>nul
+      if !ERRORLEVEL! EQU 0 (
+        echo [xaml-wrapper] VS-0001: false-positive on retry. Returning 0.
+        exit /b 0
+      )
+    )
+  )
 )
 
 echo [xaml-wrapper] Failed with exit code !XC_EXIT!

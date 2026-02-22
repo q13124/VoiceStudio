@@ -125,7 +125,8 @@ class PolicyLoader:
         # Validate
         self.validate(policy)
 
-        return policy
+        result: dict[str, Any] = policy
+        return result
 
     def validate(self, policy: dict[str, Any]) -> None:
         """

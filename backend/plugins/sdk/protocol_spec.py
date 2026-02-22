@@ -20,12 +20,13 @@ from pathlib import Path
 from typing import Any
 
 # Optional YAML support
+_yaml: Any = None
 try:
     import yaml
 
+    _yaml = yaml
     YAML_AVAILABLE = True
 except ImportError:
-    yaml = None  # type: ignore[assignment]
     YAML_AVAILABLE = False
 
 
@@ -178,7 +179,7 @@ class ProtocolSpec:
                 raise ImportError(
                     "PyYAML is required to load YAML specs. " "Install with: pip install pyyaml"
                 )
-            self._spec = yaml.safe_load(content)
+            self._spec = _yaml.safe_load(content)
         else:
             self._spec = json.loads(content)
 
@@ -266,19 +267,19 @@ class ProtocolSpec:
     def version(self) -> str:
         """Get spec version."""
         self._ensure_loaded()
-        return self._spec.get("info", {}).get("version", "0.0.0")
+        return str(self._spec.get("info", {}).get("version", "0.0.0"))
 
     @property
     def title(self) -> str:
         """Get spec title."""
         self._ensure_loaded()
-        return self._spec.get("info", {}).get("title", "")
+        return str(self._spec.get("info", {}).get("title", ""))
 
     @property
     def description(self) -> str:
         """Get spec description."""
         self._ensure_loaded()
-        return self._spec.get("info", {}).get("description", "")
+        return str(self._spec.get("info", {}).get("description", ""))
 
     def get_methods(self) -> dict[str, MethodSpec]:
         """Get all method specifications."""
@@ -462,7 +463,7 @@ class SDKGenerator:
         """Convert JSON Schema to Python type annotation."""
         if "$ref" in schema:
             # Extract name from reference
-            ref = schema["$ref"]
+            ref: str = schema["$ref"]
             return ref.split("/")[-1]
 
         schema_type = schema.get("type")
